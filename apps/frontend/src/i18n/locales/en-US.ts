@@ -1,13 +1,11 @@
 export default {
   common: {
-    users: 'Users',
     loading: 'Loading...',
     refresh: 'Refresh',
     back: 'Back',
     language: 'Language',
     logout: 'Logout',
     welcome: 'Welcome',
-    user: 'User',
   },
   home: {
     welcomeMessage: 'Welcome to My App',
@@ -67,12 +65,6 @@ export default {
     },
     show: 'Show password',
     hide: 'Hide password',
-  },
-  users: {
-    title: 'Users',
-    loading: 'Loading users...',
-    empty: 'No users found. Start the backend and create some users!',
-    joined: 'Joined',
   },
   notFound: {
     title: 'Page Not Found',

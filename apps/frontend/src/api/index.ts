@@ -155,34 +155,6 @@ httpClient.interceptors.response.use(
  */
 export const api = {
   /**
-   * 获取用户列表
-   */
-  async getUsers(): Promise<ApiResponse<User[]>> {
-    const { data } = await httpClient.get<ApiResponse<User[]>>('/users')
-    return data
-  },
-
-  /**
-   * 获取单个用户
-   */
-  async getUser(id: number): Promise<ApiResponse<User>> {
-    const { data } = await httpClient.get<ApiResponse<User>>(`/users/${id}`)
-    return data
-  },
-
-  /**
-   * 创建用户
-   */
-  async createUser(userData: {
-    email: string
-    name: string
-    password: string
-  }): Promise<ApiResponse<User>> {
-    const { data } = await httpClient.post<ApiResponse<User>>('/users', userData)
-    return data
-  },
-
-  /**
    * 获取当前用户信息
    */
   async getMe(): Promise<ApiResponse<User>> {

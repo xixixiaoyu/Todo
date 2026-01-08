@@ -1,13 +1,11 @@
 export default {
   common: {
-    users: '用户',
     loading: '加载中...',
     refresh: '刷新',
     back: '返回',
     language: '语言',
     logout: '退出登录',
     welcome: '欢迎',
-    user: '用户',
   },
   home: {
     welcomeMessage: '欢迎使用 My App',
@@ -65,12 +63,6 @@ export default {
     },
     show: '显示密码',
     hide: '隐藏密码',
-  },
-  users: {
-    title: '用户列表',
-    loading: '正在加载用户...',
-    empty: '未找到用户。请启动后端并创建一些用户！',
-    joined: '加入于',
   },
   notFound: {
     title: '页面未找到',
