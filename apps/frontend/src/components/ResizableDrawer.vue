@@ -181,7 +181,6 @@ watch(
     rgba(148, 163, 184, 0.1) 50%,
     rgba(148, 163, 184, 0.05) 100%
   );
-  backdrop-filter: blur(2px);
   transition: all 0.2s ease;
   transform: translateZ(0);
   backface-visibility: hidden;
@@ -198,7 +197,6 @@ watch(
     rgba(59, 130, 246, 0.05) 100%
   );
   box-shadow: 0 0 8px rgba(59, 130, 246, 0.15);
-  backdrop-filter: blur(4px);
 }
 
 /* 拖拽中状态 */
@@ -212,7 +210,6 @@ watch(
     rgba(59, 130, 246, 0.08) 100%
   );
   box-shadow: 0 0 12px rgba(59, 130, 246, 0.25);
-  backdrop-filter: blur(6px);
 }
 
 /* 中心线条 */
