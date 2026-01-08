@@ -177,11 +177,11 @@ watch(
   z-index: 10;
   background: linear-gradient(
     90deg,
-    rgba(148, 163, 184, 0.1) 0%,
-    rgba(148, 163, 184, 0.2) 50%,
-    rgba(148, 163, 184, 0.1) 100%
+    rgba(148, 163, 184, 0.05) 0%,
+    rgba(148, 163, 184, 0.1) 50%,
+    rgba(148, 163, 184, 0.05) 100%
   );
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(2px);
   transition: all 0.2s ease;
   transform: translateZ(0);
   backface-visibility: hidden;
@@ -193,12 +193,12 @@ watch(
   width: 16px;
   background: linear-gradient(
     90deg,
-    rgba(59, 130, 246, 0.1) 0%,
-    rgba(59, 130, 246, 0.2) 50%,
-    rgba(59, 130, 246, 0.1) 100%
+    rgba(59, 130, 246, 0.05) 0%,
+    rgba(59, 130, 246, 0.1) 50%,
+    rgba(59, 130, 246, 0.05) 100%
   );
-  box-shadow: 0 0 12px rgba(59, 130, 246, 0.3);
-  backdrop-filter: blur(8px);
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.15);
+  backdrop-filter: blur(4px);
 }
 
 /* 拖拽中状态 */
@@ -207,12 +207,12 @@ watch(
   width: 20px;
   background: linear-gradient(
     90deg,
-    rgba(59, 130, 246, 0.15) 0%,
-    rgba(59, 130, 246, 0.3) 50%,
-    rgba(59, 130, 246, 0.15) 100%
+    rgba(59, 130, 246, 0.08) 0%,
+    rgba(59, 130, 246, 0.15) 50%,
+    rgba(59, 130, 246, 0.08) 100%
   );
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
-  backdrop-filter: blur(12px);
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.25);
+  backdrop-filter: blur(6px);
 }
 
 /* 中心线条 */
@@ -225,12 +225,12 @@ watch(
   height: 32px;
   background: linear-gradient(
     180deg,
-    rgba(148, 163, 184, 0.3) 0%,
-    rgba(148, 163, 184, 0.6) 50%,
-    rgba(148, 163, 184, 0.3) 100%
+    rgba(148, 163, 184, 0.2) 0%,
+    rgba(148, 163, 184, 0.4) 50%,
+    rgba(148, 163, 184, 0.2) 100%
   );
   border-radius: 2px;
-  box-shadow: 0 0 4px rgba(148, 163, 184, 0.2);
+  box-shadow: 0 0 2px rgba(148, 163, 184, 0.1);
   transition: all 0.2s ease;
 }
 
@@ -240,11 +240,11 @@ watch(
   height: 48px;
   background: linear-gradient(
     180deg,
-    rgba(59, 130, 246, 0.4) 0%,
-    rgba(59, 130, 246, 0.8) 50%,
-    rgba(59, 130, 246, 0.4) 100%
+    rgba(59, 130, 246, 0.25) 0%,
+    rgba(59, 130, 246, 0.5) 50%,
+    rgba(59, 130, 246, 0.25) 100%
   );
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 0 4px rgba(59, 130, 246, 0.2);
 }
 
 /* 拖拽时中心线条 */
@@ -253,11 +253,11 @@ watch(
   height: 64px;
   background: linear-gradient(
     180deg,
-    rgba(59, 130, 246, 0.5) 0%,
-    rgba(59, 130, 246, 1) 50%,
-    rgba(59, 130, 246, 0.5) 100%
+    rgba(59, 130, 246, 0.3) 0%,
+    rgba(59, 130, 246, 0.6) 50%,
+    rgba(59, 130, 246, 0.3) 100%
   );
-  box-shadow: 0 0 12px rgba(59, 130, 246, 0.6);
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.3);
   animation: pulse-glow 1.5s ease-in-out infinite;
 }
 
@@ -266,11 +266,11 @@ watch(
   0%,
   100% {
     opacity: 1;
-    box-shadow: 0 0 12px rgba(59, 130, 246, 0.6);
+    box-shadow: 0 0 6px rgba(59, 130, 246, 0.3);
   }
   50% {
-    opacity: 0.8;
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
+    opacity: 0.85;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
   }
 }
 
