@@ -90,7 +90,7 @@ function handleEditKeydown(e: KeyboardEvent) {
 <template>
   <div class="min-h-screen bg-[#f5f3ed] p-4 pb-16 md:p-8 md:pb-20">
     <div
-      class="mx-auto max-w-4xl rounded-[24px] bg-[#faf8f4] p-6 md:p-8 shadow-[0_8px_30px_rgba(0,0,0,0.08)]"
+      class="mx-auto flex max-w-4xl flex-col rounded-[24px] bg-[#faf8f4] p-6 md:p-8 shadow-[0_8px_30px_rgba(0,0,0,0.08)]"
     >
       <!-- Header -->
       <header class="mb-6 flex items-center justify-between">
@@ -180,7 +180,7 @@ function handleEditKeydown(e: KeyboardEvent) {
       </div>
 
       <!-- Todo List -->
-      <div class="min-h-[400px]">
+      <div class="flex-1 min-h-[calc(100vh-350px)]">
         <!-- Empty State -->
         <div
           v-if="todoStore.filteredTodos.length === 0"
