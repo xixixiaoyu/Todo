@@ -51,9 +51,17 @@ export const useTodoStore = defineStore(
     function addTodo(title: string): void {
       if (!title.trim()) return
 
+      const trimmedTitle = title.trim()
+
+      // 检查是否已存在相同标题的待办事项（不区分大小写）
+      const exists = todos.value.some(
+        (todo) => todo.title.toLowerCase() === trimmedTitle.toLowerCase(),
+      )
+      if (exists) return
+
       const newTodo: Todo = {
         id: crypto.randomUUID(),
-        title: title.trim(),
+        title: trimmedTitle,
         completed: false,
         createdAt: new Date(),
       }
