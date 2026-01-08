@@ -47,9 +47,10 @@ export const useTodoStore = defineStore(
 
     /**
      * 添加待办事项
+     * @returns 是否成功添加（false 表示已存在重复）
      */
-    function addTodo(title: string): void {
-      if (!title.trim()) return
+    function addTodo(title: string): boolean {
+      if (!title.trim()) return false
 
       const trimmedTitle = title.trim()
 
@@ -57,7 +58,7 @@ export const useTodoStore = defineStore(
       const exists = todos.value.some(
         (todo) => todo.title.toLowerCase() === trimmedTitle.toLowerCase(),
       )
-      if (exists) return
+      if (exists) return false
 
       const newTodo: Todo = {
         id: crypto.randomUUID(),
@@ -67,6 +68,7 @@ export const useTodoStore = defineStore(
       }
 
       todos.value.unshift(newTodo)
+      return true
     }
 
     /**

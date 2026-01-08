@@ -94,5 +94,6 @@ export default {
     editPlaceholder: 'Enter task...',
     save: 'Save',
     cancel: 'Cancel',
+    duplicate: 'This task already exists',
   },
 }

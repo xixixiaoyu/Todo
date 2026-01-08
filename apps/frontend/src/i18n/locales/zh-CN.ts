@@ -92,5 +92,6 @@ export default {
     editPlaceholder: '输入待办事项...',
     save: '保存',
     cancel: '取消',
+    duplicate: '该待办事项已存在',
   },
 }
