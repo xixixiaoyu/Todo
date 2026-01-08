@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { Search, Clover, Plus, X, Check, Trash2, Pencil } from 'lucide-vue-next'
 import { useTodoStore } from '@/stores/todo'
 import Fireworks from '@/components/Fireworks.vue'
+import ResizableDrawer from '@/components/ResizableDrawer.vue'
 
 const { t } = useI18n()
 const todoStore = useTodoStore()
@@ -12,6 +13,7 @@ const newTodoTitle = ref('')
 const showSearch = ref(false)
 const searchInput = ref('')
 const showFireworks = ref(false)
+const isDrawerOpen = ref(false)
 const fireworksRef = ref<InstanceType<typeof Fireworks> | null>(null)
 const editingId = ref<string | null>(null)
 const editingTitle = ref('')
@@ -114,6 +116,7 @@ function handleEditKeydown(e: KeyboardEvent) {
         <div class="flex items-center gap-2">
           <button
             class="flex h-10 w-10 items-center justify-center rounded-xl border border-[#e8e4dd] bg-white text-[#6b5c4d] transition-all hover:bg-[#f5f3ed]"
+            @click="isDrawerOpen = true"
           >
             <Clover :size="18" />
           </button>
@@ -308,5 +311,35 @@ function handleEditKeydown(e: KeyboardEvent) {
 
     <!-- Fireworks -->
     <Fireworks ref="fireworksRef" :active="showFireworks" @complete="onFireworksComplete" />
+
+    <!-- 可拖动宽度的抽屉 -->
+    <ResizableDrawer v-model="isDrawerOpen" :default-width="320" :min-width="200" :max-width="600">
+      <div class="p-6">
+        <h2 class="text-2xl font-bold mb-6 text-[#c4694a]">菜单</h2>
+        <nav class="space-y-2">
+          <a
+            href="/"
+            class="block px-4 py-3 rounded-lg hover:bg-[#f5f3ed] transition-colors text-[#3a3a3a]"
+            @click="isDrawerOpen = false"
+          >
+            首页
+          </a>
+          <a
+            href="/todos"
+            class="block px-4 py-3 rounded-lg hover:bg-[#f5f3ed] transition-colors text-[#3a3a3a]"
+            @click="isDrawerOpen = false"
+          >
+            待办事项
+          </a>
+          <a
+            href="/users"
+            class="block px-4 py-3 rounded-lg hover:bg-[#f5f3ed] transition-colors text-[#3a3a3a]"
+            @click="isDrawerOpen = false"
+          >
+            用户管理
+          </a>
+        </nav>
+      </div>
+    </ResizableDrawer>
   </div>
 </template>
