@@ -27,6 +27,9 @@ const startWidth = ref(0)
 const isHovering = ref(false)
 const windowWidth = ref(window.innerWidth)
 
+// 移动端检测
+const isMobile = computed(() => windowWidth.value < 640)
+
 const maxWidth = computed(() => windowWidth.value - props.rightGap)
 
 function clampWidth(width: number) {
@@ -55,7 +58,7 @@ watch(drawerWidth, (newWidth) => {
 })
 
 const drawerStyle = computed(() => ({
-  width: `${drawerWidth.value}px`,
+  width: isMobile.value ? '100%' : `${drawerWidth.value}px`,
   transform: props.modelValue ? 'translateX(0)' : 'translateX(-100%)',
 }))
 
@@ -104,39 +107,39 @@ watch(
   <Teleport to="body">
     <!-- 遮罩层 -->
     <Transition name="fade">
-      <div
-        v-if="modelValue"
-        class="fixed inset-0 bg-black/50 z-40"
-        :style="overlayStyle"
-        @click="closeDrawer"
-      />
+      <div v-if="modelValue" class="drawer-overlay" :style="overlayStyle" @click="closeDrawer" />
     </Transition>
 
     <!-- 抽屉 -->
     <Transition name="slide">
-      <div
-        v-if="modelValue"
-        class="fixed top-0 left-0 h-full bg-white shadow-2xl z-50 flex"
-        :style="drawerStyle"
-      >
+      <div v-if="modelValue" class="drawer" :style="drawerStyle" role="dialog" aria-modal="true">
         <!-- 抽屉内容 -->
-        <div class="flex-1 overflow-y-auto">
+        <div class="drawer-content">
           <slot />
         </div>
 
-        <!-- 拖拽手柄 -->
+        <!-- 拖拽手柄（移动端隐藏） -->
         <div
-          class="resize-handle relative"
+          v-if="!isMobile"
+          class="resize-handle"
           :class="{
             hovering: isHovering,
             resizing: isResizing,
           }"
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="调整抽屉宽度"
+          tabindex="0"
           @mouseenter="isHovering = true"
           @mouseleave="isHovering = false"
           @mousedown="startResize"
         >
-          <!-- 中心线条 -->
-          <div class="resize-handle-line" />
+          <!-- 装饰点 -->
+          <div class="resize-handle-dots">
+            <span />
+            <span />
+            <span />
+          </div>
         </div>
       </div>
     </Transition>
@@ -144,9 +147,77 @@ watch(
 </template>
 
 <style scoped>
+/* 遮罩层 */
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* 抽屉主体 */
+.drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  z-index: 50;
+  display: flex;
+  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+  border-right: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(0, 0, 0, 0.02);
+}
+
+:root.dark .drawer {
+  background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%);
+  border-right-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+/* 抽屉内容区 */
+.drawer-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+}
+
+/* 自定义滚动条 */
+.drawer-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.drawer-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.drawer-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.drawer-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+:root.dark .drawer-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+:root.dark .drawer-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* 过渡动画 */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease;
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .fade-enter-from,
@@ -154,9 +225,12 @@ watch(
   opacity: 0;
 }
 
-.slide-enter-active,
+.slide-enter-active {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 .slide-leave-active {
-  transition: transform 0.3s ease;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 1, 1);
 }
 
 .slide-enter-from,
@@ -164,120 +238,137 @@ watch(
   transform: translateX(-100%);
 }
 
-/* 拖拽手柄基础样式 */
+/* 拖拽手柄 */
 .resize-handle {
   position: absolute;
   top: 0;
-  right: -3px;
-  width: 6px;
+  right: -6px;
+  width: 12px;
   height: 100%;
   cursor: ew-resize;
   z-index: 10;
-  background: linear-gradient(
-    90deg,
-    rgba(148, 163, 184, 0.05) 0%,
-    rgba(148, 163, 184, 0.1) 50%,
-    rgba(148, 163, 184, 0.05) 100%
-  );
-  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   transform: translateZ(0);
-  backface-visibility: hidden;
+  will-change: width, right;
 }
 
-/* 悬停状态 */
-.resize-handle.hovering {
-  right: -8px;
-  width: 16px;
-  background: linear-gradient(
-    90deg,
-    rgba(59, 130, 246, 0.05) 0%,
-    rgba(59, 130, 246, 0.1) 50%,
-    rgba(59, 130, 246, 0.05) 100%
-  );
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.15);
-}
-
-/* 拖拽中状态 */
-.resize-handle.resizing {
-  right: -10px;
-  width: 20px;
-  background: linear-gradient(
-    90deg,
-    rgba(59, 130, 246, 0.08) 0%,
-    rgba(59, 130, 246, 0.15) 50%,
-    rgba(59, 130, 246, 0.08) 100%
-  );
-  box-shadow: 0 0 12px rgba(59, 130, 246, 0.25);
-}
-
-/* 中心线条 */
-.resize-handle-line {
+.resize-handle::before {
+  content: '';
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 2px;
-  height: 32px;
-  background: linear-gradient(
-    180deg,
-    rgba(148, 163, 184, 0.2) 0%,
-    rgba(148, 163, 184, 0.4) 50%,
-    rgba(148, 163, 184, 0.2) 100%
-  );
-  border-radius: 2px;
-  box-shadow: 0 0 2px rgba(148, 163, 184, 0.1);
-  transition: all 0.2s ease;
+  inset: 0;
+  background: transparent;
+  transition: background 0.2s;
 }
 
-/* 悬停时中心线条 */
-.resize-handle.hovering .resize-handle-line {
-  width: 3px;
-  height: 48px;
+.resize-handle:hover::before,
+.resize-handle.hovering::before {
   background: linear-gradient(
-    180deg,
-    rgba(59, 130, 246, 0.25) 0%,
-    rgba(59, 130, 246, 0.5) 50%,
-    rgba(59, 130, 246, 0.25) 100%
+    90deg,
+    transparent 0%,
+    rgba(59, 130, 246, 0.08) 50%,
+    transparent 100%
   );
-  box-shadow: 0 0 4px rgba(59, 130, 246, 0.2);
 }
 
-/* 拖拽时中心线条 */
-.resize-handle.resizing .resize-handle-line {
+.resize-handle.resizing::before {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(59, 130, 246, 0.12) 50%,
+    transparent 100%
+  );
+}
+
+/* 装饰点 */
+.resize-handle-dots {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  opacity: 0;
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
+  transform: scale(0.8);
+}
+
+.resize-handle-dots span {
   width: 4px;
-  height: 64px;
-  background: linear-gradient(
-    180deg,
-    rgba(59, 130, 246, 0.3) 0%,
-    rgba(59, 130, 246, 0.6) 50%,
-    rgba(59, 130, 246, 0.3) 100%
-  );
-  box-shadow: 0 0 6px rgba(59, 130, 246, 0.3);
-  animation: pulse-glow 1.5s ease-in-out infinite;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(148, 163, 184, 0.5);
+  transition: all 0.2s;
 }
 
-/* 脉冲动画 */
-@keyframes pulse-glow {
-  0%,
-  100% {
-    opacity: 1;
-    box-shadow: 0 0 6px rgba(59, 130, 246, 0.3);
-  }
-  50% {
-    opacity: 0.85;
-    box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
-  }
+.resize-handle:hover .resize-handle-dots,
+.resize-handle.hovering .resize-handle-dots {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.resize-handle:hover .resize-handle-dots span,
+.resize-handle.hovering .resize-handle-dots span {
+  background: rgba(59, 130, 246, 0.6);
+}
+
+.resize-handle.resizing .resize-handle-dots {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.resize-handle.resizing .resize-handle-dots span {
+  background: rgba(59, 130, 246, 0.8);
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.4);
+}
+
+/* 暗色模式装饰点 */
+:root.dark .resize-handle-dots span {
+  background: rgba(148, 163, 184, 0.4);
+}
+
+:root.dark .resize-handle:hover .resize-handle-dots span,
+:root.dark .resize-handle.hovering .resize-handle-dots span {
+  background: rgba(96, 165, 250, 0.7);
+}
+
+:root.dark .resize-handle.resizing .resize-handle-dots span {
+  background: rgba(96, 165, 250, 0.9);
+  box-shadow: 0 0 8px rgba(96, 165, 250, 0.5);
+}
+
+/* 聚焦状态（键盘无障碍） */
+.resize-handle:focus-visible {
+  outline: none;
+}
+
+.resize-handle:focus-visible .resize-handle-dots {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.resize-handle:focus-visible .resize-handle-dots span {
+  background: rgba(59, 130, 246, 0.7);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
 /* 减少动画偏好 */
 @media (prefers-reduced-motion: reduce) {
+  .drawer-overlay,
+  .drawer,
   .resize-handle,
-  .resize-handle-line {
+  .resize-handle::before,
+  .resize-handle-dots,
+  .resize-handle-dots span {
     transition: none;
   }
 
-  .resize-handle.resizing .resize-handle-line {
-    animation: none;
+  .fade-enter-active,
+  .fade-leave-active,
+  .slide-enter-active,
+  .slide-leave-active {
+    transition: none;
   }
 }
 </style>
