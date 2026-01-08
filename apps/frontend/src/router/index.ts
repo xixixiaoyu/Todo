@@ -37,12 +37,6 @@ const router = createRouter({
       meta: { title: '重置密码' },
     },
     {
-      path: '/users',
-      name: 'users',
-      component: () => import('@/views/UsersView.vue'),
-      meta: { title: '用户列表' },
-    },
-    {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: () => import('@/views/NotFoundView.vue'),

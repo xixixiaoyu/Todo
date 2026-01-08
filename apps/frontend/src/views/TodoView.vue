@@ -331,13 +331,6 @@ function handleEditKeydown(e: KeyboardEvent) {
           >
             待办事项
           </a>
-          <a
-            href="/users"
-            class="block px-4 py-3 rounded-lg hover:bg-[#f5f3ed] transition-colors text-[#3a3a3a]"
-            @click="isDrawerOpen = false"
-          >
-            用户管理
-          </a>
         </nav>
       </div>
     </ResizableDrawer>
