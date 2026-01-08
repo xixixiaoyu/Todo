@@ -135,24 +135,6 @@ function handleEditKeydown(e: KeyboardEvent) {
         </button>
       </div>
 
-      <!-- Search Bar (Collapsible) -->
-      <div
-        v-if="showSearch"
-        class="mb-4 flex items-center gap-3 rounded-xl border border-[#e8e4dd] bg-white px-4 py-3"
-      >
-        <Search :size="18" class="text-[#8b8680]" />
-        <input
-          :value="searchInput"
-          type="text"
-          :placeholder="t('todo.searchPlaceholder')"
-          class="flex-1 bg-transparent text-[#3a3a3a] outline-none placeholder:text-[#c4c0b8]"
-          @input="handleSearchInput"
-        />
-        <button v-if="searchInput" class="text-[#8b8680] hover:text-[#3a3a3a]" @click="clearSearch">
-          <X :size="18" />
-        </button>
-      </div>
-
       <!-- Filter Tabs -->
       <div class="mb-6 flex justify-center gap-2">
         <button
@@ -176,6 +158,24 @@ function handleEditKeydown(e: KeyboardEvent) {
           @click="todoStore.setFilter('completed')"
         >
           {{ t('todo.completed') }}
+        </button>
+      </div>
+
+      <!-- Search Bar (Collapsible) -->
+      <div
+        v-if="showSearch"
+        class="mb-4 flex items-center gap-3 rounded-xl border border-[#e8e4dd] bg-white px-4 py-3"
+      >
+        <Search :size="18" class="text-[#8b8680]" />
+        <input
+          :value="searchInput"
+          type="text"
+          :placeholder="t('todo.searchPlaceholder')"
+          class="flex-1 bg-transparent text-[#3a3a3a] outline-none placeholder:text-[#c4c0b8]"
+          @input="handleSearchInput"
+        />
+        <button v-if="searchInput" class="text-[#8b8680] hover:text-[#3a3a3a]" @click="clearSearch">
+          <X :size="18" />
         </button>
       </div>
 
