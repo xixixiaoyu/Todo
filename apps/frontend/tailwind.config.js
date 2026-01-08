@@ -39,8 +39,8 @@ export default {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         primary: {
-          DEFAULT: '#d4c18a',
-          hover: '#c4b17a',
+          DEFAULT: 'hsl(var(--primary))',
+          hover: 'hsl(var(--primary-hover))',
           foreground: 'hsl(var(--primary-foreground))',
         },
         secondary: {
@@ -154,10 +154,10 @@ export default {
       },
       // 边框圆角
       borderRadius: {
-        xl: 'calc(var(--radius) + 4px)',
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        xl: 'calc(var(--border-radius) + 4px)',
+        lg: 'var(--border-radius)',
+        md: 'calc(var(--border-radius) - 2px)',
+        sm: 'calc(var(--border-radius) - 4px)',
         DEFAULT: 'var(--border-radius)',
         half: 'calc(var(--border-radius) / 2)',
         '1.5x': 'calc(var(--border-radius) * 1.5)',
@@ -231,18 +231,18 @@ export default {
       keyframes: {
         'accordion-down': {
           from: { height: '0' },
-          to: { height: 'var(--reka-accordion-content-height)' },
+          to: { height: 'var(--radix-accordion-content-height)' },
         },
         'accordion-up': {
-          from: { height: 'var(--reka-accordion-content-height)' },
+          from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: '0' },
         },
         'collapsible-down': {
           from: { height: '0' },
-          to: { height: 'var(--reka-collapsible-content-height)' },
+          to: { height: 'var(--radix-collapsible-content-height)' },
         },
         'collapsible-up': {
-          from: { height: 'var(--reka-collapsible-content-height)' },
+          from: { height: 'var(--radix-collapsible-content-height)' },
           to: { height: '0' },
         },
         'fade-in-up': {
@@ -300,10 +300,7 @@ export default {
         // 变换效果
         '.transform-hover-up': { transform: 'translateY(-2px)' },
         '.transform-hover-up-1': { transform: 'translateY(-1px)' },
-        '.transform-hover-up-2': { transform: 'translateY(-2px)' },
         '.transform-hover-up-4': { transform: 'translateY(-4px)' },
-        // 背景模糊
-        '.backdrop-blur-20': { 'backdrop-filter': 'blur(20px)' },
         // 文本样式
         '.ltr': { direction: 'ltr', 'unicode-bidi': 'isolate', 'text-align': 'left' },
         '.word-break-break-word': { 'word-break': 'break-word', 'overflow-wrap': 'break-word' },
