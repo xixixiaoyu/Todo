@@ -1,0 +1,58 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs
+dist
+.next
+.nuxt
+.output
+build
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Environment files
+.env
+.env.docker
+.env.local
+.env.*.local
+apps/backend/.env
+apps/frontend/.env
+!.env.example
+!.env.production
+
+# Turbo
+.turbo
+
+# Testing
+coverage
+
+# Prisma
+prisma/*.db
+prisma/*.db-journal
+
+# Temp files
+*.tmp
+*.temp
+.cache
+
+# Capacitor
+apps/frontend/ios/App/App/public
+apps/frontend/ios/App/Pods
+apps/frontend/android/app/src/main/assets/public
+apps/frontend/android/.gradle
+apps/frontend/android/app/build
+
+# Electron
+apps/frontend/dist-electron
+apps/frontend/release

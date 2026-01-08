@@ -1,0 +1,211 @@
+# Docker Compose 开发环境配置
+# 支持代码热更新：修改代码后容器内自动重载
+#
+# 前置条件（在宿主机执行）：
+#   pnpm install
+#   pnpm --filter @my-app/shared build
+#
+# 使用方式：
+#   docker compose -f docker-compose.dev.yml up -d
+#   docker compose -f docker-compose.dev.yml logs -f backend frontend
+#   docker compose -f docker-compose.dev.yml down
+#   docker compose -f docker-compose.dev.yml restart [service]
+
+services:
+  # ============================================
+  # PostgreSQL Database
+  # ============================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: myapp-postgres-dev
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:5432:5432'
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-myapp}
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-postgres}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - myapp-network-dev
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  # ============================================
+  # Redis Cache & Queue
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: myapp-redis-dev
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:6379:6379'
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy noeviction --requirepass ${REDIS_PASSWORD:-dev-redis-password}
+    volumes:
+      - redis_data_dev:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD:-dev-redis-password}', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - myapp-network-dev
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  # ============================================
+  # Backend (NestJS) - 开发模式，支持热更新
+  # ============================================
+  backend:
+    image: node:20-alpine
+    container_name: myapp-backend-dev
+    restart: unless-stopped
+    working_dir: /app/apps/backend
+    ports:
+      - '3000:3000'
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-myapp}?schema=public
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-dev-redis-password}
+      REDIS_DB: ${REDIS_DB:-0}
+      REDIS_KEY_PREFIX: ${REDIS_KEY_PREFIX:-app:}
+      REDIS_DEFAULT_TTL: ${REDIS_DEFAULT_TTL:-300}
+      # 日志 & CORS
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      # JWT
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-change-in-production}
+      JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-900}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-604800}
+      # 速率限制 (开发环境放宽)
+      THROTTLE_SHORT_TTL: ${THROTTLE_SHORT_TTL:-1000}
+      THROTTLE_SHORT_LIMIT: ${THROTTLE_SHORT_LIMIT:-100}
+      THROTTLE_MEDIUM_TTL: ${THROTTLE_MEDIUM_TTL:-10000}
+      THROTTLE_MEDIUM_LIMIT: ${THROTTLE_MEDIUM_LIMIT:-200}
+      THROTTLE_LONG_TTL: ${THROTTLE_LONG_TTL:-60000}
+      THROTTLE_LONG_LIMIT: ${THROTTLE_LONG_LIMIT:-1000}
+      # 邮件
+      MAIL_HOST: ${MAIL_HOST:-smtp.example.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_SECURE: ${MAIL_SECURE:-false}
+      MAIL_USER: ${MAIL_USER:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-"No Reply" <noreply@example.com>}
+      # S3 存储
+      S3_BUCKET: ${S3_BUCKET:-my-app-uploads}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-}
+      # 文件上传
+      UPLOAD_MAX_SIZE: ${UPLOAD_MAX_SIZE:-10485760}
+      UPLOAD_MAX_FILES: ${UPLOAD_MAX_FILES:-10}
+    volumes:
+      # 挂载项目目录（代码热更新）
+      - .:/app
+      # 挂载 node_modules（容器内安装的依赖）
+      - backend_node_modules:/app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - myapp-network-dev
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+    # 启动命令：安装依赖 + 生成 Prisma Client + 启动开发服务器
+    command: >
+      sh -c "
+        corepack enable &&
+        corepack prepare pnpm@9.15.0 --activate &&
+        pnpm install &&
+        pnpm --filter @my-app/shared build &&
+        npx prisma generate --schema=prisma/schema.prisma &&
+        pnpm dev
+      "
+
+  # ============================================
+  # Frontend (Vue + Vite) - 开发模式，支持热更新
+  # ============================================
+  frontend:
+    image: node:20-alpine
+    container_name: myapp-frontend-dev
+    restart: unless-stopped
+    working_dir: /app/apps/frontend
+    ports:
+      - '5173:5173'
+    environment:
+      NODE_ENV: development
+      # Vite 开发服务器配置 - 使用 Docker 服务名访问后端
+      VITE_API_BASE_URL: http://backend:3000
+    volumes:
+      # 挂载项目目录（代码热更新）
+      - .:/app
+      # 挂载 node_modules（容器内安装的依赖）
+      - frontend_node_modules:/app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - myapp-network-dev
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+    # 启动命令：安装依赖 + 启动 Vite 开发服务器
+    command: >
+      sh -c "
+        corepack enable &&
+        corepack prepare pnpm@9.15.0 --activate &&
+        pnpm install &&
+        pnpm --filter @my-app/shared build &&
+        pnpm dev --host 0.0.0.0
+      "
+
+networks:
+  myapp-network-dev:
+    driver: bridge
+
+volumes:
+  postgres_data_dev:
+  redis_data_dev:
+  # 后端依赖卷（容器内安装的 Alpine 原生模块）
+  backend_node_modules:
+  # 前端依赖卷（容器内安装的 Alpine 原生模块）
+  frontend_node_modules:

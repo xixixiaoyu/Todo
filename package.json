@@ -1,0 +1,60 @@
+{
+  "name": "my-app",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20.19.0",
+    "pnpm": ">=9.15.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint -- --fix",
+    "test": "turbo run test",
+    "test:watch": "turbo run test:watch",
+    "test:coverage": "turbo run test:coverage",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "clean": "turbo run clean",
+    "db:generate": "pnpm --filter @my-app/backend prisma:generate",
+    "db:push": "pnpm --filter @my-app/backend prisma:push",
+    "db:migrate": "pnpm --filter @my-app/backend prisma:migrate",
+    "db:studio": "pnpm --filter @my-app/backend prisma:studio",
+    "prepare": "husky",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "docker:clean": "docker compose down -v --rmi local"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.2",
+    "eslint": "9.39.2",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-prettier": "5.5.4",
+    "eslint-plugin-vue": "10.6.2",
+    "husky": "9.1.7",
+    "lint-staged": "16.2.7",
+    "prettier": "3.7.4",
+    "turbo": "2.7.2",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.50.1",
+    "vitest": "4.0.16"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,vue}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,css,scss,html}": [
+      "prettier --write"
+    ]
+  },
+  "pnpm": {
+    "overrides": {
+      "@electron/rebuild": "4.0.2"
+    }
+  }
+}
