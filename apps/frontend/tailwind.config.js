@@ -138,7 +138,7 @@ export default {
       // 字体系列
       fontFamily: {
         sans: [
-          'LXGW WenKai Medium',
+          'var(--font-sans)',
           'Noto Sans SC',
           'Inter',
           '-apple-system',
