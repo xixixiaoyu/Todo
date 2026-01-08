@@ -8,7 +8,7 @@ import { ForgotPasswordSchema } from '@my-app/shared'
 import { CheckCircle2 } from 'lucide-vue-next'
 import AuthCard from '@/components/auth/AuthCard.vue'
 import FormInput from '@/components/auth/FormInput.vue'
-import PrimaryButton from '@/components/auth/PrimaryButton.vue'
+import { PrimaryButton } from '@/components/ui/button'
 
 const authStore = useAuthStore()
 const { t } = useI18n()

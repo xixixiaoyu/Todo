@@ -10,7 +10,7 @@ import { passwordSchema } from '@my-app/shared'
 import { CheckCircle2, AlertCircle } from 'lucide-vue-next'
 import AuthCard from '@/components/auth/AuthCard.vue'
 import PasswordInput from '@/components/auth/PasswordInput.vue'
-import PrimaryButton from '@/components/auth/PrimaryButton.vue'
+import { PrimaryButton } from '@/components/ui/button'
 
 const router = useRouter()
 const route = useRoute()

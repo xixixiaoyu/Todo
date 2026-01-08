@@ -8,7 +8,7 @@ import { LoginSchema } from '@my-app/shared'
 import AuthCard from '@/components/auth/AuthCard.vue'
 import FormInput from '@/components/auth/FormInput.vue'
 import PasswordInput from '@/components/auth/PasswordInput.vue'
-import PrimaryButton from '@/components/auth/PrimaryButton.vue'
+import { PrimaryButton } from '@/components/ui/button'
 
 const router = useRouter()
 const authStore = useAuthStore()
