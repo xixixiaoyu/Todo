@@ -8,9 +8,9 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: () => import('@/views/HomeView.vue'),
-      meta: { title: '首页' },
+      name: 'todo',
+      component: () => import('@/views/TodoView.vue'),
+      meta: { title: '待办事项' },
     },
     {
       path: '/login',
