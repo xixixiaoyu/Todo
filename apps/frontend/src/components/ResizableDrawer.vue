@@ -1,49 +1,57 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, type CSSProperties, type Ref } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, type CSSProperties } from 'vue'
 
 interface Props {
   modelValue: boolean
   defaultWidth?: number
   minWidth?: number
-  maxWidth?: number // 屏幕宽度的比例，0.85 表示 85%
+  rightGap?: number // 距离右边的最小间距（px）
   storageKey?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   defaultWidth: 320,
   minWidth: 200,
-  maxWidth: 0.7,
+  rightGap: 48,
   storageKey: 'resizable-drawer-width',
 })
 
-interface Emits {
-  (e: 'update:modelValue', value: boolean): void
-}
-
-const emit = defineEmits<Emits>()
-
-const STORAGE_KEY = props.storageKey
+const emit = defineEmits<{
+  'update:modelValue': [value: boolean]
+}>()
 
 const drawerWidth = ref(props.defaultWidth)
 const isResizing = ref(false)
 const startX = ref(0)
 const startWidth = ref(0)
 const isHovering = ref(false)
+const windowWidth = ref(window.innerWidth)
 
-const maxWidth = computed(() => window.innerWidth * props.maxWidth)
+const maxWidth = computed(() => windowWidth.value - props.rightGap)
+
+function clampWidth(width: number) {
+  return Math.max(props.minWidth, Math.min(maxWidth.value, width))
+}
+
+function handleWindowResize() {
+  windowWidth.value = window.innerWidth
+  drawerWidth.value = clampWidth(drawerWidth.value)
+}
 
 onMounted(() => {
-  const savedWidth = localStorage.getItem(STORAGE_KEY)
+  window.addEventListener('resize', handleWindowResize)
+  const savedWidth = localStorage.getItem(props.storageKey)
   if (savedWidth) {
-    const width = Number(savedWidth)
-    if (width >= props.minWidth && width <= maxWidth.value) {
-      drawerWidth.value = width
-    }
+    drawerWidth.value = clampWidth(Number(savedWidth))
   }
 })
 
+onUnmounted(() => {
+  window.removeEventListener('resize', handleWindowResize)
+})
+
 watch(drawerWidth, (newWidth) => {
-  localStorage.setItem(STORAGE_KEY, String(newWidth))
+  localStorage.setItem(props.storageKey, String(newWidth))
 })
 
 const drawerStyle = computed(() => ({
@@ -69,13 +77,7 @@ function startResize(e: MouseEvent) {
 
 function onResize(e: MouseEvent) {
   if (!isResizing.value) return
-
-  const deltaX = e.clientX - startX.value
-  const newWidth = startWidth.value + deltaX
-
-  // 严格限制宽度范围
-  const clampedWidth = Math.max(props.minWidth, Math.min(maxWidth.value, newWidth))
-  drawerWidth.value = clampedWidth
+  drawerWidth.value = clampWidth(startWidth.value + e.clientX - startX.value)
 }
 
 function stopResize() {
@@ -93,11 +95,7 @@ function closeDrawer() {
 watch(
   () => props.modelValue,
   (newValue) => {
-    if (newValue) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
+    document.body.style.overflow = newValue ? 'hidden' : ''
   },
 )
 </script>
