@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
 
 /**
  * 应用路由配置
@@ -52,42 +51,10 @@ const router = createRouter({
   ],
 })
 
-// 路由守卫：更新页面标题 + 认证检查
+// 路由守卫：更新页面标题
 router.beforeEach((to) => {
   const title = to.meta.title as string
   document.title = title ? `${title} - My App` : 'My App'
-
-  const authStore = useAuthStore()
-
-  // 需要认证的页面
-  const requiresAuth = ['home', 'users'].includes(to.name as string)
-
-  // 从 localStorage 检查 token（作为持久化数据恢复前的后备方案）
-  const hasTokenInStorage = () => {
-    const authData = localStorage.getItem('auth')
-    if (authData) {
-      try {
-        const parsed = JSON.parse(authData)
-        return !!parsed.token
-      } catch {
-        return false
-      }
-    }
-    return false
-  }
-
-  // 已登录用户访问登录/注册页，跳转到首页
-  if (
-    (authStore.isAuthenticated || hasTokenInStorage()) &&
-    ['login', 'register'].includes(to.name as string)
-  ) {
-    return '/'
-  }
-
-  // 未登录用户访问需要认证的页面，跳转到登录页
-  if (!authStore.isAuthenticated && !hasTokenInStorage() && requiresAuth) {
-    return '/login'
-  }
 })
 
 export default router
