@@ -5,20 +5,20 @@ interface Props {
   modelValue: boolean
   defaultWidth?: number
   minWidth?: number
-  maxWidth?: number
+  maxWidth?: number // 屏幕宽度的比例，0.85 表示 85%
   storageKey?: string
-}
-
-interface Emits {
-  (e: 'update:modelValue', value: boolean): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
   defaultWidth: 320,
   minWidth: 200,
-  maxWidth: 600,
+  maxWidth: 0.85,
   storageKey: 'resizable-drawer-width',
 })
+
+interface Emits {
+  (e: 'update:modelValue', value: boolean): void
+}
 
 const emit = defineEmits<Emits>()
 
@@ -29,11 +29,13 @@ const isResizing = ref(false)
 const startX = ref(0)
 const startWidth = ref(0)
 
+const maxWidth = computed(() => window.innerWidth * props.maxWidth)
+
 onMounted(() => {
   const savedWidth = localStorage.getItem(STORAGE_KEY)
   if (savedWidth) {
     const width = Number(savedWidth)
-    if (width >= props.minWidth && width <= props.maxWidth) {
+    if (width >= props.minWidth && width <= maxWidth.value) {
       drawerWidth.value = width
     }
   }
@@ -67,7 +69,7 @@ function onResize(e: MouseEvent) {
   const deltaX = e.clientX - startX.value
   const newWidth = startWidth.value + deltaX
 
-  if (newWidth >= props.minWidth && newWidth <= props.maxWidth) {
+  if (newWidth >= props.minWidth && newWidth <= maxWidth.value) {
     drawerWidth.value = newWidth
   }
 }
@@ -120,10 +122,37 @@ watch(
 
         <!-- 拖动手柄 -->
         <div
-          class="w-4 bg-gray-200 hover:bg-primary-400 cursor-col-resize transition-colors flex items-center justify-center group"
+          class="w-6 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-primary-50 hover:to-primary-100 cursor-col-resize transition-all duration-200 flex items-center justify-center group border-l border-gray-200 hover:border-primary-200 relative"
           @mousedown="startResize"
         >
-          <div class="w-1.5 h-8 bg-gray-400 rounded-full group-hover:bg-white transition-colors" />
+          <div class="flex flex-col gap-1.5">
+            <div
+              class="w-1 h-1.5 bg-gray-400 rounded-full group-hover:bg-primary-500 transition-colors"
+            />
+            <div
+              class="w-1 h-1.5 bg-gray-400 rounded-full group-hover:bg-primary-500 transition-colors"
+            />
+            <div
+              class="w-1 h-1.5 bg-gray-400 rounded-full group-hover:bg-primary-500 transition-colors"
+            />
+          </div>
+          <div
+            class="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <svg
+              class="w-3 h-3 text-gray-400 group-hover:text-primary-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </div>
         </div>
       </div>
     </Transition>
