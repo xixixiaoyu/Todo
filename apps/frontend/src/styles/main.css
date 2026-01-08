@@ -1,8 +1,19 @@
+@font-face {
+  font-family: 'LXGW WenKai';
+  src: url('/LXGWWenKai-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --font-sans: 'LXGW WenKai', system-ui, -apple-system, sans-serif;
+  }
   :root {
     --background: 40 25% 97%;
     --foreground: 240 10% 3.9%;
