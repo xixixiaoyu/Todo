@@ -113,6 +113,11 @@ function handleEditKeydown(e: KeyboardEvent) {
         </h1>
         <div class="flex items-center gap-2">
           <button
+            class="flex h-10 w-10 items-center justify-center rounded-xl border border-[#e8e4dd] bg-white text-[#6b5c4d] transition-all hover:bg-[#f5f3ed]"
+          >
+            <Clover :size="18" />
+          </button>
+          <button
             class="flex h-10 w-10 items-center justify-center rounded-xl border border-[#e8e4dd] transition-all"
             :class="
               showSearch ? 'bg-[#3a3a3a] text-white' : 'bg-white text-[#8b8680] hover:bg-[#f5f3ed]'
@@ -121,11 +126,6 @@ function handleEditKeydown(e: KeyboardEvent) {
             @click="toggleSearch"
           >
             <Search :size="18" />
-          </button>
-          <button
-            class="flex h-10 w-10 items-center justify-center rounded-xl border border-[#e8e4dd] bg-white text-[#6b5c4d] transition-all hover:bg-[#f5f3ed]"
-          >
-            <Clover :size="18" />
           </button>
         </div>
       </header>
