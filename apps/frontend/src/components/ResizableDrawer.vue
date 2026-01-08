@@ -73,9 +73,9 @@ function onResize(e: MouseEvent) {
   const deltaX = e.clientX - startX.value
   const newWidth = startWidth.value + deltaX
 
-  if (newWidth >= props.minWidth && newWidth <= maxWidth.value) {
-    drawerWidth.value = newWidth
-  }
+  // 严格限制宽度范围
+  const clampedWidth = Math.max(props.minWidth, Math.min(maxWidth.value, newWidth))
+  drawerWidth.value = clampedWidth
 }
 
 function stopResize() {
