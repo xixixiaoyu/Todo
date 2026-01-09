@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { Search, Clover, Plus, X, Check, Trash2, Pencil } from 'lucide-vue-next'
 import { useTodoStore } from '@/stores/todo'
 import Fireworks from '@/components/Fireworks.vue'
-import ResizableDrawer from '@/components/ResizableDrawer.vue'
+import AiAssistantDrawer from '@/components/AiAssistantDrawer.vue'
 
 const { t } = useI18n()
 const todoStore = useTodoStore()
@@ -312,27 +312,7 @@ function handleEditKeydown(e: KeyboardEvent) {
     <!-- Fireworks -->
     <Fireworks ref="fireworksRef" :active="showFireworks" @complete="onFireworksComplete" />
 
-    <!-- 可拖动宽度的抽屉 -->
-    <ResizableDrawer v-model="isDrawerOpen" :default-width="320" :min-width="200" :max-width="600">
-      <div class="p-6">
-        <h2 class="text-2xl font-bold mb-6 text-[#c4694a]">菜单</h2>
-        <nav class="space-y-2">
-          <a
-            href="/"
-            class="block px-4 py-3 rounded-lg hover:bg-[#f5f3ed] transition-colors text-[#3a3a3a]"
-            @click="isDrawerOpen = false"
-          >
-            首页
-          </a>
-          <a
-            href="/todos"
-            class="block px-4 py-3 rounded-lg hover:bg-[#f5f3ed] transition-colors text-[#3a3a3a]"
-            @click="isDrawerOpen = false"
-          >
-            待办事项
-          </a>
-        </nav>
-      </div>
-    </ResizableDrawer>
+    <!-- AI 助手抽屉 -->
+    <AiAssistantDrawer v-model="isDrawerOpen" />
   </div>
 </template>
