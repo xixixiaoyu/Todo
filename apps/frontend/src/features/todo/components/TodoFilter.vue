@@ -1,0 +1,41 @@
+<script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+import type { FilterType } from '../stores/todo'
+
+const { t } = useI18n()
+
+defineProps<{
+  filter: FilterType
+}>()
+
+const emit = defineEmits<{
+  'update:filter': [value: FilterType]
+}>()
+</script>
+
+<template>
+  <div class="mb-6 flex justify-center gap-2">
+    <button
+      class="rounded-full px-5 py-2 text-sm font-medium transition-all"
+      :class="
+        filter === 'pending'
+          ? 'bg-[#c9b896] text-white'
+          : 'border border-[#e8e4dd] bg-white text-[#8b8680] hover:bg-[#f5f3ed]'
+      "
+      @click="emit('update:filter', 'pending')"
+    >
+      {{ t('todo.pending') }}
+    </button>
+    <button
+      class="rounded-full px-5 py-2 text-sm font-medium transition-all"
+      :class="
+        filter === 'completed'
+          ? 'bg-[#c9b896] text-white'
+          : 'border border-[#e8e4dd] bg-white text-[#8b8680] hover:bg-[#f5f3ed]'
+      "
+      @click="emit('update:filter', 'completed')"
+    >
+      {{ t('todo.completed') }}
+    </button>
+  </div>
+</template>

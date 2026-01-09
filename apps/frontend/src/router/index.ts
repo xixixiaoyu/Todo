@@ -9,7 +9,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'todo',
-      component: () => import('@/views/TodoView.vue'),
+      component: () => import('@/features/todo/TodoView.vue'),
       meta: { title: '待办事项' },
     },
     {
