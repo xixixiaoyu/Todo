@@ -8,6 +8,9 @@ import globals from 'globals'
  * 继承根目录配置，添加 Vue 相关规则
  */
 export default [
+  {
+    ignores: ['dist', 'dist-electron', 'node_modules'],
+  },
   ...baseConfig,
   ...vue.configs['flat/recommended'],
   {
@@ -78,8 +81,5 @@ export default [
       'vue/first-attribute-linebreak': 'off',
       'vue/html-self-closing': 'off',
     },
-  },
-  {
-    ignores: ['dist', 'dist-electron', 'node_modules'],
   },
 ]
