@@ -1,4 +1,4 @@
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import {
   getAIStreamResponse,
   abortCurrentRequest,
@@ -6,19 +6,27 @@ import {
   type ChatMessage,
   type AIRequestOptions,
 } from '@/services/aiService'
+import { useChatHistory } from './useChatHistory'
 
 export type { ChatMessage }
 
-const STORAGE_KEY = 'ai-chat-history'
 const MAX_RETRIES = 3
-const SAVE_THROTTLE_MS = 500
 
 /**
  * 聊天功能 composable
  */
 export function useChat(options: AIRequestOptions = {}) {
-  // 聊天历史
-  const chatHistory = ref<ChatMessage[]>([])
+  const { currentSession, getOrCreateCurrentSession, updateSessionMessages, createSession } =
+    useChatHistory()
+
+  // 聊天历史（从当前会话获取）
+  const chatHistory = computed({
+    get: () => currentSession.value?.messages ?? [],
+    set: (messages: ChatMessage[]) => {
+      const session = getOrCreateCurrentSession()
+      updateSessionMessages(session.id, messages)
+    },
+  })
 
   // 流式响应状态
   const currentAIResponse = ref('')
@@ -31,52 +39,6 @@ export function useChat(options: AIRequestOptions = {}) {
 
   // 重试计数
   const retryCount = ref(0)
-
-  // 节流保存定时器
-  let saveTimer: ReturnType<typeof setTimeout> | null = null
-
-  /**
-   * 从 localStorage 加载聊天历史
-   */
-  function loadHistory(): void {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        chatHistory.value = parsed.map((msg: ChatMessage) => ({
-          ...msg,
-          createdAt: msg.createdAt ? new Date(msg.createdAt) : undefined,
-        }))
-      }
-    } catch {
-      console.warn('加载聊天历史失败')
-    }
-  }
-
-  /**
-   * 保存聊天历史到 localStorage（节流）
-   */
-  function saveHistory(): void {
-    if (saveTimer) {
-      clearTimeout(saveTimer)
-    }
-    saveTimer = setTimeout(() => {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(chatHistory.value))
-      } catch {
-        console.warn('保存聊天历史失败')
-      }
-    }, SAVE_THROTTLE_MS)
-  }
-
-  // 监听历史变化自动保存
-  watch(
-    chatHistory,
-    () => {
-      saveHistory()
-    },
-    { deep: true },
-  )
 
   /**
    * 发送消息
@@ -151,7 +113,7 @@ export function useChat(options: AIRequestOptions = {}) {
       // 自动重试
       if (retryCount.value < MAX_RETRIES) {
         retryCount.value++
-        console.log(`重试第 ${retryCount.value} 次...`)
+        console.warn(`重试第 ${retryCount.value} 次...`)
         // 移除失败的用户消息，重新发送
         chatHistory.value.pop()
         await sendMessage(content)
@@ -171,14 +133,13 @@ export function useChat(options: AIRequestOptions = {}) {
   }
 
   /**
-   * 清空聊天历史
+   * 清空当前会话（创建新对话）
    */
   function clearHistory(): void {
-    chatHistory.value = []
+    createSession()
     currentAIResponse.value = ''
     currentThinkingContent.value = ''
     error.value = null
-    localStorage.removeItem(STORAGE_KEY)
   }
 
   /**
@@ -234,9 +195,6 @@ export function useChat(options: AIRequestOptions = {}) {
     return allMessages
   })
 
-  // 初始化加载历史
-  loadHistory()
-
   return {
     // 状态
     messages,
@@ -253,6 +211,5 @@ export function useChat(options: AIRequestOptions = {}) {
     clearHistory,
     deleteMessage,
     regenerateLastResponse,
-    loadHistory,
   }
 }

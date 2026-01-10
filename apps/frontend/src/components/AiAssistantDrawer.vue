@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { ref, nextTick, computed } from 'vue'
 import {
-  Search,
   Clover,
   Plus,
   X,
-  ChevronLeft,
   Maximize2,
   Minimize2,
   Send,
@@ -15,17 +13,24 @@ import {
   Square,
   RefreshCw,
   Trash2,
+  History,
+  Check,
 } from 'lucide-vue-next'
 import ResizableDrawer from '@/components/ResizableDrawer.vue'
 import ChatMessageList from '@/components/chat/ChatMessageList.vue'
 import AISettingsDialog from '@/components/chat/AISettingsDialog.vue'
+import ChatHistoryPanel from '@/components/chat/ChatHistoryPanel.vue'
 import { useChat } from '@/composables/useChat'
 import { useAIConfig } from '@/composables/useAIConfig'
+import { useChatHistory } from '@/composables/useChatHistory'
 
 const modelValue = defineModel<boolean>({ required: true })
 
-// AI 配置
-const { config } = useAIConfig()
+// AI 配置与预设
+const { config, presets, activePreset, switchPreset } = useAIConfig()
+
+// 会话历史管理
+const { switchSession, hasSession } = useChatHistory()
 
 // 使用聊天 composable（不传入固定 systemPrompt，使用配置中的值）
 const {
@@ -45,6 +50,12 @@ const messageListRef = ref<InstanceType<typeof ChatMessageList>>()
 
 // 设置弹窗状态
 const showSettings = ref(false)
+
+// 历史记录面板状态
+const showHistory = ref(false)
+
+// 预设下拉框状态
+const showPresetDropdown = ref(false)
 
 const MIN_HEIGHT = 36
 const MAX_HEIGHT = 192
@@ -96,6 +107,34 @@ const handleNewChat = () => {
   clearHistory()
   chatInput.value = ''
 }
+
+// 打开历史记录面板
+const openHistory = () => {
+  if (!isGenerating.value) {
+    showHistory.value = true
+  }
+}
+
+// 切换会话
+const handleSelectSession = (sessionId: string) => {
+  switchSession(sessionId)
+  showHistory.value = false
+}
+
+// 选择预设
+const handleSelectPreset = (presetId: string) => {
+  switchPreset(presetId)
+  showPresetDropdown.value = false
+}
+
+// 打开设置并关闭预设下拉框
+const openSettings = () => {
+  showSettings.value = true
+  showPresetDropdown.value = false
+}
+
+// 当前显示的预设名称
+const currentPresetName = computed(() => activePreset.value?.name ?? '自定义')
 </script>
 
 <template>
@@ -106,20 +145,64 @@ const handleNewChat = () => {
     :max-width="1000"
     :is-fullscreen="isMaximized"
   >
-    <div class="flex h-full flex-col bg-[#faf8f4]">
+    <div class="relative flex h-full flex-col bg-[#faf8f4]">
       <!-- 顶部标题栏 -->
       <header class="flex h-12 shrink-0 items-center justify-between bg-[#c9b896] px-4">
         <span class="text-sm font-medium text-white">AI 助手</span>
         <div class="flex items-center gap-2">
-          <!-- 当前模型显示 -->
-          <button
-            class="flex items-center gap-1 rounded-md bg-[#b8a785] px-3 py-1.5 text-xs text-white transition-colors hover:bg-[#a99676]"
-            title="点击打开设置"
-            @click="showSettings = true"
-          >
-            <span>{{ config.model }}</span>
-            <ChevronDown :size="14" />
-          </button>
+          <!-- 预设下拉框 -->
+          <div class="relative">
+            <button
+              class="flex items-center gap-1 rounded-md bg-[#b8a785] px-3 py-1.5 text-xs text-white transition-colors hover:bg-[#a99676]"
+              @click="showPresetDropdown = !showPresetDropdown"
+            >
+              <span>{{ currentPresetName }}</span>
+              <ChevronDown :size="14" :class="{ 'rotate-180': showPresetDropdown }" />
+            </button>
+            <!-- 下拉菜单 -->
+            <Transition
+              enter-active-class="transition-all duration-150 ease-out"
+              leave-active-class="transition-all duration-100 ease-in"
+              enter-from-class="opacity-0 -translate-y-1"
+              enter-to-class="opacity-100 translate-y-0"
+              leave-from-class="opacity-100 translate-y-0"
+              leave-to-class="opacity-0 -translate-y-1"
+            >
+              <div
+                v-if="showPresetDropdown"
+                class="absolute right-0 top-full z-50 mt-1 min-w-[160px] overflow-hidden rounded-lg border border-[#e8e4dd] bg-white py-1 shadow-lg"
+              >
+                <button
+                  v-for="preset in presets"
+                  :key="preset.id"
+                  class="flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition-colors hover:bg-[#f5f3ed]"
+                  :class="{
+                    'bg-[#f5f3ed] text-[#6b5c4d]': activePreset?.id === preset.id,
+                    'text-[#3a3a3a]': activePreset?.id !== preset.id,
+                  }"
+                  @click="handleSelectPreset(preset.id)"
+                >
+                  <Check v-if="activePreset?.id === preset.id" :size="12" class="text-[#c9b896]" />
+                  <span :class="{ 'ml-4': activePreset?.id !== preset.id }">{{ preset.name }}</span>
+                </button>
+                <!-- 分割线 + 设置入口 -->
+                <div class="my-1 border-t border-[#e8e4dd]" />
+                <button
+                  class="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-[#8b8680] transition-colors hover:bg-[#f5f3ed] hover:text-[#6b5c4d]"
+                  @click="openSettings"
+                >
+                  <Settings2 :size="12" />
+                  <span>管理预设...</span>
+                </button>
+              </div>
+            </Transition>
+            <!-- 点击外部关闭 -->
+            <div
+              v-if="showPresetDropdown"
+              class="fixed inset-0 z-40"
+              @click="showPresetDropdown = false"
+            />
+          </div>
           <!-- 最大化/最小化 -->
           <button
             class="flex h-7 w-7 items-center justify-center rounded-md text-white/80 transition-colors hover:bg-white/10 hover:text-white"
@@ -198,14 +281,12 @@ const handleNewChat = () => {
           </button>
           <button
             class="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e4dd] bg-white text-[#8b8680] transition-colors hover:bg-[#f5f3ed]"
+            title="历史记录"
+            :class="{ 'cursor-not-allowed opacity-50': isGenerating }"
+            :disabled="isGenerating"
+            @click="openHistory"
           >
-            <Search :size="16" />
-          </button>
-          <button
-            class="flex items-center gap-1 rounded-full border border-[#e8e4dd] bg-white px-3 py-1.5 text-[#6b5c4d] transition-colors hover:bg-[#f5f3ed]"
-          >
-            <ChevronLeft :size="14" />
-            <span>上一个对话</span>
+            <History :size="16" />
           </button>
           <button
             class="flex items-center gap-1 rounded-full border border-[#e8e4dd] bg-white px-3 py-1.5 text-[#6b5c4d] transition-colors hover:bg-[#f5f3ed]"
@@ -248,6 +329,46 @@ const handleNewChat = () => {
           </button>
         </div>
       </div>
+
+      <!-- 历史记录面板遮罩 -->
+      <Transition
+        enter-active-class="transition-opacity duration-200"
+        leave-active-class="transition-opacity duration-200"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="showHistory"
+          class="absolute inset-0 z-10 bg-black/20"
+          @click="showHistory = false"
+        />
+      </Transition>
+
+      <!-- 历史记录面板 -->
+      <Transition
+        enter-active-class="transition-transform duration-200 ease-out"
+        leave-active-class="transition-transform duration-200 ease-in"
+        enter-from-class="-translate-x-full"
+        enter-to-class="translate-x-0"
+        leave-from-class="translate-x-0"
+        leave-to-class="-translate-x-full"
+      >
+        <div
+          v-if="showHistory"
+          class="absolute inset-y-0 left-0 z-20 flex w-[280px] flex-col border-r border-[#e8e4dd] bg-[#faf8f4] shadow-lg"
+        >
+          <!-- 关闭按钮 -->
+          <button
+            class="absolute right-3 top-3 z-20 flex h-7 w-7 items-center justify-center rounded-md text-[#8b8680] transition-colors hover:bg-[#e8e4dd] hover:text-[#6b5c4d]"
+            @click="showHistory = false"
+          >
+            <X :size="16" />
+          </button>
+          <ChatHistoryPanel @select="handleSelectSession" @close="showHistory = false" />
+        </div>
+      </Transition>
     </div>
   </ResizableDrawer>
 
