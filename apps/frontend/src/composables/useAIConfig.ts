@@ -160,10 +160,39 @@ function saveActivePresetId(id: string | null): void {
   }
 }
 
+/**
+ * 查找匹配的预设 ID
+ */
+function findMatchingPreset(cfg: AIConfig, presetList: AIPreset[]): string | null {
+  const match = presetList.find(
+    (p) =>
+      p.baseUrl === cfg.baseUrl &&
+      p.apiKey === cfg.apiKey &&
+      p.model === cfg.model &&
+      p.systemPrompt === cfg.systemPrompt &&
+      Math.abs(p.temperature - cfg.temperature) < 0.001 &&
+      p.thinkingMode === cfg.thinkingMode &&
+      p.todoAssistant === cfg.todoAssistant,
+  )
+  return match ? match.id : null
+}
+
 // 监听配置变化自动保存
 watch(config, (newConfig) => saveConfig(newConfig), { deep: true })
 watch(presets, (newPresets) => savePresets(newPresets), { deep: true })
 watch(activePresetId, (id) => saveActivePresetId(id))
+
+// 监听配置或预设变化，自动同步激活状态
+watch(
+  [config, presets],
+  ([newConfig, newPresets]) => {
+    const matchingId = findMatchingPreset(newConfig as AIConfig, newPresets as AIPreset[])
+    if (activePresetId.value !== matchingId) {
+      activePresetId.value = matchingId
+    }
+  },
+  { deep: true },
+)
 
 /**
  * 导出重置函数用于测试
@@ -190,8 +219,6 @@ export function useAIConfig() {
    */
   function updateConfig(partial: Partial<AIConfig>): void {
     config.value = { ...config.value, ...partial }
-    // 手动更新配置后，清除当前激活的预设 ID，表示当前是自定义配置
-    activePresetId.value = null
   }
 
   /**
@@ -199,7 +226,6 @@ export function useAIConfig() {
    */
   function resetConfig(): void {
     config.value = { ...DEFAULT_CONFIG }
-    activePresetId.value = null
   }
 
   /**

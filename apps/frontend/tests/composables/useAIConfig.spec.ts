@@ -329,6 +329,102 @@ describe('useAIConfig', () => {
       expect(activePresetId.value).toBe(preset.id)
     })
 
+    it('should automatically switch to a matching preset when config is updated', async () => {
+      const { updateConfig, addPreset, activePresetId } = useAIConfig()
+
+      const preset = addPreset({
+        name: 'Matching Preset',
+        baseUrl: 'https://match-api.com',
+        apiKey: 'match-key',
+        model: 'match-model',
+        systemPrompt: 'Match prompt',
+        temperature: 0.5,
+        thinkingMode: 'enabled',
+        todoAssistant: false,
+      })
+
+      // Update config to match the preset
+      updateConfig({
+        baseUrl: 'https://match-api.com',
+        apiKey: 'match-key',
+        model: 'match-model',
+        systemPrompt: 'Match prompt',
+        temperature: 0.5,
+        thinkingMode: 'enabled',
+        todoAssistant: false,
+      })
+
+      await nextTick() // Wait for watcher
+
+      expect(activePresetId.value).toBe(preset.id)
+    })
+
+    it('should automatically switch to null when config no longer matches any preset', async () => {
+      const { updateConfig, addPreset, activePresetId, switchPreset } = useAIConfig()
+
+      const preset = addPreset({
+        name: 'Matching Preset',
+        baseUrl: 'https://match-api.com',
+        apiKey: 'match-key',
+        model: 'match-model',
+        systemPrompt: 'Match prompt',
+        temperature: 0.5,
+        thinkingMode: 'enabled',
+        todoAssistant: false,
+      })
+
+      switchPreset(preset.id)
+      await nextTick()
+      expect(activePresetId.value).toBe(preset.id)
+
+      // Update config to something else
+      updateConfig({ model: 'different-model' })
+      await nextTick()
+
+      expect(activePresetId.value).toBeNull()
+    })
+
+    it('should automatically switch when a preset is updated to match current config', async () => {
+      const { updateConfig, addPreset, updatePreset, activePresetId } = useAIConfig()
+
+      // Current config is something custom
+      updateConfig({
+        baseUrl: 'https://custom-api.com',
+        apiKey: 'custom-key',
+        model: 'custom-model',
+      })
+      await nextTick()
+      expect(activePresetId.value).toBeNull()
+
+      // Create a preset that doesn't match
+      const preset = addPreset({
+        name: 'Non-matching Preset',
+        baseUrl: 'https://other-api.com',
+        apiKey: 'other-key',
+        model: 'other-model',
+        systemPrompt: 'Other prompt',
+        temperature: 0.3,
+        thinkingMode: 'enabled',
+        todoAssistant: false,
+      })
+
+      // Update the preset to match the current custom config
+      updatePreset(preset.id, {
+        baseUrl: 'https://custom-api.com',
+        apiKey: 'custom-key',
+        model: 'custom-model',
+        systemPrompt: 'Other prompt', // Keep this or update it too
+        temperature: 0.3,
+      })
+
+      // Update config systemPrompt to match preset's systemPrompt for full match
+      updateConfig({ systemPrompt: 'Other prompt', temperature: 0.3 })
+
+      await nextTick()
+
+      expect(activePresetId.value).toBe(preset.id)
+    })
+
     it('should get preset defaults from current config', () => {
       const { updateConfig, getPresetDefaults } = useAIConfig()
 
