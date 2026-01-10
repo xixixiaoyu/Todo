@@ -27,10 +27,10 @@ import { useChatHistory } from '@/composables/useChatHistory'
 const modelValue = defineModel<boolean>({ required: true })
 
 // AI 配置与预设
-const { config, presets, activePreset, switchPreset } = useAIConfig()
+const { presets, activePreset, switchPreset } = useAIConfig()
 
 // 会话历史管理
-const { switchSession, hasSession } = useChatHistory()
+const { switchSession } = useChatHistory()
 
 // 使用聊天 composable（不传入固定 systemPrompt，使用配置中的值）
 const {

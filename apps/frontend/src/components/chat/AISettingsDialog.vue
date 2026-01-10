@@ -8,7 +8,6 @@ const modelValue = defineModel<boolean>({ required: true })
 const {
   config,
   updateConfig,
-  resetConfig,
   DEFAULT_CONFIG,
   presets,
   addPreset,

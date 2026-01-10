@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch, nextTick } from 'vue'
-import { User, Bot, ChevronDown, ChevronUp, Copy, Check } from 'lucide-vue-next'
+import { User, Bot, ChevronUp, Copy, Check } from 'lucide-vue-next'
 import type { ChatMessage } from '@/composables/useChat'
 
 const props = defineProps<{
