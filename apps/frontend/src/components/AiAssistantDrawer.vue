@@ -89,6 +89,7 @@ const messageListRef = ref<InstanceType<typeof ChatMessageList>>()
 
 // 设置弹窗状态
 const showSettings = ref(false)
+const settingsTab = ref<'settings' | 'presets'>('settings')
 
 // 历史记录面板状态
 const showHistory = ref(false)
@@ -164,7 +165,8 @@ const handleSelectPreset = (presetId: string) => {
 }
 
 // 打开设置并关闭预设下拉框
-const openSettings = () => {
+const openSettings = (tab: 'settings' | 'presets' = 'settings') => {
+  settingsTab.value = tab
   showSettings.value = true
   showPresetDropdown.value = false
 }
@@ -233,7 +235,7 @@ defineOptions({
                 <div class="my-1 border-t border-[#e8e4dd] dark:border-[#3a3a3a]" />
                 <button
                   class="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-[#8b8680] transition-colors hover:bg-[#f5f3ed] hover:text-[#6b5c4d] dark:text-[#808080] dark:hover:bg-[#3a3a3a] dark:hover:text-[#c9b896]"
-                  @click="openSettings"
+                  @click="openSettings('presets')"
                 >
                   <Settings2 :size="12" />
                   <span>{{ t('ai.managePresets') }}</span>
@@ -338,7 +340,7 @@ defineOptions({
           <button
             class="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e4dd] bg-white text-[#8b8680] transition-colors hover:bg-[#f5f3ed] dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#6b6b6b] dark:hover:bg-[#3a3a3a]"
             :title="t('ai.settings')"
-            @click="showSettings = true"
+            @click="openSettings('settings')"
           >
             <Settings2 :size="16" />
           </button>
@@ -434,7 +436,7 @@ defineOptions({
   </ResizableDrawer>
 
   <!-- 设置弹窗 -->
-  <AISettingsDialog v-model="showSettings" />
+  <AISettingsDialog v-model="showSettings" :initial-tab="settingsTab" />
 </template>
 
 <style scoped>

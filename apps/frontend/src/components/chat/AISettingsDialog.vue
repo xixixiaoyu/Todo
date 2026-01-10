@@ -4,6 +4,10 @@ import { useI18n } from 'vue-i18n'
 import { X, RotateCcw, Eye, EyeOff, Check, Plus, Trash2, Edit3 } from 'lucide-vue-next'
 import { useAIConfig, type AIConfig, type AIPreset } from '@/composables/useAIConfig'
 
+const props = defineProps<{
+  initialTab?: 'settings' | 'presets'
+}>()
+
 const modelValue = defineModel<boolean>({ required: true })
 
 const { t } = useI18n()
@@ -20,7 +24,7 @@ const {
 } = useAIConfig()
 
 // 当前 Tab
-const activeTab = ref<'settings' | 'presets'>('settings')
+const activeTab = ref<'settings' | 'presets'>(props.initialTab || 'settings')
 
 // 本地表单状态
 const formData = ref<AIConfig>({ ...config.value })
@@ -43,6 +47,21 @@ const presetForm = ref<Omit<AIPreset, 'id'>>({
   todoAssistant: false,
 })
 
+// 监听弹窗打开，或者初始 Tab 变化时，设置当前 Tab 以及重置内部状态
+watch(
+  [() => modelValue.value, () => props.initialTab],
+  ([isOpen, tab]) => {
+    if (isOpen) {
+      activeTab.value = tab || 'settings'
+      formData.value = { ...config.value }
+      editingPreset.value = null
+      isCreatingPreset.value = false
+      showPresetApiKey.value = false
+    }
+  },
+  { immediate: true },
+)
+
 // 同步外部配置到表单
 watch(
   () => config.value,
@@ -51,17 +70,6 @@ watch(
   },
   { immediate: true },
 )
-
-// 打开时重新同步
-watch(modelValue, (open) => {
-  if (open) {
-    formData.value = { ...config.value }
-    activeTab.value = 'settings'
-    editingPreset.value = null
-    isCreatingPreset.value = false
-    showPresetApiKey.value = false
-  }
-})
 
 /**
  * 保存配置

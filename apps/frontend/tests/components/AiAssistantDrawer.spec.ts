@@ -33,7 +33,11 @@ vi.mock('@/components/chat/ChatMessageList.vue', () => ({
   default: { template: '<div>ChatMessageList</div>' },
 }))
 vi.mock('@/components/chat/AISettingsDialog.vue', () => ({
-  default: { template: '<div>AISettingsDialog</div>' },
+  default: {
+    name: 'AISettingsDialog',
+    template: '<div>AISettingsDialog</div>',
+    props: ['modelValue', 'initialTab'],
+  },
 }))
 vi.mock('@/components/chat/ChatHistoryPanel.vue', () => ({
   default: { template: '<div>ChatHistoryPanel</div>' },
@@ -205,5 +209,36 @@ describe('AiAssistantDrawer Navigation and Button States', () => {
     // In our mock, toggleThinkingMode is local to the component but it calls saveAIThinkingMode.
     const { saveAIThinkingMode } = await import('@/composables/useAIConfig')
     expect(saveAIThinkingMode).toHaveBeenCalled()
+  })
+
+  it('should pass "presets" as initialTab when clicking "Manage Presets"', async () => {
+    const wrapper = mount(AiAssistantDrawer, {
+      props: { modelValue: true },
+    })
+
+    // Open preset dropdown
+    const presetBtn = wrapper.find('button.flex.items-center.gap-1.rounded-md')
+    await presetBtn.trigger('click')
+
+    // Click Manage Presets
+    const managePresetsBtn = wrapper
+      .findAll('button')
+      .find((b) => b.text().includes('ai.managePresets'))
+    await managePresetsBtn?.trigger('click')
+
+    const settingsDialog = wrapper.findComponent({ name: 'AISettingsDialog' })
+    expect(settingsDialog.props('initialTab')).toBe('presets')
+  })
+
+  it('should pass "settings" as initialTab when clicking settings button', async () => {
+    const wrapper = mount(AiAssistantDrawer, {
+      props: { modelValue: true },
+    })
+
+    const settingsBtn = wrapper.find('button[title="ai.settings"]')
+    await settingsBtn.trigger('click')
+
+    const settingsDialog = wrapper.findComponent({ name: 'AISettingsDialog' })
+    expect(settingsDialog.props('initialTab')).toBe('settings')
   })
 })
