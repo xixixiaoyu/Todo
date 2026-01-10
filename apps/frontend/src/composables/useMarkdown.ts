@@ -27,6 +27,8 @@ interface MermaidQueueItem {
 
 interface MarkdownEnv {
   mermaidQueue?: MermaidQueueItem[]
+  isStreaming?: boolean
+  closedMermaidBlocks?: Set<string>
 }
 
 /**
@@ -226,16 +228,23 @@ md.renderer.rules.fence = (tokens, idx, options, env: MarkdownEnv, self) => {
   // Mermaid 特殊处理
   if (lang === 'mermaid') {
     const code = content.trim()
-    const hash = stableHash(code)
-    const placeholderId = `mermaid-${hash}`
 
-    env.mermaidQueue = env.mermaidQueue || []
-    env.mermaidQueue.push({ id: placeholderId, code })
+    // 只有在非流式输出，或者代码块已完全闭合时才渲染图表
+    const isClosed = env.closedMermaidBlocks?.has(code)
+    const shouldRenderDiagram = !env.isStreaming || isClosed
 
-    return `<div id="${placeholderId}" class="mermaid-container" aria-busy="true" data-processed="false"><div class="mermaid-diagram"><div class="mermaid-loading">正在渲染图表...</div></div></div>`
+    if (shouldRenderDiagram) {
+      const hash = stableHash(code)
+      const placeholderId = `mermaid-${hash}`
+
+      env.mermaidQueue = env.mermaidQueue || []
+      env.mermaidQueue.push({ id: placeholderId, code })
+
+      return `<div id="${placeholderId}" class="mermaid-container" aria-busy="true" data-processed="false"><div class="mermaid-diagram"><div class="mermaid-loading">正在渲染图表...</div></div></div>`
+    }
   }
 
-  // 普通代码块渲染
+  // 普通代码块渲染（或者未闭合的 Mermaid）
   const displayLanguage = getLanguageDisplayName(lang || 'text')
   const highlighted = defaultFence(tokens, idx, options, env, self)
 
@@ -540,11 +549,25 @@ export function useMarkdown() {
       // 1. 预处理公式
       const preprocessed = preprocessMathFormulas(markdown)
 
-      // 2. 渲染 Markdown
-      const env: MarkdownEnv = { mermaidQueue: [] }
+      // 2. 识别已闭合的 Mermaid 代码块
+      const closedMermaidBlocks = new Set<string>()
+      if (isStreaming) {
+        // 使用正则查找所有闭合的代码块内容
+        const matches = markdown.matchAll(/```mermaid\s*\n([\s\S]*?)\n```/g)
+        for (const match of matches) {
+          closedMermaidBlocks.add(match[1].trim())
+        }
+      }
+
+      // 3. 渲染 Markdown
+      const env: MarkdownEnv = {
+        mermaidQueue: [],
+        isStreaming,
+        closedMermaidBlocks,
+      }
       let html = md.render(preprocessed, env)
 
-      // 3. 恢复转义的美元符号
+      // 4. 恢复转义的美元符号
       html = html.replace(/__ESC_DOLLAR__/g, '$')
 
       // 4. XSS 清理：先清理基础 HTML，保护占位符
