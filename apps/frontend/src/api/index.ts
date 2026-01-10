@@ -85,20 +85,31 @@ httpClient.interceptors.request.use(
 
 // 防止并发刷新请求
 let isRefreshing = false
-let refreshSubscribers: Array<(token: string) => void> = []
+let refreshSubscribers: Array<{
+  resolve: (token: string) => void
+  reject: (error: Error) => void
+}> = []
 
 /**
  * 订阅刷新令牌完成事件
  */
-function subscribeTokenRefresh(callback: (token: string) => void) {
-  refreshSubscribers.push(callback)
+function subscribeTokenRefresh(resolve: (token: string) => void, reject: (error: Error) => void) {
+  refreshSubscribers.push({ resolve, reject })
 }
 
 /**
- * 刷新令牌完成后通知所有订阅者
+ * 刷新令牌成功后通知所有订阅者
  */
 function onRefreshed(token: string) {
-  refreshSubscribers.forEach((callback) => callback(token))
+  refreshSubscribers.forEach(({ resolve }) => resolve(token))
+  refreshSubscribers = []
+}
+
+/**
+ * 刷新令牌失败后通知所有订阅者
+ */
+function onRefreshFailed(error: Error) {
+  refreshSubscribers.forEach(({ reject }) => reject(error))
   refreshSubscribers = []
 }
 
@@ -112,13 +123,11 @@ httpClient.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       // 如果正在刷新，将请求加入队列
       if (isRefreshing) {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
           subscribeTokenRefresh((token) => {
             originalRequest.headers.Authorization = `Bearer ${token}`
             resolve(httpClient(originalRequest))
-          })
-        }).catch(() => {
-          return Promise.reject(error)
+          }, reject)
         })
       }
 
@@ -134,9 +143,17 @@ httpClient.interceptors.response.use(
           onRefreshed(newToken)
           originalRequest.headers.Authorization = `Bearer ${newToken}`
           return httpClient(originalRequest)
+        } else {
+          // 刷新失败，通知所有等待的请求
+          const refreshError = new Error('Token refresh failed')
+          onRefreshFailed(refreshError)
+          throw refreshError
         }
-      } catch {
-        // 刷新失败，清除认证状态
+      } catch (refreshError) {
+        // 刷新失败，通知所有等待的请求并清除认证状态
+        onRefreshFailed(
+          refreshError instanceof Error ? refreshError : new Error('Token refresh failed'),
+        )
         localStorage.removeItem('auth')
         // 触发登出事件，让组件决定是否跳转
         window.dispatchEvent(new CustomEvent('auth:logout'))
