@@ -98,6 +98,31 @@ watch(
 )
 
 /**
+ * 选择讨论主模型
+ */
+function selectPrimaryModel(presetId: string | null) {
+  if (formData.value.discussionPrimaryModelId === presetId) {
+    formData.value.discussionPrimaryModelId = null
+    return
+  }
+
+  formData.value.discussionPrimaryModelId = presetId
+}
+
+/**
+ * 切换讨论副模型
+ */
+function toggleSecondaryModel(presetId: string) {
+  if (formData.value.discussionModelIds.includes(presetId)) {
+    formData.value.discussionModelIds = formData.value.discussionModelIds.filter(
+      (id) => id !== presetId,
+    )
+  } else {
+    formData.value.discussionModelIds = [...formData.value.discussionModelIds, presetId]
+  }
+}
+
+/**
  * 保存配置
  */
 function handleSave() {
@@ -425,10 +450,7 @@ defineExpose({
                               ? 'border-primary bg-primary text-primary-foreground'
                               : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground'
                           "
-                          @click="
-                            formData.discussionPrimaryModelId =
-                              formData.discussionPrimaryModelId === preset.id ? null : preset.id
-                          "
+                          @click="selectPrimaryModel(preset.id)"
                         >
                           <Star v-if="formData.discussionPrimaryModelId === preset.id" :size="12" />
                           <span>{{ preset.name }}</span>
@@ -457,16 +479,7 @@ defineExpose({
                               ? 'border-primary bg-primary text-primary-foreground'
                               : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground'
                           "
-                          @click="
-                            formData.discussionModelIds.includes(preset.id)
-                              ? (formData.discussionModelIds = formData.discussionModelIds.filter(
-                                  (id) => id !== preset.id,
-                                ))
-                              : (formData.discussionModelIds = [
-                                  ...formData.discussionModelIds,
-                                  preset.id,
-                                ])
-                          "
+                          @click="toggleSecondaryModel(preset.id)"
                         >
                           <Check
                             v-if="formData.discussionModelIds.includes(preset.id)"

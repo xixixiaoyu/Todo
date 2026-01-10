@@ -2,7 +2,7 @@
  * AI 服务层 - 处理流式 API 请求
  */
 
-import { getAIConfig, type AIPreset } from '@/composables/useAIConfig'
+import { getAIConfig, getAIPresets, type AIPreset } from '@/composables/useAIConfig'
 import { useTodoStore } from '@/features/todo/stores/todo'
 import i18n from '@/i18n'
 
@@ -301,38 +301,34 @@ export async function getMultiModelDiscussionStream(
   const { signal } = abortController
 
   // 1. 获取所有参与讨论的模型配置
-  const presets = JSON.parse(localStorage.getItem('ai-presets') || '[]') as AIPreset[]
+  const presets = getAIPresets()
 
-  // 确定主模型配置
+  // 确定主模型配置 (强制使用选中的讨论主模型预设)
   const primaryPreset = discussionPrimaryModelId
     ? presets.find((p) => p.id === discussionPrimaryModelId)
     : null
-
-  const primaryConfig = {
-    baseUrl: primaryPreset?.baseUrl ?? aiConfig.baseUrl,
-    apiKey: primaryPreset?.apiKey ?? aiConfig.apiKey,
-    model: primaryPreset?.model ?? aiConfig.model,
-    temperature: primaryPreset?.temperature ?? aiConfig.temperature,
-  }
 
   // 获取选中的副模型
   const selectedPresets = presets.filter((p) => {
     return discussionModelIds.includes(p.id)
   })
 
-  // 如果没有选择副模型，回退到普通单模型请求
-  if (selectedPresets.length === 0) {
+  // 如果没有选择主模型或副模型，回退到普通单模型请求
+  if (!primaryPreset || selectedPresets.length === 0) {
     return getAIStreamResponse(messages, onFinalChunk, undefined, options)
   }
 
-  // 构建带系统提示和 Todo 列表的消息列表
-  const messagesWithSystem = injectSystemPrompts(messages, systemPrompt, aiConfig.todoAssistant)
+  const primaryConfig = {
+    baseUrl: primaryPreset.baseUrl,
+    apiKey: primaryPreset.apiKey,
+    model: primaryPreset.model,
+    temperature: primaryPreset.temperature,
+  }
+
   const userQuery = messages[messages.length - 1].content
 
   // 初始化步骤列表
   const steps: DiscussionStep[] = []
-
-  // 并行模式：所有副模型直接生成回答
   steps.push(
     ...selectedPresets.map((p) => ({
       modelId: p.id,
@@ -343,12 +339,20 @@ export async function getMultiModelDiscussionStream(
   )
   onStepUpdate([...steps])
 
-  const fetchModelResponse = async (preset: any, index: number) => {
+  const fetchModelResponse = async (preset: AIPreset, index: number) => {
     try {
+      // 副模型仅使用其自身定义的系统提示词（如果不定义则不注入），不回退到全局设置
+      const modelSystemPrompt = preset.systemPrompt || ''
+      const messagesForModel = injectSystemPrompts(
+        messages,
+        modelSystemPrompt,
+        aiConfig.todoAssistant,
+      )
+
       steps[index].content = await fetchNonStreamResponse(
         preset,
-        messagesWithSystem,
-        thinkingMode,
+        messagesForModel,
+        thinkingMode, // 思考模式统一使用全局配置
         signal,
       )
       steps[index].status = 'done'

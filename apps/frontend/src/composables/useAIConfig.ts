@@ -344,3 +344,10 @@ export function useAIConfig() {
 export function getAIConfig(): AIConfig {
   return config.value
 }
+
+/**
+ * 获取当前所有预设（供 aiService 使用）
+ */
+export function getAIPresets(): AIPreset[] {
+  return presets.value
+}

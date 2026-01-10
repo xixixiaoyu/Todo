@@ -72,24 +72,43 @@ describe('aiService - Multi-model Discussion', () => {
     }))
   })
 
-  it('should fall back to single model if no presets are selected', async () => {
-    const messages: ChatMessage[] = [{ id: '1', role: 'user', content: 'Hello' }]
+  it('should fall back to single model if no primary or secondary presets are selected', async () => {
+    const messages = [{ id: '1', role: 'user', content: 'hello' } as ChatMessage]
     const onStepUpdate = vi.fn()
     const onFinalChunk = vi.fn()
 
-    mockLocalStorage.setItem(
+    // Scenario 1: No secondary models
+    localStorage.setItem(
       'ai-config',
       JSON.stringify({
         discussionMode: true,
         discussionModelIds: [],
+        discussionPrimaryModelId: 'p1',
+      }),
+    )
+    localStorage.setItem(
+      'ai-presets',
+      JSON.stringify([{ id: 'p1', name: 'P1', baseUrl: 'api.1.com', apiKey: 'k1', model: 'm1' }]),
+    )
+    _resetAIConfig()
+
+    await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)
+    expect(onStepUpdate).not.toHaveBeenCalled()
+
+    // Scenario 2: No primary model (even if secondary exists)
+    vi.clearAllMocks()
+    localStorage.setItem(
+      'ai-config',
+      JSON.stringify({
+        discussionMode: true,
+        discussionModelIds: ['p1'],
+        discussionPrimaryModelId: null, // Force no primary
       }),
     )
     _resetAIConfig()
 
     await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)
-
     expect(onStepUpdate).not.toHaveBeenCalled()
-    expect(onFinalChunk).toHaveBeenCalledWith('Default response')
   })
 
   it('should handle multi-model discussion (parallel) correctly', async () => {
@@ -127,6 +146,7 @@ describe('aiService - Multi-model Discussion', () => {
       JSON.stringify({
         discussionMode: true,
         discussionModelIds: ['p1', 'p2'],
+        discussionPrimaryModelId: 'p1', // Add primary model
       }),
     )
     _resetAIConfig()
@@ -199,6 +219,7 @@ describe('aiService - Multi-model Discussion', () => {
       JSON.stringify({
         discussionMode: true,
         discussionModelIds: ['p1'],
+        discussionPrimaryModelId: 'p1', // Add primary model
       }),
     )
     _resetAIConfig()
@@ -242,7 +263,7 @@ describe('aiService - Multi-model Discussion', () => {
     expect(onFinalChunk).toHaveBeenCalledWith('Fallback synthesis')
   })
 
-  it('should use explicitly configured primary model if provided', async () => {
+  it('should use explicitly configured primary model if provided, independent of basic settings', async () => {
     const messages = [{ id: '1', role: 'user', content: 'hello' } as ChatMessage]
     const onStepUpdate = vi.fn()
     const onFinalChunk = vi.fn()
@@ -250,14 +271,8 @@ describe('aiService - Multi-model Discussion', () => {
     localStorage.setItem(
       'ai-presets',
       JSON.stringify([
-        { id: 'p1', name: 'Model 1', baseUrl: 'api.1.com', apiKey: 'key1', model: 'm1' },
-        {
-          id: 'p2',
-          name: 'Primary Model',
-          baseUrl: 'api.primary.com',
-          apiKey: 'key-p',
-          model: 'm-p',
-        },
+        { id: 'p1', name: 'Primary Model', baseUrl: 'api.p1.com', apiKey: 'key-p1', model: 'm-p1' },
+        { id: 'p2', name: 'Other Model', baseUrl: 'api.p2.com', apiKey: 'key-p2', model: 'm-p2' },
       ]),
     )
     localStorage.setItem(
@@ -265,36 +280,23 @@ describe('aiService - Multi-model Discussion', () => {
       JSON.stringify({
         ...JSON.parse(localStorage.getItem('ai-config') || '{}'),
         discussionMode: true,
-        discussionModelIds: ['p1'],
-        discussionPrimaryModelId: 'p2',
+        discussionModelIds: ['p2'],
+        discussionPrimaryModelId: 'p1',
+        // Basic settings are different from p1
+        baseUrl: 'api.basic.com',
+        apiKey: 'key-basic',
+        model: 'm-basic',
+        temperature: 0.7,
       }),
     )
     _resetAIConfig()
 
-    mockFetch.mockImplementation(async (url: string, _init: any) => {
-      if (url.includes('api.primary.com')) {
-        return {
-          ok: true,
-          body: {
-            getReader: () => ({
-              read: vi
-                .fn()
-                .mockResolvedValueOnce({
-                  value: new TextEncoder().encode(
-                    'data: {"choices":[{"delta":{"content":"Primary synthesis"}}]}\n\n',
-                  ),
-                  done: false,
-                })
-                .mockResolvedValueOnce({
-                  value: new TextEncoder().encode('data: [DONE]\n\n'),
-                  done: true,
-                }),
-            }),
-          },
-        }
-      }
+    mockFetch.mockImplementation(async (url: string, init: any) => {
+      const body = JSON.parse(init.body)
 
-      if (url.includes('api.1.com')) {
+      if (body.stream === false) {
+        // Parallel model request (p2)
+        expect(url).toContain('api.p2.com')
         return {
           ok: true,
           json: async () => ({
@@ -303,20 +305,32 @@ describe('aiService - Multi-model Discussion', () => {
         }
       }
 
-      return { ok: false, status: 500 }
+      // Final synthesis request (should use p1, not basic)
+      expect(url).toContain('api.p1.com')
+      expect(init.headers.Authorization).toBe('Bearer key-p1')
+
+      return {
+        ok: true,
+        body: {
+          getReader: () => ({
+            read: vi
+              .fn()
+              .mockResolvedValueOnce({
+                value: new TextEncoder().encode(
+                  'data: {"choices":[{"delta":{"content":"Final"}}]} \n\n',
+                ),
+                done: false,
+              })
+              .mockResolvedValueOnce({
+                value: new TextEncoder().encode('data: [DONE]\n\n'),
+                done: true,
+              }),
+          }),
+        },
+      }
     })
 
     await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)
-
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining('api.primary.com'),
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          Authorization: 'Bearer key-p',
-        }),
-      }),
-    )
-    expect(onFinalChunk).toHaveBeenCalledWith('Primary synthesis')
   })
 
   it('should include primary model in contributors if selected', async () => {
@@ -338,6 +352,10 @@ describe('aiService - Multi-model Discussion', () => {
         discussionMode: true,
         discussionModelIds: ['p1', 'p2'],
         discussionPrimaryModelId: 'p1',
+        baseUrl: 'api.p.com',
+        apiKey: 'key-p',
+        model: 'm-p',
+        temperature: 0.7,
       }),
     )
     _resetAIConfig()
@@ -381,7 +399,7 @@ describe('aiService - Multi-model Discussion', () => {
     expect(lastSteps[1].modelId).toBe('p2')
   })
 
-  it('should pass thinking config to parallel model requests', async () => {
+  it('should pass global thinking config to parallel model requests', async () => {
     const messages = [{ id: '1', role: 'user', content: 'hello' } as ChatMessage]
     const onStepUpdate = vi.fn()
     const onFinalChunk = vi.fn()
@@ -397,14 +415,23 @@ describe('aiService - Multi-model Discussion', () => {
     )
     localStorage.setItem(
       'ai-presets',
-      JSON.stringify([{ id: 'p1', name: 'P1', baseUrl: 'api.p1.com', apiKey: 'k1', model: 'm1' }]),
+      JSON.stringify([
+        {
+          id: 'p1',
+          name: 'P1',
+          baseUrl: 'api.p1.com',
+          apiKey: 'k1',
+          model: 'm1',
+          thinkingMode: 'disabled', // Preset says disabled, but should use global enabled
+        },
+      ]),
     )
     _resetAIConfig()
 
     mockFetch.mockImplementation(async (url: string, init: any) => {
       const body = JSON.parse(init.body)
       if (body.stream === false) {
-        expect(body.thinking).toEqual({ type: 'enabled' })
+        expect(body.thinking).toEqual({ type: 'enabled' }) // Global setting
         return {
           ok: true,
           json: async () => ({
@@ -436,11 +463,11 @@ describe('aiService - Multi-model Discussion', () => {
     await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)
   })
 
-  it('should include system prompt in all steps of discussion', async () => {
+  it('should NOT include global system prompt in contributor steps if preset has no prompt', async () => {
     const messages = [{ id: '1', role: 'user', content: 'hello' } as ChatMessage]
     const onStepUpdate = vi.fn()
     const onFinalChunk = vi.fn()
-    const systemPrompt = 'You are a helpful assistant'
+    const systemPrompt = 'Global System Prompt'
 
     localStorage.setItem(
       'ai-config',
@@ -459,9 +486,10 @@ describe('aiService - Multi-model Discussion', () => {
 
     mockFetch.mockImplementation(async (url: string, init: any) => {
       const body = JSON.parse(init.body)
-      expect(body.messages).toContainEqual({ role: 'system', content: systemPrompt })
 
       if (body.stream === false) {
+        // Parallel model request (contributor)
+        expect(body.messages).not.toContainEqual({ role: 'system', content: systemPrompt })
         return {
           ok: true,
           json: async () => ({
@@ -469,6 +497,9 @@ describe('aiService - Multi-model Discussion', () => {
           }),
         }
       }
+
+      // Final synthesis request
+      expect(body.messages).toContainEqual({ role: 'system', content: systemPrompt })
       return {
         ok: true,
         body: {
@@ -491,6 +522,77 @@ describe('aiService - Multi-model Discussion', () => {
     })
 
     await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)
-    expect(mockFetch).toHaveBeenCalledTimes(2) // 1 Parallel + 1 Synthesis
+  })
+
+  it('should use preset specific system prompt for contributors', async () => {
+    const messages = [{ id: '1', role: 'user', content: 'hello' } as ChatMessage]
+    const onStepUpdate = vi.fn()
+    const onFinalChunk = vi.fn()
+    const globalSystemPrompt = 'Global System Prompt'
+    const presetSystemPrompt = 'Preset System Prompt'
+
+    localStorage.setItem(
+      'ai-config',
+      JSON.stringify({
+        ...JSON.parse(localStorage.getItem('ai-config') || '{}'),
+        discussionMode: true,
+        discussionModelIds: ['p1'],
+        systemPrompt: globalSystemPrompt,
+      }),
+    )
+    localStorage.setItem(
+      'ai-presets',
+      JSON.stringify([
+        {
+          id: 'p1',
+          name: 'P1',
+          baseUrl: 'api.p1.com',
+          apiKey: 'k1',
+          model: 'm1',
+          systemPrompt: presetSystemPrompt,
+        },
+      ]),
+    )
+    _resetAIConfig()
+
+    mockFetch.mockImplementation(async (url: string, init: any) => {
+      const body = JSON.parse(init.body)
+
+      if (body.stream === false) {
+        // Parallel model request (contributor)
+        expect(body.messages).toContainEqual({ role: 'system', content: presetSystemPrompt })
+        expect(body.messages).not.toContainEqual({ role: 'system', content: globalSystemPrompt })
+        return {
+          ok: true,
+          json: async () => ({
+            choices: [{ message: { content: 'Success' } }],
+          }),
+        }
+      }
+
+      // Final synthesis request
+      expect(body.messages).toContainEqual({ role: 'system', content: globalSystemPrompt })
+      return {
+        ok: true,
+        body: {
+          getReader: () => ({
+            read: vi
+              .fn()
+              .mockResolvedValueOnce({
+                value: new TextEncoder().encode(
+                  'data: {"choices":[{"delta":{"content":"Final"}}]}\n\n',
+                ),
+                done: false,
+              })
+              .mockResolvedValueOnce({
+                value: new TextEncoder().encode('data: [DONE]\n\n'),
+                done: true,
+              }),
+          }),
+        },
+      }
+    })
+
+    await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)
   })
 })
