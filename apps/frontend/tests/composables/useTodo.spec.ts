@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { nextTick } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { useTodo } from '@/features/todo/composables/useTodo'
 import { useTodoStore } from '@/features/todo/stores/todo'
@@ -41,13 +42,45 @@ describe('useTodo', () => {
 
   describe('initial state', () => {
     it('should have correct default values', () => {
-      const { newTodoTitle, showSearch, searchInput, showFireworks, editingId } = useTodo()
+      const { newTodoTitle, showSearch, searchInput, showFireworks, editingId, isDrawerOpen } =
+        useTodo()
 
       expect(newTodoTitle.value).toBe('')
       expect(showSearch.value).toBe(false)
       expect(searchInput.value).toBe('')
       expect(showFireworks.value).toBe(false)
       expect(editingId.value).toBeNull()
+      expect(isDrawerOpen.value).toBe(false)
+    })
+  })
+
+  describe('persistence', () => {
+    beforeEach(() => {
+      vi.stubGlobal('localStorage', {
+        getItem: vi.fn(),
+        setItem: vi.fn(),
+      })
+    })
+
+    afterEach(() => {
+      vi.unstubAllGlobals()
+    })
+
+    it('should load isDrawerOpen from localStorage', () => {
+      vi.mocked(localStorage.getItem).mockReturnValue('true')
+      const { isDrawerOpen } = useTodo()
+      expect(isDrawerOpen.value).toBe(true)
+      expect(localStorage.getItem).toHaveBeenCalledWith('todo_ai_drawer_open')
+    })
+
+    it('should save isDrawerOpen to localStorage when it changes', async () => {
+      vi.mocked(localStorage.getItem).mockReturnValue('false')
+      const { isDrawerOpen } = useTodo()
+
+      isDrawerOpen.value = true
+      await nextTick()
+
+      expect(localStorage.setItem).toHaveBeenCalledWith('todo_ai_drawer_open', 'true')
     })
   })
 
