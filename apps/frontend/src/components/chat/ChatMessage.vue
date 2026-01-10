@@ -99,8 +99,7 @@ const thinkingStatus = computed(() => {
     if (props.message.discussionSteps?.length) {
       const currentStep = props.message.discussionSteps.find((s) => s.status === 'thinking')
       if (currentStep) {
-        if (currentStep.modelId === 'primary-draft') return t('ai.primaryDrafting')
-        return t('ai.secondaryReviewing')
+        return t('ai.discussionStatus')
       }
       return t('ai.finalSynthesizing')
     }
@@ -344,9 +343,7 @@ async function copyContent() {
                     ? t('ai.isThinking')
                     : step.status === 'error'
                       ? step.content
-                      : step.modelId === 'primary-draft'
-                        ? t('ai.draftReady')
-                        : t('ai.contributionReady')
+                      : t('ai.contributionReady')
                 }}
               </span>
             </div>
