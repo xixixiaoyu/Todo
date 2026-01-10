@@ -33,7 +33,10 @@ const mockActivePresetId = ref<string | null>(null)
 vi.mock('@/composables/useAIConfig', () => ({
   useAIConfig: () => ({
     config: mockConfig,
-    updateConfig: vi.fn(),
+    updateConfig: vi.fn((partial) => {
+      mockConfig.value = { ...mockConfig.value, ...partial }
+      mockActivePresetId.value = null
+    }),
     DEFAULT_CONFIG: {
       baseUrl: '',
       apiKey: '',
@@ -46,14 +49,26 @@ vi.mock('@/composables/useAIConfig', () => ({
     presets: mockPresets,
     activePresetId: mockActivePresetId,
     switchPreset: vi.fn((id) => {
-      mockActivePresetId.value = id
+      const preset = mockPresets.value.find((p) => p.id === id)
+      if (preset) {
+        mockActivePresetId.value = id
+        mockConfig.value = { ...preset }
+      }
     }),
     addPreset: vi.fn((p) => {
       const newPreset = { ...p, id: 'test-id' }
       mockPresets.value.push(newPreset)
       return newPreset
     }),
-    updatePreset: vi.fn(),
+    updatePreset: vi.fn((id, updates) => {
+      const index = mockPresets.value.findIndex((p) => p.id === id)
+      if (index !== -1) {
+        mockPresets.value[index] = { ...mockPresets.value[index], ...updates }
+        if (mockActivePresetId.value === id) {
+          mockConfig.value = { ...mockPresets.value[index] }
+        }
+      }
+    }),
     deletePreset: vi.fn(),
     getPresetDefaults: vi.fn(() => ({
       baseUrl: '',
