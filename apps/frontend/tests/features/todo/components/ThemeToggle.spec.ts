@@ -25,9 +25,9 @@ describe('ThemeToggle', () => {
 
     const mockedUseTheme = vi.mocked(useTheme)
     mockedUseTheme.mockReturnValue({
-      theme: theme as any,
+      theme: theme as unknown as ReturnType<typeof useTheme>['theme'],
       setTheme,
-    } as any)
+    })
 
     const wrapper = mount(ThemeToggle)
 

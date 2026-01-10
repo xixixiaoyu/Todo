@@ -276,14 +276,17 @@ export default {
       },
     },
   },
-  plugins: [tailwindcssAnimate, plugin(function ({ addUtilities }) {
-    addUtilities({
-      '.animate-sparkle': {
-        animation: 'sparkle 1.5s ease-in-out infinite',
-      },
-      '.animate-pulse-custom': {
-        animation: 'pulse-custom 2s ease-in-out infinite',
-      },
-    })
-  })],
+  plugins: [
+    tailwindcssAnimate,
+    plugin(function ({ addUtilities }) {
+      addUtilities({
+        '.animate-sparkle': {
+          animation: 'sparkle 1.5s ease-in-out infinite',
+        },
+        '.animate-pulse-custom': {
+          animation: 'pulse-custom 2s ease-in-out infinite',
+        },
+      })
+    }),
+  ],
 }

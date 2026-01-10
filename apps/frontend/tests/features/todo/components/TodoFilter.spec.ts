@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createI18n } from 'vue-i18n'
 import TodoFilter from '@/features/todo/components/TodoFilter.vue'
-import { Tabs, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs } from '@/components/ui/tabs'
 
 // Mock vue-i18n
 const i18n = createI18n({
