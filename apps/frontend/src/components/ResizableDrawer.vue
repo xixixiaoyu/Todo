@@ -7,6 +7,7 @@ interface Props {
   minWidth?: number
   rightGap?: number // 距离右边的最小间距（px）
   storageKey?: string
+  isFullscreen?: boolean // 是否全屏
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -14,6 +15,7 @@ const props = withDefaults(defineProps<Props>(), {
   minWidth: 200,
   rightGap: 48,
   storageKey: 'resizable-drawer-width',
+  isFullscreen: false,
 })
 
 const emit = defineEmits<{
@@ -58,7 +60,7 @@ watch(drawerWidth, (newWidth) => {
 })
 
 const drawerStyle = computed(() => ({
-  width: isMobile.value ? '100%' : `${drawerWidth.value}px`,
+  width: props.isFullscreen ? '100%' : isMobile.value ? '100%' : `${drawerWidth.value}px`,
   transform: props.modelValue ? 'translateX(0)' : 'translateX(-100%)',
 }))
 
@@ -118,9 +120,9 @@ watch(
           <slot />
         </div>
 
-        <!-- 拖拽手柄（移动端隐藏） -->
+        <!-- 拖拽手柄（移动端或全屏时隐藏） -->
         <div
-          v-if="!isMobile"
+          v-if="!isMobile && !isFullscreen"
           class="resize-handle"
           :class="{
             hovering: isHovering,
@@ -134,12 +136,7 @@ watch(
           @mouseleave="isHovering = false"
           @mousedown="startResize"
         >
-          <!-- 装饰点 -->
-          <div class="resize-handle-dots">
-            <span />
-            <span />
-            <span />
-          </div>
+          <div class="resize-handle-line" />
         </div>
       </div>
     </Transition>
@@ -242,8 +239,8 @@ watch(
 .resize-handle {
   position: absolute;
   top: 0;
-  right: -6px;
-  width: 12px;
+  right: -3px;
+  width: 6px;
   height: 100%;
   cursor: ew-resize;
   z-index: 10;
@@ -253,89 +250,67 @@ watch(
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   transform: translateZ(0);
   will-change: width, right;
+  background: rgba(148, 163, 184, 0.08);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 
-.resize-handle::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: transparent;
-  transition: background 0.2s;
+.resize-handle:hover,
+.resize-handle.hovering {
+  width: 12px;
+  right: -6px;
+  background: rgba(148, 163, 184, 0.15);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
-.resize-handle:hover::before,
-.resize-handle.hovering::before {
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(59, 130, 246, 0.08) 50%,
-    transparent 100%
-  );
+.resize-handle.resizing {
+  background: rgba(148, 163, 184, 0.2);
 }
 
-.resize-handle.resizing::before {
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(59, 130, 246, 0.12) 50%,
-    transparent 100%
-  );
+:root.dark .resize-handle {
+  background: rgba(148, 163, 184, 0.12);
 }
 
-/* 装饰点 */
-.resize-handle-dots {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  opacity: 0;
-  transition:
-    opacity 0.2s,
-    transform 0.2s;
-  transform: scale(0.8);
+:root.dark .resize-handle:hover,
+:root.dark .resize-handle.hovering {
+  background: rgba(148, 163, 184, 0.2);
 }
 
-.resize-handle-dots span {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
+:root.dark .resize-handle.resizing {
+  background: rgba(148, 163, 184, 0.25);
+}
+
+/* 指示线 */
+.resize-handle-line {
+  width: 2px;
+  height: 32px;
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 1px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.resize-handle:hover .resize-handle-line,
+.resize-handle.hovering .resize-handle-line {
   background: rgba(148, 163, 184, 0.5);
-  transition: all 0.2s;
 }
 
-.resize-handle:hover .resize-handle-dots,
-.resize-handle.hovering .resize-handle-dots {
-  opacity: 1;
-  transform: scale(1);
+.resize-handle.resizing .resize-handle-line {
+  height: 48px;
+  background: rgba(148, 163, 184, 0.6);
 }
 
-.resize-handle:hover .resize-handle-dots span,
-.resize-handle.hovering .resize-handle-dots span {
-  background: rgba(59, 130, 246, 0.6);
-}
-
-.resize-handle.resizing .resize-handle-dots {
-  opacity: 1;
-  transform: scale(1.1);
-}
-
-.resize-handle.resizing .resize-handle-dots span {
-  background: rgba(59, 130, 246, 0.8);
-  box-shadow: 0 0 6px rgba(59, 130, 246, 0.4);
-}
-
-/* 暗色模式装饰点 */
-:root.dark .resize-handle-dots span {
+:root.dark .resize-handle-line {
   background: rgba(148, 163, 184, 0.4);
 }
 
-:root.dark .resize-handle:hover .resize-handle-dots span,
-:root.dark .resize-handle.hovering .resize-handle-dots span {
-  background: rgba(96, 165, 250, 0.7);
+:root.dark .resize-handle:hover .resize-handle-line,
+:root.dark .resize-handle.hovering .resize-handle-line {
+  background: rgba(148, 163, 184, 0.6);
 }
 
-:root.dark .resize-handle.resizing .resize-handle-dots span {
-  background: rgba(96, 165, 250, 0.9);
-  box-shadow: 0 0 8px rgba(96, 165, 250, 0.5);
+:root.dark .resize-handle.resizing .resize-handle-line {
+  background: rgba(148, 163, 184, 0.7);
 }
 
 /* 聚焦状态（键盘无障碍） */
@@ -343,24 +318,12 @@ watch(
   outline: none;
 }
 
-.resize-handle:focus-visible .resize-handle-dots {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.resize-handle:focus-visible .resize-handle-dots span {
-  background: rgba(59, 130, 246, 0.7);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-}
-
 /* 减少动画偏好 */
 @media (prefers-reduced-motion: reduce) {
   .drawer-overlay,
   .drawer,
   .resize-handle,
-  .resize-handle::before,
-  .resize-handle-dots,
-  .resize-handle-dots span {
+  .resize-handle-line {
     transition: none;
   }
 

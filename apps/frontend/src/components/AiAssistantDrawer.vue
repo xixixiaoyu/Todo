@@ -62,6 +62,7 @@ const handleNewline = (event: KeyboardEvent) => {
     :default-width="isMaximized ? 800 : 420"
     :min-width="320"
     :max-width="1000"
+    :is-fullscreen="isMaximized"
   >
     <div class="flex h-full flex-col bg-[#faf8f4]">
       <!-- 顶部标题栏 -->
