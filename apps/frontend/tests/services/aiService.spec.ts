@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { getMultiModelDiscussionStream } from '@/services/aiService'
 import { _resetAIConfig } from '@/composables/useAIConfig'
-import type { ChatMessage } from '@/composables/useChat'
+import type { ChatMessage } from '@/services/aiService'
+import type { AIPreset } from '@/composables/useAIConfig'
 
 // Mock localStorage
 const mockLocalStorage = (() => {
@@ -96,13 +97,17 @@ describe('aiService - Multi-model Discussion', () => {
     const onStepUpdate = vi.fn()
     const onFinalChunk = vi.fn()
 
-    const presets = [
+    const presets: AIPreset[] = [
       {
         id: 'p1',
         name: 'Model A',
         baseUrl: 'https://api.a.com',
         apiKey: 'key-a',
         model: 'model-a',
+        systemPrompt: '',
+        temperature: 0.7,
+        thinkingMode: 'disabled',
+        todoAssistant: false,
       },
       {
         id: 'p2',
@@ -110,6 +115,10 @@ describe('aiService - Multi-model Discussion', () => {
         baseUrl: 'https://api.b.com',
         apiKey: 'key-b',
         model: 'model-b',
+        systemPrompt: '',
+        temperature: 0.7,
+        thinkingMode: 'disabled',
+        todoAssistant: false,
       },
     ]
     mockLocalStorage.setItem('ai-presets', JSON.stringify(presets))
@@ -262,7 +271,7 @@ describe('aiService - Multi-model Discussion', () => {
     )
     _resetAIConfig()
 
-    mockFetch.mockImplementation(async (url: string, init: any) => {
+    mockFetch.mockImplementation(async (url: string, _init: any) => {
       if (url.includes('api.primary.com')) {
         return {
           ok: true,

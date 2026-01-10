@@ -71,8 +71,8 @@ describe('TodoFilter', () => {
     })
 
     const pendingButton = wrapper.findAll('button')[0]
-    expect(pendingButton.classes()).toContain('bg-[#c9b896]')
-    expect(pendingButton.classes()).toContain('text-white')
+    expect(pendingButton.classes()).toContain('bg-primary')
+    expect(pendingButton.classes()).toContain('text-primary-foreground')
   })
 
   it('should apply inactive style to completed button when filter is pending', () => {
@@ -87,8 +87,8 @@ describe('TodoFilter', () => {
 
     const completedButton = wrapper.findAll('button')[1]
     expect(completedButton.classes()).toContain('border')
-    expect(completedButton.classes()).toContain('bg-white')
-    expect(completedButton.classes()).toContain('text-[#8b8680]')
+    expect(completedButton.classes()).toContain('bg-card')
+    expect(completedButton.classes()).toContain('text-muted-foreground')
   })
 
   it('should apply active style to completed button when filter is completed', () => {
@@ -102,8 +102,8 @@ describe('TodoFilter', () => {
     })
 
     const completedButton = wrapper.findAll('button')[1]
-    expect(completedButton.classes()).toContain('bg-[#c9b896]')
-    expect(completedButton.classes()).toContain('text-white')
+    expect(completedButton.classes()).toContain('bg-primary')
+    expect(completedButton.classes()).toContain('text-primary-foreground')
   })
 
   it('should apply inactive style to pending button when filter is completed', () => {
@@ -118,8 +118,8 @@ describe('TodoFilter', () => {
 
     const pendingButton = wrapper.findAll('button')[0]
     expect(pendingButton.classes()).toContain('border')
-    expect(pendingButton.classes()).toContain('bg-white')
-    expect(pendingButton.classes()).toContain('text-[#8b8680]')
+    expect(pendingButton.classes()).toContain('bg-card')
+    expect(pendingButton.classes()).toContain('text-muted-foreground')
   })
 
   it('should emit update:filter with pending when pending button clicked', async () => {

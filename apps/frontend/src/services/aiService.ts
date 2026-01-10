@@ -2,7 +2,7 @@
  * AI 服务层 - 处理流式 API 请求
  */
 
-import { getAIConfig } from '@/composables/useAIConfig'
+import { getAIConfig, type AIPreset } from '@/composables/useAIConfig'
 import { useTodoStore } from '@/features/todo/stores/todo'
 import i18n from '@/i18n'
 
@@ -61,21 +61,21 @@ function getHeaders(apiKeyOverride?: string): Record<string, string> {
  * 生成唯一 ID
  */
 export function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
+  return Math.random().toString(36).substring(2, 11)
 }
 
 /**
- * 注入系统提示和 Todo 列表
+ * 注入系统提示和待办事项上下文
  */
 function injectSystemPrompts(
   messages: ChatMessage[],
-  systemPrompt?: string,
-  todoAssistant?: boolean,
+  systemPrompt: string,
+  todoAssistant: boolean,
 ): Array<{ role: string; content: string }> {
-  const messagesWithSystem: Array<{ role: string; content: string }> = []
+  const result: Array<{ role: string; content: string }> = []
 
   if (systemPrompt) {
-    messagesWithSystem.push({
+    result.push({
       role: 'system',
       content: systemPrompt,
     })
@@ -87,7 +87,7 @@ function injectSystemPrompts(
     const pendingTodos = todoStore.todos.filter((t) => !t.completed)
     if (pendingTodos.length > 0) {
       const todoList = pendingTodos.map((t) => `- ${t.title}`).join('\n')
-      messagesWithSystem.push({
+      result.push({
         role: 'system',
         content: t('ai.todoAssistantPrompt', {
           count: pendingTodos.length,
@@ -97,14 +97,14 @@ function injectSystemPrompts(
     }
   }
 
-  messagesWithSystem.push(
+  result.push(
     ...messages.map((msg) => ({
       role: msg.role,
       content: msg.content,
     })),
   )
 
-  return messagesWithSystem
+  return result
 }
 
 /**
@@ -248,11 +248,11 @@ export async function getAIStreamResponse(
  */
 async function fetchNonStreamResponse(
   config: { baseUrl: string; apiKey: string; model: string; temperature?: number },
-  messages: any[],
+  messages: Array<{ role: string; content: string }>,
   thinkingMode?: string,
   signal?: AbortSignal,
 ): Promise<string> {
-  const requestBody: Record<string, any> = {
+  const requestBody: Record<string, unknown> = {
     model: config.model,
     messages,
     temperature: config.temperature ?? 0.7,
@@ -301,7 +301,7 @@ export async function getMultiModelDiscussionStream(
   const { signal } = abortController
 
   // 1. 获取所有参与讨论的模型配置
-  const presets = JSON.parse(localStorage.getItem('ai-presets') || '[]') as any[]
+  const presets = JSON.parse(localStorage.getItem('ai-presets') || '[]') as AIPreset[]
 
   // 确定主模型配置
   const primaryPreset = discussionPrimaryModelId

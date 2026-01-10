@@ -8,7 +8,7 @@ import { I18nContext } from 'nestjs-i18n'
  */
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  catch(exception: any, host: ArgumentsHost) {
+  catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp()
     const response = ctx.getResponse<Response>()
     const i18n = I18nContext.current(host)
@@ -22,8 +22,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
       exception instanceof HttpException ? exception.message : 'common.error.INTERNAL_SERVER_ERROR'
 
     // 处理 Zod 验证错误
-    if (exception.name === 'ZodValidationException' && exception.getZodError) {
-      const zodError = exception.getZodError()
+    const exceptionWithZod = exception as {
+      name?: string
+      getZodError?: () => { issues: Array<{ message: string; path: string[] }> }
+    }
+    if (exceptionWithZod.name === 'ZodValidationException' && exceptionWithZod.getZodError) {
+      const zodError = exceptionWithZod.getZodError()
       const firstIssue = zodError.issues[0]
       if (firstIssue) {
         // 如果错误消息是一个 i18n 键名，则进行翻译

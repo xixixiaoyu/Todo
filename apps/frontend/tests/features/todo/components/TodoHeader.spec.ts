@@ -92,7 +92,7 @@ describe('TodoHeader', () => {
       },
     })
 
-    const langButton = wrapper.findAll('button')[2]
+    const langButton = wrapper.findAll('button')[3]
 
     // 初始是 zh-CN
     expect(i18n.global.locale.value).toBe('zh-CN')
@@ -122,9 +122,9 @@ describe('TodoHeader', () => {
     })
 
     const buttons = wrapper.findAll('button')
-    expect(buttons.length).toBe(3)
+    expect(buttons.length).toBe(4)
 
     // 最后一个按钮的 title 应该是语言切换
-    expect(buttons[2].attributes('title')).toBe('切换语言')
+    expect(buttons[3].attributes('title')).toBe('切换语言')
   })
 })

@@ -18,15 +18,16 @@ vi.mock('vue-i18n', () => ({
 
 describe('ThemeToggle', () => {
   it('should cycle through themes when clicked', async () => {
-    const theme = ref('light')
-    const setTheme = vi.fn((val) => {
+    const theme = ref<'light' | 'dark' | 'auto'>('light')
+    const setTheme = vi.fn((val: 'light' | 'dark' | 'auto') => {
       theme.value = val
     })
 
-    ;(useTheme as any).mockReturnValue({
+    const mockedUseTheme = vi.mocked(useTheme)
+    mockedUseTheme.mockReturnValue({
       theme,
       setTheme,
-    })
+    } as any)
 
     const wrapper = mount(ThemeToggle)
 

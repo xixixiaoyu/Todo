@@ -383,7 +383,7 @@ if (typeof window !== 'undefined') {
     const code = button.getAttribute('data-code')
     if (!code) return
 
-    navigator.clipboard.writeText(decodeURIComponent(code)).then(() => {
+    void navigator.clipboard.writeText(decodeURIComponent(code)).then(() => {
       const originalText = button.textContent
       button.textContent = '已复制!'
       button.classList.add('copied')

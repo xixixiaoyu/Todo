@@ -73,7 +73,7 @@ export class UsersService {
   /**
    * 更新用户信息
    */
-  async update(id: number, data: any) {
+  async update(id: number, data: Partial<RegisterInput>) {
     return this.prisma.user.update({
       where: { id },
       data,
@@ -83,7 +83,7 @@ export class UsersService {
   /**
    * 查找第一个匹配的用户（内部使用）
    */
-  async findInternalFirst(where: any) {
+  async findInternalFirst(where: Record<string, unknown>) {
     return this.prisma.user.findFirst({
       where,
     })

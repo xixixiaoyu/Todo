@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import { ref, nextTick } from 'vue'
 import AISettingsDialog from '@/components/chat/AISettingsDialog.vue'
 import { useAIConfig } from '@/composables/useAIConfig'
+import type { AIPreset, AIConfig } from '@/composables/useAIConfig'
 
 // Mock Lucide icons
 vi.mock('lucide-vue-next', () => ({
@@ -14,6 +15,8 @@ vi.mock('lucide-vue-next', () => ({
   Plus: { template: '<span>Plus</span>' },
   Trash2: { template: '<span>Trash2</span>' },
   Edit3: { template: '<span>Edit3</span>' },
+  Users: { template: '<span>Users</span>' },
+  Star: { template: '<span>Star</span>' },
 }))
 
 // Mock composables
@@ -25,6 +28,9 @@ const mockConfig = ref({
   temperature: 0.7,
   thinkingMode: 'disabled',
   todoAssistant: false,
+  discussionMode: false,
+  discussionModelIds: [],
+  discussionPrimaryModelId: null,
 })
 
 const mockPresets = ref<any[]>([])
@@ -45,6 +51,9 @@ vi.mock('@/composables/useAIConfig', () => ({
       temperature: 0.7,
       thinkingMode: 'disabled',
       todoAssistant: false,
+      discussionMode: false,
+      discussionModelIds: [],
+      discussionPrimaryModelId: null,
     },
     presets: mockPresets,
     activePresetId: mockActivePresetId,
@@ -52,11 +61,22 @@ vi.mock('@/composables/useAIConfig', () => ({
       const preset = mockPresets.value.find((p) => p.id === id)
       if (preset) {
         mockActivePresetId.value = id
-        mockConfig.value = { ...preset }
+        mockConfig.value = {
+          discussionMode: false,
+          discussionModelIds: [] as string[],
+          discussionPrimaryModelId: null,
+          ...preset,
+        } as unknown as AIConfig
       }
     }),
     addPreset: vi.fn((p) => {
-      const newPreset = { ...p, id: 'test-id' }
+      const newPreset: AIPreset = {
+        discussionMode: false,
+        discussionModelIds: [] as string[],
+        discussionPrimaryModelId: null,
+        ...p,
+        id: 'test-id',
+      } as unknown as AIPreset
       mockPresets.value.push(newPreset)
       return newPreset
     }),
@@ -65,7 +85,12 @@ vi.mock('@/composables/useAIConfig', () => ({
       if (index !== -1) {
         mockPresets.value[index] = { ...mockPresets.value[index], ...updates }
         if (mockActivePresetId.value === id) {
-          mockConfig.value = { ...mockPresets.value[index] }
+          mockConfig.value = {
+            discussionMode: false,
+            discussionModelIds: [] as string[],
+            discussionPrimaryModelId: null,
+            ...mockPresets.value[index],
+          } as unknown as AIConfig
         }
       }
     }),
@@ -108,7 +133,7 @@ describe('AISettingsDialog', () => {
       },
     })
 
-    expect(wrapper.find('button.text-\\[\\#6b5c4d\\]').text()).toContain('ai.basicSettings')
+    expect(wrapper.find('button.relative').text()).toContain('ai.basicSettings')
   })
 
   it('should emit update:initialTab when activeTab changes', async () => {
@@ -165,7 +190,7 @@ describe('AISettingsDialog', () => {
     await presetItem.trigger('click')
 
     expect(mockActivePresetId.value).toBe(preset.id)
-    expect(wrapper.find('.bg-\\[\\#c9b896\\]\\/10').exists()).toBe(true) // 激活标签
+    expect(wrapper.find('.bg-primary\\/10').exists()).toBe(true) // 激活标签
   })
 
   it('should reset tab and state when modelValue becomes true', async () => {
@@ -206,7 +231,7 @@ describe('AISettingsDialog', () => {
     })
 
     await nextTick()
-    await wrapper.find('button.bg-\\[\\#c9b896\\]').trigger('click') // 点击保存
+    await wrapper.find('button.bg-primary').trigger('click') // 点击保存
 
     expect(mockActivePresetId.value).toBe(null)
   })
@@ -233,6 +258,9 @@ describe('AISettingsDialog', () => {
       temperature: preset.temperature,
       thinkingMode: preset.thinkingMode,
       todoAssistant: preset.todoAssistant,
+      discussionMode: false,
+      discussionModelIds: [],
+      discussionPrimaryModelId: null,
     }
 
     const wrapper = mount(AISettingsDialog, {
@@ -260,7 +288,7 @@ describe('AISettingsDialog', () => {
     await modelInput.setValue('new-model')
 
     // 点击保存预设
-    await wrapper.find('button.bg-\\[\\#c9b896\\]').trigger('click')
+    await wrapper.find('button.bg-primary').trigger('click')
     await nextTick()
 
     expect(mockPresets.value[0].model).toBe('new-model')

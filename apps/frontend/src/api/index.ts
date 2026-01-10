@@ -72,7 +72,8 @@ httpClient.interceptors.request.use(
     }
 
     // 添加语言标识
-    const currentLocale = (i18n.global.locale as any).value || i18n.global.locale || 'zh-CN'
+    const currentLocale =
+      (i18n.global.locale as { value?: string }).value || i18n.global.locale || 'zh-CN'
     config.headers['x-lang'] = currentLocale
     config.headers['Accept-Language'] = currentLocale
 
@@ -164,7 +165,7 @@ httpClient.interceptors.response.use(
         onRefreshError(refreshError as Error)
         isRefreshing = false
         const authStore = useAuthStore()
-        authStore.logout()
+        await authStore.logout()
         return Promise.reject(refreshError)
       }
     }

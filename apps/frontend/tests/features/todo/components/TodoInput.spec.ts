@@ -110,7 +110,7 @@ describe('TodoInput', () => {
 
     // The shaking class is applied to the input container div (third div)
     const container = wrapper.findAll('div')[2]
-    expect(container.classes()).toContain('border-[#d97757]')
+    expect(container.classes()).toContain('border-error')
     expect(container.classes()).toContain('animate-shake')
   })
 
@@ -127,7 +127,7 @@ describe('TodoInput', () => {
 
     // The shaking class is applied to the input container div (third div)
     const container = wrapper.findAll('div')[2]
-    expect(container.classes()).not.toContain('border-[#d97757]')
+    expect(container.classes()).not.toContain('border-error')
     expect(container.classes()).not.toContain('animate-shake')
   })
 

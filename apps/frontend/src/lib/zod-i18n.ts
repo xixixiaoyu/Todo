@@ -9,7 +9,7 @@ export const zodErrorMap: z.ZodErrorMap = (issue, ctx) => {
 
   // 如果 issue.message 看起来像一个 i18n 键名（包含点号），则直接翻译
   if (issue.message && issue.message.includes('.')) {
-    return { message: t(issue.message, issue as any) }
+    return { message: t(issue.message, issue as unknown as Record<string, unknown>) }
   }
 
   // 否则根据 issue.code 进行默认翻译

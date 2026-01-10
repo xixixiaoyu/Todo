@@ -114,7 +114,7 @@ describe('FormInput', () => {
     })
 
     const input = wrapper.find('input')
-    expect(input.classes()).toContain('border-warm-error')
+    expect(input.classes()).toContain('border-error')
   })
 
   it('should not apply error styles when error prop is not provided', () => {
@@ -126,7 +126,7 @@ describe('FormInput', () => {
     })
 
     const input = wrapper.find('input')
-    expect(input.classes()).toContain('border-warm-border')
+    expect(input.classes()).toContain('border-border')
   })
 
   it('should be disabled when disabled prop is true', () => {
@@ -140,7 +140,7 @@ describe('FormInput', () => {
 
     const input = wrapper.find('input')
     expect(input.attributes('disabled')).toBeDefined()
-    expect(input.classes()).toContain('disabled:bg-gray-50')
+    expect(input.classes()).toContain('disabled:opacity-50')
   })
 
   it('should not be disabled when disabled prop is false', () => {

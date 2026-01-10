@@ -82,7 +82,7 @@ export const useTodoStore = defineStore(
         }
         todos.value.unshift(newTodo)
         return true
-      } catch (e: unknown) {
+      } catch {
         error.value = 'todo.addError'
         return false
       } finally {

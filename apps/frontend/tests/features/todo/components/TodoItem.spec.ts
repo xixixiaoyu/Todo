@@ -77,7 +77,7 @@ describe('TodoItem', () => {
 
     const titleSpan = wrapper.find('span')
     expect(titleSpan.classes()).toContain('line-through')
-    expect(titleSpan.classes()).toContain('text-[#8b8680]')
+    expect(titleSpan.classes()).toContain('text-text-completed')
   })
 
   it('should show edit mode when editingId matches todo id', () => {

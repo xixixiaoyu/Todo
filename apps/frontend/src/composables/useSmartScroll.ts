@@ -346,7 +346,7 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
 
     // 初始滚动到底部
     if (isSticking.value) {
-      nextTick(() => {
+      void nextTick(() => {
         scrollToBottomInstant()
       })
     }

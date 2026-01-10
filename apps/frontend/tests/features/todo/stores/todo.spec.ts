@@ -27,7 +27,7 @@ describe('useTodoStore', () => {
 
     // Mock crypto.randomUUID
     if (!global.crypto) {
-      // @ts-ignore
+      // @ts-expect-error - Mocking crypto.randomUUID for testing environment
       global.crypto = {
         randomUUID: () =>
           '00000000-0000-0000-0000-000000000000' as `${string}-${string}-${string}-${string}-${string}`,

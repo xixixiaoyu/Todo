@@ -102,7 +102,7 @@ describe('PasswordInput', () => {
     })
 
     const input = wrapper.find('input')
-    expect(input.classes()).toContain('border-warm-error')
+    expect(input.classes()).toContain('border-error')
   })
 
   it('should be disabled when disabled prop is true', () => {
@@ -116,7 +116,7 @@ describe('PasswordInput', () => {
 
     const input = wrapper.find('input')
     expect(input.attributes('disabled')).toBeDefined()
-    expect(input.classes()).toContain('disabled:bg-gray-50')
+    expect(input.classes()).toContain('disabled:opacity-50')
   })
 
   it('should not show password strength when showStrength is false', () => {

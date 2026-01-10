@@ -19,7 +19,7 @@ describe('useTheme', () => {
   })
 
   it('should change theme', () => {
-    const { theme, setTheme } = useTheme()
+    const { setTheme } = useTheme()
     setTheme('dark')
     // Note: Since we're mocking useColorMode, we need to handle the value change if we want to test it deeply.
     // But for a simple test, this confirms the interface exists.
