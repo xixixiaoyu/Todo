@@ -11,7 +11,8 @@ const emit = defineEmits<{
 }>()
 
 const { t, locale } = useI18n()
-const { sessions, currentSessionId, renameSession, deleteSession } = useChatHistory()
+const { sessions, currentSessionId, renameSession, deleteSession, clearAllSessions } =
+  useChatHistory()
 
 // 搜索
 const searchQuery = ref('')
@@ -93,6 +94,13 @@ function handleDelete(sessionId: string, event: Event): void {
   event.stopPropagation()
   deleteSession(sessionId)
 }
+
+// 清除所有会话
+function handleClearAll(): void {
+  if (confirm(t('ai.clearAllConfirm'))) {
+    clearAllSessions()
+  }
+}
 </script>
 
 <template>
@@ -104,6 +112,22 @@ function handleDelete(sessionId: string, event: Event): void {
           <Clock :size="16" class="text-primary" />
           {{ t('ai.historyTitle') }}
         </h3>
+        <div class="flex items-center gap-1">
+          <button
+            v-if="hasSessions"
+            class="flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+            @click="handleClearAll"
+          >
+            <Trash2 :size="12" />
+            {{ t('ai.clearAll') }}
+          </button>
+          <button
+            class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            @click="emit('close')"
+          >
+            <X :size="16" />
+          </button>
+        </div>
       </div>
 
       <!-- 搜索和新建按钮 -->
@@ -188,13 +212,7 @@ function handleDelete(sessionId: string, event: Event): void {
 
           <!-- 正常显示 -->
           <template v-else>
-            <div class="flex items-start gap-3">
-              <div
-                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted transition-colors group-hover:bg-background"
-                :class="{ 'bg-primary/10 text-primary': session.id === currentSessionId }"
-              >
-                <MessageSquare :size="14" />
-              </div>
+            <div class="flex items-start gap-2">
               <div class="min-w-0 flex-1">
                 <p
                   class="truncate text-sm font-medium transition-colors"

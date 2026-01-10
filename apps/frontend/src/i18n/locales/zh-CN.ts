@@ -163,6 +163,8 @@ export default {
     daysAgo: '{days}天前',
     editTitle: '编辑标题',
     delete: '删除',
+    clearAll: '清除所有记录',
+    clearAllConfirm: '确定要清除所有历史记录吗？此操作不可撤销。',
     todoAssistantPrompt: '用户当前有 {count} 个未完成的待办事项：\n{todoList}',
     apiError: 'API 请求失败: {status} - {error}',
     noStream: '无法获取响应流',

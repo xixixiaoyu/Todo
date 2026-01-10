@@ -446,13 +446,6 @@ defineOptions({
           class="absolute inset-y-0 left-0 z-20 flex flex-col border-r border-border bg-card shadow-xl"
           :style="{ width: `${historyWidth}px` }"
         >
-          <!-- 关闭按钮 -->
-          <button
-            class="absolute right-3 top-3 z-20 flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-            @click="showHistory = false"
-          >
-            <X :size="16" />
-          </button>
           <ChatHistoryPanel
             @select="handleSelectSession"
             @close="showHistory = false"

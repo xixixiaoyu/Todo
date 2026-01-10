@@ -165,6 +165,9 @@ export default {
     daysAgo: '{days} days ago',
     editTitle: 'Edit Title',
     delete: 'Delete',
+    clearAll: 'Clear All History',
+    clearAllConfirm:
+      'Are you sure you want to clear all chat history? This action cannot be undone.',
     todoAssistantPrompt: 'User currently has {count} pending tasks:\n{todoList}',
     apiError: 'API Request failed: {status} - {error}',
     noStream: 'Unable to get response stream',

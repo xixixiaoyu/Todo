@@ -211,6 +211,19 @@ export function useChatHistory() {
   }
 
   /**
+   * 删除所有会话
+   */
+  function clearAllSessions(): void {
+    sessions.value = []
+    currentSessionId.value = null
+    lastActiveSessionId.value = null
+    // 强制清理 localStorage
+    localStorage.removeItem(SESSIONS_STORAGE_KEY)
+    localStorage.removeItem(CURRENT_SESSION_KEY)
+    localStorage.removeItem(LAST_ACTIVE_SESSION_KEY)
+  }
+
+  /**
    * 获取或创建当前会话
    */
   function getOrCreateCurrentSession(): ChatSession {
@@ -233,6 +246,7 @@ export function useChatHistory() {
     updateSessionMessages,
     renameSession,
     deleteSession,
+    clearAllSessions,
     getOrCreateCurrentSession,
   }
 }
