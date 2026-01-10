@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch, nextTick } from 'vue'
-import { User, Bot, ChevronUp, Copy, Check } from 'lucide-vue-next'
+import { ChevronUp, Copy, Check, Sparkles } from 'lucide-vue-next'
 import type { ChatMessage } from '@/composables/useChat'
 import { useMarkdown } from '@/composables/useMarkdown'
 
@@ -151,90 +151,109 @@ async function copyContent() {
 </script>
 
 <template>
-  <div class="group flex gap-3 py-4" :class="{ 'flex-row-reverse': isUser }">
-    <!-- 头像 -->
-    <div
-      class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
-      :class="isUser ? 'bg-[#c9b896]' : 'bg-[#e8e4dd]'"
-    >
-      <User v-if="isUser" :size="16" class="text-white" />
-      <Bot v-else :size="16" class="text-[#6b5c4d]" />
-    </div>
-
+  <div class="group flex py-4" :class="isUser ? 'justify-end' : 'justify-start'">
     <!-- 消息内容 -->
-    <div class="max-w-[80%] space-y-2">
+    <div class="max-w-[85%] space-y-2">
       <!-- 思考过程（AI 消息） -->
       <div
         v-if="hasThinking && !isUser"
-        class="group/thinking mb-2 overflow-hidden transition-all duration-300"
+        class="thinking-content group/thinking mb-2 overflow-hidden rounded-xl border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] transition-all duration-300"
       >
-        <button
-          class="flex items-center gap-2 py-1 text-[13px] text-[#a09c96] transition-colors hover:text-[#8b8680]"
-          @click="isThinkingCollapsed = !isThinkingCollapsed"
+        <div class="thinking-header flex items-center justify-between px-3 py-2">
+          <h4 class="flex items-center gap-2">
+            <Sparkles :size="14" class="text-[hsl(var(--primary-color))]" />
+            <span
+              class="font-medium tracking-wide text-sm text-[hsl(var(--text-secondary-color))]"
+              >{{ thinkingStatus }}</span
+            >
+          </h4>
+          <button
+            class="flex h-6 w-6 items-center justify-center rounded-md transition-colors hover:bg-[hsl(var(--ai-accent-hover))]"
+            @click="isThinkingCollapsed = !isThinkingCollapsed"
+          >
+            <ChevronUp
+              :size="14"
+              class="text-[hsl(var(--text-secondary-color))] transition-transform duration-300"
+              :class="{ 'rotate-180': isThinkingCollapsed }"
+            />
+          </button>
+        </div>
+        <div
+          class="thinking-body transition-all duration-500 ease-in-out"
+          :style="{ maxHeight: thinkingHeight }"
         >
-          <div class="relative flex h-4 w-4 items-center justify-center">
-            <span
-              v-if="isStreaming && !hasContent"
-              class="absolute h-full w-full animate-ping rounded-full bg-[#c9b896] opacity-20"
-            />
-            <span
-              class="relative h-1 w-1 rounded-full transition-colors duration-300"
-              :class="isStreaming && !hasContent ? 'bg-[#c9b896]' : 'bg-[#c9b896]/50'"
-            />
-          </div>
-          <span class="font-medium">{{ thinkingStatus }}</span>
-          <ChevronUp
-            :size="14"
-            class="opacity-40 transition-all duration-300"
-            :class="{ 'rotate-180': isThinkingCollapsed }"
-          />
-        </button>
-        <div class="transition-all duration-500 ease-in-out" :style="{ maxHeight: thinkingHeight }">
-          <div class="py-1">
+          <div class="px-3 pb-3">
             <div
               ref="thinkingContentRef"
-              class="max-h-80 overflow-y-auto border-l border-[#e8e4dd] pl-4 text-[13px] leading-relaxed text-[#8b8680]"
+              class="thinking-text max-h-80 overflow-y-auto border-l border-[hsl(var(--ai-message-border))] pl-4"
             >
               <div
                 v-if="renderedThinkingHtml"
-                class="markdown-content thinking-markdown italic"
+                class="markdown-content thinking-markdown italic text-[hsl(var(--text-secondary-color))]"
                 v-html="renderedThinkingHtml"
               />
-              <div v-else class="whitespace-pre-wrap italic">
+              <div
+                v-else
+                class="whitespace-pre-wrap italic text-[hsl(var(--text-secondary-color))]"
+              >
                 {{ message.thinkingContent }}
               </div>
               <span
                 v-if="isStreaming && !hasContent"
-                class="ml-0.5 inline-block w-1 animate-pulse bg-[#c9b896]"
-                >|</span
-              >
+                class="ml-0.5 inline-block h-4 w-1 animate-pulse bg-[hsl(var(--primary-color))] align-middle"
+              ></span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 主消息气泡 -->
-      <div
-        v-if="isUser || renderedHtml || (isStreaming && hasContent) || !hasThinking"
-        class="rounded-2xl px-4 py-3"
-        :class="
-          isUser ? 'bg-[#c9b896] text-white' : 'border border-[#e8e4dd] bg-white text-[#3a3a3a]'
-        "
-      >
-        <!-- 用户消息：纯文本显示 -->
-        <div v-if="isUser" class="whitespace-pre-wrap text-sm leading-relaxed">
-          {{ message.content }}
-        </div>
-        <!-- AI 消息：Markdown 渲染 -->
+      <!-- 主消息气泡 / 加载状态 -->
+      <template v-if="isUser || renderedHtml || (isStreaming && hasContent) || !hasThinking">
         <div
-          v-else-if="renderedHtml"
-          class="markdown-content text-sm leading-relaxed"
-          v-html="renderedHtml"
-        />
-        <!-- 加载中状态（仅在没有思考过程且没有内容时显示） -->
-        <div v-else-if="!hasContent" class="text-sm leading-relaxed">...</div>
-        <span v-if="isStreaming && hasContent" class="inline-block animate-pulse">█</span>
-      </div>
+          v-if="!isUser && !hasContent && isStreaming"
+          class="loading-container flex items-center gap-2 rounded-xl border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] px-3.5 py-2 shadow-sm"
+        >
+          <div class="ai-icon animate-pulse-custom text-[hsl(var(--primary-color))]">
+            <Sparkles :size="18" />
+          </div>
+          <span class="shimmer-text text-sm font-medium">正在生成响应...</span>
+          <div class="flex gap-0.5">
+            <span
+              class="ai-sparkle h-1 w-1 animate-sparkle rounded-full bg-[hsl(var(--primary-color))] opacity-40"
+            />
+            <span
+              class="ai-sparkle h-1 w-1 animate-sparkle rounded-full bg-[hsl(var(--primary-color))] opacity-40 [animation-delay:0.3s]"
+            />
+            <span
+              class="ai-sparkle h-1 w-1 animate-sparkle rounded-full bg-[hsl(var(--primary-color))] opacity-40 [animation-delay:0.6s]"
+            />
+          </div>
+        </div>
+
+        <div
+          v-else
+          class="rounded-2xl px-4 py-3 shadow-sm"
+          :class="
+            isUser
+              ? 'bg-[#c9b896] text-white'
+              : 'border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] text-[hsl(var(--text-color))]'
+          "
+        >
+          <!-- 用户消息：纯文本显示 -->
+          <div v-if="isUser" class="whitespace-pre-wrap text-sm leading-relaxed">
+            {{ message.content }}
+          </div>
+          <!-- AI 消息：Markdown 渲染 -->
+          <div
+            v-else-if="renderedHtml"
+            class="markdown-content text-sm leading-relaxed"
+            v-html="renderedHtml"
+          />
+          <!-- 兜底加载状态 -->
+          <div v-else class="text-sm leading-relaxed">...</div>
+          <span v-if="isStreaming && hasContent" class="inline-block animate-pulse">█</span>
+        </div>
+      </template>
 
       <!-- 操作按钮（AI 消息 hover 时显示） -->
       <div

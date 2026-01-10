@@ -55,12 +55,23 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
 
-    /* Radix UI 变量 */
-    --radix-accordion-content-height: 0px;
-    --radix-collapsible-content-height: 0px;
+    /* AI 助手特定变量 */
+    --ai-message-bg: 40 20% 98%;
+    --ai-message-border: 40 10% 90%;
+    --ai-accent-hover: 43 46% 92%;
+    --text-color: 240 10% 3.9%;
+    --text-secondary-color: 240 3.8% 46.1%;
+    --primary-color: 43 46% 69%;
   }
 
   .dark {
+    /* AI 助手特定变量 */
+    --ai-message-bg: 240 10% 10%;
+    --ai-message-border: 240 10% 20%;
+    --ai-accent-hover: 240 10% 15%;
+    --text-color: 0 0% 98%;
+    --text-secondary-color: 240 5% 64.9%;
+    --primary-color: 43 46% 69%;
     /* 基础颜色 */
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
@@ -105,6 +116,84 @@
     /* Radix UI 变量 */
     --radix-accordion-content-height: 0px;
     --radix-collapsible-content-height: 0px;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+@keyframes pulse-custom {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+@keyframes sparkle {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s linear infinite;
+}
+
+.shimmer-text {
+  background: linear-gradient(
+    90deg,
+    rgba(107, 92, 77, 0.4) 0%,
+    rgba(107, 92, 77, 1) 50%,
+    rgba(107, 92, 77, 0.4) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 2s linear infinite;
+}
+
+.dark .shimmer-text {
+  background: linear-gradient(
+    90deg,
+    rgba(201, 184, 150, 0.4) 0%,
+    rgba(201, 184, 150, 1) 50%,
+    rgba(201, 184, 150, 0.4) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.animate-pulse-custom {
+  animation: pulse-custom 2s ease-in-out infinite;
+}
+
+.animate-sparkle {
+  animation: sparkle 1.5s ease-in-out infinite;
+}
+
+@media (max-width: 640px) {
+  .thinking-content {
+    margin: 0.5rem -0.5rem;
+    border-radius: 0;
+    border-left: none !important;
+    border-right: none !important;
   }
 }
 
