@@ -10,6 +10,7 @@ import {
   Lightbulb,
   Settings2,
   ChevronDown,
+  ChevronLeft,
   Square,
   RefreshCw,
   Trash2,
@@ -50,7 +51,26 @@ const toggleTodoAssistant = () => {
 const isTodoAssistantEnabled = computed(() => config.value.todoAssistant)
 
 // 会话历史管理
-const { switchSession } = useChatHistory()
+const { sessions, currentSessionId, switchSession } = useChatHistory()
+
+// 寻找当前会话索引
+const currentSessionIndex = computed(() =>
+  sessions.value.findIndex((s) => s.id === currentSessionId.value),
+)
+
+// 上一个会话（时间更早的）
+const previousSession = computed(() => {
+  const idx = currentSessionIndex.value
+  if (idx === -1 || idx === sessions.value.length - 1) return null
+  return sessions.value[idx + 1]
+})
+
+// 切换会话
+const navigateToPrevious = () => {
+  if (previousSession.value) {
+    switchSession(previousSession.value.id)
+  }
+}
 
 // 使用聊天 composable（不传入固定 systemPrompt，使用配置中的值）
 const {
@@ -265,7 +285,8 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
         <!-- 快捷操作按钮 -->
         <div class="mb-3 flex flex-wrap items-center gap-2 text-sm">
           <button
-            class="flex items-center gap-1 rounded-full border border-[#e8e4dd] bg-white px-3 py-1.5 text-[#6b5c4d] transition-colors hover:bg-[#f5f3ed] dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#a0a0a0] dark:hover:bg-[#3a3a3a]"
+            class="flex items-center gap-1 rounded-full border border-[#e8e4dd] bg-white px-3 py-1.5 text-[#6b5c4d] transition-colors hover:bg-[#f5f3ed] disabled:cursor-not-allowed disabled:opacity-30 dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#a0a0a0] dark:hover:bg-[#3a3a3a]"
+            :disabled="!hasHistory || isGenerating"
             @click="handleNewChat"
           >
             <Plus :size="14" />
@@ -301,6 +322,16 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
           >
             <RefreshCw :size="14" />
             <span>重新生成</span>
+          </button>
+          <!-- 返回上一个会话按钮 -->
+          <button
+            v-if="sessions.length > 1"
+            class="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e4dd] bg-white text-[#8b8680] transition-colors hover:bg-[#f5f3ed] disabled:cursor-not-allowed disabled:opacity-30 dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#6b6b6b] dark:hover:bg-[#3a3a3a]"
+            title="返回上一个会话"
+            :disabled="!previousSession || isGenerating"
+            @click="navigateToPrevious"
+          >
+            <ChevronLeft :size="16" />
           </button>
           <!-- 清空历史按钮 -->
           <button
