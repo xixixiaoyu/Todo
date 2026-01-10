@@ -12,6 +12,7 @@ vi.mock('@/features/todo/stores/todo', () => ({
     updateTodo: vi.fn(),
     clearSearch: vi.fn(),
     setSearchQuery: vi.fn(),
+    clearError: vi.fn(),
   })),
 }))
 
@@ -30,6 +31,7 @@ describe('useTodo', () => {
       updateTodo: vi.fn(),
       clearSearch: vi.fn(),
       setSearchQuery: vi.fn(),
+      clearError: vi.fn(),
     } as unknown as ReturnType<typeof useTodoStore>
 
     vi.mocked(useTodoStore).mockReturnValue(todoStore)

@@ -53,7 +53,7 @@ const emit = defineEmits<{
         v-if="showTooltip"
         class="absolute -top-10 left-0 z-10 rounded-lg bg-[#3a3a3a] px-3 py-1.5 text-sm text-white shadow-lg dark:bg-[#4a4a4a]"
       >
-        {{ errorMessage.includes('.') ? t(errorMessage) : errorMessage }}
+        {{ errorMessage?.includes('.') ? t(errorMessage) : errorMessage || '' }}
         <!-- 小三角 -->
         <div class="absolute -bottom-1 left-4 h-2 w-2 rotate-45 bg-[#3a3a3a] dark:bg-[#4a4a4a]" />
       </div>

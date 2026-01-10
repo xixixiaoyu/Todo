@@ -19,13 +19,16 @@ const i18n = createI18n({
 })
 
 describe('TodoInput', () => {
+  const defaultProps = {
+    modelValue: '',
+    isShaking: false,
+    showTooltip: false,
+    errorMessage: '',
+  }
+
   it('should render input field', () => {
     const wrapper = mount(TodoInput, {
-      props: {
-        modelValue: '',
-        isShaking: false,
-        showTooltip: false,
-      },
+      props: defaultProps,
       global: {
         plugins: [i18n],
       },
@@ -37,11 +40,7 @@ describe('TodoInput', () => {
 
   it('should render add button', () => {
     const wrapper = mount(TodoInput, {
-      props: {
-        modelValue: '',
-        isShaking: false,
-        showTooltip: false,
-      },
+      props: defaultProps,
       global: {
         plugins: [i18n],
       },
@@ -54,11 +53,7 @@ describe('TodoInput', () => {
 
   it('should emit update:modelValue when input changes', async () => {
     const wrapper = mount(TodoInput, {
-      props: {
-        modelValue: '',
-        isShaking: false,
-        showTooltip: false,
-      },
+      props: defaultProps,
       global: {
         plugins: [i18n],
       },
@@ -74,9 +69,8 @@ describe('TodoInput', () => {
   it('should emit add event when button clicked', async () => {
     const wrapper = mount(TodoInput, {
       props: {
+        ...defaultProps,
         modelValue: 'New todo',
-        isShaking: false,
-        showTooltip: false,
       },
       global: {
         plugins: [i18n],
@@ -91,11 +85,7 @@ describe('TodoInput', () => {
 
   it('should emit keydown event when keydown occurs', async () => {
     const wrapper = mount(TodoInput, {
-      props: {
-        modelValue: '',
-        isShaking: false,
-        showTooltip: false,
-      },
+      props: defaultProps,
       global: {
         plugins: [i18n],
       },
@@ -110,9 +100,8 @@ describe('TodoInput', () => {
   it('should apply shaking class when isShaking is true', () => {
     const wrapper = mount(TodoInput, {
       props: {
-        modelValue: '',
+        ...defaultProps,
         isShaking: true,
-        showTooltip: false,
       },
       global: {
         plugins: [i18n],
@@ -128,9 +117,8 @@ describe('TodoInput', () => {
   it('should not apply shaking class when isShaking is false', () => {
     const wrapper = mount(TodoInput, {
       props: {
-        modelValue: '',
+        ...defaultProps,
         isShaking: false,
-        showTooltip: false,
       },
       global: {
         plugins: [i18n],
@@ -146,9 +134,9 @@ describe('TodoInput', () => {
   it('should show tooltip when showTooltip is true', () => {
     const wrapper = mount(TodoInput, {
       props: {
-        modelValue: '',
-        isShaking: false,
+        ...defaultProps,
         showTooltip: true,
+        errorMessage: 'todo.duplicate',
       },
       global: {
         plugins: [i18n],
@@ -163,8 +151,7 @@ describe('TodoInput', () => {
   it('should not show tooltip when showTooltip is false', () => {
     const wrapper = mount(TodoInput, {
       props: {
-        modelValue: '',
-        isShaking: false,
+        ...defaultProps,
         showTooltip: false,
       },
       global: {
@@ -179,9 +166,8 @@ describe('TodoInput', () => {
   it('should display current modelValue in input', () => {
     const wrapper = mount(TodoInput, {
       props: {
+        ...defaultProps,
         modelValue: 'Test todo',
-        isShaking: false,
-        showTooltip: false,
       },
       global: {
         plugins: [i18n],
@@ -194,11 +180,7 @@ describe('TodoInput', () => {
 
   it('should have correct placeholder', () => {
     const wrapper = mount(TodoInput, {
-      props: {
-        modelValue: '',
-        isShaking: false,
-        showTooltip: false,
-      },
+      props: defaultProps,
       global: {
         plugins: [i18n],
       },

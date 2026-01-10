@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { ref, computed } from 'vue'
+import i18n from '@/i18n'
 import { useChat } from '@/composables/useChat'
 import type { ChatSession } from '@/composables/useChatHistory'
 import type { ChatMessage } from '@/services/aiService'
@@ -225,7 +226,8 @@ describe('useChat', () => {
       await sendMessage('test message')
 
       expect(messages.value).toHaveLength(2) // 用户消息 + 部分 AI 消息
-      expect(messages.value[1].content).toContain('*（已中断）*')
+      const abortedText = i18n.global.t('ai.aborted')
+      expect(messages.value[1].content).toContain(abortedText)
       expect(isGenerating.value).toBe(false)
     })
 

@@ -103,3 +103,12 @@ export const ResetPasswordSchema = z.object({
     .regex(/[A-Za-z]/, ValidationKeys.PASSWORD_LETTER)
     .regex(/[0-9]/, ValidationKeys.PASSWORD_NUMBER),
 })
+
+export type LoginInput = z.infer<typeof LoginSchema>
+export type RegisterInput = z.infer<typeof RegisterSchema>
+export type UpdateUserInput = z.infer<typeof UpdateUserSchema>
+export type User = z.infer<typeof UserSchema>
+export type AuthResponse = z.infer<typeof AuthResponseSchema>
+export type RefreshTokenInput = z.infer<typeof RefreshTokenSchema>
+export type ForgotPasswordInput = z.infer<typeof ForgotPasswordSchema>
+export type ResetPasswordInput = z.infer<typeof ResetPasswordSchema>

@@ -121,7 +121,7 @@ describe('useAuthStore', () => {
       const result = await store.login(credentials)
 
       expect(result).toBe(false)
-      expect(store.error).toBe('登录失败')
+      expect(store.error).toBe('login.failed')
     })
   })
 

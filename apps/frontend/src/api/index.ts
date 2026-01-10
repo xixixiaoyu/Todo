@@ -19,7 +19,7 @@ const httpClient = axios.create({
  */
 let csrfInitialized = false
 
-async function initCsrfToken(): Promise<void> {
+export async function initCsrfToken(): Promise<void> {
   if (csrfInitialized) return
 
   try {
@@ -152,7 +152,7 @@ httpClient.interceptors.response.use(
 
       try {
         const authStore = useAuthStore()
-        const success = await authStore.refresh()
+        const success = await authStore.refreshAccessToken()
 
         if (success && authStore.token) {
           onRefreshed(authStore.token)
