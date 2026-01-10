@@ -108,8 +108,27 @@ describe('TodoItem', () => {
       },
     })
 
-    const editButton = wrapper.findAll('button')[1]
-    await editButton.trigger('click')
+    const editBtn = wrapper.find('button[title="编辑"]')
+    await editBtn.trigger('click')
+
+    expect(wrapper.emitted('startEdit')).toBeTruthy()
+    expect(wrapper.emitted('startEdit')?.[0]).toEqual(['1', 'Test todo'])
+  })
+
+  it('should emit startEdit event when title is double clicked', async () => {
+    const wrapper = mount(TodoItem, {
+      props: {
+        todo: mockTodo,
+        editingId: null,
+        editingTitle: '',
+      },
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    const titleSpan = wrapper.find('span')
+    await titleSpan.trigger('dblclick')
 
     expect(wrapper.emitted('startEdit')).toBeTruthy()
     expect(wrapper.emitted('startEdit')?.[0]).toEqual(['1', 'Test todo'])
@@ -220,10 +239,8 @@ describe('TodoItem', () => {
       },
     })
 
-    const checkbox = wrapper.find('button')
-    // Check that the button has completed style
-    expect(checkbox.classes()).toContain('bg-[#90b494]')
-    expect(checkbox.classes()).toContain('text-white')
+    // Check for the Lucide Check icon
+    expect(wrapper.find('svg.lucide-check').exists()).toBe(true)
   })
 
   it('should not show check icon when todo is not completed', () => {
@@ -238,7 +255,24 @@ describe('TodoItem', () => {
       },
     })
 
-    const checkbox = wrapper.find('button')
-    expect(checkbox.html()).not.toContain('Check')
+    expect(wrapper.find('svg.lucide-check').exists()).toBe(false)
+  })
+
+  it('should emit saveEdit event when input blurred', async () => {
+    const wrapper = mount(TodoItem, {
+      props: {
+        todo: mockTodo,
+        editingId: '1',
+        editingTitle: 'Updated todo',
+      },
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    const input = wrapper.find('input[type="text"]')
+    await input.trigger('blur')
+
+    expect(wrapper.emitted('saveEdit')).toBeTruthy()
   })
 })

@@ -47,6 +47,7 @@ const emit = defineEmits<{
         :placeholder="t('todo.editPlaceholder')"
         @input="emit('update:editingTitle', ($event.target as HTMLInputElement).value)"
         @keydown="emit('editKeydown', $event)"
+        @blur="emit('saveEdit')"
       />
       <button
         class="text-[#90b494] transition-all hover:text-[#7a9b7e] dark:text-[#7a9b7e] dark:hover:text-[#90b494]"
@@ -67,8 +68,9 @@ const emit = defineEmits<{
     <!-- 显示模式 -->
     <template v-else>
       <span
-        class="flex-1 text-[#3a3a3a] transition-all dark:text-[#e0e0e0]"
+        class="flex-1 cursor-pointer select-none text-[#3a3a3a] transition-all dark:text-[#e0e0e0]"
         :class="todo.completed ? 'line-through text-[#8b8680] dark:text-[#6b6b6b]' : ''"
+        @dblclick="emit('startEdit', todo.id, todo.title)"
       >
         {{ todo.title }}
       </span>
