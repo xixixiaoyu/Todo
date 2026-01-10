@@ -39,6 +39,16 @@ const toggleThinkingMode = () => {
 // 思考模式是否开启
 const isThinkingEnabled = computed(() => config.value.thinkingMode === 'enabled')
 
+// 切换 Todo 助手
+const toggleTodoAssistant = () => {
+  updateConfig({
+    todoAssistant: !config.value.todoAssistant,
+  })
+}
+
+// Todo 助手是否开启
+const isTodoAssistantEnabled = computed(() => config.value.todoAssistant)
+
 // 会话历史管理
 const { switchSession } = useChatHistory()
 
@@ -311,7 +321,14 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
             <History :size="16" />
           </button>
           <button
-            class="flex items-center gap-1 rounded-full border border-[#e8e4dd] bg-white px-3 py-1.5 text-[#6b5c4d] transition-colors hover:bg-[#f5f3ed]"
+            class="flex items-center gap-1 rounded-full border px-3 py-1.5 transition-colors"
+            :class="
+              isTodoAssistantEnabled
+                ? 'border-[#c9b896] bg-[#c9b896]/10 text-[#c9b896]'
+                : 'border-[#e8e4dd] bg-white text-[#6b5c4d] hover:bg-[#f5f3ed]'
+            "
+            :title="isTodoAssistantEnabled ? 'Todo 助手已开启' : 'Todo 助手已关闭'"
+            @click="toggleTodoAssistant"
           >
             <Clover :size="14" />
             <span>Todo 助手</span>

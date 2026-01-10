@@ -37,6 +37,7 @@ const presetForm = ref<Omit<AIPreset, 'id'>>({
   systemPrompt: '',
   temperature: 0.3,
   thinkingMode: 'enabled',
+  todoAssistant: false,
 })
 
 // 同步外部配置到表单
@@ -110,6 +111,7 @@ function startEditPreset(preset: AIPreset) {
     systemPrompt: preset.systemPrompt,
     temperature: preset.temperature,
     thinkingMode: preset.thinkingMode,
+    todoAssistant: preset.todoAssistant,
   }
 }
 

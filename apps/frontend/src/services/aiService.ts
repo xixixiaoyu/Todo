@@ -3,6 +3,7 @@
  */
 
 import { getAIConfig } from '@/composables/useAIConfig'
+import { useTodoStore } from '@/features/todo/stores/todo'
 
 export interface ChatMessage {
   id: string
@@ -81,6 +82,19 @@ export async function getAIStreamResponse(
       role: 'system',
       content: systemPrompt,
     })
+  }
+
+  // Todo 助手：注入未完成的 Todo 列表
+  if (aiConfig.todoAssistant) {
+    const todoStore = useTodoStore()
+    const pendingTodos = todoStore.todos.filter((t) => !t.completed)
+    if (pendingTodos.length > 0) {
+      const todoList = pendingTodos.map((t) => `- ${t.title}`).join('\n')
+      messagesWithSystemPrompts.push({
+        role: 'system',
+        content: `用户当前有 ${pendingTodos.length} 个未完成的待办事项：\n${todoList}`,
+      })
+    }
   }
 
   messagesWithSystemPrompts.push(

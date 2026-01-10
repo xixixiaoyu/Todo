@@ -10,6 +10,7 @@ export interface AIConfig {
   temperature: number
   systemPrompt: string
   thinkingMode: ThinkingMode
+  todoAssistant: boolean
 }
 
 export interface AIPreset {
@@ -21,6 +22,7 @@ export interface AIPreset {
   systemPrompt: string
   temperature: number
   thinkingMode: ThinkingMode
+  todoAssistant: boolean
 }
 
 const STORAGE_KEY = 'ai-config'
@@ -35,6 +37,7 @@ const DEFAULT_CONFIG: AIConfig = {
   temperature: 0.3,
   systemPrompt: '你是一个友好的 AI 助手，请用简洁明了的中文回答用户的问题。',
   thinkingMode: 'enabled',
+  todoAssistant: false,
 }
 
 // 全局配置状态（单例）
@@ -161,6 +164,7 @@ export function useAIConfig() {
       systemPrompt: preset.systemPrompt,
       temperature: preset.temperature,
       thinkingMode: preset.thinkingMode,
+      todoAssistant: preset.todoAssistant,
     }
   }
 
@@ -210,6 +214,7 @@ export function useAIConfig() {
       systemPrompt: config.value.systemPrompt,
       temperature: config.value.temperature,
       thinkingMode: config.value.thinkingMode,
+      todoAssistant: config.value.todoAssistant,
     }
   }
 
