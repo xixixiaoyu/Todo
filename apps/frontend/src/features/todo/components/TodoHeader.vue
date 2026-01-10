@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { Search, Clover, Languages } from 'lucide-vue-next'
+import ThemeToggle from './ThemeToggle.vue'
 
 const { t, locale } = useI18n()
 
@@ -47,6 +48,7 @@ const toggleLanguage = () => {
       >
         <Search :size="18" />
       </button>
+      <ThemeToggle />
       <button
         class="flex h-10 w-10 items-center justify-center rounded-xl border border-[#e8e4dd] bg-white text-[#6b5c4d] transition-all hover:bg-[#f5f3ed] dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#a0a0a0] dark:hover:bg-[#3a3a3a]"
         :title="t('todo.language')"

@@ -7,6 +7,11 @@ export default {
     logout: 'Logout',
     welcome: 'Welcome',
     backToHome: 'Back to Home',
+    theme: {
+      light: 'Light Mode',
+      dark: 'Dark Mode',
+      system: 'System Preference',
+    },
   },
   home: {
     welcomeMessage: 'Welcome to My App',

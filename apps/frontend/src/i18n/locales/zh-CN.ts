@@ -7,6 +7,11 @@ export default {
     logout: '退出登录',
     welcome: '欢迎',
     backToHome: '返回首页',
+    theme: {
+      light: '浅色模式',
+      dark: '暗色模式',
+      system: '跟随系统',
+    },
   },
   home: {
     welcomeMessage: '欢迎使用 My App',
