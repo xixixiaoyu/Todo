@@ -303,6 +303,15 @@ defineOptions({
             <Plus :size="14" />
             <span>{{ t('ai.newChat') }}</span>
           </button>
+          <!-- 停止生成按钮 -->
+          <button
+            v-if="isGenerating && !error"
+            class="flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-red-600 transition-colors hover:bg-red-100 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
+            @click="stopGenerating"
+          >
+            <Square :size="12" />
+            <span>{{ t('ai.stop') }}</span>
+          </button>
           <!-- AI 思考模式开关 -->
           <button
             class="flex h-8 w-8 items-center justify-center rounded-full border transition-colors"
@@ -315,15 +324,6 @@ defineOptions({
             @click="toggleThinkingMode"
           >
             <Lightbulb :size="16" />
-          </button>
-          <!-- 停止生成按钮 -->
-          <button
-            v-if="isGenerating && !error"
-            class="flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-red-600 transition-colors hover:bg-red-100 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
-            @click="stopGenerating"
-          >
-            <Square :size="12" />
-            <span>{{ t('ai.stop') }}</span>
           </button>
           <!-- 返回上一个会话按钮 -->
           <button
