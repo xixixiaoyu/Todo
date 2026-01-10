@@ -33,7 +33,7 @@ const mockConfig = ref({
   discussionPrimaryModelId: null,
 })
 
-const mockPresets = ref<any[]>([])
+const mockPresets = ref<AIPreset[]>([])
 const mockActivePresetId = ref<string | null>(null)
 
 vi.mock('@/composables/useAIConfig', () => ({
@@ -151,7 +151,7 @@ describe('AISettingsDialog', () => {
 
     await nextTick()
     // 通过 expose 的 activeTab 修改
-    ;(wrapper.vm as any).activeTab = 'presets'
+    ;(wrapper.vm as unknown as { activeTab: string }).activeTab = 'presets'
     await nextTick()
 
     expect(wrapper.emitted('update:initialTab')).toBeTruthy()
@@ -207,12 +207,12 @@ describe('AISettingsDialog', () => {
     })
 
     // 设置一些中间状态
-    ;(wrapper.vm as any).activeTab = 'settings'
+    ;(wrapper.vm as unknown as { activeTab: string }).activeTab = 'settings'
 
     await wrapper.setProps({ modelValue: true })
     await nextTick()
 
-    expect((wrapper.vm as any).activeTab).toBe('presets')
+    expect((wrapper.vm as unknown as { activeTab: string }).activeTab).toBe('presets')
   })
 
   it('should clear activePresetId when saving custom settings', async () => {

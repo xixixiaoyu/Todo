@@ -291,7 +291,7 @@ export async function getMultiModelDiscussionStream(
   options: AIRequestOptions = {},
 ): Promise<void> {
   const aiConfig = getAIConfig()
-  const { discussionModelIds = [], discussionPrimaryModelId, thinkingMode, systemPrompt } = aiConfig
+  const { discussionModelIds = [], discussionPrimaryModelId, thinkingMode } = aiConfig
 
   // 确保先中止之前的请求
   abortCurrentRequest()

@@ -110,7 +110,9 @@ async function loadMermaid() {
       }
     }
     const mermaidModule = await import('mermaid')
-    mermaid = mermaidModule.default || (mermaidModule as any).default || mermaidModule
+    mermaid =
+      (mermaidModule as { default?: typeof import('mermaid').default }).default ||
+      (mermaidModule as unknown as typeof import('mermaid').default)
     return mermaid!
   })()
 

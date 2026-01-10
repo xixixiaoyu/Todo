@@ -214,9 +214,8 @@ describe('useChatHistory', () => {
 
       createSession() // session1
       await nextTick()
-      const session1Id = lastActiveSessionId.value // This might still be null if only 1 session exists
 
-      const session2 = createSession()
+      createSession()
       await nextTick()
       const lastId = lastActiveSessionId.value
       expect(lastId).not.toBeNull()

@@ -35,7 +35,7 @@ Object.defineProperty(window, 'fetch', {
 vi.mock('@/i18n', () => ({
   default: {
     global: {
-      t: vi.fn((key: string, params?: any) => {
+      t: vi.fn((key: string, params?: Record<string, unknown>) => {
         if (key === 'ai.parallelSynthesisPrompt') {
           return `Synthesis: ${params.originalQuery} - ${params.discussionData}`
         }
@@ -151,9 +151,10 @@ describe('aiService - Multi-model Discussion', () => {
     )
     _resetAIConfig()
 
-    mockFetch.mockImplementation(async (url: string, init: any) => {
+    mockFetch.mockImplementation(async (url: string, init: RequestInit) => {
+      const body = init?.body ? JSON.parse(init.body as string) : {}
       // 流式请求 (synthesis)
-      if (init?.body && JSON.parse(init.body).stream === true) {
+      if (body.stream === true) {
         return {
           ok: true,
           body: {
@@ -224,8 +225,10 @@ describe('aiService - Multi-model Discussion', () => {
     )
     _resetAIConfig()
 
-    mockFetch.mockImplementation(async (url: string, init: any) => {
-      if (init?.body && JSON.parse(init.body).stream === true) {
+    mockFetch.mockImplementation(async (url: string, init: RequestInit) => {
+      const body = init?.body ? JSON.parse(init.body as string) : {}
+      // 流式请求
+      if (body.stream === true) {
         return {
           ok: true,
           body: {
@@ -291,8 +294,8 @@ describe('aiService - Multi-model Discussion', () => {
     )
     _resetAIConfig()
 
-    mockFetch.mockImplementation(async (url: string, init: any) => {
-      const body = JSON.parse(init.body)
+    mockFetch.mockImplementation(async (url: string, init: RequestInit) => {
+      const body = init?.body ? JSON.parse(init.body as string) : {}
 
       if (body.stream === false) {
         // Parallel model request (p2)
@@ -360,8 +363,10 @@ describe('aiService - Multi-model Discussion', () => {
     )
     _resetAIConfig()
 
-    mockFetch.mockImplementation(async (url: string, init: any) => {
-      if (init?.body && JSON.parse(init.body).stream === true) {
+    mockFetch.mockImplementation(async (url: string, init: RequestInit) => {
+      const body = init?.body ? JSON.parse(init.body as string) : {}
+      // 流式请求
+      if (body.stream === true) {
         return {
           ok: true,
           body: {
@@ -428,8 +433,8 @@ describe('aiService - Multi-model Discussion', () => {
     )
     _resetAIConfig()
 
-    mockFetch.mockImplementation(async (url: string, init: any) => {
-      const body = JSON.parse(init.body)
+    mockFetch.mockImplementation(async (url: string, init: RequestInit) => {
+      const body = init?.body ? JSON.parse(init.body as string) : {}
       if (body.stream === false) {
         expect(body.thinking).toEqual({ type: 'enabled' }) // Global setting
         return {
@@ -484,8 +489,8 @@ describe('aiService - Multi-model Discussion', () => {
     )
     _resetAIConfig()
 
-    mockFetch.mockImplementation(async (url: string, init: any) => {
-      const body = JSON.parse(init.body)
+    mockFetch.mockImplementation(async (url: string, init: RequestInit) => {
+      const body = init?.body ? JSON.parse(init.body as string) : {}
 
       if (body.stream === false) {
         // Parallel model request (contributor)
@@ -555,8 +560,8 @@ describe('aiService - Multi-model Discussion', () => {
     )
     _resetAIConfig()
 
-    mockFetch.mockImplementation(async (url: string, init: any) => {
-      const body = JSON.parse(init.body)
+    mockFetch.mockImplementation(async (url: string, init: RequestInit) => {
+      const body = init?.body ? JSON.parse(init.body as string) : {}
 
       if (body.stream === false) {
         // Parallel model request (contributor)

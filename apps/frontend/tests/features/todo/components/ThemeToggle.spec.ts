@@ -27,7 +27,8 @@ describe('ThemeToggle', () => {
     mockedUseTheme.mockReturnValue({
       theme,
       setTheme,
-    } as any)
+      isDark: ref(false),
+    })
 
     const wrapper = mount(ThemeToggle)
 
