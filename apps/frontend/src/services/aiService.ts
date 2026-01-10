@@ -152,11 +152,9 @@ export async function getAIStreamResponse(
       stream: true,
     }
 
-    // 仅在开启思考模式时添加 thinking 参数
-    if (thinkingMode === 'enabled') {
-      requestBody.thinking = {
-        type: 'enabled',
-      }
+    // 始终传递 thinking 参数
+    requestBody.thinking = {
+      type: thinkingMode,
     }
 
     const response = await fetch(buildApiUrl(baseUrl), {
@@ -261,8 +259,8 @@ async function fetchNonStreamResponse(
     stream: false,
   }
 
-  if (thinkingMode === 'enabled') {
-    requestBody.thinking = { type: 'enabled' }
+  if (thinkingMode) {
+    requestBody.thinking = { type: thinkingMode }
   }
 
   const response = await fetch(buildApiUrl(config.baseUrl), {
