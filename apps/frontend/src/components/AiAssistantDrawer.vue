@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import {
   Search,
   Clover,
@@ -19,6 +19,41 @@ const modelValue = defineModel<boolean>({ required: true })
 
 const isMaximized = ref(false)
 const chatInput = ref('')
+const textareaRef = ref<HTMLTextAreaElement>()
+
+const MIN_HEIGHT = 36
+const MAX_HEIGHT = 192
+
+const adjustTextareaHeight = () => {
+  const textarea = textareaRef.value
+  if (!textarea) return
+
+  textarea.style.height = 'auto'
+  const newHeight = Math.min(Math.max(textarea.scrollHeight, MIN_HEIGHT), MAX_HEIGHT)
+  textarea.style.height = `${newHeight}px`
+}
+
+const handleSend = () => {
+  if (!chatInput.value.trim()) return
+  // TODO: 发送消息逻辑
+  chatInput.value = ''
+  nextTick(() => adjustTextareaHeight())
+}
+
+const handleNewline = (event: KeyboardEvent) => {
+  event.preventDefault()
+  const textarea = event.target as HTMLTextAreaElement
+  const start = textarea.selectionStart
+  const end = textarea.selectionEnd
+  const value = textarea.value
+  const newValue = value.substring(0, start) + '\n' + value.substring(end)
+  chatInput.value = newValue
+  nextTick(() => {
+    textarea.selectionStart = textarea.selectionEnd = start + 1
+    textarea.scrollTop = textarea.scrollHeight
+    adjustTextareaHeight()
+  })
+}
 </script>
 
 <template>
@@ -112,15 +147,21 @@ const chatInput = ref('')
         </div>
 
         <!-- 输入框区域 -->
-        <div class="flex items-center gap-2 rounded-xl border border-[#e8e4dd] bg-white px-4 py-3">
-          <input
+        <div class="flex gap-2 rounded-xl border border-[#e8e4dd] bg-white px-4 py-3">
+          <textarea
+            ref="textareaRef"
             v-model="chatInput"
-            type="text"
+            rows="1"
             placeholder="询问 AI 助手... (按 Shift + Enter 换行，Enter 发送)"
-            class="flex-1 bg-transparent text-sm text-[#3a3a3a] outline-none placeholder:text-[#c4c0b8]"
+            class="flex-1 resize-none bg-transparent text-sm text-[#3a3a3a] outline-none placeholder:text-[#c4c0b8]"
+            :style="{ height: `${MIN_HEIGHT}px` }"
+            @input="adjustTextareaHeight"
+            @keydown.enter.exact.prevent="handleSend"
+            @keydown.enter.shift.exact="handleNewline"
           />
           <button
-            class="flex h-9 w-9 items-center justify-center rounded-full bg-[#c9b896] text-white transition-colors hover:bg-[#b8a785]"
+            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#c9b896] text-white transition-colors hover:bg-[#b8a785]"
+            @click="handleSend"
           >
             <Send :size="16" />
           </button>
