@@ -18,8 +18,14 @@ const { t } = useI18n()
 
 const { renderMarkdown, getMermaidSvgMap } = useMarkdown()
 
-// 思考内容折叠状态（流式且没有正文时默认展开，否则折叠）
-const isThinkingCollapsed = ref(!props.message.isStreaming || !!props.message.content)
+// 思考内容展开状态（流式且没有正文时默认展开）
+const isExpanded = ref(props.message.isStreaming && !props.message.content)
+
+// 记录内容实际高度
+const contentHeight = ref(0)
+
+// 自动折叠定时器
+let autoCollapseTimer: ReturnType<typeof setTimeout> | null = null
 
 // 复制状态
 const isCopied = ref(false)
@@ -44,44 +50,16 @@ const thinkingStatus = computed(() => {
 
 // 动态计算思考内容高度
 const thinkingHeight = computed(() => {
-  if (isThinkingCollapsed.value) return '0px'
-  // 依赖 props.message.thinkingContent 确保在流式输出时高度能动态更新
-  return (props.message.thinkingContent || renderedThinkingHtml.value) && thinkingContentRef.value
-    ? `${thinkingContentRef.value.scrollHeight}px`
-    : 'auto'
+  if (!isExpanded.value) return '0px'
+  // 流式输出思考过程且无正文时，保持内容自然流出
+  if (isStreaming.value && !hasContent.value) return 'none'
+  return `${contentHeight.value}px`
 })
 
-// 渲染 Markdown 内容
-async function updateRenderedContent() {
-  const tasks = []
-
-  if (props.message.content && !isUser.value) {
-    tasks.push(
-      renderMarkdown(props.message.content, props.message.isStreaming).then((html) => {
-        renderedHtml.value = html
-      }),
-    )
-  } else {
-    renderedHtml.value = ''
-  }
-
-  if (props.message.thinkingContent && !isUser.value) {
-    tasks.push(
-      renderMarkdown(
-        props.message.thinkingContent,
-        props.message.isStreaming && !props.message.content,
-      ).then((html) => {
-        renderedThinkingHtml.value = html
-      }),
-    )
-  } else {
-    renderedThinkingHtml.value = ''
-  }
-
-  if (tasks.length > 0) {
-    await Promise.all(tasks)
-    await nextTick()
-    injectMermaidSvgs()
+// 更新内容高度
+const updateContentHeight = () => {
+  if (thinkingContentRef.value) {
+    contentHeight.value = thinkingContentRef.value.scrollHeight + 12
   }
 }
 
@@ -105,40 +83,63 @@ function injectMermaidSvgs() {
   svgMap.clear()
 }
 
-// 监听内容变化，自动收起思考内容并渲染 Markdown
+// 渲染 Markdown 内容
+async function updateRenderedContent() {
+  const { content, thinkingContent, isStreaming } = props.message
+
+  if (content && !isUser.value) {
+    renderedHtml.value = await renderMarkdown(content, isStreaming)
+  }
+
+  if (thinkingContent && !isUser.value) {
+    // 只有在正在思考且没有正文时，才给思考内容应用流式渲染效果
+    const isThinkingStreaming = isStreaming && !content
+    renderedThinkingHtml.value = await renderMarkdown(thinkingContent, isThinkingStreaming)
+    nextTick(updateContentHeight)
+  }
+
+  injectMermaidSvgs()
+}
+
+// 监听内容与状态变化
 watch(
-  [() => props.message.content, () => props.message.thinkingContent],
-  async ([content, thinkingContent]) => {
-    if (content && props.message.isStreaming && !isThinkingCollapsed.value) {
-      // 出现正文时，快速收起思考过程，保留极短延迟以确保平滑感
-      setTimeout(() => {
-        isThinkingCollapsed.value = true
-      }, 300)
+  [() => props.message.content, () => props.message.thinkingContent, isStreaming],
+  async ([content, thinking, streaming], [oldContent, oldThinking, oldStreaming]) => {
+    // 1. 自动折叠逻辑
+    if (isExpanded.value) {
+      // 场景 A: AI 开始输出正文内容 -> 立即折叠
+      const hasStartedResponding = content && !oldContent
+      // 场景 B: 只有思考内容，且流式结束 -> 触发 3s 延迟折叠
+      const hasFinishedThinkingOnly = !streaming && oldStreaming && thinking && !content
+      // 场景 C: 思考内容稳定（非流式状态下的重复触发）
+      const isThinkingStable = !streaming && thinking === oldThinking && thinking && !content
+
+      if (hasStartedResponding) {
+        isExpanded.value = false
+      } else if (hasFinishedThinkingOnly || isThinkingStable) {
+        if (autoCollapseTimer) clearTimeout(autoCollapseTimer)
+        autoCollapseTimer = setTimeout(() => {
+          isExpanded.value = false
+        }, 3000)
+      }
     }
-    // 更新渲染内容
+
+    // 2. 渲染更新
     await updateRenderedContent()
   },
   { immediate: true },
 )
 
-// 监听流式结束，确保收起
-watch(
-  () => props.message.isStreaming,
-  (isStreaming) => {
-    if (!isStreaming && hasThinking.value) {
-      isThinkingCollapsed.value = true
-    }
-  },
-)
-
-// 流式更新时滚动到底部
+// 思考过程滚动跟随
 watch(
   () => props.message.thinkingContent,
   () => {
-    if (!isThinkingCollapsed.value && thinkingContentRef.value) {
+    if (isExpanded.value && thinkingContentRef.value) {
       nextTick(() => {
-        if (thinkingContentRef.value) {
-          thinkingContentRef.value.scrollTop = thinkingContentRef.value.scrollHeight
+        const el = thinkingContentRef.value
+        if (el) {
+          el.scrollTop = el.scrollHeight
+          updateContentHeight()
         }
       })
     }
@@ -172,10 +173,11 @@ async function copyContent() {
       <div
         v-if="hasThinking && !isUser"
         class="thinking-content group/thinking mb-2 overflow-hidden rounded-xl border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] transition-all duration-300 shadow-sm hover:shadow-md"
+        :class="{ 'is-collapsed': !isExpanded }"
       >
         <div
           class="thinking-header flex items-center justify-between px-3 py-2 cursor-pointer select-none"
-          @click="isThinkingCollapsed = !isThinkingCollapsed"
+          @click="isExpanded = !isExpanded"
         >
           <h4 class="flex items-center gap-2">
             <div
@@ -219,24 +221,21 @@ async function copyContent() {
           </h4>
           <button
             class="flex h-6 w-6 items-center justify-center rounded-md transition-colors hover:bg-[hsl(var(--ai-accent-hover))]"
-            @click="isThinkingCollapsed = !isThinkingCollapsed"
+            @click.stop="isExpanded = !isExpanded"
           >
             <ChevronUp
               :size="14"
               class="text-[hsl(var(--text-secondary-color))] transition-transform duration-300"
-              :class="{ 'rotate-180': isThinkingCollapsed }"
+              :class="{ 'rotate-180': !isExpanded }"
             />
           </button>
         </div>
         <div
-          class="thinking-body transition-all duration-500 ease-in-out"
+          class="thinking-body transition-all duration-300 ease-in-out overflow-hidden"
           :style="{ maxHeight: thinkingHeight }"
         >
           <div class="px-3 pb-3">
-            <div
-              ref="thinkingContentRef"
-              class="thinking-text max-h-80 overflow-y-auto border-l border-[hsl(var(--ai-message-border))] pl-4"
-            >
+            <div ref="thinkingContentRef" class="thinking-text">
               <div
                 v-if="renderedThinkingHtml"
                 class="markdown-content thinking-markdown italic text-[hsl(var(--text-secondary-color))]"
@@ -254,99 +253,119 @@ async function copyContent() {
       </div>
 
       <!-- 主消息气泡 / 加载状态 -->
-      <template v-if="isUser || hasContent || (isStreaming && !hasThinking)">
-        <!-- 加载状态：仅在既没有思考内容也没有正文内容时显示 -->
-        <div
-          v-if="!isUser && !hasContent && isStreaming && !hasThinking"
-          class="loading-container flex flex-col gap-3 rounded-2xl border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] p-4 shadow-sm"
-        >
-          <div class="flex items-center gap-2">
-            <div class="ai-icon animate-bounce text-[hsl(var(--primary-color))]">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"
-                  fill="currentColor"
-                  class="ai-star"
-                />
-              </svg>
-            </div>
-            <span class="shimmer-text font-medium">{{ t('ai.isThinking') }}</span>
-          </div>
-          <div class="flex flex-col gap-2">
-            <div
-              class="h-2.5 w-[90%] animate-pulse rounded-full bg-[hsl(var(--ai-message-border))]"
-            ></div>
-            <div
-              class="h-2.5 w-[75%] animate-pulse rounded-full bg-[hsl(var(--ai-message-border))] delay-75"
-            ></div>
-            <div
-              class="h-2.5 w-[85%] animate-pulse rounded-full bg-[hsl(var(--ai-message-border))] delay-150"
-            ></div>
-          </div>
-        </div>
-
-        <!-- 正文气泡：用户消息或已有内容的 AI 消息 -->
-        <div
-          v-else-if="isUser || hasContent"
-          class="relative rounded-2xl px-4 py-3 shadow-sm transition-all duration-300"
-          :class="
-            isUser
-              ? 'bg-[#c9b896] text-white hover:bg-[#b8a785]'
-              : 'border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] text-[hsl(var(--text-color))]'
-          "
-        >
-          <!-- 用户消息：纯文本显示 -->
-          <div v-if="isUser" class="whitespace-pre-wrap text-sm leading-relaxed">
-            {{ message.content }}
-          </div>
-          <!-- AI 消息：Markdown 渲染 -->
+      <Transition
+        enter-active-class="transition duration-300 ease-out"
+        enter-from-class="transform translate-y-2 opacity-0"
+        enter-to-class="transform translate-y-0 opacity-100"
+      >
+        <template v-if="isUser || hasContent || (isStreaming && !hasThinking)">
+          <!-- 加载状态：仅在既没有思考内容也没有正文内容时显示 -->
           <div
-            v-else-if="renderedHtml"
-            class="markdown-content text-sm leading-relaxed"
-            v-html="renderedHtml"
-          />
-          <!-- 兜底显示 -->
-          <div v-else-if="hasContent" class="text-sm leading-relaxed">
-            {{ message.content }}
-          </div>
-
-          <!-- 操作按钮（AI 消息内部） -->
-          <div
-            v-if="!isUser && !isStreaming && hasContent"
-            class="mt-2 flex items-center gap-2 border-t border-[hsl(var(--ai-message-border))] pt-2"
+            v-if="!isUser && !hasContent && isStreaming && !hasThinking"
+            class="loading-container flex flex-col gap-3 rounded-2xl border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] p-4 shadow-sm"
           >
-            <button
-              class="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-[hsl(var(--text-secondary-color))] transition-all hover:bg-[hsl(var(--ai-accent-hover))] hover:text-[hsl(var(--text-color))]"
-              :title="isCopied ? t('ai.copied') : t('ai.copy')"
-              @click="copyContent"
-            >
-              <Check v-if="isCopied" :size="12" class="text-green-600" />
-              <Copy v-else :size="12" />
-              <span>{{ isCopied ? t('ai.copied') : t('ai.copy') }}</span>
-            </button>
-            <button
-              v-if="isLast"
-              class="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-[hsl(var(--text-secondary-color))] transition-all hover:bg-[hsl(var(--ai-accent-hover))] hover:text-[hsl(var(--text-color))]"
-              :title="t('ai.regenerate')"
-              @click="emit('regenerate')"
-            >
-              <RefreshCw :size="12" />
-              <span>{{ t('ai.regenerate') }}</span>
-            </button>
+            <div class="flex items-center gap-2">
+              <div class="ai-icon animate-bounce text-[hsl(var(--primary-color))]">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"
+                    fill="currentColor"
+                    class="ai-star"
+                  />
+                </svg>
+              </div>
+              <span class="shimmer-text font-medium">{{ t('ai.isThinking') }}</span>
+            </div>
+            <div class="flex flex-col gap-2">
+              <div
+                class="h-2.5 w-[90%] animate-pulse rounded-full bg-[hsl(var(--ai-message-border))]"
+              ></div>
+              <div
+                class="h-2.5 w-[75%] animate-pulse rounded-full bg-[hsl(var(--ai-message-border))] delay-75"
+              ></div>
+              <div
+                class="h-2.5 w-[85%] animate-pulse rounded-full bg-[hsl(var(--ai-message-border))] delay-150"
+              ></div>
+            </div>
           </div>
-        </div>
-      </template>
+
+          <!-- 正文气泡：用户消息或已有内容的 AI 消息 -->
+          <div
+            v-else-if="isUser || hasContent"
+            class="relative rounded-2xl px-4 py-3 shadow-sm transition-all duration-300"
+            :class="
+              isUser
+                ? 'bg-[#c9b896] text-white hover:bg-[#b8a785]'
+                : 'border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] text-[hsl(var(--text-color))]'
+            "
+          >
+            <!-- 用户消息：纯文本显示 -->
+            <div v-if="isUser" class="whitespace-pre-wrap text-sm leading-relaxed">
+              {{ message.content }}
+            </div>
+            <!-- AI 消息：Markdown 渲染 -->
+            <div
+              v-else-if="renderedHtml"
+              class="markdown-content text-sm leading-relaxed"
+              v-html="renderedHtml"
+            />
+            <!-- 兜底显示 -->
+            <div v-else-if="hasContent" class="text-sm leading-relaxed">
+              {{ message.content }}
+            </div>
+
+            <!-- 操作按钮（AI 消息内部） -->
+            <div
+              v-if="!isUser && !isStreaming && hasContent"
+              class="mt-2 flex items-center gap-2 border-t border-[hsl(var(--ai-message-border))] pt-2"
+            >
+              <button
+                class="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-[hsl(var(--text-secondary-color))] transition-all hover:bg-[hsl(var(--ai-accent-hover))] hover:text-[hsl(var(--text-color))]"
+                :title="isCopied ? t('ai.copied') : t('ai.copy')"
+                @click="copyContent"
+              >
+                <Check v-if="isCopied" :size="12" class="text-green-600" />
+                <Copy v-else :size="12" />
+                <span>{{ isCopied ? t('ai.copied') : t('ai.copy') }}</span>
+              </button>
+              <button
+                v-if="isLast"
+                class="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-[hsl(var(--text-secondary-color))] transition-all hover:bg-[hsl(var(--ai-accent-hover))] hover:text-[hsl(var(--text-color))]"
+                :title="t('ai.regenerate')"
+                @click="emit('regenerate')"
+              >
+                <RefreshCw :size="12" />
+                <span>{{ t('ai.regenerate') }}</span>
+              </button>
+            </div>
+          </div>
+        </template>
+      </Transition>
     </div>
   </div>
 </template>
 
 <style scoped>
+.thinking-text {
+  max-height: 20rem;
+  overflow-y: auto;
+  border-left: 1px solid hsl(var(--ai-message-border));
+  padding-left: 1rem;
+  color: hsl(var(--text-secondary-color));
+  font-family: var(--font-sans);
+}
+
+.thinking-body {
+  transition: max-height 0.3s ease-in-out;
+  mask-image: linear-gradient(to bottom, black calc(100% - 20px), transparent 100%);
+}
+
 .thinking-markdown :deep(p) {
   margin: 0.5em 0;
 }
@@ -390,11 +409,6 @@ async function copyContent() {
 .thinking-header:hover .ai-icon {
   transform: scale(1.1);
   transition: transform 0.2s ease;
-}
-
-/* 流式输出时，思考内容平滑收起 */
-.thinking-body {
-  mask-image: linear-gradient(to bottom, black calc(100% - 20px), transparent 100%);
 }
 
 .is-collapsed .thinking-body {
