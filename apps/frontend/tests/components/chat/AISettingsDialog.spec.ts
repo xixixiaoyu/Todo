@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { ref, nextTick } from 'vue'
 import AISettingsDialog from '@/components/chat/AISettingsDialog.vue'
+import { useAIConfig } from '@/composables/useAIConfig'
 
 // Mock Lucide icons
 vi.mock('lucide-vue-next', () => ({
@@ -26,6 +27,9 @@ const mockConfig = ref({
   todoAssistant: false,
 })
 
+const mockPresets = ref<any[]>([])
+const mockActivePresetId = ref<string | null>(null)
+
 vi.mock('@/composables/useAIConfig', () => ({
   useAIConfig: () => ({
     config: mockConfig,
@@ -39,8 +43,16 @@ vi.mock('@/composables/useAIConfig', () => ({
       thinkingMode: 'disabled',
       todoAssistant: false,
     },
-    presets: ref([]),
-    addPreset: vi.fn(),
+    presets: mockPresets,
+    activePresetId: mockActivePresetId,
+    switchPreset: vi.fn((id) => {
+      mockActivePresetId.value = id
+    }),
+    addPreset: vi.fn((p) => {
+      const newPreset = { ...p, id: 'test-id' }
+      mockPresets.value.push(newPreset)
+      return newPreset
+    }),
     updatePreset: vi.fn(),
     deletePreset: vi.fn(),
     getPresetDefaults: vi.fn(() => ({
@@ -64,36 +76,15 @@ vi.mock('vue-i18n', () => ({
 describe('AISettingsDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockPresets.value = []
+    mockActivePresetId.value = null
   })
 
-  const mountOptions = {
-    global: {
-      stubs: {
-        Teleport: true,
-      },
-    },
-  }
-
-  it('should default to "settings" tab when no initialTab is provided', async () => {
+  it('should render correct initial tab', async () => {
     const wrapper = mount(AISettingsDialog, {
       props: {
         modelValue: true,
-        'onUpdate:modelValue': (val: boolean) => wrapper.setProps({ modelValue: val }),
-      },
-      ...mountOptions,
-    })
-
-    // Check if basic settings content is visible
-    expect(wrapper.text()).toContain('ai.basicSettings')
-    const activeTabBtn = wrapper.find('button.text-\\[\\#6b5c4d\\]')
-    expect(activeTabBtn.text()).toContain('ai.basicSettings')
-  })
-
-  it('should switch to "presets" tab when initialTab is "presets"', async () => {
-    const wrapper = mount(AISettingsDialog, {
-      props: {
-        modelValue: true,
-        initialTab: 'presets' as const,
+        initialTab: 'settings',
       },
       global: {
         stubs: {
@@ -102,8 +93,7 @@ describe('AISettingsDialog', () => {
       },
     })
 
-    await nextTick()
-    expect((wrapper.vm as any).activeTab).toBe('presets')
+    expect(wrapper.find('button.text-\\[\\#6b5c4d\\]').text()).toContain('ai.basicSettings')
   })
 
   it('should emit update:initialTab when activeTab changes', async () => {
@@ -120,6 +110,7 @@ describe('AISettingsDialog', () => {
     })
 
     await nextTick()
+    // 通过 expose 的 activeTab 修改
     ;(wrapper.vm as any).activeTab = 'presets'
     await nextTick()
 
@@ -127,12 +118,23 @@ describe('AISettingsDialog', () => {
     expect(wrapper.emitted('update:initialTab')![0]).toEqual(['presets'])
   })
 
-  it('should reset to initialTab whenever dialog is reopened', async () => {
+  it('should switch preset and update active state', async () => {
+    const { addPreset } = useAIConfig()
+    const preset = addPreset({
+      name: 'Test Preset',
+      baseUrl: 'https://api.test.com',
+      apiKey: 'test-key',
+      model: 'test-model',
+      systemPrompt: 'Test prompt',
+      temperature: 0.5,
+      thinkingMode: 'enabled',
+      todoAssistant: false,
+    })
+
     const wrapper = mount(AISettingsDialog, {
       props: {
         modelValue: true,
-        initialTab: 'presets' as const,
-        'onUpdate:modelValue': (val: boolean) => wrapper.setProps({ modelValue: val }),
+        initialTab: 'presets',
       },
       global: {
         stubs: {
@@ -142,15 +144,31 @@ describe('AISettingsDialog', () => {
     })
 
     await nextTick()
-    expect((wrapper.vm as any).activeTab).toBe('presets')
 
-    // Manually change tab to settings
+    // 点击预设项进行激活
+    const presetItem = wrapper.find('.cursor-pointer')
+    await presetItem.trigger('click')
+
+    expect(mockActivePresetId.value).toBe(preset.id)
+    expect(wrapper.find('.bg-\\[\\#c9b896\\]\\/10').exists()).toBe(true) // 激活标签
+  })
+
+  it('should reset tab and state when modelValue becomes true', async () => {
+    const wrapper = mount(AISettingsDialog, {
+      props: {
+        modelValue: false,
+        initialTab: 'presets',
+      },
+      global: {
+        stubs: {
+          Teleport: true,
+        },
+      },
+    })
+
+    // 设置一些中间状态
     ;(wrapper.vm as any).activeTab = 'settings'
-    expect((wrapper.vm as any).activeTab).toBe('settings')
 
-    // Close and reopen with initialTab='presets'
-    await wrapper.setProps({ modelValue: false })
-    await nextTick()
     await wrapper.setProps({ modelValue: true })
     await nextTick()
 

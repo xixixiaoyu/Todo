@@ -25,6 +25,8 @@ const {
   updatePreset,
   deletePreset,
   getPresetDefaults,
+  activePresetId,
+  switchPreset,
 } = useAIConfig()
 
 // 当前 Tab
@@ -166,7 +168,34 @@ function cancelEditPreset() {
  */
 function handleDeletePreset(presetId: string) {
   deletePreset(presetId)
+  if (editingPreset.value?.id === presetId) {
+    cancelEditPreset()
+  }
 }
+
+// 监听切换预设，更新本地表单
+watch(activePresetId, () => {
+  if (activeTab.value === 'presets') {
+    formData.value = { ...config.value }
+  }
+})
+
+defineExpose({
+  activeTab,
+  formData,
+  editingPreset,
+  isCreatingPreset,
+  handleReset,
+  saveConfig: handleSave,
+  startCreatePreset,
+  startEditPreset,
+  savePreset,
+  handleDeletePreset,
+  cancelEditPreset,
+  handleClose,
+  activePresetId,
+  switchPreset,
+})
 </script>
 
 <template>
@@ -442,33 +471,56 @@ function handleDeletePreset(presetId: string) {
                     <div
                       v-for="preset in presets"
                       :key="preset.id"
-                      class="group rounded-lg border border-[#e8e4dd] bg-white p-3 transition-colors hover:border-[#c9b896]"
+                      class="group relative rounded-lg border p-3 transition-all hover:border-[#c9b896]"
+                      :class="[
+                        activePresetId === preset.id
+                          ? 'border-[#c9b896] bg-[#c9b896]/5 shadow-sm'
+                          : 'border-[#e8e4dd] bg-white',
+                      ]"
                     >
                       <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                          <p class="text-sm font-medium text-[#3a3a3a]">
-                            {{ preset.name || t('ai.unnamedPreset') }}
-                          </p>
+                        <div
+                          class="flex-1 cursor-pointer"
+                          @click="activePresetId !== preset.id && switchPreset(preset.id)"
+                        >
+                          <div class="flex items-center gap-2">
+                            <p class="text-sm font-medium text-[#3a3a3a]">
+                              {{ preset.name || t('ai.unnamedPreset') }}
+                            </p>
+                            <span
+                              v-if="activePresetId === preset.id"
+                              class="inline-flex items-center rounded-full bg-[#c9b896]/10 px-1.5 py-0.5 text-[10px] font-medium text-[#c9b896]"
+                            >
+                              <Check :size="10" class="mr-0.5" />
+                              {{ t('ai.active') }}
+                            </span>
+                          </div>
                           <p class="mt-0.5 text-xs text-[#8b8680]">{{ preset.model }}</p>
                         </div>
                         <div
-                          class="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100"
+                          class="flex gap-1 transition-opacity group-hover:opacity-100"
+                          :class="activePresetId === preset.id ? 'opacity-100' : 'opacity-0'"
                         >
                           <button
                             class="rounded p-1 text-[#8b8680] hover:bg-[#f5f3ed] hover:text-[#6b5c4d]"
+                            :title="t('ai.edit')"
                             @click="startEditPreset(preset)"
                           >
                             <Edit3 :size="14" />
                           </button>
                           <button
                             class="rounded p-1 text-[#8b8680] hover:bg-red-50 hover:text-red-500"
+                            :title="t('ai.delete')"
                             @click="handleDeletePreset(preset.id)"
                           >
                             <Trash2 :size="14" />
                           </button>
                         </div>
                       </div>
-                      <p class="mt-2 line-clamp-2 text-xs text-[#8b8680]">
+                      <p
+                        class="mt-2 line-clamp-2 cursor-pointer text-xs text-[#8b8680]"
+                        @click="activePresetId !== preset.id && switchPreset(preset.id)"
+                      >
                         {{ preset.systemPrompt || t('ai.noSystemPrompt') }}
                       </p>
                     </div>
