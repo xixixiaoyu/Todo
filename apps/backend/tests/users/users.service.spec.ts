@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { UsersService } from './users.service'
+import { UsersService } from '../../src/users/users.service'
 import { NotFoundException, ConflictException } from '@nestjs/common'
-import { PrismaService } from '../prisma/prisma.service'
-import { AuthService } from '../auth/auth.service'
+import { PrismaService } from '../../src/prisma/prisma.service'
+import { AuthService } from '../../src/auth/auth.service'
 
 // Mock PrismaService
 const mockPrismaService = {

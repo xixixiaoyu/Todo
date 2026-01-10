@@ -108,15 +108,18 @@ export const useTodoStore = defineStore(
       const todo = todos.value.find((t) => t.id === id)
       if (!todo) return
 
-      const newStatus = !todo.completed
+      const oldStatus = todo.completed
+      const newStatus = !oldStatus
       loading.value = true
       error.value = null
       try {
-        await todoApi.update(id, { completed: newStatus })
-        todo.completed = newStatus
+        const response = await todoApi.update(id, { completed: newStatus })
+        todo.completed = response.data.completed
       } catch (e: unknown) {
         const err = e as { response?: { data?: { message?: string } } }
         error.value = err.response?.data?.message || '更新待办事项失败'
+        // 回滚状态
+        todo.completed = oldStatus
       } finally {
         loading.value = false
       }
@@ -137,6 +140,7 @@ export const useTodoStore = defineStore(
       } catch (e: unknown) {
         const err = e as { response?: { data?: { message?: string } } }
         error.value = err.response?.data?.message || '删除待办事项失败'
+        // 不需要回滚，因为删除是在 API 成功后才执行的
       } finally {
         loading.value = false
       }
@@ -150,14 +154,18 @@ export const useTodoStore = defineStore(
       const todo = todos.value.find((t) => t.id === id)
       if (!todo) return
 
+      const oldTitle = todo.title
+      const trimmedTitle = title.trim()
       loading.value = true
       error.value = null
       try {
-        await todoApi.update(id, { title: title.trim() })
-        todo.title = title.trim()
+        const response = await todoApi.update(id, { title: trimmedTitle })
+        todo.title = response.data.title
       } catch (e: unknown) {
         const err = e as { response?: { data?: { message?: string } } }
         error.value = err.response?.data?.message || '更新待办事项失败'
+        // 回滚状态
+        todo.title = oldTitle
       } finally {
         loading.value = false
       }

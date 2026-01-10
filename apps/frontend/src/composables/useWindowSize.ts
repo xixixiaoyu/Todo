@@ -1,4 +1,4 @@
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, getCurrentInstance } from 'vue'
 
 /**
  * 响应式窗口尺寸 Hook
@@ -12,13 +12,21 @@ export function useWindowSize() {
     height.value = window.innerHeight
   }
 
-  onMounted(() => {
-    window.addEventListener('resize', update)
-  })
+  // 检查是否在组件上下文中
+  const isComponent = getCurrentInstance() !== null
 
-  onUnmounted(() => {
-    window.removeEventListener('resize', update)
-  })
+  if (isComponent) {
+    onMounted(() => {
+      window.addEventListener('resize', update)
+    })
+
+    onUnmounted(() => {
+      window.removeEventListener('resize', update)
+    })
+  } else {
+    // 非组件环境（如测试），立即添加监听器
+    window.addEventListener('resize', update)
+  }
 
   return { width, height }
 }

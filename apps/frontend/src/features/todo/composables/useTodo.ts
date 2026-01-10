@@ -14,10 +14,10 @@ export function useTodo() {
   const isShaking = ref(false)
   const showTooltip = ref(false)
 
-  function handleAddTodo() {
+  async function handleAddTodo() {
     if (!newTodoTitle.value.trim()) return
 
-    const success = todoStore.addTodo(newTodoTitle.value)
+    const success = await todoStore.addTodo(newTodoTitle.value)
     if (success) {
       newTodoTitle.value = ''
     } else {
@@ -32,9 +32,9 @@ export function useTodo() {
     }
   }
 
-  function handleKeydown(e: KeyboardEvent) {
+  async function handleKeydown(e: KeyboardEvent) {
     if (e.key === 'Enter') {
-      handleAddTodo()
+      await handleAddTodo()
     }
   }
 
@@ -57,11 +57,11 @@ export function useTodo() {
     todoStore.clearSearch()
   }
 
-  function handleToggleTodo(id: string, currentCompleted: boolean) {
+  async function handleToggleTodo(id: string, currentCompleted: boolean) {
     if (!currentCompleted) {
       showFireworks.value = true
     }
-    todoStore.toggleTodo(id)
+    await todoStore.toggleTodo(id)
   }
 
   function startEditing(id: string, title: string) {
@@ -74,16 +74,16 @@ export function useTodo() {
     editingTitle.value = ''
   }
 
-  function saveEditing() {
+  async function saveEditing() {
     if (editingId.value && editingTitle.value.trim()) {
-      todoStore.updateTodo(editingId.value, editingTitle.value)
+      await todoStore.updateTodo(editingId.value, editingTitle.value)
     }
     cancelEditing()
   }
 
-  function handleEditKeydown(e: KeyboardEvent) {
+  async function handleEditKeydown(e: KeyboardEvent) {
     if (e.key === 'Enter') {
-      saveEditing()
+      await saveEditing()
     } else if (e.key === 'Escape') {
       cancelEditing()
     }

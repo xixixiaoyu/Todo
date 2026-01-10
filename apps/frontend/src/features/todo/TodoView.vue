@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useI18n } from 'vue-i18n'
 import { useTodoStore } from './stores/todo'
 import { useTodo } from './composables/useTodo'
 import TodoHeader from './components/TodoHeader.vue'
@@ -11,7 +10,6 @@ import TodoList from './components/TodoList.vue'
 import Fireworks from '@/components/Fireworks.vue'
 import AiAssistantDrawer from '@/components/AiAssistantDrawer.vue'
 
-const { t } = useI18n()
 const todoStore = useTodoStore()
 const {
   newTodoTitle,
@@ -25,7 +23,6 @@ const {
   showTooltip,
   handleAddTodo,
   handleKeydown,
-  toggleSearch,
   handleSearchInput,
   clearSearch,
   handleToggleTodo,
