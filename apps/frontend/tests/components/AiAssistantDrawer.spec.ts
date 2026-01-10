@@ -49,6 +49,7 @@ import { type ChatSession } from '@/composables/useChatHistory'
 // Mock composables
 const mockSessions = ref<ChatSession[]>([])
 const mockCurrentSessionId = ref<string | null>(null)
+const mockLastActiveSession = ref<ChatSession | null>(null)
 const mockMessages = ref<ChatMessage[]>([])
 const mockIsGenerating = ref(false)
 
@@ -56,6 +57,7 @@ vi.mock('@/composables/useChatHistory', () => ({
   useChatHistory: () => ({
     sessions: mockSessions,
     currentSessionId: mockCurrentSessionId,
+    lastActiveSession: mockLastActiveSession,
     switchSession: vi.fn((id) => {
       mockCurrentSessionId.value = id
     }),
@@ -134,26 +136,12 @@ describe('AiAssistantDrawer Navigation and Button States', () => {
     expect(newChatBtn?.attributes('disabled')).toBeDefined()
   })
 
-  it('should not show "Previous Session" button when there is only one session', async () => {
+  it('should show "Previous Session" button regardless of session count but disabled if no last active session', async () => {
     mockSessions.value = [
       { id: '1', title: 'Session 1', messages: [], createdAt: new Date(), updatedAt: new Date() },
     ]
     mockCurrentSessionId.value = '1'
-
-    const wrapper = mount(AiAssistantDrawer, {
-      props: { modelValue: true },
-    })
-
-    const prevBtn = wrapper.find('button[title="ai.previousSession"]')
-    expect(prevBtn.exists()).toBe(false)
-  })
-
-  it('should show "Previous Session" button when there are multiple sessions', async () => {
-    mockSessions.value = [
-      { id: '2', title: 'Session 2', messages: [], createdAt: new Date(), updatedAt: new Date() },
-      { id: '1', title: 'Session 1', messages: [], createdAt: new Date(), updatedAt: new Date() },
-    ]
-    mockCurrentSessionId.value = '2'
+    mockLastActiveSession.value = null
 
     const wrapper = mount(AiAssistantDrawer, {
       props: { modelValue: true },
@@ -161,29 +149,33 @@ describe('AiAssistantDrawer Navigation and Button States', () => {
 
     const prevBtn = wrapper.find('button[title="ai.previousSession"]')
     expect(prevBtn.exists()).toBe(true)
+    expect(prevBtn.attributes('disabled')).toBeDefined()
   })
 
-  it('should disable "Previous Session" button when on the oldest session', async () => {
+  it('should enable "Previous Session" button when there is a last active session', async () => {
     mockSessions.value = [
       { id: '2', title: 'Session 2', messages: [], createdAt: new Date(), updatedAt: new Date() },
       { id: '1', title: 'Session 1', messages: [], createdAt: new Date(), updatedAt: new Date() },
     ]
-    mockCurrentSessionId.value = '1' // Oldest
+    mockCurrentSessionId.value = '2'
+    mockLastActiveSession.value = mockSessions.value[1] // Session 1
 
     const wrapper = mount(AiAssistantDrawer, {
       props: { modelValue: true },
     })
 
     const prevBtn = wrapper.find('button[title="ai.previousSession"]')
-    expect(prevBtn.attributes('disabled')).toBeDefined()
+    expect(prevBtn.exists()).toBe(true)
+    expect(prevBtn.attributes('disabled')).toBeUndefined()
   })
 
-  it('should disable "Previous Session" button when generating', async () => {
+  it('should disable "Previous Session" button when generating even if last active session exists', async () => {
     mockSessions.value = [
       { id: '2', title: 'Session 2', messages: [], createdAt: new Date(), updatedAt: new Date() },
       { id: '1', title: 'Session 1', messages: [], createdAt: new Date(), updatedAt: new Date() },
     ]
     mockCurrentSessionId.value = '2'
+    mockLastActiveSession.value = mockSessions.value[1]
     mockIsGenerating.value = true
 
     const wrapper = mount(AiAssistantDrawer, {

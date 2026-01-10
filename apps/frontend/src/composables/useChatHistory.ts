@@ -13,11 +13,13 @@ export interface ChatSession {
 
 const SESSIONS_STORAGE_KEY = 'ai-chat-sessions'
 const CURRENT_SESSION_KEY = 'ai-chat-current-session'
+const LAST_ACTIVE_SESSION_KEY = 'ai-chat-last-active-session'
 const SAVE_THROTTLE_MS = 500
 
 // 全局单例状态
 const sessions = ref<ChatSession[]>([])
 const currentSessionId = ref<string | null>(null)
+const lastActiveSessionId = ref<string | null>(null)
 let saveTimer: ReturnType<typeof setTimeout> | null = null
 
 /**
@@ -46,6 +48,12 @@ function loadSessions(): void {
     } else if (sessions.value.length > 0) {
       currentSessionId.value = sessions.value[0].id
     }
+
+    // 加载上一个激活的会话 ID
+    const savedLastId = localStorage.getItem(LAST_ACTIVE_SESSION_KEY)
+    if (savedLastId && sessions.value.some((s) => s.id === savedLastId)) {
+      lastActiveSessionId.value = savedLastId
+    }
   } catch {
     console.warn('加载会话历史失败')
   }
@@ -62,6 +70,9 @@ function saveSessions(): void {
       if (currentSessionId.value) {
         localStorage.setItem(CURRENT_SESSION_KEY, currentSessionId.value)
       }
+      if (lastActiveSessionId.value) {
+        localStorage.setItem(LAST_ACTIVE_SESSION_KEY, lastActiveSessionId.value)
+      }
     } catch {
       console.warn('保存会话历史失败')
     }
@@ -74,7 +85,14 @@ if (typeof window !== 'undefined') {
 }
 
 // 监听变化自动保存
-watch([sessions, currentSessionId], saveSessions, { deep: true })
+watch([sessions, currentSessionId, lastActiveSessionId], saveSessions, { deep: true })
+
+// 监听当前会话变化，更新上一个激活的会话
+watch(currentSessionId, (newId, oldId) => {
+  if (oldId && oldId !== newId && sessions.value.some((s) => s.id === oldId)) {
+    lastActiveSessionId.value = oldId
+  }
+})
 
 /**
  * 导出重置函数用于测试
@@ -82,6 +100,7 @@ watch([sessions, currentSessionId], saveSessions, { deep: true })
 export function _resetChatHistory() {
   sessions.value = []
   currentSessionId.value = null
+  lastActiveSessionId.value = null
   if (saveTimer) {
     clearTimeout(saveTimer)
     saveTimer = null
@@ -95,6 +114,11 @@ export function useChatHistory() {
   // 当前会话
   const currentSession = computed(
     () => sessions.value.find((s) => s.id === currentSessionId.value) ?? null,
+  )
+
+  // 上一个激活的会话
+  const lastActiveSession = computed(
+    () => sessions.value.find((s) => s.id === lastActiveSessionId.value) ?? null,
   )
 
   // 会话列表（按更新时间倒序）
@@ -179,6 +203,11 @@ export function useChatHistory() {
     if (currentSessionId.value === sessionId) {
       currentSessionId.value = sessions.value.length > 0 ? sessions.value[0].id : null
     }
+
+    // 如果删除的是上一个激活的会话，重置它
+    if (lastActiveSessionId.value === sessionId) {
+      lastActiveSessionId.value = null
+    }
   }
 
   /**
@@ -194,6 +223,8 @@ export function useChatHistory() {
     sessions: sortedSessions,
     currentSession,
     currentSessionId,
+    lastActiveSession,
+    lastActiveSessionId,
     hasSession,
 
     // 方法

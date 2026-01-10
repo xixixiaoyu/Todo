@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { nextTick } from 'vue'
 import i18n from '@/i18n'
 import { useChatHistory, _resetChatHistory } from '@/composables/useChatHistory'
 import { type ChatMessage } from '@/services/aiService'
@@ -183,6 +184,46 @@ describe('useChatHistory', () => {
 
       const saved = localStorage.getItem('ai-chat-current-session')
       expect(saved).toBe(session.id)
+    })
+  })
+
+  describe('lastActiveSessionId', () => {
+    it('should update lastActiveSessionId when currentSessionId changes', async () => {
+      const { createSession, switchSession, lastActiveSessionId } = useChatHistory()
+
+      createSession() // session1
+      await nextTick()
+      const session2 = createSession()
+      await nextTick()
+
+      // 初始状态：创建 session2 后，session1 成为上一个激活的
+      const session1Id = lastActiveSessionId.value
+      expect(session1Id).not.toBeNull()
+
+      switchSession(session1Id!)
+      await nextTick()
+      expect(lastActiveSessionId.value).toBe(session2.id)
+
+      switchSession(session2.id)
+      await nextTick()
+      expect(lastActiveSessionId.value).toBe(session1Id)
+    })
+
+    it('should clear lastActiveSessionId when the last active session is deleted', async () => {
+      const { createSession, deleteSession, lastActiveSessionId } = useChatHistory()
+
+      createSession() // session1
+      await nextTick()
+      const session1Id = lastActiveSessionId.value // This might still be null if only 1 session exists
+
+      const session2 = createSession()
+      await nextTick()
+      const lastId = lastActiveSessionId.value
+      expect(lastId).not.toBeNull()
+
+      deleteSession(lastId!)
+      await nextTick()
+      expect(lastActiveSessionId.value).toBeNull()
     })
   })
 })

@@ -51,24 +51,12 @@ const toggleTodoAssistant = () => {
 const isTodoAssistantEnabled = computed(() => config.value.todoAssistant)
 
 // 会话历史管理
-const { sessions, currentSessionId, switchSession } = useChatHistory()
-
-// 寻找当前会话索引
-const currentSessionIndex = computed(() =>
-  sessions.value.findIndex((s) => s.id === currentSessionId.value),
-)
-
-// 上一个会话（时间更早的）
-const previousSession = computed(() => {
-  const idx = currentSessionIndex.value
-  if (idx === -1 || idx === sessions.value.length - 1) return null
-  return sessions.value[idx + 1]
-})
+const { sessions, currentSessionId, lastActiveSession, switchSession } = useChatHistory()
 
 // 切换会话
 const navigateToPrevious = () => {
-  if (previousSession.value) {
-    switchSession(previousSession.value.id)
+  if (lastActiveSession.value) {
+    switchSession(lastActiveSession.value.id)
   }
 }
 
@@ -324,10 +312,9 @@ defineOptions({
           </button>
           <!-- 返回上一个会话按钮 -->
           <button
-            v-if="sessions.length > 1"
             class="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-30"
             :title="t('ai.previousSession')"
-            :disabled="!previousSession || isGenerating"
+            :disabled="!lastActiveSession || isGenerating"
             @click="navigateToPrevious"
           >
             <ChevronLeft :size="16" />
