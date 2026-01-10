@@ -325,15 +325,33 @@
 
 /* 数学公式 */
 .math-block {
-  @apply my-4 overflow-x-auto text-center;
+  @apply my-4 overflow-x-auto text-center py-4 px-2;
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+  -webkit-overflow-scrolling: touch;
+}
+
+.math-block::-webkit-scrollbar {
+  height: 6px;
+}
+
+.math-block::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.math-block::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 20px;
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
 
 .math-inline {
-  @apply inline-block align-middle;
+  @apply inline-block align-middle px-1;
 }
 
 .math-error {
-  @apply text-red-500;
+  @apply text-red-500 text-sm italic;
 }
 
 /* 链接 */
@@ -543,9 +561,13 @@
 
 /* KaTeX 样式调整 */
 .katex {
-  font-size: 1.1em;
+  font-size: 1.05em;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .katex-display {
-  @apply my-4 overflow-x-auto;
+  @apply !my-0 !overflow-visible !mx-0;
+  width: 100%;
+  min-width: 100%;
 }
