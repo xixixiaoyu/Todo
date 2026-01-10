@@ -170,7 +170,7 @@ const openSettings = () => {
 }
 
 // 当前显示的预设名称
-const currentPresetName = computed(() => activePreset.value?.name ?? '自定义')
+const currentPresetName = computed(() => activePreset.value?.name ?? t('ai.custom'))
 
 defineOptions({
   inheritAttrs: false,
@@ -191,7 +191,7 @@ defineOptions({
       <header
         class="flex h-12 shrink-0 items-center justify-between bg-[#c9b896] px-4 dark:bg-[#8a7a5a]"
       >
-        <span class="text-sm font-medium text-white">AI 助手</span>
+        <span class="text-sm font-medium text-white">{{ t('ai.assistant') }}</span>
         <div class="flex items-center gap-2">
           <!-- 预设下拉框 -->
           <div class="relative">
@@ -236,7 +236,7 @@ defineOptions({
                   @click="openSettings"
                 >
                   <Settings2 :size="12" />
-                  <span>管理预设...</span>
+                  <span>{{ t('ai.managePresets') }}</span>
                 </button>
               </div>
             </Transition>
@@ -292,7 +292,7 @@ defineOptions({
             @click="handleNewChat"
           >
             <Plus :size="14" />
-            <span>新对话</span>
+            <span>{{ t('ai.newChat') }}</span>
           </button>
           <!-- AI 思考模式开关 -->
           <button
@@ -314,13 +314,13 @@ defineOptions({
             @click="stopGenerating"
           >
             <Square :size="12" />
-            <span>停止</span>
+            <span>{{ t('ai.stop') }}</span>
           </button>
           <!-- 返回上一个会话按钮 -->
           <button
             v-if="sessions.length > 1"
             class="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e4dd] bg-white text-[#8b8680] transition-colors hover:bg-[#f5f3ed] disabled:cursor-not-allowed disabled:opacity-30 dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#6b6b6b] dark:hover:bg-[#3a3a3a]"
-            title="返回上一个会话"
+            :title="t('ai.previousSession')"
             :disabled="!previousSession || isGenerating"
             @click="navigateToPrevious"
           >
@@ -328,7 +328,7 @@ defineOptions({
           </button>
           <button
             class="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e4dd] bg-white text-[#8b8680] transition-colors hover:bg-[#f5f3ed] dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#6b6b6b] dark:hover:bg-[#3a3a3a]"
-            title="历史记录"
+            :title="t('ai.history')"
             :class="{ 'cursor-not-allowed opacity-50': isGenerating }"
             :disabled="isGenerating"
             @click="openHistory"
@@ -337,7 +337,7 @@ defineOptions({
           </button>
           <button
             class="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e4dd] bg-white text-[#8b8680] transition-colors hover:bg-[#f5f3ed] dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#6b6b6b] dark:hover:bg-[#3a3a3a]"
-            title="设置"
+            :title="t('ai.settings')"
             @click="showSettings = true"
           >
             <Settings2 :size="16" />
@@ -349,11 +349,13 @@ defineOptions({
                 ? 'border-[#c9b896] bg-[#c9b896]/10 text-[#c9b896] dark:border-[#b8a785] dark:bg-[#b8a785]/20 dark:text-[#b8a785]'
                 : 'border-[#e8e4dd] bg-white text-[#6b5c4d] hover:bg-[#f5f3ed] dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#a0a0a0] dark:hover:bg-[#3a3a3a]'
             "
-            :title="isTodoAssistantEnabled ? 'Todo 助手已开启' : 'Todo 助手已关闭'"
+            :title="
+              isTodoAssistantEnabled ? t('ai.todoAssistantEnabled') : t('ai.todoAssistantDisabled')
+            "
             @click="toggleTodoAssistant"
           >
             <Clover :size="14" />
-            <span>Todo 助手</span>
+            <span>{{ t('ai.todoAssistant') }}</span>
           </button>
         </div>
 
@@ -366,11 +368,7 @@ defineOptions({
             ref="textareaRef"
             v-model="chatInput"
             rows="1"
-            :placeholder="
-              isInputDisabled
-                ? 'AI 正在回复...'
-                : '询问 AI 助手... (按 Shift + Enter 换行，Enter 发送)'
-            "
+            :placeholder="isInputDisabled ? t('ai.generating') : t('ai.placeholder')"
             class="flex-1 resize-none bg-transparent text-sm text-[#3a3a3a] outline-none placeholder:text-[#c4c0b8] dark:text-[#e0e0e0] dark:placeholder:text-[#6b6b6b]"
             :style="{ height: `${MIN_HEIGHT}px` }"
             :disabled="isInputDisabled"

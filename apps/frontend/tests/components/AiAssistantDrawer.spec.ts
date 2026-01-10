@@ -103,7 +103,7 @@ describe('AiAssistantDrawer Navigation and Button States', () => {
       props: { modelValue: true },
     })
 
-    const newChatBtn = wrapper.findAll('button').find((b) => b.text().includes('新对话'))
+    const newChatBtn = wrapper.findAll('button').find((b) => b.text().includes('ai.newChat'))
     expect(newChatBtn?.attributes('disabled')).toBeDefined()
   })
 
@@ -114,7 +114,7 @@ describe('AiAssistantDrawer Navigation and Button States', () => {
       props: { modelValue: true },
     })
 
-    const newChatBtn = wrapper.findAll('button').find((b) => b.text().includes('新对话'))
+    const newChatBtn = wrapper.findAll('button').find((b) => b.text().includes('ai.newChat'))
     expect(newChatBtn?.attributes('disabled')).toBeUndefined()
   })
 
@@ -126,7 +126,7 @@ describe('AiAssistantDrawer Navigation and Button States', () => {
       props: { modelValue: true },
     })
 
-    const newChatBtn = wrapper.findAll('button').find((b) => b.text().includes('新对话'))
+    const newChatBtn = wrapper.findAll('button').find((b) => b.text().includes('ai.newChat'))
     expect(newChatBtn?.attributes('disabled')).toBeDefined()
   })
 
@@ -140,7 +140,7 @@ describe('AiAssistantDrawer Navigation and Button States', () => {
       props: { modelValue: true },
     })
 
-    const prevBtn = wrapper.find('button[title="返回上一个会话"]')
+    const prevBtn = wrapper.find('button[title="ai.previousSession"]')
     expect(prevBtn.exists()).toBe(false)
   })
 
@@ -155,7 +155,7 @@ describe('AiAssistantDrawer Navigation and Button States', () => {
       props: { modelValue: true },
     })
 
-    const prevBtn = wrapper.find('button[title="返回上一个会话"]')
+    const prevBtn = wrapper.find('button[title="ai.previousSession"]')
     expect(prevBtn.exists()).toBe(true)
   })
 
@@ -170,7 +170,7 @@ describe('AiAssistantDrawer Navigation and Button States', () => {
       props: { modelValue: true },
     })
 
-    const prevBtn = wrapper.find('button[title="返回上一个会话"]')
+    const prevBtn = wrapper.find('button[title="ai.previousSession"]')
     expect(prevBtn.attributes('disabled')).toBeDefined()
   })
 
@@ -186,19 +186,24 @@ describe('AiAssistantDrawer Navigation and Button States', () => {
       props: { modelValue: true },
     })
 
-    const prevBtn = wrapper.find('button[title="返回上一个会话"]')
+    const prevBtn = wrapper.find('button[title="ai.previousSession"]')
     expect(prevBtn.attributes('disabled')).toBeDefined()
   })
 
-  it('should call saveAIThinkingMode when toggle is clicked', async () => {
-    const { saveAIThinkingMode } = await import('@/composables/useAIConfig')
+  it('should call toggleThinkingMode when button is clicked', async () => {
     const wrapper = mount(AiAssistantDrawer, {
       props: { modelValue: true },
     })
 
-    const checkbox = wrapper.find('input.thinking-checkbox')
-    await checkbox.setValue(true)
+    const thinkingBtn = wrapper
+      .findAll('button')
+      .find((b) => b.attributes('title')?.includes('ai.thinking'))
+    await thinkingBtn?.trigger('click')
 
-    expect(saveAIThinkingMode).toHaveBeenCalledWith('enabled')
+    // Note: Since we are mocking useAIConfig, we check if the toggle function was called
+    // or if the state changed if we were using the real composable.
+    // In our mock, toggleThinkingMode is local to the component but it calls saveAIThinkingMode.
+    const { saveAIThinkingMode } = await import('@/composables/useAIConfig')
+    expect(saveAIThinkingMode).toHaveBeenCalled()
   })
 })

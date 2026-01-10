@@ -1,4 +1,5 @@
 import { ref, computed, watch } from 'vue'
+import i18n from '@/i18n'
 import { generateId } from '@/services/aiService'
 import type { ChatMessage } from '@/services/aiService'
 
@@ -110,7 +111,7 @@ export function useChatHistory() {
   function createSession(): ChatSession {
     const newSession: ChatSession = {
       id: generateId(),
-      title: '新对话',
+      title: i18n.global.t('ai.newChat'),
       messages: [],
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -139,11 +140,18 @@ export function useChatHistory() {
     session.messages = messages
     session.updatedAt = new Date()
 
-    // 如果是第一条用户消息，更新标题
+    // 如果是第一条用户消息，且标题仍为默认值，则更新标题为消息内容
     const firstUserMsg = messages.find((m) => m.role === 'user')
-    if (firstUserMsg && session.title === '新对话') {
-      session.title =
-        firstUserMsg.content.slice(0, 30) + (firstUserMsg.content.length > 30 ? '...' : '')
+    const isDefaultTitle =
+      session.title === '新对话' ||
+      session.title === 'New Chat' ||
+      session.title === i18n.global.t('ai.newChat')
+
+    if (firstUserMsg && (isDefaultTitle || !session.title)) {
+      const title = firstUserMsg.content.trim()
+      if (title) {
+        session.title = title.slice(0, 100) // 限制标题长度，防止极端情况
+      }
     }
   }
 

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import i18n from '@/i18n'
 import { useChatHistory, _reset } from '@/composables/useChatHistory'
 import { type ChatMessage } from '@/services/aiService'
 
@@ -61,7 +62,7 @@ describe('useChatHistory', () => {
       expect(sessions.value).toHaveLength(1)
       expect(currentSession.value).toEqual(newSession)
       expect(newSession.id).toBeDefined()
-      expect(newSession.title).toBe('新对话')
+      expect(newSession.title).toBe(i18n.global.t('ai.newChat'))
       expect(newSession.messages).toEqual([])
       expect(newSession.createdAt).toBeInstanceOf(Date)
       expect(newSession.updatedAt).toBeInstanceOf(Date)
@@ -110,7 +111,7 @@ describe('useChatHistory', () => {
       expect(sessions.value[0].title).toBe('Initial user message')
     })
 
-    it('should truncate long titles', () => {
+    it('should use full message as title', () => {
       const { sessions, createSession, updateSessionMessages } = useChatHistory()
 
       const session = createSession()
@@ -121,7 +122,7 @@ describe('useChatHistory', () => {
 
       updateSessionMessages(session.id, messages)
 
-      expect(sessions.value[0].title).toBe(longContent.slice(0, 30) + '...')
+      expect(sessions.value[0].title).toBe(longContent)
     })
   })
 

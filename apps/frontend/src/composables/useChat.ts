@@ -60,7 +60,8 @@ export function useChat(options: AIRequestOptions = {}) {
       createdAt: new Date(),
     }
 
-    chatHistory.value.push(userMessage)
+    // 使用 setter 触发更新逻辑（包括标题生成）
+    chatHistory.value = [...chatHistory.value, userMessage]
     isGenerating.value = true
 
     try {
@@ -78,7 +79,7 @@ export function useChat(options: AIRequestOptions = {}) {
                 thinkingContent: currentThinkingContent.value || undefined,
                 createdAt: new Date(),
               }
-              chatHistory.value.push(aiMessage)
+              chatHistory.value = [...chatHistory.value, aiMessage]
             }
             currentAIResponse.value = ''
             currentThinkingContent.value = ''
@@ -93,7 +94,7 @@ export function useChat(options: AIRequestOptions = {}) {
                 thinkingContent: currentThinkingContent.value || undefined,
                 createdAt: new Date(),
               }
-              chatHistory.value.push(aiMessage)
+              chatHistory.value = [...chatHistory.value, aiMessage]
             }
             currentAIResponse.value = ''
             currentThinkingContent.value = ''
