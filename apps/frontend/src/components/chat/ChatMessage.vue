@@ -2,10 +2,13 @@
 import { computed, ref, watch, nextTick } from 'vue'
 import { User, Bot, ChevronUp, Copy, Check } from 'lucide-vue-next'
 import type { ChatMessage } from '@/composables/useChat'
+import { useMarkdown } from '@/composables/useMarkdown'
 
 const props = defineProps<{
   message: ChatMessage
 }>()
+
+const { renderMarkdown, getMermaidSvgMap } = useMarkdown()
 
 // 思考内容折叠状态（流式时默认展开）
 const isThinkingCollapsed = ref(!props.message.isStreaming)
@@ -15,6 +18,9 @@ const isCopied = ref(false)
 
 // 思考内容容器引用
 const thinkingContentRef = ref<HTMLDivElement>()
+
+// 渲染后的 HTML 内容
+const renderedHtml = ref('')
 
 const isUser = computed(() => props.message.role === 'user')
 const isStreaming = computed(() => props.message.isStreaming)
@@ -27,17 +33,53 @@ const thinkingHeight = computed(() => {
   return thinkingContentRef.value ? `${thinkingContentRef.value.scrollHeight}px` : 'auto'
 })
 
+// 渲染 Markdown 内容
+async function updateRenderedContent() {
+  if (!props.message.content || isUser.value) {
+    renderedHtml.value = ''
+    return
+  }
+  renderedHtml.value = await renderMarkdown(props.message.content)
+
+  // 注入 Mermaid SVG
+  await nextTick()
+  injectMermaidSvgs()
+}
+
+// 注入 Mermaid SVG
+function injectMermaidSvgs() {
+  const svgMap = getMermaidSvgMap()
+  if (svgMap.size === 0) return
+
+  svgMap.forEach((fullHtml, placeholderId) => {
+    const placeholder = document.getElementById(placeholderId)
+    if (placeholder && placeholder.parentNode) {
+      const tempWrapper = document.createElement('div')
+      tempWrapper.innerHTML = fullHtml
+      const containerElement = tempWrapper.querySelector('.mermaid-container')
+      if (containerElement) {
+        placeholder.parentNode.replaceChild(containerElement, placeholder)
+      }
+    }
+  })
+
+  svgMap.clear()
+}
+
 // AI 回复开始后自动收起思考内容
 watch(
   () => props.message.content,
-  (content) => {
+  async (content) => {
     if (content && props.message.isStreaming && hasThinking.value) {
       // 延迟收起，让用户看到一点思考过程
       setTimeout(() => {
         isThinkingCollapsed.value = true
       }, 1500)
     }
+    // 更新渲染内容
+    await updateRenderedContent()
   },
+  { immediate: true },
 )
 
 // 流式更新时滚动到底部
@@ -123,10 +165,21 @@ async function copyContent() {
           isUser ? 'bg-[#c9b896] text-white' : 'border border-[#e8e4dd] bg-white text-[#3a3a3a]'
         "
       >
-        <div class="whitespace-pre-wrap text-sm leading-relaxed">
-          {{ message.content || (hasThinking && isStreaming ? '' : '...') }}
-          <span v-if="isStreaming && hasContent" class="inline-block animate-pulse">▊</span>
+        <!-- 用户消息：纯文本显示 -->
+        <div v-if="isUser" class="whitespace-pre-wrap text-sm leading-relaxed">
+          {{ message.content }}
         </div>
+        <!-- AI 消息：Markdown 渲染 -->
+        <div
+          v-else-if="renderedHtml"
+          class="markdown-content text-sm leading-relaxed"
+          v-html="renderedHtml"
+        />
+        <!-- 加载中状态 -->
+        <div v-else class="text-sm leading-relaxed">
+          {{ hasThinking && isStreaming ? '' : '...' }}
+        </div>
+        <span v-if="isStreaming && hasContent" class="inline-block animate-pulse">█</span>
       </div>
 
       <!-- 操作按钮（AI 消息 hover 时显示） -->

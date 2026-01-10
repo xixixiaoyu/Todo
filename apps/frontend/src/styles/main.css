@@ -103,3 +103,269 @@
 .animate-shake {
   animation: shake 0.6s ease-in-out;
 }
+
+/* =====================================================
+   Markdown 渲染样式
+   ===================================================== */
+
+/* 代码块容器 */
+.code-block-container {
+  @apply my-3 overflow-hidden rounded-lg border border-[#e8e4dd] bg-[#faf8f4];
+}
+
+.dark .code-block-container {
+  @apply border-[#3a3a3a] bg-[#1e1e1e];
+}
+
+.code-block-header {
+  @apply flex items-center justify-between border-b border-[#e8e4dd] bg-[#f5f3ed] px-4 py-2;
+}
+
+.dark .code-block-header {
+  @apply border-[#3a3a3a] bg-[#2a2a2a];
+}
+
+.code-language {
+  @apply text-xs font-medium text-[#6b5c4d];
+}
+
+.dark .code-language {
+  @apply text-[#a0a0a0];
+}
+
+.copy-button {
+  @apply rounded-md px-2 py-1 text-xs text-[#8b8680] transition-colors hover:bg-[#e8e4dd] hover:text-[#6b5c4d];
+}
+
+.copy-button.copied {
+  @apply text-green-600;
+}
+
+.dark .copy-button {
+  @apply text-[#808080] hover:bg-[#3a3a3a] hover:text-[#c0c0c0];
+}
+
+.code-content {
+  @apply m-0 overflow-x-auto p-4;
+}
+
+.code-content code {
+  @apply text-sm leading-relaxed;
+  font-family: 'Fira Code', 'JetBrains Mono', Consolas, Monaco, monospace;
+}
+
+/* 行内代码 */
+.inline-code {
+  @apply rounded bg-[#f5f3ed] px-1.5 py-0.5 text-sm text-[#c9b896];
+  font-family: 'Fira Code', 'JetBrains Mono', Consolas, Monaco, monospace;
+}
+
+.dark .inline-code {
+  @apply bg-[#2a2a2a] text-[#c9b896];
+}
+
+/* 数学公式 */
+.math-block {
+  @apply my-4 overflow-x-auto text-center;
+}
+
+.math-inline {
+  @apply inline-block align-middle;
+}
+
+.math-error {
+  @apply text-red-500;
+}
+
+/* 链接 */
+.markdown-link {
+  @apply text-[#c9b896] underline decoration-[#c9b896]/30 underline-offset-2 transition-colors hover:text-[#b8a785] hover:decoration-[#b8a785]/50;
+}
+
+/* 表格 */
+.table-container {
+  @apply my-4 overflow-x-auto;
+}
+
+.markdown-table {
+  @apply w-full border-collapse text-sm;
+}
+
+.markdown-table th,
+.markdown-table td {
+  @apply border border-[#e8e4dd] px-4 py-2 text-left;
+}
+
+.markdown-table th {
+  @apply bg-[#f5f3ed] font-medium text-[#6b5c4d];
+}
+
+.dark .markdown-table th,
+.dark .markdown-table td {
+  @apply border-[#3a3a3a];
+}
+
+.dark .markdown-table th {
+  @apply bg-[#2a2a2a] text-[#c0c0c0];
+}
+
+/* 引用块 */
+.markdown-blockquote {
+  @apply my-4 border-l-4 border-[#c9b896] bg-[#faf8f4] py-2 pl-4 pr-2 italic text-[#6b5c4d];
+}
+
+.dark .markdown-blockquote {
+  @apply bg-[#1e1e1e] text-[#a0a0a0];
+}
+
+/* Markdown 内容样式 */
+.markdown-content h1 {
+  @apply mb-4 mt-6 text-2xl font-bold text-[#3a3a3a];
+}
+
+.markdown-content h2 {
+  @apply mb-3 mt-5 text-xl font-bold text-[#3a3a3a];
+}
+
+.markdown-content h3 {
+  @apply mb-2 mt-4 text-lg font-semibold text-[#3a3a3a];
+}
+
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  @apply mb-2 mt-3 font-semibold text-[#3a3a3a];
+}
+
+.dark .markdown-content h1,
+.dark .markdown-content h2,
+.dark .markdown-content h3,
+.dark .markdown-content h4,
+.dark .markdown-content h5,
+.dark .markdown-content h6 {
+  @apply text-[#f0f0f0];
+}
+
+.markdown-content p {
+  @apply my-2 leading-relaxed;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  @apply my-2 pl-6;
+}
+
+.markdown-content ul {
+  @apply list-disc;
+}
+
+.markdown-content ol {
+  @apply list-decimal;
+}
+
+.markdown-content li {
+  @apply my-1;
+}
+
+.markdown-content hr {
+  @apply my-6 border-[#e8e4dd];
+}
+
+.dark .markdown-content hr {
+  @apply border-[#3a3a3a];
+}
+
+.markdown-content strong {
+  @apply font-bold;
+}
+
+.markdown-content em {
+  @apply italic;
+}
+
+.markdown-content del {
+  @apply line-through opacity-70;
+}
+
+/* Mermaid 图表 */
+.mermaid-container {
+  @apply relative my-4 overflow-hidden rounded-lg border border-[#e8e4dd] bg-white;
+}
+
+.dark .mermaid-container {
+  @apply border-[#3a3a3a] bg-[#1e1e1e];
+}
+
+.mermaid-zoom-controls {
+  @apply absolute right-2 top-2 z-10 flex gap-1 rounded-md bg-white/80 p-1 shadow-sm backdrop-blur-sm;
+}
+
+.dark .mermaid-zoom-controls {
+  @apply bg-[#2a2a2a]/80;
+}
+
+.mermaid-zoom-btn {
+  @apply flex h-7 w-7 items-center justify-center rounded text-sm text-[#6b5c4d] transition-colors hover:bg-[#f5f3ed];
+}
+
+.dark .mermaid-zoom-btn {
+  @apply text-[#a0a0a0] hover:bg-[#3a3a3a];
+}
+
+.mermaid-diagram {
+  @apply flex min-h-[200px] items-center justify-center overflow-hidden p-4;
+  --mermaid-scale: 1;
+  --mermaid-translate-x: 0px;
+  --mermaid-translate-y: 0px;
+}
+
+.mermaid-diagram svg {
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  min-width: 200px;
+  min-height: 150px;
+  background: transparent;
+  transform: scale(var(--mermaid-scale))
+    translate(var(--mermaid-translate-x), var(--mermaid-translate-y));
+  transform-origin: center;
+  transition: transform 0.15s ease-out;
+  cursor: grab;
+  user-select: none;
+}
+
+.mermaid-diagram svg:active {
+  cursor: grabbing;
+  transition: none;
+}
+
+.mermaid-loading {
+  @apply text-sm text-[#8b8680];
+}
+
+.mermaid-error {
+  @apply my-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600;
+}
+
+.dark .mermaid-error {
+  @apply bg-red-900/20 text-red-400;
+}
+
+/* Markdown 错误 */
+.markdown-error {
+  @apply text-red-500;
+}
+
+/* highlight.js 主题覆盖 */
+.hljs {
+  @apply bg-transparent;
+}
+
+/* KaTeX 样式调整 */
+.katex {
+  font-size: 1.1em;
+}
+
+.katex-display {
+  @apply my-4 overflow-x-auto;
+}

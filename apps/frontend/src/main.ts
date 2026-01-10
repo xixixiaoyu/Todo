@@ -17,6 +17,10 @@ import router from './router'
 import i18n from './i18n'
 import './styles/main.css'
 
+// Markdown 渲染相关样式
+import 'highlight.js/styles/github.css'
+import 'katex/dist/katex.min.css'
+
 // 注册 ECharts 必要组件
 use([
   CanvasRenderer,
