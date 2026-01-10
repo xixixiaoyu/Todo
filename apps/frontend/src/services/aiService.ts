@@ -2,6 +2,8 @@
  * AI 服务层 - 处理流式 API 请求
  */
 
+import { getAIConfig } from '@/composables/useAIConfig'
+
 export interface ChatMessage {
   id: string
   role: 'user' | 'assistant' | 'system'
@@ -22,22 +24,18 @@ export interface AIRequestOptions {
 let abortController: AbortController | null = null
 
 /**
- * 获取 API 配置
- * TODO: 后续可以从环境变量或配置中心获取
+ * 构建完整的 API URL
  */
-function getApiConfig() {
-  return {
-    apiUrl: import.meta.env.VITE_AI_API_URL || 'https://api.deepseek.com/chat/completions',
-    apiKey: import.meta.env.VITE_AI_API_KEY || '',
-    defaultModel: import.meta.env.VITE_AI_MODEL || 'deepseek-chat',
-  }
+function buildApiUrl(baseUrl: string): string {
+  const base = baseUrl.replace(/\/+$/, '') // 移除末尾斜杠
+  return `${base}/chat/completions`
 }
 
 /**
  * 构建请求头
  */
 function getHeaders(): Record<string, string> {
-  const { apiKey } = getApiConfig()
+  const { apiKey } = getAIConfig()
   return {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${apiKey}`,
@@ -64,8 +62,12 @@ export async function getAIStreamResponse(
   onThinking?: (thinking: string) => void,
   options: AIRequestOptions = {},
 ): Promise<void> {
-  const { apiUrl, defaultModel } = getApiConfig()
-  const { model = defaultModel, temperature = 0.7, systemPrompt } = options
+  const aiConfig = getAIConfig()
+  const {
+    model = aiConfig.model,
+    temperature = aiConfig.temperature,
+    systemPrompt = aiConfig.systemPrompt,
+  } = options
 
   // 创建新的 AbortController
   abortController = new AbortController()
@@ -89,15 +91,23 @@ export async function getAIStreamResponse(
   )
 
   try {
-    const response = await fetch(apiUrl, {
+    // 构建请求体
+    const requestBody: Record<string, unknown> = {
+      model,
+      messages: messagesWithSystemPrompts,
+      temperature,
+      stream: true,
+    }
+
+    // 注入思考模式参数（仅当启用时）
+    if (aiConfig.thinkingMode === 'enabled') {
+      requestBody.thinking = { type: 'enabled' }
+    }
+
+    const response = await fetch(buildApiUrl(aiConfig.baseUrl), {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({
-        model,
-        messages: messagesWithSystemPrompts,
-        temperature,
-        stream: true,
-      }),
+      body: JSON.stringify(requestBody),
       signal,
     })
 

@@ -18,11 +18,16 @@ import {
 } from 'lucide-vue-next'
 import ResizableDrawer from '@/components/ResizableDrawer.vue'
 import ChatMessageList from '@/components/chat/ChatMessageList.vue'
+import AISettingsDialog from '@/components/chat/AISettingsDialog.vue'
 import { useChat } from '@/composables/useChat'
+import { useAIConfig } from '@/composables/useAIConfig'
 
 const modelValue = defineModel<boolean>({ required: true })
 
-// 使用聊天 composable
+// AI 配置
+const { config } = useAIConfig()
+
+// 使用聊天 composable（不传入固定 systemPrompt，使用配置中的值）
 const {
   messages,
   isGenerating,
@@ -31,14 +36,15 @@ const {
   stopGenerating,
   clearHistory,
   regenerateLastResponse,
-} = useChat({
-  systemPrompt: '你是一个友好的 AI 助手，请用简洁明了的中文回答用户的问题。',
-})
+} = useChat()
 
 const isMaximized = ref(false)
 const chatInput = ref('')
 const textareaRef = ref<HTMLTextAreaElement>()
 const messageListRef = ref<InstanceType<typeof ChatMessageList>>()
+
+// 设置弹窗状态
+const showSettings = ref(false)
 
 const MIN_HEIGHT = 36
 const MAX_HEIGHT = 192
@@ -105,17 +111,13 @@ const handleNewChat = () => {
       <header class="flex h-12 shrink-0 items-center justify-between bg-[#c9b896] px-4">
         <span class="text-sm font-medium text-white">AI 助手</span>
         <div class="flex items-center gap-2">
-          <!-- 模型选择下拉 -->
+          <!-- 当前模型显示 -->
           <button
             class="flex items-center gap-1 rounded-md bg-[#b8a785] px-3 py-1.5 text-xs text-white transition-colors hover:bg-[#a99676]"
+            title="点击打开设置"
+            @click="showSettings = true"
           >
-            <span>teach</span>
-            <ChevronDown :size="14" />
-          </button>
-          <button
-            class="flex items-center gap-1 rounded-md bg-[#b8a785] px-3 py-1.5 text-xs text-white transition-colors hover:bg-[#a99676]"
-          >
-            <span>glm4.7 (自定义)</span>
+            <span>{{ config.model }}</span>
             <ChevronDown :size="14" />
           </button>
           <!-- 最大化/最小化 -->
@@ -189,6 +191,8 @@ const handleNewChat = () => {
           </button>
           <button
             class="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e4dd] bg-white text-[#8b8680] transition-colors hover:bg-[#f5f3ed]"
+            title="设置"
+            @click="showSettings = true"
           >
             <Settings2 :size="16" />
           </button>
@@ -246,4 +250,7 @@ const handleNewChat = () => {
       </div>
     </div>
   </ResizableDrawer>
+
+  <!-- 设置弹窗 -->
+  <AISettingsDialog v-model="showSettings" />
 </template>
