@@ -375,7 +375,7 @@ defineOptions({
             v-model="chatInput"
             rows="1"
             :placeholder="isInputDisabled ? t('ai.generating') : t('ai.placeholder')"
-            class="flex-1 resize-none bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/50"
+            class="flex-1 resize-none bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground/50"
             :style="{ height: `${MIN_HEIGHT}px` }"
             :disabled="isInputDisabled"
             @input="adjustTextareaHeight"
