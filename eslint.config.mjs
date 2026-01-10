@@ -19,7 +19,7 @@ export default [
       },
     },
     rules: {
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-misused-promises': 'warn',
@@ -31,6 +31,6 @@ export default [
     },
   },
   {
-    ignores: ['**/dist', '**/node_modules', '**/*.js', '**/*.cjs', '**/*.vue'],
+    ignores: ['**/dist', '**/node_modules', '**/dist-electron'],
   },
 ]
