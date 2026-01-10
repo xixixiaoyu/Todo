@@ -26,7 +26,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup",
-    "lint": "eslint src --fix",
+    "lint": "eslint src --fix --cache",
     "clean": "rm -rf dist"
   },
   "dependencies": {
