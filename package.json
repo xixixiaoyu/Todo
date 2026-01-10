@@ -45,15 +45,15 @@
   },
   "lint-staged": {
     "apps/frontend/**/*.{ts,tsx,vue}": [
-      "cd apps/frontend && eslint --fix",
+      "eslint --fix --cache --config apps/frontend/eslint.config.mjs",
       "prettier --write"
     ],
     "apps/backend/**/*.ts": [
-      "cd apps/backend && eslint --fix",
+      "eslint --fix --cache --config apps/backend/eslint.config.mjs",
       "prettier --write"
     ],
     "packages/shared/**/*.ts": [
-      "cd packages/shared && eslint --fix",
+      "eslint --fix --cache --config packages/shared/eslint.config.mjs",
       "prettier --write"
     ],
     "*.{json,css,scss,html}": [
