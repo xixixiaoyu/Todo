@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { X, RotateCcw, Eye, EyeOff, Check, Lightbulb, Plus, Trash2, Edit3 } from 'lucide-vue-next'
+import { X, RotateCcw, Eye, EyeOff, Check, Plus, Trash2, Edit3 } from 'lucide-vue-next'
 import { useAIConfig, type AIConfig, type AIPreset } from '@/composables/useAIConfig'
 
 const modelValue = defineModel<boolean>({ required: true })
@@ -251,35 +251,6 @@ function handleDeletePreset(presetId: string) {
                   />
                 </div>
 
-                <!-- 思考模式开关 -->
-                <div class="space-y-2">
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                      <Lightbulb :size="16" class="text-[#c9b896]" />
-                      <label class="text-sm font-medium text-[#6b5c4d]"
-                        >思考模式 (Thinking Mode)</label
-                      >
-                    </div>
-                    <button
-                      type="button"
-                      class="relative h-6 w-11 rounded-full transition-colors"
-                      :class="formData.thinkingMode === 'enabled' ? 'bg-[#c9b896]' : 'bg-[#e8e4dd]'"
-                      @click="
-                        formData.thinkingMode =
-                          formData.thinkingMode === 'enabled' ? 'disabled' : 'enabled'
-                      "
-                    >
-                      <span
-                        class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
-                        :class="{ 'translate-x-5': formData.thinkingMode === 'enabled' }"
-                      />
-                    </button>
-                  </div>
-                  <p class="text-xs text-[#8b8680]">
-                    启用后 AI 会展示思考过程（需要模型支持 reasoning_content）
-                  </p>
-                </div>
-
                 <!-- 温度参数 -->
                 <div class="space-y-2">
                   <div class="flex items-center justify-between">
@@ -404,25 +375,6 @@ function handleDeletePreset(presetId: string) {
                           presetForm.temperature.toFixed(1)
                         }}</span>
                       </div>
-                    </div>
-                    <div class="flex items-center justify-between">
-                      <label class="text-xs text-[#6b5c4d]">思考模式</label>
-                      <button
-                        type="button"
-                        class="relative h-5 w-9 rounded-full transition-colors"
-                        :class="
-                          presetForm.thinkingMode === 'enabled' ? 'bg-[#c9b896]' : 'bg-[#e8e4dd]'
-                        "
-                        @click="
-                          presetForm.thinkingMode =
-                            presetForm.thinkingMode === 'enabled' ? 'disabled' : 'enabled'
-                        "
-                      >
-                        <span
-                          class="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform"
-                          :class="{ 'translate-x-4': presetForm.thinkingMode === 'enabled' }"
-                        />
-                      </button>
                     </div>
                   </div>
 
