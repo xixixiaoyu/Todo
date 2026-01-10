@@ -503,7 +503,11 @@
 
 /* 缩放控制按钮 */
 .mermaid-zoom-controls {
-  @apply absolute right-3 top-3 z-10 flex gap-1 rounded-lg bg-white/90 p-1.5 shadow-sm backdrop-blur transition-all hover:bg-white;
+  @apply absolute right-3 top-3 z-10 flex gap-1 rounded-lg bg-white/90 p-1.5 shadow-sm backdrop-blur transition-all duration-300 opacity-0 translate-y-[-4px] pointer-events-none hover:bg-white;
+}
+
+.mermaid-container:hover .mermaid-zoom-controls {
+  @apply opacity-100 translate-y-0 pointer-events-auto;
 }
 
 .dark .mermaid-zoom-controls {
@@ -512,6 +516,14 @@
 
 .mermaid-zoom-btn {
   @apply flex h-8 w-8 items-center justify-center rounded-md text-base text-[#6b5c4d] transition-all hover:bg-[#f5f3ed] active:scale-90;
+}
+
+.mermaid-zoom-divider {
+  @apply mx-1 h-4 w-px bg-[#e8e4dd] self-center;
+}
+
+.dark .mermaid-zoom-divider {
+  @apply bg-[#3a3a3a];
 }
 
 .dark .mermaid-zoom-btn {
