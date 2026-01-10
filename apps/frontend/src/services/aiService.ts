@@ -315,12 +315,9 @@ export async function getMultiModelDiscussionStream(
     temperature: primaryPreset?.temperature ?? aiConfig.temperature,
   }
 
-  // 过滤副模型：排除主模型，避免冗余回答
+  // 获取选中的副模型
   const selectedPresets = presets.filter((p) => {
-    const isSelected = discussionModelIds.includes(p.id)
-    const isPrimary =
-      p.id === primaryPreset?.id || (p.model === aiConfig.model && p.baseUrl === aiConfig.baseUrl)
-    return isSelected && !isPrimary
+    return discussionModelIds.includes(p.id)
   })
 
   // 如果没有选择副模型，回退到普通单模型请求

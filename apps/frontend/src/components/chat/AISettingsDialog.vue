@@ -452,15 +452,11 @@ defineExpose({
                           v-for="preset in presets"
                           :key="'secondary-' + preset.id"
                           class="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-all"
-                          :class="[
+                          :class="
                             formData.discussionModelIds.includes(preset.id)
                               ? 'border-primary bg-primary text-primary-foreground'
-                              : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground',
-                            formData.discussionPrimaryModelId === preset.id
-                              ? 'opacity-50 cursor-not-allowed'
-                              : '',
-                          ]"
-                          :disabled="formData.discussionPrimaryModelId === preset.id"
+                              : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground'
+                          "
                           @click="
                             formData.discussionModelIds.includes(preset.id)
                               ? (formData.discussionModelIds = formData.discussionModelIds.filter(

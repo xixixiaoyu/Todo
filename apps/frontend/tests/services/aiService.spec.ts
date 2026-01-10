@@ -319,7 +319,7 @@ describe('aiService - Multi-model Discussion', () => {
     expect(onFinalChunk).toHaveBeenCalledWith('Primary synthesis')
   })
 
-  it('should exclude primary model from contributors even if selected', async () => {
+  it('should include primary model in contributors if selected', async () => {
     const messages = [{ id: '1', role: 'user', content: 'hello' } as ChatMessage]
     const onStepUpdate = vi.fn()
     const onFinalChunk = vi.fn()
@@ -375,9 +375,10 @@ describe('aiService - Multi-model Discussion', () => {
     await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)
 
     const lastSteps = onStepUpdate.mock.calls[onStepUpdate.mock.calls.length - 1][0]
-    // 应该只有 1 个步骤：只有 p2 参与独立回答。p1 被排除（因为它是主模型）。
-    expect(lastSteps).toHaveLength(1)
-    expect(lastSteps[0].modelId).toBe('p2')
+    // 现在应该有 2 个步骤：p1 和 p2 都参与独立回答。
+    expect(lastSteps).toHaveLength(2)
+    expect(lastSteps[0].modelId).toBe('p1')
+    expect(lastSteps[1].modelId).toBe('p2')
   })
 
   it('should pass thinking config to parallel model requests', async () => {
