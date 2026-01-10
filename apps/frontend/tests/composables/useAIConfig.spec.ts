@@ -1,5 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { useAIConfig } from '@/composables/useAIConfig'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { nextTick } from 'vue'
+import { useAIConfig, _reset } from '@/composables/useAIConfig'
+import type { AIConfig, AIPreset } from '@/composables/useAIConfig'
 
 // Mock localStorage
 const mockLocalStorage = (() => {
@@ -28,11 +30,8 @@ Object.defineProperty(window, 'localStorage', {
 describe('useAIConfig', () => {
   beforeEach(() => {
     localStorage.clear()
-    vi.resetModules()
-  })
-
-  afterEach(() => {
-    localStorage.clear()
+    _reset()
+    vi.clearAllMocks()
   })
 
   describe('initial state', () => {
@@ -60,6 +59,7 @@ describe('useAIConfig', () => {
 
       localStorage.setItem('ai-config', JSON.stringify(savedConfig))
 
+      _reset() // 手动触发重置以从 localStorage 加载
       const { config } = useAIConfig()
 
       expect(config.value).toEqual(savedConfig)
@@ -73,6 +73,7 @@ describe('useAIConfig', () => {
 
       localStorage.setItem('ai-config', JSON.stringify(savedConfig))
 
+      _reset() // 手动触发重置以从 localStorage 加载
       const { config, DEFAULT_CONFIG } = useAIConfig()
 
       expect(config.value).toEqual({
@@ -95,10 +96,11 @@ describe('useAIConfig', () => {
       expect(config.value.baseUrl).toBe(initialConfig.baseUrl) // Should remain unchanged
     })
 
-    it('should persist updated config to localStorage', () => {
+    it('should persist updated config to localStorage', async () => {
       const { updateConfig } = useAIConfig()
 
       updateConfig({ apiKey: 'persisted-key' })
+      await nextTick()
 
       const saved = localStorage.getItem('ai-config')
       expect(saved).toBeTruthy()
@@ -200,7 +202,7 @@ describe('useAIConfig', () => {
       expect(newPreset.name).toBe('Test Preset')
     })
 
-    it('should persist presets to localStorage', () => {
+    it('should persist presets to localStorage', async () => {
       const { addPreset } = useAIConfig()
 
       addPreset({
@@ -213,6 +215,8 @@ describe('useAIConfig', () => {
         thinkingMode: 'enabled',
         todoAssistant: false,
       })
+
+      await nextTick()
 
       const saved = localStorage.getItem('ai-presets')
       expect(saved).toBeTruthy()
@@ -315,20 +319,22 @@ describe('useAIConfig', () => {
   describe('readonly properties', () => {
     it('should make config readonly', () => {
       const { config } = useAIConfig()
+      const originalValue = { ...config.value }
 
-      expect(() => {
-        // @ts-expect-error - testing readonly property
-        config.value = { ...config.value, apiKey: 'modified' }
-      }).toThrow()
+      // @ts-expect-error - testing readonly property
+      config.value = { ...config.value, apiKey: 'modified' }
+
+      expect(config.value).toEqual(originalValue)
     })
 
     it('should make activePresetId readonly', () => {
       const { activePresetId } = useAIConfig()
+      const originalValue = activePresetId.value
 
-      expect(() => {
-        // @ts-expect-error - testing readonly property
-        activePresetId.value = 'modified-id'
-      }).toThrow()
+      // @ts-expect-error - testing readonly property
+      activePresetId.value = 'modified-id'
+
+      expect(activePresetId.value).toBe(originalValue)
     })
   })
 })

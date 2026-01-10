@@ -43,11 +43,13 @@ export function useChat(options: AIRequestOptions = {}) {
   /**
    * 发送消息
    */
-  async function sendMessage(content: string): Promise<void> {
+  async function sendMessage(content: string, isRetry = false): Promise<void> {
     if (!content.trim() || isGenerating.value) return
 
     error.value = null
-    retryCount.value = 0
+    if (!isRetry) {
+      retryCount.value = 0
+    }
 
     // 创建用户消息
     const userMessage: ChatMessage = {
@@ -114,9 +116,10 @@ export function useChat(options: AIRequestOptions = {}) {
       if (retryCount.value < MAX_RETRIES) {
         retryCount.value++
         console.warn(`重试第 ${retryCount.value} 次...`)
-        // 移除失败的用户消息，重新发送
+        // 移除失败的用户消息，允许重新发送
         chatHistory.value.pop()
-        await sendMessage(content)
+        isGenerating.value = false
+        await sendMessage(content, true)
       } else {
         isGenerating.value = false
         currentAIResponse.value = ''
@@ -170,8 +173,9 @@ export function useChat(options: AIRequestOptions = {}) {
 
     const userContent = chatHistory.value[lastUserMsgIndex].content
 
-    // 删除最后一条用户消息之后的所有 AI 消息
-    chatHistory.value = chatHistory.value.slice(0, lastUserMsgIndex)
+    // 删除最后一条用户消息及其之后的所有消息
+    const newHistory = chatHistory.value.slice(0, lastUserMsgIndex)
+    chatHistory.value = newHistory
 
     // 重新发送
     await sendMessage(userContent)

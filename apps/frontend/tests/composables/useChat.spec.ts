@@ -47,6 +47,11 @@ describe('useChat', () => {
 
     // 重置 mock 实现
     mockCurrentSession.value = null
+    mockUpdateSessionMessages.mockImplementation((sessionId, messages) => {
+      if (mockCurrentSession.value && mockCurrentSession.value.id === sessionId) {
+        mockCurrentSession.value.messages = [...messages]
+      }
+    })
     mockGetOrCreateCurrentSession.mockImplementation(() => {
       if (!mockCurrentSession.value) {
         mockCurrentSession.value = {
@@ -135,7 +140,8 @@ describe('useChat', () => {
       mockGetOrCreateCurrentSession.mockReturnValue(mockSession)
 
       mockGetAIStreamResponse.mockImplementation(async (_, onChunk) => {
-        // 模拟流完成
+        // 模拟流响应内容
+        onChunk('Hello')
         onChunk('[DONE]')
       })
 
@@ -235,7 +241,12 @@ describe('useChat', () => {
       mockGetOrCreateCurrentSession.mockReturnValue(mockSession)
 
       const error = new Error('Network error')
-      mockGetAIStreamResponse.mockRejectedValueOnce(error).mockResolvedValue(undefined)
+      mockGetAIStreamResponse
+        .mockRejectedValueOnce(error)
+        .mockImplementationOnce(async (_, onChunk) => {
+          onChunk('Success after retry')
+          onChunk('[DONE]')
+        })
 
       const { sendMessage, error: errorState, isGenerating } = useChat()
 
@@ -361,6 +372,7 @@ describe('useChat', () => {
       mockGetOrCreateCurrentSession.mockReturnValue(mockSessionWithMessages)
 
       mockGetAIStreamResponse.mockImplementation(async (_, onChunk) => {
+        onChunk('Hello')
         onChunk('[DONE]')
       })
 

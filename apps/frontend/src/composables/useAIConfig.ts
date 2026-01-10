@@ -120,6 +120,15 @@ watch(presets, (newPresets) => savePresets(newPresets), { deep: true })
 watch(activePresetId, (id) => saveActivePresetId(id))
 
 /**
+ * 导出重置函数用于测试
+ */
+export function _reset() {
+  config.value = loadConfig()
+  presets.value = loadPresets()
+  activePresetId.value = loadActivePresetId()
+}
+
+/**
  * AI 配置管理 composable
  */
 export function useAIConfig() {

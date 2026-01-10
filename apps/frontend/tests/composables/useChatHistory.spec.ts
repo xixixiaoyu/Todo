@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { useChatHistory } from '@/composables/useChatHistory'
+import { useChatHistory, _reset } from '@/composables/useChatHistory'
 import { type ChatMessage } from '@/services/aiService'
 
 // Mock localStorage
@@ -28,11 +28,10 @@ Object.defineProperty(window, 'localStorage', {
 
 describe('useChatHistory', () => {
   beforeEach(() => {
+    // 重置全局状态
+    _reset()
     // 清除所有现有数据
     localStorage.clear()
-    // 由于 useChatHistory 是全局单例，我们需要清除 localStorage 来重置状态
-    localStorage.removeItem('ai-chat-sessions')
-    localStorage.removeItem('ai-chat-current-session')
 
     vi.clearAllMocks()
     vi.useFakeTimers()

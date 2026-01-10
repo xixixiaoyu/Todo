@@ -68,10 +68,24 @@ function saveSessions(): void {
 }
 
 // 初始化加载
-loadSessions()
+if (typeof window !== 'undefined') {
+  loadSessions()
+}
 
 // 监听变化自动保存
 watch([sessions, currentSessionId], saveSessions, { deep: true })
+
+/**
+ * 导出重置函数用于测试
+ */
+export function _reset() {
+  sessions.value = []
+  currentSessionId.value = null
+  if (saveTimer) {
+    clearTimeout(saveTimer)
+    saveTimer = null
+  }
+}
 
 /**
  * 会话历史管理 composable
