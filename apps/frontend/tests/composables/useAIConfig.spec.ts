@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { nextTick } from 'vue'
-import { useAIConfig, _reset, aiThinkingMode, getAIThinkingMode } from '@/composables/useAIConfig'
+import {
+  useAIConfig,
+  _resetAIConfig,
+  aiThinkingMode,
+  getAIThinkingMode,
+} from '@/composables/useAIConfig'
 
 // Mock localStorage
 const mockLocalStorage = (() => {
@@ -29,7 +34,7 @@ Object.defineProperty(window, 'localStorage', {
 describe('useAIConfig', () => {
   beforeEach(() => {
     localStorage.clear()
-    _reset()
+    _resetAIConfig()
     vi.clearAllMocks()
   })
 
@@ -58,7 +63,7 @@ describe('useAIConfig', () => {
 
       localStorage.setItem('ai-config', JSON.stringify(savedConfig))
 
-      _reset() // 手动触发重置以从 localStorage 加载
+      _resetAIConfig() // 手动触发重置以从 localStorage 加载
       const { config } = useAIConfig()
 
       expect(config.value).toEqual(savedConfig)
@@ -72,7 +77,7 @@ describe('useAIConfig', () => {
 
       localStorage.setItem('ai-config', JSON.stringify(savedConfig))
 
-      _reset() // 手动触发重置以从 localStorage 加载
+      _resetAIConfig() // 手动触发重置以从 localStorage 加载
       const { config, DEFAULT_CONFIG } = useAIConfig()
 
       expect(config.value).toEqual({
@@ -91,7 +96,7 @@ describe('useAIConfig', () => {
 
     it('should load saved value from localStorage', () => {
       localStorage.setItem('ai_thinking_mode', 'disabled')
-      _reset()
+      _resetAIConfig()
       expect(aiThinkingMode.value).toBe('disabled')
     })
 

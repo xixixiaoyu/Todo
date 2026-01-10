@@ -162,7 +162,7 @@ watch(activePresetId, (id) => saveActivePresetId(id))
 /**
  * 导出重置函数用于测试
  */
-export function _reset() {
+export function _resetAIConfig() {
   aiThinkingMode.value =
     (localStorage.getItem(AI_THINKING_MODE_STORAGE_KEY) as 'enabled' | 'disabled') || 'enabled'
   config.value = loadConfig()

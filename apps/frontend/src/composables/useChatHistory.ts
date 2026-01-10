@@ -79,7 +79,7 @@ watch([sessions, currentSessionId], saveSessions, { deep: true })
 /**
  * 导出重置函数用于测试
  */
-export function _reset() {
+export function _resetChatHistory() {
   sessions.value = []
   currentSessionId.value = null
   if (saveTimer) {

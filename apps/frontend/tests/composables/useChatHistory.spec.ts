@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import i18n from '@/i18n'
-import { useChatHistory, _reset } from '@/composables/useChatHistory'
+import { useChatHistory, _resetChatHistory } from '@/composables/useChatHistory'
 import { type ChatMessage } from '@/services/aiService'
 
 // Mock localStorage
@@ -30,7 +30,7 @@ Object.defineProperty(window, 'localStorage', {
 describe('useChatHistory', () => {
   beforeEach(() => {
     // 重置全局状态
-    _reset()
+    _resetChatHistory()
     // 清除所有现有数据
     localStorage.clear()
 
