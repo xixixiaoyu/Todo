@@ -442,8 +442,9 @@ describe('useChat', () => {
       mockCurrentSession.value = mockSessionWithMessages
       mockGetOrCreateCurrentSession.mockReturnValue(mockSessionWithMessages)
 
-      const { messages, currentAIResponse, currentThinkingContent } = useChat()
+      const { messages, currentAIResponse, currentThinkingContent, isGenerating } = useChat()
 
+      isGenerating.value = true
       currentAIResponse.value = 'partial response'
       currentThinkingContent.value = 'thinking...'
 
