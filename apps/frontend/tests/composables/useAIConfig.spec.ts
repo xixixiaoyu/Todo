@@ -61,6 +61,7 @@ describe('useAIConfig', () => {
         todoAssistant: true,
         discussionMode: true,
         discussionModelIds: ['1', '2'],
+        discussionPrimaryModelId: null,
       }
 
       localStorage.setItem('ai-config', JSON.stringify(savedConfig))

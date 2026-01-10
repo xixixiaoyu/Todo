@@ -65,6 +65,49 @@ export function generateId(): string {
 }
 
 /**
+ * 注入系统提示和 Todo 列表
+ */
+function injectSystemPrompts(
+  messages: ChatMessage[],
+  systemPrompt?: string,
+  todoAssistant?: boolean,
+): Array<{ role: string; content: string }> {
+  const messagesWithSystem: Array<{ role: string; content: string }> = []
+
+  if (systemPrompt) {
+    messagesWithSystem.push({
+      role: 'system',
+      content: systemPrompt,
+    })
+  }
+
+  // Todo 助手：注入未完成的 Todo 列表
+  if (todoAssistant) {
+    const todoStore = useTodoStore()
+    const pendingTodos = todoStore.todos.filter((t) => !t.completed)
+    if (pendingTodos.length > 0) {
+      const todoList = pendingTodos.map((t) => `- ${t.title}`).join('\n')
+      messagesWithSystem.push({
+        role: 'system',
+        content: t('ai.todoAssistantPrompt', {
+          count: pendingTodos.length,
+          todoList,
+        }),
+      })
+    }
+  }
+
+  messagesWithSystem.push(
+    ...messages.map((msg) => ({
+      role: msg.role,
+      content: msg.content,
+    })),
+  )
+
+  return messagesWithSystem
+}
+
+/**
  * 发送流式 AI 请求
  * @param messages 消息历史
  * @param onChunk 内容块回调
@@ -87,41 +130,17 @@ export async function getAIStreamResponse(
     thinkingMode = aiConfig.thinkingMode,
   } = options
 
-  // 创建新的 AbortController
-  abortController = new AbortController()
+  // 仅在没有活跃的 AbortController 时创建新的
+  if (!abortController) {
+    abortController = new AbortController()
+  }
   const { signal } = abortController
 
-  // 构建消息列表（添加系统提示）
-  const messagesWithSystemPrompts: Array<{ role: string; content: string }> = []
-
-  if (systemPrompt) {
-    messagesWithSystemPrompts.push({
-      role: 'system',
-      content: systemPrompt,
-    })
-  }
-
-  // Todo 助手：注入未完成的 Todo 列表
-  if (aiConfig.todoAssistant) {
-    const todoStore = useTodoStore()
-    const pendingTodos = todoStore.todos.filter((t) => !t.completed)
-    if (pendingTodos.length > 0) {
-      const todoList = pendingTodos.map((t) => `- ${t.title}`).join('\n')
-      messagesWithSystemPrompts.push({
-        role: 'system',
-        content: t('ai.todoAssistantPrompt', {
-          count: pendingTodos.length,
-          todoList,
-        }),
-      })
-    }
-  }
-
-  messagesWithSystemPrompts.push(
-    ...messages.map((msg) => ({
-      role: msg.role,
-      content: msg.content,
-    })),
+  // 构建消息列表（添加系统提示和 Todo 列表）
+  const messagesWithSystemPrompts = injectSystemPrompts(
+    messages,
+    systemPrompt,
+    aiConfig.todoAssistant,
   )
 
   try {
@@ -131,9 +150,13 @@ export async function getAIStreamResponse(
       messages: messagesWithSystemPrompts,
       temperature,
       stream: true,
-      thinking: {
-        type: thinkingMode,
-      },
+    }
+
+    // 仅在开启思考模式时添加 thinking 参数
+    if (thinkingMode === 'enabled') {
+      requestBody.thinking = {
+        type: 'enabled',
+      }
     }
 
     const response = await fetch(buildApiUrl(baseUrl), {
@@ -229,20 +252,27 @@ async function fetchNonStreamResponse(
   config: { baseUrl: string; apiKey: string; model: string; temperature?: number },
   messages: any[],
   thinkingMode?: string,
+  signal?: AbortSignal,
 ): Promise<string> {
+  const requestBody: Record<string, any> = {
+    model: config.model,
+    messages,
+    temperature: config.temperature ?? 0.7,
+    stream: false,
+  }
+
+  if (thinkingMode === 'enabled') {
+    requestBody.thinking = { type: 'enabled' }
+  }
+
   const response = await fetch(buildApiUrl(config.baseUrl), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${config.apiKey}`,
     },
-    body: JSON.stringify({
-      model: config.model,
-      messages,
-      temperature: config.temperature ?? 0.7,
-      stream: false,
-      thinking: thinkingMode ? { type: thinkingMode } : undefined,
-    }),
+    body: JSON.stringify(requestBody),
+    signal,
   })
 
   if (!response.ok) {
@@ -263,7 +293,14 @@ export async function getMultiModelDiscussionStream(
   options: AIRequestOptions = {},
 ): Promise<void> {
   const aiConfig = getAIConfig()
-  const { discussionModelIds = [], discussionPrimaryModelId, thinkingMode } = aiConfig
+  const { discussionModelIds = [], discussionPrimaryModelId, thinkingMode, systemPrompt } = aiConfig
+
+  // 确保先中止之前的请求
+  abortCurrentRequest()
+
+  // 创建新的 AbortController
+  abortController = new AbortController()
+  const { signal } = abortController
 
   // 1. 获取所有参与讨论的模型配置
   const presets = JSON.parse(localStorage.getItem('ai-presets') || '[]') as any[]
@@ -295,6 +332,9 @@ export async function getMultiModelDiscussionStream(
     return getAIStreamResponse(messages, onFinalChunk, undefined, options)
   }
 
+  // 构建带系统提示和 Todo 列表的消息列表
+  const messagesWithSystem = injectSystemPrompts(messages, systemPrompt, aiConfig.todoAssistant)
+
   // 初始化步骤列表
   const steps: DiscussionStep[] = [
     {
@@ -320,14 +360,20 @@ export async function getMultiModelDiscussionStream(
   try {
     draftContent = await fetchNonStreamResponse(
       primaryConfig,
-      messages.map((m) => ({ role: m.role, content: m.content })),
+      messagesWithSystem,
       thinkingMode,
+      signal,
     )
     steps[0].content = draftContent
     steps[0].status = 'done'
   } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      onFinalChunk('[ABORTED]')
+      return
+    }
     steps[0].content = err instanceof Error ? err.message : 'Draft generation failed'
     steps[0].status = 'error'
+    // 如果主模型失败，尝试回退到流式单模型
     return getAIStreamResponse(messages, onFinalChunk, undefined, options)
   } finally {
     onStepUpdate([...steps])
@@ -342,16 +388,27 @@ export async function getMultiModelDiscussionStream(
         draftContent,
       })
 
+      // 副模型评审也带上系统提示词和 Todo 列表
+      const baseMessages = messages.slice(0, -1)
+      const reviewMessages = injectSystemPrompts(
+        [...baseMessages, { id: generateId(), role: 'user', content: reviewPrompt } as ChatMessage],
+        systemPrompt,
+        aiConfig.todoAssistant,
+      )
+
       steps[stepIndex].content = await fetchNonStreamResponse(
         preset,
-        [
-          ...messages.slice(0, -1).map((m) => ({ role: m.role, content: m.content })),
-          { role: 'user', content: reviewPrompt },
-        ],
+        reviewMessages,
         thinkingMode,
+        signal,
       )
       steps[stepIndex].status = 'done'
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        steps[stepIndex].content = 'Aborted'
+        steps[stepIndex].status = 'error'
+        throw err // 向上抛出以便 Promise.all 处理
+      }
       steps[stepIndex].content = err instanceof Error ? err.message : 'Review failed'
       steps[stepIndex].status = 'error'
     } finally {
@@ -359,7 +416,19 @@ export async function getMultiModelDiscussionStream(
     }
   }
 
-  await Promise.all(selectedPresets.map((p, i) => fetchModelReview(p, i)))
+  try {
+    await Promise.all(selectedPresets.map((p, i) => fetchModelReview(p, i)))
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      onFinalChunk('[ABORTED]')
+      return
+    }
+  }
+
+  if (signal.aborted) {
+    onFinalChunk('[ABORTED]')
+    return
+  }
 
   // 4. 第三阶段：汇总讨论结果，由主模型生成最终回复
   const discussionSummary = steps

@@ -458,4 +458,63 @@ describe('aiService - Multi-model Discussion', () => {
 
     await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)
   })
+
+  it('should include system prompt in all steps of discussion', async () => {
+    const messages = [{ id: '1', role: 'user', content: 'hello' } as ChatMessage]
+    const onStepUpdate = vi.fn()
+    const onFinalChunk = vi.fn()
+    const systemPrompt = 'You are a helpful assistant'
+
+    localStorage.setItem(
+      'ai-config',
+      JSON.stringify({
+        ...JSON.parse(localStorage.getItem('ai-config') || '{}'),
+        discussionMode: true,
+        discussionModelIds: ['p1'],
+        systemPrompt,
+      }),
+    )
+    localStorage.setItem(
+      'ai-presets',
+      JSON.stringify([{ id: 'p1', name: 'P1', baseUrl: 'api.p1.com', apiKey: 'k1', model: 'm1' }]),
+    )
+    _resetAIConfig()
+
+    mockFetch.mockImplementation(async (url: string, init: any) => {
+      const body = JSON.parse(init.body)
+      // Verify system prompt is present in messages
+      expect(body.messages).toContainEqual({ role: 'system', content: systemPrompt })
+
+      if (body.stream === false) {
+        return {
+          ok: true,
+          json: async () => ({
+            choices: [{ message: { content: 'Success' } }],
+          }),
+        }
+      }
+      return {
+        ok: true,
+        body: {
+          getReader: () => ({
+            read: vi
+              .fn()
+              .mockResolvedValueOnce({
+                value: new TextEncoder().encode(
+                  'data: {"choices":[{"delta":{"content":"Final"}}]}\n\n',
+                ),
+                done: false,
+              })
+              .mockResolvedValueOnce({
+                value: new TextEncoder().encode('data: [DONE]\n\n'),
+                done: true,
+              }),
+          }),
+        },
+      }
+    })
+
+    await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)
+    expect(mockFetch).toHaveBeenCalledTimes(3) // Draft, Review, Synthesis
+  })
 })
