@@ -19,6 +19,7 @@ export interface AIRequestOptions {
   temperature?: number
   maxTokens?: number
   systemPrompt?: string
+  thinkingMode?: 'enabled' | 'disabled'
 }
 
 // 当前请求的 AbortController
@@ -68,6 +69,7 @@ export async function getAIStreamResponse(
     model = aiConfig.model,
     temperature = aiConfig.temperature,
     systemPrompt = aiConfig.systemPrompt,
+    thinkingMode = aiConfig.thinkingMode,
   } = options
 
   // 创建新的 AbortController
@@ -111,11 +113,9 @@ export async function getAIStreamResponse(
       messages: messagesWithSystemPrompts,
       temperature,
       stream: true,
-    }
-
-    // 注入思考模式参数（仅当启用时）
-    if (aiConfig.thinkingMode === 'enabled') {
-      requestBody.thinking = { type: 'enabled' }
+      thinking: {
+        type: thinkingMode,
+      },
     }
 
     const response = await fetch(buildApiUrl(aiConfig.baseUrl), {

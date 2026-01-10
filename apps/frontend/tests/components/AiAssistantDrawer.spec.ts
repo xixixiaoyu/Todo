@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { nextTick, ref } from 'vue'
+import { ref } from 'vue'
 import AiAssistantDrawer from '@/components/AiAssistantDrawer.vue'
 
 // Mock Lucide icons
@@ -78,6 +78,14 @@ vi.mock('@/composables/useAIConfig', () => ({
     switchPreset: vi.fn(),
     config: ref({ thinkingMode: 'disabled', todoAssistant: false }),
     updateConfig: vi.fn(),
+  }),
+  aiThinkingMode: ref('disabled'),
+  saveAIThinkingMode: vi.fn(),
+}))
+
+vi.mock('vue-i18n', () => ({
+  useI18n: () => ({
+    t: (key: string) => key,
   }),
 }))
 
@@ -180,5 +188,17 @@ describe('AiAssistantDrawer Navigation and Button States', () => {
 
     const prevBtn = wrapper.find('button[title="返回上一个会话"]')
     expect(prevBtn.attributes('disabled')).toBeDefined()
+  })
+
+  it('should call saveAIThinkingMode when toggle is clicked', async () => {
+    const { saveAIThinkingMode } = await import('@/composables/useAIConfig')
+    const wrapper = mount(AiAssistantDrawer, {
+      props: { modelValue: true },
+    })
+
+    const checkbox = wrapper.find('input.thinking-checkbox')
+    await checkbox.setValue(true)
+
+    expect(saveAIThinkingMode).toHaveBeenCalledWith('enabled')
   })
 })

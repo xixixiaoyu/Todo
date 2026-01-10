@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { nextTick } from 'vue'
-import { useAIConfig, _reset } from '@/composables/useAIConfig'
-import type { AIConfig, AIPreset } from '@/composables/useAIConfig'
+import { useAIConfig, _reset, aiThinkingMode, getAIThinkingMode } from '@/composables/useAIConfig'
 
 // Mock localStorage
 const mockLocalStorage = (() => {
@@ -81,6 +80,39 @@ describe('useAIConfig', () => {
         baseUrl: 'https://api.test.com',
         apiKey: 'test-key',
       })
+    })
+  })
+
+  describe('AI Thinking Mode', () => {
+    it('should initialize with default value (enabled)', () => {
+      expect(aiThinkingMode.value).toBe('enabled')
+      expect(getAIThinkingMode()).toBe('enabled')
+    })
+
+    it('should load saved value from localStorage', () => {
+      localStorage.setItem('ai_thinking_mode', 'disabled')
+      _reset()
+      expect(aiThinkingMode.value).toBe('disabled')
+    })
+
+    it('should persist value to localStorage when changed', async () => {
+      aiThinkingMode.value = 'disabled'
+      await nextTick()
+      expect(localStorage.getItem('ai_thinking_mode')).toBe('disabled')
+    })
+
+    it('should sync with config.thinkingMode', async () => {
+      const { config, updateConfig } = useAIConfig()
+
+      // aiThinkingMode -> config
+      aiThinkingMode.value = 'disabled'
+      await nextTick()
+      expect(config.value.thinkingMode).toBe('disabled')
+
+      // config -> aiThinkingMode
+      updateConfig({ thinkingMode: 'enabled' })
+      await nextTick()
+      expect(aiThinkingMode.value).toBe('enabled')
     })
   })
 

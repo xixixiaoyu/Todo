@@ -5,10 +5,15 @@ interface Props {
   modelValue: boolean
   defaultWidth?: number
   minWidth?: number
+  maxWidth?: number
   rightGap?: number // 距离右边的最小间距（px）
   storageKey?: string
   isFullscreen?: boolean // 是否全屏
 }
+
+defineOptions({
+  inheritAttrs: false,
+})
 
 const props = withDefaults(defineProps<Props>(), {
   defaultWidth: 320,
@@ -32,10 +37,13 @@ const windowWidth = ref(window.innerWidth)
 // 移动端检测
 const isMobile = computed(() => windowWidth.value < 640)
 
-const maxWidth = computed(() => windowWidth.value - props.rightGap)
+const resolvedMaxWidth = computed(() => {
+  const windowLimit = windowWidth.value - props.rightGap
+  return props.maxWidth ? Math.min(props.maxWidth, windowLimit) : windowLimit
+})
 
 function clampWidth(width: number) {
-  return Math.max(props.minWidth, Math.min(maxWidth.value, width))
+  return Math.max(props.minWidth, Math.min(resolvedMaxWidth.value, width))
 }
 
 function handleWindowResize() {
@@ -114,7 +122,14 @@ watch(
 
     <!-- 抽屉 -->
     <Transition name="slide">
-      <div v-if="modelValue" class="drawer" :style="drawerStyle" role="dialog" aria-modal="true">
+      <div
+        v-if="modelValue"
+        class="drawer"
+        :style="drawerStyle"
+        role="dialog"
+        aria-modal="true"
+        v-bind="$attrs"
+      >
         <!-- 抽屉内容 -->
         <div class="drawer-content">
           <slot />

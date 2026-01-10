@@ -21,9 +21,11 @@ import ChatMessageList from '@/components/chat/ChatMessageList.vue'
 import AISettingsDialog from '@/components/chat/AISettingsDialog.vue'
 import ChatHistoryPanel from '@/components/chat/ChatHistoryPanel.vue'
 import { useChat } from '@/composables/useChat'
-import { useAIConfig } from '@/composables/useAIConfig'
+import { useAIConfig, aiThinkingMode, saveAIThinkingMode } from '@/composables/useAIConfig'
 import { useChatHistory } from '@/composables/useChatHistory'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const modelValue = defineModel<boolean>({ required: true })
 
 // AI 配置与预设
@@ -31,13 +33,12 @@ const { presets, activePreset, switchPreset, config, updateConfig } = useAIConfi
 
 // 切换思考模式
 const toggleThinkingMode = () => {
-  updateConfig({
-    thinkingMode: config.value.thinkingMode === 'enabled' ? 'disabled' : 'enabled',
-  })
+  const mode = aiThinkingMode.value === 'enabled' ? 'disabled' : 'enabled'
+  saveAIThinkingMode(mode)
 }
 
 // 思考模式是否开启
-const isThinkingEnabled = computed(() => config.value.thinkingMode === 'enabled')
+const isThinkingEnabled = computed(() => aiThinkingMode.value === 'enabled')
 
 // 切换 Todo 助手
 const toggleTodoAssistant = () => {
@@ -171,6 +172,10 @@ const openSettings = () => {
 
 // 当前显示的预设名称
 const currentPresetName = computed(() => activePreset.value?.name ?? '自定义')
+
+defineOptions({
+  inheritAttrs: false,
+})
 </script>
 
 <template>
@@ -180,6 +185,7 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
     :min-width="320"
     :max-width="1000"
     :is-fullscreen="isMaximized"
+    v-bind="$attrs"
   >
     <div class="relative flex h-full flex-col bg-[#faf8f4] dark:bg-[#1a1a1a]">
       <!-- 顶部标题栏 -->
@@ -289,7 +295,7 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
             <Plus :size="14" />
             <span>新对话</span>
           </button>
-          <!-- 思考模式开关 -->
+          <!-- AI 思考模式开关 -->
           <button
             class="flex h-8 w-8 items-center justify-center rounded-full border transition-colors"
             :class="
@@ -297,7 +303,7 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
                 ? 'border-[#c9b896] bg-[#c9b896]/10 text-[#c9b896] dark:border-[#b8a785] dark:bg-[#b8a785]/20 dark:text-[#b8a785]'
                 : 'border-[#e8e4dd] bg-white text-[#8b8680] hover:bg-[#f5f3ed] dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#6b6b6b] dark:hover:bg-[#3a3a3a]'
             "
-            :title="isThinkingEnabled ? '思考模式已开启' : '思考模式已关闭'"
+            :title="isThinkingEnabled ? t('ai.thinkingEnabled') : t('ai.thinkingDisabled')"
             @click="toggleThinkingMode"
           >
             <Lightbulb :size="16" />
@@ -443,3 +449,9 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
   <!-- 设置弹窗 -->
   <AISettingsDialog v-model="showSettings" />
 </template>
+
+<style scoped>
+.thinking-markdown :deep(p) {
+  margin: 0.5em 0;
+}
+</style>

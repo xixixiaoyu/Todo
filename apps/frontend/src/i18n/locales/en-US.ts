@@ -88,4 +88,9 @@ export default {
     cancel: 'Cancel',
     duplicate: 'This task already exists',
   },
+  ai: {
+    thinkingMode: 'AI Thinking Mode',
+    thinkingEnabled: 'Thinking Mode Enabled',
+    thinkingDisabled: 'Thinking Mode Disabled',
+  },
 }

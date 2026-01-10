@@ -86,4 +86,9 @@ export default {
     cancel: '取消',
     duplicate: '该待办事项已存在',
   },
+  ai: {
+    thinkingMode: 'AI 思考模式',
+    thinkingEnabled: '思考模式已开启',
+    thinkingDisabled: '思考模式已关闭',
+  },
 }

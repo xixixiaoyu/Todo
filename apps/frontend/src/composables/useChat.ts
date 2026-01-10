@@ -7,6 +7,7 @@ import {
   type AIRequestOptions,
 } from '@/services/aiService'
 import { useChatHistory } from './useChatHistory'
+import { getAIThinkingMode } from './useAIConfig'
 
 export type { ChatMessage }
 
@@ -106,7 +107,10 @@ export function useChat(options: AIRequestOptions = {}) {
         (thinking: string) => {
           currentThinkingContent.value += thinking
         },
-        options,
+        {
+          ...options,
+          thinkingMode: getAIThinkingMode(),
+        },
       )
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '请求失败'

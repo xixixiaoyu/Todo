@@ -28,6 +28,28 @@ export interface AIPreset {
 const STORAGE_KEY = 'ai-config'
 const PRESETS_STORAGE_KEY = 'ai-presets'
 const ACTIVE_PRESET_KEY = 'ai-active-preset'
+const AI_THINKING_MODE_STORAGE_KEY = 'ai_thinking_mode'
+
+/**
+ * AI 思考模式状态
+ */
+export const aiThinkingMode = ref<'enabled' | 'disabled'>(
+  (localStorage.getItem(AI_THINKING_MODE_STORAGE_KEY) as 'enabled' | 'disabled') || 'enabled',
+)
+
+/**
+ * 获取 AI 思考模式
+ */
+export function getAIThinkingMode(): 'enabled' | 'disabled' {
+  return aiThinkingMode.value
+}
+
+/**
+ * 保存 AI 思考模式
+ */
+export function saveAIThinkingMode(mode: 'enabled' | 'disabled'): void {
+  aiThinkingMode.value = mode
+}
 
 // 默认配置
 const DEFAULT_CONFIG: AIConfig = {
@@ -36,7 +58,7 @@ const DEFAULT_CONFIG: AIConfig = {
   model: import.meta.env.VITE_AI_MODEL || 'deepseek-chat',
   temperature: 0.3,
   systemPrompt: '你是一个友好的 AI 助手，请用简洁明了的中文回答用户的问题。',
-  thinkingMode: 'enabled',
+  thinkingMode: aiThinkingMode.value, // 使用初始值
   todoAssistant: false,
 }
 
@@ -44,6 +66,23 @@ const DEFAULT_CONFIG: AIConfig = {
 const config = ref<AIConfig>(loadConfig())
 const presets = ref<AIPreset[]>(loadPresets())
 const activePresetId = ref<string | null>(loadActivePresetId())
+
+// 监听思考模式变化并同步
+watch(aiThinkingMode, (val) => {
+  localStorage.setItem(AI_THINKING_MODE_STORAGE_KEY, val)
+  if (config.value.thinkingMode !== val) {
+    config.value.thinkingMode = val
+  }
+})
+
+watch(
+  () => config.value.thinkingMode,
+  (val) => {
+    if (aiThinkingMode.value !== val) {
+      aiThinkingMode.value = val
+    }
+  },
+)
 
 /**
  * 从 localStorage 加载配置
@@ -123,6 +162,8 @@ watch(activePresetId, (id) => saveActivePresetId(id))
  * 导出重置函数用于测试
  */
 export function _reset() {
+  aiThinkingMode.value =
+    (localStorage.getItem(AI_THINKING_MODE_STORAGE_KEY) as 'enabled' | 'disabled') || 'enabled'
   config.value = loadConfig()
   presets.value = loadPresets()
   activePresetId.value = loadActivePresetId()
