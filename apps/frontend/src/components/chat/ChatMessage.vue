@@ -149,6 +149,14 @@ function injectMermaidSvgs() {
         if (containerElement && placeholder.parentNode) {
           containerElement.setAttribute('data-processed', 'true')
           placeholder.parentNode.replaceChild(containerElement, placeholder)
+
+          // 触发淡入动画
+          requestAnimationFrame(() => {
+            const diagram = containerElement.querySelector('.mermaid-diagram') as HTMLElement
+            if (diagram) {
+              diagram.style.opacity = '1'
+            }
+          })
         }
       }
     })

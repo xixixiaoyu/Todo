@@ -128,19 +128,31 @@ async function initializeMermaid(theme: 'default' | 'dark' = 'default') {
   mermaidInstance.initialize({
     startOnLoad: false,
     theme: isDark ? 'dark' : 'default',
-    securityLevel: 'strict', // 使用 strict 模式以获得更标准的 SVG
+    securityLevel: 'loose', // 允许内联样式以保证渲染效果
     fontFamily: fontStack,
     fontSize: 14,
-    flowchart: { useMaxWidth: false, htmlLabels: true, curve: 'linear', padding: 20 },
+    flowchart: {
+      useMaxWidth: false,
+      htmlLabels: true,
+      curve: 'basis', // 使用更平滑的曲线
+      padding: 15,
+    },
     themeVariables: isDark
       ? {
           primaryColor: '#c9b896',
-          primaryTextColor: '#f5f5f5',
+          primaryTextColor: '#f0f0f0',
           primaryBorderColor: '#8b8680',
-          lineColor: '#8b8680',
+          lineColor: '#c9b896',
           secondaryColor: '#3a3a3a',
-          background: '#1a1a1a',
-          mainBkg: '#2a2a2a',
+          tertiaryColor: '#2a2a2a',
+          mainBkg: '#1e1e1e',
+          nodeBorder: '#8b8680',
+          clusterBkg: '#2a2a2a',
+          clusterBorder: '#3a3a3a',
+          defaultLinkColor: '#c9b896',
+          titleColor: '#f0f0f0',
+          edgeLabelBackground: '#1e1e1e',
+          nodeTextColor: '#f0f0f0',
         }
       : {
           primaryColor: '#c9b896',
@@ -148,8 +160,15 @@ async function initializeMermaid(theme: 'default' | 'dark' = 'default') {
           primaryBorderColor: '#c9b896',
           lineColor: '#8b8680',
           secondaryColor: '#faf8f4',
-          background: '#ffffff',
-          mainBkg: '#faf8f4',
+          tertiaryColor: '#f5f3ed',
+          mainBkg: '#ffffff',
+          nodeBorder: '#c9b896',
+          clusterBkg: '#f5f3ed',
+          clusterBorder: '#e8e4dd',
+          defaultLinkColor: '#8b8680',
+          titleColor: '#3a3a3a',
+          edgeLabelBackground: '#ffffff',
+          nodeTextColor: '#3a3a3a',
         },
   })
 
@@ -389,6 +408,9 @@ const PURIFY_CONFIG = {
     'title',
     'use',
     'symbol',
+    'style',
+    'defs',
+    'marker',
   ],
   // 额外允许的属性（补丁）
   ADD_ATTR: [
@@ -400,6 +422,15 @@ const PURIFY_CONFIG = {
     'aria-processed',
     'viewBox',
     'preserveAspectRatio',
+    'refX',
+    'refY',
+    'markerWidth',
+    'markerHeight',
+    'orient',
+    'markerUnits',
+    'stroke-dasharray',
+    'stroke-linecap',
+    'stroke-linejoin',
   ],
   FORCE_BODY: true, // 强制保留完整的 SVG 结构
 }
@@ -453,11 +484,14 @@ export function useMarkdown() {
         try {
           const id = `mermaid-${++mermaidIdCounter}`
           const { svg } = await mermaidInstance.render(id, item.code)
-          // 优化 SVG 字符串，移除可能干扰 DOMPurify 的非法样式
+          // 优化 SVG 字符串：
+          // 1. 确保 viewBox 存在以支持缩放
+          // 2. 移除硬编码的背景色，改用透明以适配容器
+          // 3. 保留 style 标签，这是 Mermaid 渲染的关键
           const optimizedSvg = svg
-            .replace(/<style>[\s\S]*?<\/style>/gi, '') // 移除内联 style 标签，改用全局样式
             .replace('<svg', '<svg preserveAspectRatio="xMidYMid meet"')
             .replace(/style="[^"]*background[^"]*"/gi, 'style="background: transparent"')
+            .replace(/<rect[^>]*class="ghost"[^>]*><\/rect>/gi, '') // 移除某些主题下的幽灵矩形
 
           fullHtml = `
             <div id="${item.id}" class="mermaid-container" data-processed="true" data-raw="${encodeURIComponent(
@@ -468,7 +502,7 @@ export function useMarkdown() {
                 <button class="mermaid-zoom-btn" data-action="out" title="缩小">−</button>
                 <button class="mermaid-zoom-btn" data-action="reset" title="重置">⌂</button>
               </div>
-              <div class="mermaid-diagram">${optimizedSvg}</div>
+              <div class="mermaid-diagram" style="opacity: 0; transition: opacity 0.5s ease-in-out;">${optimizedSvg}</div>
             </div>
           `
           mermaidCodeCache.set(cacheKey, fullHtml)

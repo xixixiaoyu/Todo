@@ -489,33 +489,26 @@
   @apply line-through opacity-70;
 }
 
-/* Mermaid 图表 */
+/* Mermaid 图表基础样式 */
 .mermaid-container {
-  @apply relative my-4 overflow-hidden rounded-lg border border-[#e8e4dd] bg-white transition-all duration-500 ease-in-out;
-}
-
-.mermaid-container[data-processed='false'] {
-  @apply animate-pulse opacity-50;
-}
-
-.mermaid-container[data-processed='true'] {
-  @apply opacity-100;
+  @apply relative my-6 overflow-hidden rounded-xl border border-[#e8e4dd] bg-white shadow-sm transition-all duration-300 hover:shadow-md;
 }
 
 .dark .mermaid-container {
-  @apply border-[#3a3a3a] bg-[#1e1e1e];
+  @apply border-[#3a3a3a] bg-[#1a1a1a];
 }
 
+/* 缩放控制按钮 */
 .mermaid-zoom-controls {
-  @apply absolute right-2 top-2 z-10 flex gap-1 rounded-md bg-white/80 p-1 shadow-sm backdrop-blur-sm;
+  @apply absolute right-3 top-3 z-10 flex gap-1 rounded-lg bg-white/90 p-1.5 shadow-sm backdrop-blur transition-all hover:bg-white;
 }
 
 .dark .mermaid-zoom-controls {
-  @apply bg-[#2a2a2a]/80;
+  @apply bg-[#2a2a2a]/90 hover:bg-[#2a2a2a];
 }
 
 .mermaid-zoom-btn {
-  @apply flex h-7 w-7 items-center justify-center rounded text-sm text-[#6b5c4d] transition-colors hover:bg-[#f5f3ed];
+  @apply flex h-8 w-8 items-center justify-center rounded-md text-base text-[#6b5c4d] transition-all hover:bg-[#f5f3ed] active:scale-90;
 }
 
 .dark .mermaid-zoom-btn {
@@ -523,48 +516,30 @@
 }
 
 .mermaid-diagram {
-  @apply flex min-h-[200px] items-center justify-center overflow-hidden p-4;
+  @apply flex min-h-[200px] items-center justify-center overflow-hidden p-6;
   --mermaid-scale: 1;
   --mermaid-translate-x: 0px;
   --mermaid-translate-y: 0px;
 }
 
 .mermaid-diagram svg {
-  max-width: 100%;
-  width: auto;
-  height: auto;
-  min-width: 200px;
-  min-height: 150px;
-  background: transparent;
+  @apply max-w-full h-auto min-w-[300px] transition-transform duration-150 ease-out cursor-grab select-none;
   transform: scale(var(--mermaid-scale))
     translate(var(--mermaid-translate-x), var(--mermaid-translate-y));
   transform-origin: center;
-  transition: transform 0.15s ease-out;
-  cursor: grab;
-  user-select: none;
 }
 
 .mermaid-diagram svg:active {
-  cursor: grabbing;
-  transition: none;
+  @apply cursor-grabbing transition-none;
 }
 
-/* 修复 Mermaid 节点文字缺失/颜色问题 */
-.mermaid-diagram .nodeLabel,
-.mermaid-diagram .edgeLabel,
-.mermaid-diagram .label,
-.mermaid-diagram text,
-.mermaid-diagram span {
-  @apply !fill-current !text-foreground;
-  font-family: inherit;
+/* 允许 Mermaid 内部样式生效，仅做必要的对比度修正 */
+.mermaid-diagram .label {
+  @apply font-sans;
 }
 
-.dark .mermaid-diagram text,
-.dark .mermaid-diagram span,
-.dark .mermaid-diagram .nodeLabel,
-.dark .mermaid-diagram .edgeLabel {
-  fill: #f0f0f0 !important;
-  color: #f0f0f0 !important;
+.mermaid-diagram foreignObject div {
+  @apply flex items-center justify-center text-center;
 }
 
 .mermaid-loading {
