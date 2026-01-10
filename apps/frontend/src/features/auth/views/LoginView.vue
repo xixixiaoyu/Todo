@@ -3,9 +3,8 @@ import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth'
-import { RegisterSchema } from '@my-app/shared'
-import { z } from 'zod'
+import { useAuthStore } from '../stores/auth'
+import { LoginSchema } from '@my-app/shared'
 import AuthCard from '@/components/auth/AuthCard.vue'
 import FormInput from '@/components/auth/FormInput.vue'
 import PasswordInput from '@/components/auth/PasswordInput.vue'
@@ -14,25 +13,16 @@ import { PrimaryButton } from '@/components/ui/button'
 const router = useRouter()
 const authStore = useAuthStore()
 const { t } = useI18n()
-const RegisterWithConfirmSchema = RegisterSchema.extend({
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: '两次输入的密码不一致',
-  path: ['confirmPassword'],
-})
 
 const { handleSubmit, errors, defineField } = useForm({
-  validationSchema: toTypedSchema(RegisterWithConfirmSchema),
+  validationSchema: toTypedSchema(LoginSchema),
 })
 
 const [email] = defineField('email')
-const [name] = defineField('name')
 const [password] = defineField('password')
-const [confirmPassword] = defineField('confirmPassword')
 
 const onSubmit = handleSubmit(async (values) => {
-  const { email, name, password } = values
-  const success = await authStore.register({ email, name, password })
+  const success = await authStore.login(values)
   if (success) {
     router.push('/')
   }
@@ -40,7 +30,7 @@ const onSubmit = handleSubmit(async (values) => {
 </script>
 
 <template>
-  <AuthCard :title="t('register.title')">
+  <AuthCard :title="t('login.title')">
     <form class="space-y-6" @submit="onSubmit">
       <div
         v-if="authStore.error"
@@ -57,41 +47,34 @@ const onSubmit = handleSubmit(async (values) => {
         :error="errors.email"
       />
 
-      <FormInput
-        v-model="name"
-        :label="t('register.name')"
-        :placeholder="t('register.namePlaceholder')"
-        type="text"
-        :error="errors.name"
-      />
-
       <PasswordInput
         v-model="password"
         :label="t('login.password')"
         :placeholder="t('login.passwordPlaceholder')"
         :error="errors.password"
-        show-strength
       />
 
-      <PasswordInput
-        v-model="confirmPassword"
-        :label="t('register.confirmPassword')"
-        :placeholder="t('register.confirmPasswordPlaceholder')"
-        :error="errors.confirmPassword"
-      />
+      <div class="flex justify-end">
+        <router-link
+          to="/forgot-password"
+          class="text-sm text-warm-primary hover:text-warm-primary-hover transition-colors"
+        >
+          {{ t('login.forgotPassword') }}
+        </router-link>
+      </div>
 
       <PrimaryButton :loading="authStore.loading" full-width>
-        <template #loading>{{ t('register.submitting') }}</template>
-        {{ t('register.submit') }}
+        <template #loading>{{ t('login.submitting') }}</template>
+        {{ t('login.submit') }}
       </PrimaryButton>
 
       <p class="text-center text-sm text-warm-text-secondary">
-        {{ t('register.hasAccount') }}
+        {{ t('login.noAccount') }}
         <router-link
-          to="/login"
+          to="/register"
           class="text-warm-primary hover:text-warm-primary-hover font-medium transition-colors"
         >
-          {{ t('register.loginLink') }}
+          {{ t('login.registerLink') }}
         </router-link>
       </p>
     </form>

@@ -15,25 +15,25 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: () => import('@/views/auth/LoginView.vue'),
+      component: () => import('@/features/auth/views/LoginView.vue'),
       meta: { title: '登录' },
     },
     {
       path: '/register',
       name: 'register',
-      component: () => import('@/views/auth/RegisterView.vue'),
+      component: () => import('@/features/auth/views/RegisterView.vue'),
       meta: { title: '注册' },
     },
     {
       path: '/forgot-password',
       name: 'forgot-password',
-      component: () => import('@/views/auth/ForgotPasswordView.vue'),
+      component: () => import('@/features/auth/views/ForgotPasswordView.vue'),
       meta: { title: '找回密码' },
     },
     {
       path: '/reset-password',
       name: 'reset-password',
-      component: () => import('@/views/auth/ResetPasswordView.vue'),
+      component: () => import('@/features/auth/views/ResetPasswordView.vue'),
       meta: { title: '重置密码' },
     },
     {

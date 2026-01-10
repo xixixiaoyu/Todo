@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { api } from '../api'
+import { authApi } from '../api'
 import type { User, LoginInput, RegisterInput } from '@my-app/shared'
 
 /**
@@ -28,7 +28,7 @@ export const useAuthStore = defineStore(
       error.value = null
 
       try {
-        const response = await api.login(credentials)
+        const response = await authApi.login(credentials)
         token.value = response.data.accessToken
         refreshToken.value = response.data.refreshToken || null
         user.value = response.data.user
@@ -50,7 +50,7 @@ export const useAuthStore = defineStore(
       error.value = null
 
       try {
-        const response = await api.register(userData)
+        const response = await authApi.register(userData)
         token.value = response.data.accessToken
         refreshToken.value = response.data.refreshToken || null
         user.value = response.data.user
@@ -72,7 +72,7 @@ export const useAuthStore = defineStore(
       error.value = null
 
       try {
-        await api.forgotPassword(email)
+        await authApi.forgotPassword(email)
         return true
       } catch (e: unknown) {
         const err = e as { response?: { data?: { message?: string } } }
@@ -91,7 +91,7 @@ export const useAuthStore = defineStore(
       error.value = null
 
       try {
-        await api.resetPassword(token, password)
+        await authApi.resetPassword(token, password)
         return true
       } catch (e: unknown) {
         const err = e as { response?: { data?: { message?: string } } }
@@ -109,7 +109,7 @@ export const useAuthStore = defineStore(
       if (!token.value) return
 
       try {
-        const response = await api.getMe()
+        const response = await authApi.getMe()
         user.value = response.data
       } catch {
         void logout()
@@ -125,7 +125,7 @@ export const useAuthStore = defineStore(
       }
 
       try {
-        const response = await api.refreshToken(refreshToken.value)
+        const response = await authApi.refreshToken(refreshToken.value)
         token.value = response.data.accessToken
         refreshToken.value = response.data.refreshToken
         user.value = response.data.user
@@ -142,7 +142,7 @@ export const useAuthStore = defineStore(
     async function logout(): Promise<void> {
       if (refreshToken.value) {
         try {
-          await api.logout(refreshToken.value)
+          await authApi.logout(refreshToken.value)
         } catch {
           // 静默失败
         }
