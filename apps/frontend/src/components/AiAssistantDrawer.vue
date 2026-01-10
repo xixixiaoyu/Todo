@@ -196,17 +196,15 @@ defineOptions({
     :is-fullscreen="isMaximized"
     v-bind="$attrs"
   >
-    <div class="relative flex h-full flex-col bg-[#faf8f4] dark:bg-[#1a1a1a]">
+    <div class="relative flex h-full flex-col bg-background">
       <!-- 顶部标题栏 -->
-      <header
-        class="flex h-12 shrink-0 items-center justify-between bg-[#c9b896] px-4 dark:bg-[#8a7a5a]"
-      >
-        <span class="text-sm font-medium text-white">{{ t('ai.assistant') }}</span>
+      <header class="flex h-12 shrink-0 items-center justify-between bg-primary px-4">
+        <span class="text-sm font-medium text-primary-foreground">{{ t('ai.assistant') }}</span>
         <div class="flex items-center gap-2">
           <!-- 预设下拉框 -->
           <div class="relative">
             <button
-              class="flex items-center gap-1 rounded-md bg-[#b8a785] px-3 py-1.5 text-xs text-white transition-colors hover:bg-[#a99676] dark:bg-[#7a6a4a] dark:hover:bg-[#6a5a3a]"
+              class="flex items-center gap-1 rounded-md bg-white/20 px-3 py-1.5 text-xs text-white transition-colors hover:bg-white/30"
               @click="showPresetDropdown = !showPresetDropdown"
             >
               <span>{{ currentPresetName }}</span>
@@ -223,26 +221,25 @@ defineOptions({
             >
               <div
                 v-if="showPresetDropdown"
-                class="absolute right-0 top-full z-50 mt-1 min-w-[160px] overflow-hidden rounded-lg border border-[#e8e4dd] bg-white py-1 shadow-lg dark:border-[#3a3a3a] dark:bg-[#2a2a2a]"
+                class="absolute right-0 top-full z-50 mt-1 min-w-[160px] overflow-hidden rounded-lg border border-border bg-card py-1 shadow-lg"
               >
                 <button
                   v-for="preset in presets"
                   :key="preset.id"
-                  class="flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition-colors hover:bg-[#f5f3ed] dark:hover:bg-[#3a3a3a]"
+                  class="flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition-colors hover:bg-accent"
                   :class="{
-                    'bg-[#f5f3ed] text-[#6b5c4d] dark:bg-[#3a3a3a] dark:text-[#c9b896]':
-                      activePreset?.id === preset.id,
-                    'text-[#3a3a3a] dark:text-[#e0e0e0]': activePreset?.id !== preset.id,
+                    'bg-accent text-primary': activePreset?.id === preset.id,
+                    'text-foreground': activePreset?.id !== preset.id,
                   }"
                   @click="handleSelectPreset(preset.id)"
                 >
-                  <Check v-if="activePreset?.id === preset.id" :size="12" class="text-[#c9b896]" />
+                  <Check v-if="activePreset?.id === preset.id" :size="12" class="text-primary" />
                   <span :class="{ 'ml-4': activePreset?.id !== preset.id }">{{ preset.name }}</span>
                 </button>
                 <!-- 分割线 + 设置入口 -->
-                <div class="my-1 border-t border-[#e8e4dd] dark:border-[#3a3a3a]" />
+                <div class="my-1 border-t border-border" />
                 <button
-                  class="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-[#8b8680] transition-colors hover:bg-[#f5f3ed] hover:text-[#6b5c4d] dark:text-[#808080] dark:hover:bg-[#3a3a3a] dark:hover:text-[#c9b896]"
+                  class="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   @click="openSettings('presets')"
                 >
                   <Settings2 :size="12" />
@@ -292,13 +289,11 @@ defineOptions({
       </div>
 
       <!-- 底部工具栏 -->
-      <div
-        class="shrink-0 border-t border-[#e8e4dd] bg-[#faf8f4] p-3 dark:border-[#3a3a3a] dark:bg-[#1a1a1a]"
-      >
+      <div class="shrink-0 border-t border-border bg-muted/30 p-3">
         <!-- 快捷操作按钮 -->
         <div class="mb-3 flex flex-wrap items-center gap-2 text-sm">
           <button
-            class="flex items-center gap-1 rounded-full border border-[#e8e4dd] bg-white px-3 py-1.5 text-[#6b5c4d] transition-colors hover:bg-[#f5f3ed] disabled:cursor-not-allowed disabled:opacity-30 dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#a0a0a0] dark:hover:bg-[#3a3a3a]"
+            class="flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-30"
             :disabled="!hasHistory || isGenerating"
             @click="handleNewChat"
           >
@@ -308,7 +303,7 @@ defineOptions({
           <!-- 停止生成按钮 -->
           <button
             v-if="isGenerating && !error"
-            class="flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-red-600 transition-colors hover:bg-red-100 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
+            class="flex items-center gap-1 rounded-full border border-error/20 bg-error/10 px-3 py-1.5 text-error transition-colors hover:bg-error/20"
             @click="stopGenerating"
           >
             <Square :size="12" />
@@ -319,8 +314,8 @@ defineOptions({
             class="flex h-8 w-8 items-center justify-center rounded-full border transition-colors"
             :class="
               isThinkingEnabled
-                ? 'border-[#c9b896] bg-[#c9b896]/10 text-[#c9b896] dark:border-[#b8a785] dark:bg-[#b8a785]/20 dark:text-[#b8a785]'
-                : 'border-[#e8e4dd] bg-white text-[#8b8680] hover:bg-[#f5f3ed] dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#6b6b6b] dark:hover:bg-[#3a3a3a]'
+                ? 'border-primary bg-primary/10 text-primary'
+                : 'border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground'
             "
             :title="isThinkingEnabled ? t('ai.thinkingEnabled') : t('ai.thinkingDisabled')"
             @click="toggleThinkingMode"
@@ -330,7 +325,7 @@ defineOptions({
           <!-- 返回上一个会话按钮 -->
           <button
             v-if="sessions.length > 1"
-            class="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e4dd] bg-white text-[#8b8680] transition-colors hover:bg-[#f5f3ed] disabled:cursor-not-allowed disabled:opacity-30 dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#6b6b6b] dark:hover:bg-[#3a3a3a]"
+            class="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-30"
             :title="t('ai.previousSession')"
             :disabled="!previousSession || isGenerating"
             @click="navigateToPrevious"
@@ -338,7 +333,7 @@ defineOptions({
             <ChevronLeft :size="16" />
           </button>
           <button
-            class="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e4dd] bg-white text-[#8b8680] transition-colors hover:bg-[#f5f3ed] dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#6b6b6b] dark:hover:bg-[#3a3a3a]"
+            class="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
             :title="t('ai.history')"
             :class="{ 'cursor-not-allowed opacity-50': isGenerating }"
             :disabled="isGenerating"
@@ -347,7 +342,7 @@ defineOptions({
             <History :size="16" />
           </button>
           <button
-            class="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e4dd] bg-white text-[#8b8680] transition-colors hover:bg-[#f5f3ed] dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#6b6b6b] dark:hover:bg-[#3a3a3a]"
+            class="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground"
             :title="t('ai.settings')"
             @click="openSettings()"
           >
@@ -357,8 +352,8 @@ defineOptions({
             class="flex items-center gap-1 rounded-full border px-3 py-1.5 transition-colors"
             :class="
               isTodoAssistantEnabled
-                ? 'border-[#c9b896] bg-[#c9b896]/10 text-[#c9b896] dark:border-[#b8a785] dark:bg-[#b8a785]/20 dark:text-[#b8a785]'
-                : 'border-[#e8e4dd] bg-white text-[#6b5c4d] hover:bg-[#f5f3ed] dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#a0a0a0] dark:hover:bg-[#3a3a3a]'
+                ? 'border-primary bg-primary/10 text-primary'
+                : 'border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground'
             "
             :title="
               isTodoAssistantEnabled ? t('ai.todoAssistantEnabled') : t('ai.todoAssistantDisabled')
@@ -372,7 +367,7 @@ defineOptions({
 
         <!-- 输入框区域 -->
         <div
-          class="flex gap-2 rounded-xl border border-[#e8e4dd] bg-white px-4 py-3 dark:border-[#3a3a3a] dark:bg-[#2a2a2a]"
+          class="flex gap-2 rounded-xl border border-border bg-card px-4 py-3"
           :class="{ 'opacity-50': isInputDisabled }"
         >
           <textarea
@@ -380,7 +375,7 @@ defineOptions({
             v-model="chatInput"
             rows="1"
             :placeholder="isInputDisabled ? t('ai.generating') : t('ai.placeholder')"
-            class="flex-1 resize-none bg-transparent text-sm text-[#3a3a3a] outline-none placeholder:text-[#c4c0b8] dark:text-[#e0e0e0] dark:placeholder:text-[#6b6b6b]"
+            class="flex-1 resize-none bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/50"
             :style="{ height: `${MIN_HEIGHT}px` }"
             :disabled="isInputDisabled"
             @input="adjustTextareaHeight"
@@ -388,11 +383,11 @@ defineOptions({
             @keydown.enter.shift.exact="handleNewline"
           />
           <button
-            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white transition-colors"
+            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-primary-foreground transition-colors"
             :class="
               isInputDisabled
-                ? 'cursor-not-allowed bg-[#d4c9b3] dark:bg-[#5a5a5a]'
-                : 'bg-[#c9b896] hover:bg-[#b8a785] dark:bg-[#b8a785] dark:hover:bg-[#a99676]'
+                ? 'cursor-not-allowed bg-primary/30'
+                : 'bg-primary hover:bg-primary-hover'
             "
             :disabled="isInputDisabled"
             @click="handleSend"
@@ -429,11 +424,11 @@ defineOptions({
       >
         <div
           v-if="showHistory"
-          class="absolute inset-y-0 left-0 z-20 flex w-[280px] flex-col border-r border-[#e8e4dd] bg-[#faf8f4] shadow-lg dark:border-[#3a3a3a] dark:bg-[#1a1a1a]"
+          class="absolute inset-y-0 left-0 z-20 flex w-[280px] flex-col border-r border-border bg-card shadow-lg"
         >
           <!-- 关闭按钮 -->
           <button
-            class="absolute right-3 top-3 z-20 flex h-7 w-7 items-center justify-center rounded-md text-[#8b8680] transition-colors hover:bg-[#e8e4dd] hover:text-[#6b5c4d] dark:text-[#6b6b6b] dark:hover:bg-[#3a3a3a] dark:hover:text-[#a0a0a0]"
+            class="absolute right-3 top-3 z-20 flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
             @click="showHistory = false"
           >
             <X :size="16" />

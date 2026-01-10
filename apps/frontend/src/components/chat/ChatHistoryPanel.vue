@@ -77,8 +77,8 @@ function handleDelete(sessionId: string, event: Event): void {
 <template>
   <div class="flex h-full flex-col">
     <!-- 头部 -->
-    <div class="flex items-center justify-between border-b border-[#e8e4dd] px-4 py-3">
-      <h3 class="text-sm font-medium text-[#3a3a3a]">{{ t('ai.historyTitle') }}</h3>
+    <div class="flex items-center justify-between border-b border-border px-4 py-3">
+      <h3 class="text-sm font-medium text-foreground">{{ t('ai.historyTitle') }}</h3>
     </div>
 
     <!-- 会话列表 -->
@@ -86,7 +86,7 @@ function handleDelete(sessionId: string, event: Event): void {
       <!-- 空状态 -->
       <div
         v-if="!hasSessions"
-        class="flex h-full flex-col items-center justify-center gap-2 text-[#c4c0b8]"
+        class="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground/50"
       >
         <MessageSquare :size="32" />
         <p class="text-sm">{{ t('ai.noHistory') }}</p>
@@ -97,9 +97,9 @@ function handleDelete(sessionId: string, event: Event): void {
         <div
           v-for="session in sessions"
           :key="session.id"
-          class="group relative cursor-pointer rounded-lg px-3 py-2.5 transition-colors hover:bg-[#f5f3ed]"
+          class="group relative cursor-pointer rounded-lg px-3 py-2.5 transition-colors hover:bg-accent"
           :class="{
-            'bg-[#e8e4dd]': session.id === currentSessionId,
+            'bg-accent': session.id === currentSessionId,
           }"
           @click="selectSession(session.id)"
         >
@@ -108,14 +108,14 @@ function handleDelete(sessionId: string, event: Event): void {
             <input
               ref="editInputRef"
               v-model="editingTitle"
-              class="flex-1 rounded border border-[#c9b896] bg-white px-2 py-1 text-sm text-[#3a3a3a] outline-none"
+              class="flex-1 rounded border border-primary bg-card px-2 py-1 text-sm text-foreground outline-none"
               @keydown.enter="saveEdit"
               @keydown.escape="cancelEdit"
             />
-            <button class="rounded p-1 text-[#c9b896] hover:bg-[#c9b896]/10" @click="saveEdit">
+            <button class="rounded p-1 text-primary hover:bg-primary/10" @click="saveEdit">
               <Check :size="14" />
             </button>
-            <button class="rounded p-1 text-[#8b8680] hover:bg-[#f5f3ed]" @click="cancelEdit">
+            <button class="rounded p-1 text-muted-foreground hover:bg-accent" @click="cancelEdit">
               <X :size="14" />
             </button>
           </div>
@@ -124,8 +124,8 @@ function handleDelete(sessionId: string, event: Event): void {
           <template v-else>
             <div class="flex items-start justify-between gap-2">
               <div class="min-w-0 flex-1">
-                <p class="truncate text-sm text-[#3a3a3a]">{{ session.title }}</p>
-                <p class="mt-0.5 text-xs text-[#8b8680]">
+                <p class="truncate text-sm text-foreground">{{ session.title }}</p>
+                <p class="mt-0.5 text-xs text-muted-foreground">
                   {{ t('ai.messageCount', { count: session.messages.length }) }} ·
                   {{ formatTime(session.updatedAt) }}
                 </p>
@@ -136,14 +136,14 @@ function handleDelete(sessionId: string, event: Event): void {
                 @click.stop
               >
                 <button
-                  class="rounded p-1.5 text-[#8b8680] hover:bg-white hover:text-[#6b5c4d]"
+                  class="rounded p-1.5 text-muted-foreground hover:bg-card hover:text-foreground"
                   :title="t('ai.editTitle')"
                   @click="startEdit(session)"
                 >
                   <Edit3 :size="14" />
                 </button>
                 <button
-                  class="rounded p-1.5 text-[#8b8680] hover:bg-red-50 hover:text-red-500"
+                  class="rounded p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                   :title="t('ai.delete')"
                   @click="handleDelete(session.id, $event)"
                 >

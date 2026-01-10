@@ -12,8 +12,8 @@ defineProps<{
     :disabled="disabled || loading"
     :class="[
       'px-8 py-3 rounded-xl font-medium transition-all duration-200',
-      'bg-warm-primary text-white hover:bg-warm-primary-hover',
-      'focus:outline-none focus:ring-2 focus:ring-warm-primary focus:ring-offset-2',
+      'bg-primary text-primary-foreground hover:bg-primary-hover',
+      'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
       'disabled:opacity-50 disabled:cursor-not-allowed',
       'transform hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0',
       fullWidth ? 'w-full' : '',

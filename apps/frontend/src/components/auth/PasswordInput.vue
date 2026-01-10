@@ -34,17 +34,16 @@ const passwordStrength = computed(() => {
   if (/[^A-Za-z0-9]/.test(props.modelValue)) strength++
   if (props.modelValue.length >= 8) strength++
 
-  if (strength <= 2)
-    return { level: 'weak', color: 'bg-warm-error', text: t('password.strength.weak') }
+  if (strength <= 2) return { level: 'weak', color: 'bg-error', text: t('password.strength.weak') }
   if (strength === 3)
-    return { level: 'medium', color: 'bg-warm-primary', text: t('password.strength.medium') }
-  return { level: 'strong', color: 'bg-warm-success', text: t('password.strength.strong') }
+    return { level: 'medium', color: 'bg-primary', text: t('password.strength.medium') }
+  return { level: 'strong', color: 'bg-success', text: t('password.strength.strong') }
 })
 </script>
 
 <template>
   <div class="space-y-2">
-    <label class="block text-sm font-medium text-warm-text">
+    <label class="block text-sm font-medium text-foreground">
       {{ label }}
     </label>
     <div class="relative">
@@ -54,17 +53,15 @@ const passwordStrength = computed(() => {
         :placeholder="placeholder"
         :disabled="disabled"
         :class="[
-          'w-full px-4 py-3 pr-12 rounded-xl border transition-all duration-200',
-          'focus:outline-none focus:ring-2 focus:ring-warm-primary focus:border-transparent',
-          'disabled:bg-gray-50 disabled:cursor-not-allowed',
-          error
-            ? 'border-warm-error focus:ring-warm-error'
-            : 'border-warm-border hover:border-warm-primary/50',
+          'w-full px-4 py-3 pr-12 rounded-xl border bg-card transition-all duration-200',
+          'focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent',
+          'disabled:opacity-50 disabled:cursor-not-allowed',
+          error ? 'border-error focus:ring-error' : 'border-border hover:border-primary/50',
         ]"
       />
       <button
         type="button"
-        class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-warm-text-secondary hover:text-warm-text transition-colors"
+        class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
         :title="showPassword ? t('password.hide') : t('password.show')"
         @click="showPassword = !showPassword"
       >
@@ -73,7 +70,7 @@ const passwordStrength = computed(() => {
     </div>
 
     <div v-if="showStrength && passwordStrength && modelValue" class="flex items-center gap-2">
-      <div class="flex-1 h-1 bg-warm-border rounded-full overflow-hidden">
+      <div class="flex-1 h-1 bg-border rounded-full overflow-hidden">
         <div
           :class="[passwordStrength.color, 'h-full transition-all duration-300']"
           :style="{
@@ -86,10 +83,10 @@ const passwordStrength = computed(() => {
           }"
         />
       </div>
-      <span class="text-xs text-warm-text-secondary">{{ passwordStrength.text }}</span>
+      <span class="text-xs text-muted-foreground">{{ passwordStrength.text }}</span>
     </div>
 
-    <p v-if="error" class="text-sm text-warm-error">
+    <p v-if="error" class="text-sm text-error">
       {{ error }}
     </p>
   </div>

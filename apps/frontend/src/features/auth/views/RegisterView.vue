@@ -44,7 +44,7 @@ const onSubmit = handleSubmit(async (values) => {
     <form class="space-y-6" @submit="onSubmit">
       <div
         v-if="authStore.error"
-        class="bg-warm-error/10 border border-warm-error text-warm-error px-4 py-3 rounded-xl text-sm animate-shake"
+        class="bg-error/10 border border-error text-error px-4 py-3 rounded-xl text-sm animate-shake"
       >
         {{ authStore.error.includes('.') ? t(authStore.error) : authStore.error }}
       </div>
@@ -85,11 +85,11 @@ const onSubmit = handleSubmit(async (values) => {
         {{ t('register.submit') }}
       </PrimaryButton>
 
-      <p class="text-center text-sm text-warm-text-secondary">
+      <p class="text-center text-sm text-muted-foreground">
         {{ t('register.hasAccount') }}
         <router-link
           to="/login"
-          class="text-warm-primary hover:text-warm-primary-hover font-medium transition-colors"
+          class="text-primary hover:text-primary-hover font-medium transition-colors"
         >
           {{ t('register.loginLink') }}
         </router-link>

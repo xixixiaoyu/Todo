@@ -313,11 +313,13 @@ async function copyContent() {
       <!-- 多模型讨论过程 -->
       <div
         v-if="message.discussionSteps && message.discussionSteps.length > 0 && !isUser"
-        class="mb-2 space-y-2 rounded-xl border border-[#e8e4dd] bg-[#faf8f4] p-3 shadow-sm"
+        class="mb-2 space-y-2 rounded-xl border border-border bg-muted/30 p-3 shadow-sm"
       >
-        <div class="flex items-center gap-2 border-b border-[#e8e4dd] pb-2">
-          <Users :size="14" class="text-[#c9b896]" />
-          <span class="text-xs font-medium text-[#6b5c4d]">{{ t('ai.discussionStatus') }}</span>
+        <div class="flex items-center gap-2 border-b border-border pb-2">
+          <Users :size="14" class="text-primary" />
+          <span class="text-xs font-medium text-muted-foreground">{{
+            t('ai.discussionStatus')
+          }}</span>
         </div>
         <div class="space-y-2 pt-1">
           <div
@@ -329,7 +331,7 @@ async function copyContent() {
               <CircleDashed
                 v-if="step.status === 'thinking'"
                 :size="12"
-                class="animate-spin text-[#c9b896]"
+                class="animate-spin text-primary"
               />
               <template v-else-if="step.status === 'done'">
                 <CheckCircle2
@@ -342,8 +344,8 @@ async function copyContent() {
               <AlertCircle v-else :size="12" class="text-red-500" />
             </div>
             <div class="flex-1">
-              <span class="font-medium text-[#6b5c4d]">{{ step.modelName }}: </span>
-              <span class="text-[#8b8680]">
+              <span class="font-medium text-foreground">{{ step.modelName }}: </span>
+              <span class="text-muted-foreground">
                 {{
                   step.status === 'thinking'
                     ? t('ai.isThinking')
@@ -408,9 +410,9 @@ async function copyContent() {
             class="relative rounded-2xl px-4 py-3 shadow-sm transition-all duration-300"
             :class="[
               isUser
-                ? 'bg-[#c9b896] text-white hover:bg-[#b8a785]'
-                : 'border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] text-[hsl(var(--text-color))]',
-              isEditing ? 'w-full !bg-white !text-[#3a3a3a] ring-1 ring-[#c9b896]' : '',
+                ? 'bg-primary text-primary-foreground hover:bg-primary-hover'
+                : 'border border-border bg-card text-foreground',
+              isEditing ? 'w-full !bg-card !text-foreground ring-1 ring-primary' : '',
             ]"
           >
             <!-- 用户消息：编辑模式 -->
@@ -425,15 +427,15 @@ async function copyContent() {
                 @keydown.enter.ctrl.exact="saveEdit"
                 @keydown.enter.meta.exact="saveEdit"
               />
-              <div class="flex justify-end gap-2 border-t border-[#f0eee9] pt-2">
+              <div class="flex justify-end gap-2 border-t border-border pt-2">
                 <button
-                  class="rounded px-2 py-1 text-xs text-[#8b8680] hover:bg-[#f5f3ed]"
+                  class="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                   @click="cancelEdit"
                 >
                   {{ t('ai.cancel') }}
                 </button>
                 <button
-                  class="rounded bg-[#c9b896] px-2 py-1 text-xs text-white hover:bg-[#b8a785]"
+                  class="rounded bg-primary px-2 py-1 text-xs text-primary-foreground hover:bg-primary-hover"
                   @click="saveEdit"
                 >
                   {{ t('ai.save') }}
@@ -449,7 +451,7 @@ async function copyContent() {
               <!-- 编辑按钮 -->
               <button
                 v-if="!isEditing"
-                class="absolute -left-10 top-0 flex h-7 w-7 items-center justify-center rounded-md bg-white/80 text-[#8b8680] opacity-0 shadow-sm transition-all hover:bg-white hover:text-[#c9b896] group-hover/user:opacity-100"
+                class="absolute -left-10 top-0 flex h-7 w-7 items-center justify-center rounded-md bg-card/80 text-muted-foreground opacity-0 shadow-sm transition-all hover:bg-card hover:text-primary group-hover/user:opacity-100"
                 :title="t('ai.edit')"
                 @click="startEdit"
               >

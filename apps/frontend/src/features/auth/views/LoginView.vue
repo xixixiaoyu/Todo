@@ -34,7 +34,7 @@ const onSubmit = handleSubmit(async (values) => {
     <form class="space-y-6" @submit="onSubmit">
       <div
         v-if="authStore.error"
-        class="bg-warm-error/10 border border-warm-error text-warm-error px-4 py-3 rounded-xl text-sm animate-shake"
+        class="bg-error/10 border border-error text-error px-4 py-3 rounded-xl text-sm animate-shake"
       >
         {{ authStore.error.includes('.') ? t(authStore.error) : authStore.error }}
       </div>
@@ -57,7 +57,7 @@ const onSubmit = handleSubmit(async (values) => {
       <div class="flex justify-end">
         <router-link
           to="/forgot-password"
-          class="text-sm text-warm-primary hover:text-warm-primary-hover transition-colors"
+          class="text-sm text-primary hover:text-primary-hover transition-colors"
         >
           {{ t('login.forgotPassword') }}
         </router-link>
@@ -68,11 +68,11 @@ const onSubmit = handleSubmit(async (values) => {
         {{ t('login.submit') }}
       </PrimaryButton>
 
-      <p class="text-center text-sm text-warm-text-secondary">
+      <p class="text-center text-sm text-muted-foreground">
         {{ t('login.noAccount') }}
         <router-link
           to="/register"
-          class="text-warm-primary hover:text-warm-primary-hover font-medium transition-colors"
+          class="text-primary hover:text-primary-hover font-medium transition-colors"
         >
           {{ t('login.registerLink') }}
         </router-link>

@@ -185,19 +185,13 @@ onUnmounted(() => {
   height: 100%;
   z-index: 50;
   display: flex;
-  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
-  border-right: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow:
-    0 25px 50px -12px rgba(0, 0, 0, 0.15),
-    0 0 0 1px rgba(0, 0, 0, 0.02);
+  background: hsl(var(--background));
+  border-right: 1px solid hsl(var(--border));
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
 }
 
 :root.dark .drawer {
-  background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%);
-  border-right-color: rgba(255, 255, 255, 0.08);
-  box-shadow:
-    0 25px 50px -12px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(255, 255, 255, 0.05);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
 /* 抽屉内容区 */

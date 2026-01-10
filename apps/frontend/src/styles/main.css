@@ -23,99 +23,83 @@
     --popover-foreground: 240 10% 3.9%;
 
     /* 主题色 */
-    --primary: 43 46% 69%;
-    --primary-hover: 43 38% 62%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 32 45% 45%;
+    --primary-hover: 32 45% 40%;
+    --primary-foreground: 0 0% 100%;
 
     /* 次要色 */
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
+    --secondary: 32 15% 95%;
+    --secondary-foreground: 32 10% 23%;
+    --muted: 32 15% 95%;
+    --muted-foreground: 32 5% 45%;
+    --accent: 32 15% 95%;
+    --accent-foreground: 32 10% 23%;
 
     /* 警告/错误色 */
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 15 65% 55%;
+    --destructive-foreground: 0 0% 100%;
 
     /* 边框和输入 */
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 10% 3.9%;
+    --border: 32 15% 88%;
+    --input: 32 15% 88%;
+    --ring: 32 45% 45%;
 
     /* 圆角 */
-    --radius: 0.5rem;
-    --border-radius: 0.5rem;
+    --radius: 0.75rem;
+    --border-radius: 0.75rem;
 
     /* 图表色 */
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --chart-1: 32 45% 45%;
+    --chart-2: 155 35% 45%;
+    --chart-3: 20 65% 55%;
+    --chart-4: 45 65% 55%;
+    --chart-5: 32 25% 65%;
 
-    /* AI 助手特定变量 */
-    --ai-message-bg: 40 20% 98%;
-    --ai-message-border: 40 10% 90%;
-    --ai-accent-hover: 43 46% 92%;
-    --text-color: 240 10% 3.9%;
-    --text-secondary-color: 240 3.8% 46.1%;
-    --primary-color: 43 46% 69%;
+    /* 语义化变量 */
+    --text-color: 32 10% 23%;
+    --text-secondary: 32 5% 45%;
+    --todo-completed: 32 5% 45%;
+    --success: 145 35% 45%;
+    --error: 15 65% 55%;
   }
 
   .dark {
-    /* AI 助手特定变量 */
-    --ai-message-bg: 240 10% 10%;
-    --ai-message-border: 240 10% 20%;
-    --ai-accent-hover: 240 10% 15%;
-    --text-color: 0 0% 98%;
-    --text-secondary-color: 240 5% 64.9%;
-    --primary-color: 43 46% 69%;
-    /* 基础颜色 */
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
+    /* 基础颜色 - 调浅背景，降低对比度 */
+    --background: 240 6% 10%;
+    --foreground: 0 0% 92%;
+    --card: 240 6% 12%;
+    --card-foreground: 0 0% 92%;
+    --popover: 240 6% 12%;
+    --popover-foreground: 0 0% 92%;
 
-    /* 主题色 */
-    --primary: 43 46% 69%;
-    --primary-hover: 43 38% 62%;
-    --primary-foreground: 240 5.9% 10%;
+    /* 主题色 - 降低主色亮度，使其更柔和 */
+    --primary: 32 35% 60%;
+    --primary-hover: 32 35% 65%;
+    --primary-foreground: 32 10% 12%;
 
     /* 次要色 */
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
+    --secondary: 240 4% 18%;
+    --secondary-foreground: 0 0% 92%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 4% 60%;
+    --accent: 240 4% 18%;
+    --accent-foreground: 0 0% 92%;
 
     /* 警告/错误色 */
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 15 50% 50%;
+    --destructive-foreground: 0 0% 92%;
 
-    /* 边框和输入 */
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    /* 边框和输入 - 调亮边框使其更自然 */
+    --border: 240 4% 18%;
+    --input: 240 4% 18%;
+    --ring: 32 35% 60%;
 
-    /* 圆角 */
-    --radius: 0.5rem;
-    --border-radius: 0.5rem;
-
-    /* 图表色 */
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-
-    /* Radix UI 变量 */
-    --radix-accordion-content-height: 0px;
-    --radix-collapsible-content-height: 0px;
+    /* 语义化变量 */
+    --text-color: 0 0% 90%;
+    --text-secondary: 240 4% 60%;
+    --todo-completed: 240 4% 45%;
+    --success: 145 30% 50%;
+    --error: 15 50% 50%;
   }
 }
 

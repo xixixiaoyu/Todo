@@ -71,7 +71,7 @@ defineExpose({
       <!-- 空状态 -->
       <div
         v-if="messages.length === 0"
-        class="flex h-full items-center justify-center text-[#c4c0b8]"
+        class="flex h-full items-center justify-center text-muted-foreground/50"
       >
         <p class="text-sm">{{ t('ai.startChat') }}</p>
       </div>
@@ -95,7 +95,7 @@ defineExpose({
     <Transition name="fade">
       <button
         v-if="isUserScrolledUp"
-        class="absolute bottom-6 right-8 flex h-10 w-10 items-center justify-center rounded-full border border-[hsl(var(--ai-message-border))] bg-white/80 text-[hsl(var(--primary-color))] shadow-lg backdrop-blur-sm transition-all hover:bg-white hover:shadow-xl active:scale-95 dark:bg-zinc-800/80 dark:hover:bg-zinc-800"
+        class="absolute bottom-6 right-8 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card/80 text-primary shadow-lg backdrop-blur-sm transition-all hover:bg-card hover:shadow-xl active:scale-95"
         title="返回底部"
         @click="enableAutoScroll"
       >

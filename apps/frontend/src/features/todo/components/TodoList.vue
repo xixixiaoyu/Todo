@@ -30,7 +30,7 @@ const emit = defineEmits<{
     <!-- Empty State -->
     <div
       v-if="todos.length === 0"
-      class="flex flex-col items-center justify-center py-20 text-[#c4c0b8] dark:text-[#6b6b6b]"
+      class="flex flex-col items-center justify-center py-20 text-muted-foreground/50"
     >
       <Plus :size="48" :stroke-width="1" class="mb-4" />
       <p class="text-base">

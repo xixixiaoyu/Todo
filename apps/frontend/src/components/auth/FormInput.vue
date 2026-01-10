@@ -22,7 +22,7 @@ const inputValue = computed({
 
 <template>
   <div class="space-y-2">
-    <label class="block text-sm font-medium text-warm-text">
+    <label class="block text-sm font-medium text-foreground">
       {{ label }}
     </label>
     <input
@@ -31,15 +31,13 @@ const inputValue = computed({
       :placeholder="placeholder"
       :disabled="disabled"
       :class="[
-        'w-full px-4 py-3 rounded-xl border transition-all duration-200',
-        'focus:outline-none focus:ring-2 focus:ring-warm-primary focus:border-transparent',
-        'disabled:bg-gray-50 disabled:cursor-not-allowed',
-        error
-          ? 'border-warm-error focus:ring-warm-error'
-          : 'border-warm-border hover:border-warm-primary/50',
+        'w-full px-4 py-3 rounded-xl border bg-card transition-all duration-200',
+        'focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent',
+        'disabled:opacity-50 disabled:cursor-not-allowed',
+        error ? 'border-error focus:ring-error' : 'border-border hover:border-primary/50',
       ]"
     />
-    <p v-if="error" class="text-sm text-warm-error">
+    <p v-if="error" class="text-sm text-error">
       {{ error }}
     </p>
   </div>

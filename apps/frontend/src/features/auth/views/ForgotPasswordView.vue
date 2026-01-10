@@ -35,23 +35,23 @@ const onSubmit = handleSubmit(async (values) => {
   >
     <div v-if="success" class="text-center space-y-6">
       <div class="flex justify-center">
-        <div class="w-16 h-16 rounded-full bg-warm-success/10 flex items-center justify-center">
-          <CheckCircle2 class="w-8 h-8 text-warm-success" />
+        <div class="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center">
+          <CheckCircle2 class="w-8 h-8 text-success" />
         </div>
       </div>
 
       <div class="space-y-2">
-        <h3 class="text-xl font-semibold text-warm-text">
+        <h3 class="text-xl font-semibold text-foreground">
           {{ t('forgotPassword.successTitle') }}
         </h3>
-        <p class="text-warm-text-secondary leading-relaxed">
+        <p class="text-muted-foreground leading-relaxed">
           {{ t('forgotPassword.successMessage') }}
         </p>
       </div>
 
       <router-link
         to="/login"
-        class="inline-block w-full px-8 py-3 rounded-xl font-medium transition-all duration-200 bg-warm-primary text-white hover:bg-warm-primary-hover transform hover:-translate-y-0.5 hover:shadow-lg"
+        class="inline-block w-full px-8 py-3 rounded-xl font-medium transition-all duration-200 bg-primary text-primary-foreground hover:bg-primary-hover transform hover:-translate-y-0.5 hover:shadow-lg"
       >
         {{ t('forgotPassword.backToLogin') }}
       </router-link>
@@ -60,7 +60,7 @@ const onSubmit = handleSubmit(async (values) => {
     <form v-else class="space-y-6" @submit="onSubmit">
       <div
         v-if="authStore.error"
-        class="bg-warm-error/10 border border-warm-error text-warm-error px-4 py-3 rounded-xl text-sm animate-shake"
+        class="bg-error/10 border border-error text-error px-4 py-3 rounded-xl text-sm animate-shake"
       >
         {{ authStore.error.includes('.') ? t(authStore.error) : authStore.error }}
       </div>
@@ -78,10 +78,10 @@ const onSubmit = handleSubmit(async (values) => {
         {{ t('forgotPassword.submit') }}
       </PrimaryButton>
 
-      <p class="text-center text-sm text-warm-text-secondary">
+      <p class="text-center text-sm text-muted-foreground">
         <router-link
           to="/login"
-          class="text-warm-primary hover:text-warm-primary-hover font-medium transition-colors"
+          class="text-primary hover:text-primary-hover font-medium transition-colors"
         >
           {{ t('forgotPassword.backToLogin') }}
         </router-link>
