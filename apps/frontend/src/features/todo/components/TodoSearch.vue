@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { Search, X } from 'lucide-vue-next'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 const { t } = useI18n()
 
@@ -15,21 +17,26 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="mb-4 flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3">
-    <Search :size="18" class="text-muted-foreground" />
-    <input
-      :value="modelValue"
+  <div class="mb-6 relative group">
+    <Search
+      :size="18"
+      class="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary"
+    />
+    <Input
+      :model-value="modelValue"
       type="text"
       :placeholder="t('todo.searchPlaceholder')"
-      class="flex-1 bg-transparent text-foreground outline-none placeholder:text-muted-foreground/60"
-      @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+      class="h-11 pl-11 pr-11 bg-muted/30 border-none rounded-xl focus-visible:ring-primary/20"
+      @update:model-value="emit('update:modelValue', $event as string)"
     />
-    <button
+    <Button
       v-if="modelValue"
-      class="text-muted-foreground hover:text-foreground"
+      variant="ghost"
+      size="icon"
+      class="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-foreground"
       @click="emit('clear')"
     >
-      <X :size="18" />
-    </button>
+      <X :size="16" />
+    </Button>
   </div>
 </template>

@@ -9,6 +9,7 @@ import TodoSearch from './components/TodoSearch.vue'
 import TodoList from './components/TodoList.vue'
 import Fireworks from '@/components/Fireworks.vue'
 import AiAssistantDrawer from '@/components/AiAssistantDrawer.vue'
+import { Card, CardContent } from '@/components/ui/card'
 
 const todoStore = useTodoStore()
 const {
@@ -41,49 +42,51 @@ function onFireworksComplete() {
 
 <template>
   <div class="min-h-screen bg-background p-4 pb-16 md:p-8 md:pb-20">
-    <div
-      class="mx-auto flex max-w-4xl flex-col rounded-[24px] bg-card p-6 md:p-8 shadow-card dark:shadow-[0_8px_30px_rgba(0,0,0,0.3)]"
+    <Card
+      class="mx-auto max-w-4xl border-none shadow-card dark:shadow-[0_8px_30px_rgba(0,0,0,0.3)] overflow-hidden rounded-[24px]"
     >
-      <!-- Header -->
-      <TodoHeader v-model:is-drawer-open="isDrawerOpen" v-model:show-search="showSearch" />
+      <CardContent class="p-6 md:p-8">
+        <!-- Header -->
+        <TodoHeader v-model:is-drawer-open="isDrawerOpen" v-model:show-search="showSearch" />
 
-      <!-- Input Area -->
-      <TodoInput
-        v-model="newTodoTitle"
-        :is-shaking="isShaking"
-        :show-tooltip="showTooltip"
-        :error-message="todoStore.error || ''"
-        @add="handleAddTodo"
-        @keydown="handleKeydown"
-      />
+        <!-- Input Area -->
+        <TodoInput
+          v-model="newTodoTitle"
+          :is-shaking="isShaking"
+          :show-tooltip="showTooltip"
+          :error-message="todoStore.error || ''"
+          @add="handleAddTodo"
+          @keydown="handleKeydown"
+        />
 
-      <!-- Filter Tabs -->
-      <TodoFilter v-model:filter="todoStore.filter" />
+        <!-- Filter Tabs -->
+        <TodoFilter v-model:filter="todoStore.filter" />
 
-      <!-- Search Bar (Collapsible) -->
-      <TodoSearch
-        v-if="showSearch"
-        v-model="searchInput"
-        @clear="clearSearch"
-        @input="handleSearchInput"
-      />
+        <!-- Search Bar (Collapsible) -->
+        <TodoSearch
+          v-if="showSearch"
+          v-model="searchInput"
+          @clear="clearSearch"
+          @input="handleSearchInput"
+        />
 
-      <!-- Todo List -->
-      <TodoList
-        :todos="todoStore.filteredTodos"
-        :filter="todoStore.filter"
-        :search-query="todoStore.searchQuery"
-        :editing-id="editingId"
-        :editing-title="editingTitle"
-        @toggle="(id, currentCompleted) => handleToggleTodo(id, currentCompleted)"
-        @start-edit="startEditing"
-        @save-edit="saveEditing"
-        @cancel-edit="cancelEditing"
-        @delete="todoStore.deleteTodo"
-        @update:editing-title="editingTitle = $event"
-        @edit-keydown="handleEditKeydown"
-      />
-    </div>
+        <!-- Todo List -->
+        <TodoList
+          :todos="todoStore.filteredTodos"
+          :filter="todoStore.filter"
+          :search-query="todoStore.searchQuery"
+          :editing-id="editingId"
+          :editing-title="editingTitle"
+          @toggle="(id, currentCompleted) => handleToggleTodo(id, currentCompleted)"
+          @start-edit="startEditing"
+          @save-edit="saveEditing"
+          @cancel-edit="cancelEditing"
+          @delete="todoStore.deleteTodo"
+          @update:editing-title="editingTitle = $event"
+          @edit-keydown="handleEditKeydown"
+        />
+      </CardContent>
+    </Card>
 
     <!-- Fireworks -->
     <Fireworks ref="fireworksRef" :active="showFireworks" @complete="onFireworksComplete" />

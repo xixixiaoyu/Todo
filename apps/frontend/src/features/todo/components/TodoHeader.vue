@@ -2,6 +2,8 @@
 import { useI18n } from 'vue-i18n'
 import { Search, Clover, Languages } from 'lucide-vue-next'
 import ThemeToggle from './ThemeToggle.vue'
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 const { t, locale } = useI18n()
 
@@ -23,39 +25,70 @@ const toggleLanguage = () => {
 </script>
 
 <template>
-  <header class="mb-6 flex items-center justify-between">
-    <h1
-      class="cursor-default bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-2xl font-bold tracking-tight text-transparent transition-transform duration-300 hover:scale-105 md:text-3xl"
-    >
-      {{ t('todo.title') }}
-    </h1>
-    <div class="flex items-center gap-2">
-      <button
-        class="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground"
-        @click="emit('update:isDrawerOpen', true)"
-      >
-        <Clover :size="18" />
-      </button>
-      <button
-        class="flex h-10 w-10 items-center justify-center rounded-xl border transition-all"
-        :class="
-          showSearch
-            ? 'border-primary bg-primary text-primary-foreground'
-            : 'border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-        "
-        :title="t('todo.search')"
-        @click="emit('update:showSearch', !showSearch)"
-      >
-        <Search :size="18" />
-      </button>
-      <ThemeToggle />
-      <button
-        class="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground"
-        :title="t('todo.language')"
-        @click="toggleLanguage"
-      >
-        <Languages :size="18" />
-      </button>
-    </div>
-  </header>
+  <TooltipProvider>
+    <header class="mb-8 flex items-center justify-between">
+      <div class="flex items-center gap-3 group">
+        <div
+          class="p-2 rounded-xl bg-primary/10 text-primary transition-transform group-hover:rotate-12"
+        >
+          <Clover :size="24" />
+        </div>
+        <h1
+          class="cursor-default bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-2xl font-extrabold tracking-tight text-transparent md:text-3xl"
+        >
+          {{ t('todo.title') }}
+        </h1>
+      </div>
+      <div class="flex items-center gap-2">
+        <Tooltip>
+          <TooltipTrigger as-child>
+            <Button
+              variant="outline"
+              size="icon"
+              class="h-10 w-10 rounded-xl bg-card border-border hover:bg-accent"
+              @click="emit('update:isDrawerOpen', true)"
+            >
+              <Clover :size="18" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>AI Assistant</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger as-child>
+            <Button
+              variant="outline"
+              size="icon"
+              class="h-10 w-10 rounded-xl transition-all"
+              :class="
+                showSearch
+                  ? 'border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground'
+                  : 'bg-card border-border hover:bg-accent'
+              "
+              @click="emit('update:showSearch', !showSearch)"
+            >
+              <Search :size="18" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{{ t('todo.search') }}</TooltipContent>
+        </Tooltip>
+
+        <ThemeToggle />
+
+        <Tooltip>
+          <TooltipTrigger as-child>
+            <Button
+              variant="outline"
+              size="icon"
+              class="h-10 w-10 rounded-xl bg-card border-border hover:bg-accent"
+              @click="toggleLanguage"
+            >
+              <Languages :size="18" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{{ t('todo.language') }}</TooltipContent>
+        </Tooltip>
+      </div>
+    </header>
+  </TooltipProvider>
 </template>

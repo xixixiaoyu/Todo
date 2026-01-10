@@ -2,6 +2,10 @@
 import { useI18n } from 'vue-i18n'
 import { Check, X, Pencil, Trash2 } from 'lucide-vue-next'
 import type { Todo } from '../stores/todo'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 const { t } = useI18n()
 
@@ -23,70 +27,91 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div
-    class="group flex items-center gap-4 rounded-xl border border-border bg-card px-4 py-3 transition-all hover:shadow-sm dark:hover:shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
-  >
-    <button
-      class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-all"
-      :class="
-        todo.completed
-          ? 'border-success bg-success text-white'
-          : 'border-border hover:border-primary/50'
-      "
-      @click="emit('toggle', todo.id, todo.completed)"
+  <TooltipProvider>
+    <div
+      class="group flex items-center gap-4 rounded-xl border border-border bg-card px-4 py-3 transition-all hover:shadow-md hover:border-primary/20 dark:hover:shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
     >
-      <Check v-if="todo.completed" :size="14" />
-    </button>
-
-    <!-- 编辑模式 -->
-    <template v-if="editingId === todo.id">
-      <input
-        :value="editingTitle"
-        type="text"
-        class="flex-1 rounded-lg border border-primary/50 bg-background px-2 py-1 text-foreground outline-none focus:ring-2 focus:ring-primary/20"
-        :placeholder="t('todo.editPlaceholder')"
-        @input="emit('update:editingTitle', ($event.target as HTMLInputElement).value)"
-        @keydown="emit('editKeydown', $event)"
-        @blur="emit('saveEdit')"
+      <Checkbox
+        :checked="todo.completed"
+        class="h-5 w-5 rounded-full border-2 data-[state=checked]:bg-success data-[state=checked]:border-success transition-transform active:scale-90"
+        @update:checked="emit('toggle', todo.id, todo.completed)"
       />
-      <button
-        class="text-success transition-all hover:opacity-80"
-        :title="t('todo.save')"
-        @click="emit('saveEdit')"
-      >
-        <Check :size="18" />
-      </button>
-      <button
-        class="text-muted-foreground transition-all hover:text-foreground"
-        :title="t('todo.cancel')"
-        @click="emit('cancelEdit')"
-      >
-        <X :size="18" />
-      </button>
-    </template>
 
-    <!-- 显示模式 -->
-    <template v-else>
-      <span
-        class="flex-1 cursor-pointer select-none text-foreground transition-all"
-        :class="todo.completed ? 'line-through text-text-completed' : ''"
-        @dblclick="emit('startEdit', todo.id, todo.title)"
-      >
-        {{ todo.title }}
-      </span>
-      <button
-        class="text-muted-foreground opacity-0 transition-all hover:text-primary group-hover:opacity-100"
-        :title="t('todo.edit')"
-        @click="emit('startEdit', todo.id, todo.title)"
-      >
-        <Pencil :size="18" />
-      </button>
-      <button
-        class="text-muted-foreground opacity-0 transition-all hover:text-error group-hover:opacity-100"
-        @click="emit('delete', todo.id)"
-      >
-        <Trash2 :size="18" />
-      </button>
-    </template>
-  </div>
+      <!-- 编辑模式 -->
+      <template v-if="editingId === todo.id">
+        <Input
+          :model-value="editingTitle"
+          type="text"
+          class="h-9 flex-1 bg-background text-foreground focus-visible:ring-primary/20"
+          :placeholder="t('todo.editPlaceholder')"
+          auto-focus
+          @update:model-value="emit('update:editingTitle', $event as string)"
+          @keydown="emit('editKeydown', $event)"
+          @blur="emit('saveEdit')"
+        />
+        <div class="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            class="h-8 w-8 text-success hover:bg-success/10"
+            @click="emit('saveEdit')"
+          >
+            <Check class="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            class="h-8 w-8 text-muted-foreground hover:bg-muted"
+            @click="emit('cancelEdit')"
+          >
+            <X class="h-4 w-4" />
+          </Button>
+        </div>
+      </template>
+
+      <!-- 显示模式 -->
+      <template v-else>
+        <span
+          class="flex-1 cursor-pointer select-none text-foreground transition-all duration-300"
+          :class="todo.completed ? 'line-through text-muted-foreground/50' : ''"
+          @dblclick="emit('startEdit', todo.id, todo.title)"
+        >
+          {{ todo.title }}
+        </span>
+        <div class="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+          <Tooltip>
+            <TooltipTrigger as-child>
+              <Button
+                variant="ghost"
+                size="icon"
+                class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                @click="emit('startEdit', todo.id, todo.title)"
+              >
+                <Pencil class="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{{ t('todo.edit') }}</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger as-child>
+              <Button
+                variant="ghost"
+                size="icon"
+                class="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                @click="emit('delete', todo.id)"
+              >
+                <Trash2 class="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{{ t('common.delete') || 'Delete' }}</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </template>
+    </div>
+  </TooltipProvider>
 </template>

@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import { Plus } from 'lucide-vue-next'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 const { t } = useI18n()
 
@@ -18,45 +22,42 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="relative mb-6">
+  <div class="relative mb-8">
     <div class="flex items-center gap-3">
-      <div
-        class="flex-1 rounded-xl border border-border bg-card px-4 py-3 transition-all"
-        :class="isShaking ? 'animate-shake border-error' : ''"
-      >
-        <input
-          :value="modelValue"
-          type="text"
-          :placeholder="t('todo.inputPlaceholder')"
-          class="w-full bg-transparent text-foreground outline-none placeholder:text-muted-foreground/60"
-          @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
-          @keydown="emit('keydown', $event)"
-        />
+      <div class="relative flex-1 group">
+        <TooltipProvider :delay-duration="0">
+          <Tooltip :open="showTooltip">
+            <TooltipTrigger as-child>
+              <div :class="isShaking ? 'animate-shake' : ''">
+                <Input
+                  :model-value="modelValue"
+                  type="text"
+                  :placeholder="t('todo.inputPlaceholder')"
+                  class="h-12 px-5 text-base rounded-xl border-border bg-card shadow-sm transition-all focus-visible:ring-primary/20 group-hover:border-primary/30"
+                  :class="isShaking ? 'border-destructive' : ''"
+                  @update:model-value="emit('update:modelValue', $event as string)"
+                  @keydown="emit('keydown', $event)"
+                />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent
+              side="top"
+              align="start"
+              class="bg-destructive text-destructive-foreground border-none"
+            >
+              <p>{{ errorMessage?.includes('.') ? t(errorMessage) : errorMessage || '' }}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
-      <button
-        class="rounded-xl bg-primary px-6 py-3 font-medium text-primary-foreground transition-all hover:opacity-90 active:scale-95"
+      <Button
+        size="lg"
+        class="h-12 px-6 rounded-xl font-semibold shadow-sm transition-all active:scale-95"
         @click="emit('add')"
       >
+        <Plus class="mr-2 h-5 w-5" />
         {{ t('todo.add') }}
-      </button>
+      </Button>
     </div>
-    <!-- 浮动提示 -->
-    <Transition
-      enter-active-class="transition-opacity duration-200"
-      enter-from-class="opacity-0"
-      enter-to-class="opacity-100"
-      leave-active-class="transition-opacity duration-200"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
-    >
-      <div
-        v-if="showTooltip"
-        class="absolute -top-10 left-0 z-10 rounded-lg bg-foreground px-3 py-1.5 text-sm text-background shadow-lg"
-      >
-        {{ errorMessage?.includes('.') ? t(errorMessage) : errorMessage || '' }}
-        <!-- 小三角 -->
-        <div class="absolute -bottom-1 left-4 h-2 w-2 rotate-45 bg-foreground" />
-      </div>
-    </Transition>
   </div>
 </template>
