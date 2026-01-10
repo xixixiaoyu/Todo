@@ -491,7 +491,15 @@
 
 /* Mermaid 图表 */
 .mermaid-container {
-  @apply relative my-4 overflow-hidden rounded-lg border border-[#e8e4dd] bg-white;
+  @apply relative my-4 overflow-hidden rounded-lg border border-[#e8e4dd] bg-white transition-all duration-500 ease-in-out;
+}
+
+.mermaid-container[data-processed='false'] {
+  @apply animate-pulse opacity-50;
+}
+
+.mermaid-container[data-processed='true'] {
+  @apply opacity-100;
 }
 
 .dark .mermaid-container {
@@ -539,6 +547,24 @@
 .mermaid-diagram svg:active {
   cursor: grabbing;
   transition: none;
+}
+
+/* 修复 Mermaid 节点文字缺失/颜色问题 */
+.mermaid-diagram .nodeLabel,
+.mermaid-diagram .edgeLabel,
+.mermaid-diagram .label,
+.mermaid-diagram text,
+.mermaid-diagram span {
+  @apply !fill-current !text-foreground;
+  font-family: inherit;
+}
+
+.dark .mermaid-diagram text,
+.dark .mermaid-diagram span,
+.dark .mermaid-diagram .nodeLabel,
+.dark .mermaid-diagram .edgeLabel {
+  fill: #f0f0f0 !important;
+  color: #f0f0f0 !important;
 }
 
 .mermaid-loading {

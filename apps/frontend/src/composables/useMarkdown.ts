@@ -128,7 +128,7 @@ async function initializeMermaid(theme: 'default' | 'dark' = 'default') {
   mermaidInstance.initialize({
     startOnLoad: false,
     theme: isDark ? 'dark' : 'default',
-    securityLevel: 'loose',
+    securityLevel: 'strict', // 使用 strict 模式以获得更标准的 SVG
     fontFamily: fontStack,
     fontSize: 14,
     flowchart: { useMaxWidth: false, htmlLabels: true, curve: 'linear', padding: 20 },
@@ -202,11 +202,14 @@ md.renderer.rules.fence = (tokens, idx, options, env: MarkdownEnv, self) => {
 
   // Mermaid 特殊处理
   if (lang === 'mermaid') {
-    const placeholderId = `mermaid-placeholder-${++mermaidIdCounter}`
-    env.mermaidQueue = env.mermaidQueue || []
-    env.mermaidQueue.push({ id: placeholderId, code: content.trim() })
+    const code = content.trim()
+    const hash = stableHash(code)
+    const placeholderId = `mermaid-${hash}`
 
-    return `<div id="${placeholderId}" class="mermaid-container" aria-busy="true"><div class="mermaid-diagram"><div class="mermaid-loading">正在渲染图表...</div></div></div>`
+    env.mermaidQueue = env.mermaidQueue || []
+    env.mermaidQueue.push({ id: placeholderId, code })
+
+    return `<div id="${placeholderId}" class="mermaid-container" aria-busy="true" data-processed="false"><div class="mermaid-diagram"><div class="mermaid-loading">正在渲染图表...</div></div></div>`
   }
 
   // 普通代码块渲染
@@ -382,9 +385,23 @@ const PURIFY_CONFIG = {
     'mo',
     'msup',
     'msub',
+    'desc',
+    'title',
+    'use',
+    'symbol',
   ],
   // 额外允许的属性（补丁）
-  ADD_ATTR: ['xmlns:xlink', 'xlink:href', 'data-raw', 'data-code', 'aria-busy'],
+  ADD_ATTR: [
+    'xmlns:xlink',
+    'xlink:href',
+    'data-raw',
+    'data-code',
+    'aria-busy',
+    'aria-processed',
+    'viewBox',
+    'preserveAspectRatio',
+  ],
+  FORCE_BODY: true, // 强制保留完整的 SVG 结构
 }
 
 /**
@@ -436,12 +453,16 @@ export function useMarkdown() {
         try {
           const id = `mermaid-${++mermaidIdCounter}`
           const { svg } = await mermaidInstance.render(id, item.code)
+          // 优化 SVG 字符串，移除可能干扰 DOMPurify 的非法样式
           const optimizedSvg = svg
+            .replace(/<style>[\s\S]*?<\/style>/gi, '') // 移除内联 style 标签，改用全局样式
             .replace('<svg', '<svg preserveAspectRatio="xMidYMid meet"')
             .replace(/style="[^"]*background[^"]*"/gi, 'style="background: transparent"')
 
           fullHtml = `
-            <div class="mermaid-container" data-raw="${encodeURIComponent(item.code)}">
+            <div id="${item.id}" class="mermaid-container" data-processed="true" data-raw="${encodeURIComponent(
+              item.code,
+            )}">
               <div class="mermaid-zoom-controls">
                 <button class="mermaid-zoom-btn" data-action="in" title="放大">+</button>
                 <button class="mermaid-zoom-btn" data-action="out" title="缩小">−</button>
@@ -480,6 +501,19 @@ export function useMarkdown() {
 
       // 4. 如果存在待渲染的图表，执行异步渲染
       if (env.mermaidQueue && env.mermaidQueue.length > 0) {
+        // 先尝试从缓存中直接替换，减少闪烁
+        const currentTheme = getCurrentTheme()
+        env.mermaidQueue.forEach((item) => {
+          const cacheKey = `${currentTheme}:${stableHash(item.code)}`
+          const cachedSvg = mermaidCodeCache.get(cacheKey)
+          if (cachedSvg) {
+            // 使用非贪婪匹配，确保只替换当前 ID 的容器
+            const placeholderRegex = new RegExp(`<div id="${item.id}"[^>]*>[\\s\\S]*?<\\/div>`, 'g')
+            html = html.replace(placeholderRegex, cachedSvg)
+          }
+        })
+
+        // 执行异步渲染（处理新图表或更新缓存）
         await processMermaidQueue(env.mermaidQueue)
       }
 

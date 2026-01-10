@@ -130,22 +130,30 @@ function injectMermaidSvgs() {
   if (svgMap.size === 0) return
 
   nextTick(() => {
-    svgMap.forEach((fullHtml, placeholderId) => {
-      // 优先在当前组件范围内查找占位符，避免全局冲突
-      const container = messageRef.value
-      const placeholder =
-        container?.querySelector(`#${placeholderId}`) || document.getElementById(placeholderId)
+    const container = messageRef.value
+    if (!container) return
 
-      if (placeholder && placeholder.parentNode) {
+    svgMap.forEach((fullHtml, placeholderId) => {
+      const placeholder = container.querySelector(`#${placeholderId}`)
+
+      if (placeholder) {
+        // 如果已经处理过且内容没变，跳过以防止闪烁
+        if (placeholder.getAttribute('data-processed') === 'true') {
+          return
+        }
+
         const tempWrapper = document.createElement('div')
         tempWrapper.innerHTML = fullHtml
         const containerElement = tempWrapper.querySelector('.mermaid-container')
-        if (containerElement) {
+
+        if (containerElement && placeholder.parentNode) {
+          containerElement.setAttribute('data-processed', 'true')
           placeholder.parentNode.replaceChild(containerElement, placeholder)
         }
       }
     })
-    svgMap.clear()
+    // 注意：不要在这里 clear svgMap，因为流式输出可能会多次调用此函数
+    // svgMap 会在 useMarkdown 的 clear 逻辑中处理
   })
 }
 
