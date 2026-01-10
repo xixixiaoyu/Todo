@@ -59,6 +59,8 @@ describe('useAIConfig', () => {
         systemPrompt: 'Test prompt',
         thinkingMode: 'enabled' as const,
         todoAssistant: true,
+        discussionMode: true,
+        discussionModelIds: ['1', '2'],
       }
 
       localStorage.setItem('ai-config', JSON.stringify(savedConfig))

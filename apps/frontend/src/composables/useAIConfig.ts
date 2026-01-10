@@ -12,6 +12,9 @@ export interface AIConfig {
   systemPrompt: string
   thinkingMode: ThinkingMode
   todoAssistant: boolean
+  discussionMode: boolean
+  discussionModelIds: string[]
+  discussionPrimaryModelId: string | null
 }
 
 export interface AIPreset {
@@ -61,6 +64,9 @@ const DEFAULT_CONFIG: AIConfig = {
   systemPrompt: i18n.global.t('ai.defaultSystemPrompt'),
   thinkingMode: aiThinkingMode.value, // 使用初始值
   todoAssistant: false,
+  discussionMode: false,
+  discussionModelIds: [],
+  discussionPrimaryModelId: null,
 }
 
 // 全局配置状态（单例）
@@ -212,6 +218,7 @@ export function useAIConfig() {
 
     activePresetId.value = presetId
     config.value = {
+      ...config.value,
       baseUrl: preset.baseUrl,
       apiKey: preset.apiKey,
       model: preset.model,
@@ -246,6 +253,7 @@ export function useAIConfig() {
       // 如果更新的是当前激活的预设，同步更新配置
       if (activePresetId.value === presetId) {
         config.value = {
+          ...config.value,
           baseUrl: updatedPreset.baseUrl,
           apiKey: updatedPreset.apiKey,
           model: updatedPreset.model,

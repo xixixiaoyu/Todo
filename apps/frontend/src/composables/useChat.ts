@@ -2,13 +2,15 @@ import { ref, computed } from 'vue'
 import i18n from '@/i18n'
 import {
   getAIStreamResponse,
+  getMultiModelDiscussionStream,
   abortCurrentRequest,
   generateId,
   type ChatMessage,
   type AIRequestOptions,
+  type DiscussionStep,
 } from '@/services/aiService'
 import { useChatHistory } from './useChatHistory'
-import { getAIThinkingMode } from './useAIConfig'
+import { getAIThinkingMode, getAIConfig } from './useAIConfig'
 
 export type { ChatMessage }
 
@@ -35,6 +37,7 @@ export function useChat(options: AIRequestOptions = {}) {
   // 流式响应状态
   const currentAIResponse = ref('')
   const currentThinkingContent = ref('')
+  const currentDiscussionSteps = ref<DiscussionStep[]>([])
   const currentAssistantMessageId = ref<string | null>(null)
 
   // 加载/生成状态
@@ -68,58 +71,84 @@ export function useChat(options: AIRequestOptions = {}) {
     chatHistory.value = [...chatHistory.value, userMessage]
     isGenerating.value = true
     currentAssistantMessageId.value = generateId()
+    const aiConfig = getAIConfig()
 
     try {
-      await getAIStreamResponse(
-        chatHistory.value,
-        // 处理内容块
-        (chunk: string) => {
-          if (chunk === '[DONE]') {
-            // 流式结束，将临时内容合并为完整消息
-            if (currentAIResponse.value) {
-              const aiMessage: ChatMessage = {
-                id: currentAssistantMessageId.value!,
-                role: 'assistant',
-                content: currentAIResponse.value,
-                thinkingContent: currentThinkingContent.value || undefined,
-                createdAt: new Date(),
-              }
-              chatHistory.value = [...chatHistory.value, aiMessage]
+      const handleChunk = (chunk: string) => {
+        if (chunk === '[DONE]') {
+          // 流式结束，将临时内容合并为完整消息
+          if (currentAIResponse.value) {
+            const aiMessage: ChatMessage = {
+              id: currentAssistantMessageId.value!,
+              role: 'assistant',
+              content: currentAIResponse.value,
+              thinkingContent: currentThinkingContent.value || undefined,
+              discussionSteps:
+                currentDiscussionSteps.value.length > 0
+                  ? [...currentDiscussionSteps.value]
+                  : undefined,
+              createdAt: new Date(),
             }
-            currentAIResponse.value = ''
-            currentThinkingContent.value = ''
-            currentAssistantMessageId.value = null
-            isGenerating.value = false
-          } else if (chunk === '[ABORTED]') {
-            // 用户中断 - 保留已生成的内容
-            if (currentAIResponse.value) {
-              const aiMessage: ChatMessage = {
-                id: currentAssistantMessageId.value!,
-                role: 'assistant',
-                content: currentAIResponse.value + `\n\n*${t('ai.aborted')}*`,
-                thinkingContent: currentThinkingContent.value || undefined,
-                createdAt: new Date(),
-              }
-              chatHistory.value = [...chatHistory.value, aiMessage]
-            }
-            currentAIResponse.value = ''
-            currentThinkingContent.value = ''
-            currentAssistantMessageId.value = null
-            isGenerating.value = false
-          } else {
-            // 累积内容
-            currentAIResponse.value += chunk
+            chatHistory.value = [...chatHistory.value, aiMessage]
           }
-        },
-        // 处理思考过程
-        (thinking: string) => {
-          currentThinkingContent.value += thinking
-        },
-        {
-          ...options,
-          thinkingMode: getAIThinkingMode(),
-        },
-      )
+          currentAIResponse.value = ''
+          currentThinkingContent.value = ''
+          currentDiscussionSteps.value = []
+          currentAssistantMessageId.value = null
+          isGenerating.value = false
+        } else if (chunk === '[ABORTED]') {
+          // 用户中断 - 保留已生成的内容
+          if (currentAIResponse.value) {
+            const aiMessage: ChatMessage = {
+              id: currentAssistantMessageId.value!,
+              role: 'assistant',
+              content: currentAIResponse.value + `\n\n*${t('ai.aborted')}*`,
+              thinkingContent: currentThinkingContent.value || undefined,
+              discussionSteps:
+                currentDiscussionSteps.value.length > 0
+                  ? [...currentDiscussionSteps.value]
+                  : undefined,
+              createdAt: new Date(),
+            }
+            chatHistory.value = [...chatHistory.value, aiMessage]
+          }
+          currentAIResponse.value = ''
+          currentThinkingContent.value = ''
+          currentDiscussionSteps.value = []
+          currentAssistantMessageId.value = null
+          isGenerating.value = false
+        } else {
+          // 累积内容
+          currentAIResponse.value += chunk
+        }
+      }
+
+      if (aiConfig.discussionMode && aiConfig.discussionModelIds.length > 0) {
+        await getMultiModelDiscussionStream(
+          chatHistory.value,
+          (steps) => {
+            currentDiscussionSteps.value = steps
+          },
+          handleChunk,
+          {
+            ...options,
+            thinkingMode: getAIThinkingMode(),
+          },
+        )
+      } else {
+        await getAIStreamResponse(
+          chatHistory.value,
+          handleChunk,
+          // 处理思考过程
+          (thinking: string) => {
+            currentThinkingContent.value += thinking
+          },
+          {
+            ...options,
+            thinkingMode: getAIThinkingMode(),
+          },
+        )
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : t('ai.requestFailed')
       error.value = errorMessage
@@ -218,6 +247,7 @@ export function useChat(options: AIRequestOptions = {}) {
     chatHistory,
     currentAIResponse,
     currentThinkingContent,
+    currentDiscussionSteps,
     isGenerating,
     isLoading,
     error,

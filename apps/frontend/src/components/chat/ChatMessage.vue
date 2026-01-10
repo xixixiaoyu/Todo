@@ -1,7 +1,16 @@
 <script setup lang="ts">
 import { computed, ref, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ChevronUp, Copy, Check, RefreshCw } from 'lucide-vue-next'
+import {
+  ChevronUp,
+  Copy,
+  Check,
+  RefreshCw,
+  Users,
+  CircleDashed,
+  CheckCircle2,
+  AlertCircle,
+} from 'lucide-vue-next'
 import type { ChatMessage } from '@/composables/useChat'
 import { useMarkdown } from '@/composables/useMarkdown'
 
@@ -44,7 +53,17 @@ const hasContent = computed(() => !!props.message.content)
 
 // 思考状态描述
 const thinkingStatus = computed(() => {
-  if (isStreaming.value && !hasContent.value) return t('ai.isThinking')
+  if (isStreaming.value && !hasContent.value) {
+    if (props.message.discussionSteps?.length) {
+      const currentStep = props.message.discussionSteps.find((s) => s.status === 'thinking')
+      if (currentStep) {
+        if (currentStep.modelId === 'primary-draft') return t('ai.primaryDrafting')
+        return t('ai.secondaryReviewing')
+      }
+      return t('ai.finalSynthesizing')
+    }
+    return t('ai.isThinking')
+  }
   return t('ai.thoughtProcess')
 })
 
@@ -244,6 +263,55 @@ async function copyContent() {
               >
                 {{ message.thinkingContent }}
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 多模型讨论过程 -->
+      <div
+        v-if="message.discussionSteps && message.discussionSteps.length > 0 && !isUser"
+        class="mb-2 space-y-2 rounded-xl border border-[#e8e4dd] bg-[#faf8f4] p-3 shadow-sm"
+      >
+        <div class="flex items-center gap-2 border-b border-[#e8e4dd] pb-2">
+          <Users :size="14" class="text-[#c9b896]" />
+          <span class="text-xs font-medium text-[#6b5c4d]">{{ t('ai.discussionStatus') }}</span>
+        </div>
+        <div class="space-y-2 pt-1">
+          <div
+            v-for="step in message.discussionSteps"
+            :key="step.modelId"
+            class="flex items-start gap-2 text-xs"
+          >
+            <div class="mt-0.5 shrink-0">
+              <CircleDashed
+                v-if="step.status === 'thinking'"
+                :size="12"
+                class="animate-spin text-[#c9b896]"
+              />
+              <template v-else-if="step.status === 'done'">
+                <CheckCircle2
+                  v-if="step.modelId === 'primary-draft'"
+                  :size="12"
+                  class="text-blue-500"
+                />
+                <CheckCircle2 v-else :size="12" class="text-green-500" />
+              </template>
+              <AlertCircle v-else :size="12" class="text-red-500" />
+            </div>
+            <div class="flex-1">
+              <span class="font-medium text-[#6b5c4d]">{{ step.modelName }}: </span>
+              <span class="text-[#8b8680]">
+                {{
+                  step.status === 'thinking'
+                    ? t('ai.isThinking')
+                    : step.status === 'error'
+                      ? step.content
+                      : step.modelId === 'primary-draft'
+                        ? t('ai.draftReady')
+                        : t('ai.contributionReady')
+                }}
+              </span>
             </div>
           </div>
         </div>

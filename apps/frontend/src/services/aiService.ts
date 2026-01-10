@@ -8,17 +8,27 @@ import i18n from '@/i18n'
 
 const { t } = i18n.global
 
+export interface DiscussionStep {
+  modelId: string
+  modelName: string
+  content: string
+  status: 'thinking' | 'done' | 'error'
+}
+
 export interface ChatMessage {
   id: string
   role: 'user' | 'assistant' | 'system'
   content: string
   thinkingContent?: string
+  discussionSteps?: DiscussionStep[]
   isStreaming?: boolean
   createdAt?: Date
 }
 
 export interface AIRequestOptions {
   model?: string
+  baseUrl?: string
+  apiKey?: string
   temperature?: number
   maxTokens?: number
   systemPrompt?: string
@@ -39,11 +49,11 @@ function buildApiUrl(baseUrl: string): string {
 /**
  * 构建请求头
  */
-function getHeaders(): Record<string, string> {
+function getHeaders(apiKeyOverride?: string): Record<string, string> {
   const { apiKey } = getAIConfig()
   return {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${apiKey}`,
+    Authorization: `Bearer ${apiKeyOverride || apiKey}`,
   }
 }
 
@@ -70,6 +80,8 @@ export async function getAIStreamResponse(
   const aiConfig = getAIConfig()
   const {
     model = aiConfig.model,
+    baseUrl = aiConfig.baseUrl,
+    apiKey = aiConfig.apiKey,
     temperature = aiConfig.temperature,
     systemPrompt = aiConfig.systemPrompt,
     thinkingMode = aiConfig.thinkingMode,
@@ -124,9 +136,9 @@ export async function getAIStreamResponse(
       },
     }
 
-    const response = await fetch(buildApiUrl(aiConfig.baseUrl), {
+    const response = await fetch(buildApiUrl(baseUrl), {
       method: 'POST',
-      headers: getHeaders(),
+      headers: getHeaders(apiKey),
       body: JSON.stringify(requestBody),
       signal,
     })
@@ -208,6 +220,173 @@ export async function getAIStreamResponse(
   } finally {
     abortController = null
   }
+}
+
+/**
+ * 发送非流式 AI 请求的通用工具函数
+ */
+async function fetchNonStreamResponse(
+  config: { baseUrl: string; apiKey: string; model: string; temperature?: number },
+  messages: any[],
+  thinkingMode?: string,
+): Promise<string> {
+  const response = await fetch(buildApiUrl(config.baseUrl), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${config.apiKey}`,
+    },
+    body: JSON.stringify({
+      model: config.model,
+      messages,
+      temperature: config.temperature ?? 0.7,
+      stream: false,
+      thinking: thinkingMode ? { type: thinkingMode } : undefined,
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error(`AI API Error: ${response.status} ${await response.text()}`)
+  }
+
+  const data = await response.json()
+  return data.choices[0]?.message?.content || ''
+}
+
+/**
+ * 发送多模型协同讨论请求
+ */
+export async function getMultiModelDiscussionStream(
+  messages: ChatMessage[],
+  onStepUpdate: (steps: DiscussionStep[]) => void,
+  onFinalChunk: (chunk: string) => void,
+  options: AIRequestOptions = {},
+): Promise<void> {
+  const aiConfig = getAIConfig()
+  const { discussionModelIds = [], discussionPrimaryModelId, thinkingMode } = aiConfig
+
+  // 1. 获取所有参与讨论的模型配置
+  const presets = JSON.parse(localStorage.getItem('ai-presets') || '[]') as any[]
+
+  // 确定主模型配置
+  const primaryPreset = discussionPrimaryModelId
+    ? presets.find((p) => p.id === discussionPrimaryModelId)
+    : null
+
+  const primaryConfig = {
+    baseUrl: primaryPreset?.baseUrl ?? aiConfig.baseUrl,
+    apiKey: primaryPreset?.apiKey ?? aiConfig.apiKey,
+    model: primaryPreset?.model ?? aiConfig.model,
+    temperature: primaryPreset?.temperature ?? aiConfig.temperature,
+  }
+
+  // 过滤副模型：排除主模型，避免冗余评审
+  const selectedPresets = presets.filter((p) => {
+    const isSelected = discussionModelIds.includes(p.id)
+    const isPrimary =
+      p.id === primaryPreset?.id || (p.model === aiConfig.model && p.baseUrl === aiConfig.baseUrl)
+    return isSelected && !isPrimary
+  })
+
+  const primaryModelName = primaryPreset?.name ?? t('ai.primaryModel')
+
+  // 如果没有选择副模型，回退到普通单模型请求
+  if (selectedPresets.length === 0) {
+    return getAIStreamResponse(messages, onFinalChunk, undefined, options)
+  }
+
+  // 初始化步骤列表
+  const steps: DiscussionStep[] = [
+    {
+      modelId: 'primary-draft',
+      modelName: primaryModelName,
+      content: '',
+      status: 'thinking' as const,
+    },
+    ...selectedPresets.map((p) => ({
+      modelId: p.id,
+      modelName: p.name,
+      content: '',
+      status: 'thinking' as const,
+    })),
+  ]
+
+  onStepUpdate([...steps])
+
+  const userQuery = messages[messages.length - 1].content
+
+  // 2. 第一阶段：主模型生成草案
+  let draftContent = ''
+  try {
+    draftContent = await fetchNonStreamResponse(
+      primaryConfig,
+      messages.map((m) => ({ role: m.role, content: m.content })),
+      thinkingMode,
+    )
+    steps[0].content = draftContent
+    steps[0].status = 'done'
+  } catch (err) {
+    steps[0].content = err instanceof Error ? err.message : 'Draft generation failed'
+    steps[0].status = 'error'
+    return getAIStreamResponse(messages, onFinalChunk, undefined, options)
+  } finally {
+    onStepUpdate([...steps])
+  }
+
+  // 3. 第二阶段：副模型评审草案
+  const fetchModelReview = async (preset: any, index: number) => {
+    const stepIndex = index + 1
+    try {
+      const reviewPrompt = t('ai.reviewPrompt', {
+        originalQuery: userQuery,
+        draftContent,
+      })
+
+      steps[stepIndex].content = await fetchNonStreamResponse(
+        preset,
+        [
+          ...messages.slice(0, -1).map((m) => ({ role: m.role, content: m.content })),
+          { role: 'user', content: reviewPrompt },
+        ],
+        thinkingMode,
+      )
+      steps[stepIndex].status = 'done'
+    } catch (err) {
+      steps[stepIndex].content = err instanceof Error ? err.message : 'Review failed'
+      steps[stepIndex].status = 'error'
+    } finally {
+      onStepUpdate([...steps])
+    }
+  }
+
+  await Promise.all(selectedPresets.map((p, i) => fetchModelReview(p, i)))
+
+  // 4. 第三阶段：汇总讨论结果，由主模型生成最终回复
+  const discussionSummary = steps
+    .slice(1)
+    .filter((s) => s.status === 'done')
+    .map((s) => `【${s.modelName} 的评审意见】：\n${s.content}`)
+    .join('\n\n')
+
+  const synthesisPrompt = t('ai.synthesisPrompt', {
+    originalQuery: userQuery,
+    draftContent,
+    discussionData: discussionSummary,
+  })
+
+  const synthesisMessages: ChatMessage[] = [
+    ...messages.slice(0, -1),
+    {
+      id: generateId(),
+      role: 'user',
+      content: synthesisPrompt,
+    },
+  ]
+
+  return getAIStreamResponse(synthesisMessages, onFinalChunk, undefined, {
+    ...options,
+    ...primaryConfig,
+  })
 }
 
 /**

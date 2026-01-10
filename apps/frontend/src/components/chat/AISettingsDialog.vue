@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { X, RotateCcw, Eye, EyeOff, Check, Plus, Trash2, Edit3 } from 'lucide-vue-next'
+import { X, RotateCcw, Eye, EyeOff, Check, Plus, Trash2, Edit3, Users, Star } from 'lucide-vue-next'
 import { useAIConfig, type AIConfig, type AIPreset } from '@/composables/useAIConfig'
 import { useEscClose } from '@/composables/useEscClose'
 
@@ -39,7 +39,11 @@ watch(activeTab, (newTab) => {
 })
 
 // 本地表单状态
-const formData = ref<AIConfig>({ ...config.value })
+const formData = ref<AIConfig>({
+  ...config.value,
+  discussionModelIds: [...config.value.discussionModelIds] as string[],
+  discussionPrimaryModelId: config.value.discussionPrimaryModelId,
+})
 
 // API Key 显示/隐藏
 const showApiKey = ref(false)
@@ -67,7 +71,11 @@ watch(
       if (tab) {
         activeTab.value = tab
       }
-      formData.value = { ...config.value }
+      formData.value = {
+        ...config.value,
+        discussionModelIds: [...config.value.discussionModelIds] as string[],
+        discussionPrimaryModelId: config.value.discussionPrimaryModelId,
+      }
       editingPreset.value = null
       isCreatingPreset.value = false
       showPresetApiKey.value = false
@@ -80,7 +88,11 @@ watch(
 watch(
   () => config.value,
   (newConfig) => {
-    formData.value = { ...newConfig }
+    formData.value = {
+      ...newConfig,
+      discussionModelIds: [...newConfig.discussionModelIds] as string[],
+      discussionPrimaryModelId: newConfig.discussionPrimaryModelId,
+    }
   },
   { immediate: true },
 )
@@ -97,7 +109,11 @@ function handleSave() {
  * 重置为默认值
  */
 function handleReset() {
-  formData.value = { ...DEFAULT_CONFIG }
+  formData.value = {
+    ...DEFAULT_CONFIG,
+    discussionModelIds: [...DEFAULT_CONFIG.discussionModelIds] as string[],
+    discussionPrimaryModelId: DEFAULT_CONFIG.discussionPrimaryModelId,
+  }
 }
 
 /**
@@ -180,7 +196,11 @@ function handleDeletePreset(presetId: string) {
 // 监听切换预设，更新本地表单
 watch(activePresetId, () => {
   if (activeTab.value === 'presets') {
-    formData.value = { ...config.value }
+    formData.value = {
+      ...config.value,
+      discussionModelIds: [...config.value.discussionModelIds] as string[],
+      discussionPrimaryModelId: config.value.discussionPrimaryModelId,
+    }
   }
 })
 
@@ -348,6 +368,118 @@ defineExpose({
                     :placeholder="t('ai.systemPromptPlaceholder')"
                     class="w-full resize-none rounded-lg border border-[#e8e4dd] bg-[#faf8f4] px-4 py-3 text-sm leading-relaxed text-[#3a3a3a] outline-none transition-colors placeholder:text-[#c4c0b8] focus:border-[#c9b896] focus:ring-2 focus:ring-[#c9b896]/20"
                   />
+                </div>
+
+                <!-- 多模型协同讨论 -->
+                <div class="space-y-3 rounded-xl border border-[#e8e4dd] bg-[#faf8f4] p-4">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <div
+                        class="flex h-8 w-8 items-center justify-center rounded-lg bg-[#c9b896]/10 text-[#c9b896]"
+                      >
+                        <Users :size="16" />
+                      </div>
+                      <div>
+                        <p class="text-sm font-medium text-[#6b5c4d]">
+                          {{ t('ai.discussionMode') }}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus:outline-none"
+                      :class="formData.discussionMode ? 'bg-[#c9b896]' : 'bg-[#e8e4dd]'"
+                      @click="formData.discussionMode = !formData.discussionMode"
+                    >
+                      <span
+                        class="inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+                        :class="
+                          formData.discussionMode ? 'translate-x-[22px]' : 'translate-x-[2px]'
+                        "
+                      />
+                    </button>
+                  </div>
+
+                  <div
+                    v-if="formData.discussionMode"
+                    class="space-y-4 border-t border-[#e8e4dd] pt-3"
+                  >
+                    <!-- 主模型选择 -->
+                    <div class="space-y-2">
+                      <p class="text-xs font-medium text-[#8b8680]">
+                        {{ t('ai.discussionPrimaryModel') }}
+                      </p>
+                      <div
+                        v-if="presets.length === 0"
+                        class="py-2 text-center text-xs text-[#c4c0b8]"
+                      >
+                        {{ t('ai.noPresetsForDiscussion') }}
+                      </div>
+                      <div v-else class="flex flex-wrap gap-2">
+                        <button
+                          v-for="preset in presets"
+                          :key="'primary-' + preset.id"
+                          class="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-all"
+                          :class="
+                            formData.discussionPrimaryModelId === preset.id
+                              ? 'border-[#c9b896] bg-[#c9b896] text-white'
+                              : 'border-[#e8e4dd] bg-white text-[#8b8680] hover:border-[#c9b896] hover:text-[#6b5c4d]'
+                          "
+                          @click="
+                            formData.discussionPrimaryModelId =
+                              formData.discussionPrimaryModelId === preset.id ? null : preset.id
+                          "
+                        >
+                          <Star v-if="formData.discussionPrimaryModelId === preset.id" :size="12" />
+                          <span>{{ preset.name }}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- 副模型选择 -->
+                    <div class="space-y-2">
+                      <p class="text-xs font-medium text-[#8b8680]">
+                        {{ t('ai.discussionSecondaryModels') }}
+                      </p>
+                      <div
+                        v-if="presets.length === 0"
+                        class="py-2 text-center text-xs text-[#c4c0b8]"
+                      >
+                        {{ t('ai.noPresetsForDiscussion') }}
+                      </div>
+                      <div v-else class="flex flex-wrap gap-2">
+                        <button
+                          v-for="preset in presets"
+                          :key="'secondary-' + preset.id"
+                          class="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-all"
+                          :class="[
+                            formData.discussionModelIds.includes(preset.id)
+                              ? 'border-[#c9b896] bg-[#c9b896] text-white'
+                              : 'border-[#e8e4dd] bg-white text-[#8b8680] hover:border-[#c9b896] hover:text-[#6b5c4d]',
+                            formData.discussionPrimaryModelId === preset.id
+                              ? 'opacity-50 cursor-not-allowed'
+                              : '',
+                          ]"
+                          :disabled="formData.discussionPrimaryModelId === preset.id"
+                          @click="
+                            formData.discussionModelIds.includes(preset.id)
+                              ? (formData.discussionModelIds = formData.discussionModelIds.filter(
+                                  (id) => id !== preset.id,
+                                ))
+                              : (formData.discussionModelIds = [
+                                  ...formData.discussionModelIds,
+                                  preset.id,
+                                ])
+                          "
+                        >
+                          <Check
+                            v-if="formData.discussionModelIds.includes(preset.id)"
+                            :size="12"
+                          />
+                          <span>{{ preset.name }}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
