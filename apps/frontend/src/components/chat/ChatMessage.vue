@@ -124,7 +124,7 @@ const updateContentHeight = () => {
   }
 }
 
-// 注入 Mermaid SVG
+// 注入 Mermaid SVG 并初始化交互
 function injectMermaidSvgs() {
   const svgMap = getMermaidSvgMap()
   if (svgMap.size === 0) return
@@ -137,31 +137,98 @@ function injectMermaidSvgs() {
       const placeholder = container.querySelector(`#${placeholderId}`)
 
       if (placeholder) {
-        // 如果已经处理过且内容没变，跳过以防止闪烁
-        if (placeholder.getAttribute('data-processed') === 'true') {
-          return
-        }
+        // 如果占位符还在（说明是新渲染的），则进行替换
+        if (placeholder.getAttribute('data-processed') !== 'true') {
+          const tempWrapper = document.createElement('div')
+          tempWrapper.innerHTML = fullHtml
+          const containerElement = tempWrapper.querySelector('.mermaid-container')
 
-        const tempWrapper = document.createElement('div')
-        tempWrapper.innerHTML = fullHtml
-        const containerElement = tempWrapper.querySelector('.mermaid-container')
-
-        if (containerElement && placeholder.parentNode) {
-          containerElement.setAttribute('data-processed', 'true')
-          placeholder.parentNode.replaceChild(containerElement, placeholder)
-
-          // 触发淡入动画
-          requestAnimationFrame(() => {
-            const diagram = containerElement.querySelector('.mermaid-diagram') as HTMLElement
-            if (diagram) {
-              diagram.style.opacity = '1'
-            }
-          })
+          if (containerElement && placeholder.parentNode) {
+            containerElement.setAttribute('data-processed', 'true')
+            placeholder.parentNode.replaceChild(containerElement, placeholder)
+            initMermaidInteractions(containerElement as HTMLElement)
+          }
+        } else {
+          // 如果已经处理过，确保交互逻辑仍然有效（应对 Vue 重新渲染 DOM 的情况）
+          initMermaidInteractions(placeholder as HTMLElement)
         }
       }
     })
-    // 注意：不要在这里 clear svgMap，因为流式输出可能会多次调用此函数
-    // svgMap 会在 useMarkdown 的 clear 逻辑中处理
+  })
+}
+
+// 初始化 Mermaid 图表交互（缩放与拖拽）
+function initMermaidInteractions(container: HTMLElement) {
+  if (container.dataset.interacted === 'true') return
+  container.dataset.interacted = 'true'
+
+  const diagram = container.querySelector('.mermaid-diagram') as HTMLElement
+  const svg = diagram?.querySelector('svg') as SVGElement
+  if (!diagram || !svg) return
+
+  let scale = 1
+  let translateX = 0
+  let translateY = 0
+  let isDragging = false
+  let startX = 0
+  let startY = 0
+
+  const updateTransform = () => {
+    diagram.style.setProperty('--mermaid-scale', scale.toString())
+    diagram.style.setProperty('--mermaid-translate-x', `${translateX}px`)
+    diagram.style.setProperty('--mermaid-translate-y', `${translateY}px`)
+  }
+
+  // 缩放按钮处理
+  container.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('.mermaid-zoom-btn') as HTMLButtonElement
+    if (!btn) return
+
+    const action = btn.dataset.action
+    if (action === 'in') scale = Math.min(scale + 0.2, 5)
+    else if (action === 'out') scale = Math.max(scale - 0.2, 0.5)
+    else if (action === 'reset') {
+      scale = 1
+      translateX = 0
+      translateY = 0
+    }
+    updateTransform()
+  })
+
+  // 鼠标滚轮缩放
+  diagram.addEventListener(
+    'wheel',
+    (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault()
+        const delta = e.deltaY > 0 ? -0.1 : 0.1
+        scale = Math.min(Math.max(scale + delta, 0.5), 5)
+        updateTransform()
+      }
+    },
+    { passive: false },
+  )
+
+  // 拖拽平移
+  svg.addEventListener('mousedown', (e) => {
+    if (scale <= 1 && translateX === 0 && translateY === 0) return
+    isDragging = true
+    startX = e.clientX - translateX
+    startY = e.clientY - translateY
+    svg.style.cursor = 'grabbing'
+  })
+
+  window.addEventListener('mousemove', (e) => {
+    if (!isDragging) return
+    translateX = e.clientX - startX
+    translateY = e.clientY - startY
+    updateTransform()
+  })
+
+  window.addEventListener('mouseup', () => {
+    if (!isDragging) return
+    isDragging = false
+    svg.style.cursor = 'grab'
   })
 }
 

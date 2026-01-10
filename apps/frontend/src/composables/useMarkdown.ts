@@ -391,6 +391,9 @@ const PURIFY_CONFIG = {
     'markerUnits',
     'xlink:href',
     'xmlns:xlink',
+    'stroke-dashoffset',
+    'stroke-miterlimit',
+    'vector-effect',
   ],
   // 额外允许的 SVG 和 MathML 标签（补丁）
   ADD_TAGS: [
@@ -411,6 +414,10 @@ const PURIFY_CONFIG = {
     'style',
     'defs',
     'marker',
+    'pattern',
+    'linearGradient',
+    'radialGradient',
+    'stop',
   ],
   // 额外允许的属性（补丁）
   ADD_ATTR: [
@@ -429,8 +436,11 @@ const PURIFY_CONFIG = {
     'orient',
     'markerUnits',
     'stroke-dasharray',
+    'stroke-dashoffset',
     'stroke-linecap',
     'stroke-linejoin',
+    'stroke-miterlimit',
+    'vector-effect',
   ],
   FORCE_BODY: true, // 强制保留完整的 SVG 结构
 }
@@ -502,7 +512,7 @@ export function useMarkdown() {
                 <button class="mermaid-zoom-btn" data-action="out" title="缩小">−</button>
                 <button class="mermaid-zoom-btn" data-action="reset" title="重置">⌂</button>
               </div>
-              <div class="mermaid-diagram" style="opacity: 0; transition: opacity 0.5s ease-in-out;">${optimizedSvg}</div>
+              <div class="mermaid-diagram">${optimizedSvg}</div>
             </div>
           `
           mermaidCodeCache.set(cacheKey, fullHtml)
