@@ -22,6 +22,7 @@ const props = withDefaults(defineProps<Props>(), {
   rightGap: 48,
   storageKey: 'resizable-drawer-width',
   isFullscreen: false,
+  maxWidth: undefined,
 })
 
 const emit = defineEmits<{

@@ -400,6 +400,7 @@ async function copyContent() {
         >
           <div class="px-3 pb-3">
             <div ref="thinkingContentRef" class="thinking-text">
+              <!-- eslint-disable-next-line vue/no-v-html -->
               <div
                 v-if="renderedThinkingHtml"
                 class="markdown-content thinking-markdown italic text-muted-foreground"
@@ -558,6 +559,7 @@ async function copyContent() {
               </button>
             </div>
             <!-- AI 消息：Markdown 渲染 -->
+            <!-- eslint-disable-next-line vue/no-v-html -->
             <div
               v-else-if="renderedHtml"
               class="markdown-content leading-relaxed"
