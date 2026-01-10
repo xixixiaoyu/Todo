@@ -155,33 +155,55 @@
 }
 
 .shimmer-text {
+  font-size: 14px;
+  font-weight: 500;
   background: linear-gradient(
     90deg,
-    rgba(107, 92, 77, 0.4) 0%,
-    rgba(107, 92, 77, 1) 50%,
-    rgba(107, 92, 77, 0.4) 100%
+    hsl(var(--text-secondary-color)) 0%,
+    hsl(var(--text-secondary-color)) 40%,
+    hsl(var(--primary-color)) 50%,
+    hsl(var(--text-secondary-color)) 60%,
+    hsl(var(--text-secondary-color)) 100%
   );
   background-size: 200% 100%;
-  -webkit-background-clip: text;
   background-clip: text;
-  color: transparent;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   animation: shimmer 2s linear infinite;
 }
 
 .dark .shimmer-text {
   background: linear-gradient(
     90deg,
-    rgba(201, 184, 150, 0.4) 0%,
-    rgba(201, 184, 150, 1) 50%,
-    rgba(201, 184, 150, 0.4) 100%
+    hsl(var(--text-secondary-color)) 0%,
+    hsl(var(--text-secondary-color)) 40%,
+    hsl(var(--primary-color)) 50%,
+    hsl(var(--text-secondary-color)) 60%,
+    hsl(var(--text-secondary-color)) 100%
   );
   background-size: 200% 100%;
-  -webkit-background-clip: text;
   background-clip: text;
+  -webkit-background-clip: text;
+}
+
+.ai-star {
+  transform-origin: center;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
 }
 
 .animate-pulse-custom {
-  animation: pulse-custom 2s ease-in-out infinite;
+  animation: pulse 2s ease-in-out infinite;
 }
 
 .animate-sparkle {
@@ -194,6 +216,20 @@
     border-radius: 0;
     border-left: none !important;
     border-right: none !important;
+  }
+
+  .loading-container {
+    padding: 6px 12px;
+    gap: 6px;
+  }
+
+  .shimmer-text {
+    font-size: 13px;
+  }
+
+  .ai-icon svg {
+    width: 16px;
+    height: 16px;
   }
 }
 

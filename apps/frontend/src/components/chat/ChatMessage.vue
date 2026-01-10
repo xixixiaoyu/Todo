@@ -99,10 +99,10 @@ watch(
   [() => props.message.content, () => props.message.thinkingContent],
   async ([content, thinkingContent]) => {
     if (content && props.message.isStreaming && !isThinkingCollapsed.value) {
-      // 出现正文时，稍微延迟后收起思考过程，确保平滑
+      // 出现正文时，快速收起思考过程，保留极短延迟以确保平滑感
       setTimeout(() => {
         isThinkingCollapsed.value = true
-      }, 1000)
+      }, 300)
     }
     // 更新渲染内容
     await updateRenderedContent()
@@ -161,11 +161,41 @@ async function copyContent() {
       >
         <div class="thinking-header flex items-center justify-between px-3 py-2">
           <h4 class="flex items-center gap-2">
-            <Sparkles :size="14" class="text-[hsl(var(--primary-color))]" />
+            <div class="ai-icon animate-pulse-custom text-[hsl(var(--primary-color))]">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"
+                  fill="currentColor"
+                  class="ai-star"
+                />
+                <path
+                  d="M19 15L19.5 17L21.5 17.5L19.5 18L19 20L18.5 18L16.5 17.5L18.5 17L19 15Z"
+                  fill="currentColor"
+                  class="ai-sparkle animate-sparkle"
+                />
+                <path
+                  d="M5 6L5.5 7.5L7 8L5.5 8.5L5 10L4.5 8.5L3 8L4.5 7.5L5 6Z"
+                  fill="currentColor"
+                  class="ai-sparkle animate-sparkle [animation-delay:0.6s]"
+                />
+              </svg>
+            </div>
             <span
-              class="font-medium tracking-wide text-sm text-[hsl(var(--text-secondary-color))]"
-              >{{ thinkingStatus }}</span
+              class="font-medium tracking-wide text-sm transition-all duration-300"
+              :class="
+                isStreaming && !hasContent
+                  ? 'shimmer-text'
+                  : 'text-[hsl(var(--text-secondary-color))]'
+              "
             >
+              {{ thinkingStatus }}
+            </span>
           </h4>
           <button
             class="flex h-6 w-6 items-center justify-center rounded-md transition-colors hover:bg-[hsl(var(--ai-accent-hover))]"
@@ -208,30 +238,43 @@ async function copyContent() {
       </div>
 
       <!-- 主消息气泡 / 加载状态 -->
-      <template v-if="isUser || renderedHtml || (isStreaming && hasContent) || !hasThinking">
+      <template v-if="isUser || hasContent || (isStreaming && !hasThinking)">
+        <!-- 加载状态：仅在既没有思考内容也没有正文内容时显示 -->
         <div
-          v-if="!isUser && !hasContent && isStreaming"
+          v-if="!isUser && !hasContent && isStreaming && !hasThinking"
           class="loading-container flex items-center gap-2 rounded-xl border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] px-3.5 py-2 shadow-sm"
         >
           <div class="ai-icon animate-pulse-custom text-[hsl(var(--primary-color))]">
-            <Sparkles :size="18" />
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"
+                fill="currentColor"
+                class="ai-star"
+              />
+              <path
+                d="M19 15L19.5 17L21.5 17.5L19.5 18L19 20L18.5 18L16.5 17.5L18.5 17L19 15Z"
+                fill="currentColor"
+                class="ai-sparkle animate-sparkle"
+              />
+              <path
+                d="M5 6L5.5 7.5L7 8L5.5 8.5L5 10L4.5 8.5L3 8L4.5 7.5L5 6Z"
+                fill="currentColor"
+                class="ai-sparkle animate-sparkle [animation-delay:0.6s]"
+              />
+            </svg>
           </div>
-          <span class="shimmer-text text-sm font-medium">正在生成响应...</span>
-          <div class="flex gap-0.5">
-            <span
-              class="ai-sparkle h-1 w-1 animate-sparkle rounded-full bg-[hsl(var(--primary-color))] opacity-40"
-            />
-            <span
-              class="ai-sparkle h-1 w-1 animate-sparkle rounded-full bg-[hsl(var(--primary-color))] opacity-40 [animation-delay:0.3s]"
-            />
-            <span
-              class="ai-sparkle h-1 w-1 animate-sparkle rounded-full bg-[hsl(var(--primary-color))] opacity-40 [animation-delay:0.6s]"
-            />
-          </div>
+          <span class="shimmer-text">正在生成响应...</span>
         </div>
 
+        <!-- 正文气泡：用户消息或已有内容的 AI 消息 -->
         <div
-          v-else
+          v-else-if="isUser || hasContent"
           class="rounded-2xl px-4 py-3 shadow-sm"
           :class="
             isUser
@@ -249,8 +292,10 @@ async function copyContent() {
             class="markdown-content text-sm leading-relaxed"
             v-html="renderedHtml"
           />
-          <!-- 兜底加载状态 -->
-          <div v-else class="text-sm leading-relaxed">...</div>
+          <!-- 兜底显示 -->
+          <div v-else-if="hasContent" class="text-sm leading-relaxed">
+            {{ message.content }}
+          </div>
           <span v-if="isStreaming && hasContent" class="inline-block animate-pulse">█</span>
         </div>
       </template>

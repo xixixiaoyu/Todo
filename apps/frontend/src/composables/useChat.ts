@@ -185,8 +185,8 @@ export function useChat(options: AIRequestOptions = {}) {
   const messages = computed(() => {
     const allMessages = [...chatHistory.value]
 
-    // 如果有正在生成的内容，添加流式消息
-    if (currentAIResponse.value || currentThinkingContent.value) {
+    // 如果正在生成，添加流式消息占位
+    if (isGenerating.value) {
       allMessages.push({
         id: 'streaming-response',
         role: 'assistant',
