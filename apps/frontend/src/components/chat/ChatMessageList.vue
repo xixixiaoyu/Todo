@@ -43,7 +43,7 @@ watch(
     if (isStreaming) {
       // 正在流式输出时，使用专门的高频滚动处理
       streamingScroll()
-    } else if (isNewMessage) {
+    } else if (isNewMessage && oldMessages && oldMessages.length > 0) {
       // 仅当新消息到达时（如用户发送消息），执行平滑滚动到底部
       nextTick(() => {
         scrollToBottom('smooth')
@@ -63,7 +63,7 @@ defineExpose({
 
 <template>
   <div class="relative flex-1 overflow-hidden">
-    <div ref="containerRef" class="h-full overflow-y-auto px-4 scroll-smooth">
+    <div ref="containerRef" class="h-full overflow-y-auto px-4">
       <!-- 空状态 -->
       <div
         v-if="messages.length === 0"
