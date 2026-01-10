@@ -17,7 +17,7 @@ const { t } = useI18n()
 const RegisterWithConfirmSchema = RegisterSchema.extend({
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
-  message: '两次输入的密码不一致',
+  message: t('password.mismatch'),
   path: ['confirmPassword'],
 })
 
@@ -46,7 +46,7 @@ const onSubmit = handleSubmit(async (values) => {
         v-if="authStore.error"
         class="bg-warm-error/10 border border-warm-error text-warm-error px-4 py-3 rounded-xl text-sm animate-shake"
       >
-        {{ authStore.error }}
+        {{ authStore.error.includes('.') ? t(authStore.error) : authStore.error }}
       </div>
 
       <FormInput

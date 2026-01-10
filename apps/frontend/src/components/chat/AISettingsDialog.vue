@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { X, RotateCcw, Eye, EyeOff, Check, Plus, Trash2, Edit3 } from 'lucide-vue-next'
 import { useAIConfig, type AIConfig, type AIPreset } from '@/composables/useAIConfig'
 
 const modelValue = defineModel<boolean>({ required: true })
+
+const { t } = useI18n()
 
 const {
   config,
@@ -164,7 +167,7 @@ function handleDeletePreset(presetId: string) {
             <div
               class="flex shrink-0 items-center justify-between border-b border-[#e8e4dd] px-6 py-4"
             >
-              <h2 class="text-lg font-medium text-[#3a3a3a]">AI 助手设置</h2>
+              <h2 class="text-lg font-medium text-[#3a3a3a]">{{ t('ai.settings') }}</h2>
               <button
                 class="flex h-8 w-8 items-center justify-center rounded-lg text-[#8b8680] transition-colors hover:bg-[#f5f3ed] hover:text-[#6b5c4d]"
                 @click="handleClose"
@@ -184,7 +187,7 @@ function handleDeletePreset(presetId: string) {
                 "
                 @click="activeTab = 'settings'"
               >
-                基础设置
+                {{ t('ai.basicSettings') }}
                 <span
                   v-if="activeTab === 'settings'"
                   class="absolute bottom-0 left-0 h-0.5 w-full bg-[#c9b896]"
@@ -197,7 +200,7 @@ function handleDeletePreset(presetId: string) {
                 "
                 @click="activeTab = 'presets'"
               >
-                预设管理
+                {{ t('ai.presetManagement') }}
                 <span
                   v-if="activeTab === 'presets'"
                   class="absolute bottom-0 left-0 h-0.5 w-full bg-[#c9b896]"
@@ -211,24 +214,28 @@ function handleDeletePreset(presetId: string) {
               <div v-if="activeTab === 'settings'" class="space-y-5 px-6 py-5">
                 <!-- Base URL -->
                 <div class="space-y-2">
-                  <label class="text-sm font-medium text-[#6b5c4d]">API Base URL</label>
+                  <label class="text-sm font-medium text-[#6b5c4d]">{{
+                    t('ai.baseUrlLabel')
+                  }}</label>
                   <input
                     v-model="formData.baseUrl"
                     type="text"
-                    placeholder="https://api.deepseek.com"
+                    :placeholder="t('ai.baseUrlPlaceholder')"
                     class="w-full rounded-lg border border-[#e8e4dd] bg-[#faf8f4] px-4 py-2.5 text-sm text-[#3a3a3a] outline-none transition-colors placeholder:text-[#c4c0b8] focus:border-[#c9b896] focus:ring-2 focus:ring-[#c9b896]/20"
                   />
-                  <p class="text-xs text-[#8b8680]">请求时会自动拼接 /chat/completions</p>
+                  <p class="text-xs text-[#8b8680]">{{ t('ai.baseUrlHint') }}</p>
                 </div>
 
                 <!-- API Key -->
                 <div class="space-y-2">
-                  <label class="text-sm font-medium text-[#6b5c4d]">API Key</label>
+                  <label class="text-sm font-medium text-[#6b5c4d]">{{
+                    t('ai.apiKeyLabel')
+                  }}</label>
                   <div class="relative">
                     <input
                       v-model="formData.apiKey"
                       :type="showApiKey ? 'text' : 'password'"
-                      placeholder="sk-..."
+                      :placeholder="t('ai.apiKeyPlaceholder')"
                       class="w-full rounded-lg border border-[#e8e4dd] bg-[#faf8f4] px-4 py-2.5 pr-10 text-sm text-[#3a3a3a] outline-none transition-colors placeholder:text-[#c4c0b8] focus:border-[#c9b896] focus:ring-2 focus:ring-[#c9b896]/20"
                     />
                     <button
@@ -244,11 +251,11 @@ function handleDeletePreset(presetId: string) {
 
                 <!-- 模型 -->
                 <div class="space-y-2">
-                  <label class="text-sm font-medium text-[#6b5c4d]">模型</label>
+                  <label class="text-sm font-medium text-[#6b5c4d]">{{ t('ai.modelLabel') }}</label>
                   <input
                     v-model="formData.model"
                     type="text"
-                    placeholder="deepseek-chat"
+                    :placeholder="t('ai.modelPlaceholder')"
                     class="w-full rounded-lg border border-[#e8e4dd] bg-[#faf8f4] px-4 py-2.5 text-sm text-[#3a3a3a] outline-none transition-colors placeholder:text-[#c4c0b8] focus:border-[#c9b896] focus:ring-2 focus:ring-[#c9b896]/20"
                   />
                 </div>
@@ -256,7 +263,9 @@ function handleDeletePreset(presetId: string) {
                 <!-- 温度参数 -->
                 <div class="space-y-2">
                   <div class="flex items-center justify-between">
-                    <label class="text-sm font-medium text-[#6b5c4d]">温度 (Temperature)</label>
+                    <label class="text-sm font-medium text-[#6b5c4d]">{{
+                      t('ai.temperatureLabel')
+                    }}</label>
                     <span class="text-sm text-[#8b8680]">{{
                       formData.temperature.toFixed(1)
                     }}</span>
@@ -270,21 +279,21 @@ function handleDeletePreset(presetId: string) {
                     class="h-2 w-full cursor-pointer appearance-none rounded-full bg-[#e8e4dd] accent-[#c9b896]"
                   />
                   <div class="flex justify-between text-xs text-[#c4c0b8]">
-                    <span>精确 (0)</span>
-                    <span>平衡 (1)</span>
-                    <span>创意 (2)</span>
+                    <span>{{ t('ai.tempPrecise') }}</span>
+                    <span>{{ t('ai.tempBalanced') }}</span>
+                    <span>{{ t('ai.tempCreative') }}</span>
                   </div>
                 </div>
 
                 <!-- System Prompt -->
                 <div class="space-y-2">
-                  <label class="text-sm font-medium text-[#6b5c4d]"
-                    >系统提示词 (System Prompt)</label
-                  >
+                  <label class="text-sm font-medium text-[#6b5c4d]">{{
+                    t('ai.systemPromptLabel')
+                  }}</label>
                   <textarea
                     v-model="formData.systemPrompt"
                     rows="4"
-                    placeholder="设置 AI 的角色和行为..."
+                    :placeholder="t('ai.systemPromptPlaceholder')"
                     class="w-full resize-none rounded-lg border border-[#e8e4dd] bg-[#faf8f4] px-4 py-3 text-sm leading-relaxed text-[#3a3a3a] outline-none transition-colors placeholder:text-[#c4c0b8] focus:border-[#c9b896] focus:ring-2 focus:ring-[#c9b896]/20"
                   />
                 </div>
@@ -296,42 +305,48 @@ function handleDeletePreset(presetId: string) {
                 <div v-if="isCreatingPreset || editingPreset" class="space-y-4">
                   <div class="flex items-center justify-between">
                     <h3 class="text-sm font-medium text-[#3a3a3a]">
-                      {{ isCreatingPreset ? '创建预设' : '编辑预设' }}
+                      {{ isCreatingPreset ? t('ai.createPreset') : t('ai.editPreset') }}
                     </h3>
                     <button
                       class="text-xs text-[#8b8680] hover:text-[#6b5c4d]"
                       @click="cancelEditPreset"
                     >
-                      取消
+                      {{ t('ai.cancel') }}
                     </button>
                   </div>
 
                   <div class="space-y-3">
                     <div>
-                      <label class="mb-1 block text-xs text-[#6b5c4d]">预设名称</label>
+                      <label class="mb-1 block text-xs text-[#6b5c4d]">{{
+                        t('ai.presetNameLabel')
+                      }}</label>
                       <input
                         v-model="presetForm.name"
                         type="text"
-                        placeholder="例如：编程助手"
+                        :placeholder="t('ai.presetNamePlaceholder')"
                         class="w-full rounded-lg border border-[#e8e4dd] bg-[#faf8f4] px-3 py-2 text-sm outline-none focus:border-[#c9b896]"
                       />
                     </div>
                     <div>
-                      <label class="mb-1 block text-xs text-[#6b5c4d]">API Base URL</label>
+                      <label class="mb-1 block text-xs text-[#6b5c4d]">{{
+                        t('ai.baseUrlLabel')
+                      }}</label>
                       <input
                         v-model="presetForm.baseUrl"
                         type="text"
-                        placeholder="https://api.deepseek.com"
+                        :placeholder="t('ai.baseUrlPlaceholder')"
                         class="w-full rounded-lg border border-[#e8e4dd] bg-[#faf8f4] px-3 py-2 text-sm outline-none focus:border-[#c9b896]"
                       />
                     </div>
                     <div>
-                      <label class="mb-1 block text-xs text-[#6b5c4d]">API Key</label>
+                      <label class="mb-1 block text-xs text-[#6b5c4d]">{{
+                        t('ai.apiKeyLabel')
+                      }}</label>
                       <div class="relative">
                         <input
                           v-model="presetForm.apiKey"
                           :type="showPresetApiKey ? 'text' : 'password'"
-                          placeholder="sk-..."
+                          :placeholder="t('ai.apiKeyPlaceholder')"
                           class="w-full rounded-lg border border-[#e8e4dd] bg-[#faf8f4] px-3 py-2 pr-9 text-sm outline-none focus:border-[#c9b896]"
                         />
                         <button
@@ -345,25 +360,29 @@ function handleDeletePreset(presetId: string) {
                       </div>
                     </div>
                     <div>
-                      <label class="mb-1 block text-xs text-[#6b5c4d]">模型</label>
+                      <label class="mb-1 block text-xs text-[#6b5c4d]">{{
+                        t('ai.modelLabel')
+                      }}</label>
                       <input
                         v-model="presetForm.model"
                         type="text"
-                        placeholder="deepseek-chat"
+                        :placeholder="t('ai.modelPlaceholder')"
                         class="w-full rounded-lg border border-[#e8e4dd] bg-[#faf8f4] px-3 py-2 text-sm outline-none focus:border-[#c9b896]"
                       />
                     </div>
                     <div>
-                      <label class="mb-1 block text-xs text-[#6b5c4d]">系统提示词</label>
+                      <label class="mb-1 block text-xs text-[#6b5c4d]">{{
+                        t('ai.systemPromptLabel')
+                      }}</label>
                       <textarea
                         v-model="presetForm.systemPrompt"
                         rows="3"
-                        placeholder="设置 AI 的角色..."
+                        :placeholder="t('ai.systemPromptPlaceholder')"
                         class="w-full resize-none rounded-lg border border-[#e8e4dd] bg-[#faf8f4] px-3 py-2 text-sm outline-none focus:border-[#c9b896]"
                       />
                     </div>
                     <div class="flex items-center justify-between">
-                      <label class="text-xs text-[#6b5c4d]">温度</label>
+                      <label class="text-xs text-[#6b5c4d]">{{ t('ai.temperatureLabel') }}</label>
                       <div class="flex items-center gap-2">
                         <input
                           v-model.number="presetForm.temperature"
@@ -384,7 +403,7 @@ function handleDeletePreset(presetId: string) {
                     class="w-full rounded-lg bg-[#c9b896] py-2 text-sm text-white transition-colors hover:bg-[#b8a785]"
                     @click="savePreset"
                   >
-                    保存预设
+                    {{ t('ai.savePreset') }}
                   </button>
                 </div>
 
@@ -396,7 +415,7 @@ function handleDeletePreset(presetId: string) {
                     @click="startCreatePreset"
                   >
                     <Plus :size="14" />
-                    <span>创建新预设</span>
+                    <span>{{ t('ai.createNewPreset') }}</span>
                   </button>
 
                   <!-- 预设列表 -->
@@ -408,7 +427,9 @@ function handleDeletePreset(presetId: string) {
                     >
                       <div class="flex items-start justify-between">
                         <div class="flex-1">
-                          <p class="text-sm font-medium text-[#3a3a3a]">{{ preset.name }}</p>
+                          <p class="text-sm font-medium text-[#3a3a3a]">
+                            {{ preset.name || t('ai.unnamedPreset') }}
+                          </p>
                           <p class="mt-0.5 text-xs text-[#8b8680]">{{ preset.model }}</p>
                         </div>
                         <div
@@ -429,13 +450,13 @@ function handleDeletePreset(presetId: string) {
                         </div>
                       </div>
                       <p class="mt-2 line-clamp-2 text-xs text-[#8b8680]">
-                        {{ preset.systemPrompt || '未设置系统提示词' }}
+                        {{ preset.systemPrompt || t('ai.noSystemPrompt') }}
                       </p>
                     </div>
                   </div>
 
                   <p v-else class="py-4 text-center text-xs text-[#c4c0b8]">
-                    暂无预设，点击上方按钮创建
+                    {{ t('ai.noPresets') }}
                   </p>
                 </div>
               </div>
@@ -451,21 +472,21 @@ function handleDeletePreset(presetId: string) {
                 @click="handleReset"
               >
                 <RotateCcw :size="14" />
-                <span>恢复默认</span>
+                <span>{{ t('ai.resetToDefault') }}</span>
               </button>
               <div class="flex gap-2">
                 <button
                   class="rounded-lg border border-[#e8e4dd] px-4 py-2 text-sm text-[#6b5c4d] transition-colors hover:bg-[#f5f3ed]"
                   @click="handleClose"
                 >
-                  取消
+                  {{ t('ai.cancel') }}
                 </button>
                 <button
                   class="flex items-center gap-1.5 rounded-lg bg-[#c9b896] px-4 py-2 text-sm text-white transition-colors hover:bg-[#b8a785]"
                   @click="handleSave"
                 >
                   <Check :size="14" />
-                  <span>保存</span>
+                  <span>{{ t('ai.save') }}</span>
                 </button>
               </div>
             </div>

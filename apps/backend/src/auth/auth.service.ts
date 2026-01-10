@@ -1,12 +1,13 @@
 import {
   Injectable,
   UnauthorizedException,
-  ConflictException,
   BadRequestException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { ConfigService } from '@nestjs/config'
-import { PrismaService } from '../prisma/prisma.service'
+import { UsersService } from '../users/users.service'
 import { MailService } from '../mail/mail.service'
 import { RedisService, CachePrefix } from '../redis/redis.service'
 import * as bcrypt from 'bcryptjs'
@@ -32,7 +33,8 @@ export class AuthService {
   private readonly refreshTokenExpiresIn: number // 刷新令牌过期时间（秒）
 
   constructor(
-    private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => UsersService))
+    private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly mailService: MailService,
@@ -48,9 +50,7 @@ export class AuthService {
    * 验证用户凭据
    */
   async validateUser(email: string, password: string): Promise<User | null> {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-    })
+    const user = await this.usersService.findInternalByEmail(email)
 
     if (!user) {
       return null
@@ -71,7 +71,7 @@ export class AuthService {
     const user = await this.validateUser(loginDto.email, loginDto.password)
 
     if (!user) {
-      throw new UnauthorizedException('邮箱或密码错误')
+      throw new UnauthorizedException('auth.INVALID_CREDENTIALS')
     }
 
     // 生成访问令牌和刷新令牌
@@ -96,19 +96,19 @@ export class AuthService {
         prefix: CachePrefix.AUTH,
       })
       if (isBlacklisted) {
-        throw new UnauthorizedException('刷新令牌已失效')
+        throw new UnauthorizedException('auth.INVALID_REFRESH_TOKEN')
       }
 
       const payload = this.jwtService.verify<JwtPayload>(refreshToken)
 
       // 验证是否为刷新令牌
       if (payload.type !== 'refresh') {
-        throw new UnauthorizedException('无效的刷新令牌')
+        throw new UnauthorizedException('auth.INVALID_REFRESH_TOKEN')
       }
 
       const user = await this.getUserById(payload.sub)
       if (!user) {
-        throw new UnauthorizedException('用户不存在')
+        throw new UnauthorizedException('auth.USER_NOT_FOUND')
       }
 
       const newAccessToken = this.generateAccessToken(user.id, user.email)
@@ -121,7 +121,7 @@ export class AuthService {
         user,
       }
     } catch {
-      throw new UnauthorizedException('刷新令牌无效或已过期')
+      throw new UnauthorizedException('auth.TOKEN_EXPIRED')
     }
   }
 
@@ -149,15 +149,11 @@ export class AuthService {
    * 根据用户 ID 获取用户信息
    */
   async getUserById(userId: number): Promise<User | null> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-    })
-
-    if (!user) {
+    try {
+      return await this.usersService.findOne(userId)
+    } catch {
       return null
     }
-
-    return formatUser(user)
   }
 
   /**
@@ -171,33 +167,16 @@ export class AuthService {
    * 用户注册
    */
   async register(registerDto: RegisterInput): Promise<AuthResponse> {
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: registerDto.email },
-    })
+    const user = await this.usersService.create(registerDto)
 
-    if (existingUser) {
-      throw new ConflictException('邮箱已被注册')
-    }
-
-    const hashedPassword = await this.hashPassword(registerDto.password)
-
-    const user = await this.prisma.user.create({
-      data: {
-        email: registerDto.email,
-        name: registerDto.name,
-        password: hashedPassword,
-      },
-    })
-
-    const formattedUser = formatUser(user)
-    const accessToken = this.generateAccessToken(formattedUser.id, formattedUser.email)
-    const refreshToken = this.generateRefreshToken(formattedUser.id, formattedUser.email)
+    const accessToken = this.generateAccessToken(user.id, user.email)
+    const refreshToken = this.generateRefreshToken(user.id, user.email)
 
     return {
       accessToken,
       refreshToken,
       expiresIn: this.accessTokenExpiresIn,
-      user: formattedUser,
+      user,
     }
   }
 
@@ -205,9 +184,7 @@ export class AuthService {
    * 请求密码重置
    */
   async requestPasswordReset(email: string): Promise<void> {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-    })
+    const user = await this.usersService.findInternalByEmail(email)
 
     // 为防止用户枚举攻击，无论用户是否存在都不抛出错误
     if (!user) {
@@ -218,12 +195,9 @@ export class AuthService {
     const resetPasswordExpiresIn = this.configService.get<number>('RESET_PASSWORD_EXPIRES_IN', 3600)
     const expiresAt = new Date(Date.now() + resetPasswordExpiresIn * 1000)
 
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        resetPasswordToken: hashedToken,
-        resetPasswordExpires: expiresAt,
-      },
+    await this.usersService.update(user.id, {
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: expiresAt,
     })
 
     const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:5173')
@@ -238,28 +212,23 @@ export class AuthService {
   async resetPassword(token: string, newPassword: string): Promise<void> {
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex')
 
-    const user = await this.prisma.user.findFirst({
-      where: {
-        resetPasswordToken: hashedToken,
-        resetPasswordExpires: {
-          gt: new Date(),
-        },
+    const user = await this.usersService.findInternalFirst({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: {
+        gt: new Date(),
       },
     })
 
     if (!user) {
-      throw new BadRequestException('重置链接无效或已过期')
+      throw new BadRequestException('auth.INVALID_RESET_TOKEN')
     }
 
     const hashedPassword = await this.hashPassword(newPassword)
 
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        password: hashedPassword,
-        resetPasswordToken: null,
-        resetPasswordExpires: null,
-      },
+    await this.usersService.update(user.id, {
+      password: hashedPassword,
+      resetPasswordToken: null,
+      resetPasswordExpires: null,
     })
   }
 
@@ -276,7 +245,7 @@ export class AuthService {
    * 用户登出
    * 将刷新令牌加入黑名单
    */
-  async logout(userId: number, refreshToken: string): Promise<void> {
+  async logout(_userId: number, refreshToken: string): Promise<void> {
     try {
       const payload = this.jwtService.verify<JwtPayload>(refreshToken)
 

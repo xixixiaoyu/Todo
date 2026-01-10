@@ -4,6 +4,9 @@
 
 import { getAIConfig } from '@/composables/useAIConfig'
 import { useTodoStore } from '@/features/todo/stores/todo'
+import i18n from '@/i18n'
+
+const { t } = i18n.global
 
 export interface ChatMessage {
   id: string
@@ -94,7 +97,10 @@ export async function getAIStreamResponse(
       const todoList = pendingTodos.map((t) => `- ${t.title}`).join('\n')
       messagesWithSystemPrompts.push({
         role: 'system',
-        content: `用户当前有 ${pendingTodos.length} 个未完成的待办事项：\n${todoList}`,
+        content: t('ai.todoAssistantPrompt', {
+          count: pendingTodos.length,
+          todoList,
+        }),
       })
     }
   }
@@ -127,12 +133,17 @@ export async function getAIStreamResponse(
 
     if (!response.ok) {
       const errorText = await response.text()
-      throw new Error(`API 请求失败: ${response.status} - ${errorText}`)
+      throw new Error(
+        t('ai.apiError', {
+          status: response.status,
+          error: errorText,
+        }),
+      )
     }
 
     const reader = response.body?.getReader()
     if (!reader) {
-      throw new Error('无法获取响应流')
+      throw new Error(t('ai.noStream'))
     }
 
     const textDecoder = new TextDecoder()

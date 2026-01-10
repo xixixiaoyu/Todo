@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
 import { Trash2, Edit3, Check, X, MessageSquare } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
 import { useChatHistory, type ChatSession } from '@/composables/useChatHistory'
 
 const emit = defineEmits<{
@@ -8,6 +9,7 @@ const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
+const { t, locale } = useI18n()
 const { sessions, currentSessionId, renameSession, deleteSession } = useChatHistory()
 
 // 编辑状态
@@ -25,13 +27,13 @@ function formatTime(date: Date): string {
   const days = Math.floor(diff / (1000 * 60 * 60 * 24))
 
   if (days === 0) {
-    return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+    return date.toLocaleTimeString(locale.value, { hour: '2-digit', minute: '2-digit' })
   } else if (days === 1) {
-    return '昨天'
+    return t('ai.yesterday')
   } else if (days < 7) {
-    return `${days}天前`
+    return t('ai.daysAgo', { days })
   } else {
-    return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
+    return date.toLocaleDateString(locale.value, { month: 'short', day: 'numeric' })
   }
 }
 
@@ -76,7 +78,7 @@ function handleDelete(sessionId: string, event: Event): void {
   <div class="flex h-full flex-col">
     <!-- 头部 -->
     <div class="flex items-center justify-between border-b border-[#e8e4dd] px-4 py-3">
-      <h3 class="text-sm font-medium text-[#3a3a3a]">历史记录</h3>
+      <h3 class="text-sm font-medium text-[#3a3a3a]">{{ t('ai.historyTitle') }}</h3>
     </div>
 
     <!-- 会话列表 -->
@@ -87,7 +89,7 @@ function handleDelete(sessionId: string, event: Event): void {
         class="flex h-full flex-col items-center justify-center gap-2 text-[#c4c0b8]"
       >
         <MessageSquare :size="32" />
-        <p class="text-sm">暂无历史记录</p>
+        <p class="text-sm">{{ t('ai.noHistory') }}</p>
       </div>
 
       <!-- 列表 -->
@@ -124,7 +126,8 @@ function handleDelete(sessionId: string, event: Event): void {
               <div class="min-w-0 flex-1">
                 <p class="truncate text-sm text-[#3a3a3a]">{{ session.title }}</p>
                 <p class="mt-0.5 text-xs text-[#8b8680]">
-                  {{ session.messages.length }} 条消息 · {{ formatTime(session.updatedAt) }}
+                  {{ t('ai.messageCount', { count: session.messages.length }) }} ·
+                  {{ formatTime(session.updatedAt) }}
                 </p>
               </div>
               <!-- 操作按钮 -->
@@ -134,14 +137,14 @@ function handleDelete(sessionId: string, event: Event): void {
               >
                 <button
                   class="rounded p-1.5 text-[#8b8680] hover:bg-white hover:text-[#6b5c4d]"
-                  title="编辑标题"
+                  :title="t('ai.editTitle')"
                   @click="startEdit(session)"
                 >
                   <Edit3 :size="14" />
                 </button>
                 <button
                   class="rounded p-1.5 text-[#8b8680] hover:bg-red-50 hover:text-red-500"
-                  title="删除"
+                  :title="t('ai.delete')"
                   @click="handleDelete(session.id, $event)"
                 >
                   <Trash2 :size="14" />

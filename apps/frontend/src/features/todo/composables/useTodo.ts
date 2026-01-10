@@ -31,6 +31,7 @@ export function useTodo() {
   async function handleAddTodo() {
     if (!newTodoTitle.value.trim()) return
 
+    todoStore.clearError()
     const success = await todoStore.addTodo(newTodoTitle.value)
     if (success) {
       newTodoTitle.value = ''

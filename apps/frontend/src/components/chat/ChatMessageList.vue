@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ArrowDown } from 'lucide-vue-next'
 import ChatMessage from './ChatMessage.vue'
 import type { ChatMessage as ChatMessageType } from '@/composables/useChat'
@@ -12,6 +13,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'regenerate'): void
 }>()
+
+const { t } = useI18n()
 
 const containerRef = ref<HTMLElement | null>(null)
 
@@ -69,7 +72,7 @@ defineExpose({
         v-if="messages.length === 0"
         class="flex h-full items-center justify-center text-[#c4c0b8]"
       >
-        <p class="text-sm">开始与 AI 助手对话...</p>
+        <p class="text-sm">{{ t('ai.startChat') }}</p>
       </div>
 
       <!-- 消息列表 -->

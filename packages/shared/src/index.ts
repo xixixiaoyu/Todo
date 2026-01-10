@@ -1,5 +1,6 @@
 // Zod Schemas (Single Source of Truth)
 export * from './schemas/auth.schema'
+export * from './schemas/i18n-keys'
 
 // 通用响应类型
 export * from './dto/common.dto'

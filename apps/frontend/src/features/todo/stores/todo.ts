@@ -67,7 +67,10 @@ export const useTodoStore = defineStore(
       const exists = todos.value.some(
         (todo) => todo.title.toLowerCase() === trimmedTitle.toLowerCase(),
       )
-      if (exists) return false
+      if (exists) {
+        error.value = 'todo.duplicate'
+        return false
+      }
 
       loading.value = true
       try {
@@ -80,7 +83,7 @@ export const useTodoStore = defineStore(
         todos.value.unshift(newTodo)
         return true
       } catch (e: unknown) {
-        error.value = '添加待办事项失败'
+        error.value = 'todo.addError'
         return false
       } finally {
         loading.value = false

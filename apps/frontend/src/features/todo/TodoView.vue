@@ -52,6 +52,7 @@ function onFireworksComplete() {
         v-model="newTodoTitle"
         :is-shaking="isShaking"
         :show-tooltip="showTooltip"
+        :error-message="todoStore.error || ''"
         @add="handleAddTodo"
         @keydown="handleKeydown"
       />

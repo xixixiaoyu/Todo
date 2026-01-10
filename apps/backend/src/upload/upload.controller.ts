@@ -41,7 +41,7 @@ export class UploadController {
   @UseInterceptors(FileInterceptor('file'))
   async uploadSingle(@UploadedFile() file: Express.Multer.File): Promise<UploadResult> {
     if (!file) {
-      throw new BadRequestException('请选择要上传的文件')
+      throw new BadRequestException('upload.FILE_REQUIRED')
     }
     return this.storageService.upload(file)
   }
@@ -66,7 +66,7 @@ export class UploadController {
   @UseInterceptors(FilesInterceptor('files', 10))
   async uploadMultiple(@UploadedFiles() files: Express.Multer.File[]): Promise<UploadResult[]> {
     if (!files || files.length === 0) {
-      throw new BadRequestException('请选择要上传的文件')
+      throw new BadRequestException('upload.FILE_REQUIRED')
     }
     return this.storageService.uploadMany(files)
   }

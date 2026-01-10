@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common'
+import { Module, forwardRef } from '@nestjs/common'
 import { JwtModule } from '@nestjs/jwt'
 import { PassportModule } from '@nestjs/passport'
 import { ConfigService } from '@nestjs/config'
@@ -8,6 +8,7 @@ import { JwtStrategy } from './jwt.strategy'
 import { PrismaModule } from '../prisma/prisma.module'
 import { MailModule } from '../mail/mail.module'
 import { RedisModule } from '../redis/redis.module'
+import { UsersModule } from '../users/users.module'
 
 /**
  * 认证模块
@@ -17,6 +18,7 @@ import { RedisModule } from '../redis/redis.module'
     PrismaModule,
     MailModule,
     RedisModule,
+    forwardRef(() => UsersModule),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       inject: [ConfigService],
@@ -30,6 +32,6 @@ import { RedisModule } from '../redis/redis.module'
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
-  exports: [AuthService, JwtModule],
+  exports: [AuthService, JwtModule, PassportModule],
 })
 export class AuthModule {}

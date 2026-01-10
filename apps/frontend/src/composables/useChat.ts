@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue'
+import i18n from '@/i18n'
 import {
   getAIStreamResponse,
   abortCurrentRequest,
@@ -12,6 +13,8 @@ import { getAIThinkingMode } from './useAIConfig'
 export type { ChatMessage }
 
 const MAX_RETRIES = 3
+
+const { t } = i18n.global
 
 /**
  * 聊天功能 composable
@@ -90,7 +93,7 @@ export function useChat(options: AIRequestOptions = {}) {
               const aiMessage: ChatMessage = {
                 id: generateId(),
                 role: 'assistant',
-                content: currentAIResponse.value + '\n\n*（已中断）*',
+                content: currentAIResponse.value + `\n\n*${t('ai.aborted')}*`,
                 thinkingContent: currentThinkingContent.value || undefined,
                 createdAt: new Date(),
               }
@@ -114,13 +117,13 @@ export function useChat(options: AIRequestOptions = {}) {
         },
       )
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '请求失败'
+      const errorMessage = err instanceof Error ? err.message : t('ai.requestFailed')
       error.value = errorMessage
 
       // 自动重试
       if (retryCount.value < MAX_RETRIES) {
         retryCount.value++
-        console.warn(`重试第 ${retryCount.value} 次...`)
+        console.warn(`Retrying ${retryCount.value}/${MAX_RETRIES}...`)
         // 移除失败的用户消息，允许重新发送
         chatHistory.value.pop()
         isGenerating.value = false

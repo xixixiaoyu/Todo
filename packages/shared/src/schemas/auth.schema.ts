@@ -1,12 +1,13 @@
 import { z } from 'zod'
+import { ValidationKeys } from './i18n-keys'
 
 /**
  * 共享的邮箱验证规则
  */
 export const emailSchema = z
-  .string({ required_error: '邮箱不能为空' })
-  .min(1, '邮箱不能为空')
-  .email('请输入有效的邮箱地址')
+  .string({ required_error: ValidationKeys.REQUIRED })
+  .min(1, ValidationKeys.REQUIRED)
+  .email(ValidationKeys.INVALID_EMAIL)
   .toLowerCase()
   .trim()
 
@@ -14,9 +15,9 @@ export const emailSchema = z
  * 共享的密码基础验证规则
  */
 export const passwordSchema = z
-  .string({ required_error: '密码不能为空' })
-  .min(6, '密码至少需要 6 个字符')
-  .max(100, '密码不能超过 100 个字符')
+  .string({ required_error: ValidationKeys.REQUIRED })
+  .min(6, ValidationKeys.MIN_LENGTH)
+  .max(100, ValidationKeys.MAX_LENGTH)
 
 /**
  * 登录表单验证 Schema
@@ -32,13 +33,13 @@ export const LoginSchema = z.object({
 export const RegisterSchema = z.object({
   email: emailSchema,
   name: z
-    .string({ required_error: '用户名不能为空' })
-    .min(2, '用户名至少需要 2 个字符')
-    .max(50, '用户名不能超过 50 个字符')
+    .string({ required_error: ValidationKeys.REQUIRED })
+    .min(2, ValidationKeys.MIN_LENGTH)
+    .max(50, ValidationKeys.MAX_LENGTH)
     .trim(),
   password: passwordSchema
-    .regex(/[A-Za-z]/, '密码必须包含至少一个字母')
-    .regex(/[0-9]/, '密码必须包含至少一个数字'),
+    .regex(/[A-Za-z]/, ValidationKeys.PASSWORD_LETTER)
+    .regex(/[0-9]/, ValidationKeys.PASSWORD_NUMBER),
 })
 
 /**
@@ -47,11 +48,11 @@ export const RegisterSchema = z.object({
 export const UpdateUserSchema = z.object({
   name: z
     .string()
-    .min(2, '用户名至少需要 2 个字符')
-    .max(50, '用户名不能超过 50 个字符')
+    .min(2, ValidationKeys.MIN_LENGTH)
+    .max(50, ValidationKeys.MAX_LENGTH)
     .trim()
     .optional(),
-  avatar: z.string().url('请输入有效的 URL 地址').optional().nullable(),
+  avatar: z.string().url(ValidationKeys.INVALID_URL).optional().nullable(),
 })
 
 /**
@@ -81,7 +82,9 @@ export const AuthResponseSchema = z.object({
  * 刷新令牌请求 Schema
  */
 export const RefreshTokenSchema = z.object({
-  refreshToken: z.string({ required_error: '刷新令牌不能为空' }).min(1, '刷新令牌不能为空'),
+  refreshToken: z
+    .string({ required_error: ValidationKeys.REQUIRED })
+    .min(1, ValidationKeys.REQUIRED),
 })
 
 /**
@@ -95,18 +98,8 @@ export const ForgotPasswordSchema = z.object({
  * 重置密码 Schema
  */
 export const ResetPasswordSchema = z.object({
-  token: z.string({ required_error: '重置令牌不能为空' }).min(1, '重置令牌不能为空'),
+  token: z.string({ required_error: ValidationKeys.REQUIRED }).min(1, ValidationKeys.REQUIRED),
   password: passwordSchema
-    .regex(/[A-Za-z]/, '密码必须包含至少一个字母')
-    .regex(/[0-9]/, '密码必须包含至少一个数字'),
+    .regex(/[A-Za-z]/, ValidationKeys.PASSWORD_LETTER)
+    .regex(/[0-9]/, ValidationKeys.PASSWORD_NUMBER),
 })
-
-// 从 Zod Schema 推断 TypeScript 类型
-export type LoginInput = z.infer<typeof LoginSchema>
-export type RegisterInput = z.infer<typeof RegisterSchema>
-export type UpdateUserInput = z.infer<typeof UpdateUserSchema>
-export type User = z.infer<typeof UserSchema>
-export type AuthResponse = z.infer<typeof AuthResponseSchema>
-export type RefreshTokenInput = z.infer<typeof RefreshTokenSchema>
-export type ForgotPasswordInput = z.infer<typeof ForgotPasswordSchema>
-export type ResetPasswordInput = z.infer<typeof ResetPasswordSchema>

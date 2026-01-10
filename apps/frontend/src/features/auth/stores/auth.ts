@@ -35,7 +35,7 @@ export const useAuthStore = defineStore(
         return true
       } catch (e: unknown) {
         const err = e as { response?: { data?: { message?: string } } }
-        error.value = err.response?.data?.message || '登录失败'
+        error.value = err.response?.data?.message || 'login.failed'
         return false
       } finally {
         loading.value = false
@@ -57,7 +57,7 @@ export const useAuthStore = defineStore(
         return true
       } catch (e: unknown) {
         const err = e as { response?: { data?: { message?: string } } }
-        error.value = err.response?.data?.message || '注册失败'
+        error.value = err.response?.data?.message || 'register.failed'
         return false
       } finally {
         loading.value = false
@@ -76,7 +76,7 @@ export const useAuthStore = defineStore(
         return true
       } catch (e: unknown) {
         const err = e as { response?: { data?: { message?: string } } }
-        error.value = err.response?.data?.message || '请求失败'
+        error.value = err.response?.data?.message || 'forgotPassword.failed'
         return false
       } finally {
         loading.value = false
@@ -95,7 +95,7 @@ export const useAuthStore = defineStore(
         return true
       } catch (e: unknown) {
         const err = e as { response?: { data?: { message?: string } } }
-        error.value = err.response?.data?.message || '重置密码失败'
+        error.value = err.response?.data?.message || 'resetPassword.failed'
         return false
       } finally {
         loading.value = false

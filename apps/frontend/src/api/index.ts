@@ -1,4 +1,5 @@
 import axios from 'axios'
+import i18n from '@/i18n'
 import { useAuthStore } from '@/features/auth/stores/auth'
 
 /**
@@ -70,6 +71,11 @@ httpClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`
     }
 
+    // 添加语言标识
+    const currentLocale = (i18n.global.locale as any).value || i18n.global.locale || 'zh-CN'
+    config.headers['x-lang'] = currentLocale
+    config.headers['Accept-Language'] = currentLocale
+
     // 非 GET 请求添加 CSRF token
     if (config.method && !['get', 'head', 'options'].includes(config.method.toLowerCase())) {
       const csrfToken = getCookie('XSRF-TOKEN')
@@ -98,18 +104,18 @@ function subscribeTokenRefresh(resolve: (token: string) => void, reject: (error:
 }
 
 /**
- * 刷新令牌成功后通知所有订阅者
+ * 刷新订阅者
  */
 function onRefreshed(token: string) {
-  refreshSubscribers.forEach(({ resolve }) => resolve(token))
+  refreshSubscribers.map((cb) => cb.resolve(token))
   refreshSubscribers = []
 }
 
 /**
- * 刷新令牌失败后通知所有订阅者
+ * 刷新失败
  */
-function onRefreshFailed(error: Error) {
-  refreshSubscribers.forEach(({ reject }) => reject(error))
+function onRefreshError(error: Error) {
+  refreshSubscribers.map((cb) => cb.reject(error))
   refreshSubscribers = []
 }
 
@@ -117,17 +123,27 @@ function onRefreshFailed(error: Error) {
 httpClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config
+    const { config, response } = error
+    const originalRequest = config
 
-    // 处理 401 错误
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      // 如果正在刷新，将请求加入队列
+    // 如果是 401 错误且不是重复请求
+    if (response && response.status === 401 && !originalRequest._retry) {
+      // 如果是登录请求失败，直接返回错误
+      if (originalRequest.url === '/auth/login') {
+        return Promise.reject(error)
+      }
+
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
-          subscribeTokenRefresh((token) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`
-            resolve(httpClient(originalRequest))
-          }, reject)
+          subscribeTokenRefresh(
+            (token) => {
+              originalRequest.headers.Authorization = `Bearer ${token}`
+              resolve(httpClient(originalRequest))
+            },
+            (err) => {
+              reject(err)
+            },
+          )
         })
       }
 
@@ -136,29 +152,20 @@ httpClient.interceptors.response.use(
 
       try {
         const authStore = useAuthStore()
-        const success = await authStore.refreshAccessToken()
+        const success = await authStore.refresh()
 
         if (success && authStore.token) {
-          const newToken = authStore.token
-          onRefreshed(newToken)
-          originalRequest.headers.Authorization = `Bearer ${newToken}`
+          onRefreshed(authStore.token)
+          isRefreshing = false
+          originalRequest.headers.Authorization = `Bearer ${authStore.token}`
           return httpClient(originalRequest)
-        } else {
-          // 刷新失败，通知所有等待的请求
-          const refreshError = new Error('Token refresh failed')
-          onRefreshFailed(refreshError)
-          throw refreshError
         }
       } catch (refreshError) {
-        // 刷新失败，通知所有等待的请求并清除认证状态
-        onRefreshFailed(
-          refreshError instanceof Error ? refreshError : new Error('Token refresh failed'),
-        )
-        localStorage.removeItem('auth')
-        // 触发登出事件，让组件决定是否跳转
-        window.dispatchEvent(new CustomEvent('auth:logout'))
-      } finally {
+        onRefreshError(refreshError as Error)
         isRefreshing = false
+        const authStore = useAuthStore()
+        authStore.logout()
+        return Promise.reject(refreshError)
       }
     }
 
@@ -166,4 +173,4 @@ httpClient.interceptors.response.use(
   },
 )
 
-export { httpClient, initCsrfToken }
+export default httpClient

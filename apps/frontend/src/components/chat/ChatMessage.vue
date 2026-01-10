@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ChevronUp, Copy, Check, RefreshCw } from 'lucide-vue-next'
 import type { ChatMessage } from '@/composables/useChat'
 import { useMarkdown } from '@/composables/useMarkdown'
@@ -12,6 +13,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'regenerate'): void
 }>()
+
+const { t } = useI18n()
 
 const { renderMarkdown, getMermaidSvgMap } = useMarkdown()
 
@@ -35,8 +38,8 @@ const hasContent = computed(() => !!props.message.content)
 
 // 思考状态描述
 const thinkingStatus = computed(() => {
-  if (isStreaming.value && !hasContent.value) return '正在思考...'
-  return '思考过程'
+  if (isStreaming.value && !hasContent.value) return t('ai.isThinking')
+  return t('ai.thoughtProcess')
 })
 
 // 动态计算思考内容高度
@@ -273,7 +276,7 @@ async function copyContent() {
                 />
               </svg>
             </div>
-            <span class="shimmer-text font-medium">AI 正在思考中...</span>
+            <span class="shimmer-text font-medium">{{ t('ai.isThinking') }}</span>
           </div>
           <div class="flex flex-col gap-2">
             <div
@@ -320,21 +323,21 @@ async function copyContent() {
           >
             <button
               class="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-[hsl(var(--text-secondary-color))] transition-all hover:bg-[hsl(var(--ai-accent-hover))] hover:text-[hsl(var(--text-color))]"
-              :title="isCopied ? '已复制' : '复制内容'"
+              :title="isCopied ? t('ai.copied') : t('ai.copy')"
               @click="copyContent"
             >
               <Check v-if="isCopied" :size="12" class="text-green-600" />
               <Copy v-else :size="12" />
-              <span>{{ isCopied ? '已复制' : '复制' }}</span>
+              <span>{{ isCopied ? t('ai.copied') : t('ai.copy') }}</span>
             </button>
             <button
               v-if="isLast"
               class="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-[hsl(var(--text-secondary-color))] transition-all hover:bg-[hsl(var(--ai-accent-hover))] hover:text-[hsl(var(--text-color))]"
-              title="重新生成回答"
+              :title="t('ai.regenerate')"
               @click="emit('regenerate')"
             >
               <RefreshCw :size="12" />
-              <span>重新生成</span>
+              <span>{{ t('ai.regenerate') }}</span>
             </button>
           </div>
         </div>

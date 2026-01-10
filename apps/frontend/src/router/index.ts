@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import i18n from '@/i18n'
 
 /**
  * 应用路由配置
@@ -10,45 +11,47 @@ const router = createRouter({
       path: '/',
       name: 'todo',
       component: () => import('@/features/todo/TodoView.vue'),
-      meta: { title: '待办事项' },
+      meta: { title: 'todo.title' },
     },
     {
       path: '/login',
       name: 'login',
       component: () => import('@/features/auth/views/LoginView.vue'),
-      meta: { title: '登录' },
+      meta: { title: 'login.title' },
     },
     {
       path: '/register',
       name: 'register',
       component: () => import('@/features/auth/views/RegisterView.vue'),
-      meta: { title: '注册' },
+      meta: { title: 'register.title' },
     },
     {
       path: '/forgot-password',
       name: 'forgot-password',
       component: () => import('@/features/auth/views/ForgotPasswordView.vue'),
-      meta: { title: '找回密码' },
+      meta: { title: 'forgotPassword.title' },
     },
     {
       path: '/reset-password',
       name: 'reset-password',
       component: () => import('@/features/auth/views/ResetPasswordView.vue'),
-      meta: { title: '重置密码' },
+      meta: { title: 'resetPassword.title' },
     },
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: () => import('@/views/error/NotFoundView.vue'),
-      meta: { title: '页面未找到' },
+      meta: { title: 'notFound.title' },
     },
   ],
 })
 
 // 路由守卫：更新页面标题
 router.beforeEach((to) => {
-  const title = to.meta.title as string
-  document.title = title ? `${title} - My App` : 'My App'
+  const { t } = i18n.global
+  const titleKey = to.meta.title as string
+  const translatedTitle = titleKey ? t(titleKey) : ''
+  document.title = translatedTitle ? `${translatedTitle} - My App` : 'My App'
 })
 
 export default router

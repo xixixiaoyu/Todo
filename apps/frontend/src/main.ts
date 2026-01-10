@@ -15,7 +15,11 @@ import VChart from 'vue-echarts'
 import App from './App.vue'
 import router from './router'
 import i18n from './i18n'
+import { initZodI18n } from './lib/zod-i18n'
 import './styles/main.css'
+
+// 初始化 Zod 国际化
+initZodI18n()
 
 // Markdown 渲染相关样式
 import 'highlight.js/styles/github.css'

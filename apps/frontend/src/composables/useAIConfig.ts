@@ -1,4 +1,5 @@
 import { ref, watch, readonly, computed } from 'vue'
+import i18n from '@/i18n'
 import { generateId } from '@/services/aiService'
 
 export type ThinkingMode = 'enabled' | 'disabled'
@@ -57,7 +58,7 @@ const DEFAULT_CONFIG: AIConfig = {
   apiKey: import.meta.env.VITE_AI_API_KEY || '',
   model: import.meta.env.VITE_AI_MODEL || 'deepseek-chat',
   temperature: 0.3,
-  systemPrompt: '你是一个友好的 AI 助手，请用简洁明了的中文回答用户的问题。',
+  systemPrompt: i18n.global.t('ai.defaultSystemPrompt'),
   thinkingMode: aiThinkingMode.value, // 使用初始值
   todoAssistant: false,
 }
