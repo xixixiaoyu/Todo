@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, type UserConfig, type PluginOption } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 import { resolve } from 'path'
@@ -6,7 +6,7 @@ import { resolve } from 'path'
 const isElectron = process.env.ELECTRON === 'true'
 
 // 动态导入 electron 插件，避免在非 electron 环境下加载
-const getElectronPlugins = async () => {
+const getElectronPlugins = async (): Promise<PluginOption[]> => {
   if (!isElectron) return []
   const electron = (await import('vite-plugin-electron')).default
   const renderer = (await import('vite-plugin-electron-renderer')).default
@@ -43,8 +43,8 @@ const getElectronPlugins = async () => {
           },
         },
       },
-    ]),
-    renderer(),
+    ]) as unknown as PluginOption,
+    renderer() as unknown as PluginOption,
   ]
 }
 
@@ -58,7 +58,7 @@ const getBase = () => {
   return './'
 }
 
-export default defineConfig(async () => {
+export default defineConfig(async (): Promise<UserConfig> => {
   const electronPlugins = isElectron ? await getElectronPlugins() : []
 
   return {
@@ -119,7 +119,7 @@ export default defineConfig(async () => {
             },
           ],
         },
-      }),
+      }) as unknown as PluginOption,
     ],
     resolve: {
       alias: {
