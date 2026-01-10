@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, type CSSProperties } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, type CSSProperties, toRef } from 'vue'
+import { useEscClose } from '@/composables/useEscClose'
 
 interface Props {
   modelValue: boolean
@@ -105,12 +106,19 @@ function closeDrawer() {
   emit('update:modelValue', false)
 }
 
+// 使用公共 Composable 处理 ESC 关闭
+useEscClose(toRef(props, 'modelValue'), closeDrawer)
+
 watch(
   () => props.modelValue,
   (newValue) => {
     document.body.style.overflow = newValue ? 'hidden' : ''
   },
 )
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleWindowResize)
+})
 </script>
 
 <template>

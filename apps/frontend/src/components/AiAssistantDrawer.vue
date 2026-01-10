@@ -23,6 +23,7 @@ import { useChat } from '@/composables/useChat'
 import { useAIConfig, aiThinkingMode, saveAIThinkingMode } from '@/composables/useAIConfig'
 import { useChatHistory } from '@/composables/useChatHistory'
 import { useI18n } from 'vue-i18n'
+import { useEscClose } from '@/composables/useEscClose'
 
 const { t } = useI18n()
 const modelValue = defineModel<boolean>({ required: true })
@@ -96,6 +97,10 @@ const showHistory = ref(false)
 
 // 预设下拉框状态
 const showPresetDropdown = ref(false)
+
+// 使用公共 Composable 处理 ESC 关闭
+useEscClose(showHistory, () => (showHistory.value = false))
+useEscClose(showPresetDropdown, () => (showPresetDropdown.value = false))
 
 const MIN_HEIGHT = 36
 const MAX_HEIGHT = 192

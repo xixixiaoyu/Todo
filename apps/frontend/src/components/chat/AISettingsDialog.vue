@@ -3,6 +3,7 @@ import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { X, RotateCcw, Eye, EyeOff, Check, Plus, Trash2, Edit3 } from 'lucide-vue-next'
 import { useAIConfig, type AIConfig, type AIPreset } from '@/composables/useAIConfig'
+import { useEscClose } from '@/composables/useEscClose'
 
 const props = defineProps<{
   initialTab?: 'settings' | 'presets'
@@ -105,6 +106,9 @@ function handleReset() {
 function handleClose() {
   modelValue.value = false
 }
+
+// 使用公共 Composable 处理 ESC 关闭
+useEscClose(modelValue, handleClose)
 
 /**
  * 开始创建预设
