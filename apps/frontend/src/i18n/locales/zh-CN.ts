@@ -7,6 +7,8 @@ export default {
     logout: '退出登录',
     welcome: '欢迎',
     backToHome: '返回首页',
+    search: '搜索',
+    noResults: '未找到匹配结果',
     theme: {
       light: '浅色模式',
       dark: '暗色模式',

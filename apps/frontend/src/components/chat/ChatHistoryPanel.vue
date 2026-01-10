@@ -1,16 +1,37 @@
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
-import { Trash2, Edit3, Check, X, MessageSquare } from 'lucide-vue-next'
+import { Trash2, Edit3, Check, X, MessageSquare, Clock, Search, Plus } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useChatHistory, type ChatSession } from '@/composables/useChatHistory'
 
 const emit = defineEmits<{
   (e: 'select', sessionId: string): void
   (e: 'close'): void
+  (e: 'new-chat'): void
 }>()
 
 const { t, locale } = useI18n()
 const { sessions, currentSessionId, renameSession, deleteSession } = useChatHistory()
+
+// 搜索
+const searchQuery = ref('')
+
+// 过滤后的会话
+const filteredSessions = computed(() => {
+  if (!searchQuery.value.trim()) return sessions.value
+  const query = searchQuery.value.toLowerCase()
+  return sessions.value.filter(
+    (session) =>
+      session.title.toLowerCase().includes(query) ||
+      session.messages.some((m) => m.content.toLowerCase().includes(query)),
+  )
+})
+
+// 新建对话
+const handleNewChat = () => {
+  emit('new-chat')
+  emit('close')
+}
 
 // 编辑状态
 const editingId = ref<string | null>(null)
@@ -75,31 +96,68 @@ function handleDelete(sessionId: string, event: Event): void {
 </script>
 
 <template>
-  <div class="flex h-full flex-col">
+  <div class="flex h-full flex-col bg-card/50 backdrop-blur-sm">
     <!-- 头部 -->
-    <div class="flex items-center justify-between border-b border-border px-4 py-3">
-      <h3 class="text-sm font-medium text-foreground">{{ t('ai.historyTitle') }}</h3>
+    <div class="shrink-0 border-b border-border/50 px-4 py-4">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <Clock :size="16" class="text-primary" />
+          {{ t('ai.historyTitle') }}
+        </h3>
+      </div>
+
+      <!-- 搜索和新建按钮 -->
+      <div class="flex flex-col gap-2">
+        <div class="relative group">
+          <Search
+            :size="14"
+            class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary"
+          />
+          <input
+            v-model="searchQuery"
+            :placeholder="t('common.search')"
+            class="w-full rounded-lg border border-border bg-muted/50 py-1.5 pl-9 pr-3 text-xs outline-none transition-all focus:border-primary/50 focus:bg-background focus:ring-2 focus:ring-primary/10"
+          />
+        </div>
+        <button
+          class="flex items-center justify-center gap-2 rounded-lg border border-dashed border-border py-2 text-xs font-medium text-muted-foreground transition-all hover:border-primary/50 hover:bg-primary/5 hover:text-primary active:scale-[0.98]"
+          @click="handleNewChat"
+        >
+          <Plus :size="14" />
+          {{ t('ai.newChat') }}
+        </button>
+      </div>
     </div>
 
     <!-- 会话列表 -->
-    <div class="flex-1 overflow-y-auto">
+    <div class="flex-1 overflow-y-auto overflow-x-hidden p-2 custom-scrollbar">
       <!-- 空状态 -->
       <div
         v-if="!hasSessions"
-        class="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground/50"
+        class="flex h-64 flex-col items-center justify-center gap-3 text-muted-foreground/40"
       >
-        <MessageSquare :size="32" />
-        <p class="text-sm">{{ t('ai.noHistory') }}</p>
+        <div class="rounded-full bg-muted p-4">
+          <MessageSquare :size="32" />
+        </div>
+        <p class="text-sm font-medium">{{ t('ai.noHistory') }}</p>
+      </div>
+
+      <!-- 搜索无结果 -->
+      <div
+        v-else-if="filteredSessions.length === 0"
+        class="flex h-32 flex-col items-center justify-center text-muted-foreground/40"
+      >
+        <p class="text-xs">{{ t('common.noResults') }}</p>
       </div>
 
       <!-- 列表 -->
-      <div v-else class="space-y-1 p-2">
+      <div v-else class="space-y-1">
         <div
-          v-for="session in sessions"
+          v-for="session in filteredSessions"
           :key="session.id"
-          class="group relative cursor-pointer rounded-lg px-3 py-2.5 transition-colors hover:bg-accent"
+          class="group relative cursor-pointer rounded-xl p-3 transition-all hover:bg-accent/50 active:scale-[0.99]"
           :class="{
-            'bg-accent': session.id === currentSessionId,
+            'bg-primary/5 ring-1 ring-primary/20': session.id === currentSessionId,
           }"
           @click="selectSession(session.id)"
         >
@@ -108,42 +166,62 @@ function handleDelete(sessionId: string, event: Event): void {
             <input
               ref="editInputRef"
               v-model="editingTitle"
-              class="flex-1 rounded border border-primary bg-card px-2 py-1 text-sm text-foreground outline-none"
+              class="flex-1 rounded-md border border-primary bg-background px-2 py-1.5 text-sm text-foreground outline-none ring-2 ring-primary/10"
               @keydown.enter="saveEdit"
               @keydown.escape="cancelEdit"
             />
-            <button class="rounded p-1 text-primary hover:bg-primary/10" @click="saveEdit">
-              <Check :size="14" />
-            </button>
-            <button class="rounded p-1 text-muted-foreground hover:bg-accent" @click="cancelEdit">
-              <X :size="14" />
-            </button>
+            <div class="flex items-center gap-1">
+              <button
+                class="rounded-md p-1.5 text-primary transition-colors hover:bg-primary/10"
+                @click="saveEdit"
+              >
+                <Check :size="14" />
+              </button>
+              <button
+                class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted"
+                @click="cancelEdit"
+              >
+                <X :size="14" />
+              </button>
+            </div>
           </div>
 
           <!-- 正常显示 -->
           <template v-else>
-            <div class="flex items-start justify-between gap-2">
+            <div class="flex items-start gap-3">
+              <div
+                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted transition-colors group-hover:bg-background"
+                :class="{ 'bg-primary/10 text-primary': session.id === currentSessionId }"
+              >
+                <MessageSquare :size="14" />
+              </div>
               <div class="min-w-0 flex-1">
-                <p class="truncate text-sm text-foreground">{{ session.title }}</p>
-                <p class="mt-0.5 text-xs text-muted-foreground">
-                  {{ t('ai.messageCount', { count: session.messages.length }) }} ·
-                  {{ formatTime(session.updatedAt) }}
+                <p
+                  class="truncate text-sm font-medium transition-colors"
+                  :class="session.id === currentSessionId ? 'text-primary' : 'text-foreground'"
+                >
+                  {{ session.title }}
                 </p>
+                <div class="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
+                  <span>{{ t('ai.messageCount', { count: session.messages.length }) }}</span>
+                  <span class="h-0.5 w-0.5 rounded-full bg-muted-foreground/30" />
+                  <span>{{ formatTime(session.updatedAt) }}</span>
+                </div>
               </div>
               <!-- 操作按钮 -->
               <div
-                class="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100"
+                class="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100"
                 @click.stop
               >
                 <button
-                  class="rounded p-1.5 text-muted-foreground hover:bg-card hover:text-foreground"
+                  class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
                   :title="t('ai.editTitle')"
                   @click="startEdit(session)"
                 >
                   <Edit3 :size="14" />
                 </button>
                 <button
-                  class="rounded p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                  class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                   :title="t('ai.delete')"
                   @click="handleDelete(session.id, $event)"
                 >
@@ -157,3 +235,19 @@ function handleDelete(sessionId: string, event: Event): void {
     </div>
   </div>
 </template>
+
+<style scoped>
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 2px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.3);
+}
+</style>

@@ -51,7 +51,7 @@ const toggleTodoAssistant = () => {
 const isTodoAssistantEnabled = computed(() => config.value.todoAssistant)
 
 // 会话历史管理
-const { sessions, currentSessionId, lastActiveSession, switchSession } = useChatHistory()
+const { lastActiveSession, switchSession } = useChatHistory()
 
 // 切换会话
 const navigateToPrevious = () => {
@@ -83,6 +83,38 @@ const lastActiveTab = ref<'settings' | 'presets'>('settings')
 
 // 历史记录面板状态
 const showHistory = ref(false)
+const historyWidth = ref(320)
+const isResizingHistory = ref(false)
+const startHistoryX = ref(0)
+const startHistoryWidth = ref(0)
+
+const startHistoryResize = (e: MouseEvent) => {
+  e.preventDefault()
+  isResizingHistory.value = true
+  startHistoryX.value = e.clientX
+  startHistoryWidth.value = historyWidth.value
+  document.body.style.cursor = 'ew-resize'
+  document.body.style.userSelect = 'none'
+  window.addEventListener('mousemove', onHistoryResize)
+  window.addEventListener('mouseup', stopHistoryResize)
+}
+
+const onHistoryResize = (e: MouseEvent) => {
+  if (!isResizingHistory.value) return
+  const deltaX = e.clientX - startHistoryX.value
+  const newWidth = startHistoryWidth.value + deltaX
+  // 限制最小宽度 240px，最大宽度不超过 AI 助手抽屉的 80%
+  const containerWidth = (textareaRef.value?.closest('.drawer') as HTMLElement)?.offsetWidth || 400
+  historyWidth.value = Math.max(240, Math.min(newWidth, containerWidth * 0.8))
+}
+
+const stopHistoryResize = () => {
+  isResizingHistory.value = false
+  document.body.style.cursor = ''
+  document.body.style.userSelect = ''
+  window.removeEventListener('mousemove', onHistoryResize)
+  window.removeEventListener('mouseup', stopHistoryResize)
+}
 
 // 预设下拉框状态
 const showPresetDropdown = ref(false)
@@ -178,9 +210,9 @@ defineOptions({
 <template>
   <ResizableDrawer
     v-model="modelValue"
-    :default-width="isMaximized ? 800 : 420"
-    :min-width="320"
-    :max-width="1000"
+    :default-width="isMaximized ? 800 : 480"
+    :min-width="360"
+    :max-width="1200"
     :is-fullscreen="isMaximized"
     v-bind="$attrs"
   >
@@ -411,7 +443,8 @@ defineOptions({
       >
         <div
           v-if="showHistory"
-          class="absolute inset-y-0 left-0 z-20 flex w-[280px] flex-col border-r border-border bg-card shadow-lg"
+          class="absolute inset-y-0 left-0 z-20 flex flex-col border-r border-border bg-card shadow-xl"
+          :style="{ width: `${historyWidth}px` }"
         >
           <!-- 关闭按钮 -->
           <button
@@ -420,7 +453,23 @@ defineOptions({
           >
             <X :size="16" />
           </button>
-          <ChatHistoryPanel @select="handleSelectSession" @close="showHistory = false" />
+          <ChatHistoryPanel
+            @select="handleSelectSession"
+            @close="showHistory = false"
+            @new-chat="handleNewChat"
+          />
+
+          <!-- 拖拽手柄 -->
+          <div
+            class="absolute -right-1.5 top-0 z-30 flex h-full w-3 cursor-ew-resize items-center justify-center transition-colors hover:bg-primary/10"
+            :class="{ 'bg-primary/20': isResizingHistory }"
+            @mousedown="startHistoryResize"
+          >
+            <div
+              class="h-12 w-1 rounded-full bg-border transition-colors group-hover:bg-primary/30"
+              :class="{ 'bg-primary/50': isResizingHistory }"
+            />
+          </div>
         </div>
       </Transition>
     </div>

@@ -7,6 +7,8 @@ export default {
     logout: 'Logout',
     welcome: 'Welcome',
     backToHome: 'Back to Home',
+    search: 'Search',
+    noResults: 'No results found',
     theme: {
       light: 'Light Mode',
       dark: 'Dark Mode',
