@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { todoApi } from '../api'
 
 export interface Todo {
   id: string
@@ -12,7 +11,7 @@ export interface Todo {
 export type FilterType = 'pending' | 'completed'
 
 /**
- * 待办事项状态管理
+ * 待办事项状态管理 (纯本地存储)
  */
 export const useTodoStore = defineStore(
   'todo',
@@ -49,23 +48,11 @@ export const useTodoStore = defineStore(
     const completedCount = computed(() => todos.value.filter((todo) => todo.completed).length)
 
     /**
-     * 获取所有待办事项
+     * 获取所有待办事项 (本地存储已由 pinia-plugin-persistedstate 处理)
      */
     async function fetchTodos(): Promise<void> {
-      loading.value = true
-      error.value = null
-      try {
-        const response = await todoApi.getAll()
-        todos.value = response.data.map((apiTodo) => ({
-          ...apiTodo,
-          createdAt: new Date(apiTodo.createdAt),
-        }))
-      } catch (e: unknown) {
-        const err = e as { response?: { data?: { message?: string } } }
-        error.value = err.response?.data?.message || '获取待办事项失败'
-      } finally {
-        loading.value = false
-      }
+      // 纯本地存储，不需要从 API 获取
+      // 这里可以做一些初始化逻辑，如果有必要的话
     }
 
     /**
@@ -76,25 +63,24 @@ export const useTodoStore = defineStore(
 
       const trimmedTitle = title.trim()
 
-      // 检查是否已存在相同标题的待办事项（不区分大小写）
+      // 检查是否已存在相同标题的待办事项
       const exists = todos.value.some(
         (todo) => todo.title.toLowerCase() === trimmedTitle.toLowerCase(),
       )
       if (exists) return false
 
       loading.value = true
-      error.value = null
       try {
-        const response = await todoApi.create({ title: trimmedTitle })
         const newTodo: Todo = {
-          ...response.data,
-          createdAt: new Date(response.data.createdAt),
+          id: crypto.randomUUID(),
+          title: trimmedTitle,
+          completed: false,
+          createdAt: new Date(),
         }
         todos.value.unshift(newTodo)
         return true
       } catch (e: unknown) {
-        const err = e as { response?: { data?: { message?: string } } }
-        error.value = err.response?.data?.message || '添加待办事项失败'
+        error.value = '添加待办事项失败'
         return false
       } finally {
         loading.value = false
@@ -108,41 +94,16 @@ export const useTodoStore = defineStore(
       const todo = todos.value.find((t) => t.id === id)
       if (!todo) return
 
-      const oldStatus = todo.completed
-      const newStatus = !oldStatus
-      loading.value = true
-      error.value = null
-      try {
-        const response = await todoApi.update(id, { completed: newStatus })
-        todo.completed = response.data.completed
-      } catch (e: unknown) {
-        const err = e as { response?: { data?: { message?: string } } }
-        error.value = err.response?.data?.message || '更新待办事项失败'
-        // 回滚状态
-        todo.completed = oldStatus
-      } finally {
-        loading.value = false
-      }
+      todo.completed = !todo.completed
     }
 
     /**
      * 删除待办事项
      */
     async function deleteTodo(id: string): Promise<void> {
-      loading.value = true
-      error.value = null
-      try {
-        await todoApi.delete(id)
-        const index = todos.value.findIndex((t) => t.id === id)
-        if (index !== -1) {
-          todos.value.splice(index, 1)
-        }
-      } catch (e: unknown) {
-        const err = e as { response?: { data?: { message?: string } } }
-        error.value = err.response?.data?.message || '删除待办事项失败'
-        // 不需要回滚，因为删除是在 API 成功后才执行的
-      } finally {
-        loading.value = false
+      const index = todos.value.findIndex((t) => t.id === id)
+      if (index !== -1) {
+        todos.value.splice(index, 1)
       }
     }
 
@@ -154,21 +115,8 @@ export const useTodoStore = defineStore(
       const todo = todos.value.find((t) => t.id === id)
       if (!todo) return
 
-      const oldTitle = todo.title
       const trimmedTitle = title.trim()
-      loading.value = true
-      error.value = null
-      try {
-        const response = await todoApi.update(id, { title: trimmedTitle })
-        todo.title = response.data.title
-      } catch (e: unknown) {
-        const err = e as { response?: { data?: { message?: string } } }
-        error.value = err.response?.data?.message || '更新待办事项失败'
-        // 回滚状态
-        todo.title = oldTitle
-      } finally {
-        loading.value = false
-      }
+      todo.title = trimmedTitle
     }
 
     /**
