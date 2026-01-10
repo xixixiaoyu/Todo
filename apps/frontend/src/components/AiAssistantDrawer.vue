@@ -7,7 +7,7 @@ import {
   Maximize2,
   Minimize2,
   Send,
-  ToggleLeft,
+  Lightbulb,
   Settings2,
   ChevronDown,
   Square,
@@ -27,7 +27,17 @@ import { useChatHistory } from '@/composables/useChatHistory'
 const modelValue = defineModel<boolean>({ required: true })
 
 // AI 配置与预设
-const { presets, activePreset, switchPreset } = useAIConfig()
+const { presets, activePreset, switchPreset, config, updateConfig } = useAIConfig()
+
+// 切换思考模式
+const toggleThinkingMode = () => {
+  updateConfig({
+    thinkingMode: config.value.thinkingMode === 'enabled' ? 'disabled' : 'enabled',
+  })
+}
+
+// 思考模式是否开启
+const isThinkingEnabled = computed(() => config.value.thinkingMode === 'enabled')
 
 // 会话历史管理
 const { switchSession } = useChatHistory()
@@ -69,6 +79,9 @@ const canRegenerate = computed(() => {
   return messages.value.some((msg) => msg.role === 'assistant')
 })
 
+// 输入框是否禁用（生成中且没有报错时禁用）
+const isInputDisabled = computed(() => isGenerating.value && !error.value)
+
 const adjustTextareaHeight = () => {
   const textarea = textareaRef.value
   if (!textarea) return
@@ -80,7 +93,7 @@ const adjustTextareaHeight = () => {
 
 const handleSend = async () => {
   const content = chatInput.value.trim()
-  if (!content || isGenerating.value) return
+  if (!content || isInputDisabled.value) return
 
   chatInput.value = ''
   nextTick(() => adjustTextareaHeight())
@@ -240,9 +253,22 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
             <Plus :size="14" />
             <span>新对话</span>
           </button>
+          <!-- 思考模式开关 -->
+          <button
+            class="flex h-8 w-8 items-center justify-center rounded-full border transition-colors"
+            :class="
+              isThinkingEnabled
+                ? 'border-[#c9b896] bg-[#c9b896]/10 text-[#c9b896]'
+                : 'border-[#e8e4dd] bg-white text-[#8b8680] hover:bg-[#f5f3ed]'
+            "
+            :title="isThinkingEnabled ? '思考模式已开启' : '思考模式已关闭'"
+            @click="toggleThinkingMode"
+          >
+            <Lightbulb :size="16" />
+          </button>
           <!-- 停止生成按钮 -->
           <button
-            v-if="isGenerating"
+            v-if="isGenerating && !error"
             class="flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-red-600 transition-colors hover:bg-red-100"
             @click="stopGenerating"
           >
@@ -267,11 +293,7 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
           >
             <Trash2 :size="16" />
           </button>
-          <button
-            class="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e4dd] bg-white text-[#8b8680] transition-colors hover:bg-[#f5f3ed]"
-          >
-            <ToggleLeft :size="16" />
-          </button>
+
           <button
             class="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e4dd] bg-white text-[#8b8680] transition-colors hover:bg-[#f5f3ed]"
             title="设置"
@@ -299,20 +321,20 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
         <!-- 输入框区域 -->
         <div
           class="flex gap-2 rounded-xl border border-[#e8e4dd] bg-white px-4 py-3"
-          :class="{ 'opacity-50': isGenerating }"
+          :class="{ 'opacity-50': isInputDisabled }"
         >
           <textarea
             ref="textareaRef"
             v-model="chatInput"
             rows="1"
             :placeholder="
-              isGenerating
+              isInputDisabled
                 ? 'AI 正在回复...'
                 : '询问 AI 助手... (按 Shift + Enter 换行，Enter 发送)'
             "
             class="flex-1 resize-none bg-transparent text-sm text-[#3a3a3a] outline-none placeholder:text-[#c4c0b8]"
             :style="{ height: `${MIN_HEIGHT}px` }"
-            :disabled="isGenerating"
+            :disabled="isInputDisabled"
             @input="adjustTextareaHeight"
             @keydown.enter.exact.prevent="handleSend"
             @keydown.enter.shift.exact="handleNewline"
@@ -320,9 +342,11 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
           <button
             class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white transition-colors"
             :class="
-              isGenerating ? 'cursor-not-allowed bg-[#d4c9b3]' : 'bg-[#c9b896] hover:bg-[#b8a785]'
+              isInputDisabled
+                ? 'cursor-not-allowed bg-[#d4c9b3]'
+                : 'bg-[#c9b896] hover:bg-[#b8a785]'
             "
-            :disabled="isGenerating"
+            :disabled="isInputDisabled"
             @click="handleSend"
           >
             <Send :size="16" />
