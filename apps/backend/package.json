@@ -51,6 +51,7 @@
     "ioredis": "5.8.2",
     "lodash": "4.17.21",
     "multer": "2.0.2",
+    "nestjs-i18n": "^10.6.0",
     "nestjs-pino": "4.5.0",
     "nestjs-zod": "5.0.1",
     "nodemailer": "7.0.12",
