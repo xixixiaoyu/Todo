@@ -44,8 +44,12 @@
     "vitest": "4.0.16"
   },
   "lint-staged": {
-    "*.{ts,tsx,vue}": [
-      "eslint --fix",
+    "apps/frontend/**/*.{ts,tsx,vue}": [
+      "cd apps/frontend && eslint --fix",
+      "prettier --write"
+    ],
+    "apps/backend/**/*.ts": [
+      "cd apps/backend && eslint --fix",
       "prettier --write"
     ],
     "*.{json,css,scss,html}": [

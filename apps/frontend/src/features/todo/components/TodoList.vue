@@ -26,11 +26,11 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="flex-1 min-h-[calc(100vh-350px)]">
+  <div class="min-h-[calc(100vh-350px)] flex-1">
     <!-- Empty State -->
     <div
       v-if="todos.length === 0"
-      class="flex flex-col items-center justify-center py-20 text-[#c4c0b8]"
+      class="flex flex-col items-center justify-center py-20 text-[#c4c0b8] dark:text-[#6b6b6b]"
     >
       <Plus :size="48" :stroke-width="1" class="mb-4" />
       <p class="text-base">

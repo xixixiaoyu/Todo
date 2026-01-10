@@ -31,6 +31,6 @@ export default [
     },
   },
   {
-    ignores: ['**/dist', '**/node_modules', '**/*.js', '**/*.cjs'],
+    ignores: ['**/dist', '**/node_modules', '**/*.js', '**/*.cjs', '**/*.vue'],
   },
 ]

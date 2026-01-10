@@ -168,15 +168,17 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
     :max-width="1000"
     :is-fullscreen="isMaximized"
   >
-    <div class="relative flex h-full flex-col bg-[#faf8f4]">
+    <div class="relative flex h-full flex-col bg-[#faf8f4] dark:bg-[#1a1a1a]">
       <!-- 顶部标题栏 -->
-      <header class="flex h-12 shrink-0 items-center justify-between bg-[#c9b896] px-4">
+      <header
+        class="flex h-12 shrink-0 items-center justify-between bg-[#c9b896] px-4 dark:bg-[#8a7a5a]"
+      >
         <span class="text-sm font-medium text-white">AI 助手</span>
         <div class="flex items-center gap-2">
           <!-- 预设下拉框 -->
           <div class="relative">
             <button
-              class="flex items-center gap-1 rounded-md bg-[#b8a785] px-3 py-1.5 text-xs text-white transition-colors hover:bg-[#a99676]"
+              class="flex items-center gap-1 rounded-md bg-[#b8a785] px-3 py-1.5 text-xs text-white transition-colors hover:bg-[#a99676] dark:bg-[#7a6a4a] dark:hover:bg-[#6a5a3a]"
               @click="showPresetDropdown = !showPresetDropdown"
             >
               <span>{{ currentPresetName }}</span>
@@ -193,15 +195,16 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
             >
               <div
                 v-if="showPresetDropdown"
-                class="absolute right-0 top-full z-50 mt-1 min-w-[160px] overflow-hidden rounded-lg border border-[#e8e4dd] bg-white py-1 shadow-lg"
+                class="absolute right-0 top-full z-50 mt-1 min-w-[160px] overflow-hidden rounded-lg border border-[#e8e4dd] bg-white py-1 shadow-lg dark:border-[#3a3a3a] dark:bg-[#2a2a2a]"
               >
                 <button
                   v-for="preset in presets"
                   :key="preset.id"
-                  class="flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition-colors hover:bg-[#f5f3ed]"
+                  class="flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition-colors hover:bg-[#f5f3ed] dark:hover:bg-[#3a3a3a]"
                   :class="{
-                    'bg-[#f5f3ed] text-[#6b5c4d]': activePreset?.id === preset.id,
-                    'text-[#3a3a3a]': activePreset?.id !== preset.id,
+                    'bg-[#f5f3ed] text-[#6b5c4d] dark:bg-[#3a3a3a] dark:text-[#c9b896]':
+                      activePreset?.id === preset.id,
+                    'text-[#3a3a3a] dark:text-[#e0e0e0]': activePreset?.id !== preset.id,
                   }"
                   @click="handleSelectPreset(preset.id)"
                 >
@@ -209,9 +212,9 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
                   <span :class="{ 'ml-4': activePreset?.id !== preset.id }">{{ preset.name }}</span>
                 </button>
                 <!-- 分割线 + 设置入口 -->
-                <div class="my-1 border-t border-[#e8e4dd]" />
+                <div class="my-1 border-t border-[#e8e4dd] dark:border-[#3a3a3a]" />
                 <button
-                  class="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-[#8b8680] transition-colors hover:bg-[#f5f3ed] hover:text-[#6b5c4d]"
+                  class="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-[#8b8680] transition-colors hover:bg-[#f5f3ed] hover:text-[#6b5c4d] dark:text-[#808080] dark:hover:bg-[#3a3a3a] dark:hover:text-[#c9b896]"
                   @click="openSettings"
                 >
                   <Settings2 :size="12" />
@@ -248,16 +251,21 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
       <ChatMessageList ref="messageListRef" :messages="messages" />
 
       <!-- 错误提示 -->
-      <div v-if="error" class="mx-4 mb-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+      <div
+        v-if="error"
+        class="mx-4 mb-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400"
+      >
         {{ error }}
       </div>
 
       <!-- 底部工具栏 -->
-      <div class="shrink-0 border-t border-[#e8e4dd] bg-[#faf8f4] p-3">
+      <div
+        class="shrink-0 border-t border-[#e8e4dd] bg-[#faf8f4] p-3 dark:border-[#3a3a3a] dark:bg-[#1a1a1a]"
+      >
         <!-- 快捷操作按钮 -->
         <div class="mb-3 flex flex-wrap items-center gap-2 text-sm">
           <button
-            class="flex items-center gap-1 rounded-full border border-[#e8e4dd] bg-white px-3 py-1.5 text-[#6b5c4d] transition-colors hover:bg-[#f5f3ed]"
+            class="flex items-center gap-1 rounded-full border border-[#e8e4dd] bg-white px-3 py-1.5 text-[#6b5c4d] transition-colors hover:bg-[#f5f3ed] dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#a0a0a0] dark:hover:bg-[#3a3a3a]"
             @click="handleNewChat"
           >
             <Plus :size="14" />
@@ -268,8 +276,8 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
             class="flex h-8 w-8 items-center justify-center rounded-full border transition-colors"
             :class="
               isThinkingEnabled
-                ? 'border-[#c9b896] bg-[#c9b896]/10 text-[#c9b896]'
-                : 'border-[#e8e4dd] bg-white text-[#8b8680] hover:bg-[#f5f3ed]'
+                ? 'border-[#c9b896] bg-[#c9b896]/10 text-[#c9b896] dark:border-[#b8a785] dark:bg-[#b8a785]/20 dark:text-[#b8a785]'
+                : 'border-[#e8e4dd] bg-white text-[#8b8680] hover:bg-[#f5f3ed] dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#6b6b6b] dark:hover:bg-[#3a3a3a]'
             "
             :title="isThinkingEnabled ? '思考模式已开启' : '思考模式已关闭'"
             @click="toggleThinkingMode"
@@ -279,7 +287,7 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
           <!-- 停止生成按钮 -->
           <button
             v-if="isGenerating && !error"
-            class="flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-red-600 transition-colors hover:bg-red-100"
+            class="flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-red-600 transition-colors hover:bg-red-100 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
             @click="stopGenerating"
           >
             <Square :size="12" />
@@ -288,7 +296,7 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
           <!-- 重新生成按钮 -->
           <button
             v-if="canRegenerate"
-            class="flex items-center gap-1 rounded-full border border-[#e8e4dd] bg-white px-3 py-1.5 text-[#6b5c4d] transition-colors hover:bg-[#f5f3ed]"
+            class="flex items-center gap-1 rounded-full border border-[#e8e4dd] bg-white px-3 py-1.5 text-[#6b5c4d] transition-colors hover:bg-[#f5f3ed] dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#a0a0a0] dark:hover:bg-[#3a3a3a]"
             @click="regenerateLastResponse"
           >
             <RefreshCw :size="14" />
@@ -297,7 +305,7 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
           <!-- 清空历史按钮 -->
           <button
             v-if="hasHistory && !isGenerating"
-            class="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e4dd] bg-white text-[#8b8680] transition-colors hover:bg-red-50 hover:text-red-500"
+            class="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e4dd] bg-white text-[#8b8680] transition-colors hover:bg-red-50 hover:text-red-500 dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#6b6b6b] dark:hover:bg-red-900/20 dark:hover:text-red-400"
             title="清空历史"
             @click="clearHistory"
           >
@@ -305,14 +313,14 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
           </button>
 
           <button
-            class="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e4dd] bg-white text-[#8b8680] transition-colors hover:bg-[#f5f3ed]"
+            class="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e4dd] bg-white text-[#8b8680] transition-colors hover:bg-[#f5f3ed] dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#6b6b6b] dark:hover:bg-[#3a3a3a]"
             title="设置"
             @click="showSettings = true"
           >
             <Settings2 :size="16" />
           </button>
           <button
-            class="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e4dd] bg-white text-[#8b8680] transition-colors hover:bg-[#f5f3ed]"
+            class="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e4dd] bg-white text-[#8b8680] transition-colors hover:bg-[#f5f3ed] dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#6b6b6b] dark:hover:bg-[#3a3a3a]"
             title="历史记录"
             :class="{ 'cursor-not-allowed opacity-50': isGenerating }"
             :disabled="isGenerating"
@@ -324,8 +332,8 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
             class="flex items-center gap-1 rounded-full border px-3 py-1.5 transition-colors"
             :class="
               isTodoAssistantEnabled
-                ? 'border-[#c9b896] bg-[#c9b896]/10 text-[#c9b896]'
-                : 'border-[#e8e4dd] bg-white text-[#6b5c4d] hover:bg-[#f5f3ed]'
+                ? 'border-[#c9b896] bg-[#c9b896]/10 text-[#c9b896] dark:border-[#b8a785] dark:bg-[#b8a785]/20 dark:text-[#b8a785]'
+                : 'border-[#e8e4dd] bg-white text-[#6b5c4d] hover:bg-[#f5f3ed] dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#a0a0a0] dark:hover:bg-[#3a3a3a]'
             "
             :title="isTodoAssistantEnabled ? 'Todo 助手已开启' : 'Todo 助手已关闭'"
             @click="toggleTodoAssistant"
@@ -337,7 +345,7 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
 
         <!-- 输入框区域 -->
         <div
-          class="flex gap-2 rounded-xl border border-[#e8e4dd] bg-white px-4 py-3"
+          class="flex gap-2 rounded-xl border border-[#e8e4dd] bg-white px-4 py-3 dark:border-[#3a3a3a] dark:bg-[#2a2a2a]"
           :class="{ 'opacity-50': isInputDisabled }"
         >
           <textarea
@@ -349,7 +357,7 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
                 ? 'AI 正在回复...'
                 : '询问 AI 助手... (按 Shift + Enter 换行，Enter 发送)'
             "
-            class="flex-1 resize-none bg-transparent text-sm text-[#3a3a3a] outline-none placeholder:text-[#c4c0b8]"
+            class="flex-1 resize-none bg-transparent text-sm text-[#3a3a3a] outline-none placeholder:text-[#c4c0b8] dark:text-[#e0e0e0] dark:placeholder:text-[#6b6b6b]"
             :style="{ height: `${MIN_HEIGHT}px` }"
             :disabled="isInputDisabled"
             @input="adjustTextareaHeight"
@@ -360,8 +368,8 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
             class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white transition-colors"
             :class="
               isInputDisabled
-                ? 'cursor-not-allowed bg-[#d4c9b3]'
-                : 'bg-[#c9b896] hover:bg-[#b8a785]'
+                ? 'cursor-not-allowed bg-[#d4c9b3] dark:bg-[#5a5a5a]'
+                : 'bg-[#c9b896] hover:bg-[#b8a785] dark:bg-[#b8a785] dark:hover:bg-[#a99676]'
             "
             :disabled="isInputDisabled"
             @click="handleSend"
@@ -382,7 +390,7 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
       >
         <div
           v-if="showHistory"
-          class="absolute inset-0 z-10 bg-black/20"
+          class="absolute inset-0 z-10 bg-black/20 dark:bg-black/40"
           @click="showHistory = false"
         />
       </Transition>
@@ -398,11 +406,11 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
       >
         <div
           v-if="showHistory"
-          class="absolute inset-y-0 left-0 z-20 flex w-[280px] flex-col border-r border-[#e8e4dd] bg-[#faf8f4] shadow-lg"
+          class="absolute inset-y-0 left-0 z-20 flex w-[280px] flex-col border-r border-[#e8e4dd] bg-[#faf8f4] shadow-lg dark:border-[#3a3a3a] dark:bg-[#1a1a1a]"
         >
           <!-- 关闭按钮 -->
           <button
-            class="absolute right-3 top-3 z-20 flex h-7 w-7 items-center justify-center rounded-md text-[#8b8680] transition-colors hover:bg-[#e8e4dd] hover:text-[#6b5c4d]"
+            class="absolute right-3 top-3 z-20 flex h-7 w-7 items-center justify-center rounded-md text-[#8b8680] transition-colors hover:bg-[#e8e4dd] hover:text-[#6b5c4d] dark:text-[#6b6b6b] dark:hover:bg-[#3a3a3a] dark:hover:text-[#a0a0a0]"
             @click="showHistory = false"
           >
             <X :size="16" />

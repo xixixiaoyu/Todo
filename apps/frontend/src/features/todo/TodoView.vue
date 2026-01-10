@@ -40,9 +40,9 @@ function onFireworksComplete() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#f5f3ed] p-4 pb-16 md:p-8 md:pb-20">
+  <div class="min-h-screen bg-[#f5f3ed] p-4 pb-16 md:p-8 md:pb-20 dark:bg-[#0f0f0f]">
     <div
-      class="mx-auto flex max-w-4xl flex-col rounded-[24px] bg-[#faf8f4] p-6 md:p-8 shadow-[0_8px_30px_rgba(0,0,0,0.08)]"
+      class="mx-auto flex max-w-4xl flex-col rounded-[24px] bg-[#faf8f4] p-6 md:p-8 shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:bg-[#1a1a1a] dark:shadow-[0_8px_30px_rgba(0,0,0,0.3)]"
     >
       <!-- Header -->
       <TodoHeader v-model:is-drawer-open="isDrawerOpen" v-model:show-search="showSearch" />

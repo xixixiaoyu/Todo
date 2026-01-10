@@ -19,8 +19,8 @@ const emit = defineEmits<{
       class="rounded-full px-5 py-2 text-sm font-medium transition-all"
       :class="
         filter === 'pending'
-          ? 'bg-[#c9b896] text-white'
-          : 'border border-[#e8e4dd] bg-white text-[#8b8680] hover:bg-[#f5f3ed]'
+          ? 'bg-[#c9b896] text-white dark:bg-[#b8a785]'
+          : 'border border-[#e8e4dd] bg-white text-[#8b8680] hover:bg-[#f5f3ed] dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#a0a0a0] dark:hover:bg-[#3a3a3a]'
       "
       @click="emit('update:filter', 'pending')"
     >
@@ -30,8 +30,8 @@ const emit = defineEmits<{
       class="rounded-full px-5 py-2 text-sm font-medium transition-all"
       :class="
         filter === 'completed'
-          ? 'bg-[#c9b896] text-white'
-          : 'border border-[#e8e4dd] bg-white text-[#8b8680] hover:bg-[#f5f3ed]'
+          ? 'bg-[#c9b896] text-white dark:bg-[#b8a785]'
+          : 'border border-[#e8e4dd] bg-white text-[#8b8680] hover:bg-[#f5f3ed] dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#a0a0a0] dark:hover:bg-[#3a3a3a]'
       "
       @click="emit('update:filter', 'completed')"
     >
