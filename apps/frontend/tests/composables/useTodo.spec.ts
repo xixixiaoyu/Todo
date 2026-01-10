@@ -230,12 +230,31 @@ describe('useTodo', () => {
 
       startEditing('todo-1', 'Test Title')
       editingTitle.value = 'Updated Title'
+      vi.mocked(todoStore.updateTodo).mockResolvedValue(true)
 
       await saveEditing()
 
       expect(todoStore.updateTodo).toHaveBeenCalledWith('todo-1', 'Updated Title')
       expect(editingId.value).toBeNull()
       expect(editingTitle.value).toBe('')
+    })
+
+    it('should stay in edit mode if updateTodo fails due to duplication', async () => {
+      const { editingId, editingTitle, startEditing, saveEditing } = useTodo()
+
+      startEditing('todo-1', 'Test Title')
+      editingTitle.value = 'Duplicate Title'
+
+      // Mock updateTodo to return false and set error
+      vi.mocked(todoStore.updateTodo).mockResolvedValue(false)
+      // @ts-ignore - Mocking the error property
+      todoStore.error = 'todo.duplicate'
+
+      await saveEditing()
+
+      expect(todoStore.updateTodo).toHaveBeenCalledWith('todo-1', 'Duplicate Title')
+      expect(editingId.value).toBe('todo-1') // Should NOT be null
+      expect(editingTitle.value).toBe('Duplicate Title') // Should NOT be empty
     })
 
     it('should not save edit if editingId is null', async () => {

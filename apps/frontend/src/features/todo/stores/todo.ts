@@ -63,9 +63,9 @@ export const useTodoStore = defineStore(
 
       const trimmedTitle = title.trim()
 
-      // 检查是否已存在相同标题的待办事项
+      // 检查是否已存在相同标题的未完成待办事项
       const exists = todos.value.some(
-        (todo) => todo.title.toLowerCase() === trimmedTitle.toLowerCase(),
+        (todo) => !todo.completed && todo.title.toLowerCase() === trimmedTitle.toLowerCase(),
       )
       if (exists) {
         error.value = 'todo.duplicate'
@@ -113,13 +113,27 @@ export const useTodoStore = defineStore(
     /**
      * 更新待办事项标题
      */
-    async function updateTodo(id: string, title: string): Promise<void> {
-      if (!title.trim()) return
+    async function updateTodo(id: string, title: string): Promise<boolean> {
+      if (!title.trim()) return false
       const todo = todos.value.find((t) => t.id === id)
-      if (!todo) return
+      if (!todo) return false
 
       const trimmedTitle = title.trim()
+
+      // 如果标题没变，直接返回成功
+      if (todo.title === trimmedTitle) return true
+
+      // 检查是否已存在相同标题的未完成待办事项 (排除自身)
+      const exists = todos.value.some(
+        (t) => t.id !== id && !t.completed && t.title.toLowerCase() === trimmedTitle.toLowerCase(),
+      )
+      if (exists) {
+        error.value = 'todo.duplicate'
+        return false
+      }
+
       todo.title = trimmedTitle
+      return true
     }
 
     /**

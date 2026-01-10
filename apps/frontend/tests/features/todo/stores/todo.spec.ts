@@ -29,7 +29,8 @@ describe('useTodoStore', () => {
     if (!global.crypto) {
       // @ts-ignore
       global.crypto = {
-        randomUUID: () => Math.random().toString(36).substring(2),
+        randomUUID: () =>
+          '00000000-0000-0000-0000-000000000000' as `${string}-${string}-${string}-${string}-${string}`,
       }
     }
   })
@@ -126,13 +127,25 @@ describe('useTodoStore', () => {
       expect(store.todos).toHaveLength(0)
     })
 
-    it('should not add duplicate todo', async () => {
-      store.todos = [mockTodos[0]]
+    it('should not add duplicate todo if it is pending', async () => {
+      store.todos = [{ ...mockTodos[0] }] // 'First todo', completed: false
 
       const result = await store.addTodo('First todo')
 
       expect(result).toBe(false)
+      expect(store.error).toBe('todo.duplicate')
       expect(store.todos).toHaveLength(1)
+    })
+
+    it('should allow adding duplicate todo if existing one is completed', async () => {
+      store.todos = [{ ...mockTodos[1] }] // 'Second todo', completed: true
+
+      const result = await store.addTodo('Second todo')
+
+      expect(result).toBe(true)
+      expect(store.todos).toHaveLength(2)
+      expect(store.todos[0].title).toBe('Second todo')
+      expect(store.todos[0].completed).toBe(false)
     })
   })
 
@@ -163,17 +176,52 @@ describe('useTodoStore', () => {
     it('should update todo title successfully', async () => {
       store.todos = [{ ...mockTodos[0] }]
 
-      await store.updateTodo('1', 'Updated title')
+      const result = await store.updateTodo('1', 'Updated title')
 
+      expect(result).toBe(true)
       expect(store.todos[0].title).toBe('Updated title')
     })
 
     it('should not update with empty title', async () => {
       store.todos = [{ ...mockTodos[0] }]
 
-      await store.updateTodo('1', '   ')
+      const result = await store.updateTodo('1', '   ')
 
+      expect(result).toBe(false)
       expect(store.todos[0].title).toBe('First todo')
+    })
+
+    it('should not update to a duplicate title if it exists in pending todos', async () => {
+      store.todos = [
+        { ...mockTodos[0], id: '1', title: 'Task 1', completed: false },
+        { ...mockTodos[1], id: '2', title: 'Task 2', completed: false },
+      ]
+
+      const result = await store.updateTodo('1', 'Task 2')
+
+      expect(result).toBe(false)
+      expect(store.error).toBe('todo.duplicate')
+      expect(store.todos[0].title).toBe('Task 1')
+    })
+
+    it('should allow updating to a title that exists in completed todos', async () => {
+      store.todos = [
+        { ...mockTodos[0], id: '1', title: 'Task 1', completed: false },
+        { ...mockTodos[1], id: '2', title: 'Task 2', completed: true },
+      ]
+
+      const result = await store.updateTodo('1', 'Task 2')
+
+      expect(result).toBe(true)
+      expect(store.todos[0].title).toBe('Task 2')
+    })
+
+    it('should return true if title has not changed', async () => {
+      store.todos = [{ ...mockTodos[0], title: 'Same title' }]
+
+      const result = await store.updateTodo('1', 'Same title')
+
+      expect(result).toBe(true)
     })
   })
 })

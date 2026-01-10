@@ -91,7 +91,13 @@ export function useTodo() {
 
   async function saveEditing() {
     if (editingId.value && editingTitle.value.trim()) {
-      await todoStore.updateTodo(editingId.value, editingTitle.value)
+      todoStore.clearError()
+      const success = await todoStore.updateTodo(editingId.value, editingTitle.value)
+      if (!success && todoStore.error === 'todo.duplicate') {
+        // 如果是重复项，可以保持编辑状态并显示错误（如果有 UI 支持的话）
+        // 目前简单的处理是继续保持编辑状态
+        return
+      }
     }
     cancelEditing()
   }
