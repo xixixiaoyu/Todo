@@ -5,7 +5,7 @@ import { useAuthStore } from '@/features/auth/stores/auth'
 /**
  * HTTP 客户端实例
  */
-const httpClient = axios.create({
+export const httpClient = axios.create({
   baseURL: '/api',
   timeout: 10000,
   headers: {
