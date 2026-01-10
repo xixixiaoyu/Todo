@@ -216,19 +216,23 @@ function initMermaidInteractions(container: HTMLElement) {
     startX = e.clientX - translateX
     startY = e.clientY - translateY
     svg.style.cursor = 'grabbing'
-  })
 
-  window.addEventListener('mousemove', (e) => {
-    if (!isDragging) return
-    translateX = e.clientX - startX
-    translateY = e.clientY - startY
-    updateTransform()
-  })
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (!isDragging) return
+      translateX = moveEvent.clientX - startX
+      translateY = moveEvent.clientY - startY
+      updateTransform()
+    }
 
-  window.addEventListener('mouseup', () => {
-    if (!isDragging) return
-    isDragging = false
-    svg.style.cursor = 'grab'
+    const handleMouseUp = () => {
+      isDragging = false
+      svg.style.cursor = 'grab'
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
   })
 }
 
