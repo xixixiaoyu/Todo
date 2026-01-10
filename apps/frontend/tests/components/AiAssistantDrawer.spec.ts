@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import AiAssistantDrawer from '@/components/AiAssistantDrawer.vue'
 
 // Mock Lucide icons
@@ -211,34 +211,81 @@ describe('AiAssistantDrawer Navigation and Button States', () => {
     expect(saveAIThinkingMode).toHaveBeenCalled()
   })
 
-  it('should pass "presets" as initialTab when clicking "Manage Presets"', async () => {
+  it('should remember the last tab when opening settings without arguments', async () => {
     const wrapper = mount(AiAssistantDrawer, {
       props: { modelValue: true },
+      global: {
+        stubs: {
+          ChatMessageList: true,
+          AISettingsDialog: {
+            name: 'AISettingsDialog',
+            template: '<div class="settings-dialog-stub"></div>',
+            props: ['modelValue', 'initialTab'],
+            emits: ['update:modelValue', 'update:initialTab'],
+          },
+          History: true,
+          Settings2: true,
+          Plus: true,
+          Brain: true,
+          ChevronDown: true,
+          Check: true,
+          Maximize2: true,
+          Minimize2: true,
+          X: true,
+        },
+        mocks: {
+          t: (key: string) => key,
+        },
+      },
     })
 
-    // Open preset dropdown
-    const presetBtn = wrapper.find('button.flex.items-center.gap-1.rounded-md')
-    await presetBtn.trigger('click')
-
-    // Click Manage Presets
-    const managePresetsBtn = wrapper
+    // 1. Initial state: should be settings
+    const settingsBtn = wrapper
       .findAll('button')
-      .find((b) => b.text().includes('ai.managePresets'))
-    await managePresetsBtn?.trigger('click')
+      .find((b) => b.attributes('title') === 'ai.settings')
+    await settingsBtn?.trigger('click')
+    let dialog = wrapper.findComponent({ name: 'AISettingsDialog' })
+    expect(dialog.props('initialTab')).toBe('settings')
 
-    const settingsDialog = wrapper.findComponent({ name: 'AISettingsDialog' })
-    expect(settingsDialog.props('initialTab')).toBe('presets')
+    // 2. Simulate user switching tab in dialog to 'presets'
+    await dialog.vm.$emit('update:initialTab', 'presets')
+    await dialog.vm.$emit('update:modelValue', false) // close
+    await nextTick()
+
+    // 3. Reopen via settings button (no arguments)
+    await settingsBtn?.trigger('click')
+    dialog = wrapper.findComponent({ name: 'AISettingsDialog' })
+    expect(dialog.props('initialTab')).toBe('presets')
   })
 
-  it('should pass "settings" as initialTab when clicking settings button', async () => {
+  it('should still allow explicit tab override', async () => {
     const wrapper = mount(AiAssistantDrawer, {
       props: { modelValue: true },
+      global: {
+        stubs: {
+          ChatMessageList: true,
+          AISettingsDialog: {
+            name: 'AISettingsDialog',
+            template: '<div></div>',
+            props: ['modelValue', 'initialTab'],
+          },
+          ChevronDown: true,
+        },
+        mocks: {
+          t: (key: string) => key,
+        },
+      },
     })
 
-    const settingsBtn = wrapper.find('button[title="ai.settings"]')
-    await settingsBtn.trigger('click')
+    // Click "Manage Presets" which should override even if last was settings
+    const presetTrigger = wrapper
+      .findAll('button')
+      .find((b) => b.classes().some((c) => c.includes('bg-[#b8a785]')))
+    await presetTrigger?.trigger('click') // open dropdown
+    const manageBtn = wrapper.findAll('button').find((b) => b.text().includes('ai.managePresets'))
+    await manageBtn?.trigger('click')
 
-    const settingsDialog = wrapper.findComponent({ name: 'AISettingsDialog' })
-    expect(settingsDialog.props('initialTab')).toBe('settings')
+    const dialog = wrapper.findComponent({ name: 'AISettingsDialog' })
+    expect(dialog.props('initialTab')).toBe('presets')
   })
 })

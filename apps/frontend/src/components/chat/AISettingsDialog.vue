@@ -8,6 +8,10 @@ const props = defineProps<{
   initialTab?: 'settings' | 'presets'
 }>()
 
+const emit = defineEmits<{
+  (e: 'update:initialTab', tab: 'settings' | 'presets'): void
+}>()
+
 const modelValue = defineModel<boolean>({ required: true })
 
 const { t } = useI18n()
@@ -25,6 +29,11 @@ const {
 
 // 当前 Tab
 const activeTab = ref<'settings' | 'presets'>(props.initialTab || 'settings')
+
+// 监听内部 Tab 变化并通知外部
+watch(activeTab, (newTab) => {
+  emit('update:initialTab', newTab)
+})
 
 // 本地表单状态
 const formData = ref<AIConfig>({ ...config.value })
@@ -52,7 +61,9 @@ watch(
   [() => modelValue.value, () => props.initialTab],
   ([isOpen, tab]) => {
     if (isOpen) {
-      activeTab.value = tab || 'settings'
+      if (tab) {
+        activeTab.value = tab
+      }
       formData.value = { ...config.value }
       editingPreset.value = null
       isCreatingPreset.value = false

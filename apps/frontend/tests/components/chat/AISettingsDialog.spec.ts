@@ -106,6 +106,27 @@ describe('AISettingsDialog', () => {
     expect((wrapper.vm as any).activeTab).toBe('presets')
   })
 
+  it('should emit update:initialTab when activeTab changes', async () => {
+    const wrapper = mount(AISettingsDialog, {
+      props: {
+        modelValue: true,
+        initialTab: 'settings' as const,
+      },
+      global: {
+        stubs: {
+          Teleport: true,
+        },
+      },
+    })
+
+    await nextTick()
+    ;(wrapper.vm as any).activeTab = 'presets'
+    await nextTick()
+
+    expect(wrapper.emitted('update:initialTab')).toBeTruthy()
+    expect(wrapper.emitted('update:initialTab')![0]).toEqual(['presets'])
+  })
+
   it('should reset to initialTab whenever dialog is reopened', async () => {
     const wrapper = mount(AISettingsDialog, {
       props: {

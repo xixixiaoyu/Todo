@@ -89,7 +89,7 @@ const messageListRef = ref<InstanceType<typeof ChatMessageList>>()
 
 // 设置弹窗状态
 const showSettings = ref(false)
-const settingsTab = ref<'settings' | 'presets'>('settings')
+const lastActiveTab = ref<'settings' | 'presets'>('settings')
 
 // 历史记录面板状态
 const showHistory = ref(false)
@@ -165,8 +165,10 @@ const handleSelectPreset = (presetId: string) => {
 }
 
 // 打开设置并关闭预设下拉框
-const openSettings = (tab: 'settings' | 'presets' = 'settings') => {
-  settingsTab.value = tab
+const openSettings = (tab?: 'settings' | 'presets') => {
+  if (tab) {
+    lastActiveTab.value = tab
+  }
   showSettings.value = true
   showPresetDropdown.value = false
 }
@@ -340,7 +342,7 @@ defineOptions({
           <button
             class="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e4dd] bg-white text-[#8b8680] transition-colors hover:bg-[#f5f3ed] dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#6b6b6b] dark:hover:bg-[#3a3a3a]"
             :title="t('ai.settings')"
-            @click="openSettings('settings')"
+            @click="openSettings()"
           >
             <Settings2 :size="16" />
           </button>
@@ -436,7 +438,7 @@ defineOptions({
   </ResizableDrawer>
 
   <!-- 设置弹窗 -->
-  <AISettingsDialog v-model="showSettings" :initial-tab="settingsTab" />
+  <AISettingsDialog v-model="showSettings" v-model:initial-tab="lastActiveTab" />
 </template>
 
 <style scoped>
