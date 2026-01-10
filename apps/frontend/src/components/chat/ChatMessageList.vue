@@ -96,14 +96,52 @@ defineExpose({
     </div>
 
     <!-- 消息列表 -->
-    <div v-else class="space-y-2 py-4">
-      <ChatMessage
-        v-for="(msg, index) in messages"
-        :key="msg.id"
-        :message="msg"
-        :is-last="index === messages.length - 1"
-        @regenerate="emit('regenerate')"
-      />
+    <div v-else class="py-4">
+      <TransitionGroup name="message-list" tag="div" class="space-y-4">
+        <ChatMessage
+          v-for="(msg, index) in messages"
+          :key="msg.id"
+          :message="msg"
+          :is-last="index === messages.length - 1"
+          @regenerate="emit('regenerate')"
+        />
+      </TransitionGroup>
     </div>
   </div>
 </template>
+
+<style scoped>
+.message-list-enter-active,
+.message-list-leave-active {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.message-list-enter-from {
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
+}
+
+.message-list-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+/* 隐藏滚动条但保留功能 */
+.overflow-y-auto {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--ai-message-border)) transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar {
+  width: 5px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--ai-message-border));
+  border-radius: 20px;
+}
+</style>

@@ -54,7 +54,7 @@ async function updateRenderedContent() {
 
   if (props.message.content && !isUser.value) {
     tasks.push(
-      renderMarkdown(props.message.content).then((html) => {
+      renderMarkdown(props.message.content, props.message.isStreaming).then((html) => {
         renderedHtml.value = html
       }),
     )
@@ -64,7 +64,10 @@ async function updateRenderedContent() {
 
   if (props.message.thinkingContent && !isUser.value) {
     tasks.push(
-      renderMarkdown(props.message.thinkingContent).then((html) => {
+      renderMarkdown(
+        props.message.thinkingContent,
+        props.message.isStreaming && !props.message.content,
+      ).then((html) => {
         renderedThinkingHtml.value = html
       }),
     )
@@ -156,17 +159,26 @@ async function copyContent() {
 </script>
 
 <template>
-  <div class="group flex py-4" :class="isUser ? 'justify-end' : 'justify-start'">
+  <div
+    class="group flex py-4 animate-in fade-in slide-in-from-bottom-2 duration-300"
+    :class="isUser ? 'justify-end' : 'justify-start'"
+  >
     <!-- 消息内容 -->
     <div class="max-w-[85%] space-y-2">
       <!-- 思考过程（AI 消息） -->
       <div
         v-if="hasThinking && !isUser"
-        class="thinking-content group/thinking mb-2 overflow-hidden rounded-xl border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] transition-all duration-300"
+        class="thinking-content group/thinking mb-2 overflow-hidden rounded-xl border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] transition-all duration-300 shadow-sm hover:shadow-md"
       >
-        <div class="thinking-header flex items-center justify-between px-3 py-2">
+        <div
+          class="thinking-header flex items-center justify-between px-3 py-2 cursor-pointer select-none"
+          @click="isThinkingCollapsed = !isThinkingCollapsed"
+        >
           <h4 class="flex items-center gap-2">
-            <div class="ai-icon animate-pulse-custom text-[hsl(var(--primary-color))]">
+            <div
+              class="ai-icon text-[hsl(var(--primary-color))]"
+              :class="{ 'animate-pulse-custom': isStreaming && !hasContent }"
+            >
               <svg
                 width="14"
                 height="14"
@@ -233,10 +245,6 @@ async function copyContent() {
               >
                 {{ message.thinkingContent }}
               </div>
-              <span
-                v-if="isStreaming && !hasContent"
-                class="ml-0.5 inline-block h-4 w-1 animate-pulse bg-[hsl(var(--primary-color))] align-middle"
-              ></span>
             </div>
           </div>
         </div>
@@ -247,43 +255,46 @@ async function copyContent() {
         <!-- 加载状态：仅在既没有思考内容也没有正文内容时显示 -->
         <div
           v-if="!isUser && !hasContent && isStreaming && !hasThinking"
-          class="loading-container flex items-center gap-2 rounded-xl border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] px-3.5 py-2 shadow-sm"
+          class="loading-container flex flex-col gap-3 rounded-2xl border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] p-4 shadow-sm"
         >
-          <div class="ai-icon animate-pulse-custom text-[hsl(var(--primary-color))]">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"
-                fill="currentColor"
-                class="ai-star"
-              />
-              <path
-                d="M19 15L19.5 17L21.5 17.5L19.5 18L19 20L18.5 18L16.5 17.5L18.5 17L19 15Z"
-                fill="currentColor"
-                class="ai-sparkle animate-sparkle"
-              />
-              <path
-                d="M5 6L5.5 7.5L7 8L5.5 8.5L5 10L4.5 8.5L3 8L4.5 7.5L5 6Z"
-                fill="currentColor"
-                class="ai-sparkle animate-sparkle [animation-delay:0.6s]"
-              />
-            </svg>
+          <div class="flex items-center gap-2">
+            <div class="ai-icon animate-bounce text-[hsl(var(--primary-color))]">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"
+                  fill="currentColor"
+                  class="ai-star"
+                />
+              </svg>
+            </div>
+            <span class="shimmer-text font-medium">AI 正在思考中...</span>
           </div>
-          <span class="shimmer-text">正在生成响应...</span>
+          <div class="flex flex-col gap-2">
+            <div
+              class="h-2.5 w-[90%] animate-pulse rounded-full bg-[hsl(var(--ai-message-border))]"
+            ></div>
+            <div
+              class="h-2.5 w-[75%] animate-pulse rounded-full bg-[hsl(var(--ai-message-border))] delay-75"
+            ></div>
+            <div
+              class="h-2.5 w-[85%] animate-pulse rounded-full bg-[hsl(var(--ai-message-border))] delay-150"
+            ></div>
+          </div>
         </div>
 
         <!-- 正文气泡：用户消息或已有内容的 AI 消息 -->
         <div
           v-else-if="isUser || hasContent"
-          class="rounded-2xl px-4 py-3 shadow-sm"
+          class="relative rounded-2xl px-4 py-3 shadow-sm transition-all duration-300"
           :class="
             isUser
-              ? 'bg-[#c9b896] text-white'
+              ? 'bg-[#c9b896] text-white hover:bg-[#b8a785]'
               : 'border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] text-[hsl(var(--text-color))]'
           "
         >
@@ -301,7 +312,6 @@ async function copyContent() {
           <div v-else-if="hasContent" class="text-sm leading-relaxed">
             {{ message.content }}
           </div>
-          <span v-if="isStreaming && hasContent" class="inline-block animate-pulse">█</span>
 
           <!-- 操作按钮（AI 消息内部） -->
           <div
@@ -350,5 +360,41 @@ async function copyContent() {
   background-color: rgba(0, 0, 0, 0.05);
   padding: 0.1em 0.3em;
   border-radius: 3px;
+}
+
+.markdown-content :deep(.hljs) {
+  background: transparent;
+  padding: 0;
+}
+
+/* 消息入场动画 */
+@keyframes slide-in-bottom {
+  0% {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-in {
+  animation: slide-in-bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 思考过程中的波纹效果 */
+.thinking-header:hover .ai-icon {
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
+}
+
+/* 流式输出时，思考内容平滑收起 */
+.thinking-body {
+  mask-image: linear-gradient(to bottom, black calc(100% - 20px), transparent 100%);
+}
+
+.is-collapsed .thinking-body {
+  mask-image: none;
 }
 </style>

@@ -131,11 +131,11 @@
 @keyframes pulse-custom {
   0%,
   100% {
-    transform: scale(1);
+    transform: scale(1) rotate(0deg);
     opacity: 1;
   }
   50% {
-    transform: scale(1.1);
+    transform: scale(1.1) rotate(10deg);
     opacity: 0.8;
   }
 }
@@ -193,12 +193,12 @@
 @keyframes pulse {
   0%,
   100% {
-    transform: scale(1);
+    transform: scale(1) rotate(0deg);
     opacity: 1;
   }
   50% {
-    transform: scale(1.1);
-    opacity: 0.8;
+    transform: scale(1.1) rotate(5deg);
+    opacity: 0.9;
   }
 }
 
@@ -264,7 +264,7 @@
 
 /* 代码块容器 */
 .code-block-container {
-  @apply my-3 overflow-hidden rounded-lg border border-[#e8e4dd] bg-[#faf8f4];
+  @apply my-4 overflow-hidden rounded-xl border border-[#e8e4dd] bg-[#faf8f4] shadow-sm transition-all hover:shadow-md;
 }
 
 .dark .code-block-container {
@@ -272,15 +272,15 @@
 }
 
 .code-block-header {
-  @apply flex items-center justify-between border-b border-[#e8e4dd] bg-[#f5f3ed] px-4 py-2;
+  @apply flex items-center justify-between border-b border-[#e8e4dd] bg-[#f5f3ed]/80 px-4 py-2 backdrop-blur-sm;
 }
 
 .dark .code-block-header {
-  @apply border-[#3a3a3a] bg-[#2a2a2a];
+  @apply border-[#3a3a3a] bg-[#2a2a2a]/80;
 }
 
 .code-language {
-  @apply text-xs font-medium text-[#6b5c4d];
+  @apply flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#6b5c4d];
 }
 
 .dark .code-language {
@@ -288,11 +288,15 @@
 }
 
 .copy-button {
-  @apply rounded-md px-2 py-1 text-xs text-[#8b8680] transition-colors hover:bg-[#e8e4dd] hover:text-[#6b5c4d];
+  @apply flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-[#8b8680] transition-all hover:bg-[#e8e4dd] hover:text-[#6b5c4d] active:scale-95;
 }
 
 .copy-button.copied {
-  @apply text-green-600;
+  @apply bg-green-50 text-green-600;
+}
+
+.dark .copy-button.copied {
+  @apply bg-green-900/20 text-green-400;
 }
 
 .dark .copy-button {
@@ -336,9 +340,22 @@
   @apply text-[#c9b896] underline decoration-[#c9b896]/30 underline-offset-2 transition-colors hover:text-[#b8a785] hover:decoration-[#b8a785]/50;
 }
 
+/* 引用块 */
+.markdown-blockquote {
+  @apply my-4 border-l-4 border-[#c9b896] bg-[#faf8f4] py-3 pl-5 pr-3 italic text-[#6b5c4d] rounded-r-lg shadow-sm;
+}
+
+.dark .markdown-blockquote {
+  @apply bg-[#1e1e1e] text-[#a0a0a0];
+}
+
 /* 表格 */
 .table-container {
-  @apply my-4 overflow-x-auto;
+  @apply my-5 overflow-x-auto rounded-xl border border-[#e8e4dd] bg-white shadow-sm;
+}
+
+.dark .table-container {
+  @apply border-[#3a3a3a] bg-[#1e1e1e];
 }
 
 .markdown-table {
@@ -347,11 +364,19 @@
 
 .markdown-table th,
 .markdown-table td {
-  @apply border border-[#e8e4dd] px-4 py-2 text-left;
+  @apply border-b border-[#e8e4dd] px-5 py-3 text-left transition-colors;
 }
 
 .markdown-table th {
-  @apply bg-[#f5f3ed] font-medium text-[#6b5c4d];
+  @apply bg-[#f5f3ed] font-bold text-[#6b5c4d] first:rounded-tl-lg last:rounded-tr-lg;
+}
+
+.markdown-table tr:last-child td {
+  @apply border-b-0;
+}
+
+.markdown-table tr:hover td {
+  @apply bg-[#fcfbf9];
 }
 
 .dark .markdown-table th,
@@ -363,13 +388,8 @@
   @apply bg-[#2a2a2a] text-[#c0c0c0];
 }
 
-/* 引用块 */
-.markdown-blockquote {
-  @apply my-4 border-l-4 border-[#c9b896] bg-[#faf8f4] py-2 pl-4 pr-2 italic text-[#6b5c4d];
-}
-
-.dark .markdown-blockquote {
-  @apply bg-[#1e1e1e] text-[#a0a0a0];
+.dark .markdown-table tr:hover td {
+  @apply bg-[#252525];
 }
 
 /* Markdown 内容样式 */
@@ -508,6 +528,11 @@
 /* Markdown 错误 */
 .markdown-error {
   @apply text-red-500;
+}
+
+/* 打字机光标 */
+.typing-cursor {
+  @apply ml-1 inline-block h-4 w-1.5 animate-pulse rounded-sm bg-[hsl(var(--primary-color))] align-middle;
 }
 
 /* highlight.js 主题覆盖 */

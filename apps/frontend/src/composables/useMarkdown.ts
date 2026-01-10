@@ -526,7 +526,7 @@ export function useMarkdown() {
   /**
    * 渲染 Markdown
    */
-  async function renderMarkdown(markdown: string): Promise<string> {
+  async function renderMarkdown(markdown: string, isStreaming = false): Promise<string> {
     if (!markdown) return ''
 
     isRendering.value = true
@@ -539,9 +539,19 @@ export function useMarkdown() {
       processedMarkdown = await preprocessMermaidDiagrams(processedMarkdown)
 
       // 3. 使用 marked 解析
-      const html = await marked.parse(processedMarkdown)
+      let html = await marked.parse(processedMarkdown)
 
-      // 4. 使用 DOMPurify 清理
+      // 4. 如果正在流式输出，添加光标
+      if (isStreaming) {
+        // 尝试将光标插入到最后一个段落内，避免换行
+        if (html.endsWith('</p>')) {
+          html = html.replace(/<\/p>$/, '<span class="typing-cursor"></span></p>')
+        } else {
+          html += '<span class="typing-cursor"></span>'
+        }
+      }
+
+      // 5. 使用 DOMPurify 清理
       const cleanHtml = DOMPurify.sanitize(html, {
         ALLOWED_TAGS: [
           'h1',
@@ -590,6 +600,7 @@ export function useMarkdown() {
           'marker',
           'style',
           'foreignObject',
+          'use',
         ],
         ALLOWED_ATTR: [
           'href',
@@ -611,6 +622,13 @@ export function useMarkdown() {
           'fill',
           'stroke',
           'stroke-width',
+          'stroke-dasharray',
+          'stroke-linecap',
+          'stroke-linejoin',
+          'stroke-miterlimit',
+          'stroke-opacity',
+          'fill-opacity',
+          'opacity',
           'transform',
           'x',
           'y',
@@ -639,6 +657,8 @@ export function useMarkdown() {
           'markerHeight',
           'orient',
           'markerUnits',
+          'xlink:href',
+          'xmlns:xlink',
         ],
         ADD_TAGS: ['foreignObject'],
         ADD_ATTR: ['xmlns:xlink', 'xlink:href'],
