@@ -314,19 +314,19 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
 
           <button
             class="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e4dd] bg-white text-[#8b8680] transition-colors hover:bg-[#f5f3ed] dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#6b6b6b] dark:hover:bg-[#3a3a3a]"
-            title="设置"
-            @click="showSettings = true"
-          >
-            <Settings2 :size="16" />
-          </button>
-          <button
-            class="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e4dd] bg-white text-[#8b8680] transition-colors hover:bg-[#f5f3ed] dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#6b6b6b] dark:hover:bg-[#3a3a3a]"
             title="历史记录"
             :class="{ 'cursor-not-allowed opacity-50': isGenerating }"
             :disabled="isGenerating"
             @click="openHistory"
           >
             <History :size="16" />
+          </button>
+          <button
+            class="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e4dd] bg-white text-[#8b8680] transition-colors hover:bg-[#f5f3ed] dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#6b6b6b] dark:hover:bg-[#3a3a3a]"
+            title="设置"
+            @click="showSettings = true"
+          >
+            <Settings2 :size="16" />
           </button>
           <button
             class="flex items-center gap-1 rounded-full border px-3 py-1.5 transition-colors"
