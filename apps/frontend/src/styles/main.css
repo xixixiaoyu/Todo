@@ -412,22 +412,26 @@
 }
 
 /* Markdown 内容样式 */
+.markdown-content {
+  @apply text-sm leading-relaxed break-words;
+}
+
 .markdown-content h1 {
-  @apply mb-4 mt-6 text-2xl font-bold text-[#3a3a3a];
+  @apply mb-4 mt-8 text-2xl font-bold text-[#3a3a3a] border-b border-[#e8e4dd] pb-2;
 }
 
 .markdown-content h2 {
-  @apply mb-3 mt-5 text-xl font-bold text-[#3a3a3a];
+  @apply mb-4 mt-7 text-xl font-bold text-[#3a3a3a] border-b border-[#e8e4dd]/50 pb-1;
 }
 
 .markdown-content h3 {
-  @apply mb-2 mt-4 text-lg font-semibold text-[#3a3a3a];
+  @apply mb-3 mt-6 text-lg font-semibold text-[#3a3a3a];
 }
 
 .markdown-content h4,
 .markdown-content h5,
 .markdown-content h6 {
-  @apply mb-2 mt-3 font-semibold text-[#3a3a3a];
+  @apply mb-2 mt-5 font-semibold text-[#3a3a3a];
 }
 
 .dark .markdown-content h1,
@@ -436,32 +440,37 @@
 .dark .markdown-content h4,
 .dark .markdown-content h5,
 .dark .markdown-content h6 {
-  @apply text-[#f0f0f0];
+  @apply text-[#f0f0f0] border-[#3a3a3a];
 }
 
 .markdown-content p {
-  @apply my-2 leading-relaxed;
+  @apply my-3 leading-relaxed;
 }
 
 .markdown-content ul,
 .markdown-content ol {
-  @apply my-2 pl-6;
+  @apply my-3 pl-6 space-y-1;
 }
 
 .markdown-content ul {
-  @apply list-disc;
+  @apply list-disc marker:text-[#c9b896];
 }
 
 .markdown-content ol {
-  @apply list-decimal;
+  @apply list-decimal marker:text-[#c9b896] marker:font-medium;
 }
 
 .markdown-content li {
+  @apply pl-1;
+}
+
+.markdown-content li > ul,
+.markdown-content li > ol {
   @apply my-1;
 }
 
 .markdown-content hr {
-  @apply my-6 border-[#e8e4dd];
+  @apply my-8 border-[#e8e4dd];
 }
 
 .dark .markdown-content hr {

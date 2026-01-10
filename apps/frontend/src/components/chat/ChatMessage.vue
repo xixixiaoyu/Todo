@@ -83,6 +83,7 @@ const isCopied = ref(false)
 
 // 思考内容容器引用
 const thinkingContentRef = ref<HTMLDivElement>()
+const messageRef = ref<HTMLDivElement>()
 
 // 渲染后的 HTML 内容
 const renderedHtml = ref('')
@@ -128,19 +129,24 @@ function injectMermaidSvgs() {
   const svgMap = getMermaidSvgMap()
   if (svgMap.size === 0) return
 
-  svgMap.forEach((fullHtml, placeholderId) => {
-    const placeholder = document.getElementById(placeholderId)
-    if (placeholder && placeholder.parentNode) {
-      const tempWrapper = document.createElement('div')
-      tempWrapper.innerHTML = fullHtml
-      const containerElement = tempWrapper.querySelector('.mermaid-container')
-      if (containerElement) {
-        placeholder.parentNode.replaceChild(containerElement, placeholder)
-      }
-    }
-  })
+  nextTick(() => {
+    svgMap.forEach((fullHtml, placeholderId) => {
+      // 优先在当前组件范围内查找占位符，避免全局冲突
+      const container = messageRef.value
+      const placeholder =
+        container?.querySelector(`#${placeholderId}`) || document.getElementById(placeholderId)
 
-  svgMap.clear()
+      if (placeholder && placeholder.parentNode) {
+        const tempWrapper = document.createElement('div')
+        tempWrapper.innerHTML = fullHtml
+        const containerElement = tempWrapper.querySelector('.mermaid-container')
+        if (containerElement) {
+          placeholder.parentNode.replaceChild(containerElement, placeholder)
+        }
+      }
+    })
+    svgMap.clear()
+  })
 }
 
 // 渲染 Markdown 内容
@@ -223,7 +229,7 @@ async function copyContent() {
 </script>
 
 <template>
-  <div class="group flex py-4" :class="isUser ? 'justify-end' : 'justify-start'">
+  <div ref="messageRef" class="group flex py-4" :class="isUser ? 'justify-end' : 'justify-start'">
     <!-- 消息内容 -->
     <div class="max-w-[85%] space-y-2">
       <!-- 思考过程（AI 消息） -->

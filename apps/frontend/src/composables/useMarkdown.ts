@@ -1,8 +1,13 @@
-import { ref } from 'vue'
-import { marked, type Renderer, type Tokens } from 'marked'
+import { ref, watch } from 'vue'
+import MarkdownIt from 'markdown-it'
+import type { Options } from 'markdown-it'
+import type Token from 'markdown-it/lib/token.mjs'
+import type Renderer from 'markdown-it/lib/renderer.mjs'
+import mdKatex from 'markdown-it-katex'
+import mdHighlight from 'markdown-it-highlightjs'
 import hljs from 'highlight.js'
-import katex from 'katex'
 import DOMPurify from 'dompurify'
+import { useTheme } from './useTheme'
 
 // Mermaid 单例和加载状态
 let mermaid: typeof import('mermaid').default | null = null
@@ -10,20 +15,19 @@ let mermaidLoadPromise: Promise<typeof import('mermaid').default> | null = null
 let mermaidInitialized = false
 let currentMermaidTheme: 'default' | 'dark' = 'default'
 
-// 缓存
+// 缓存与状态
 const mermaidCodeCache = new Map<string, string>()
 const mermaidSvgMap = new Map<string, string>()
 let mermaidIdCounter = 0
 
-// 拖拽状态
-let isDragging = false
-let dragTarget: HTMLElement | null = null
-let dragStartX = 0
-let dragStartY = 0
-let currentTranslateX = 0
-let currentTranslateY = 0
-const pendingTransform = { x: 0, y: 0 }
-let animationFrameId: number | null = null
+interface MermaidQueueItem {
+  id: string
+  code: string
+}
+
+interface MarkdownEnv {
+  mermaidQueue?: MermaidQueueItem[]
+}
 
 /**
  * 获取语言显示名称
@@ -93,19 +97,19 @@ async function loadMermaid() {
   if (mermaidLoadPromise) return await mermaidLoadPromise
 
   mermaidLoadPromise = (async () => {
-    // 设置全局变量解决 debug 模块问题
     if (typeof window !== 'undefined') {
-      ;(window as unknown as Record<string, unknown>).process = {
+      // 这里的类型断言是为了解决 mermaid 内部依赖 process 的问题
+      const win = window as unknown as { process: Record<string, unknown> }
+      win.process = {
         browser: true,
         env: { DEBUG: '', NODE_ENV: 'production' },
         platform: 'browser',
         version: 'v18.0.0',
       }
     }
-
     const mermaidModule = await import('mermaid')
-    mermaid = mermaidModule.default || mermaidModule
-    return mermaid
+    mermaid = mermaidModule.default || (mermaidModule as any).default || mermaidModule
+    return mermaid!
   })()
 
   return await mermaidLoadPromise
@@ -116,11 +120,7 @@ async function loadMermaid() {
  */
 async function initializeMermaid(theme: 'default' | 'dark' = 'default') {
   const mermaidInstance = await loadMermaid()
-
-  // 如果已初始化且主题相同，跳过
-  if (mermaidInitialized && currentMermaidTheme === theme) {
-    return mermaidInstance
-  }
+  if (mermaidInitialized && currentMermaidTheme === theme) return mermaidInstance
 
   const fontStack = '"LXGW WenKai", system-ui, -apple-system, sans-serif'
   const isDark = theme === 'dark'
@@ -131,30 +131,7 @@ async function initializeMermaid(theme: 'default' | 'dark' = 'default') {
     securityLevel: 'loose',
     fontFamily: fontStack,
     fontSize: 14,
-    flowchart: {
-      useMaxWidth: false,
-      htmlLabels: true,
-      curve: 'linear',
-      padding: 20,
-      nodeSpacing: 60,
-      rankSpacing: 80,
-    },
-    sequence: {
-      useMaxWidth: false,
-      diagramMarginX: 20,
-      diagramMarginY: 20,
-      actorMargin: 60,
-      width: 180,
-      height: 50,
-    },
-    gantt: {
-      useMaxWidth: false,
-      barHeight: 24,
-      barGap: 6,
-      topPadding: 40,
-      leftPadding: 80,
-      fontSize: 14,
-    },
+    flowchart: { useMaxWidth: false, htmlLabels: true, curve: 'linear', padding: 20 },
     themeVariables: isDark
       ? {
           primaryColor: '#c9b896',
@@ -162,14 +139,8 @@ async function initializeMermaid(theme: 'default' | 'dark' = 'default') {
           primaryBorderColor: '#8b8680',
           lineColor: '#8b8680',
           secondaryColor: '#3a3a3a',
-          tertiaryColor: '#2a2a2a',
           background: '#1a1a1a',
           mainBkg: '#2a2a2a',
-          nodeBorder: '#8b8680',
-          clusterBkg: '#2a2a2a',
-          clusterBorder: '#8b8680',
-          titleColor: '#f5f5f5',
-          edgeLabelBackground: '#2a2a2a',
         }
       : {
           primaryColor: '#c9b896',
@@ -177,14 +148,8 @@ async function initializeMermaid(theme: 'default' | 'dark' = 'default') {
           primaryBorderColor: '#c9b896',
           lineColor: '#8b8680',
           secondaryColor: '#faf8f4',
-          tertiaryColor: '#f5f3ed',
           background: '#ffffff',
           mainBkg: '#faf8f4',
-          nodeBorder: '#c9b896',
-          clusterBkg: '#faf8f4',
-          clusterBorder: '#c9b896',
-          titleColor: '#3a3a3a',
-          edgeLabelBackground: '#faf8f4',
         },
   })
 
@@ -194,356 +159,332 @@ async function initializeMermaid(theme: 'default' | 'dark' = 'default') {
 }
 
 /**
- * 修复 Mermaid 语法问题
+ * 创建并配置 MarkdownIt 单例
  */
-function fixMermaidSyntax(code: string): string {
-  let fixed = code.replace(/^\s*[\r\n]+/, '').replace(/[\r\n]+\s*$/, '')
+const md = new MarkdownIt({
+  html: true,
+  linkify: true,
+  typographer: true,
+  breaks: true,
+})
 
-  // 修复常见问题
-  fixed = fixed
-    .replace(/-->/g, ' --> ')
-    .replace(/\s+-->\s+/g, ' --> ')
-    .replace(/(\w)\s*\[\s*/g, '$1[')
-    .replace(/\s*\]\s*(\w)/g, ']$1')
+// 使用插件
+md.use(mdKatex, {
+  throwOnError: false,
+  errorColor: 'hsl(var(--destructive))',
+})
 
-  return fixed
+md.use(mdHighlight, {
+  hljs,
+  inline: false,
+})
+
+// 自定义链接渲染：新窗口打开并添加类名
+const defaultLinkRender =
+  md.renderer.rules.link_open ||
+  ((tokens: Token[], idx: number, options: Options, _env: MarkdownEnv, self: Renderer) =>
+    self.renderToken(tokens, idx, options))
+
+md.renderer.rules.link_open = (tokens, idx, options, env: MarkdownEnv, self) => {
+  tokens[idx].attrPush(['target', '_blank'])
+  tokens[idx].attrPush(['rel', 'noopener noreferrer'])
+  tokens[idx].attrPush(['class', 'markdown-link'])
+  return defaultLinkRender(tokens, idx, options, env, self)
+}
+
+// 自定义代码块 (Fence)：处理 Mermaid 和 代码块头
+const defaultFence = md.renderer.rules.fence!
+md.renderer.rules.fence = (tokens, idx, options, env: MarkdownEnv, self) => {
+  const token = tokens[idx]
+  const info = token.info ? token.info.trim() : ''
+  const lang = info.split(/\s+/g)[0].toLowerCase()
+  const content = token.content
+
+  // Mermaid 特殊处理
+  if (lang === 'mermaid') {
+    const placeholderId = `mermaid-placeholder-${++mermaidIdCounter}`
+    env.mermaidQueue = env.mermaidQueue || []
+    env.mermaidQueue.push({ id: placeholderId, code: content.trim() })
+
+    return `<div id="${placeholderId}" class="mermaid-container" aria-busy="true"><div class="mermaid-diagram"><div class="mermaid-loading">正在渲染图表...</div></div></div>`
+  }
+
+  // 普通代码块渲染
+  const displayLanguage = getLanguageDisplayName(lang || 'text')
+  const highlighted = defaultFence(tokens, idx, options, env, self)
+
+  return `
+    <div class="code-block-container">
+      <div class="code-block-header">
+        <span class="code-language">${displayLanguage}</span>
+        <button class="copy-button" data-code="${encodeURIComponent(content)}">复制</button>
+      </div>
+      <div class="code-content">${highlighted}</div>
+    </div>
+  `
+}
+
+// 表格样式增强
+md.renderer.rules.table_open = () => '<div class="table-container"><table class="markdown-table">'
+md.renderer.rules.table_close = () => '</table></div>'
+
+/**
+ * DOMPurify 安全配置
+ */
+const PURIFY_CONFIG = {
+  ALLOWED_TAGS: [
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'p',
+    'br',
+    'hr',
+    'ul',
+    'ol',
+    'li',
+    'blockquote',
+    'pre',
+    'code',
+    'table',
+    'thead',
+    'tbody',
+    'tr',
+    'th',
+    'td',
+    'a',
+    'strong',
+    'em',
+    'del',
+    'ins',
+    'img',
+    'figure',
+    'figcaption',
+    'div',
+    'span',
+    'button',
+    'svg',
+    'path',
+    'g',
+    'rect',
+    'circle',
+    'line',
+    'polygon',
+    'polyline',
+    'text',
+    'tspan',
+    'defs',
+    'marker',
+    'style',
+    'foreignObject',
+    'use',
+    'math',
+    'annotation',
+    'semantics',
+    'mrow',
+    'ms',
+    'mstyle',
+    'mover',
+    'munder',
+    'munderover',
+    'msup',
+    'msub',
+    'msubsup',
+    'mfrac',
+    'msqrt',
+    'mroot',
+    'mfenced',
+    'menclose',
+    'mphantom',
+    'merror',
+    'mpadded',
+    'mspace',
+    'mtable',
+    'mtr',
+    'mtd',
+    'maligngroup',
+    'malignmark',
+    'mi',
+    'mn',
+    'mo',
+  ],
+  ALLOWED_ATTR: [
+    'href',
+    'title',
+    'target',
+    'rel',
+    'src',
+    'alt',
+    'width',
+    'height',
+    'class',
+    'id',
+    'style',
+    'data-code',
+    'data-action',
+    'data-raw',
+    'viewBox',
+    'xmlns',
+    'd',
+    'fill',
+    'stroke',
+    'stroke-width',
+    'stroke-dasharray',
+    'stroke-linecap',
+    'stroke-linejoin',
+    'stroke-miterlimit',
+    'stroke-opacity',
+    'fill-opacity',
+    'opacity',
+    'transform',
+    'x',
+    'y',
+    'x1',
+    'y1',
+    'x2',
+    'y2',
+    'cx',
+    'cy',
+    'r',
+    'rx',
+    'ry',
+    'points',
+    'preserveAspectRatio',
+    'font-size',
+    'font-family',
+    'text-anchor',
+    'dominant-baseline',
+    'aria-busy',
+    'aria-label',
+    'aria-hidden',
+    'marker-end',
+    'marker-start',
+    'refX',
+    'refY',
+    'markerWidth',
+    'markerHeight',
+    'orient',
+    'markerUnits',
+    'xlink:href',
+    'xmlns:xlink',
+  ],
+  // 额外允许的 SVG 和 MathML 标签（补丁）
+  ADD_TAGS: [
+    'foreignObject',
+    'math',
+    'annotation',
+    'semantics',
+    'mrow',
+    'mi',
+    'mn',
+    'mo',
+    'msup',
+    'msub',
+  ],
+  // 额外允许的属性（补丁）
+  ADD_ATTR: ['xmlns:xlink', 'xlink:href', 'data-raw', 'data-code', 'aria-busy'],
 }
 
 /**
- * 预处理 LaTeX 数学公式
+ * 预处理数学公式：保护转义美元符号并规范化块公式
  */
-function preprocessMathFormulas(markdown: string): string {
-  // 保护代码块
-  const codeBlocks: string[] = []
-  let processed = markdown.replace(/```[\s\S]*?```|`[^`]+`/g, (match) => {
-    codeBlocks.push(match)
-    return `__CODE_BLOCK_${codeBlocks.length - 1}__`
-  })
+function preprocessMathFormulas(text: string): string {
+  if (!text) return ''
 
-  // 块级公式 $$...$$
-  processed = processed.replace(/\$\$([^$]+)\$\$/g, (_, formula) => {
-    try {
-      const html = katex.renderToString(formula.trim(), {
-        displayMode: true,
-        throwOnError: false,
-        trust: true,
-      })
-      return `<div class="math-block">${html}</div>`
-    } catch (e) {
-      console.warn('KaTeX block error:', e)
-      return `<div class="math-block math-error">公式渲染失败: ${formula}</div>`
-    }
-  })
+  // 1. 保护转义的美元符号 \$ -> __ESC_DOLLAR__
+  let processed = text.replace(/\\(\$)/g, '__ESC_DOLLAR__')
 
-  // 行内公式 $...$
-  processed = processed.replace(/\$([^$\n]+)\$/g, (_, formula) => {
-    try {
-      const html = katex.renderToString(formula.trim(), {
-        displayMode: false,
-        throwOnError: false,
-        trust: true,
-      })
-      return `<span class="math-inline">${html}</span>`
-    } catch (e) {
-      console.warn('KaTeX inline error:', e)
-      return `<span class="math-inline math-error">${formula}</span>`
-    }
-  })
-
-  // 恢复代码块
-  processed = processed.replace(/__CODE_BLOCK_(\d+)__/g, (_, index) => {
-    return codeBlocks[parseInt(index)]
+  // 2. 规范化块级公式 $$...$$
+  // 确保 $$ 独占一行或周围有换行，防止解析失败
+  processed = processed.replace(/\n?\s*\$\$\s*([\s\S]+?)\s*\$\$\s*\n?/g, (match, formula) => {
+    return `\n\n$$\n${formula.trim()}\n$$\n\n`
   })
 
   return processed
 }
 
 /**
- * 预处理 Mermaid 图表
- */
-async function preprocessMermaidDiagrams(markdown: string): Promise<string> {
-  const mermaidRegex = /```mermaid\n([\s\S]*?)\n```/g
-  const matches = [...markdown.matchAll(mermaidRegex)]
-
-  if (matches.length === 0) return markdown
-
-  const currentTheme = getCurrentTheme()
-  await initializeMermaid(currentTheme)
-
-  let processedMarkdown = markdown
-
-  for (const match of matches) {
-    let diagramCode = match[1]
-    diagramCode = fixMermaidSyntax(diagramCode)
-    const normalizedCode = diagramCode.trim()
-
-    // 生成缓存键
-    const cacheKey = `${currentTheme}:${stableHash(normalizedCode)}`
-
-    let fullHtml = mermaidCodeCache.get(cacheKey)
-
-    if (!fullHtml) {
-      try {
-        const mermaidInstance = await loadMermaid()
-        const id = `mermaid-${++mermaidIdCounter}`
-        const { svg } = await mermaidInstance.render(id, normalizedCode)
-
-        // 优化 SVG
-        const optimizedSvg = svg
-          .replace('<svg', '<svg preserveAspectRatio="xMidYMid meet"')
-          .replace(/style="[^"]*background[^"]*"/gi, 'style="background: transparent"')
-
-        fullHtml = `<div class="mermaid-container">
-          <div class="mermaid-zoom-controls">
-            <button class="mermaid-zoom-btn" data-action="in" title="放大">+</button>
-            <button class="mermaid-zoom-btn" data-action="out" title="缩小">−</button>
-            <button class="mermaid-zoom-btn" data-action="reset" title="重置">⌂</button>
-          </div>
-          <div class="mermaid-diagram">${optimizedSvg}</div>
-        </div>`
-
-        mermaidCodeCache.set(cacheKey, fullHtml)
-      } catch (error) {
-        console.error('Mermaid render error:', error)
-        fullHtml = `<div class="mermaid-error">图表渲染失败: ${error}</div>`
-      }
-    }
-
-    // 生成占位符
-    const placeholderId = `mermaid-placeholder-${++mermaidIdCounter}`
-    mermaidSvgMap.set(placeholderId, fullHtml)
-
-    const placeholderHtml = `
-      <div id="${placeholderId}" class="mermaid-container" aria-busy="true">
-        <div class="mermaid-diagram">
-          <div class="mermaid-loading">Mermaid 图表加载中…</div>
-        </div>
-      </div>
-    `
-
-    processedMarkdown = processedMarkdown.replace(match[0], placeholderHtml)
-  }
-
-  return processedMarkdown
-}
-
-/**
- * 更新拖拽变换
- */
-function updateDragTransform() {
-  if (dragTarget) {
-    const diagram = dragTarget.querySelector('.mermaid-diagram') as HTMLElement
-    if (diagram) {
-      diagram.style.setProperty('--mermaid-translate-x', `${pendingTransform.x}px`)
-      diagram.style.setProperty('--mermaid-translate-y', `${pendingTransform.y}px`)
-    }
-  }
-  animationFrameId = null
-}
-
-// 全局事件监听（只注册一次）
-if (typeof window !== 'undefined') {
-  // 缩放按钮点击
-  document.addEventListener('click', (event) => {
-    const button = (event.target as HTMLElement).closest('.mermaid-zoom-btn')
-    if (!button) return
-
-    const action = button.getAttribute('data-action')
-    const container = button.closest('.mermaid-container') as HTMLElement
-    if (!container) return
-
-    const diagram = container.querySelector('.mermaid-diagram') as HTMLElement
-    if (!diagram) return
-
-    const currentScale = parseFloat(diagram.style.getPropertyValue('--mermaid-scale') || '1')
-
-    let newScale = currentScale
-    switch (action) {
-      case 'in':
-        newScale = Math.min(currentScale * 1.2, 5.0)
-        break
-      case 'out':
-        newScale = Math.max(currentScale / 1.2, 0.2)
-        break
-      case 'reset':
-        newScale = 1
-        diagram.style.setProperty('--mermaid-translate-x', '0px')
-        diagram.style.setProperty('--mermaid-translate-y', '0px')
-        break
-    }
-
-    diagram.style.setProperty('--mermaid-scale', newScale.toString())
-  })
-
-  // 代码复制按钮
-  document.addEventListener('click', (event) => {
-    const button = (event.target as HTMLElement).closest('.copy-button')
-    if (!button) return
-
-    const code = button.getAttribute('data-code')
-    if (!code) return
-
-    void navigator.clipboard.writeText(decodeURIComponent(code)).then(() => {
-      const originalText = button.textContent
-      button.textContent = '已复制!'
-      button.classList.add('copied')
-      setTimeout(() => {
-        button.textContent = originalText
-        button.classList.remove('copied')
-      }, 2000)
-    })
-  })
-
-  // 拖拽功能
-  document.addEventListener('mousedown', (event) => {
-    const svgElement = (event.target as HTMLElement).closest('svg')
-    const container = (event.target as HTMLElement).closest('.mermaid-container')
-    if (svgElement && container) {
-      isDragging = true
-      dragTarget = container as HTMLElement
-      dragStartX = event.clientX
-      dragStartY = event.clientY
-
-      const diagram = container.querySelector('.mermaid-diagram') as HTMLElement
-      if (diagram) {
-        const translateX = diagram.style.getPropertyValue('--mermaid-translate-x')
-        const translateY = diagram.style.getPropertyValue('--mermaid-translate-y')
-        currentTranslateX = parseFloat(translateX) || 0
-        currentTranslateY = parseFloat(translateY) || 0
-      }
-
-      event.preventDefault()
-    }
-  })
-
-  document.addEventListener('mousemove', (event) => {
-    if (!isDragging || !dragTarget) return
-
-    const deltaX = event.clientX - dragStartX
-    const deltaY = event.clientY - dragStartY
-
-    pendingTransform.x = currentTranslateX + deltaX
-    pendingTransform.y = currentTranslateY + deltaY
-
-    if (!animationFrameId) {
-      animationFrameId = requestAnimationFrame(updateDragTransform)
-    }
-  })
-
-  document.addEventListener('mouseup', () => {
-    if (isDragging && dragTarget) {
-      const diagram = dragTarget.querySelector('.mermaid-diagram') as HTMLElement
-      if (diagram) {
-        currentTranslateX = pendingTransform.x
-        currentTranslateY = pendingTransform.y
-      }
-    }
-    isDragging = false
-    dragTarget = null
-  })
-}
-
-/**
- * 创建自定义渲染器
- */
-function createRenderer(): Renderer {
-  const renderer = new marked.Renderer()
-
-  // 代码块渲染
-  renderer.code = function ({ text, lang }: Tokens.Code) {
-    const language = lang || 'text'
-    const displayLanguage = getLanguageDisplayName(language)
-
-    let highlightedCode: string
-    if (lang && hljs.getLanguage(lang)) {
-      highlightedCode = hljs.highlight(text, { language: lang }).value
-    } else {
-      highlightedCode = hljs.highlightAuto(text).value
-    }
-
-    return `
-      <div class="code-block-container">
-        <div class="code-block-header">
-          <span class="code-language">${displayLanguage}</span>
-          <button class="copy-button" data-code="${encodeURIComponent(text)}">复制</button>
-        </div>
-        <pre class="code-content"><code class="hljs language-${language}">${highlightedCode}</code></pre>
-      </div>
-    `
-  }
-
-  // 行内代码
-  renderer.codespan = function ({ text }: Tokens.Codespan) {
-    return `<code class="inline-code">${text}</code>`
-  }
-
-  // 链接（新窗口打开）
-  renderer.link = function ({ href, title, text }: Tokens.Link) {
-    const titleAttr = title ? ` title="${title}"` : ''
-    return `<a href="${href}"${titleAttr} target="_blank" rel="noopener noreferrer" class="markdown-link">${text}</a>`
-  }
-
-  // 表格
-  renderer.table = function ({ header, rows }: Tokens.Table) {
-    const headerHtml = header.map((cell) => `<th>${cell.text}</th>`).join('')
-    const bodyHtml = rows
-      .map((row) => `<tr>${row.map((cell) => `<td>${cell.text}</td>`).join('')}</tr>`)
-      .join('')
-
-    return `
-      <div class="table-container">
-        <table class="markdown-table">
-          <thead><tr>${headerHtml}</tr></thead>
-          <tbody>${bodyHtml}</tbody>
-        </table>
-      </div>
-    `
-  }
-
-  // 引用块
-  renderer.blockquote = function ({ text }: Tokens.Blockquote) {
-    return `<blockquote class="markdown-blockquote">${text}</blockquote>`
-  }
-
-  return renderer
-}
-
-/**
- * Markdown 渲染 Composable
+ * 渲染 Markdown 核心方法
  */
 export function useMarkdown() {
   const isRendering = ref(false)
+  const { theme } = useTheme()
 
-  const renderer = createRenderer()
-
-  // 配置 marked
-  marked.setOptions({
-    renderer,
-    gfm: true,
-    breaks: true,
+  // 监听主题变化，清理缓存
+  watch(theme, () => {
+    mermaidCodeCache.clear()
+    mermaidSvgMap.clear()
   })
 
   /**
-   * 渲染 Markdown
+   * 异步渲染 Mermaid 队列
+   */
+  async function processMermaidQueue(queue: MermaidQueueItem[]) {
+    if (!queue || queue.length === 0) return
+
+    const currentTheme = getCurrentTheme()
+    await initializeMermaid(currentTheme)
+    const mermaidInstance = await loadMermaid()
+
+    for (const item of queue) {
+      const cacheKey = `${currentTheme}:${stableHash(item.code)}`
+      let fullHtml = mermaidCodeCache.get(cacheKey)
+
+      if (!fullHtml) {
+        try {
+          const id = `mermaid-${++mermaidIdCounter}`
+          const { svg } = await mermaidInstance.render(id, item.code)
+          const optimizedSvg = svg
+            .replace('<svg', '<svg preserveAspectRatio="xMidYMid meet"')
+            .replace(/style="[^"]*background[^"]*"/gi, 'style="background: transparent"')
+
+          fullHtml = `
+            <div class="mermaid-container" data-raw="${encodeURIComponent(item.code)}">
+              <div class="mermaid-zoom-controls">
+                <button class="mermaid-zoom-btn" data-action="in" title="放大">+</button>
+                <button class="mermaid-zoom-btn" data-action="out" title="缩小">−</button>
+                <button class="mermaid-zoom-btn" data-action="reset" title="重置">⌂</button>
+              </div>
+              <div class="mermaid-diagram">${optimizedSvg}</div>
+            </div>
+          `
+          mermaidCodeCache.set(cacheKey, fullHtml)
+        } catch (e) {
+          console.error('Mermaid render error:', e)
+          fullHtml = `<div class="mermaid-error">图表渲染失败: ${e}</div>`
+        }
+      }
+      mermaidSvgMap.set(item.id, fullHtml!)
+    }
+  }
+
+  /**
+   * 渲染 Markdown 核心方法
    */
   async function renderMarkdown(markdown: string, isStreaming = false): Promise<string> {
     if (!markdown) return ''
-
     isRendering.value = true
 
     try {
-      // 1. 预处理 LaTeX 数学公式
-      let processedMarkdown = preprocessMathFormulas(markdown)
+      // 1. 预处理公式
+      const preprocessed = preprocessMathFormulas(markdown)
 
-      // 2. 预处理 Mermaid 图表
-      processedMarkdown = await preprocessMermaidDiagrams(processedMarkdown)
+      // 2. 渲染 Markdown
+      const env: MarkdownEnv = { mermaidQueue: [] }
+      let html = md.render(preprocessed, env)
 
-      // 3. 使用 marked 解析
-      let html = await marked.parse(processedMarkdown)
+      // 3. 恢复转义的美元符号
+      html = html.replace(/__ESC_DOLLAR__/g, '$')
 
-      // 4. 如果正在流式输出，添加光标
+      // 4. 如果存在待渲染的图表，执行异步渲染
+      if (env.mermaidQueue && env.mermaidQueue.length > 0) {
+        await processMermaidQueue(env.mermaidQueue)
+      }
+
+      // 5. 处理流式输出光标
       if (isStreaming) {
-        // 尝试将光标插入到最后一个段落内，避免换行
         if (html.endsWith('</p>')) {
           html = html.replace(/<\/p>$/, '<span class="typing-cursor"></span></p>')
         } else {
@@ -551,120 +492,8 @@ export function useMarkdown() {
         }
       }
 
-      // 5. 使用 DOMPurify 清理
-      const cleanHtml = DOMPurify.sanitize(html, {
-        ALLOWED_TAGS: [
-          'h1',
-          'h2',
-          'h3',
-          'h4',
-          'h5',
-          'h6',
-          'p',
-          'br',
-          'hr',
-          'ul',
-          'ol',
-          'li',
-          'blockquote',
-          'pre',
-          'code',
-          'table',
-          'thead',
-          'tbody',
-          'tr',
-          'th',
-          'td',
-          'a',
-          'strong',
-          'em',
-          'del',
-          'ins',
-          'img',
-          'figure',
-          'figcaption',
-          'div',
-          'span',
-          'button',
-          'svg',
-          'path',
-          'g',
-          'rect',
-          'circle',
-          'line',
-          'polygon',
-          'polyline',
-          'text',
-          'tspan',
-          'defs',
-          'marker',
-          'style',
-          'foreignObject',
-          'use',
-        ],
-        ALLOWED_ATTR: [
-          'href',
-          'title',
-          'target',
-          'rel',
-          'src',
-          'alt',
-          'width',
-          'height',
-          'class',
-          'id',
-          'style',
-          'data-code',
-          'data-action',
-          'viewBox',
-          'xmlns',
-          'd',
-          'fill',
-          'stroke',
-          'stroke-width',
-          'stroke-dasharray',
-          'stroke-linecap',
-          'stroke-linejoin',
-          'stroke-miterlimit',
-          'stroke-opacity',
-          'fill-opacity',
-          'opacity',
-          'transform',
-          'x',
-          'y',
-          'x1',
-          'y1',
-          'x2',
-          'y2',
-          'cx',
-          'cy',
-          'r',
-          'rx',
-          'ry',
-          'points',
-          'preserveAspectRatio',
-          'font-size',
-          'font-family',
-          'text-anchor',
-          'dominant-baseline',
-          'aria-busy',
-          'aria-label',
-          'marker-end',
-          'marker-start',
-          'refX',
-          'refY',
-          'markerWidth',
-          'markerHeight',
-          'orient',
-          'markerUnits',
-          'xlink:href',
-          'xmlns:xlink',
-        ],
-        ADD_TAGS: ['foreignObject'],
-        ADD_ATTR: ['xmlns:xlink', 'xlink:href'],
-      })
-
-      return cleanHtml
+      // 6. XSS 清理
+      return DOMPurify.sanitize(html, PURIFY_CONFIG)
     } catch (error) {
       console.error('Markdown rendering error:', error)
       return `<p class="markdown-error">渲染失败: ${error}</p>`
@@ -673,25 +502,13 @@ export function useMarkdown() {
     }
   }
 
-  /**
-   * 获取 Mermaid SVG 映射（用于注入）
-   */
-  function getMermaidSvgMap(): Map<string, string> {
-    return mermaidSvgMap
-  }
-
-  /**
-   * 清除 Mermaid 缓存（主题切换时调用）
-   */
-  function clearMermaidCache(): void {
-    mermaidCodeCache.clear()
-    mermaidInitialized = false
-  }
-
   return {
-    renderMarkdown,
-    getMermaidSvgMap,
-    clearMermaidCache,
     isRendering,
+    renderMarkdown,
+    getMermaidSvgMap: () => mermaidSvgMap,
+    clearMermaidCache: () => {
+      mermaidCodeCache.clear()
+      mermaidSvgMap.clear()
+    },
   }
 }
