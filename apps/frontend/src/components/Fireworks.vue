@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import { watch } from 'vue'
 import confetti from 'canvas-confetti'
 
-defineProps<{
+const props = defineProps<{
   active: boolean
 }>()
 
@@ -24,6 +25,15 @@ function startFireworks() {
     }, 2500)
   })
 }
+
+watch(
+  () => props.active,
+  (active) => {
+    if (active) {
+      startFireworks()
+    }
+  },
+)
 
 defineExpose({ startFireworks })
 </script>
