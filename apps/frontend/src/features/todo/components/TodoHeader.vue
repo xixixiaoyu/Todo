@@ -24,7 +24,7 @@ const toggleLanguage = () => {
 <template>
   <header class="mb-6 flex items-center justify-between">
     <h1
-      class="bg-gradient-to-r from-[#f43f5e] via-[#fbbf24] to-[#22d3ee] bg-clip-text text-2xl font-bold text-transparent md:text-3xl"
+      class="cursor-default bg-gradient-to-r from-[#fde68a] via-[#fbbf24] to-[#f59e0b] bg-clip-text text-2xl font-bold tracking-tight text-transparent transition-transform duration-300 hover:scale-105 md:text-3xl"
     >
       {{ t('todo.title') }}
     </h1>
