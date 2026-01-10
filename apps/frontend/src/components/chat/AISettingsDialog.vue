@@ -311,94 +311,6 @@ defineExpose({
             <div class="flex-1 overflow-y-auto">
               <!-- 基础设置 Tab -->
               <div v-if="activeTab === 'settings'" class="space-y-5 px-6 py-5">
-                <!-- Base URL -->
-                <div class="space-y-2">
-                  <label class="text-sm font-medium text-foreground">{{
-                    t('ai.baseUrlLabel')
-                  }}</label>
-                  <input
-                    v-model="formData.baseUrl"
-                    type="text"
-                    :placeholder="t('ai.baseUrlPlaceholder')"
-                    class="w-full rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  />
-                  <p class="text-xs text-muted-foreground">{{ t('ai.baseUrlHint') }}</p>
-                </div>
-
-                <!-- API Key -->
-                <div class="space-y-2">
-                  <label class="text-sm font-medium text-foreground">{{
-                    t('ai.apiKeyLabel')
-                  }}</label>
-                  <div class="relative">
-                    <input
-                      v-model="formData.apiKey"
-                      :type="showApiKey ? 'text' : 'password'"
-                      :placeholder="t('ai.apiKeyPlaceholder')"
-                      class="w-full rounded-lg border border-border bg-muted/30 px-4 py-2.5 pr-10 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    />
-                    <button
-                      type="button"
-                      class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
-                      @click="showApiKey = !showApiKey"
-                    >
-                      <EyeOff v-if="showApiKey" :size="16" />
-                      <Eye v-else :size="16" />
-                    </button>
-                  </div>
-                </div>
-
-                <!-- 模型 -->
-                <div class="space-y-2">
-                  <label class="text-sm font-medium text-foreground">{{
-                    t('ai.modelLabel')
-                  }}</label>
-                  <input
-                    v-model="formData.model"
-                    type="text"
-                    :placeholder="t('ai.modelPlaceholder')"
-                    class="w-full rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  />
-                </div>
-
-                <!-- 温度参数 -->
-                <div class="space-y-2">
-                  <div class="flex items-center justify-between">
-                    <label class="text-sm font-medium text-foreground">{{
-                      t('ai.temperatureLabel')
-                    }}</label>
-                    <span class="text-sm text-muted-foreground">{{
-                      formData.temperature.toFixed(1)
-                    }}</span>
-                  </div>
-                  <input
-                    v-model.number="formData.temperature"
-                    type="range"
-                    min="0"
-                    max="2"
-                    step="0.1"
-                    class="h-2 w-full cursor-pointer appearance-none rounded-full bg-border accent-primary"
-                  />
-                  <div class="flex justify-between text-xs text-muted-foreground/50">
-                    <span>{{ t('ai.tempPrecise') }}</span>
-                    <span>{{ t('ai.tempBalanced') }}</span>
-                    <span>{{ t('ai.tempCreative') }}</span>
-                  </div>
-                </div>
-
-                <!-- System Prompt -->
-                <div class="space-y-2">
-                  <label class="text-sm font-medium text-foreground">{{
-                    t('ai.systemPromptLabel')
-                  }}</label>
-                  <textarea
-                    v-model="formData.systemPrompt"
-                    rows="4"
-                    :placeholder="t('ai.systemPromptPlaceholder')"
-                    class="w-full resize-none rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm leading-relaxed text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  />
-                </div>
-
                 <!-- 多模型协同讨论 -->
                 <div class="space-y-3 rounded-xl border border-border bg-muted/30 p-4">
                   <div class="flex items-center justify-between">
@@ -489,6 +401,97 @@ defineExpose({
                         </button>
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                <!-- 基础设置项 (当开启协同讨论时隐藏) -->
+                <div v-if="!formData.discussionMode" class="space-y-5">
+                  <!-- Base URL -->
+                  <div class="space-y-2">
+                    <label class="text-sm font-medium text-foreground">{{
+                      t('ai.baseUrlLabel')
+                    }}</label>
+                    <input
+                      v-model="formData.baseUrl"
+                      type="text"
+                      :placeholder="t('ai.baseUrlPlaceholder')"
+                      class="w-full rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    />
+                    <p class="text-xs text-muted-foreground">{{ t('ai.baseUrlHint') }}</p>
+                  </div>
+
+                  <!-- API Key -->
+                  <div class="space-y-2">
+                    <label class="text-sm font-medium text-foreground">{{
+                      t('ai.apiKeyLabel')
+                    }}</label>
+                    <div class="relative">
+                      <input
+                        v-model="formData.apiKey"
+                        :type="showApiKey ? 'text' : 'password'"
+                        :placeholder="t('ai.apiKeyPlaceholder')"
+                        class="w-full rounded-lg border border-border bg-muted/30 px-4 py-2.5 pr-10 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      />
+                      <button
+                        type="button"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                        @click="showApiKey = !showApiKey"
+                      >
+                        <EyeOff v-if="showApiKey" :size="16" />
+                        <Eye v-else :size="16" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- 模型 -->
+                  <div class="space-y-2">
+                    <label class="text-sm font-medium text-foreground">{{
+                      t('ai.modelLabel')
+                    }}</label>
+                    <input
+                      v-model="formData.model"
+                      type="text"
+                      :placeholder="t('ai.modelPlaceholder')"
+                      class="w-full rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+
+                  <!-- 温度参数 -->
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                      <label class="text-sm font-medium text-foreground">{{
+                        t('ai.temperatureLabel')
+                      }}</label>
+                      <span class="text-sm text-muted-foreground">{{
+                        formData.temperature.toFixed(1)
+                      }}</span>
+                    </div>
+                    <input
+                      v-model.number="formData.temperature"
+                      type="range"
+                      min="0"
+                      max="2"
+                      step="0.1"
+                      class="h-2 w-full cursor-pointer appearance-none rounded-full bg-border accent-primary"
+                    />
+                    <div class="flex justify-between text-xs text-muted-foreground/50">
+                      <span>{{ t('ai.tempPrecise') }}</span>
+                      <span>{{ t('ai.tempBalanced') }}</span>
+                      <span>{{ t('ai.tempCreative') }}</span>
+                    </div>
+                  </div>
+
+                  <!-- System Prompt -->
+                  <div class="space-y-2">
+                    <label class="text-sm font-medium text-foreground">{{
+                      t('ai.systemPromptLabel')
+                    }}</label>
+                    <textarea
+                      v-model="formData.systemPrompt"
+                      rows="4"
+                      :placeholder="t('ai.systemPromptPlaceholder')"
+                      class="w-full resize-none rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm leading-relaxed text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    />
                   </div>
                 </div>
               </div>
