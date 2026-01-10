@@ -1,7 +1,7 @@
 @font-face {
   font-family: 'LXGW WenKai';
   src: url('/LXGWWenKai-Medium.ttf') format('truetype');
-  font-weight: 500;
+  font-weight: 400; /* 将 Medium 视为标准权重，避免默认加粗感 */
   font-style: normal;
   font-display: swap;
 }
@@ -155,7 +155,7 @@
 }
 
 .shimmer-text {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   background: linear-gradient(
     90deg,
@@ -413,7 +413,7 @@
 
 /* Markdown 内容样式 */
 .markdown-content {
-  @apply text-sm leading-relaxed break-words;
+  @apply text-[15px] leading-relaxed break-words font-normal;
 }
 
 .markdown-content h1 {
@@ -425,13 +425,13 @@
 }
 
 .markdown-content h3 {
-  @apply mb-3 mt-6 text-lg font-semibold text-[#3a3a3a];
+  @apply mb-3 mt-6 text-lg font-bold text-[#3a3a3a];
 }
 
 .markdown-content h4,
 .markdown-content h5,
 .markdown-content h6 {
-  @apply mb-2 mt-5 font-semibold text-[#3a3a3a];
+  @apply mb-2 mt-5 font-bold text-[#3a3a3a];
 }
 
 .dark .markdown-content h1,

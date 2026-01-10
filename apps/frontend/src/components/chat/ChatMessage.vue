@@ -288,7 +288,7 @@ async function copyContent() {
               </svg>
             </div>
             <span
-              class="font-medium tracking-wide text-sm transition-all duration-300"
+              class="font-medium tracking-wide text-[15px] transition-all duration-300"
               :class="isStreaming && !hasContent ? 'shimmer-text' : 'text-muted-foreground'"
             >
               {{ thinkingStatus }}
@@ -455,7 +455,7 @@ async function copyContent() {
 
             <!-- 用户消息：展示模式 -->
             <div v-else-if="isUser" class="group/user relative">
-              <div class="whitespace-pre-wrap text-sm leading-relaxed">
+              <div class="whitespace-pre-wrap text-[15px] leading-relaxed">
                 {{ message.content }}
               </div>
               <!-- 编辑按钮 -->
@@ -471,11 +471,11 @@ async function copyContent() {
             <!-- AI 消息：Markdown 渲染 -->
             <div
               v-else-if="renderedHtml"
-              class="markdown-content text-sm leading-relaxed"
+              class="markdown-content leading-relaxed"
               v-html="renderedHtml"
             />
             <!-- 兜底显示 -->
-            <div v-else-if="hasContent" class="text-sm leading-relaxed">
+            <div v-else-if="hasContent" class="text-[15px] leading-relaxed">
               {{ message.content }}
             </div>
 
@@ -518,6 +518,7 @@ async function copyContent() {
   padding-left: 1rem;
   color: hsl(var(--text-secondary));
   font-family: var(--font-sans);
+  font-size: 15px;
 }
 
 .thinking-body {
