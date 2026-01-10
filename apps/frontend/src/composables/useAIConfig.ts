@@ -184,6 +184,8 @@ export function useAIConfig() {
    */
   function updateConfig(partial: Partial<AIConfig>): void {
     config.value = { ...config.value, ...partial }
+    // 手动更新配置后，清除当前激活的预设 ID，表示当前是自定义配置
+    activePresetId.value = null
   }
 
   /**
@@ -191,6 +193,7 @@ export function useAIConfig() {
    */
   function resetConfig(): void {
     config.value = { ...DEFAULT_CONFIG }
+    activePresetId.value = null
   }
 
   /**
@@ -237,7 +240,21 @@ export function useAIConfig() {
   function updatePreset(presetId: string, updates: Partial<Omit<AIPreset, 'id'>>): void {
     const index = presets.value.findIndex((p) => p.id === presetId)
     if (index !== -1) {
-      presets.value[index] = { ...presets.value[index], ...updates }
+      const updatedPreset = { ...presets.value[index], ...updates }
+      presets.value[index] = updatedPreset
+
+      // 如果更新的是当前激活的预设，同步更新配置
+      if (activePresetId.value === presetId) {
+        config.value = {
+          baseUrl: updatedPreset.baseUrl,
+          apiKey: updatedPreset.apiKey,
+          model: updatedPreset.model,
+          systemPrompt: updatedPreset.systemPrompt,
+          temperature: updatedPreset.temperature,
+          thinkingMode: updatedPreset.thinkingMode,
+          todoAssistant: updatedPreset.todoAssistant,
+        }
+      }
     }
   }
 

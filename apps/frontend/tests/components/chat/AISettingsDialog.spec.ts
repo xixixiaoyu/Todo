@@ -174,4 +174,82 @@ describe('AISettingsDialog', () => {
 
     expect((wrapper.vm as any).activeTab).toBe('presets')
   })
+
+  it('should clear activePresetId when saving custom settings', async () => {
+    mockActivePresetId.value = 'test-id'
+
+    const wrapper = mount(AISettingsDialog, {
+      props: {
+        modelValue: true,
+        initialTab: 'settings',
+      },
+      global: {
+        stubs: {
+          Teleport: true,
+        },
+      },
+    })
+
+    await nextTick()
+    await wrapper.find('button.bg-\\[\\#c9b896\\]').trigger('click') // 点击保存
+
+    expect(mockActivePresetId.value).toBe(null)
+  })
+
+  it('should update config when updating the active preset', async () => {
+    const { addPreset } = useAIConfig()
+    const preset = addPreset({
+      name: 'Old Name',
+      baseUrl: 'https://old.com',
+      apiKey: 'old-key',
+      model: 'old-model',
+      systemPrompt: 'Old prompt',
+      temperature: 0.1,
+      thinkingMode: 'disabled',
+      todoAssistant: false,
+    })
+
+    mockActivePresetId.value = preset.id
+    mockConfig.value = {
+      baseUrl: preset.baseUrl,
+      apiKey: preset.apiKey,
+      model: preset.model,
+      systemPrompt: preset.systemPrompt,
+      temperature: preset.temperature,
+      thinkingMode: preset.thinkingMode,
+      todoAssistant: preset.todoAssistant,
+    }
+
+    const wrapper = mount(AISettingsDialog, {
+      props: {
+        modelValue: true,
+        initialTab: 'presets',
+      },
+      global: {
+        stubs: {
+          Teleport: true,
+        },
+      },
+    })
+
+    await nextTick()
+
+    // 进入编辑模式
+    await wrapper.find('button[title="ai.edit"]').trigger('click')
+    await nextTick()
+
+    // 修改表单
+    const nameInput = wrapper.find('input[placeholder="ai.presetNamePlaceholder"]')
+    await nameInput.setValue('New Name')
+    const modelInput = wrapper.find('input[placeholder="ai.modelPlaceholder"]')
+    await modelInput.setValue('new-model')
+
+    // 点击保存预设
+    await wrapper.find('button.bg-\\[\\#c9b896\\]').trigger('click')
+    await nextTick()
+
+    expect(mockPresets.value[0].model).toBe('new-model')
+    // 验证 config 也被同步更新了 (由于 mockConfig 是 ref，且 useAIConfig 的 updatePreset 会修改它)
+    expect(mockConfig.value.model).toBe('new-model')
+  })
 })
