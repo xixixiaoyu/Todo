@@ -7,6 +7,10 @@ const props = defineProps<{
   messages: ChatMessageType[]
 }>()
 
+const emit = defineEmits<{
+  (e: 'regenerate'): void
+}>()
+
 const containerRef = ref<HTMLElement>()
 
 // 是否用户正在手动滚动
@@ -93,7 +97,13 @@ defineExpose({
 
     <!-- 消息列表 -->
     <div v-else class="space-y-2 py-4">
-      <ChatMessage v-for="msg in messages" :key="msg.id" :message="msg" />
+      <ChatMessage
+        v-for="(msg, index) in messages"
+        :key="msg.id"
+        :message="msg"
+        :is-last="index === messages.length - 1"
+        @regenerate="emit('regenerate')"
+      />
     </div>
   </div>
 </template>

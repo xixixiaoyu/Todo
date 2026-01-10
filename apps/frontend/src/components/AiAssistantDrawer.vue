@@ -12,7 +12,6 @@ import {
   ChevronDown,
   ChevronLeft,
   Square,
-  RefreshCw,
   Trash2,
   History,
   Check,
@@ -102,12 +101,6 @@ const MAX_HEIGHT = 192
 
 // 是否有聊天历史
 const hasHistory = computed(() => messages.value.length > 0)
-
-// 可以重新生成（有 AI 消息且不在生成中）
-const canRegenerate = computed(() => {
-  if (isGenerating.value) return false
-  return messages.value.some((msg) => msg.role === 'assistant')
-})
 
 // 输入框是否禁用（生成中且没有报错时禁用）
 const isInputDisabled = computed(() => isGenerating.value && !error.value)
@@ -268,7 +261,11 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
       </header>
 
       <!-- 主内容区域 -->
-      <ChatMessageList ref="messageListRef" :messages="messages" />
+      <ChatMessageList
+        ref="messageListRef"
+        :messages="messages"
+        @regenerate="regenerateLastResponse"
+      />
 
       <!-- 错误提示 -->
       <div
@@ -313,15 +310,6 @@ const currentPresetName = computed(() => activePreset.value?.name ?? '自定义'
           >
             <Square :size="12" />
             <span>停止</span>
-          </button>
-          <!-- 重新生成按钮 -->
-          <button
-            v-if="canRegenerate"
-            class="flex items-center gap-1 rounded-full border border-[#e8e4dd] bg-white px-3 py-1.5 text-[#6b5c4d] transition-colors hover:bg-[#f5f3ed] dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#a0a0a0] dark:hover:bg-[#3a3a3a]"
-            @click="regenerateLastResponse"
-          >
-            <RefreshCw :size="14" />
-            <span>重新生成</span>
           </button>
           <!-- 返回上一个会话按钮 -->
           <button

@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import { computed, ref, watch, nextTick } from 'vue'
-import { ChevronUp, Copy, Check, Sparkles } from 'lucide-vue-next'
+import { ChevronUp, Copy, Check, RefreshCw } from 'lucide-vue-next'
 import type { ChatMessage } from '@/composables/useChat'
 import { useMarkdown } from '@/composables/useMarkdown'
 
 const props = defineProps<{
   message: ChatMessage
+  isLast?: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: 'regenerate'): void
 }>()
 
 const { renderMarkdown, getMermaidSvgMap } = useMarkdown()
@@ -297,23 +302,33 @@ async function copyContent() {
             {{ message.content }}
           </div>
           <span v-if="isStreaming && hasContent" class="inline-block animate-pulse">█</span>
+
+          <!-- 操作按钮（AI 消息内部） -->
+          <div
+            v-if="!isUser && !isStreaming && hasContent"
+            class="mt-2 flex items-center gap-2 border-t border-[hsl(var(--ai-message-border))] pt-2"
+          >
+            <button
+              class="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-[hsl(var(--text-secondary-color))] transition-all hover:bg-[hsl(var(--ai-accent-hover))] hover:text-[hsl(var(--text-color))]"
+              :title="isCopied ? '已复制' : '复制内容'"
+              @click="copyContent"
+            >
+              <Check v-if="isCopied" :size="12" class="text-green-600" />
+              <Copy v-else :size="12" />
+              <span>{{ isCopied ? '已复制' : '复制' }}</span>
+            </button>
+            <button
+              v-if="isLast"
+              class="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-[hsl(var(--text-secondary-color))] transition-all hover:bg-[hsl(var(--ai-accent-hover))] hover:text-[hsl(var(--text-color))]"
+              title="重新生成回答"
+              @click="emit('regenerate')"
+            >
+              <RefreshCw :size="12" />
+              <span>重新生成</span>
+            </button>
+          </div>
         </div>
       </template>
-
-      <!-- 操作按钮（AI 消息 hover 时显示） -->
-      <div
-        v-if="!isUser && !isStreaming"
-        class="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100"
-      >
-        <button
-          class="flex h-7 w-7 items-center justify-center rounded-md text-[#8b8680] transition-colors hover:bg-[#f5f3ed] hover:text-[#6b5c4d]"
-          :title="isCopied ? '已复制' : '复制'"
-          @click="copyContent"
-        >
-          <Check v-if="isCopied" :size="14" class="text-green-600" />
-          <Copy v-else :size="14" />
-        </button>
-      </div>
     </div>
   </div>
 </template>
