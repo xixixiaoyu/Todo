@@ -116,7 +116,8 @@ defineExpose({
 
 <style scoped>
 .message-list-enter-active,
-.message-list-leave-active {
+.message-list-leave-active,
+.message-list-move {
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 

@@ -163,10 +163,7 @@ async function copyContent() {
 </script>
 
 <template>
-  <div
-    class="group flex py-4 animate-in fade-in slide-in-from-bottom-2 duration-300"
-    :class="isUser ? 'justify-end' : 'justify-start'"
-  >
+  <div class="group flex py-4" :class="isUser ? 'justify-end' : 'justify-start'">
     <!-- 消息内容 -->
     <div class="max-w-[85%] space-y-2">
       <!-- 思考过程（AI 消息） -->
@@ -387,22 +384,6 @@ async function copyContent() {
 .markdown-content :deep(.hljs) {
   background: transparent;
   padding: 0;
-}
-
-/* 消息入场动画 */
-@keyframes slide-in-bottom {
-  0% {
-    transform: translateY(10px);
-    opacity: 0;
-  }
-  100% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-.animate-in {
-  animation: slide-in-bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* 思考过程中的波纹效果 */

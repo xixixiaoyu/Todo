@@ -35,6 +35,7 @@ export function useChat(options: AIRequestOptions = {}) {
   // 流式响应状态
   const currentAIResponse = ref('')
   const currentThinkingContent = ref('')
+  const currentAssistantMessageId = ref<string | null>(null)
 
   // 加载/生成状态
   const isGenerating = ref(false)
@@ -66,6 +67,7 @@ export function useChat(options: AIRequestOptions = {}) {
     // 使用 setter 触发更新逻辑（包括标题生成）
     chatHistory.value = [...chatHistory.value, userMessage]
     isGenerating.value = true
+    currentAssistantMessageId.value = generateId()
 
     try {
       await getAIStreamResponse(
@@ -76,7 +78,7 @@ export function useChat(options: AIRequestOptions = {}) {
             // 流式结束，将临时内容合并为完整消息
             if (currentAIResponse.value) {
               const aiMessage: ChatMessage = {
-                id: generateId(),
+                id: currentAssistantMessageId.value!,
                 role: 'assistant',
                 content: currentAIResponse.value,
                 thinkingContent: currentThinkingContent.value || undefined,
@@ -86,12 +88,13 @@ export function useChat(options: AIRequestOptions = {}) {
             }
             currentAIResponse.value = ''
             currentThinkingContent.value = ''
+            currentAssistantMessageId.value = null
             isGenerating.value = false
           } else if (chunk === '[ABORTED]') {
             // 用户中断 - 保留已生成的内容
             if (currentAIResponse.value) {
               const aiMessage: ChatMessage = {
-                id: generateId(),
+                id: currentAssistantMessageId.value!,
                 role: 'assistant',
                 content: currentAIResponse.value + `\n\n*${t('ai.aborted')}*`,
                 thinkingContent: currentThinkingContent.value || undefined,
@@ -101,6 +104,7 @@ export function useChat(options: AIRequestOptions = {}) {
             }
             currentAIResponse.value = ''
             currentThinkingContent.value = ''
+            currentAssistantMessageId.value = null
             isGenerating.value = false
           } else {
             // 累积内容
@@ -132,6 +136,7 @@ export function useChat(options: AIRequestOptions = {}) {
         isGenerating.value = false
         currentAIResponse.value = ''
         currentThinkingContent.value = ''
+        currentAssistantMessageId.value = null
       }
     }
   }
@@ -194,9 +199,9 @@ export function useChat(options: AIRequestOptions = {}) {
     const allMessages = [...chatHistory.value]
 
     // 如果正在生成，添加流式消息占位
-    if (isGenerating.value) {
+    if (isGenerating.value && currentAssistantMessageId.value) {
       allMessages.push({
-        id: 'streaming-response',
+        id: currentAssistantMessageId.value,
         role: 'assistant',
         content: currentAIResponse.value,
         thinkingContent: currentThinkingContent.value,
