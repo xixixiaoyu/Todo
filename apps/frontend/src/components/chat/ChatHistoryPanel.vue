@@ -8,16 +8,12 @@ const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
-const { sessions, currentSessionId, renameSession, deleteSession, deleteAllSessions } =
-  useChatHistory()
+const { sessions, currentSessionId, renameSession, deleteSession } = useChatHistory()
 
 // 编辑状态
 const editingId = ref<string | null>(null)
 const editingTitle = ref('')
 const editInputRef = ref<HTMLInputElement>()
-
-// 确认删除全部
-const showDeleteAllConfirm = ref(false)
 
 // 是否有会话
 const hasSessions = computed(() => sessions.value.length > 0)
@@ -74,13 +70,6 @@ function handleDelete(sessionId: string, event: Event): void {
   event.stopPropagation()
   deleteSession(sessionId)
 }
-
-// 删除全部
-function handleDeleteAll(): void {
-  deleteAllSessions()
-  showDeleteAllConfirm.value = false
-  emit('close')
-}
 </script>
 
 <template>
@@ -88,26 +77,6 @@ function handleDeleteAll(): void {
     <!-- 头部 -->
     <div class="flex items-center justify-between border-b border-[#e8e4dd] px-4 py-3">
       <h3 class="text-sm font-medium text-[#3a3a3a]">历史记录</h3>
-      <button
-        v-if="hasSessions && !showDeleteAllConfirm"
-        class="text-xs text-[#8b8680] transition-colors hover:text-red-500"
-        @click="showDeleteAllConfirm = true"
-      >
-        清空全部
-      </button>
-      <!-- 确认删除全部 -->
-      <div v-if="showDeleteAllConfirm" class="flex items-center gap-2">
-        <span class="text-xs text-red-500">确定删除?</span>
-        <button class="rounded p-1 text-red-500 hover:bg-red-50" @click="handleDeleteAll">
-          <Check :size="14" />
-        </button>
-        <button
-          class="rounded p-1 text-[#8b8680] hover:bg-[#f5f3ed]"
-          @click="showDeleteAllConfirm = false"
-        >
-          <X :size="14" />
-        </button>
-      </div>
     </div>
 
     <!-- 会话列表 -->

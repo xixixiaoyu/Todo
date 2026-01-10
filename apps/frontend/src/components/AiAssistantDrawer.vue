@@ -12,7 +12,6 @@ import {
   ChevronDown,
   ChevronLeft,
   Square,
-  Trash2,
   History,
   Check,
 } from 'lucide-vue-next'
@@ -327,16 +326,6 @@ defineOptions({
           >
             <ChevronLeft :size="16" />
           </button>
-          <!-- 清空历史按钮 -->
-          <button
-            v-if="hasHistory && !isGenerating"
-            class="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e4dd] bg-white text-[#8b8680] transition-colors hover:bg-red-50 hover:text-red-500 dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#6b6b6b] dark:hover:bg-red-900/20 dark:hover:text-red-400"
-            title="清空历史"
-            @click="clearHistory"
-          >
-            <Trash2 :size="16" />
-          </button>
-
           <button
             class="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e4dd] bg-white text-[#8b8680] transition-colors hover:bg-[#f5f3ed] dark:border-[#3a3a3a] dark:bg-[#2a2a2a] dark:text-[#6b6b6b] dark:hover:bg-[#3a3a3a]"
             title="历史记录"
