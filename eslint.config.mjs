@@ -31,6 +31,14 @@ export default [
     },
   },
   {
-    ignores: ['**/dist', '**/node_modules', '**/dist-electron'],
+    ignores: [
+      '**/dist',
+      '**/node_modules',
+      '**/dist-electron',
+      'apps/frontend/ios',
+      'apps/frontend/android',
+      '.husky',
+      '.trae',
+    ],
   },
 ]

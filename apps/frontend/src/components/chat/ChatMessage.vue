@@ -400,12 +400,13 @@ async function copyContent() {
         >
           <div class="px-3 pb-3">
             <div ref="thinkingContentRef" class="thinking-text">
-              <!-- eslint-disable-next-line vue/no-v-html -->
+              <!-- eslint-disable vue/no-v-html -->
               <div
                 v-if="renderedThinkingHtml"
                 class="markdown-content thinking-markdown italic text-muted-foreground"
                 v-html="renderedThinkingHtml"
               />
+              <!-- eslint-enable vue/no-v-html -->
               <div v-else class="whitespace-pre-wrap italic text-muted-foreground">
                 {{ message.thinkingContent }}
               </div>
@@ -559,12 +560,13 @@ async function copyContent() {
               </button>
             </div>
             <!-- AI 消息：Markdown 渲染 -->
-            <!-- eslint-disable-next-line vue/no-v-html -->
+            <!-- eslint-disable vue/no-v-html -->
             <div
               v-else-if="renderedHtml"
               class="markdown-content leading-relaxed"
               v-html="renderedHtml"
             />
+            <!-- eslint-enable vue/no-v-html -->
             <!-- 兜底显示 -->
             <div v-else-if="hasContent" class="text-[15px] leading-relaxed">
               {{ message.content }}

@@ -9,7 +9,16 @@ import globals from 'globals'
  */
 export default [
   {
-    ignores: ['dist', 'dist-electron', 'node_modules'],
+    ignores: [
+      'dist',
+      'dist-electron',
+      'node_modules',
+      'ios',
+      'android',
+      'public',
+      'src/assets',
+      'capacitor.config.ts',
+    ],
   },
   ...baseConfig,
   ...vue.configs['flat/recommended'],
