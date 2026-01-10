@@ -98,10 +98,15 @@ export default {
         filter: {
           bg: 'hsl(var(--secondary))',
           text: 'hsl(var(--muted-foreground))',
-          border: 'hsl(var(--border))',
-          'active-bg': 'hsl(var(--primary))',
-          'active-text': 'hsl(var(--primary-foreground))',
-          'active-border': 'hsl(var(--primary))',
+        },
+        ai: {
+          message: {
+            bg: 'hsl(var(--ai-message-bg))',
+            border: 'hsl(var(--ai-message-border))',
+          },
+          accent: {
+            hover: 'hsl(var(--ai-accent-hover))',
+          },
         },
         language: {
           bg: 'hsl(var(--secondary))',
@@ -189,6 +194,7 @@ export default {
         100: '400px',
         125: '500px',
         150: '600px',
+        201: '201px',
       },
       // 最小/最大宽高
       minHeight: {
@@ -270,59 +276,14 @@ export default {
       },
     },
   },
-  plugins: [
-    tailwindcssAnimate,
-    // 自定义工具类插件
-    plugin(({ addUtilities }) => {
-      addUtilities({
-        // 字体平滑
-        '.font-smooth-antialiased': { '-webkit-font-smoothing': 'antialiased' },
-        '.font-smooth-subpixel': { '-webkit-font-smoothing': 'subpixel-antialiased' },
-        // 滚动条
-        '.scrollbar-thin': {
-          'scrollbar-width': 'thin',
-          'scrollbar-color': 'rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.05)',
-        },
-        // 过渡效果
-        '.transition-all-300': { transition: 'all 0.3s ease' },
-        '.transition-all-500': { transition: 'all 0.5s ease' },
-        '.transition-opacity-300': { transition: 'opacity 0.3s ease' },
-        '.transition-transform-300': { transition: 'transform 0.3s ease' },
-        // 背景渐变
-        '.bg-gradient-card': {
-          background:
-            'linear-gradient(135deg, var(--card-bg-color) 0%, rgba(255, 255, 255, 0.02) 100%)',
-        },
-        '.bg-gradient-pomodoro': {
-          background:
-            'linear-gradient(135deg, var(--card-bg-color) 0%, rgba(255, 126, 103, 0.02) 100%)',
-        },
-        // 变换效果
-        '.transform-hover-up': { transform: 'translateY(-2px)' },
-        '.transform-hover-up-1': { transform: 'translateY(-1px)' },
-        '.transform-hover-up-4': { transform: 'translateY(-4px)' },
-        // 文本样式
-        '.ltr': { direction: 'ltr', 'unicode-bidi': 'isolate', 'text-align': 'left' },
-        '.word-break-break-word': { 'word-break': 'break-word', 'overflow-wrap': 'break-word' },
-        '.break-words': { 'overflow-wrap': 'break-word', 'word-break': 'break-word' },
-        // backface-visibility
-        '.backface-visibility-hidden': { 'backface-visibility': 'hidden' },
-        // will-change
-        '.will-change-transform': { 'will-change': 'transform' },
-        // stroke
-        '.stroke-round': { 'stroke-linecap': 'round' },
-        // 布局
-        '.flex-center': {
-          display: 'flex',
-          'align-items': 'center',
-          'justify-content': 'center',
-        },
-        '.flex-between': {
-          display: 'flex',
-          'align-items': 'center',
-          'justify-content': 'space-between',
-        },
-      })
-    }),
-  ],
+  plugins: [tailwindcssAnimate, plugin(function ({ addUtilities }) {
+    addUtilities({
+      '.animate-sparkle': {
+        animation: 'sparkle 1.5s ease-in-out infinite',
+      },
+      '.animate-pulse-custom': {
+        animation: 'pulse-custom 2s ease-in-out infinite',
+      },
+    })
+  })],
 }

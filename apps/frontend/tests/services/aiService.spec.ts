@@ -35,7 +35,7 @@ vi.mock('@/i18n', () => ({
   default: {
     global: {
       t: vi.fn((key: string, params?: any) => {
-        if (key === 'ai.synthesisPrompt') {
+        if (key === 'ai.parallelSynthesisPrompt') {
           return `Synthesis: ${params.originalQuery} - ${params.discussionData}`
         }
         return key
@@ -91,7 +91,7 @@ describe('aiService - Multi-model Discussion', () => {
     expect(onFinalChunk).toHaveBeenCalledWith('Default response')
   })
 
-  it('should handle multi-model discussion correctly', async () => {
+  it('should handle multi-model discussion (parallel) correctly', async () => {
     const messages: ChatMessage[] = [{ id: '1', role: 'user', content: 'What is 1+1?' }]
     const onStepUpdate = vi.fn()
     const onFinalChunk = vi.fn()
@@ -123,7 +123,7 @@ describe('aiService - Multi-model Discussion', () => {
     _resetAIConfig()
 
     mockFetch.mockImplementation(async (url: string, init: any) => {
-      // 如果是流式请求 (synthesis)
+      // 流式请求 (synthesis)
       if (init?.body && JSON.parse(init.body).stream === true) {
         return {
           ok: true,
@@ -146,18 +146,8 @@ describe('aiService - Multi-model Discussion', () => {
         }
       }
 
-      // 处理主模型草案或副模型评审 (stream: false)
-      const body = init?.body ? JSON.parse(init.body) : {}
-      let content = ''
-
-      if (url.includes('api.a.com')) {
-        content = 'Review from A'
-      } else if (url.includes('api.b.com')) {
-        content = 'Review from B'
-      } else {
-        content = 'Primary Draft'
-      }
-
+      // 并行请求 (non-stream)
+      const content = url.includes('api.a.com') ? 'Answer from A' : 'Answer from B'
       return {
         ok: true,
         json: async () => ({
@@ -170,12 +160,13 @@ describe('aiService - Multi-model Discussion', () => {
 
     expect(onStepUpdate).toHaveBeenCalled()
     const lastSteps = onStepUpdate.mock.calls[onStepUpdate.mock.calls.length - 1][0]
-    expect(lastSteps).toHaveLength(3) // 1 draft + 2 reviews
-    expect(lastSteps[0].modelId).toBe('primary-draft')
+    expect(lastSteps).toHaveLength(2) // 2 parallel models
+    expect(lastSteps[0].modelId).toBe('p1')
     expect(lastSteps[0].status).toBe('done')
-    expect(lastSteps[0].content).toBe('Primary Draft')
+    expect(lastSteps[0].content).toBe('Answer from A')
+    expect(lastSteps[1].modelId).toBe('p2')
     expect(lastSteps[1].status).toBe('done')
-    expect(lastSteps[2].status).toBe('done')
+    expect(lastSteps[1].content).toBe('Answer from B')
     expect(onFinalChunk).toHaveBeenCalledWith('Final synthesis')
   })
 
@@ -204,7 +195,6 @@ describe('aiService - Multi-model Discussion', () => {
     _resetAIConfig()
 
     mockFetch.mockImplementation(async (url: string, init: any) => {
-      // 流式请求 (synthesis)
       if (init?.body && JSON.parse(init.body).stream === true) {
         return {
           ok: true,
@@ -227,27 +217,19 @@ describe('aiService - Multi-model Discussion', () => {
         }
       }
 
-      // 副模型评审报错
       if (url.includes('api.a.com')) {
         throw new Error('Network error')
       }
 
-      // 主模型草案成功
-      return {
-        ok: true,
-        json: async () => ({
-          choices: [{ message: { content: 'Draft' } }],
-        }),
-      }
+      return { ok: false }
     })
 
     await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)
 
     const lastSteps = onStepUpdate.mock.calls[onStepUpdate.mock.calls.length - 1][0]
-    expect(lastSteps).toHaveLength(2) // Draft + Review
-    expect(lastSteps[0].status).toBe('done') // Primary Draft done
-    expect(lastSteps[1].status).toBe('error') // Secondary Review error
-    expect(lastSteps[1].content).toBe('Network error')
+    expect(lastSteps).toHaveLength(1)
+    expect(lastSteps[0].status).toBe('error')
+    expect(lastSteps[0].content).toBe('Network error')
     expect(onFinalChunk).toHaveBeenCalledWith('Fallback synthesis')
   })
 
@@ -281,46 +263,33 @@ describe('aiService - Multi-model Discussion', () => {
     _resetAIConfig()
 
     mockFetch.mockImplementation(async (url: string, init: any) => {
-      // 检查是否使用了主模型配置
       if (url.includes('api.primary.com')) {
-        if (init?.body && JSON.parse(init.body).stream === true) {
-          // Synthesis stage
-          return {
-            ok: true,
-            body: {
-              getReader: () => ({
-                read: vi
-                  .fn()
-                  .mockResolvedValueOnce({
-                    value: new TextEncoder().encode(
-                      'data: {"choices":[{"delta":{"content":"Primary synthesis"}}]}\n\n',
-                    ),
-                    done: false,
-                  })
-                  .mockResolvedValueOnce({
-                    value: new TextEncoder().encode('data: [DONE]\n\n'),
-                    done: true,
-                  }),
-              }),
-            },
-          }
-        } else {
-          // Draft stage
-          return {
-            ok: true,
-            json: async () => ({
-              choices: [{ message: { content: 'Primary Draft' } }],
+        return {
+          ok: true,
+          body: {
+            getReader: () => ({
+              read: vi
+                .fn()
+                .mockResolvedValueOnce({
+                  value: new TextEncoder().encode(
+                    'data: {"choices":[{"delta":{"content":"Primary synthesis"}}]}\n\n',
+                  ),
+                  done: false,
+                })
+                .mockResolvedValueOnce({
+                  value: new TextEncoder().encode('data: [DONE]\n\n'),
+                  done: true,
+                }),
             }),
-          }
+          },
         }
       }
 
-      // Review stage
       if (url.includes('api.1.com')) {
         return {
           ok: true,
           json: async () => ({
-            choices: [{ message: { content: 'Review 1' } }],
+            choices: [{ message: { content: 'Answer 1' } }],
           }),
         }
       }
@@ -341,7 +310,7 @@ describe('aiService - Multi-model Discussion', () => {
     expect(onFinalChunk).toHaveBeenCalledWith('Primary synthesis')
   })
 
-  it('should exclude primary model from reviewers even if selected', async () => {
+  it('should exclude primary model from contributors even if selected', async () => {
     const messages = [{ id: '1', role: 'user', content: 'hello' } as ChatMessage]
     const onStepUpdate = vi.fn()
     const onFinalChunk = vi.fn()
@@ -358,8 +327,8 @@ describe('aiService - Multi-model Discussion', () => {
       JSON.stringify({
         ...JSON.parse(localStorage.getItem('ai-config') || '{}'),
         discussionMode: true,
-        discussionModelIds: ['p1', 'p2'], // 选了自己和 p2 作为副模型
-        discussionPrimaryModelId: 'p1', // 同时也作为主模型
+        discussionModelIds: ['p1', 'p2'],
+        discussionPrimaryModelId: 'p1',
       }),
     )
     _resetAIConfig()
@@ -389,7 +358,7 @@ describe('aiService - Multi-model Discussion', () => {
       return {
         ok: true,
         json: async () => ({
-          choices: [{ message: { content: 'Draft or Review' } }],
+          choices: [{ message: { content: 'Answer' } }],
         }),
       }
     })
@@ -397,13 +366,12 @@ describe('aiService - Multi-model Discussion', () => {
     await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)
 
     const lastSteps = onStepUpdate.mock.calls[onStepUpdate.mock.calls.length - 1][0]
-    // 应该只有 2 个步骤：1个草案 + 1个 p2 的评审。p1 被排除了。
-    expect(lastSteps).toHaveLength(2)
-    expect(lastSteps[0].modelId).toBe('primary-draft')
-    expect(lastSteps[1].modelId).toBe('p2')
+    // 应该只有 1 个步骤：只有 p2 参与独立回答。p1 被排除（因为它是主模型）。
+    expect(lastSteps).toHaveLength(1)
+    expect(lastSteps[0].modelId).toBe('p2')
   })
 
-  it('should pass thinking config to non-stream draft and review requests', async () => {
+  it('should pass thinking config to parallel model requests', async () => {
     const messages = [{ id: '1', role: 'user', content: 'hello' } as ChatMessage]
     const onStepUpdate = vi.fn()
     const onFinalChunk = vi.fn()
@@ -426,63 +394,7 @@ describe('aiService - Multi-model Discussion', () => {
     mockFetch.mockImplementation(async (url: string, init: any) => {
       const body = JSON.parse(init.body)
       if (body.stream === false) {
-        // 验证 thinking 参数是否存在且正确
         expect(body.thinking).toEqual({ type: 'enabled' })
-        return {
-          ok: true,
-          json: async () => ({
-            choices: [{ message: { content: 'Success' } }],
-          }),
-        }
-      }
-      return {
-        ok: true,
-        body: {
-          getReader: () => ({
-            read: vi
-              .fn()
-              .mockResolvedValueOnce({
-                value: new TextEncoder().encode(
-                  'data: {"choices":[{"delta":{"content":"Final"}}]}\n\n',
-                ),
-                done: false,
-              })
-              .mockResolvedValueOnce({
-                value: new TextEncoder().encode('data: [DONE]\n\n'),
-                done: true,
-              }),
-          }),
-        },
-      }
-    })
-
-    await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)
-  })
-
-  it('should pass thinking: disabled when thinkingMode is disabled', async () => {
-    const messages = [{ id: '1', role: 'user', content: 'hello' } as ChatMessage]
-    const onStepUpdate = vi.fn()
-    const onFinalChunk = vi.fn()
-
-    localStorage.setItem(
-      'ai-config',
-      JSON.stringify({
-        ...JSON.parse(localStorage.getItem('ai-config') || '{}'),
-        discussionMode: true,
-        discussionModelIds: ['p1'],
-        thinkingMode: 'disabled',
-      }),
-    )
-    localStorage.setItem(
-      'ai-presets',
-      JSON.stringify([{ id: 'p1', name: 'P1', baseUrl: 'api.p1.com', apiKey: 'k1', model: 'm1' }]),
-    )
-    _resetAIConfig()
-
-    mockFetch.mockImplementation(async (url: string, init: any) => {
-      const body = JSON.parse(init.body)
-      if (body.stream === false) {
-        expect(body.thinking).toEqual({ type: 'disabled' })
         return {
           ok: true,
           json: async () => ({
@@ -537,7 +449,6 @@ describe('aiService - Multi-model Discussion', () => {
 
     mockFetch.mockImplementation(async (url: string, init: any) => {
       const body = JSON.parse(init.body)
-      // Verify system prompt is present in messages
       expect(body.messages).toContainEqual({ role: 'system', content: systemPrompt })
 
       if (body.stream === false) {
@@ -570,6 +481,6 @@ describe('aiService - Multi-model Discussion', () => {
     })
 
     await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)
-    expect(mockFetch).toHaveBeenCalledTimes(3) // Draft, Review, Synthesis
+    expect(mockFetch).toHaveBeenCalledTimes(2) // 1 Parallel + 1 Synthesis
   })
 })

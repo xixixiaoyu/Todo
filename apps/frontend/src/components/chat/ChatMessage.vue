@@ -230,7 +230,7 @@ async function copyContent() {
       <!-- 思考过程（AI 消息） -->
       <div
         v-if="hasThinking && !isUser"
-        class="thinking-content group/thinking mb-2 overflow-hidden rounded-xl border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] transition-all duration-300 shadow-sm hover:shadow-md"
+        class="thinking-content group/thinking mb-2 overflow-hidden rounded-xl border border-ai-message-border bg-ai-message-bg transition-all duration-300 shadow-sm hover:shadow-md"
         :class="{ 'is-collapsed': !isExpanded }"
       >
         <div
@@ -239,7 +239,7 @@ async function copyContent() {
         >
           <h4 class="flex items-center gap-2">
             <div
-              class="ai-icon text-[hsl(var(--primary-color))]"
+              class="ai-icon text-primary"
               :class="{ 'animate-pulse-custom': isStreaming && !hasContent }"
             >
               <svg
@@ -268,22 +268,18 @@ async function copyContent() {
             </div>
             <span
               class="font-medium tracking-wide text-sm transition-all duration-300"
-              :class="
-                isStreaming && !hasContent
-                  ? 'shimmer-text'
-                  : 'text-[hsl(var(--text-secondary-color))]'
-              "
+              :class="isStreaming && !hasContent ? 'shimmer-text' : 'text-muted-foreground'"
             >
               {{ thinkingStatus }}
             </span>
           </h4>
           <button
-            class="flex h-6 w-6 items-center justify-center rounded-md transition-colors hover:bg-[hsl(var(--ai-accent-hover))]"
+            class="flex h-6 w-6 items-center justify-center rounded-md transition-colors hover:bg-ai-accent-hover"
             @click.stop="isExpanded = !isExpanded"
           >
             <ChevronUp
               :size="14"
-              class="text-[hsl(var(--text-secondary-color))] transition-transform duration-300"
+              class="text-muted-foreground transition-transform duration-300"
               :class="{ 'rotate-180': !isExpanded }"
             />
           </button>
@@ -296,13 +292,10 @@ async function copyContent() {
             <div ref="thinkingContentRef" class="thinking-text">
               <div
                 v-if="renderedThinkingHtml"
-                class="markdown-content thinking-markdown italic text-[hsl(var(--text-secondary-color))]"
+                class="markdown-content thinking-markdown italic text-muted-foreground"
                 v-html="renderedThinkingHtml"
               />
-              <div
-                v-else
-                class="whitespace-pre-wrap italic text-[hsl(var(--text-secondary-color))]"
-              >
+              <div v-else class="whitespace-pre-wrap italic text-muted-foreground">
                 {{ message.thinkingContent }}
               </div>
             </div>
@@ -371,10 +364,10 @@ async function copyContent() {
           <!-- 加载状态：仅在既没有思考内容也没有正文内容时显示 -->
           <div
             v-if="!isUser && !hasContent && isStreaming && !hasThinking"
-            class="loading-container flex flex-col gap-3 rounded-2xl border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] p-4 shadow-sm"
+            class="loading-container flex flex-col gap-3 rounded-2xl border border-ai-message-border bg-ai-message-bg p-4 shadow-sm"
           >
             <div class="flex items-center gap-2">
-              <div class="ai-icon animate-bounce text-[hsl(var(--primary-color))]">
+              <div class="ai-icon animate-bounce text-primary">
                 <svg
                   width="18"
                   height="18"
@@ -392,14 +385,12 @@ async function copyContent() {
               <span class="shimmer-text font-medium">{{ t('ai.isThinking') }}</span>
             </div>
             <div class="flex flex-col gap-2">
+              <div class="h-2.5 w-[90%] animate-pulse rounded-full bg-ai-message-border"></div>
               <div
-                class="h-2.5 w-[90%] animate-pulse rounded-full bg-[hsl(var(--ai-message-border))]"
+                class="h-2.5 w-[75%] animate-pulse rounded-full bg-ai-message-border delay-75"
               ></div>
               <div
-                class="h-2.5 w-[75%] animate-pulse rounded-full bg-[hsl(var(--ai-message-border))] delay-75"
-              ></div>
-              <div
-                class="h-2.5 w-[85%] animate-pulse rounded-full bg-[hsl(var(--ai-message-border))] delay-150"
+                class="h-2.5 w-[85%] animate-pulse rounded-full bg-ai-message-border delay-150"
               ></div>
             </div>
           </div>
@@ -472,10 +463,10 @@ async function copyContent() {
             <!-- 操作按钮（AI 消息内部） -->
             <div
               v-if="!isUser && !isStreaming && hasContent"
-              class="mt-2 flex items-center gap-2 border-t border-[hsl(var(--ai-message-border))] pt-2"
+              class="mt-2 flex items-center gap-2 border-t border-ai-message-border pt-2"
             >
               <button
-                class="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-[hsl(var(--text-secondary-color))] transition-all hover:bg-[hsl(var(--ai-accent-hover))] hover:text-[hsl(var(--text-color))]"
+                class="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground transition-all hover:bg-ai-accent-hover hover:text-foreground"
                 :title="isCopied ? t('ai.copied') : t('ai.copy')"
                 @click="copyContent"
               >
@@ -485,7 +476,7 @@ async function copyContent() {
               </button>
               <button
                 v-if="isLast"
-                class="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-[hsl(var(--text-secondary-color))] transition-all hover:bg-[hsl(var(--ai-accent-hover))] hover:text-[hsl(var(--text-color))]"
+                class="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground transition-all hover:bg-ai-accent-hover hover:text-foreground"
                 :title="t('ai.regenerate')"
                 @click="emit('regenerate')"
               >
@@ -506,7 +497,7 @@ async function copyContent() {
   overflow-y: auto;
   border-left: 1px solid hsl(var(--ai-message-border));
   padding-left: 1rem;
-  color: hsl(var(--text-secondary-color));
+  color: hsl(var(--text-secondary));
   font-family: var(--font-sans);
 }
 

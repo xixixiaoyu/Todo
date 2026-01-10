@@ -315,15 +315,13 @@ export async function getMultiModelDiscussionStream(
     temperature: primaryPreset?.temperature ?? aiConfig.temperature,
   }
 
-  // 过滤副模型：排除主模型，避免冗余评审
+  // 过滤副模型：排除主模型，避免冗余回答
   const selectedPresets = presets.filter((p) => {
     const isSelected = discussionModelIds.includes(p.id)
     const isPrimary =
       p.id === primaryPreset?.id || (p.model === aiConfig.model && p.baseUrl === aiConfig.baseUrl)
     return isSelected && !isPrimary
   })
-
-  const primaryModelName = primaryPreset?.name ?? t('ai.primaryModel')
 
   // 如果没有选择副模型，回退到普通单模型请求
   if (selectedPresets.length === 0) {
@@ -332,90 +330,46 @@ export async function getMultiModelDiscussionStream(
 
   // 构建带系统提示和 Todo 列表的消息列表
   const messagesWithSystem = injectSystemPrompts(messages, systemPrompt, aiConfig.todoAssistant)
+  const userQuery = messages[messages.length - 1].content
 
   // 初始化步骤列表
-  const steps: DiscussionStep[] = [
-    {
-      modelId: 'primary-draft',
-      modelName: primaryModelName,
-      content: '',
-      status: 'thinking' as const,
-    },
+  const steps: DiscussionStep[] = []
+
+  // 并行模式：所有副模型直接生成回答
+  steps.push(
     ...selectedPresets.map((p) => ({
       modelId: p.id,
       modelName: p.name,
       content: '',
       status: 'thinking' as const,
     })),
-  ]
-
+  )
   onStepUpdate([...steps])
 
-  const userQuery = messages[messages.length - 1].content
-
-  // 2. 第一阶段：主模型生成草案
-  let draftContent = ''
-  try {
-    draftContent = await fetchNonStreamResponse(
-      primaryConfig,
-      messagesWithSystem,
-      thinkingMode,
-      signal,
-    )
-    steps[0].content = draftContent
-    steps[0].status = 'done'
-  } catch (err) {
-    if (err instanceof Error && err.name === 'AbortError') {
-      onFinalChunk('[ABORTED]')
-      return
-    }
-    steps[0].content = err instanceof Error ? err.message : 'Draft generation failed'
-    steps[0].status = 'error'
-    // 如果主模型失败，尝试回退到流式单模型
-    return getAIStreamResponse(messages, onFinalChunk, undefined, options)
-  } finally {
-    onStepUpdate([...steps])
-  }
-
-  // 3. 第二阶段：副模型评审草案
-  const fetchModelReview = async (preset: any, index: number) => {
-    const stepIndex = index + 1
+  const fetchModelResponse = async (preset: any, index: number) => {
     try {
-      const reviewPrompt = t('ai.reviewPrompt', {
-        originalQuery: userQuery,
-        draftContent,
-      })
-
-      // 副模型评审也带上系统提示词和 Todo 列表
-      const baseMessages = messages.slice(0, -1)
-      const reviewMessages = injectSystemPrompts(
-        [...baseMessages, { id: generateId(), role: 'user', content: reviewPrompt } as ChatMessage],
-        systemPrompt,
-        aiConfig.todoAssistant,
-      )
-
-      steps[stepIndex].content = await fetchNonStreamResponse(
+      steps[index].content = await fetchNonStreamResponse(
         preset,
-        reviewMessages,
+        messagesWithSystem,
         thinkingMode,
         signal,
       )
-      steps[stepIndex].status = 'done'
+      steps[index].status = 'done'
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
-        steps[stepIndex].content = 'Aborted'
-        steps[stepIndex].status = 'error'
-        throw err // 向上抛出以便 Promise.all 处理
+        steps[index].content = 'Aborted'
+        steps[index].status = 'error'
+        throw err
       }
-      steps[stepIndex].content = err instanceof Error ? err.message : 'Review failed'
-      steps[stepIndex].status = 'error'
+      steps[index].content = err instanceof Error ? err.message : 'Generation failed'
+      steps[index].status = 'error'
     } finally {
       onStepUpdate([...steps])
     }
   }
 
   try {
-    await Promise.all(selectedPresets.map((p, i) => fetchModelReview(p, i)))
+    await Promise.all(selectedPresets.map((p, i) => fetchModelResponse(p, i)))
   } catch (err) {
     if (err instanceof Error && err.name === 'AbortError') {
       onFinalChunk('[ABORTED]')
@@ -428,16 +382,14 @@ export async function getMultiModelDiscussionStream(
     return
   }
 
-  // 4. 第三阶段：汇总讨论结果，由主模型生成最终回复
+  // 汇总结果
   const discussionSummary = steps
-    .slice(1)
     .filter((s) => s.status === 'done')
-    .map((s) => `【${s.modelName} 的评审意见】：\n${s.content}`)
+    .map((s) => `【${s.modelName} 的回答】：\n${s.content}`)
     .join('\n\n')
 
-  const synthesisPrompt = t('ai.synthesisPrompt', {
+  const synthesisPrompt = t('ai.parallelSynthesisPrompt', {
     originalQuery: userQuery,
-    draftContent,
     discussionData: discussionSummary,
   })
 

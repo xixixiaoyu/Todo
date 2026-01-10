@@ -171,16 +171,12 @@ export default {
     discussionSecondaryModels: '讨论副模型',
     discussionStatus: '正在多模型讨论...',
     contributionReady: '见解已就绪',
-    primaryDrafting: '主模型正在生成草案...',
-    secondaryReviewing: '副模型正在评审草案...',
+    modelGenerating: '模型正在生成回答...',
     finalSynthesizing: '正在综合最终回答...',
     primaryModel: '主模型',
     secondaryModel: '副模型',
-    draftReady: '草案已生成',
     noPresetsForDiscussion: '暂无可用预设，请先在“预设管理”中添加参与讨论的模型',
-    reviewPrompt:
-      '以下是主模型对用户问题“{originalQuery}”生成的初步回答草案：\n\n{draftContent}\n\n请你作为副模型，参考该草案并结合你自己的专业知识，指出草案中的不足之处，并给出你的补充建议或修正方案。',
-    synthesisPrompt:
-      '我邀请了主模型生成了一个草案，并由多个副模型进行了评审。以下是讨论过程：\n\n【主模型草案】：\n{draftContent}\n\n{discussionData}\n\n请你综合以上所有内容，对用户的问题“{originalQuery}”给出一个最完美、专业且深入的最终回答。',
+    parallelSynthesisPrompt:
+      '我邀请了多个 AI 模型对用户的问题“{originalQuery}”进行了独立回答。以下是各模型的回答内容：\n\n{discussionData}\n\n请你作为主模型，深度分析并综合以上所有回答，为用户提供一个最准确、专业且全面的最终答案。',
   },
 }

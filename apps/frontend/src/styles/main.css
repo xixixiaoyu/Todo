@@ -61,6 +61,14 @@
     --todo-completed: 32 5% 45%;
     --success: 145 35% 45%;
     --error: 15 65% 55%;
+
+    /* AI 助手相关变量 */
+    --primary-color: var(--primary);
+    --text-color-base: var(--text-color);
+    --text-secondary-color: var(--text-secondary);
+    --ai-message-bg: var(--muted);
+    --ai-message-border: var(--border);
+    --ai-accent-hover: var(--accent);
   }
 
   .dark {
@@ -100,6 +108,14 @@
     --todo-completed: 240 4% 45%;
     --success: 145 30% 50%;
     --error: 15 50% 50%;
+
+    /* AI 助手相关变量 */
+    --primary-color: var(--primary);
+    --text-color-base: var(--text-color);
+    --text-secondary-color: var(--text-secondary);
+    --ai-message-bg: var(--muted);
+    --ai-message-border: var(--border);
+    --ai-accent-hover: var(--accent);
   }
 }
 
@@ -168,6 +184,7 @@
   background-size: 200% 100%;
   background-clip: text;
   -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .ai-star {
