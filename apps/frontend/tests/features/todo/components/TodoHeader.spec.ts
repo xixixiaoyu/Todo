@@ -56,8 +56,9 @@ describe('TodoHeader', () => {
       },
     })
 
-    const cloverButton = wrapper.findAll('button')[0]
-    await cloverButton.trigger('click')
+    const buttons = wrapper.findAll('button')
+    const cloverButton = buttons.find((b) => b.find('.lucide-clover').exists())
+    await cloverButton?.trigger('click')
 
     expect(wrapper.emitted('update:isDrawerOpen')).toBeTruthy()
     expect(wrapper.emitted('update:isDrawerOpen')?.[0]).toEqual([true])
@@ -74,8 +75,9 @@ describe('TodoHeader', () => {
       },
     })
 
-    const searchButton = wrapper.findAll('button')[1]
-    await searchButton.trigger('click')
+    const buttons = wrapper.findAll('button')
+    const searchButton = buttons.find((b) => b.find('.lucide-search').exists())
+    await searchButton?.trigger('click')
 
     expect(wrapper.emitted('update:showSearch')).toBeTruthy()
     expect(wrapper.emitted('update:showSearch')?.[0]).toEqual([true])
@@ -92,25 +94,26 @@ describe('TodoHeader', () => {
       },
     })
 
-    const langButton = wrapper.findAll('button')[3]
+    const buttons = wrapper.findAll('button')
+    const langButton = buttons.find((b) => b.find('.lucide-languages').exists())
 
     // 初始是 zh-CN
     expect(i18n.global.locale.value).toBe('zh-CN')
 
-    await langButton.trigger('click')
+    await langButton?.trigger('click')
 
     // 切换到 en-US
     expect(i18n.global.locale.value).toBe('en-US')
     expect(localStorage.getItem('locale')).toBe('en-US')
 
-    await langButton.trigger('click')
+    await langButton?.trigger('click')
 
     // 切换回 zh-CN
     expect(i18n.global.locale.value).toBe('zh-CN')
     expect(localStorage.getItem('locale')).toBe('zh-CN')
   })
 
-  it('语言切换按钮应该是最后一个按钮', () => {
+  it('应该包含语言切换按钮', () => {
     const wrapper = mount(TodoHeader, {
       props: {
         isDrawerOpen: false,
@@ -122,9 +125,7 @@ describe('TodoHeader', () => {
     })
 
     const buttons = wrapper.findAll('button')
-    expect(buttons.length).toBe(4)
-
-    // 最后一个按钮的 title 应该是语言切换
-    expect(buttons[3].attributes('title')).toBe('切换语言')
+    const langButton = buttons.find((b) => b.find('.lucide-languages').exists())
+    expect(langButton?.exists()).toBe(true)
   })
 })

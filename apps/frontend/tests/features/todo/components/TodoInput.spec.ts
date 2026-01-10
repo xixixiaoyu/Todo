@@ -108,10 +108,10 @@ describe('TodoInput', () => {
       },
     })
 
-    // The shaking class is applied to the input container div (third div)
-    const container = wrapper.findAll('div')[2]
-    expect(container.classes()).toContain('border-error')
-    expect(container.classes()).toContain('animate-shake')
+    const container = wrapper.find('.animate-shake')
+    expect(container.exists()).toBe(true)
+    const input = wrapper.find('input')
+    expect(input.classes()).toContain('border-destructive')
   })
 
   it('should not apply shaking class when isShaking is false', () => {
@@ -125,13 +125,16 @@ describe('TodoInput', () => {
       },
     })
 
-    // The shaking class is applied to the input container div (third div)
-    const container = wrapper.findAll('div')[2]
-    expect(container.classes()).not.toContain('border-error')
-    expect(container.classes()).not.toContain('animate-shake')
+    const container = wrapper.find('.animate-shake')
+    expect(container.exists()).toBe(false)
+    const input = wrapper.find('input')
+    expect(input.classes()).not.toContain('border-destructive')
   })
 
   it('should show tooltip when showTooltip is true', () => {
+    // Tooltip content is often teleported or conditionally rendered by shadcn components.
+    // In a unit test without proper setup for tooltips, we can check if the Tooltip component
+    // is present and has the correct open prop.
     const wrapper = mount(TodoInput, {
       props: {
         ...defaultProps,
@@ -140,12 +143,28 @@ describe('TodoInput', () => {
       },
       global: {
         plugins: [i18n],
+        stubs: {
+          Tooltip: {
+            template: '<div class="tooltip-stub" :data-open="open"><slot /></div>',
+            props: ['open'],
+          },
+          TooltipContent: {
+            template: '<div class="tooltip-content-stub"><slot /></div>',
+          },
+          TooltipProvider: {
+            template: '<div><slot /></div>',
+          },
+          TooltipTrigger: {
+            template: '<div><slot /></div>',
+          },
+        },
       },
     })
 
-    const tooltip = wrapper.find('.absolute')
+    const tooltip = wrapper.find('.tooltip-stub')
     expect(tooltip.exists()).toBe(true)
-    expect(tooltip.text()).toBe('已存在相同的待办事项')
+    expect(tooltip.attributes('data-open')).toBe('true')
+    expect(wrapper.find('.tooltip-content-stub').text()).toBe('已存在相同的待办事项')
   })
 
   it('should not show tooltip when showTooltip is false', () => {
@@ -156,11 +175,26 @@ describe('TodoInput', () => {
       },
       global: {
         plugins: [i18n],
+        stubs: {
+          Tooltip: {
+            template: '<div class="tooltip-stub" :data-open="open"><slot /></div>',
+            props: ['open'],
+          },
+          TooltipContent: {
+            template: '<div class="tooltip-content-stub"><slot /></div>',
+          },
+          TooltipProvider: {
+            template: '<div><slot /></div>',
+          },
+          TooltipTrigger: {
+            template: '<div><slot /></div>',
+          },
+        },
       },
     })
 
-    const tooltip = wrapper.find('.absolute')
-    expect(tooltip.exists()).toBe(false)
+    const tooltip = wrapper.find('.tooltip-stub')
+    expect(tooltip.attributes('data-open')).toBe('false')
   })
 
   it('should display current modelValue in input', () => {
@@ -175,7 +209,7 @@ describe('TodoInput', () => {
     })
 
     const input = wrapper.find('input[type="text"]')
-    expect(input.attributes('value')).toBe('Test todo')
+    expect((input.element as HTMLInputElement).value).toBe('Test todo')
   })
 
   it('should have correct placeholder', () => {

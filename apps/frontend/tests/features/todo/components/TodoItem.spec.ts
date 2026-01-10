@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createI18n } from 'vue-i18n'
 import TodoItem from '@/features/todo/components/TodoItem.vue'
+import { Checkbox } from '@/components/ui/checkbox'
 import type { Todo } from '@/features/todo/stores/todo'
 
 // Mock vue-i18n
@@ -55,7 +56,7 @@ describe('TodoItem', () => {
       },
     })
 
-    const checkbox = wrapper.find('button')
+    const checkbox = wrapper.findComponent(Checkbox)
     await checkbox.trigger('click')
 
     expect(wrapper.emitted('toggle')).toBeTruthy()
@@ -75,9 +76,10 @@ describe('TodoItem', () => {
       },
     })
 
-    const titleSpan = wrapper.find('span')
-    expect(titleSpan.classes()).toContain('line-through')
-    expect(titleSpan.classes()).toContain('text-text-completed')
+    const titleSpan = wrapper.findAll('span').find((s) => s.text() === 'Test todo')
+    expect(titleSpan?.exists()).toBe(true)
+    expect(titleSpan?.classes()).toContain('line-through')
+    expect(titleSpan?.classes()).toContain('text-muted-foreground/50')
   })
 
   it('should show edit mode when editingId matches todo id', () => {
@@ -108,8 +110,10 @@ describe('TodoItem', () => {
       },
     })
 
-    const editBtn = wrapper.find('button[title="编辑"]')
-    await editBtn.trigger('click')
+    // Find the Pencil icon button
+    const buttons = wrapper.findAll('button')
+    const editBtn = buttons.find((b) => b.find('.lucide-pencil').exists())
+    await editBtn?.trigger('click')
 
     expect(wrapper.emitted('startEdit')).toBeTruthy()
     expect(wrapper.emitted('startEdit')?.[0]).toEqual(['1', 'Test todo'])
@@ -239,8 +243,9 @@ describe('TodoItem', () => {
       },
     })
 
-    // Check for the Lucide Check icon
-    expect(wrapper.find('svg.lucide-check').exists()).toBe(true)
+    // Check if checkbox is checked
+    const checkbox = wrapper.findComponent(Checkbox)
+    expect(checkbox.props('modelValue')).toBe(true)
   })
 
   it('should not show check icon when todo is not completed', () => {
@@ -255,7 +260,8 @@ describe('TodoItem', () => {
       },
     })
 
-    expect(wrapper.find('svg.lucide-check').exists()).toBe(false)
+    const checkbox = wrapper.findComponent(Checkbox)
+    expect(checkbox.props('modelValue')).toBe(false)
   })
 
   it('should emit saveEdit event when input blurred', async () => {

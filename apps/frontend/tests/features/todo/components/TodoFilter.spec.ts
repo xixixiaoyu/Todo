@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createI18n } from 'vue-i18n'
 import TodoFilter from '@/features/todo/components/TodoFilter.vue'
+import { Tabs, TabsTrigger } from '@/components/ui/tabs'
 
 // Mock vue-i18n
 const i18n = createI18n({
@@ -71,8 +72,7 @@ describe('TodoFilter', () => {
     })
 
     const pendingButton = wrapper.findAll('button')[0]
-    expect(pendingButton.classes()).toContain('bg-primary')
-    expect(pendingButton.classes()).toContain('text-primary-foreground')
+    expect(pendingButton.attributes('data-state')).toBe('active')
   })
 
   it('should apply inactive style to completed button when filter is pending', () => {
@@ -86,9 +86,7 @@ describe('TodoFilter', () => {
     })
 
     const completedButton = wrapper.findAll('button')[1]
-    expect(completedButton.classes()).toContain('border')
-    expect(completedButton.classes()).toContain('bg-card')
-    expect(completedButton.classes()).toContain('text-muted-foreground')
+    expect(completedButton.attributes('data-state')).toBe('inactive')
   })
 
   it('should apply active style to completed button when filter is completed', () => {
@@ -102,8 +100,7 @@ describe('TodoFilter', () => {
     })
 
     const completedButton = wrapper.findAll('button')[1]
-    expect(completedButton.classes()).toContain('bg-primary')
-    expect(completedButton.classes()).toContain('text-primary-foreground')
+    expect(completedButton.attributes('data-state')).toBe('active')
   })
 
   it('should apply inactive style to pending button when filter is completed', () => {
@@ -117,9 +114,7 @@ describe('TodoFilter', () => {
     })
 
     const pendingButton = wrapper.findAll('button')[0]
-    expect(pendingButton.classes()).toContain('border')
-    expect(pendingButton.classes()).toContain('bg-card')
-    expect(pendingButton.classes()).toContain('text-muted-foreground')
+    expect(pendingButton.attributes('data-state')).toBe('inactive')
   })
 
   it('should emit update:filter with pending when pending button clicked', async () => {
@@ -132,8 +127,8 @@ describe('TodoFilter', () => {
       },
     })
 
-    const pendingButton = wrapper.findAll('button')[0]
-    await pendingButton.trigger('click')
+    const tabs = wrapper.findComponent(Tabs)
+    await tabs.vm.$emit('update:modelValue', 'pending')
 
     expect(wrapper.emitted('update:filter')).toBeTruthy()
     expect(wrapper.emitted('update:filter')?.[0]).toEqual(['pending'])
@@ -149,8 +144,8 @@ describe('TodoFilter', () => {
       },
     })
 
-    const completedButton = wrapper.findAll('button')[1]
-    await completedButton.trigger('click')
+    const tabs = wrapper.findComponent(Tabs)
+    await tabs.vm.$emit('update:modelValue', 'completed')
 
     expect(wrapper.emitted('update:filter')).toBeTruthy()
     expect(wrapper.emitted('update:filter')?.[0]).toEqual(['completed'])

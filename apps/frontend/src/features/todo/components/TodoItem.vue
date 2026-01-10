@@ -32,9 +32,9 @@ const emit = defineEmits<{
       class="group flex items-center gap-4 rounded-xl border border-border bg-card px-4 py-3 transition-all hover:shadow-md hover:border-primary/20 dark:hover:shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
     >
       <Checkbox
-        :checked="todo.completed"
+        :model-value="todo.completed"
         class="h-5 w-5 rounded-full border-2 data-[state=checked]:bg-success data-[state=checked]:border-success transition-transform active:scale-90"
-        @update:checked="emit('toggle', todo.id, todo.completed)"
+        @update:model-value="emit('toggle', todo.id, todo.completed)"
       />
 
       <!-- 编辑模式 -->

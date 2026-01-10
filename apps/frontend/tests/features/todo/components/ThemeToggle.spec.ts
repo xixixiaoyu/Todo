@@ -25,25 +25,24 @@ describe('ThemeToggle', () => {
 
     const mockedUseTheme = vi.mocked(useTheme)
     mockedUseTheme.mockReturnValue({
-      theme,
+      theme: theme as any,
       setTheme,
-      isDark: ref(false),
-    })
+    } as any)
 
     const wrapper = mount(ThemeToggle)
 
     // Initial state: light
-    await wrapper.trigger('click')
+    await wrapper.find('button').trigger('click')
     expect(setTheme).toHaveBeenCalledWith('dark')
 
     // Change theme to dark
     theme.value = 'dark'
-    await wrapper.trigger('click')
+    await wrapper.find('button').trigger('click')
     expect(setTheme).toHaveBeenCalledWith('auto')
 
     // Change theme to auto
     theme.value = 'auto'
-    await wrapper.trigger('click')
+    await wrapper.find('button').trigger('click')
     expect(setTheme).toHaveBeenCalledWith('light')
   })
 })
