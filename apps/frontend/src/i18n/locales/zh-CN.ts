@@ -119,6 +119,7 @@ export default {
     copy: '复制',
     copied: '已复制',
     regenerate: '重新生成',
+    edit: '编辑',
     settings: 'AI 助手设置',
     basicSettings: '基础设置',
     presetManagement: '预设管理',

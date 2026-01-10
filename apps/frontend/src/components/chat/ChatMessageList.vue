@@ -12,6 +12,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'regenerate'): void
+  (e: 'edit', id: string, content: string): void
 }>()
 
 const { t } = useI18n()
@@ -84,6 +85,7 @@ defineExpose({
             :message="msg"
             :is-last="index === messages.length - 1"
             @regenerate="emit('regenerate')"
+            @edit="(content) => emit('edit', msg.id, content)"
           />
         </TransitionGroup>
       </div>

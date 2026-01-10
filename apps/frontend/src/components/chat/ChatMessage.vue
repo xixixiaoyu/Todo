@@ -6,6 +6,7 @@ import {
   Copy,
   Check,
   RefreshCw,
+  Pencil,
   Users,
   CircleDashed,
   CheckCircle2,
@@ -21,11 +22,52 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'regenerate'): void
+  (e: 'edit', content: string): void
 }>()
 
 const { t } = useI18n()
 
 const { renderMarkdown, getMermaidSvgMap } = useMarkdown()
+
+// 编辑状态
+const isEditing = ref(false)
+const editContent = ref(props.message.content)
+const editInputRef = ref<HTMLTextAreaElement>()
+
+// 开启编辑
+function startEdit() {
+  if (!isUser.value) return
+  editContent.value = props.message.content
+  isEditing.value = true
+  nextTick(() => {
+    editInputRef.value?.focus()
+    adjustEditHeight()
+  })
+}
+
+// 取消编辑
+function cancelEdit() {
+  isEditing.value = false
+  editContent.value = props.message.content
+}
+
+// 保存编辑
+function saveEdit() {
+  const content = editContent.value.trim()
+  if (content && content !== props.message.content) {
+    emit('edit', content)
+  }
+  isEditing.value = false
+}
+
+// 自动调整编辑框高度
+function adjustEditHeight() {
+  const textarea = editInputRef.value
+  if (textarea) {
+    textarea.style.height = 'auto'
+    textarea.style.height = `${textarea.scrollHeight}px`
+  }
+}
 
 // 思考内容展开状态（流式且没有正文时默认展开）
 const isExpanded = ref(props.message.isStreaming && !props.message.content)
@@ -364,15 +406,55 @@ async function copyContent() {
           <div
             v-else-if="isUser || hasContent"
             class="relative rounded-2xl px-4 py-3 shadow-sm transition-all duration-300"
-            :class="
+            :class="[
               isUser
                 ? 'bg-[#c9b896] text-white hover:bg-[#b8a785]'
-                : 'border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] text-[hsl(var(--text-color))]'
-            "
+                : 'border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] text-[hsl(var(--text-color))]',
+              isEditing ? 'w-full !bg-white !text-[#3a3a3a] ring-1 ring-[#c9b896]' : '',
+            ]"
           >
-            <!-- 用户消息：纯文本显示 -->
-            <div v-if="isUser" class="whitespace-pre-wrap text-sm leading-relaxed">
-              {{ message.content }}
+            <!-- 用户消息：编辑模式 -->
+            <div v-if="isUser && isEditing" class="flex flex-col gap-2">
+              <textarea
+                ref="editInputRef"
+                v-model="editContent"
+                class="w-full min-w-[280px] resize-none bg-transparent text-sm leading-relaxed outline-none"
+                rows="1"
+                @input="adjustEditHeight"
+                @keydown.esc="cancelEdit"
+                @keydown.enter.ctrl.exact="saveEdit"
+                @keydown.enter.meta.exact="saveEdit"
+              />
+              <div class="flex justify-end gap-2 border-t border-[#f0eee9] pt-2">
+                <button
+                  class="rounded px-2 py-1 text-xs text-[#8b8680] hover:bg-[#f5f3ed]"
+                  @click="cancelEdit"
+                >
+                  {{ t('ai.cancel') }}
+                </button>
+                <button
+                  class="rounded bg-[#c9b896] px-2 py-1 text-xs text-white hover:bg-[#b8a785]"
+                  @click="saveEdit"
+                >
+                  {{ t('ai.save') }}
+                </button>
+              </div>
+            </div>
+
+            <!-- 用户消息：展示模式 -->
+            <div v-else-if="isUser" class="group/user relative">
+              <div class="whitespace-pre-wrap text-sm leading-relaxed">
+                {{ message.content }}
+              </div>
+              <!-- 编辑按钮 -->
+              <button
+                v-if="!isEditing"
+                class="absolute -left-10 top-0 flex h-7 w-7 items-center justify-center rounded-md bg-white/80 text-[#8b8680] opacity-0 shadow-sm transition-all hover:bg-white hover:text-[#c9b896] group-hover/user:opacity-100"
+                :title="t('ai.edit')"
+                @click="startEdit"
+              >
+                <Pencil :size="14" />
+              </button>
             </div>
             <!-- AI 消息：Markdown 渲染 -->
             <div

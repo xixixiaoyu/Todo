@@ -81,6 +81,7 @@ const {
   stopGenerating,
   clearHistory,
   regenerateLastResponse,
+  editAndResendMessage,
 } = useChat()
 
 const isMaximized = ref(false)
@@ -279,6 +280,7 @@ defineOptions({
         ref="messageListRef"
         :messages="messages"
         @regenerate="regenerateLastResponse"
+        @edit="editAndResendMessage"
       />
 
       <!-- 错误提示 -->

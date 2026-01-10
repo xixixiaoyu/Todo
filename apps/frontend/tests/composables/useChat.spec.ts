@@ -431,6 +431,79 @@ describe('useChat', () => {
     })
   })
 
+  describe('editAndResendMessage', () => {
+    it('should edit message and remove subsequent messages', async () => {
+      const mockSessionWithMessages: ChatSession = {
+        id: 'session-1',
+        title: 'Test Session',
+        messages: [
+          { id: 'msg-1', role: 'user', content: 'hello', createdAt: new Date() },
+          { id: 'msg-2', role: 'assistant', content: 'hi', createdAt: new Date() },
+          { id: 'msg-3', role: 'user', content: 'how are you', createdAt: new Date() },
+          { id: 'msg-4', role: 'assistant', content: 'I am fine', createdAt: new Date() },
+        ],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+
+      mockCurrentSession.value = mockSessionWithMessages
+      mockGetOrCreateCurrentSession.mockReturnValue(mockSessionWithMessages)
+
+      mockGetAIStreamResponse.mockImplementation(async (_, onChunk) => {
+        onChunk('New Response')
+        onChunk('[DONE]')
+      })
+
+      const { editAndResendMessage, messages } = useChat()
+
+      await editAndResendMessage('msg-1', 'modified hello')
+
+      // msg-1 之后的所有消息都应该被删除，msg-1 被新发送的消息替换
+      expect(messages.value).toHaveLength(2) // 替换后的 msg-1 (new user msg) + 新的 AI 回复
+      expect(messages.value[0].content).toBe('modified hello')
+      expect(messages.value[1].content).toBe('New Response')
+    })
+
+    it('should not edit if message id not found', async () => {
+      const mockSessionWithMessages: ChatSession = {
+        id: 'session-1',
+        title: 'Test Session',
+        messages: [{ id: 'msg-1', role: 'user', content: 'hello', createdAt: new Date() }],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+
+      mockCurrentSession.value = mockSessionWithMessages
+      mockGetOrCreateCurrentSession.mockReturnValue(mockSessionWithMessages)
+
+      const { editAndResendMessage, messages } = useChat()
+
+      await editAndResendMessage('non-existent', 'new content')
+
+      expect(messages.value).toHaveLength(1)
+      expect(mockGetAIStreamResponse).not.toHaveBeenCalled()
+    })
+
+    it('should not edit if content is empty', async () => {
+      const mockSessionWithMessages: ChatSession = {
+        id: 'session-1',
+        title: 'Test Session',
+        messages: [{ id: 'msg-1', role: 'user', content: 'hello', createdAt: new Date() }],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+
+      mockCurrentSession.value = mockSessionWithMessages
+      mockGetOrCreateCurrentSession.mockReturnValue(mockSessionWithMessages)
+
+      const { editAndResendMessage } = useChat()
+
+      await editAndResendMessage('msg-1', '')
+
+      expect(mockGetAIStreamResponse).not.toHaveBeenCalled()
+    })
+  })
+
   describe('messages computed', () => {
     it('should include streaming response when present', () => {
       const mockSessionWithMessages: ChatSession = {

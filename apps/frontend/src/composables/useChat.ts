@@ -223,14 +223,31 @@ export function useChat(options: AIRequestOptions = {}) {
     await sendMessage(userContent)
   }
 
+  /**
+   * 编辑并重新发送消息
+   */
+  async function editAndResendMessage(messageId: string, newContent: string): Promise<void> {
+    if (isGenerating.value || !newContent.trim()) return
+
+    const index = chatHistory.value.findIndex((msg) => msg.id === messageId)
+    if (index === -1) return
+
+    // 更新消息内容并删除后续所有消息
+    const newHistory = [...chatHistory.value.slice(0, index)]
+    chatHistory.value = newHistory
+
+    // 重新发送新内容
+    await sendMessage(newContent)
+  }
+
   // 合并的消息列表（包含流式响应）
   const messages = computed(() => {
     const allMessages = [...chatHistory.value]
 
     // 如果正在生成，添加流式消息占位
-    if (isGenerating.value && currentAssistantMessageId.value) {
+    if (isGenerating.value) {
       allMessages.push({
-        id: currentAssistantMessageId.value,
+        id: currentAssistantMessageId.value || 'streaming-response',
         role: 'assistant',
         content: currentAIResponse.value,
         thinkingContent: currentThinkingContent.value,
@@ -258,5 +275,6 @@ export function useChat(options: AIRequestOptions = {}) {
     clearHistory,
     deleteMessage,
     regenerateLastResponse,
+    editAndResendMessage,
   }
 }

@@ -121,6 +121,7 @@ export default {
     copy: 'Copy',
     copied: 'Copied',
     regenerate: 'Regenerate',
+    edit: 'Edit',
     settings: 'AI Assistant Settings',
     basicSettings: 'Basic Settings',
     presetManagement: 'Preset Management',
