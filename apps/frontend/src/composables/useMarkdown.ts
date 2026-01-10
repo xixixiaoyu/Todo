@@ -137,6 +137,10 @@ async function initializeMermaid(theme: 'default' | 'dark' = 'default') {
       curve: 'basis', // 使用更平滑的曲线
       padding: 15,
     },
+    sequence: {
+      useMaxWidth: false,
+      showSequenceNumbers: true,
+    },
     themeVariables: isDark
       ? {
           primaryColor: '#c9b896',
@@ -543,7 +547,10 @@ export function useMarkdown() {
       // 3. 恢复转义的美元符号
       html = html.replace(/__ESC_DOLLAR__/g, '$')
 
-      // 4. 如果存在待渲染的图表，执行异步渲染
+      // 4. XSS 清理：先清理基础 HTML，保护占位符
+      html = DOMPurify.sanitize(html, PURIFY_CONFIG)
+
+      // 5. 如果存在待渲染的图表，执行异步渲染
       if (env.mermaidQueue && env.mermaidQueue.length > 0) {
         // 先尝试从缓存中直接替换，减少闪烁
         const currentTheme = getCurrentTheme()
@@ -561,7 +568,7 @@ export function useMarkdown() {
         await processMermaidQueue(env.mermaidQueue)
       }
 
-      // 5. 处理流式输出光标
+      // 6. 处理流式输出光标
       if (isStreaming) {
         if (html.endsWith('</p>')) {
           html = html.replace(/<\/p>$/, '<span class="typing-cursor"></span></p>')
@@ -570,8 +577,7 @@ export function useMarkdown() {
         }
       }
 
-      // 6. XSS 清理
-      return DOMPurify.sanitize(html, PURIFY_CONFIG)
+      return html
     } catch (error) {
       console.error('Markdown rendering error:', error)
       return `<p class="markdown-error">渲染失败: ${error}</p>`
