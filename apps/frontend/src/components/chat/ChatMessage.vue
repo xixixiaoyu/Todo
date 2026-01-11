@@ -361,7 +361,7 @@ async function copyContent() {
 </script>
 
 <template>
-  <div ref="messageRef" class="group flex py-4" :class="isUser ? 'justify-end' : 'justify-start'">
+  <div ref="messageRef" class="flex py-4" :class="isUser ? 'justify-end' : 'justify-start'">
     <!-- 消息内容 -->
     <div class="max-w-[85%] space-y-2">
       <!-- 思考过程（AI 消息） -->
@@ -609,7 +609,7 @@ async function copyContent() {
             <!-- 操作按钮（AI 消息内部） -->
             <div
               v-if="!isUser && !isStreaming && hasContent"
-              class="mt-2 flex items-center gap-1.5 border-t border-ai-message-border pt-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+              class="mt-2 flex items-center gap-1.5 border-t border-ai-message-border pt-2 transition-opacity duration-300"
             >
               <button
                 class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-muted-foreground/80 transition-all hover:bg-primary/10 hover:text-primary active:scale-95"
