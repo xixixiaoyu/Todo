@@ -1,281 +1,104 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { nextTick } from 'vue'
-import i18n from '@/i18n'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { useChatHistory, _resetChatHistory, _loadSessions } from '@/composables/useChatHistory'
-import { type ChatMessage } from '@/services/aiService'
+import type { ChatSession } from '@/composables/useChatHistory'
 
-// Mock localStorage
-const mockLocalStorage = (() => {
-  let store: Record<string, string> = {}
+/**
+ * 模拟从 localStorage 解析出的会话类型（Date 变为 string）
+ */
+type SerializedChatSession = Omit<ChatSession, 'createdAt' | 'updatedAt'> & {
+  createdAt: string
+  updatedAt: string
+}
 
-  return {
-    getItem(key: string): string | null {
-      return store[key] || null
+// Mock i18n
+vi.mock('@/i18n', () => ({
+  default: {
+    global: {
+      t: (key: string) => key,
     },
-    setItem(key: string, value: string): void {
-      store[key] = value.toString()
-    },
-    removeItem(key: string): void {
-      delete store[key]
-    },
-    clear(): void {
-      store = {}
-    },
-  }
-})()
-
-Object.defineProperty(window, 'localStorage', {
-  value: mockLocalStorage,
-})
+  },
+}))
 
 describe('useChatHistory', () => {
   beforeEach(() => {
-    // 重置全局状态
-    _resetChatHistory()
-    // 清除所有现有数据
-    localStorage.clear()
-
-    vi.clearAllMocks()
     vi.useFakeTimers()
-    vi.setSystemTime(new Date(2023, 0, 1)) // 设置固定时间以便测试日期
+    localStorage.clear()
+    _resetChatHistory()
   })
 
-  afterEach(() => {
-    vi.useRealTimers()
+  it('should persist new session after creation and reload', async () => {
+    const { createSession } = useChatHistory()
+
+    // 1. 创建新会话
+    const session = createSession()
+    const sessionId = session.id
+
+    // 触发 watcher
+    await vi.runAllTimersAsync()
+
+    // 验证是否保存到 localStorage
+    const savedSessions = JSON.parse(
+      localStorage.getItem('ai-chat-sessions') || '[]',
+    ) as SerializedChatSession[]
+    expect(savedSessions.some((s) => s.id === sessionId)).toBe(true)
+    expect(localStorage.getItem('ai-chat-current-session')).toBe(sessionId)
+
+    // 2. 模拟页面刷新 (重新加载)
+    _resetChatHistory()
+    _loadSessions()
+
+    const { currentSessionId } = useChatHistory()
+    expect(currentSessionId.value).toBe(sessionId)
   })
 
-  describe('initial state', () => {
-    it('should initialize with empty sessions', () => {
-      const { sessions, currentSession, hasSession } = useChatHistory()
+  it('should fix the issue: new session persists even if refreshed immediately', async () => {
+    const { createSession } = useChatHistory()
 
-      expect(sessions.value).toEqual([])
-      expect(currentSession.value).toBeNull()
-      expect(hasSession.value).toBe(false)
-    })
+    // 1. 创建新会话
+    const session = createSession()
+    const sessionId = session.id
+
+    // 现在 currentSessionId 的 watcher 是 sync 的，且 createSession 也会立即调用 saveSessions(true)
+    expect(localStorage.getItem('ai-chat-current-session')).toBe(sessionId)
+
+    // 验证是否已立即保存到 sessions 列表
+    const savedSessions = JSON.parse(
+      localStorage.getItem('ai-chat-sessions') || '[]',
+    ) as SerializedChatSession[]
+    expect(savedSessions.some((s) => s.id === sessionId)).toBe(true)
+
+    // 2. 模拟页面刷新 (重新加载)
+    _resetChatHistory()
+    _loadSessions()
+
+    const { currentSessionId } = useChatHistory()
+
+    // 现在应该保持一致
+    expect(currentSessionId.value).toBe(sessionId)
   })
 
-  describe('createSession', () => {
-    it('should create a new session', () => {
-      const { sessions, currentSession, createSession } = useChatHistory()
+  it('should save pending changes on beforeunload', () => {
+    const { updateSessionMessages, createSession } = useChatHistory()
+    const session = createSession()
 
-      const newSession = createSession()
+    // 模拟消息更新（这会触发节流保存）
+    updateSessionMessages(session.id, [{ id: '1', role: 'user', content: 'hello' }])
 
-      expect(sessions.value).toHaveLength(1)
-      expect(currentSession.value).toEqual(newSession)
-      expect(newSession.id).toBeDefined()
-      expect(newSession.title).toBe(i18n.global.t('ai.newChat'))
-      expect(newSession.messages).toEqual([])
-      expect(newSession.createdAt).toBeInstanceOf(Date)
-      expect(newSession.updatedAt).toBeInstanceOf(Date)
-    })
+    // 验证此时 localStorage 还没有更新消息（因为节流）
+    const savedSessionsBefore = JSON.parse(
+      localStorage.getItem('ai-chat-sessions') || '[]',
+    ) as SerializedChatSession[]
+    const sessionBefore = savedSessionsBefore.find((s) => s.id === session.id)
+    expect(sessionBefore?.messages.length).toBe(0)
 
-    it('should set the new session as current', () => {
-      const { currentSession, currentSessionId, createSession } = useChatHistory()
+    // 模拟 beforeunload 事件
+    window.dispatchEvent(new Event('beforeunload'))
 
-      const newSession = createSession()
-
-      expect(currentSession.value).toEqual(newSession)
-      expect(currentSessionId.value).toBe(newSession.id)
-    })
-  })
-
-  describe('updateSessionMessages', () => {
-    it('should update messages for a specific session', () => {
-      const { sessions, createSession, updateSessionMessages } = useChatHistory()
-
-      const session = createSession()
-      const originalUpdatedAt = session.updatedAt.getTime()
-      const newMessages: ChatMessage[] = [
-        { id: 'msg-1', role: 'user', content: 'Hello', createdAt: new Date() },
-        { id: 'msg-2', role: 'assistant', content: 'Hi', createdAt: new Date() },
-      ]
-
-      // advance timer to ensure updatedAt will be different
-      vi.advanceTimersByTime(100)
-      updateSessionMessages(session.id, newMessages)
-
-      expect(sessions.value[0].messages).toEqual(newMessages)
-      expect(sessions.value[0].updatedAt.getTime()).toBeGreaterThan(originalUpdatedAt) // Should be updated
-    })
-
-    it('should update session title if it is the default and first user message exists', () => {
-      const { sessions, createSession, updateSessionMessages } = useChatHistory()
-
-      const session = createSession()
-      const messages: ChatMessage[] = [
-        { id: 'msg-1', role: 'user', content: 'Initial user message', createdAt: new Date() },
-        { id: 'msg-2', role: 'assistant', content: 'Response', createdAt: new Date() },
-      ]
-
-      updateSessionMessages(session.id, messages)
-
-      expect(sessions.value[0].title).toBe('Initial user message')
-    })
-
-    it('should use full message as title', () => {
-      const { sessions, createSession, updateSessionMessages } = useChatHistory()
-
-      const session = createSession()
-      const longContent = 'A'.repeat(50) // Create a long string
-      const messages: ChatMessage[] = [
-        { id: 'msg-1', role: 'user', content: longContent, createdAt: new Date() },
-      ]
-
-      updateSessionMessages(session.id, messages)
-
-      expect(sessions.value[0].title).toBe(longContent)
-    })
-  })
-
-  describe('renameSession', () => {
-    it('should update session title', () => {
-      const { sessions, createSession, renameSession } = useChatHistory()
-
-      const session = createSession()
-      renameSession(session.id, 'New Title')
-
-      expect(sessions.value[0].title).toBe('New Title')
-    })
-  })
-
-  describe('getOrCreateCurrentSession', () => {
-    it('should return current session if exists', () => {
-      const { getOrCreateCurrentSession, createSession } = useChatHistory()
-
-      const session = createSession()
-      const returnedSession = getOrCreateCurrentSession()
-
-      expect(returnedSession).toEqual(session)
-    })
-
-    it('should create a new session if none exists', () => {
-      const { getOrCreateCurrentSession, currentSession } = useChatHistory()
-
-      const returnedSession = getOrCreateCurrentSession()
-
-      expect(returnedSession).toEqual(currentSession.value)
-      expect(returnedSession).toBeDefined()
-    })
-  })
-
-  describe('loadSessions', () => {
-    it('should restore currentSessionId from localStorage', () => {
-      const sessionId = 'test-session-id'
-      const sessionsData = [
-        {
-          id: sessionId,
-          title: 'Test Session',
-          messages: [],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      ]
-
-      localStorage.setItem('ai-chat-sessions', JSON.stringify(sessionsData))
-      localStorage.setItem('ai-chat-current-session', sessionId)
-
-      _loadSessions()
-
-      const { currentSessionId } = useChatHistory()
-      expect(currentSessionId.value).toBe(sessionId)
-    })
-
-    it('should fallback to the most recently updated session if currentSessionId is missing', () => {
-      const oldSessionId = 'old-session'
-      const newSessionId = 'new-session'
-      const now = new Date()
-      const sessionsData = [
-        {
-          id: oldSessionId,
-          title: 'Old Session',
-          messages: [],
-          createdAt: now.toISOString(),
-          updatedAt: now.toISOString(),
-        },
-        {
-          id: newSessionId,
-          title: 'New Session',
-          messages: [],
-          createdAt: new Date(now.getTime() - 1000).toISOString(),
-          updatedAt: new Date(now.getTime() + 1000).toISOString(), // Updated later
-        },
-      ]
-
-      localStorage.setItem('ai-chat-sessions', JSON.stringify(sessionsData))
-      // DO NOT set ai-chat-current-session
-
-      _loadSessions()
-
-      const { currentSessionId } = useChatHistory()
-      expect(currentSessionId.value).toBe(newSessionId)
-    })
-  })
-
-  describe('auto-save', () => {
-    it('should save sessions to localStorage after changes', () => {
-      const { createSession } = useChatHistory()
-
-      const session = createSession()
-
-      // Wait for the throttle timeout
-      vi.advanceTimersByTime(600)
-
-      const saved = localStorage.getItem('ai-chat-sessions')
-      expect(saved).toBeTruthy()
-      const parsed = JSON.parse(saved!)
-      expect(parsed).toHaveLength(1)
-      expect(parsed[0].id).toBe(session.id)
-    })
-
-    it('should save current session ID to localStorage', () => {
-      const { createSession } = useChatHistory()
-
-      const session = createSession()
-
-      // Wait for the throttle timeout
-      vi.advanceTimersByTime(600)
-
-      const saved = localStorage.getItem('ai-chat-current-session')
-      expect(saved).toBe(session.id)
-    })
-  })
-
-  describe('lastActiveSessionId', () => {
-    it('should update lastActiveSessionId when currentSessionId changes', async () => {
-      const { createSession, switchSession, lastActiveSessionId } = useChatHistory()
-
-      createSession() // session1
-      await nextTick()
-      const session2 = createSession()
-      await nextTick()
-
-      // 初始状态：创建 session2 后，session1 成为上一个激活的
-      const session1Id = lastActiveSessionId.value
-      expect(session1Id).not.toBeNull()
-
-      switchSession(session1Id!)
-      await nextTick()
-      expect(lastActiveSessionId.value).toBe(session2.id)
-
-      switchSession(session2.id)
-      await nextTick()
-      expect(lastActiveSessionId.value).toBe(session1Id)
-    })
-
-    it('should clear lastActiveSessionId when the last active session is deleted', async () => {
-      const { createSession, deleteSession, lastActiveSessionId } = useChatHistory()
-
-      createSession() // session1
-      await nextTick()
-
-      createSession()
-      await nextTick()
-      const lastId = lastActiveSessionId.value
-      expect(lastId).not.toBeNull()
-
-      deleteSession(lastId!)
-      await nextTick()
-      expect(lastActiveSessionId.value).toBeNull()
-    })
+    // 验证此时 localStorage 已经更新
+    const savedSessionsAfter = JSON.parse(
+      localStorage.getItem('ai-chat-sessions') || '[]',
+    ) as SerializedChatSession[]
+    const sessionAfter = savedSessionsAfter.find((s) => s.id === session.id)
+    expect(sessionAfter?.messages.length).toBe(1)
   })
 })

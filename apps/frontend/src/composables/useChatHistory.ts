@@ -86,26 +86,42 @@ function loadSessions(): void {
 }
 
 /**
- * 保存会话列表到 localStorage（节流）
+ * 保存会话列表到 localStorage
+ * @param immediate 是否立即保存（跳过节流）
  */
-function saveSessions(): void {
-  if (saveTimer) clearTimeout(saveTimer)
-  saveTimer = setTimeout(() => {
+function saveSessions(immediate = false): void {
+  if (saveTimer) {
+    clearTimeout(saveTimer)
+    saveTimer = null
+  }
+
+  const doSave = () => {
     try {
       localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(sessions.value))
     } catch {
       console.warn('保存会话历史失败')
     }
-  }, SAVE_THROTTLE_MS)
+  }
+
+  if (immediate) {
+    doSave()
+  } else {
+    saveTimer = setTimeout(doSave, SAVE_THROTTLE_MS)
+  }
 }
 
 // 初始化加载
 if (typeof window !== 'undefined') {
   loadSessions()
-}
 
-// 监听会话列表变化自动保存
-watch(sessions, saveSessions, { deep: true })
+  // 页面卸载前确保保存
+  window.addEventListener('beforeunload', () => {
+    saveSessions(true)
+  })
+
+  // 监听会话列表变化自动保存
+  watch(sessions, () => saveSessions(), { deep: true })
+}
 
 // 监听当前会话变化，更新上一个激活的会话并立即保存 ID
 watch(
@@ -180,6 +196,7 @@ export function useChatHistory() {
     }
     sessions.value.unshift(newSession)
     currentSessionId.value = newSession.id
+    saveSessions(true) // 创建新会话立即保存
     return newSession
   }
 
@@ -246,6 +263,8 @@ export function useChatHistory() {
     if (lastActiveSessionId.value === sessionId) {
       lastActiveSessionId.value = null
     }
+
+    saveSessions(true) // 删除会话立即保存
   }
 
   /**
@@ -259,6 +278,7 @@ export function useChatHistory() {
     localStorage.removeItem(SESSIONS_STORAGE_KEY)
     localStorage.removeItem(CURRENT_SESSION_KEY)
     localStorage.removeItem(LAST_ACTIVE_SESSION_KEY)
+    saveSessions(true) // 立即同步状态
   }
 
   /**
