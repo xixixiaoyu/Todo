@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, type CSSProperties, toRef } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useEscClose } from '@/composables/useEscClose'
 
 interface Props {
@@ -29,6 +30,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: boolean]
 }>()
 
+const { t } = useI18n()
 const drawerWidth = ref(props.defaultWidth)
 const isResizing = ref(false)
 const startX = ref(0)
@@ -154,7 +156,7 @@ onUnmounted(() => {
           }"
           role="separator"
           aria-orientation="vertical"
-          aria-label="调整抽屉宽度"
+          :aria-label="t('common.resizeDrawer')"
           tabindex="0"
           @mouseenter="isHovering = true"
           @mouseleave="isHovering = false"

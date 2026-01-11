@@ -136,7 +136,7 @@ import { CsrfMiddleware } from './common'
     }),
     // 国际化模块
     I18nModule.forRoot({
-      fallbackLanguage: 'en',
+      fallbackLanguage: 'en-US',
       loaderOptions: {
         path: path.join(__dirname, '/i18n/'),
         watch: true,

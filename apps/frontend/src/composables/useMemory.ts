@@ -1,6 +1,9 @@
 import { ref } from 'vue'
+import i18n from '@/i18n'
 import { getAIStaticResponse } from '@/services/aiService'
 import { getAIConfig, getAIPresets } from './useAIConfig'
+
+const { t } = i18n.global
 
 const MEMORY_STORAGE_KEY = 'ai-memories'
 const MEMORY_ENABLED_KEY = 'ai-memory-enabled'
@@ -92,16 +95,9 @@ export function useMemory() {
 
     isCompressing.value = true
     lastError.value = null
-    const prompt = `你是一个记忆管理专家。请对以下用户的记忆碎片进行压缩和合并。
-规则：
-1. 识别并合并重复或语义相似的信息（例如 "用户喜欢 TypeScript" 和 "用户倾向于使用 TS 开发" 应合并为一条）。
-2. 保持信息事实准确，每条信息应简洁有力（不超过 20 字）。
-3. 剔除过时的、矛盾的或无意义的琐碎信息。
-4. 以 JSON 数组格式返回结果（如 ["记忆A", "记忆B"]）。
-5. 必须只返回 JSON，不要包含 Markdown 代码块。
 
-当前记忆列表：
-${memories.value.map((m, i) => `${i + 1}. ${m}`).join('\n')}`
+    const memoriesStr = memories.value.map((m, i) => `${i + 1}. ${m}`).join('\n')
+    const prompt = t('ai.memoryCompressionPrompt', { memories: memoriesStr })
 
     try {
       const options = getMemoryModelOptions()

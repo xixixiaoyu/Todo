@@ -50,7 +50,7 @@ const toggleLanguage = () => {
             <Clover :size="18" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>AI Assistant</TooltipContent>
+        <TooltipContent>{{ t('ai.assistant') }}</TooltipContent>
       </Tooltip>
 
       <Tooltip>

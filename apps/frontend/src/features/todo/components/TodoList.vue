@@ -44,20 +44,20 @@ const emptyState = computed(() => {
     return {
       icon: SearchX,
       title: t('todo.emptySearch'),
-      description: t('todo.emptySearchDescription', '尝试换个关键词试试吧'),
+      description: t('todo.emptySearchDescription'),
     }
   }
   if (props.filter === 'pending') {
     return {
       icon: ClipboardList,
       title: t('todo.emptyPending'),
-      description: t('todo.emptyPendingDescription', '享受当下，或者开启一个新的任务'),
+      description: t('todo.emptyPendingDescription'),
     }
   }
   return {
     icon: CheckCircle2,
     title: t('todo.emptyCompleted'),
-    description: t('todo.emptyCompletedDescription', '还没有已完成的任务，继续加油'),
+    description: t('todo.emptyCompletedDescription'),
   }
 })
 const displayTodos = computed(() => {

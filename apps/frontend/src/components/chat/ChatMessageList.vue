@@ -163,7 +163,7 @@ defineExpose({
           'absolute bottom-6 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card/80 text-primary shadow-lg backdrop-blur-sm transition-all hover:bg-card hover:shadow-xl active:scale-95 z-20',
           isMaximized ? 'left-1/2 -translate-x-1/2' : 'right-8',
         ]"
-        title="返回底部"
+        :title="t('ai.scrollToBottom')"
         @click="enableAutoScroll"
       >
         <ArrowDown :size="20" />

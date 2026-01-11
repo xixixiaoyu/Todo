@@ -27,9 +27,9 @@ export class MailService {
    */
   private getLang(): string {
     try {
-      return I18nContext.current()?.lang || 'zh'
+      return I18nContext.current()?.lang || 'zh-CN'
     } catch {
-      return 'zh'
+      return 'zh-CN'
     }
   }
 

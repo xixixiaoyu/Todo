@@ -18,6 +18,14 @@ export default {
     save: '保存',
     delete: '删除',
     clear: '清除',
+    resizeDrawer: '调整抽屉宽度',
+    error: {
+      requestFailed: '请求失败',
+      networkError: '网络错误，请稍后再试',
+      timeout: '请求超时',
+      serverError: '服务器错误',
+      unknownError: '未知错误',
+    },
     theme: {
       light: '浅色模式',
       dark: '暗色模式',
@@ -87,6 +95,15 @@ export default {
     mismatch: '两次输入的密码不一致',
     requireLetter: '密码必须包含至少一个字母',
     requireNumber: '密码必须包含至少一个数字',
+  },
+  validation: {
+    REQUIRED: '不能为空',
+    INVALID_EMAIL: '请输入有效的邮箱地址',
+    MIN_LENGTH: '至少需要 {min} 个字符',
+    MAX_LENGTH: '不能超过 {max} 个字符',
+    INVALID_URL: '请输入有效的 URL 地址',
+    PASSWORD_LETTER: '密码必须包含至少一个字母',
+    PASSWORD_NUMBER: '密码必须包含至少一个数字',
   },
   notFound: {
     title: '页面未找到',
@@ -221,5 +238,27 @@ export default {
     memoryList: '记忆列表',
     memoryError: '记忆操作出错',
     addMemoryPlaceholder: '手动输入需要记住的事实或偏好...',
+    memoryExtractionPrompt: `你是一个记忆提取专家。请从以下对话片段中提取关于用户的关键偏好、技术栈、背景信息或习惯。
+规则：
+1. 以 JSON 数组格式返回（如 ["用户偏好使用 TypeScript", "用户正在开发一个 Todo 应用"]）。
+2. 只提取事实，不要解释。
+3. 如果没有发现任何有价值的新信息，请返回空数组 []。
+4. 提取的信息应简洁有力，每条不超过 20 字。
+5. 必须只返回 JSON，不要包含 Markdown 代码块。
+
+对话片段：
+{conversation}`,
+    memoryCompressionPrompt: `你是一个记忆管理专家。请对以下用户的记忆碎片进行压缩和合并。
+规则：
+1. 识别并合并重复或语义相似的信息（例如 "用户喜欢 TypeScript" 和 "用户倾向于使用 TS 开发" 应合并为一条）。
+2. 保持信息事实准确，每条信息应简洁有力（不超过 20 字）。
+3. 剔除过时的、矛盾的或无意义的琐碎信息。
+4. 以 JSON 数组格式返回结果（如 ["记忆A", "记忆B"]）。
+5. 必须只返回 JSON，不要包含 Markdown 代码块。
+
+当前记忆列表：
+{memories}`,
+    userRole: '用户',
+    assistantRole: '助手',
   },
 }

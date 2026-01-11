@@ -372,7 +372,7 @@ async function copyContent() {
       isCopied.value = false
     }, 2000)
   } catch {
-    console.warn('复制失败')
+    console.warn(t('common.error.requestFailed'))
   }
 }
 </script>

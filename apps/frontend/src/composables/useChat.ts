@@ -84,16 +84,11 @@ export function useChat(options: AIRequestOptions = {}) {
     const lastMessages = history.slice(-6)
     if (lastMessages.length < 2) return
 
-    const prompt = `你是一个记忆提取专家。请从以下对话片段中提取关于用户的关键偏好、技术栈、背景信息或习惯。
-规则：
-1. 以 JSON 数组格式返回（如 ["用户偏好使用 TypeScript", "用户正在开发一个 Todo 应用"]）。
-2. 只提取事实，不要解释。
-3. 如果没有发现任何有价值的新信息，请返回空数组 []。
-4. 提取的信息应简洁有力，每条不超过 20 字。
-5. 必须只返回 JSON，不要包含 Markdown 代码块。
+    const conversation = lastMessages
+      .map((m) => `${m.role === 'user' ? t('ai.userRole') : t('ai.assistantRole')}: ${m.content}`)
+      .join('\n')
 
-对话片段：
-${lastMessages.map((m) => `${m.role === 'user' ? '用户' : '助手'}: ${m.content}`).join('\n')}`
+    const prompt = t('ai.memoryExtractionPrompt', { conversation })
 
     try {
       const options = getMemoryModelOptions()

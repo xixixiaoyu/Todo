@@ -1,4 +1,5 @@
 import { ref, type Ref } from 'vue'
+import i18n from '@/i18n'
 
 /**
  * 请求状态接口
@@ -27,7 +28,7 @@ export function useRequest<T>(
     try {
       data.value = await requestFn()
     } catch (e) {
-      error.value = e instanceof Error ? e.message : '请求失败'
+      error.value = e instanceof Error ? e.message : i18n.global.t('common.error.requestFailed')
       console.error('Request failed:', e)
     } finally {
       loading.value = false

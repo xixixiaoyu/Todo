@@ -18,6 +18,14 @@ export default {
     save: 'Save',
     delete: 'Delete',
     clear: 'Clear',
+    resizeDrawer: 'Resize drawer width',
+    error: {
+      requestFailed: 'Request failed',
+      networkError: 'Network error, please try again later',
+      timeout: 'Request timeout',
+      serverError: 'Server error',
+      unknownError: 'Unknown error',
+    },
     theme: {
       light: 'Light Mode',
       dark: 'Dark Mode',
@@ -89,6 +97,15 @@ export default {
     mismatch: 'Passwords do not match',
     requireLetter: 'Password must contain at least one letter',
     requireNumber: 'Password must contain at least one number',
+  },
+  validation: {
+    REQUIRED: 'is required',
+    INVALID_EMAIL: 'Please enter a valid email address',
+    MIN_LENGTH: 'must be at least {min} characters',
+    MAX_LENGTH: 'must not exceed {max} characters',
+    INVALID_URL: 'Please enter a valid URL',
+    PASSWORD_LETTER: 'Password must contain at least one letter',
+    PASSWORD_NUMBER: 'Password must contain at least one number',
   },
   notFound: {
     title: 'Page Not Found',
@@ -228,5 +245,27 @@ export default {
     memoryList: 'Memory List',
     memoryError: 'Memory operation failed',
     addMemoryPlaceholder: 'Enter facts or preferences to remember...',
+    memoryExtractionPrompt: `You are a memory extraction expert. Please extract key preferences, tech stacks, background information, or habits about the user from the following conversation snippet.
+Rules:
+1. Return in JSON array format (e.g., ["User prefers using TypeScript", "User is developing a Todo app"]).
+2. Extract facts only, do not explain.
+3. If no valuable new information is found, return an empty array [].
+4. Extracted information should be concise and powerful, no more than 20 words each.
+5. Must return ONLY JSON, do not include Markdown code blocks.
+
+Conversation snippet:
+{conversation}`,
+    memoryCompressionPrompt: `You are a memory management expert. Please compress and merge the following user memory fragments.
+Rules:
+1. Identify and merge duplicate or semantically similar information (e.g., "User likes TypeScript" and "User tends to use TS for development" should be merged into one).
+2. Keep information factual and accurate, each piece should be concise and powerful (no more than 20 words).
+3. Remove outdated, contradictory, or meaningless trivial information.
+4. Return the result in JSON array format (e.g., ["Memory A", "Memory B"]).
+5. Must return ONLY JSON, do not include Markdown code blocks.
+
+Current memory list:
+{memories}`,
+    userRole: 'User',
+    assistantRole: 'Assistant',
   },
 }

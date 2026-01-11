@@ -208,7 +208,7 @@ async function submitAddChild() {
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{{ t('todo.addSubtask') || 'Add Subtask' }}</p>
+              <p>{{ t('todo.addSubtask') }}</p>
             </TooltipContent>
           </Tooltip>
 
@@ -240,7 +240,7 @@ async function submitAddChild() {
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{{ t('common.delete') || 'Delete' }}</p>
+              <p>{{ t('common.delete') }}</p>
             </TooltipContent>
           </Tooltip>
         </div>
@@ -259,7 +259,7 @@ async function submitAddChild() {
         v-model="newChildTitle"
         type="text"
         class="h-9 flex-1 bg-background text-sm"
-        :placeholder="t('todo.subtaskPlaceholder') || 'Enter subtask title...'"
+        :placeholder="t('todo.subtaskPlaceholder')"
         @keydown.enter="submitAddChild"
         @keydown.esc="cancelAddChild"
       />
