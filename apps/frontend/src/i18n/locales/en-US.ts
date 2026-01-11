@@ -9,6 +9,8 @@ export default {
     backToHome: 'Back to Home',
     search: 'Search',
     noResults: 'No results found',
+    confirm: 'Confirm',
+    cancel: 'Cancel',
     theme: {
       light: 'Light Mode',
       dark: 'Dark Mode',

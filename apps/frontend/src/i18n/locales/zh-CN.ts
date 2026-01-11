@@ -9,6 +9,8 @@ export default {
     backToHome: '返回首页',
     search: '搜索',
     noResults: '未找到匹配结果',
+    confirm: '确定',
+    cancel: '取消',
     theme: {
       light: '浅色模式',
       dark: '暗色模式',

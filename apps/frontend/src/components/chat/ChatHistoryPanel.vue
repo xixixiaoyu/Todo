@@ -3,6 +3,16 @@ import { ref, computed, nextTick } from 'vue'
 import { Trash2, Edit3, Check, X, MessageSquare, Clock, Search, Plus } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useChatHistory, type ChatSession } from '@/composables/useChatHistory'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 const emit = defineEmits<{
   (e: 'select', sessionId: string): void
@@ -16,6 +26,7 @@ const { sessions, currentSessionId, renameSession, deleteSession, clearAllSessio
 
 // 搜索
 const searchQuery = ref('')
+const showClearConfirm = ref(false)
 
 // 过滤后的会话
 const filteredSessions = computed(() => {
@@ -97,9 +108,13 @@ function handleDelete(sessionId: string, event: Event): void {
 
 // 清除所有会话
 function handleClearAll(): void {
-  if (confirm(t('ai.clearAllConfirm'))) {
-    clearAllSessions()
-  }
+  showClearConfirm.value = true
+}
+
+// 确认清除
+function handleClearConfirm(): void {
+  clearAllSessions()
+  showClearConfirm.value = false
 }
 </script>
 
@@ -251,6 +266,27 @@ function handleClearAll(): void {
         </div>
       </div>
     </div>
+
+    <!-- 清除确认弹窗 -->
+    <AlertDialog v-model:open="showClearConfirm">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{{ t('ai.clearAll') }}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {{ t('ai.clearAllConfirm') }}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{{ t('common.cancel') }}</AlertDialogCancel>
+          <AlertDialogAction
+            class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            @click="handleClearConfirm"
+          >
+            {{ t('common.confirm') }}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </div>
 </template>
 
