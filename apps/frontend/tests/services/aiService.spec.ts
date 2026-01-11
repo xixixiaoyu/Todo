@@ -125,7 +125,6 @@ describe('aiService - Multi-model Discussion', () => {
         model: 'model-a',
         systemPrompt: '',
         temperature: 0.7,
-        thinkingMode: 'disabled',
         todoAssistant: false,
       },
       {
@@ -136,7 +135,6 @@ describe('aiService - Multi-model Discussion', () => {
         model: 'model-b',
         systemPrompt: '',
         temperature: 0.7,
-        thinkingMode: 'disabled',
         todoAssistant: false,
       },
     ]
@@ -198,6 +196,93 @@ describe('aiService - Multi-model Discussion', () => {
     expect(lastSteps[1].status).toBe('done')
     expect(lastSteps[1].content).toBe('Answer from B')
     expect(onFinalChunk).toHaveBeenCalledWith('Final synthesis')
+  })
+
+  it('should continue with synthesis even if all secondary models fail', async () => {
+    const messages: ChatMessage[] = [{ id: '1', role: 'user', content: 'What is 1+1?' }]
+    const onStepUpdate = vi.fn()
+    const onFinalChunk = vi.fn()
+
+    const presets: AIPreset[] = [
+      {
+        id: 'p1',
+        name: 'Model A',
+        baseUrl: 'https://api.a.com',
+        apiKey: 'key-a',
+        model: 'model-a',
+        systemPrompt: '',
+        temperature: 0.7,
+        todoAssistant: false,
+      },
+      {
+        id: 'p2',
+        name: 'Model B',
+        baseUrl: 'https://api.b.com',
+        apiKey: 'key-b',
+        model: 'model-b',
+        systemPrompt: '',
+        temperature: 0.7,
+        todoAssistant: false,
+      },
+    ]
+    mockLocalStorage.setItem('ai-presets', JSON.stringify(presets))
+    mockLocalStorage.setItem(
+      'ai-config',
+      JSON.stringify({
+        discussionMode: true,
+        discussionModelIds: ['p1', 'p2'],
+        discussionPrimaryModelId: 'p1',
+      }),
+    )
+    _resetAIConfig()
+
+    mockFetch.mockImplementation(async (url: string, init: RequestInit) => {
+      const body = init?.body ? JSON.parse(init.body as string) : {}
+      // 流式请求 (synthesis)
+      if (body.stream === true) {
+        // 检查 synthesisPrompt 是否包含了空讨论数据
+        const lastMsg = body.messages[body.messages.length - 1].content
+        if (lastMsg.includes('Synthesis: What is 1+1? - ')) {
+          return {
+            ok: true,
+            body: {
+              getReader: () => ({
+                read: vi
+                  .fn()
+                  .mockResolvedValueOnce({
+                    value: new TextEncoder().encode(
+                      'data: {"choices":[{"delta":{"content":"Synthesis without discussion"}}]}\n\n',
+                    ),
+                    done: false,
+                  })
+                  .mockResolvedValueOnce({
+                    value: new TextEncoder().encode('data: [DONE]\n\n'),
+                    done: true,
+                  }),
+              }),
+            },
+          }
+        }
+      }
+
+      // 并行请求失败
+      return {
+        ok: false,
+        status: 500,
+        text: async () => 'Internal Server Error',
+      }
+    })
+
+    await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)
+
+    expect(onStepUpdate).toHaveBeenCalled()
+    const lastSteps = onStepUpdate.mock.calls[onStepUpdate.mock.calls.length - 1][0]
+    expect(lastSteps[0].status).toBe('error')
+    expect(lastSteps[0].content).toContain('500')
+    expect(lastSteps[1].status).toBe('error')
+    expect(lastSteps[1].content).toContain('500')
+
+    expect(onFinalChunk).toHaveBeenCalledWith('Synthesis without discussion')
   })
 
   it('should handle model errors gracefully', async () => {
@@ -427,7 +512,6 @@ describe('aiService - Multi-model Discussion', () => {
           baseUrl: 'api.p1.com',
           apiKey: 'k1',
           model: 'm1',
-          thinkingMode: 'disabled', // Preset says disabled, but should use global enabled
         },
       ]),
     )

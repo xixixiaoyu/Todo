@@ -167,7 +167,6 @@ describe('AISettingsDialog', () => {
       model: 'test-model',
       systemPrompt: 'Test prompt',
       temperature: 0.5,
-      thinkingMode: 'enabled',
       todoAssistant: false,
     })
 
@@ -191,6 +190,62 @@ describe('AISettingsDialog', () => {
 
     expect(mockActivePresetId.value).toBe(preset.id)
     expect(wrapper.find('.bg-primary\\/10').exists()).toBe(true) // 激活标签
+  })
+
+  it('should toggle discussion mode and show model selection', async () => {
+    const { addPreset } = useAIConfig()
+    addPreset({
+      name: 'Model 1',
+      baseUrl: 'https://api.test.com',
+      apiKey: 'test-key',
+      model: 'm1',
+      systemPrompt: 'p1',
+      temperature: 0.5,
+      todoAssistant: false,
+    })
+
+    const wrapper = mount(AISettingsDialog, {
+      props: {
+        modelValue: true,
+        initialTab: 'settings',
+      },
+      global: {
+        stubs: {
+          Teleport: true,
+        },
+      },
+    })
+
+    await nextTick()
+
+    // 初始状态：未开启讨论模式
+    expect(wrapper.find('input[type="range"]').exists()).toBe(true) // 温度选择器（基础设置）
+
+    // 开启讨论模式
+    const toggleBtn = wrapper.find('.inline-flex.h-6.w-11')
+    await toggleBtn.trigger('click')
+    await nextTick()
+
+    expect((wrapper.vm as unknown as { formData: AIConfig }).formData.discussionMode).toBe(true)
+    expect(wrapper.find('input[type="range"]').exists()).toBe(false) // 基础设置被隐藏
+
+    // 验证预设列表显示
+    const presetButtons = wrapper.findAll('.rounded-full.border')
+    // 每个预设会显示在主模型和副模型两个列表中
+    expect(presetButtons.length).toBe(2)
+    expect(presetButtons[0].text()).toContain('Model 1')
+
+    // 选择主模型
+    await presetButtons[0].trigger('click')
+    expect(
+      (wrapper.vm as unknown as { formData: AIConfig }).formData.discussionPrimaryModelId,
+    ).toBe('test-id')
+
+    // 选择副模型
+    await presetButtons[1].trigger('click')
+    expect((wrapper.vm as unknown as { formData: AIConfig }).formData.discussionModelIds).toContain(
+      'test-id',
+    )
   })
 
   it('should reset tab and state when modelValue becomes true', async () => {
@@ -245,7 +300,6 @@ describe('AISettingsDialog', () => {
       model: 'old-model',
       systemPrompt: 'Old prompt',
       temperature: 0.1,
-      thinkingMode: 'disabled',
       todoAssistant: false,
     })
 
@@ -256,7 +310,7 @@ describe('AISettingsDialog', () => {
       model: preset.model,
       systemPrompt: preset.systemPrompt,
       temperature: preset.temperature,
-      thinkingMode: preset.thinkingMode,
+      thinkingMode: 'disabled',
       todoAssistant: preset.todoAssistant,
       discussionMode: false,
       discussionModelIds: [],

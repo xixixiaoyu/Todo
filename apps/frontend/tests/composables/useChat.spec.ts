@@ -25,20 +25,38 @@ vi.mock('@/composables/useChatHistory', async () => {
 })
 
 // Mock AI service
-import { getAIStreamResponse, abortCurrentRequest, generateId } from '@/services/aiService'
+import {
+  getAIStreamResponse,
+  getMultiModelDiscussionStream,
+  abortCurrentRequest,
+  generateId,
+} from '@/services/aiService'
 
 vi.mock('@/services/aiService', async () => {
   const actual = await vi.importActual('@/services/aiService')
   return {
     ...(actual as Record<string, unknown>),
     getAIStreamResponse: vi.fn(),
+    getMultiModelDiscussionStream: vi.fn(),
     abortCurrentRequest: vi.fn(),
     generateId: vi.fn(() => 'generated-id'),
   }
 })
 
+// Mock AI config
+import { getAIConfig } from '@/composables/useAIConfig'
+vi.mock('@/composables/useAIConfig', () => ({
+  getAIConfig: vi.fn(() => ({
+    discussionMode: false,
+    discussionModelIds: [],
+    discussionPrimaryModelId: null,
+  })),
+  getAIThinkingMode: vi.fn(() => 'disabled'),
+}))
+
 describe('useChat', () => {
   const mockGetAIStreamResponse = vi.fn()
+  const mockGetMultiModelDiscussionStream = vi.fn()
   const mockAbortCurrentRequest = vi.fn()
   const mockGenerateId = vi.fn(() => 'generated-id')
 
@@ -48,6 +66,18 @@ describe('useChat', () => {
 
     // 重置 mock 实现
     mockCurrentSession.value = null
+    vi.mocked(getAIConfig).mockReturnValue({
+      discussionMode: false,
+      discussionModelIds: [],
+      discussionPrimaryModelId: null,
+      baseUrl: '',
+      apiKey: '',
+      model: '',
+      systemPrompt: '',
+      temperature: 0.7,
+      thinkingMode: 'disabled',
+      todoAssistant: false,
+    })
     mockUpdateSessionMessages.mockImplementation((sessionId, messages) => {
       if (mockCurrentSession.value && mockCurrentSession.value.id === sessionId) {
         mockCurrentSession.value.messages = [...messages]
@@ -79,6 +109,7 @@ describe('useChat', () => {
 
     // 重新设置 AI 服务模拟
     vi.mocked(getAIStreamResponse).mockImplementation(mockGetAIStreamResponse)
+    vi.mocked(getMultiModelDiscussionStream).mockImplementation(mockGetMultiModelDiscussionStream)
     vi.mocked(abortCurrentRequest).mockImplementation(mockAbortCurrentRequest)
     vi.mocked(generateId).mockImplementation(mockGenerateId)
   })
@@ -282,6 +313,49 @@ describe('useChat', () => {
       expect(mockGetAIStreamResponse).toHaveBeenCalledTimes(4) // 原始 + 3 次重试
       expect(errorState.value).toBe('Network error')
       expect(isGenerating.value).toBe(false)
+    })
+
+    it('should use multi-model discussion when enabled', async () => {
+      vi.mocked(getAIConfig).mockReturnValue({
+        discussionMode: true,
+        discussionModelIds: ['model-1', 'model-2'],
+        discussionPrimaryModelId: 'model-1',
+        baseUrl: '',
+        apiKey: '',
+        model: '',
+        systemPrompt: '',
+        temperature: 0.7,
+        thinkingMode: 'disabled',
+        todoAssistant: false,
+      })
+
+      const mockSession: ChatSession = {
+        id: 'session-1',
+        title: 'Test Session',
+        messages: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+      mockCurrentSession.value = mockSession
+      mockGetOrCreateCurrentSession.mockReturnValue(mockSession)
+
+      mockGetMultiModelDiscussionStream.mockImplementation(
+        async (messages, onStepUpdate, onFinalChunk) => {
+          onStepUpdate([{ modelId: 'model-1', modelName: 'M1', content: 'Step 1', status: 'done' }])
+          onFinalChunk('Final Answer')
+          onFinalChunk('[DONE]')
+        },
+      )
+
+      const { sendMessage, currentDiscussionSteps, messages } = useChat()
+
+      await sendMessage('Hello')
+
+      expect(mockGetMultiModelDiscussionStream).toHaveBeenCalled()
+      expect(currentDiscussionSteps.value).toEqual([]) // Should be reset after [DONE]
+      expect(messages.value).toHaveLength(2)
+      expect(messages.value[1].discussionSteps).toHaveLength(1)
+      expect(messages.value[1].discussionSteps![0].content).toBe('Step 1')
     })
   })
 
