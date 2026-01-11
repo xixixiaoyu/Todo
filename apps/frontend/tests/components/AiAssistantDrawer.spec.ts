@@ -270,9 +270,7 @@ describe('AiAssistantDrawer Navigation and Button States', () => {
     })
 
     // Click "Manage Presets" which should override even if last was settings
-    const presetTrigger = wrapper
-      .findAll('button')
-      .find((b) => b.classes().some((c) => c.includes('bg-white/20')))
+    const presetTrigger = wrapper.findAll('button').find((b) => b.html().includes('ChevronDown'))
     await presetTrigger?.trigger('click') // open dropdown
     const manageBtn = wrapper.findAll('button').find((b) => b.text().includes('ai.managePresets'))
     await manageBtn?.trigger('click')
