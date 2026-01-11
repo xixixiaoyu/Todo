@@ -8,6 +8,7 @@ import { useSmartScroll } from '@/composables/useSmartScroll'
 
 const props = defineProps<{
   messages: ChatMessageType[]
+  isMaximized?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -68,26 +69,28 @@ defineExpose({
 <template>
   <div class="relative flex-1 overflow-hidden">
     <div ref="containerRef" class="h-full overflow-y-auto px-4">
-      <!-- 空状态 -->
-      <div
-        v-if="messages.length === 0"
-        class="flex h-full items-center justify-center text-muted-foreground/50"
-      >
-        <p class="text-sm">{{ t('ai.startChat') }}</p>
-      </div>
+      <div :class="['min-h-full w-full', isMaximized ? 'mx-auto max-w-4xl' : '']">
+        <!-- 空状态 -->
+        <div
+          v-if="messages.length === 0"
+          class="flex h-full items-center justify-center text-muted-foreground/50"
+        >
+          <p class="text-sm">{{ t('ai.startChat') }}</p>
+        </div>
 
-      <!-- 消息列表 -->
-      <div v-else class="py-4">
-        <TransitionGroup name="message-list" tag="div" class="space-y-4">
-          <ChatMessage
-            v-for="(msg, index) in messages"
-            :key="msg.id"
-            :message="msg"
-            :is-last="index === messages.length - 1"
-            @regenerate="emit('regenerate')"
-            @edit="(content) => emit('edit', msg.id, content)"
-          />
-        </TransitionGroup>
+        <!-- 消息列表 -->
+        <div v-else class="py-4">
+          <TransitionGroup name="message-list" tag="div" class="space-y-4">
+            <ChatMessage
+              v-for="(msg, index) in messages"
+              :key="msg.id"
+              :message="msg"
+              :is-last="index === messages.length - 1"
+              @regenerate="emit('regenerate')"
+              @edit="(content) => emit('edit', msg.id, content)"
+            />
+          </TransitionGroup>
+        </div>
       </div>
     </div>
 
@@ -95,7 +98,10 @@ defineExpose({
     <Transition name="fade">
       <button
         v-if="isUserScrolledUp"
-        class="absolute bottom-6 right-8 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card/80 text-primary shadow-lg backdrop-blur-sm transition-all hover:bg-card hover:shadow-xl active:scale-95"
+        :class="[
+          'absolute bottom-6 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card/80 text-primary shadow-lg backdrop-blur-sm transition-all hover:bg-card hover:shadow-xl active:scale-95 z-20',
+          isMaximized ? 'left-1/2 -translate-x-1/2' : 'right-8',
+        ]"
         title="返回底部"
         @click="enableAutoScroll"
       >
