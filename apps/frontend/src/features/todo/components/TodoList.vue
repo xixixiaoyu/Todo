@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { Plus } from 'lucide-vue-next'
+import { ClipboardList, CheckCircle2, SearchX } from 'lucide-vue-next'
+import { computed } from 'vue'
 import type { Todo } from '../stores/todo'
 import TodoItem from './TodoItem.vue'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
 const { t } = useI18n()
 
-defineProps<{
+const props = defineProps<{
   todos: Todo[]
   filter: 'pending' | 'completed'
   searchQuery: string
@@ -24,6 +25,28 @@ const emit = defineEmits<{
   'update:editingTitle': [value: string]
   editKeydown: [e: KeyboardEvent]
 }>()
+
+const emptyState = computed(() => {
+  if (props.searchQuery) {
+    return {
+      icon: SearchX,
+      title: t('todo.emptySearch'),
+      description: t('todo.emptySearchDescription', '尝试换个关键词试试吧'),
+    }
+  }
+  if (props.filter === 'pending') {
+    return {
+      icon: ClipboardList,
+      title: t('todo.emptyPending'),
+      description: t('todo.emptyPendingDescription', '享受当下，或者开启一个新的任务'),
+    }
+  }
+  return {
+    icon: CheckCircle2,
+    title: t('todo.emptyCompleted'),
+    description: t('todo.emptyCompletedDescription', '还没有已完成的任务，继续加油'),
+  }
+})
 </script>
 
 <template>
@@ -32,21 +55,41 @@ const emit = defineEmits<{
       <!-- Empty State -->
       <div
         v-if="todos.length === 0"
-        class="flex flex-col items-center justify-center py-24 text-muted-foreground/30 animate-in fade-in zoom-in duration-500"
+        class="flex flex-col items-center justify-center py-32 animate-in fade-in zoom-in duration-700"
       >
-        <div class="relative mb-6">
-          <Plus :size="64" :stroke-width="1" class="text-muted-foreground/20" />
-          <div class="absolute inset-0 bg-primary/5 blur-3xl rounded-full scale-150 -z-10" />
+        <div class="relative mb-8 group">
+          <!-- Background Glow -->
+          <div
+            class="absolute inset-0 bg-primary/10 blur-3xl rounded-full scale-150 group-hover:bg-primary/20 transition-colors duration-500"
+          />
+
+          <!-- Icon Container -->
+          <div
+            class="relative flex items-center justify-center w-24 h-24 rounded-3xl bg-card border border-border/50 shadow-sm transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3"
+          >
+            <component
+              :is="emptyState.icon"
+              :size="40"
+              :stroke-width="1.5"
+              class="text-primary/40 group-hover:text-primary/60 transition-colors duration-500"
+            />
+          </div>
+
+          <!-- Decorative Elements -->
+          <div class="absolute -top-2 -right-2 w-4 h-4 rounded-full bg-primary/20 animate-pulse" />
+          <div
+            class="absolute -bottom-1 -left-1 w-3 h-3 rounded-full bg-primary/10 animate-bounce delay-300"
+          />
         </div>
-        <p class="text-lg font-medium tracking-tight">
-          {{
-            searchQuery
-              ? t('todo.emptySearch')
-              : filter === 'pending'
-                ? t('todo.emptyPending')
-                : t('todo.emptyCompleted')
-          }}
-        </p>
+
+        <div class="text-center space-y-2 px-6">
+          <h3 class="text-xl font-semibold tracking-tight text-foreground/80">
+            {{ emptyState.title }}
+          </h3>
+          <p class="text-sm text-muted-foreground/60 max-w-[200px] mx-auto leading-relaxed">
+            {{ emptyState.description }}
+          </p>
+        </div>
       </div>
 
       <!-- Todo Items -->
