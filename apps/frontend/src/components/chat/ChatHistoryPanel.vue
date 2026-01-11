@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
-import { Trash2, Edit3, Check, X, MessageSquare, Clock, Search, Plus } from 'lucide-vue-next'
+import { Trash2, Edit3, Check, X, MessageSquare, Clock, Search, Plus, Pin } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useChatHistory, type ChatSession } from '@/composables/useChatHistory'
 import { formatRelativeTime } from '@/lib/dayjs'
@@ -22,7 +22,7 @@ const emit = defineEmits<{
 }>()
 
 const { t, locale } = useI18n()
-const { sessions, currentSessionId, renameSession, deleteSession, clearAllSessions } =
+const { sessions, currentSessionId, renameSession, deleteSession, clearAllSessions, togglePin } =
   useChatHistory()
 
 // 搜索
@@ -31,14 +31,24 @@ const showClearConfirm = ref(false)
 
 // 过滤后的会话
 const filteredSessions = computed(() => {
-  if (!searchQuery.value.trim()) return sessions.value
-  const query = searchQuery.value.toLowerCase()
-  return sessions.value.filter(
-    (session) =>
-      session.title.toLowerCase().includes(query) ||
-      session.messages.some((m) => m.content.toLowerCase().includes(query)),
-  )
+  let filtered = sessions.value
+
+  // 关键词过滤
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase()
+    filtered = filtered.filter(
+      (session) =>
+        session.title.toLowerCase().includes(query) ||
+        session.messages.some((m) => m.content.toLowerCase().includes(query)),
+    )
+  }
+
+  return filtered
 })
+
+// 分组会话：置顶和普通
+const pinnedSessions = computed(() => filteredSessions.value.filter((s) => s.isPinned))
+const otherSessions = computed(() => filteredSessions.value.filter((s) => !s.isPinned))
 
 // 新建对话
 const handleNewChat = () => {
@@ -179,79 +189,198 @@ function handleClearConfirm(): void {
       </div>
 
       <!-- 列表 -->
-      <div v-else class="space-y-1">
-        <div
-          v-for="session in filteredSessions"
-          :key="session.id"
-          class="group relative cursor-pointer rounded-xl p-3 transition-all hover:bg-accent/50 active:scale-[0.99]"
-          :class="{
-            'bg-primary/5 ring-1 ring-primary/20': session.id === currentSessionId,
-          }"
-          @click="selectSession(session.id)"
-        >
-          <!-- 编辑模式 -->
-          <div v-if="editingId === session.id" class="flex items-center gap-2" @click.stop>
-            <input
-              ref="editInputRef"
-              v-model="editingTitle"
-              class="flex-1 rounded-md border border-primary bg-background px-2 py-1.5 text-sm text-foreground outline-none ring-2 ring-primary/10"
-              @keydown.enter="saveEdit"
-              @keydown.escape="cancelEdit"
-            />
-            <div class="flex items-center gap-1">
-              <button
-                class="rounded-md p-1.5 text-primary transition-colors hover:bg-primary/10"
-                @click="saveEdit"
-              >
-                <Check :size="14" />
-              </button>
-              <button
-                class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted"
-                @click="cancelEdit"
-              >
-                <X :size="14" />
-              </button>
-            </div>
+      <div v-else class="space-y-4">
+        <!-- 置顶部分 -->
+        <div v-if="pinnedSessions.length > 0" class="space-y-1">
+          <div
+            class="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60"
+          >
+            {{ t('ai.pinned') }}
           </div>
-
-          <!-- 正常显示 -->
-          <template v-else>
-            <div class="flex items-start gap-2">
-              <div class="min-w-0 flex-1">
-                <p
-                  class="truncate text-sm font-medium transition-colors"
-                  :class="session.id === currentSessionId ? 'text-primary' : 'text-foreground'"
+          <div
+            v-for="session in pinnedSessions"
+            :key="session.id"
+            class="group relative cursor-pointer rounded-xl p-3 transition-all hover:bg-accent/50 active:scale-[0.99]"
+            :class="{
+              'bg-primary/5 ring-1 ring-primary/20': session.id === currentSessionId,
+            }"
+            @click="selectSession(session.id)"
+          >
+            <!-- 编辑模式 -->
+            <div v-if="editingId === session.id" class="flex items-center gap-2" @click.stop>
+              <input
+                ref="editInputRef"
+                v-model="editingTitle"
+                class="flex-1 rounded-md border border-primary bg-background px-2 py-1.5 text-sm text-foreground outline-none ring-2 ring-primary/10"
+                @keydown.enter="saveEdit"
+                @keydown.escape="cancelEdit"
+              />
+              <div class="flex items-center gap-1">
+                <button
+                  class="rounded-md p-1.5 text-primary transition-colors hover:bg-primary/10"
+                  @click="saveEdit"
                 >
-                  {{ session.title }}
-                </p>
-                <div class="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
-                  <span>{{ t('ai.messageCount', { count: session.messages.length }) }}</span>
-                  <span class="h-0.5 w-0.5 rounded-full bg-muted-foreground/30" />
-                  <span>{{ formatTime(session.updatedAt) }}</span>
+                  <Check :size="14" />
+                </button>
+                <button
+                  class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted"
+                  @click="cancelEdit"
+                >
+                  <X :size="14" />
+                </button>
+              </div>
+            </div>
+
+            <!-- 正常显示 -->
+            <template v-else>
+              <div class="flex items-start gap-2">
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-1.5">
+                    <p
+                      class="truncate text-sm font-medium transition-colors"
+                      :class="session.id === currentSessionId ? 'text-primary' : 'text-foreground'"
+                    >
+                      {{ session.title }}
+                    </p>
+                  </div>
+                  <div class="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
+                    <span>{{ t('ai.messageCount', { count: session.messages.length }) }}</span>
+                    <span class="h-0.5 w-0.5 rounded-full bg-muted-foreground/30" />
+                    <span>{{ formatTime(session.updatedAt) }}</span>
+                  </div>
+                </div>
+                <!-- 操作按钮 -->
+                <div
+                  class="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100"
+                  @click.stop
+                >
+                  <button
+                    class="rounded-md p-1.5 transition-colors hover:bg-background"
+                    :class="
+                      session.isPinned
+                        ? 'text-primary'
+                        : 'text-muted-foreground hover:text-foreground'
+                    "
+                    :title="session.isPinned ? t('ai.unpin') : t('ai.pin')"
+                    @click="togglePin(session.id)"
+                  >
+                    <Pin :size="14" :class="{ 'fill-primary/20': session.isPinned }" />
+                  </button>
+                  <button
+                    class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+                    :title="t('ai.editTitle')"
+                    @click="startEdit(session)"
+                  >
+                    <Edit3 :size="14" />
+                  </button>
+                  <button
+                    class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    :title="t('ai.delete')"
+                    @click="handleDelete(session.id, $event)"
+                  >
+                    <Trash2 :size="14" />
+                  </button>
                 </div>
               </div>
-              <!-- 操作按钮 -->
-              <div
-                class="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100"
-                @click.stop
-              >
+            </template>
+          </div>
+        </div>
+
+        <!-- 普通会话部分 -->
+        <div class="space-y-1">
+          <div
+            v-if="pinnedSessions.length > 0"
+            class="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60"
+          >
+            {{ t('ai.history') }}
+          </div>
+          <div
+            v-for="session in otherSessions"
+            :key="session.id"
+            class="group relative cursor-pointer rounded-xl p-3 transition-all hover:bg-accent/50 active:scale-[0.99]"
+            :class="{
+              'bg-primary/5 ring-1 ring-primary/20': session.id === currentSessionId,
+            }"
+            @click="selectSession(session.id)"
+          >
+            <!-- 编辑模式 -->
+            <div v-if="editingId === session.id" class="flex items-center gap-2" @click.stop>
+              <input
+                ref="editInputRef"
+                v-model="editingTitle"
+                class="flex-1 rounded-md border border-primary bg-background px-2 py-1.5 text-sm text-foreground outline-none ring-2 ring-primary/10"
+                @keydown.enter="saveEdit"
+                @keydown.escape="cancelEdit"
+              />
+              <div class="flex items-center gap-1">
                 <button
-                  class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
-                  :title="t('ai.editTitle')"
-                  @click="startEdit(session)"
+                  class="rounded-md p-1.5 text-primary transition-colors hover:bg-primary/10"
+                  @click="saveEdit"
                 >
-                  <Edit3 :size="14" />
+                  <Check :size="14" />
                 </button>
                 <button
-                  class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                  :title="t('ai.delete')"
-                  @click="handleDelete(session.id, $event)"
+                  class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted"
+                  @click="cancelEdit"
                 >
-                  <Trash2 :size="14" />
+                  <X :size="14" />
                 </button>
               </div>
             </div>
-          </template>
+
+            <!-- 正常显示 -->
+            <template v-else>
+              <div class="flex items-start gap-2">
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-1.5">
+                    <p
+                      class="truncate text-sm font-medium transition-colors"
+                      :class="session.id === currentSessionId ? 'text-primary' : 'text-foreground'"
+                    >
+                      {{ session.title }}
+                    </p>
+                  </div>
+                  <div class="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
+                    <span>{{ t('ai.messageCount', { count: session.messages.length }) }}</span>
+                    <span class="h-0.5 w-0.5 rounded-full bg-muted-foreground/30" />
+                    <span>{{ formatTime(session.updatedAt) }}</span>
+                  </div>
+                </div>
+                <!-- 操作按钮 -->
+                <div
+                  class="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100"
+                  @click.stop
+                >
+                  <button
+                    class="rounded-md p-1.5 transition-colors hover:bg-background"
+                    :class="
+                      session.isPinned
+                        ? 'text-primary'
+                        : 'text-muted-foreground hover:text-foreground'
+                    "
+                    :title="session.isPinned ? t('ai.unpin') : t('ai.pin')"
+                    @click="togglePin(session.id)"
+                  >
+                    <Pin :size="14" :class="{ 'fill-primary/20': session.isPinned }" />
+                  </button>
+                  <button
+                    class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+                    :title="t('ai.editTitle')"
+                    @click="startEdit(session)"
+                  >
+                    <Edit3 :size="14" />
+                  </button>
+                  <button
+                    class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    :title="t('ai.delete')"
+                    @click="handleDelete(session.id, $event)"
+                  >
+                    <Trash2 :size="14" />
+                  </button>
+                </div>
+              </div>
+            </template>
+          </div>
         </div>
       </div>
     </div>

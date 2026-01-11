@@ -9,6 +9,7 @@ export interface ChatSession {
   messages: ChatMessage[]
   createdAt: Date
   updatedAt: Date
+  isPinned?: boolean
 }
 
 const SESSIONS_STORAGE_KEY = 'ai-chat-sessions'
@@ -175,9 +176,15 @@ export function useChatHistory() {
     () => sessions.value.find((s) => s.id === lastActiveSessionId.value) ?? null,
   )
 
-  // 会话列表（按更新时间倒序）
+  // 会话列表（优先置顶，其次按更新时间倒序）
   const sortedSessions = computed(() =>
-    [...sessions.value].sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()),
+    [...sessions.value].sort((a, b) => {
+      // 优先置顶
+      if (a.isPinned && !b.isPinned) return -1
+      if (!a.isPinned && b.isPinned) return 1
+      // 其次按更新时间倒序
+      return b.updatedAt.getTime() - a.updatedAt.getTime()
+    }),
   )
 
   // 是否有会话
@@ -231,6 +238,17 @@ export function useChatHistory() {
       if (title) {
         session.title = title.slice(0, 100) // 限制标题长度，防止极端情况
       }
+    }
+  }
+
+  /**
+   * 切换置顶状态
+   */
+  function togglePin(sessionId: string): void {
+    const session = sessions.value.find((s) => s.id === sessionId)
+    if (session) {
+      session.isPinned = !session.isPinned
+      saveSessions()
     }
   }
 
@@ -303,6 +321,7 @@ export function useChatHistory() {
     switchSession,
     updateSessionMessages,
     renameSession,
+    togglePin,
     deleteSession,
     clearAllSessions,
     getOrCreateCurrentSession,

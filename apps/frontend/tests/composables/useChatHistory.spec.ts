@@ -101,4 +101,54 @@ describe('useChatHistory', () => {
     const sessionAfter = savedSessionsAfter.find((s) => s.id === session.id)
     expect(sessionAfter?.messages.length).toBe(1)
   })
+
+  it('should toggle pin status', async () => {
+    const { createSession, togglePin, sessions } = useChatHistory()
+    const session = createSession()
+
+    // 初始状态
+    expect(session.isPinned).toBeFalsy()
+
+    // 切换置顶
+    togglePin(session.id)
+    expect(sessions.value[0].isPinned).toBe(true)
+
+    // 再次切换
+    togglePin(session.id)
+    expect(sessions.value[0].isPinned).toBe(false)
+  })
+
+  it('should sort sessions by pin status and then by updatedAt', async () => {
+    const { createSession, togglePin, sessions } = useChatHistory()
+
+    // 创建三个会话
+    const s1 = createSession()
+    await vi.advanceTimersByTimeAsync(1000)
+    const s2 = createSession()
+    await vi.advanceTimersByTimeAsync(1000)
+    const s3 = createSession()
+
+    // 初始排序：s3, s2, s1 (按创建/更新时间倒序)
+    expect(sessions.value[0].id).toBe(s3.id)
+    expect(sessions.value[1].id).toBe(s2.id)
+    expect(sessions.value[2].id).toBe(s1.id)
+
+    // 置顶 s1
+    togglePin(s1.id)
+    // 排序：s1 (置顶), s3, s2
+    expect(sessions.value[0].id).toBe(s1.id)
+    expect(sessions.value[1].id).toBe(s3.id)
+    expect(sessions.value[2].id).toBe(s2.id)
+
+    // 置顶 s2
+    togglePin(s2.id)
+    // 排序：s2 (最新置顶), s1 (置顶), s3
+    // 注意：s2 的 updatedAt 会因为 togglePin 而更新吗？
+    // 在我的实现中，togglePin 并没有显式更新 updatedAt。
+    // 但是 sortedSessions 的排序逻辑是：优先 isPinned，然后是 updatedAt。
+    // 如果 s2 和 s1 都置顶了，那么 s2 的 updatedAt (更晚) 会让它排在 s1 前面。
+    expect(sessions.value[0].id).toBe(s2.id)
+    expect(sessions.value[1].id).toBe(s1.id)
+    expect(sessions.value[2].id).toBe(s3.id)
+  })
 })
