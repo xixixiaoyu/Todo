@@ -22,7 +22,7 @@ import './styles/main.css'
 initZodI18n()
 
 // Markdown 渲染相关样式
-import 'highlight.js/styles/github.css'
+import 'highlight.js/styles/base16/one-light.css'
 import 'katex/dist/katex.min.css'
 
 // 注册 ECharts 必要组件
