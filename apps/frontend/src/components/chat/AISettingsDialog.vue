@@ -59,7 +59,6 @@ const presetForm = ref<Omit<AIPreset, 'id'>>({
   model: '',
   systemPrompt: '',
   temperature: 0.3,
-  thinkingMode: 'enabled',
   todoAssistant: false,
 })
 
@@ -179,7 +178,6 @@ function startEditPreset(preset: AIPreset) {
     model: preset.model,
     systemPrompt: preset.systemPrompt,
     temperature: preset.temperature,
-    thinkingMode: preset.thinkingMode,
     todoAssistant: preset.todoAssistant,
   }
 }

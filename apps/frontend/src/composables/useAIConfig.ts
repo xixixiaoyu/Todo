@@ -25,7 +25,6 @@ export interface AIPreset {
   model: string
   systemPrompt: string
   temperature: number
-  thinkingMode: ThinkingMode
   todoAssistant: boolean
 }
 
@@ -171,7 +170,6 @@ function findMatchingPreset(cfg: AIConfig, presetList: AIPreset[]): string | nul
       p.model === cfg.model &&
       p.systemPrompt === cfg.systemPrompt &&
       Math.abs(p.temperature - cfg.temperature) < 0.001 &&
-      p.thinkingMode === cfg.thinkingMode &&
       p.todoAssistant === cfg.todoAssistant,
   )
   return match ? match.id : null
@@ -250,7 +248,6 @@ export function useAIConfig() {
       model: preset.model,
       systemPrompt: preset.systemPrompt,
       temperature: preset.temperature,
-      thinkingMode: preset.thinkingMode,
       todoAssistant: preset.todoAssistant,
     }
   }
@@ -285,7 +282,6 @@ export function useAIConfig() {
           model: updatedPreset.model,
           systemPrompt: updatedPreset.systemPrompt,
           temperature: updatedPreset.temperature,
-          thinkingMode: updatedPreset.thinkingMode,
           todoAssistant: updatedPreset.todoAssistant,
         }
       }
@@ -315,7 +311,6 @@ export function useAIConfig() {
       model: config.value.model,
       systemPrompt: config.value.systemPrompt,
       temperature: config.value.temperature,
-      thinkingMode: config.value.thinkingMode,
       todoAssistant: config.value.todoAssistant,
     }
   }

@@ -232,7 +232,6 @@ describe('useAIConfig', () => {
         model: 'preset-model',
         systemPrompt: 'Test prompt',
         temperature: 0.5,
-        thinkingMode: 'enabled',
         todoAssistant: false,
       })
 
@@ -252,7 +251,6 @@ describe('useAIConfig', () => {
         model: 'preset-model',
         systemPrompt: 'Test prompt',
         temperature: 0.5,
-        thinkingMode: 'enabled',
         todoAssistant: false,
       })
 
@@ -275,7 +273,6 @@ describe('useAIConfig', () => {
         model: 'preset-model',
         systemPrompt: 'Test prompt',
         temperature: 0.5,
-        thinkingMode: 'enabled',
         todoAssistant: false,
       })
 
@@ -297,7 +294,6 @@ describe('useAIConfig', () => {
         model: 'preset-model',
         systemPrompt: 'Test prompt',
         temperature: 0.5,
-        thinkingMode: 'enabled',
         todoAssistant: false,
       })
 
@@ -316,7 +312,6 @@ describe('useAIConfig', () => {
         model: 'switch-model',
         systemPrompt: 'Switch prompt',
         temperature: 0.8,
-        thinkingMode: 'disabled',
         todoAssistant: true,
       })
 
@@ -339,7 +334,6 @@ describe('useAIConfig', () => {
         model: 'match-model',
         systemPrompt: 'Match prompt',
         temperature: 0.5,
-        thinkingMode: 'enabled',
         todoAssistant: false,
       })
 
@@ -350,7 +344,6 @@ describe('useAIConfig', () => {
         model: 'match-model',
         systemPrompt: 'Match prompt',
         temperature: 0.5,
-        thinkingMode: 'enabled',
         todoAssistant: false,
       })
 
@@ -369,7 +362,6 @@ describe('useAIConfig', () => {
         model: 'match-model',
         systemPrompt: 'Match prompt',
         temperature: 0.5,
-        thinkingMode: 'enabled',
         todoAssistant: false,
       })
 
@@ -404,7 +396,6 @@ describe('useAIConfig', () => {
         model: 'other-model',
         systemPrompt: 'Other prompt',
         temperature: 0.3,
-        thinkingMode: 'enabled',
         todoAssistant: false,
       })
 
@@ -434,7 +425,6 @@ describe('useAIConfig', () => {
         model: 'defaults-model',
         temperature: 0.9,
         systemPrompt: 'Defaults prompt',
-        thinkingMode: 'disabled',
         todoAssistant: true,
       })
 
@@ -446,9 +436,34 @@ describe('useAIConfig', () => {
         model: 'defaults-model',
         temperature: 0.9,
         systemPrompt: 'Defaults prompt',
-        thinkingMode: 'disabled',
         todoAssistant: true,
       })
+    })
+
+    it('should NOT change active preset when thinking mode is toggled (repro)', async () => {
+      const { addPreset, switchPreset, activePresetId } = useAIConfig()
+
+      const preset = addPreset({
+        name: 'Fixed Preset',
+        baseUrl: 'https://fixed-api.com',
+        apiKey: 'fixed-key',
+        model: 'fixed-model',
+        systemPrompt: 'Fixed prompt',
+        temperature: 0.5,
+        todoAssistant: false,
+      })
+
+      switchPreset(preset.id)
+      await nextTick()
+      expect(activePresetId.value).toBe(preset.id)
+
+      // Toggle thinking mode via aiThinkingMode ref (similar to toggleThinkingMode in Drawer)
+      aiThinkingMode.value = aiThinkingMode.value === 'enabled' ? 'disabled' : 'enabled'
+      await nextTick()
+      await nextTick() // Second tick for the config watcher
+
+      // Active preset should still be the same
+      expect(activePresetId.value).toBe(preset.id)
     })
   })
 
