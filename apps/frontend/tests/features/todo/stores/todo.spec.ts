@@ -160,6 +160,12 @@ describe('useTodoStore', () => {
       await store.toggleTodo('1')
       expect(store.todos[0].completed).toBe(false)
     })
+
+    it('should do nothing if todo not found', async () => {
+      store.todos = [{ ...mockTodos[0] }]
+      await store.toggleTodo('non-existent')
+      expect(store.todos[0].completed).toBe(false)
+    })
   })
 
   describe('deleteTodo', () => {
@@ -169,6 +175,12 @@ describe('useTodoStore', () => {
       await store.deleteTodo('1')
 
       expect(store.todos).toHaveLength(0)
+    })
+
+    it('should do nothing if todo not found', async () => {
+      store.todos = [{ ...mockTodos[0] }]
+      await store.deleteTodo('non-existent')
+      expect(store.todos).toHaveLength(1)
     })
   })
 
@@ -222,6 +234,39 @@ describe('useTodoStore', () => {
       const result = await store.updateTodo('1', 'Same title')
 
       expect(result).toBe(true)
+    })
+
+    it('should return false if todo not found', async () => {
+      const result = await store.updateTodo('non-existent', 'New Title')
+      expect(result).toBe(false)
+    })
+  })
+
+  describe('other actions', () => {
+    it('should set filter', () => {
+      store.setFilter('completed')
+      expect(store.filter).toBe('completed')
+    })
+
+    it('should set search query', () => {
+      store.setSearchQuery('test')
+      expect(store.searchQuery).toBe('test')
+    })
+
+    it('should clear search', () => {
+      store.searchQuery = 'test'
+      store.clearSearch()
+      expect(store.searchQuery).toBe('')
+    })
+
+    it('should clear error', () => {
+      store.error = 'some error'
+      store.clearError()
+      expect(store.error).toBeNull()
+    })
+
+    it('should fetch todos (currently empty logic)', async () => {
+      await expect(store.fetchTodos()).resolves.toBeUndefined()
     })
   })
 })

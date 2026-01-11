@@ -203,6 +203,23 @@ describe('useTodo', () => {
       expect(searchInput.value).toBe('')
       expect(todoStore.clearSearch).toHaveBeenCalled()
     })
+
+    it('should toggle search visibility and clear when closing', () => {
+      const { showSearch, searchInput, toggleSearch } = useTodo()
+
+      // Open search
+      toggleSearch()
+      expect(showSearch.value).toBe(true)
+
+      // Set some search input
+      searchInput.value = 'test'
+
+      // Close search
+      toggleSearch()
+      expect(showSearch.value).toBe(false)
+      expect(searchInput.value).toBe('')
+      expect(todoStore.clearSearch).toHaveBeenCalled()
+    })
   })
 
   describe('editing functionality', () => {
@@ -298,6 +315,17 @@ describe('useTodo', () => {
       await handleEditKeydown(event)
 
       expect(editingId.value).toBeNull()
+    })
+
+    it('should do nothing on other keys', async () => {
+      const { startEditing, editingId, handleEditKeydown } = useTodo()
+
+      startEditing('todo-1', 'Test Title')
+
+      const event = new KeyboardEvent('keydown', { key: 'Space' })
+      await handleEditKeydown(event)
+
+      expect(editingId.value).toBe('todo-1')
       expect(todoStore.updateTodo).not.toHaveBeenCalled()
     })
   })
