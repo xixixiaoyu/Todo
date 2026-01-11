@@ -27,12 +27,14 @@ describe('TodoList', () => {
       title: 'Todo 1',
       completed: false,
       createdAt: new Date(),
+      order: 0,
     },
     {
       id: '2',
       title: 'Todo 2',
       completed: true,
       createdAt: new Date(),
+      order: 1,
     },
   ]
 

@@ -11,12 +11,14 @@ describe('useTodoStore', () => {
       title: 'First todo',
       completed: false,
       createdAt: new Date(),
+      order: 0,
     },
     {
       id: '2',
       title: 'Second todo',
       completed: true,
       createdAt: new Date(),
+      order: 1,
     },
   ]
 
@@ -87,13 +89,10 @@ describe('useTodoStore', () => {
       expect(store.filteredTodos[0].title).toBe('First todo')
     })
 
-    it('should sort todos by createdAt descending (newest first)', () => {
-      const oldDate = new Date('2023-01-01')
-      const newDate = new Date('2023-01-02')
-
+    it('should sort todos by order ascending', () => {
       store.todos = [
-        { id: '1', title: 'Old', completed: false, createdAt: oldDate },
-        { id: '2', title: 'New', completed: false, createdAt: newDate },
+        { id: '1', title: 'Task 1', completed: false, createdAt: new Date(), order: 1 },
+        { id: '2', title: 'Task 2', completed: false, createdAt: new Date(), order: 0 },
       ]
       store.filter = 'pending'
 
@@ -118,14 +117,55 @@ describe('useTodoStore', () => {
     })
   })
 
-  describe('addTodo', () => {
-    it('should add todo successfully', async () => {
-      const result = await store.addTodo('New todo')
+  describe('reorderTodos', () => {
+    it('should update orders and parentId based on provided IDs', () => {
+      store.todos = [
+        {
+          id: '1',
+          title: 'Task 1',
+          completed: false,
+          createdAt: new Date(),
+          order: 0,
+          parentId: null,
+        },
+        {
+          id: '2',
+          title: 'Task 2',
+          completed: false,
+          createdAt: new Date(),
+          order: 1,
+          parentId: 'other',
+        },
+      ]
 
-      expect(result).toBe(true)
-      expect(store.todos).toHaveLength(1)
-      expect(store.todos[0].title).toBe('New todo')
-      expect(store.todos[0].id).toBeDefined()
+      store.reorderTodos(['2', '1'], 'newParent')
+
+      const t2 = store.todos.find((t) => t.id === '2')
+      const t1 = store.todos.find((t) => t.id === '1')
+
+      expect(t2?.order).toBe(0)
+      expect(t2?.parentId).toBe('newParent')
+      expect(t1?.order).toBe(1)
+      expect(t1?.parentId).toBe('newParent')
+    })
+  })
+
+  describe('addTodo', () => {
+    it('should add a new todo with order smaller than existing minimum', async () => {
+      store.todos = [
+        { id: '1', title: 'Existing', completed: false, createdAt: new Date(), order: 5 },
+      ]
+
+      await store.addTodo('New Task')
+
+      expect(store.todos).toHaveLength(2)
+      expect(store.todos[0].title).toBe('New Task')
+      expect(store.todos[0].order).toBe(4)
+    })
+
+    it('should add a new todo with order -1 if list is empty', async () => {
+      await store.addTodo('First Task')
+      expect(store.todos[0].order).toBe(-1)
     })
 
     it('should trim whitespace from title', async () => {
@@ -178,13 +218,14 @@ describe('useTodoStore', () => {
 
     it('should toggle parent and children correctly', async () => {
       store.todos = [
-        { id: 'parent', title: 'Parent', completed: false, createdAt: new Date() },
+        { id: 'parent', title: 'Parent', completed: false, createdAt: new Date(), order: 0 },
         {
           id: 'child1',
           title: 'Child 1',
           completed: false,
           createdAt: new Date(),
           parentId: 'parent',
+          order: 0,
         },
         {
           id: 'child2',
@@ -192,6 +233,7 @@ describe('useTodoStore', () => {
           completed: false,
           createdAt: new Date(),
           parentId: 'parent',
+          order: 1,
         },
       ]
 
@@ -224,13 +266,14 @@ describe('useTodoStore', () => {
 
     it('should delete parent and all children recursively', async () => {
       store.todos = [
-        { id: 'parent', title: 'Parent', completed: false, createdAt: new Date() },
+        { id: 'parent', title: 'Parent', completed: false, createdAt: new Date(), order: 0 },
         {
           id: 'child1',
           title: 'Child 1',
           completed: false,
           createdAt: new Date(),
           parentId: 'parent',
+          order: 0,
         },
         {
           id: 'child2',
@@ -238,6 +281,7 @@ describe('useTodoStore', () => {
           completed: false,
           createdAt: new Date(),
           parentId: 'parent',
+          order: 1,
         },
         {
           id: 'grandchild',
@@ -245,6 +289,7 @@ describe('useTodoStore', () => {
           completed: false,
           createdAt: new Date(),
           parentId: 'child1',
+          order: 0,
         },
       ]
 

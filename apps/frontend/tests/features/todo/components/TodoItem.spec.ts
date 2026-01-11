@@ -27,6 +27,7 @@ describe('TodoItem', () => {
     title: 'Test todo',
     completed: false,
     createdAt: new Date(),
+    order: 0,
   }
 
   it('should render todo title', () => {

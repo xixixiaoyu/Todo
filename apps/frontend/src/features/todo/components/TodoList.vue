@@ -2,6 +2,7 @@
 import { useI18n } from 'vue-i18n'
 import { ClipboardList, CheckCircle2, SearchX } from 'lucide-vue-next'
 import { computed } from 'vue'
+import draggable from 'vuedraggable'
 import type { Todo } from '../stores/todo'
 import TodoItem from './TodoItem.vue'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -22,9 +23,21 @@ const emit = defineEmits<{
   saveEdit: []
   cancelEdit: []
   delete: [id: string]
+  reorder: [ids: string[], parentId: string | null]
   'update:editingTitle': [value: string]
   editKeydown: [e: KeyboardEvent]
 }>()
+
+const dragList = computed({
+  get: () => displayTodos.value,
+  set: (val) => {
+    emit(
+      'reorder',
+      val.map((t) => t.id),
+      null,
+    )
+  },
+})
 
 const emptyState = computed(() => {
   if (props.searchQuery) {
@@ -101,33 +114,36 @@ const displayTodos = computed(() => {
         </div>
       </div>
 
-      <!-- Todo Items -->
-      <div v-else class="space-y-3 pb-6">
-        <TransitionGroup
-          enter-active-class="transition-all duration-300 ease-out"
-          enter-from-class="opacity-0 translate-y-4"
-          enter-to-class="opacity-100 translate-y-0"
-          leave-active-class="transition-all duration-200 ease-in absolute w-full"
-          leave-from-class="opacity-100 scale-100"
-          leave-to-class="opacity-0 scale-95"
-          move-class="transition-transform duration-300"
+      <div v-else class="min-h-[100px]">
+        <draggable
+          v-model="dragList"
+          item-key="id"
+          handle=".drag-handle"
+          group="todos"
+          ghost-class="opacity-50"
+          chosen-class="scale-[1.02]"
+          drag-class="rotate-1"
+          class="space-y-3 pb-6"
+          :animation="300"
+          :disabled="!!searchQuery"
         >
-          <TodoItem
-            v-for="todo in displayTodos"
-            :key="todo.id"
-            :todo="todo"
-            :editing-id="editingId"
-            :editing-title="editingTitle"
-            :default-expanded="filter !== 'completed'"
-            @toggle="(id, currentCompleted) => emit('toggle', id, currentCompleted)"
-            @start-edit="(id, title) => emit('startEdit', id, title)"
-            @save-edit="emit('saveEdit')"
-            @cancel-edit="emit('cancelEdit')"
-            @delete="(id) => emit('delete', id)"
-            @update:editing-title="(value) => emit('update:editingTitle', value)"
-            @edit-keydown="(e) => emit('editKeydown', e)"
-          />
-        </TransitionGroup>
+          <template #item="{ element: todo }">
+            <TodoItem
+              :key="todo.id"
+              :todo="todo"
+              :editing-id="editingId"
+              :editing-title="editingTitle"
+              :default-expanded="filter !== 'completed'"
+              @toggle="(id, currentCompleted) => emit('toggle', id, currentCompleted)"
+              @start-edit="(id, title) => emit('startEdit', id, title)"
+              @save-edit="emit('saveEdit')"
+              @cancel-edit="emit('cancelEdit')"
+              @delete="(id) => emit('delete', id)"
+              @update:editing-title="(value) => emit('update:editingTitle', value)"
+              @edit-keydown="(e) => emit('editKeydown', e)"
+            />
+          </template>
+        </draggable>
       </div>
     </ScrollArea>
   </div>

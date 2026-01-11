@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useTodoStore } from './stores/todo'
 import { useTodo } from './composables/useTodo'
 import TodoHeader from './components/TodoHeader.vue'
@@ -12,6 +12,11 @@ import AiAssistantDrawer from '@/components/AiAssistantDrawer.vue'
 import { Card, CardContent } from '@/components/ui/card'
 
 const todoStore = useTodoStore()
+
+onMounted(() => {
+  todoStore.fetchTodos()
+})
+
 const {
   newTodoTitle,
   showSearch,
@@ -82,6 +87,7 @@ function onFireworksComplete() {
           @save-edit="saveEditing"
           @cancel-edit="cancelEditing"
           @delete="todoStore.deleteTodo"
+          @reorder="(ids, pId) => todoStore.reorderTodos(ids, pId)"
           @update:editing-title="editingTitle = $event"
           @edit-keydown="handleEditKeydown"
         />

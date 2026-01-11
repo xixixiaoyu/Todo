@@ -7,6 +7,7 @@ export interface Todo {
   completed: boolean
   createdAt: Date
   parentId?: string | null
+  order: number
 }
 
 export type FilterType = 'pending' | 'completed'
@@ -35,7 +36,7 @@ export const useTodoStore = defineStore(
           const matchesSearch = !query || todo.title.toLowerCase().includes(query)
           return matchesFilter && matchesSearch
         })
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
     })
 
     const pendingCount = computed(() => todos.value.filter((todo) => !todo.completed).length)
@@ -57,7 +58,28 @@ export const useTodoStore = defineStore(
      * 获取所有待办事项
      */
     async function fetchTodos(): Promise<void> {
-      // 纯本地存储
+      // 纯本地存储，初始化 order
+      todos.value.forEach((todo, index) => {
+        if (todo.order === undefined) {
+          todo.order = index
+        }
+      })
+    }
+
+    /**
+     * 重新排序
+     */
+    function reorderTodos(orderedIds: string[], parentId: string | null = null): void {
+      orderedIds.forEach((id, index) => {
+        const todo = todos.value.find((t) => t.id === id)
+        if (todo) {
+          todo.order = index
+          // 如果提供了 parentId（包括 null），则更新它
+          if (parentId !== undefined) {
+            todo.parentId = parentId
+          }
+        }
+      })
     }
 
     /**
@@ -74,12 +96,16 @@ export const useTodoStore = defineStore(
 
       loading.value = true
       try {
+        const minOrder =
+          todos.value.length > 0 ? Math.min(...todos.value.map((t) => t.order ?? 0)) : 0
+
         const newTodo: Todo = {
           id: crypto.randomUUID(),
           title: trimmedTitle,
           completed: false,
           createdAt: new Date(),
           parentId,
+          order: minOrder - 1,
         }
         todos.value.unshift(newTodo)
         return true
@@ -237,6 +263,7 @@ export const useTodoStore = defineStore(
       toggleTodo,
       deleteTodo,
       updateTodo,
+      reorderTodos,
       setDrawerOpen,
       toggleDrawer,
       setFilter,

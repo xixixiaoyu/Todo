@@ -1,7 +1,17 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { Check, X, Pencil, Trash2, Plus, ChevronDown, ChevronRight } from 'lucide-vue-next'
+import {
+  Check,
+  X,
+  Pencil,
+  Trash2,
+  Plus,
+  ChevronDown,
+  ChevronRight,
+  GripVertical,
+} from 'lucide-vue-next'
 import { ref, computed, watch, nextTick } from 'vue'
+import draggable from 'vuedraggable'
 import { onClickOutside } from '@vueuse/core'
 import { useTodoStore, type Todo } from '../stores/todo'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -26,17 +36,28 @@ const emit = defineEmits<{
   saveEdit: []
   cancelEdit: []
   delete: [id: string]
+  reorder: [ids: string[], parentId: string | null]
   'update:editingTitle': [value: string]
   editKeydown: [e: KeyboardEvent]
 }>()
 
-const isExpanded = ref(props.defaultExpanded ?? true)
+const dragChildren = computed({
+  get: () => children.value,
+  set: (val) => {
+    store.reorderTodos(
+      val.map((t) => t.id),
+      props.todo.id,
+    )
+  },
+})
+
+const isExpanded = ref(props.defaultExpanded ?? false)
 const isAddingChild = ref(false)
 
 watch(
   () => props.defaultExpanded,
   (newValue) => {
-    isExpanded.value = newValue ?? true
+    isExpanded.value = newValue ?? false
   },
 )
 
@@ -71,7 +92,9 @@ watch(
 )
 
 const children = computed(() => {
-  return store.todos.filter((t) => t.parentId === props.todo.id)
+  return store.todos
+    .filter((t) => t.parentId === props.todo.id)
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
 })
 
 const hasChildren = computed(() => children.value.length > 0)
@@ -109,6 +132,9 @@ async function submitAddChild() {
       :style="{ marginLeft: `${(level || 0) * 2}rem` }"
     >
       <div class="flex items-center gap-2">
+        <GripVertical
+          class="drag-handle h-4 w-4 cursor-grab text-muted-foreground/30 hover:text-muted-foreground transition-colors active:cursor-grabbing"
+        />
         <Button
           v-if="hasChildren"
           variant="ghost"
@@ -258,23 +284,35 @@ async function submitAddChild() {
     </div>
 
     <!-- 子任务列表 -->
-    <div v-if="isExpanded && hasChildren" class="flex flex-col gap-2">
-      <TodoItem
-        v-for="child in children"
-        :key="child.id"
-        :todo="child"
-        :editing-id="editingId"
-        :editing-title="editingTitle"
-        :level="(level || 0) + 1"
-        :default-expanded="defaultExpanded"
-        @toggle="(id, currentCompleted) => emit('toggle', id, currentCompleted)"
-        @start-edit="(id, title) => emit('startEdit', id, title)"
-        @save-edit="emit('saveEdit')"
-        @cancel-edit="emit('cancelEdit')"
-        @delete="(id) => emit('delete', id)"
-        @update:editing-title="(value) => emit('update:editingTitle', value)"
-        @edit-keydown="(e) => emit('editKeydown', e)"
-      />
+    <div v-if="isExpanded" class="min-h-[10px]">
+      <draggable
+        v-model="dragChildren"
+        item-key="id"
+        handle=".drag-handle"
+        group="todos"
+        ghost-class="opacity-50"
+        chosen-class="scale-[1.01]"
+        class="flex flex-col gap-2"
+        :animation="300"
+      >
+        <template #item="{ element: child }">
+          <TodoItem
+            :todo="child"
+            :editing-id="editingId"
+            :editing-title="editingTitle"
+            :level="(level || 0) + 1"
+            :default-expanded="defaultExpanded"
+            @toggle="(id, currentCompleted) => emit('toggle', id, currentCompleted)"
+            @start-edit="(id, title) => emit('startEdit', id, title)"
+            @save-edit="emit('saveEdit')"
+            @cancel-edit="emit('cancelEdit')"
+            @delete="(id) => emit('delete', id)"
+            @reorder="(ids, pId) => emit('reorder', ids, pId)"
+            @update:editing-title="(value) => emit('update:editingTitle', value)"
+            @edit-keydown="(e) => emit('editKeydown', e)"
+          />
+        </template>
+      </draggable>
     </div>
   </div>
 </template>
