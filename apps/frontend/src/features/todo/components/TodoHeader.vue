@@ -34,7 +34,7 @@ const toggleLanguage = () => {
           <Clover :size="24" />
         </div>
         <h1
-          class="cursor-default bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-2xl font-extrabold tracking-tight text-transparent md:text-3xl"
+          class="cursor-default bg-gradient-to-r from-emerald-700 via-teal-600 to-primary bg-clip-text text-2xl font-extrabold tracking-tight text-transparent transition-transform hover:scale-105 md:text-3xl"
         >
           {{ t('todo.title') }}
         </h1>
