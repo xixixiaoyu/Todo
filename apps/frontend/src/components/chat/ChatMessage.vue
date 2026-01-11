@@ -54,7 +54,7 @@ function cancelEdit() {
 // 保存编辑
 function saveEdit() {
   const content = editContent.value.trim()
-  if (content && content !== props.message.content) {
+  if (content) {
     emit('edit', content)
   }
   isEditing.value = false
