@@ -28,11 +28,13 @@ export const useTodoStore = defineStore(
     const filteredTodos = computed(() => {
       const query = searchQuery.value.trim().toLowerCase()
 
-      return todos.value.filter((todo) => {
-        const matchesFilter = filter.value === 'pending' ? !todo.completed : todo.completed
-        const matchesSearch = !query || todo.title.toLowerCase().includes(query)
-        return matchesFilter && matchesSearch
-      })
+      return todos.value
+        .filter((todo) => {
+          const matchesFilter = filter.value === 'pending' ? !todo.completed : todo.completed
+          const matchesSearch = !query || todo.title.toLowerCase().includes(query)
+          return matchesFilter && matchesSearch
+        })
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     })
 
     const pendingCount = computed(() => todos.value.filter((todo) => !todo.completed).length)

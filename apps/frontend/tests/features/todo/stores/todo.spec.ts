@@ -86,6 +86,20 @@ describe('useTodoStore', () => {
       expect(store.filteredTodos).toHaveLength(1)
       expect(store.filteredTodos[0].title).toBe('First todo')
     })
+
+    it('should sort todos by createdAt descending (newest first)', () => {
+      const oldDate = new Date('2023-01-01')
+      const newDate = new Date('2023-01-02')
+
+      store.todos = [
+        { id: '1', title: 'Old', completed: false, createdAt: oldDate },
+        { id: '2', title: 'New', completed: false, createdAt: newDate },
+      ]
+      store.filter = 'pending'
+
+      expect(store.filteredTodos[0].id).toBe('2')
+      expect(store.filteredTodos[1].id).toBe('1')
+    })
   })
 
   describe('pendingCount', () => {
