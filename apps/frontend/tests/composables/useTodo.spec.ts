@@ -247,7 +247,6 @@ describe('useTodo', () => {
 
       // Mock updateTodo to return false and set error
       vi.mocked(todoStore.updateTodo).mockResolvedValue(false)
-      // @ts-expect-error - Mocking the error property
       todoStore.error = 'todo.duplicate'
 
       await saveEditing()

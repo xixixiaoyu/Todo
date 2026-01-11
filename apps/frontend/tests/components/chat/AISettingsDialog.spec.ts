@@ -20,7 +20,7 @@ vi.mock('lucide-vue-next', () => ({
 }))
 
 // Mock composables
-const mockConfig = ref({
+const mockConfig = ref<AIConfig>({
   baseUrl: 'https://api.example.com',
   apiKey: 'test-key',
   model: 'test-model',

@@ -3,7 +3,8 @@ import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
 
 export default defineConfig({
-  plugins: [vue()],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  plugins: [vue() as any],
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),

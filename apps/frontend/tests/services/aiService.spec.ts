@@ -36,7 +36,7 @@ vi.mock('@/i18n', () => ({
   default: {
     global: {
       t: vi.fn((key: string, params?: Record<string, unknown>) => {
-        if (key === 'ai.parallelSynthesisPrompt') {
+        if (key === 'ai.parallelSynthesisPrompt' && params) {
           return `Synthesis: ${params.originalQuery} - ${params.discussionData}`
         }
         return key
@@ -310,7 +310,7 @@ describe('aiService - Multi-model Discussion', () => {
 
       // Final synthesis request (should use p1, not basic)
       expect(url).toContain('api.p1.com')
-      expect(init.headers.Authorization).toBe('Bearer key-p1')
+      expect((init.headers as Record<string, string>).Authorization).toBe('Bearer key-p1')
 
       return {
         ok: true,
