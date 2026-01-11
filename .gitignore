@@ -45,6 +45,7 @@ prisma/*.db-journal
 *.tmp
 *.temp
 .cache
+.eslintcache
 
 # Capacitor
 apps/frontend/ios/App/App/public
