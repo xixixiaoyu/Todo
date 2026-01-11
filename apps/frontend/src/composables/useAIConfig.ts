@@ -169,8 +169,7 @@ function findMatchingPreset(cfg: AIConfig, presetList: AIPreset[]): string | nul
       p.apiKey === cfg.apiKey &&
       p.model === cfg.model &&
       p.systemPrompt === cfg.systemPrompt &&
-      Math.abs(p.temperature - cfg.temperature) < 0.001 &&
-      p.todoAssistant === cfg.todoAssistant,
+      Math.abs(p.temperature - cfg.temperature) < 0.001,
   )
   return match ? match.id : null
 }
