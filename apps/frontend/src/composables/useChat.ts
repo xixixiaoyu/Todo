@@ -3,6 +3,7 @@ import i18n from '@/i18n'
 import {
   getAIStreamResponse,
   getMultiModelDiscussionStream,
+  getAIStaticResponse,
   abortCurrentRequest,
   generateId,
   type ChatMessage,
@@ -11,6 +12,7 @@ import {
 } from '@/services/aiService'
 import { useChatHistory } from './useChatHistory'
 import { getAIThinkingMode, getAIConfig } from './useAIConfig'
+import { useMemory } from './useMemory'
 
 export type { ChatMessage }
 
@@ -47,6 +49,63 @@ export function useChat(options: AIRequestOptions = {}) {
 
   // 重试计数
   const retryCount = ref(0)
+
+  // 记忆功能
+  const { addMemories, isMemoryEnabled, getMemoryModelOptions } = useMemory()
+  const messageCounterSinceLastExtraction = ref(0)
+
+  /**
+   * 提取并存储记忆
+   */
+  async function extractAndStoreMemories(history: ChatMessage[]) {
+    if (!isMemoryEnabled.value) return
+
+    // 策略：每 3 轮对话（6 条消息）提取一次，或者在会话刚开始的前 2 轮提取
+    messageCounterSinceLastExtraction.value++
+    const totalMessages = history.length
+    const shouldExtract = totalMessages <= 4 || messageCounterSinceLastExtraction.value >= 3
+
+    if (!shouldExtract) return
+
+    // 重置计数器
+    messageCounterSinceLastExtraction.value = 0
+
+    // 提取最后几轮对话作为上下文（最多 3 轮）
+    const lastMessages = history.slice(-6)
+    if (lastMessages.length < 2) return
+
+    const prompt = `你是一个记忆提取专家。请从以下对话片段中提取关于用户的关键偏好、技术栈、背景信息或习惯。
+规则：
+1. 以 JSON 数组格式返回（如 ["用户偏好使用 TypeScript", "用户正在开发一个 Todo 应用"]）。
+2. 只提取事实，不要解释。
+3. 如果没有发现任何有价值的新信息，请返回空数组 []。
+4. 提取的信息应简洁有力，每条不超过 20 字。
+5. 必须只返回 JSON，不要包含 Markdown 代码块。
+
+对话片段：
+${lastMessages.map((m) => `${m.role === 'user' ? '用户' : '助手'}: ${m.content}`).join('\n')}`
+
+    try {
+      const options = getMemoryModelOptions()
+      const result = await getAIStaticResponse([{ role: 'user', content: prompt }], options)
+
+      // 尝试解析 JSON
+      let newMemories: string[] = []
+      try {
+        // 移除可能存在的 Markdown 代码块标记
+        const jsonStr = result.replace(/```json\n?|\n?```/g, '').trim()
+        newMemories = JSON.parse(jsonStr)
+      } catch {
+        console.warn('Failed to parse memories JSON:', result)
+      }
+
+      if (Array.isArray(newMemories) && newMemories.length > 0) {
+        addMemories(newMemories)
+      }
+    } catch (err) {
+      console.error('Failed to extract memories:', err)
+    }
+  }
 
   /**
    * 发送消息
@@ -94,7 +153,13 @@ export function useChat(options: AIRequestOptions = {}) {
                   : undefined,
               createdAt: new Date(),
             }
-            chatHistory.value = [...chatHistory.value, aiMessage]
+            const newHistory = [...chatHistory.value, aiMessage]
+            chatHistory.value = newHistory
+
+            // 异步提取记忆
+            if (isMemoryEnabled.value) {
+              void extractAndStoreMemories(newHistory)
+            }
           }
           currentAIResponse.value = ''
           currentThinkingContent.value = ''

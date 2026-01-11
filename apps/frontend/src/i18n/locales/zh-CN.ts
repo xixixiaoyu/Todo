@@ -11,6 +11,11 @@ export default {
     noResults: '未找到匹配结果',
     confirm: '确定',
     cancel: '取消',
+    add: '添加',
+    edit: '编辑',
+    save: '保存',
+    delete: '删除',
+    clear: '清除',
     theme: {
       light: '浅色模式',
       dark: '暗色模式',
@@ -192,5 +197,21 @@ export default {
     noPresetsForDiscussion: '暂无可用预设，请先在“预设管理”中添加参与讨论的模型',
     parallelSynthesisPrompt:
       '我邀请了多个 AI 模型对用户的问题“{originalQuery}”进行了独立回答。以下是各模型的回答内容：\n\n{discussionData}\n\n请你作为主模型，深度分析并综合以上所有回答，为用户提供一个最准确、专业且全面的最终答案。',
+    memory: '记忆',
+    memoryEnabled: '记忆功能已开启',
+    memoryDisabled: '记忆功能已关闭',
+    memoryManagement: '记忆管理',
+    memoryClear: '清除所有记忆',
+    memoryClearConfirm: '确定要清除所有已提取的记忆片段吗？此操作不可撤销。',
+    memoryDescription:
+      'AI 助手会自动从对话中提取关键事实、技术栈和个人偏好，并在后续对话中作为背景信息，使回复更贴合你的需求。',
+    noMemories: '暂无记忆片段',
+    memoryCompress: '压缩记忆',
+    memoryCompressing: '正在压缩...',
+    memoryModelPreset: '记忆管理专用预设',
+    memoryModelTip:
+      '为记忆任务指定一个专用预设（如逻辑推理能力更强的模型）可显著提升提取和压缩的质量。',
+    memoryList: '记忆列表',
+    addMemoryPlaceholder: '手动输入需要记住的事实或偏好...',
   },
 }

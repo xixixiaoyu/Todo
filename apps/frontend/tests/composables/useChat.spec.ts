@@ -9,6 +9,7 @@ import type { ChatSession } from '@/composables/useChatHistory'
 import {
   getAIStreamResponse,
   getMultiModelDiscussionStream,
+  getAIStaticResponse,
   abortCurrentRequest,
   generateId,
 } from '@/services/aiService'
@@ -39,10 +40,29 @@ vi.mock('@/services/aiService', async (importOriginal) => {
     ...actual,
     getAIStreamResponse: vi.fn(),
     getMultiModelDiscussionStream: vi.fn(),
+    getAIStaticResponse: vi.fn(),
     abortCurrentRequest: vi.fn(),
     generateId: vi.fn(() => 'generated-id'),
   }
 })
+
+// Mock useMemory
+const mockAddMemories = vi.fn()
+const mockIsMemoryEnabled = ref(true)
+const mockMemories = ref<string[]>([])
+
+vi.mock('@/composables/useMemory', () => ({
+  useMemory: vi.fn(() => ({
+    memories: mockMemories,
+    isMemoryEnabled: mockIsMemoryEnabled,
+    addMemories: mockAddMemories,
+    removeMemory: vi.fn(),
+    clearMemories: vi.fn(),
+    toggleMemory: vi.fn(),
+    getMemoryModelOptions: vi.fn(() => ({})),
+    compressMemories: vi.fn(),
+  })),
+}))
 
 // Mock AI config
 vi.mock('@/composables/useAIConfig', () => ({
@@ -50,6 +70,7 @@ vi.mock('@/composables/useAIConfig', () => ({
     discussionMode: false,
     discussionModelIds: [],
     discussionPrimaryModelId: null,
+    memoryModelId: null,
     baseUrl: '',
     apiKey: '',
     model: '',
@@ -76,12 +97,16 @@ describe('useChat', () => {
     vi.clearAllMocks()
     vi.useFakeTimers()
 
+    mockMemories.value = []
+    mockIsMemoryEnabled.value = true
+
     // 重置 mock 实现
     mockCurrentSession.value = null
     vi.mocked(getAIConfig).mockReturnValue({
       discussionMode: false,
       discussionModelIds: [],
       discussionPrimaryModelId: null,
+      memoryModelId: null,
       baseUrl: '',
       apiKey: '',
       model: '',
@@ -149,7 +174,7 @@ describe('useChat', () => {
 
     it('should add user message and handle [DONE] chunk correctly', async () => {
       mockGetAIStreamResponse.mockImplementation(
-        async (messages: ChatMessage[], onChunk: OnChunk) => {
+        async (_messages: ChatMessage[], onChunk: OnChunk) => {
           onChunk('Hello')
           onChunk('[DONE]')
         },
@@ -167,7 +192,7 @@ describe('useChat', () => {
 
     it('should handle [ABORTED] chunk correctly', async () => {
       mockGetAIStreamResponse.mockImplementation(
-        async (messages: ChatMessage[], onChunk: OnChunk) => {
+        async (_messages: ChatMessage[], onChunk: OnChunk) => {
           onChunk('Partially generated...')
           onChunk('[ABORTED]')
         },
@@ -184,7 +209,7 @@ describe('useChat', () => {
 
     it('should handle thinking chunks correctly', async () => {
       mockGetAIStreamResponse.mockImplementation(
-        async (messages: ChatMessage[], onChunk: OnChunk, onThinking?: OnThinking) => {
+        async (_messages: ChatMessage[], onChunk: OnChunk, onThinking?: OnThinking) => {
           onThinking?.('Thinking process...')
           onChunk('Result')
           onChunk('[DONE]')
@@ -198,10 +223,43 @@ describe('useChat', () => {
       expect(messages.value[1].content).toBe('Result')
     })
 
+    it('should extract memories according to frequency strategy', async () => {
+      const mockGetAIStaticResponse = vi.mocked(getAIStaticResponse)
+      mockGetAIStreamResponse.mockImplementation(
+        async (_messages: ChatMessage[], onChunk: OnChunk) => {
+          onChunk('Response')
+          onChunk('[DONE]')
+        },
+      )
+      mockGetAIStaticResponse.mockResolvedValue('["Memory A"]')
+
+      const { sendMessage } = useChat()
+
+      // 1. 第一轮：应提取（前 2 轮强制提取）
+      await sendMessage('msg 1')
+      expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(1)
+
+      // 2. 第二轮：应提取（前 2 轮强制提取）
+      await sendMessage('msg 2')
+      expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(2)
+
+      // 3. 第三轮：不应提取（计数器为 1，未到 3）
+      await sendMessage('msg 3')
+      expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(2)
+
+      // 4. 第四轮：不应提取（计数器为 2，未到 3）
+      await sendMessage('msg 4')
+      expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(2)
+
+      // 5. 第五轮：应提取（计数器达到 3）
+      await sendMessage('msg 5')
+      expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(3)
+    })
+
     it('should retry on failure and eventually succeed', async () => {
       let calls = 0
       mockGetAIStreamResponse.mockImplementation(
-        async (messages: ChatMessage[], onChunk: OnChunk) => {
+        async (_messages: ChatMessage[], onChunk: OnChunk) => {
           calls++
           if (calls === 1) throw new Error('Network error')
           onChunk('Success')
@@ -234,6 +292,7 @@ describe('useChat', () => {
         discussionMode: true,
         discussionModelIds: ['m1', 'm2'],
         discussionPrimaryModelId: 'm1',
+        memoryModelId: null,
         baseUrl: '',
         apiKey: '',
         model: '',
@@ -244,7 +303,7 @@ describe('useChat', () => {
       })
 
       mockGetMultiModelDiscussionStream.mockImplementation(
-        async (messages: ChatMessage[], onSteps: OnSteps, onChunk: OnChunk) => {
+        async (_messages: ChatMessage[], onSteps: OnSteps, onChunk: OnChunk) => {
           onSteps([{ modelId: 'm1', modelName: 'M1', content: 'step 1', status: 'done' }])
           onChunk('Final answer')
           onChunk('[DONE]')
@@ -312,7 +371,7 @@ describe('useChat', () => {
         updatedAt: new Date(),
       }
       mockGetAIStreamResponse.mockImplementation(
-        async (messages: ChatMessage[], onChunk: OnChunk) => {
+        async (_messages: ChatMessage[], onChunk: OnChunk) => {
           onChunk('New Hi')
           onChunk('[DONE]')
         },
@@ -339,7 +398,7 @@ describe('useChat', () => {
         updatedAt: new Date(),
       }
       mockGetAIStreamResponse.mockImplementation(
-        async (messages: ChatMessage[], onChunk: OnChunk) => {
+        async (_messages: ChatMessage[], onChunk: OnChunk) => {
           onChunk('New response')
           onChunk('[DONE]')
         },
@@ -352,6 +411,7 @@ describe('useChat', () => {
       expect(messages.value[0].content).toBe('new hello')
       expect(messages.value[1].content).toBe('New response')
     })
+
     it('should correctly delete a message and update history', async () => {
       const { deleteMessage, messages } = useChat()
 

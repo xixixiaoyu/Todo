@@ -15,6 +15,7 @@ export interface AIConfig {
   discussionMode: boolean
   discussionModelIds: string[]
   discussionPrimaryModelId: string | null
+  memoryModelId: string | null
 }
 
 export interface AIPreset {
@@ -66,6 +67,7 @@ const DEFAULT_CONFIG: AIConfig = {
   discussionMode: false,
   discussionModelIds: [],
   discussionPrimaryModelId: null,
+  memoryModelId: null,
 }
 
 // 全局配置状态（单例）

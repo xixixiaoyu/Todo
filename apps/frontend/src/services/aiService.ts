@@ -4,6 +4,7 @@
 
 import { getAIConfig, getAIPresets, type AIPreset } from '@/composables/useAIConfig'
 import { useTodoStore } from '@/features/todo/stores/todo'
+import { useMemory } from '@/composables/useMemory'
 import i18n from '@/i18n'
 
 const { t } = i18n.global
@@ -65,7 +66,7 @@ export function generateId(): string {
 }
 
 /**
- * 注入系统提示和待办事项上下文
+ * 注入系统提示和上下文信息（待办事项、记忆等）
  */
 function injectSystemPrompts(
   messages: ChatMessage[],
@@ -74,6 +75,7 @@ function injectSystemPrompts(
 ): Array<{ role: string; content: string }> {
   const result: Array<{ role: string; content: string }> = []
 
+  // 1. 基础系统提示词
   if (systemPrompt) {
     result.push({
       role: 'system',
@@ -81,7 +83,16 @@ function injectSystemPrompts(
     })
   }
 
-  // Todo 助手：注入未完成的 Todo 列表
+  // 2. 记忆功能：注入用户已知信息记录
+  const { memories, isMemoryEnabled } = useMemory()
+  if (isMemoryEnabled.value && memories.value.length > 0) {
+    result.push({
+      role: 'system',
+      content: `[用户已知信息记录]\n${memories.value.map((m) => `- ${m}`).join('\n')}`,
+    })
+  }
+
+  // 3. Todo 助手：注入未完成的 Todo 列表
   if (todoAssistant) {
     const todoStore = useTodoStore()
     const pendingTodos = todoStore.todos.filter((t) => !t.completed)
@@ -407,6 +418,40 @@ export async function getMultiModelDiscussionStream(
     ...options,
     ...primaryConfig,
   })
+}
+
+/**
+ * 发送非流式 AI 请求（用于后台提取记忆等任务）
+ */
+export async function getAIStaticResponse(
+  messages: Array<{ role: string; content: string }>,
+  options: AIRequestOptions = {},
+): Promise<string> {
+  const aiConfig = getAIConfig()
+  const {
+    model = aiConfig.model,
+    baseUrl = aiConfig.baseUrl,
+    apiKey = aiConfig.apiKey,
+    temperature = 0.3,
+  } = options
+
+  const response = await fetch(buildApiUrl(baseUrl), {
+    method: 'POST',
+    headers: getHeaders(apiKey),
+    body: JSON.stringify({
+      model,
+      messages,
+      temperature,
+      stream: false,
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`)
+  }
+
+  const result = await response.json()
+  return result.choices[0]?.message?.content || ''
 }
 
 /**

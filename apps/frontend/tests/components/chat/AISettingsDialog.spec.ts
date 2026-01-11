@@ -31,6 +31,7 @@ const mockConfig = ref<AIConfig>({
   discussionMode: false,
   discussionModelIds: [],
   discussionPrimaryModelId: null,
+  memoryModelId: null,
 })
 
 const mockPresets = ref<AIPreset[]>([])
@@ -54,6 +55,7 @@ vi.mock('@/composables/useAIConfig', () => ({
       discussionMode: false,
       discussionModelIds: [],
       discussionPrimaryModelId: null,
+      memoryModelId: null,
     },
     presets: mockPresets,
     activePresetId: mockActivePresetId,
@@ -65,6 +67,7 @@ vi.mock('@/composables/useAIConfig', () => ({
           discussionMode: false,
           discussionModelIds: [] as string[],
           discussionPrimaryModelId: null,
+          memoryModelId: null,
           ...preset,
         } as unknown as AIConfig
       }
@@ -74,6 +77,7 @@ vi.mock('@/composables/useAIConfig', () => ({
         discussionMode: false,
         discussionModelIds: [] as string[],
         discussionPrimaryModelId: null,
+        memoryModelId: null,
         ...p,
         id: 'test-id',
       } as unknown as AIPreset
@@ -89,6 +93,7 @@ vi.mock('@/composables/useAIConfig', () => ({
             discussionMode: false,
             discussionModelIds: [] as string[],
             discussionPrimaryModelId: null,
+            memoryModelId: null,
             ...mockPresets.value[index],
           } as unknown as AIConfig
         }
@@ -107,11 +112,28 @@ vi.mock('@/composables/useAIConfig', () => ({
   }),
 }))
 
-vi.mock('vue-i18n', () => ({
-  useI18n: () => ({
-    t: (key: string) => key,
+vi.mock('@/composables/useMemory', () => ({
+  useMemory: () => ({
+    memories: ref([]),
+    isMemoryEnabled: ref(false),
+    addMemories: vi.fn(),
+    removeMemory: vi.fn(),
+    clearMemories: vi.fn(),
+    toggleMemory: vi.fn(),
+    compressMemories: vi.fn(),
+    isCompressing: ref(false),
   }),
 }))
+
+vi.mock('vue-i18n', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('vue-i18n')>()
+  return {
+    ...actual,
+    useI18n: () => ({
+      t: (key: string) => key,
+    }),
+  }
+})
 
 describe('AISettingsDialog', () => {
   beforeEach(() => {
@@ -315,6 +337,7 @@ describe('AISettingsDialog', () => {
       discussionMode: false,
       discussionModelIds: [],
       discussionPrimaryModelId: null,
+      memoryModelId: null,
     }
 
     const wrapper = mount(AISettingsDialog, {

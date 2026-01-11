@@ -1,16 +1,33 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { X, RotateCcw, Eye, EyeOff, Check, Plus, Trash2, Edit3, Users, Star } from 'lucide-vue-next'
+import {
+  X,
+  RotateCcw,
+  Eye,
+  EyeOff,
+  Check,
+  Plus,
+  Trash2,
+  Edit3,
+  Users,
+  Star,
+  Brain,
+  Trash,
+  Info,
+  Sparkles,
+  Loader2,
+} from 'lucide-vue-next'
 import { useAIConfig, type AIConfig, type AIPreset } from '@/composables/useAIConfig'
 import { useEscClose } from '@/composables/useEscClose'
+import { useMemory } from '@/composables/useMemory'
 
 const props = defineProps<{
-  initialTab?: 'settings' | 'presets'
+  initialTab?: 'settings' | 'presets' | 'memory'
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:initialTab', tab: 'settings' | 'presets'): void
+  (e: 'update:initialTab', tab: 'settings' | 'presets' | 'memory'): void
 }>()
 
 const modelValue = defineModel<boolean>({ required: true })
@@ -30,8 +47,80 @@ const {
   switchPreset,
 } = useAIConfig()
 
+const {
+  memories,
+  isMemoryEnabled,
+  isCompressing,
+  removeMemory,
+  clearMemories,
+  toggleMemory,
+  compressMemories,
+  addMemory,
+  updateMemory,
+} = useMemory()
+
 // 当前 Tab
-const activeTab = ref<'settings' | 'presets'>(props.initialTab || 'settings')
+const activeTab = ref<'settings' | 'presets' | 'memory'>(props.initialTab || 'settings')
+
+// 记忆管理相关状态
+const isAddingMemory = ref(false)
+const newMemoryContent = ref('')
+const editingMemoryIndex = ref<number | null>(null)
+const editingMemoryContent = ref('')
+
+/**
+ * 开始新增记忆
+ */
+function startAddMemory() {
+  isAddingMemory.value = true
+  newMemoryContent.value = ''
+}
+
+/**
+ * 保存新增记忆
+ */
+function handleAddMemory() {
+  if (newMemoryContent.value.trim()) {
+    addMemory(newMemoryContent.value)
+    isAddingMemory.value = false
+    newMemoryContent.value = ''
+  }
+}
+
+/**
+ * 取消新增
+ */
+function cancelAddMemory() {
+  isAddingMemory.value = false
+  newMemoryContent.value = ''
+}
+
+/**
+ * 开始编辑记忆
+ */
+function startEditMemory(index: number, content: string) {
+  editingMemoryIndex.value = index
+  editingMemoryContent.value = content
+}
+
+/**
+ * 保存编辑
+ */
+function handleSaveEditMemory() {
+  if (editingMemoryIndex.value !== null && editingMemoryContent.value.trim()) {
+    updateMemory(editingMemoryIndex.value, editingMemoryContent.value)
+    editingMemoryIndex.value = null
+    editingMemoryContent.value = ''
+  }
+}
+
+/**
+ * 取消编辑
+ */
+function cancelEditMemory() {
+  editingMemoryIndex.value = null
+  editingMemoryContent.value = ''
+}
 
 // 监听内部 Tab 变化并通知外部
 watch(activeTab, (newTab) => {
@@ -43,6 +132,7 @@ const formData = ref<AIConfig>({
   ...config.value,
   discussionModelIds: [...config.value.discussionModelIds] as string[],
   discussionPrimaryModelId: config.value.discussionPrimaryModelId,
+  memoryModelId: config.value.memoryModelId,
 })
 
 // API Key 显示/隐藏
@@ -74,6 +164,7 @@ watch(
         ...config.value,
         discussionModelIds: [...config.value.discussionModelIds] as string[],
         discussionPrimaryModelId: config.value.discussionPrimaryModelId,
+        memoryModelId: config.value.memoryModelId,
       }
       editingPreset.value = null
       isCreatingPreset.value = false
@@ -91,6 +182,7 @@ watch(
       ...newConfig,
       discussionModelIds: [...newConfig.discussionModelIds] as string[],
       discussionPrimaryModelId: newConfig.discussionPrimaryModelId,
+      memoryModelId: newConfig.memoryModelId,
     }
   },
   { immediate: true },
@@ -137,6 +229,7 @@ function handleReset() {
     ...DEFAULT_CONFIG,
     discussionModelIds: [...DEFAULT_CONFIG.discussionModelIds] as string[],
     discussionPrimaryModelId: DEFAULT_CONFIG.discussionPrimaryModelId,
+    memoryModelId: DEFAULT_CONFIG.memoryModelId,
   }
 }
 
@@ -223,9 +316,19 @@ watch(activePresetId, () => {
       ...config.value,
       discussionModelIds: [...config.value.discussionModelIds] as string[],
       discussionPrimaryModelId: config.value.discussionPrimaryModelId,
+      memoryModelId: config.value.memoryModelId,
     }
   }
 })
+
+/**
+ * 清除记忆确认
+ */
+function handleClearMemories() {
+  if (window.confirm(t('ai.memoryClearConfirm'))) {
+    clearMemories()
+  }
+}
 
 defineExpose({
   activeTab,
@@ -300,6 +403,21 @@ defineExpose({
                 {{ t('ai.presetManagement') }}
                 <span
                   v-if="activeTab === 'presets'"
+                  class="absolute bottom-0 left-0 h-0.5 w-full bg-primary"
+                />
+              </button>
+              <button
+                class="relative py-3 text-sm transition-colors"
+                :class="
+                  activeTab === 'memory'
+                    ? 'text-foreground font-medium'
+                    : 'text-muted-foreground hover:text-foreground'
+                "
+                @click="activeTab = 'memory'"
+              >
+                {{ t('ai.memory') }}
+                <span
+                  v-if="activeTab === 'memory'"
                   class="absolute bottom-0 left-0 h-0.5 w-full bg-primary"
                 />
               </button>
@@ -494,6 +612,229 @@ defineExpose({
                 </div>
               </div>
 
+              <!-- 记忆管理 Tab -->
+              <div v-else-if="activeTab === 'memory'" class="space-y-5 px-6 py-5">
+                <!-- 记忆开关 -->
+                <div class="space-y-4 rounded-xl border border-border bg-muted/30 p-4">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <div
+                        class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"
+                      >
+                        <Brain :size="16" />
+                      </div>
+                      <div>
+                        <p class="text-sm font-medium text-foreground">
+                          {{ t('ai.memoryManagement') }}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus:outline-none"
+                      :class="isMemoryEnabled ? 'bg-primary' : 'bg-border'"
+                      @click="toggleMemory(!isMemoryEnabled)"
+                    >
+                      <span
+                        class="inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+                        :class="isMemoryEnabled ? 'translate-x-[22px]' : 'translate-x-[2px]'"
+                      />
+                    </button>
+                  </div>
+                  <p class="text-xs leading-relaxed text-muted-foreground">
+                    {{ t('ai.memoryDescription') }}
+                  </p>
+
+                  <!-- 记忆专用模型选择 -->
+                  <div v-if="isMemoryEnabled" class="space-y-3 border-t border-border pt-3">
+                    <div class="flex items-center justify-between">
+                      <label class="text-xs font-medium text-muted-foreground">{{
+                        t('ai.memoryModelPreset')
+                      }}</label>
+                      <div class="group relative">
+                        <Info :size="12" class="text-muted-foreground/50 cursor-help" />
+                        <div
+                          class="absolute bottom-full right-0 mb-2 hidden w-48 rounded-lg border border-border bg-popover p-2 text-[10px] leading-relaxed text-popover-foreground shadow-xl group-hover:block"
+                        >
+                          {{ t('ai.memoryModelTip') }}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      v-if="presets.length === 0"
+                      class="py-2 text-center text-xs text-muted-foreground/50"
+                    >
+                      {{ t('ai.noPresetsForDiscussion') }}
+                    </div>
+                    <div v-else class="flex flex-wrap gap-2">
+                      <button
+                        v-for="preset in presets"
+                        :key="'memory-' + preset.id"
+                        class="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-all"
+                        :class="
+                          formData.memoryModelId === preset.id
+                            ? 'border-primary bg-primary text-primary-foreground'
+                            : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground'
+                        "
+                        @click="formData.memoryModelId = preset.id"
+                      >
+                        <Brain v-if="formData.memoryModelId === preset.id" :size="12" />
+                        <span>{{ preset.name }}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 记忆列表 -->
+                <div v-if="isMemoryEnabled" class="space-y-3">
+                  <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-medium text-foreground">
+                      {{ t('ai.memoryManagement') }}
+                      <span class="ml-1 text-xs font-normal text-muted-foreground">
+                        ({{ memories.length }}/100)
+                      </span>
+                    </h3>
+                    <div class="flex items-center gap-3">
+                      <button
+                        v-if="!isAddingMemory"
+                        class="flex items-center gap-1 text-xs text-primary transition-colors hover:text-primary/80"
+                        @click="startAddMemory"
+                      >
+                        <Plus :size="12" />
+                        {{ t('common.add') }}
+                      </button>
+                      <button
+                        v-if="memories.length > 3"
+                        class="flex items-center gap-1.5 text-xs font-medium text-primary transition-colors hover:text-primary/80 disabled:cursor-not-allowed disabled:opacity-50"
+                        :disabled="isCompressing"
+                        @click="compressMemories"
+                      >
+                        <component
+                          :is="isCompressing ? Loader2 : Sparkles"
+                          :size="12"
+                          :class="{ 'animate-spin': isCompressing }"
+                        />
+                        {{ isCompressing ? t('ai.memoryCompressing') : t('ai.memoryCompress') }}
+                      </button>
+                      <button
+                        v-if="memories.length > 0"
+                        class="flex items-center gap-1 text-xs text-destructive transition-colors hover:text-destructive/80"
+                        @click="handleClearMemories"
+                      >
+                        <Trash :size="12" />
+                        {{ t('ai.memoryClear') }}
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- 新增记忆输入框 -->
+                  <div
+                    v-if="isAddingMemory"
+                    class="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 p-2"
+                  >
+                    <input
+                      v-model="newMemoryContent"
+                      type="text"
+                      class="flex-1 bg-transparent px-2 py-1 text-sm text-foreground outline-none placeholder:text-muted-foreground/50"
+                      :placeholder="t('ai.addMemoryPlaceholder')"
+                      @keyup.enter="handleAddMemory"
+                      @keyup.esc="cancelAddMemory"
+                    />
+                    <div class="flex items-center gap-1">
+                      <button
+                        class="rounded p-1 text-primary hover:bg-primary/10"
+                        :title="t('common.save')"
+                        @click="handleAddMemory"
+                      >
+                        <Check :size="14" />
+                      </button>
+                      <button
+                        class="rounded p-1 text-muted-foreground hover:bg-muted"
+                        :title="t('common.cancel')"
+                        @click="cancelAddMemory"
+                      >
+                        <X :size="14" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div
+                    v-if="memories.length === 0"
+                    class="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-10 text-center"
+                  >
+                    <div
+                      class="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted/50 text-muted-foreground/30"
+                    >
+                      <Info :size="20" />
+                    </div>
+                    <p class="text-sm text-muted-foreground">{{ t('ai.noMemories') }}</p>
+                  </div>
+
+                  <div v-else class="space-y-2">
+                    <div
+                      v-for="(memory, index) in memories"
+                      :key="index"
+                      class="group flex items-center gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:border-primary/30"
+                    >
+                      <div class="h-1.5 w-1.5 shrink-0 rounded-full bg-primary/40" />
+
+                      <!-- 编辑模式 -->
+                      <div
+                        v-if="editingMemoryIndex === index"
+                        class="flex flex-1 items-center gap-2"
+                      >
+                        <input
+                          v-model="editingMemoryContent"
+                          type="text"
+                          class="flex-1 bg-transparent text-sm text-foreground outline-none"
+                          @keyup.enter="handleSaveEditMemory"
+                          @keyup.esc="cancelEditMemory"
+                        />
+                        <div class="flex items-center gap-1">
+                          <button
+                            class="rounded p-1 text-primary hover:bg-primary/10"
+                            @click="handleSaveEditMemory"
+                          >
+                            <Check :size="14" />
+                          </button>
+                          <button
+                            class="rounded p-1 text-muted-foreground hover:bg-muted"
+                            @click="cancelEditMemory"
+                          >
+                            <X :size="14" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <!-- 显示模式 -->
+                      <template v-else>
+                        <p class="flex-1 text-sm leading-relaxed text-foreground">
+                          {{ memory }}
+                        </p>
+                        <div
+                          class="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100"
+                        >
+                          <button
+                            class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                            :title="t('common.edit')"
+                            @click="startEditMemory(index, memory)"
+                          >
+                            <Edit3 :size="14" />
+                          </button>
+                          <button
+                            class="rounded p-1 text-muted-foreground hover:text-destructive"
+                            :title="t('common.delete')"
+                            @click="removeMemory(index)"
+                          >
+                            <X :size="14" />
+                          </button>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- 预设管理 Tab -->
               <div v-else-if="activeTab === 'presets'" class="px-6 py-5">
                 <!-- 编辑/创建预设表单 -->
@@ -684,7 +1025,7 @@ defineExpose({
 
             <!-- 底部操作栏 -->
             <div
-              v-if="activeTab === 'settings'"
+              v-if="activeTab === 'settings' || activeTab === 'memory'"
               class="flex shrink-0 items-center justify-between border-t border-border px-6 py-4"
             >
               <button

@@ -11,6 +11,11 @@ export default {
     noResults: 'No results found',
     confirm: 'Confirm',
     cancel: 'Cancel',
+    add: 'Add',
+    edit: 'Edit',
+    save: 'Save',
+    delete: 'Delete',
+    clear: 'Clear',
     theme: {
       light: 'Light Mode',
       dark: 'Dark Mode',
@@ -198,5 +203,22 @@ export default {
       'No presets available. Please add models for discussion in "Preset Management" first.',
     parallelSynthesisPrompt:
       'I have invited several AI models to independently answer the user query: "{originalQuery}". Here are their responses:\n\n{discussionData}\n\nAs the primary model, please deeply analyze and synthesize all the above responses to provide the most accurate, professional, and comprehensive final answer to the user.',
+    memory: 'Memory',
+    memoryEnabled: 'Memory Enabled',
+    memoryDisabled: 'Memory Disabled',
+    memoryManagement: 'Memory Management',
+    memoryClear: 'Clear All Memories',
+    memoryClearConfirm:
+      'Are you sure you want to clear all extracted memory snippets? This action cannot be undone.',
+    memoryDescription:
+      'AI Assistant automatically extracts key facts, tech stacks, and personal preferences from conversations to provide more personalized responses in future chats.',
+    noMemories: 'No memory snippets yet',
+    memoryCompress: 'Compress',
+    memoryCompressing: 'Compressing...',
+    memoryModelPreset: 'Memory Management Preset',
+    memoryModelTip:
+      'Specifying a dedicated preset (e.g., a more powerful model) for memory tasks can significantly improve extraction and compression quality.',
+    memoryList: 'Memory List',
+    addMemoryPlaceholder: 'Enter facts or preferences to remember...',
   },
 }
