@@ -725,6 +725,30 @@
   background-size: 200% 100%;
 }
 
+/* 思考过程专用 Markdown 样式 */
+.thinking-markdown {
+  @apply opacity-90;
+}
+
+.thinking-markdown p {
+  @apply my-1.5;
+}
+
+.thinking-markdown ul,
+.thinking-markdown ol {
+  @apply my-2;
+}
+
+.thinking-markdown h1,
+.thinking-markdown h2,
+.thinking-markdown h3 {
+  @apply mt-3 mb-1.5 text-sm font-bold text-muted-foreground/90;
+}
+
+.thinking-markdown h1::before {
+  @apply h-4 w-0.5;
+}
+
 /* highlight.js 主题覆盖 */
 .hljs {
   @apply bg-transparent;

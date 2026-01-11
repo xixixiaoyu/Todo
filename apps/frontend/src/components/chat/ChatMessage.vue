@@ -120,7 +120,10 @@ const thinkingHeight = computed(() => {
 // 更新内容高度
 const updateContentHeight = () => {
   if (thinkingContentRef.value) {
-    contentHeight.value = thinkingContentRef.value.scrollHeight + 12
+    // 限制 maxHeight 计算值，确保动画过渡时间与视觉高度匹配
+    // 260px 为 CSS 定义的 max-height，16px 为 pt-1 (4px) + pb-3 (12px)
+    const rawHeight = thinkingContentRef.value.scrollHeight
+    contentHeight.value = Math.min(rawHeight, 260) + 16
   }
 }
 
@@ -328,7 +331,7 @@ watch(
   { immediate: true },
 )
 
-// 思考过程滚动跟随
+// 思考过程内容更新时触发高度计算
 watch(
   () => props.message.thinkingContent,
   () => {
@@ -367,17 +370,17 @@ async function copyContent() {
       <!-- 思考过程（AI 消息） -->
       <div
         v-if="hasThinking && !isUser"
-        class="thinking-content group/thinking mb-2 overflow-hidden rounded-xl border border-ai-message-border bg-ai-message-bg transition-all duration-300 shadow-sm hover:shadow-md hover:border-primary/20"
+        class="thinking-content group/thinking mb-2 overflow-hidden rounded-xl border border-ai-message-border bg-ai-message-bg/30 transition-all duration-300 hover:border-primary/20"
         :class="{ 'is-collapsed': !isExpanded, 'ring-1 ring-primary/5': isExpanded }"
       >
         <div
-          class="thinking-header flex items-center justify-between px-3 py-2 cursor-pointer select-none transition-colors hover:bg-primary/5"
+          class="thinking-header flex items-center justify-between px-3 py-2.5 cursor-pointer select-none transition-colors hover:bg-primary/5"
           :class="{ 'shimmer-thinking': isStreaming && !hasContent }"
           @click="isExpanded = !isExpanded"
         >
           <h4 class="flex items-center gap-2">
             <div
-              class="ai-icon text-primary/80 transition-transform duration-500 group-hover/thinking:scale-110"
+              class="ai-icon text-primary/60 transition-transform duration-500 group-hover/thinking:scale-110"
               :class="{ 'animate-pulse-custom': isStreaming && !hasContent }"
             >
               <svg
@@ -405,11 +408,11 @@ async function copyContent() {
               </svg>
             </div>
             <span
-              class="font-medium tracking-wide text-[13px] transition-all duration-300"
+              class="font-medium tracking-wide text-[12.5px] transition-all duration-300"
               :class="
                 isStreaming && !hasContent
                   ? 'shimmer-text'
-                  : 'text-muted-foreground/80 group-hover/thinking:text-primary/70'
+                  : 'text-muted-foreground/60 group-hover/thinking:text-primary/70'
               "
             >
               {{ thinkingStatus }}
@@ -422,7 +425,7 @@ async function copyContent() {
             >
               <ChevronUp
                 :size="14"
-                class="text-muted-foreground transition-transform duration-300"
+                class="text-muted-foreground/60 transition-transform duration-300"
                 :class="{ 'rotate-180': !isExpanded }"
               />
             </button>
@@ -432,16 +435,19 @@ async function copyContent() {
           class="thinking-body transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden"
           :style="{ maxHeight: thinkingHeight }"
         >
-          <div class="px-3 pb-3 border-t border-primary/5 pt-2 mx-1">
-            <div ref="thinkingContentRef" class="thinking-text">
+          <div class="px-4 pb-3 pt-1">
+            <div ref="thinkingContentRef" class="thinking-text border-l-2 border-primary/10 pl-3.5">
               <!-- eslint-disable vue/no-v-html -->
               <div
                 v-if="renderedThinkingHtml"
-                class="markdown-content thinking-markdown italic text-muted-foreground/70 text-[14px]"
+                class="markdown-content thinking-markdown text-muted-foreground/70 text-[13.5px] leading-relaxed"
                 v-html="renderedThinkingHtml"
               />
               <!-- eslint-enable vue/no-v-html -->
-              <div v-else class="whitespace-pre-wrap italic text-muted-foreground/70 text-[14px]">
+              <div
+                v-else
+                class="whitespace-pre-wrap text-muted-foreground/70 text-[13.5px] leading-relaxed"
+              >
                 {{ message.thinkingContent }}
               </div>
             </div>
@@ -638,18 +644,21 @@ async function copyContent() {
 
 <style scoped>
 .thinking-text {
-  max-height: 20rem;
+  max-height: 260px;
   overflow-y: auto;
-  border-left: 1px solid hsl(var(--ai-message-border));
-  padding-left: 1rem;
   color: hsl(var(--text-secondary));
   font-family: var(--font-sans);
-  font-size: 15px;
+  /* 隐藏滚动条但保留滚动功能 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.thinking-text::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }
 
 .thinking-body {
   transition: max-height 0.3s ease-in-out;
-  mask-image: linear-gradient(to bottom, black calc(100% - 20px), transparent 100%);
 }
 
 .thinking-markdown :deep(p) {
@@ -676,12 +685,4 @@ async function copyContent() {
 }
 
 /* 思考过程中的波纹效果 */
-.thinking-header:hover .ai-icon {
-  transform: scale(1.1);
-  transition: transform 0.2s ease;
-}
-
-.is-collapsed .thinking-body {
-  mask-image: none;
-}
 </style>
