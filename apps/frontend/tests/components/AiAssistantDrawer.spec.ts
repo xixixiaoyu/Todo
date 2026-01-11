@@ -278,4 +278,96 @@ describe('AiAssistantDrawer Navigation and Button States', () => {
     const dialog = wrapper.findComponent({ name: 'AISettingsDialog' })
     expect(dialog.props('initialTab')).toBe('presets')
   })
+
+  describe('Textarea Auto-height', () => {
+    it('should adjust height based on content scrollHeight', async () => {
+      // Mock scrollHeight
+      const mockScrollHeight = 100
+      const wrapper = mount(AiAssistantDrawer, {
+        props: { modelValue: true },
+        global: {
+          stubs: {
+            ChatMessageList: true,
+            AISettingsDialog: true,
+            ResizableDrawer: {
+              template: '<div><slot /></div>',
+            },
+          },
+        },
+      })
+
+      const textarea = wrapper.find('textarea').element as HTMLTextAreaElement
+
+      // Define property because scrollHeight is read-only
+      Object.defineProperty(textarea, 'scrollHeight', {
+        value: mockScrollHeight,
+        configurable: true,
+      })
+
+      // Trigger input change
+      await wrapper.find('textarea').setValue('some content')
+      await nextTick()
+
+      // Height should be updated to scrollHeight (100px)
+      expect(textarea.style.height).toBe('100px')
+    })
+
+    it('should cap height at MAX_HEIGHT', async () => {
+      const wrapper = mount(AiAssistantDrawer, {
+        props: { modelValue: true },
+        global: {
+          stubs: {
+            ChatMessageList: true,
+            AISettingsDialog: true,
+            ResizableDrawer: {
+              template: '<div><slot /></div>',
+            },
+          },
+        },
+      })
+
+      const textarea = wrapper.find('textarea').element as HTMLTextAreaElement
+
+      // Mock scrollHeight > MAX_HEIGHT (160)
+      Object.defineProperty(textarea, 'scrollHeight', {
+        value: 300,
+        configurable: true,
+      })
+
+      await wrapper.find('textarea').setValue('very long content...')
+      await nextTick()
+
+      expect(textarea.style.height).toBe('160px')
+      expect(textarea.style.overflowY).toBe('auto')
+    })
+
+    it('should use MIN_HEIGHT for small content', async () => {
+      const wrapper = mount(AiAssistantDrawer, {
+        props: { modelValue: true },
+        global: {
+          stubs: {
+            ChatMessageList: true,
+            AISettingsDialog: true,
+            ResizableDrawer: {
+              template: '<div><slot /></div>',
+            },
+          },
+        },
+      })
+
+      const textarea = wrapper.find('textarea').element as HTMLTextAreaElement
+
+      // Mock scrollHeight < MIN_HEIGHT (40)
+      Object.defineProperty(textarea, 'scrollHeight', {
+        value: 20,
+        configurable: true,
+      })
+
+      await wrapper.find('textarea').setValue('small')
+      await nextTick()
+
+      expect(textarea.style.height).toBe('40px')
+      expect(textarea.style.overflowY).toBe('hidden')
+    })
+  })
 })

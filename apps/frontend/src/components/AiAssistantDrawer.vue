@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, nextTick, computed } from 'vue'
+import { ref, nextTick, computed, onMounted, watch } from 'vue'
 import {
   Clover,
   Plus,
@@ -88,16 +88,30 @@ const isResizingHistory = ref(false)
 const startHistoryX = ref(0)
 const startHistoryWidth = ref(0)
 
-const startHistoryResize = (e: MouseEvent) => {
-  e.preventDefault()
-  isResizingHistory.value = true
-  startHistoryX.value = e.clientX
-  startHistoryWidth.value = historyWidth.value
-  document.body.style.cursor = 'ew-resize'
-  document.body.style.userSelect = 'none'
-  window.addEventListener('mousemove', onHistoryResize)
-  window.addEventListener('mouseup', stopHistoryResize)
+const MIN_HEIGHT = 40
+const MAX_HEIGHT = 160
+
+const adjustTextareaHeight = () => {
+  const textarea = textareaRef.value
+  if (!textarea) return
+
+  textarea.style.height = 'auto'
+  const scrollHeight = textarea.scrollHeight
+  const newHeight = Math.min(Math.max(scrollHeight, MIN_HEIGHT), MAX_HEIGHT)
+  textarea.style.height = `${newHeight}px`
+
+  // 处理滚动条显示
+  textarea.style.overflowY = scrollHeight > MAX_HEIGHT ? 'auto' : 'hidden'
 }
+
+onMounted(() => {
+  adjustTextareaHeight()
+})
+
+// 监听输入内容变化，自动调整高度
+watch(chatInput, () => {
+  nextTick(() => adjustTextareaHeight())
+})
 
 const onHistoryResize = (e: MouseEvent) => {
   if (!isResizingHistory.value) return
@@ -116,6 +130,17 @@ const stopHistoryResize = () => {
   window.removeEventListener('mouseup', stopHistoryResize)
 }
 
+const startHistoryResize = (e: MouseEvent) => {
+  e.preventDefault()
+  isResizingHistory.value = true
+  startHistoryX.value = e.clientX
+  startHistoryWidth.value = historyWidth.value
+  document.body.style.cursor = 'ew-resize'
+  document.body.style.userSelect = 'none'
+  window.addEventListener('mousemove', onHistoryResize)
+  window.addEventListener('mouseup', stopHistoryResize)
+}
+
 // 预设下拉框状态
 const showPresetDropdown = ref(false)
 
@@ -123,30 +148,17 @@ const showPresetDropdown = ref(false)
 useEscClose(showHistory, () => (showHistory.value = false))
 useEscClose(showPresetDropdown, () => (showPresetDropdown.value = false))
 
-const MIN_HEIGHT = 36
-const MAX_HEIGHT = 192
-
 // 是否有聊天历史
 const hasHistory = computed(() => messages.value.length > 0)
 
 // 输入框是否禁用（生成中且没有报错时禁用）
 const isInputDisabled = computed(() => isGenerating.value && !error.value)
 
-const adjustTextareaHeight = () => {
-  const textarea = textareaRef.value
-  if (!textarea) return
-
-  textarea.style.height = 'auto'
-  const newHeight = Math.min(Math.max(textarea.scrollHeight, MIN_HEIGHT), MAX_HEIGHT)
-  textarea.style.height = `${newHeight}px`
-}
-
 const handleSend = async () => {
   const content = chatInput.value.trim()
   if (!content || isInputDisabled.value) return
 
   chatInput.value = ''
-  nextTick(() => adjustTextareaHeight())
 
   await sendMessage(content)
 }
@@ -162,7 +174,6 @@ const handleNewline = (event: KeyboardEvent) => {
   nextTick(() => {
     textarea.selectionStart = textarea.selectionEnd = start + 1
     textarea.scrollTop = textarea.scrollHeight
-    adjustTextareaHeight()
   })
 }
 
@@ -405,10 +416,8 @@ defineOptions({
             v-model="chatInput"
             rows="1"
             :placeholder="isInputDisabled ? t('ai.generating') : t('ai.placeholder')"
-            class="flex-1 resize-none bg-transparent px-3 pt-2.5 pb-1 text-[15px] text-foreground outline-none placeholder:text-muted-foreground/30 leading-relaxed transition-all"
-            :style="{ height: `${MIN_HEIGHT}px` }"
+            class="w-full resize-none bg-transparent px-3 pt-2.5 pb-1 text-[15px] text-foreground outline-none placeholder:text-muted-foreground/30 leading-relaxed transition-colors"
             :disabled="isInputDisabled"
-            @input="adjustTextareaHeight"
             @keydown.enter.exact.prevent="handleSend"
             @keydown.enter.shift.exact="handleNewline"
           />
