@@ -530,7 +530,7 @@
 }
 
 .markdown-content strong {
-  @apply font-bold text-[#3a3a3a] bg-[#f0ede4] px-1.5 py-0.5 rounded-md mx-0.5;
+  @apply font-semibold text-[#3a3a3a] bg-[#f0ede4] px-1.5 py-0.5 rounded-md mx-0.5;
 }
 
 .dark .markdown-content strong {
