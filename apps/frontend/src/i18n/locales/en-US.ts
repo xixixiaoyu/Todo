@@ -168,8 +168,6 @@ export default {
     historyTitle: 'History',
     noHistory: 'No history yet',
     messageCount: '{count} messages',
-    yesterday: 'Yesterday',
-    daysAgo: '{days} days ago',
     editTitle: 'Edit Title',
     delete: 'Delete',
     clearAll: 'Clear All History',

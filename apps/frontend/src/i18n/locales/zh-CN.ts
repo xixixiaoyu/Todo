@@ -166,8 +166,6 @@ export default {
     historyTitle: '历史记录',
     noHistory: '暂无历史记录',
     messageCount: '{count} 条消息',
-    yesterday: '昨天',
-    daysAgo: '{days}天前',
     editTitle: '编辑标题',
     delete: '删除',
     clearAll: '清除所有记录',
