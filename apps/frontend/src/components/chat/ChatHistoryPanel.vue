@@ -3,6 +3,7 @@ import { ref, computed, nextTick } from 'vue'
 import { Trash2, Edit3, Check, X, MessageSquare, Clock, Search, Plus } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useChatHistory, type ChatSession } from '@/composables/useChatHistory'
+import { formatRelativeTime } from '@/lib/dayjs'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,19 +56,7 @@ const hasSessions = computed(() => sessions.value.length > 0)
 
 // 格式化时间
 function formatTime(date: Date): string {
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-
-  if (days === 0) {
-    return date.toLocaleTimeString(locale.value, { hour: '2-digit', minute: '2-digit' })
-  } else if (days === 1) {
-    return t('ai.yesterday')
-  } else if (days < 7) {
-    return t('ai.daysAgo', { days })
-  } else {
-    return date.toLocaleDateString(locale.value, { month: 'short', day: 'numeric' })
-  }
+  return formatRelativeTime(date, locale.value)
 }
 
 // 开始编辑
