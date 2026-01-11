@@ -465,6 +465,32 @@ describe('useAIConfig', () => {
       // Active preset should still be the same
       expect(activePresetId.value).toBe(preset.id)
     })
+
+    it('should NOT change active preset when todo assistant is toggled', async () => {
+      const { addPreset, switchPreset, activePresetId, updateConfig } = useAIConfig()
+
+      const preset = addPreset({
+        name: 'Fixed Preset',
+        baseUrl: 'https://fixed-api.com',
+        apiKey: 'fixed-key',
+        model: 'fixed-model',
+        systemPrompt: 'Fixed prompt',
+        temperature: 0.5,
+        todoAssistant: false,
+      })
+
+      switchPreset(preset.id)
+      await nextTick()
+      expect(activePresetId.value).toBe(preset.id)
+
+      // Toggle todo assistant
+      updateConfig({ todoAssistant: true })
+      await nextTick()
+      await nextTick()
+
+      // Active preset should still be the same
+      expect(activePresetId.value).toBe(preset.id)
+    })
   })
 
   describe('readonly properties', () => {
