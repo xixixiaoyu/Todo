@@ -290,14 +290,20 @@ defineOptions({
       </header>
 
       <!-- 主内容区域 -->
-      <ChatMessageList
-        ref="messageListRef"
-        :messages="messages"
-        :is-maximized="isMaximized"
-        @regenerate="regenerateLastResponse"
-        @edit="editAndResendMessage"
-        @select-suggestion="handleSelectSuggestion"
-      />
+      <div class="relative flex-1 min-h-0">
+        <ChatMessageList
+          ref="messageListRef"
+          :messages="messages"
+          :is-maximized="isMaximized"
+          @regenerate="regenerateLastResponse"
+          @edit="editAndResendMessage"
+          @select-suggestion="handleSelectSuggestion"
+        />
+        <!-- 底部渐变遮罩，使消息在进入工具栏前自然淡出 -->
+        <div
+          class="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-background/90 via-background/40 to-transparent pointer-events-none z-10"
+        />
+      </div>
 
       <!-- 错误提示 -->
       <div
@@ -311,7 +317,7 @@ defineOptions({
       </div>
 
       <!-- 底部工具栏 -->
-      <div class="shrink-0 border-t border-border bg-background/80 backdrop-blur-sm p-4">
+      <div class="shrink-0 border-t border-border/20 bg-background/60 backdrop-blur-xl p-4">
         <div :class="[isMaximized ? 'mx-auto max-w-4xl w-full' : '', 'space-y-3']">
           <!-- 快捷操作按钮 -->
           <div class="flex flex-wrap items-center gap-2 text-sm">
@@ -324,7 +330,7 @@ defineOptions({
               <span>{{ t('ai.newChat') }}</span>
             </button>
 
-            <div class="h-4 w-px bg-border/60 mx-1" />
+            <div class="h-4 w-px bg-border/30 mx-1" />
 
             <!-- AI 思考模式开关 -->
             <button
@@ -374,7 +380,7 @@ defineOptions({
               <span class="font-medium">{{ t('ai.discussionMode') }}</span>
             </button>
 
-            <div class="h-4 w-px bg-border/60 mx-0.5" />
+            <div class="h-4 w-px bg-border/30 mx-0.5" />
 
             <!-- 预设下拉框 -->
             <div class="relative">
