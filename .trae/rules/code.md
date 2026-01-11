@@ -72,6 +72,8 @@ interface ApiResponse<T> {
 
 ## shadcn-vue
 
+- **优先原则**: 通用组件优先从 **shadcn-vue** 中使用、创建或修改。
+
 ```bash
 npx shadcn-vue@latest add <component-name>  # 在 frontend 目录下执行
 ```
