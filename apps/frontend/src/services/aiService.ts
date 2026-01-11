@@ -328,11 +328,13 @@ async function fetchNonStreamResponse(
 
   const data = await response.json()
   const message = data.choices[0]?.message
-  let reasoning_details = message?.reasoning_details || message?.reasoning
 
-  // 如果是数组格式，提取其中的 text 部分
-  if (Array.isArray(reasoning_details)) {
-    reasoning_details = (reasoning_details as ReasoningDetailItem[])
+  // 归一化提取思考内容
+  let reasoning = message?.reasoning_details || message?.reasoning || message?.reasoning_content
+
+  // 如果是数组格式（部分 provider 的格式），提取其中的 text 部分
+  if (Array.isArray(reasoning)) {
+    reasoning = (reasoning as ReasoningDetailItem[])
       .filter((item) => item.type === 'reasoning.text' || item.text)
       .map((item) => item.text || '')
       .join('')
@@ -340,7 +342,7 @@ async function fetchNonStreamResponse(
 
   return {
     content: message?.content || '',
-    reasoning_details,
+    reasoning_details: typeof reasoning === 'string' ? reasoning : undefined,
   }
 }
 
@@ -476,7 +478,7 @@ export async function getMultiModelDiscussionStream(
 }
 
 /**
- * 发送非流式 AI 请求（用于后台提取记忆等任务）
+ * 获取非流式 AI 响应
  */
 export async function getAIStaticResponse(
   messages: Array<{ role: string; content: string; reasoning_details?: string }>,
