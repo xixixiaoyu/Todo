@@ -29,7 +29,7 @@ const toggleLanguage = () => {
     <header class="mb-8 flex items-center justify-between">
       <div class="flex items-center gap-3 group">
         <div
-          class="p-2 rounded-xl bg-primary/10 text-primary transition-transform group-hover:rotate-12"
+          class="p-2 rounded-xl bg-emerald-500/10 text-emerald-700 transition-transform group-hover:rotate-12 dark:text-emerald-400"
         >
           <Clover :size="24" />
         </div>
