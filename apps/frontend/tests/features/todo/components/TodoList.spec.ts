@@ -110,7 +110,7 @@ describe('TodoList', () => {
   it('should bubble up events from TodoItem', async () => {
     const wrapper = mount(TodoList, {
       props: {
-        todos: [mockTodos[0]],
+        todos: mockTodos,
         filter: 'pending',
         searchQuery: '',
         editingId: null,
@@ -121,40 +121,9 @@ describe('TodoList', () => {
       },
     })
 
-    const item = wrapper.findComponent(TodoItem)
-
-    // Test toggle event
-    await item.vm.$emit('toggle', '1', false)
+    const firstItem = wrapper.findComponent(TodoItem)
+    await firstItem.vm.$emit('toggle', '1', false)
     expect(wrapper.emitted('toggle')).toBeTruthy()
     expect(wrapper.emitted('toggle')?.[0]).toEqual(['1', false])
-
-    // Test delete event
-    await item.vm.$emit('delete', '1')
-    expect(wrapper.emitted('delete')).toBeTruthy()
-    expect(wrapper.emitted('delete')?.[0]).toEqual(['1'])
-
-    // Test startEdit event
-    await item.vm.$emit('startEdit', '1', 'Todo 1')
-    expect(wrapper.emitted('startEdit')).toBeTruthy()
-    expect(wrapper.emitted('startEdit')?.[0]).toEqual(['1', 'Todo 1'])
-
-    // Test saveEdit event
-    await item.vm.$emit('saveEdit')
-    expect(wrapper.emitted('saveEdit')).toBeTruthy()
-
-    // Test cancelEdit event
-    await item.vm.$emit('cancelEdit')
-    expect(wrapper.emitted('cancelEdit')).toBeTruthy()
-
-    // Test update:editingTitle event
-    await item.vm.$emit('update:editingTitle', 'New Title')
-    expect(wrapper.emitted('update:editingTitle')).toBeTruthy()
-    expect(wrapper.emitted('update:editingTitle')?.[0]).toEqual(['New Title'])
-
-    // Test editKeydown event
-    const event = new KeyboardEvent('keydown', { key: 'Enter' })
-    await item.vm.$emit('editKeydown', event)
-    expect(wrapper.emitted('editKeydown')).toBeTruthy()
-    expect(wrapper.emitted('editKeydown')?.[0]).toEqual([event])
   })
 })

@@ -13,6 +13,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'happy-dom',
+    setupFiles: ['./tests/setup.ts'],
     include: ['tests/**/*.{test,spec}.{js,ts,vue}'],
     exclude: ['node_modules', 'dist'],
     coverage: {

@@ -1,3 +1,4 @@
+import type { IpcRendererEvent } from 'electron'
 /* eslint-disable @typescript-eslint/no-require-imports */
 const { contextBridge, ipcRenderer } = require('electron')
 
@@ -24,7 +25,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   receive: (channel: string, callback: (...args: unknown[]) => void) => {
     const validChannels = ['fromMain']
     if (validChannels.includes(channel)) {
-      ipcRenderer.on(channel, (_event, ...args) => callback(...args))
+      ipcRenderer.on(channel, (_event: IpcRendererEvent, ...args: unknown[]) => callback(...args))
     }
   },
 

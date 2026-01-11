@@ -4,23 +4,38 @@ import { ref, nextTick } from 'vue'
 import AiAssistantDrawer from '@/components/AiAssistantDrawer.vue'
 
 // Mock Lucide icons
-vi.mock('lucide-vue-next', () => ({
-  Clover: { template: '<span>Clover</span>' },
-  Plus: { template: '<span>Plus</span>' },
-  X: { template: '<span>X</span>' },
-  Maximize2: { template: '<span>Maximize2</span>' },
-  Minimize2: { template: '<span>Minimize2</span>' },
-  Send: { template: '<span>Send</span>' },
-  Lightbulb: { template: '<span>Lightbulb</span>' },
-  Settings2: { template: '<span>Settings2</span>' },
-  ChevronDown: { template: '<span>ChevronDown</span>' },
-  ChevronLeft: { template: '<span>ChevronLeft</span>' },
-  Square: { template: '<span>Square</span>' },
-  RefreshCw: { template: '<span>RefreshCw</span>' },
-  Trash2: { template: '<span>Trash2</span>' },
-  History: { template: '<span>History</span>' },
-  Check: { template: '<span>Check</span>' },
-}))
+vi.mock('lucide-vue-next', () => {
+  const icons = [
+    'Clover',
+    'Plus',
+    'X',
+    'Maximize2',
+    'Minimize2',
+    'Send',
+    'Lightbulb',
+    'Settings2',
+    'ChevronDown',
+    'ChevronLeft',
+    'Square',
+    'RefreshCw',
+    'Trash2',
+    'History',
+    'Check',
+    'Users',
+    'MessageSquare',
+    'Sparkles',
+    'ArrowLeft',
+    'ArrowRight',
+    'Paperclip',
+    'Bot',
+    'User',
+  ]
+  const mockIcons: Record<string, { template: string }> = {}
+  icons.forEach((icon) => {
+    mockIcons[icon] = { template: `<span>${icon}</span>` }
+  })
+  return mockIcons
+})
 
 // Mock components
 vi.mock('@/components/ResizableDrawer.vue', () => ({

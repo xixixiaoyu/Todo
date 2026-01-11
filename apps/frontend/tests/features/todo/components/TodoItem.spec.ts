@@ -111,7 +111,6 @@ describe('TodoItem', () => {
       },
     })
 
-    // Find the Pencil icon button
     const buttons = wrapper.findAll('button')
     const editBtn = buttons.find((b) => b.find('.lucide-pencil').exists())
     await editBtn?.trigger('click')
@@ -151,8 +150,9 @@ describe('TodoItem', () => {
       },
     })
 
-    const deleteButton = wrapper.findAll('button')[2]
-    await deleteButton.trigger('click')
+    const buttons = wrapper.findAll('button')
+    const deleteBtn = buttons.find((b) => b.find('[class*="trash"]').exists())
+    await deleteBtn?.trigger('click')
 
     expect(wrapper.emitted('delete')).toBeTruthy()
     expect(wrapper.emitted('delete')?.[0]).toEqual(['1'])
@@ -170,8 +170,9 @@ describe('TodoItem', () => {
       },
     })
 
-    const saveButton = wrapper.findAll('button')[1]
-    await saveButton.trigger('click')
+    const buttons = wrapper.findAll('button')
+    const saveBtn = buttons.find((b) => b.find('.lucide-check').exists())
+    await saveBtn?.trigger('click')
 
     expect(wrapper.emitted('saveEdit')).toBeTruthy()
   })
@@ -188,8 +189,9 @@ describe('TodoItem', () => {
       },
     })
 
-    const cancelButton = wrapper.findAll('button')[2]
-    await cancelButton.trigger('click')
+    const buttons = wrapper.findAll('button')
+    const cancelBtn = buttons.find((b) => b.find('.lucide-x').exists())
+    await cancelBtn?.trigger('click')
 
     expect(wrapper.emitted('cancelEdit')).toBeTruthy()
   })
@@ -244,7 +246,6 @@ describe('TodoItem', () => {
       },
     })
 
-    // Check if checkbox is checked
     const checkbox = wrapper.findComponent(Checkbox)
     expect(checkbox.props('modelValue')).toBe(true)
   })
