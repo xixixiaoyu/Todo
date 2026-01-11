@@ -219,6 +219,7 @@ export default {
     memoryModelTip:
       'Specifying a dedicated preset (e.g., a more powerful model) for memory tasks can significantly improve extraction and compression quality.',
     memoryList: 'Memory List',
+    memoryError: 'Memory operation failed',
     addMemoryPlaceholder: 'Enter facts or preferences to remember...',
   },
 }

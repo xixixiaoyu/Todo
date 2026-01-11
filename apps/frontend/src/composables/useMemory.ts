@@ -10,6 +10,7 @@ const MAX_MEMORIES = 100 // 扩充记忆容量至 100 条
 const memories = ref<string[]>(JSON.parse(localStorage.getItem(MEMORY_STORAGE_KEY) || '[]'))
 const isMemoryEnabled = ref(localStorage.getItem(MEMORY_ENABLED_KEY) === 'true')
 const isCompressing = ref(false)
+const lastError = ref<string | null>(null)
 
 /**
  * AI 助手记忆功能 Composable
@@ -90,6 +91,7 @@ export function useMemory() {
     if (memories.value.length <= 3) return
 
     isCompressing.value = true
+    lastError.value = null
     const prompt = `你是一个记忆管理专家。请对以下用户的记忆碎片进行压缩和合并。
 规则：
 1. 识别并合并重复或语义相似的信息（例如 "用户喜欢 TypeScript" 和 "用户倾向于使用 TS 开发" 应合并为一条）。
@@ -113,6 +115,7 @@ ${memories.value.map((m, i) => `${i + 1}. ${m}`).join('\n')}`
       }
     } catch (err) {
       console.error('Failed to compress memories:', err)
+      lastError.value = err instanceof Error ? err.message : 'Unknown error'
       throw err
     } finally {
       isCompressing.value = false
@@ -147,6 +150,7 @@ ${memories.value.map((m, i) => `${i + 1}. ${m}`).join('\n')}`
     memories,
     isMemoryEnabled,
     isCompressing,
+    lastError,
     addMemories,
     addMemory,
     updateMemory,

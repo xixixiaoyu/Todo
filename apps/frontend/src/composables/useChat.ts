@@ -13,6 +13,7 @@ import {
 import { useChatHistory } from './useChatHistory'
 import { getAIThinkingMode, getAIConfig } from './useAIConfig'
 import { useMemory } from './useMemory'
+import { useToast } from './useToast'
 
 export type { ChatMessage }
 
@@ -47,11 +48,18 @@ export function useChat(options: AIRequestOptions = {}) {
   const isLoading = ref(false)
   const error = ref<string | null>(null)
 
+  const { error: toastError } = useToast()
+
   // 重试计数
   const retryCount = ref(0)
 
   // 记忆功能
-  const { addMemories, isMemoryEnabled, getMemoryModelOptions } = useMemory()
+  const {
+    addMemories,
+    isMemoryEnabled,
+    getMemoryModelOptions,
+    lastError: memoryError,
+  } = useMemory()
   const messageCounterSinceLastExtraction = ref(0)
 
   /**
@@ -69,6 +77,7 @@ export function useChat(options: AIRequestOptions = {}) {
 
     // 重置计数器
     messageCounterSinceLastExtraction.value = 0
+    memoryError.value = null
 
     // 提取最后几轮对话作为上下文（最多 3 轮）
     const lastMessages = history.slice(-6)
@@ -104,6 +113,9 @@ ${lastMessages.map((m) => `${m.role === 'user' ? '用户' : '助手'}: ${m.conte
       }
     } catch (err) {
       console.error('Failed to extract memories:', err)
+      const errorMsg = err instanceof Error ? err.message : 'Unknown error'
+      memoryError.value = errorMsg
+      toastError(`${t('ai.memoryError')}: ${errorMsg}`)
     }
   }
 

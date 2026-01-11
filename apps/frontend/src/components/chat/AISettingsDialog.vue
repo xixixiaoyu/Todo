@@ -21,6 +21,7 @@ import {
 import { useAIConfig, type AIConfig, type AIPreset } from '@/composables/useAIConfig'
 import { useEscClose } from '@/composables/useEscClose'
 import { useMemory } from '@/composables/useMemory'
+import { useToast } from '@/composables/useToast'
 
 const props = defineProps<{
   initialTab?: 'settings' | 'presets' | 'memory'
@@ -33,6 +34,7 @@ const emit = defineEmits<{
 const modelValue = defineModel<boolean>({ required: true })
 
 const { t } = useI18n()
+const { error: toastError } = useToast()
 
 const {
   config,
@@ -320,6 +322,18 @@ watch(activePresetId, () => {
     }
   }
 })
+
+/**
+ * 压缩记忆并处理错误
+ */
+async function handleCompressMemories() {
+  try {
+    await compressMemories()
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : 'Unknown error'
+    toastError(`${t('ai.memoryError')}: ${errorMsg}`)
+  }
+}
 
 /**
  * 清除记忆确认
@@ -707,7 +721,7 @@ defineExpose({
                         v-if="memories.length > 3"
                         class="flex items-center gap-1.5 text-xs font-medium text-primary transition-colors hover:text-primary/80 disabled:cursor-not-allowed disabled:opacity-50"
                         :disabled="isCompressing"
-                        @click="compressMemories"
+                        @click="handleCompressMemories"
                       >
                         <component
                           :is="isCompressing ? Loader2 : Sparkles"

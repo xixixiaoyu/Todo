@@ -212,6 +212,7 @@ export default {
     memoryModelTip:
       '为记忆任务指定一个专用预设（如逻辑推理能力更强的模型）可显著提升提取和压缩的质量。',
     memoryList: '记忆列表',
+    memoryError: '记忆操作出错',
     addMemoryPlaceholder: '手动输入需要记住的事实或偏好...',
   },
 }
