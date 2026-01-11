@@ -105,7 +105,8 @@ ${memories.value.map((m, i) => `${i + 1}. ${m}`).join('\n')}`
 
     try {
       const options = getMemoryModelOptions()
-      const result = await getAIStaticResponse([{ role: 'user', content: prompt }], options)
+      const response = await getAIStaticResponse([{ role: 'user', content: prompt }], options)
+      const result = response.content
       const jsonStr = result.replace(/```json\n?|\n?```/g, '').trim()
       const compressed = JSON.parse(jsonStr)
 

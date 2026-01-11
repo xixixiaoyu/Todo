@@ -40,6 +40,7 @@ export function useChat(options: AIRequestOptions = {}) {
   // 流式响应状态
   const currentAIResponse = ref('')
   const currentThinkingContent = ref('')
+  const currentReasoningDetails = ref('')
   const currentDiscussionSteps = ref<DiscussionStep[]>([])
   const currentAssistantMessageId = ref<string | null>(null)
 
@@ -96,8 +97,8 @@ ${lastMessages.map((m) => `${m.role === 'user' ? '用户' : '助手'}: ${m.conte
 
     try {
       const options = getMemoryModelOptions()
-      const result = await getAIStaticResponse([{ role: 'user', content: prompt }], options)
-
+      const response = await getAIStaticResponse([{ role: 'user', content: prompt }], options)
+      const result = response.content
       // 尝试解析 JSON
       let newMemories: string[] = []
       try {
@@ -130,6 +131,7 @@ ${lastMessages.map((m) => `${m.role === 'user' ? '用户' : '助手'}: ${m.conte
     // 清理上一轮的临时状态（无论是新发送还是重试）
     currentAIResponse.value = ''
     currentThinkingContent.value = ''
+    currentReasoningDetails.value = ''
     currentDiscussionSteps.value = []
 
     if (!isRetry) {
@@ -159,6 +161,7 @@ ${lastMessages.map((m) => `${m.role === 'user' ? '用户' : '助手'}: ${m.conte
               role: 'assistant',
               content: currentAIResponse.value,
               thinkingContent: currentThinkingContent.value || undefined,
+              reasoning_details: currentReasoningDetails.value || undefined,
               discussionSteps:
                 currentDiscussionSteps.value.length > 0
                   ? [...currentDiscussionSteps.value]
@@ -175,6 +178,7 @@ ${lastMessages.map((m) => `${m.role === 'user' ? '用户' : '助手'}: ${m.conte
           }
           currentAIResponse.value = ''
           currentThinkingContent.value = ''
+          currentReasoningDetails.value = ''
           currentDiscussionSteps.value = []
           currentAssistantMessageId.value = null
           isGenerating.value = false
@@ -186,6 +190,7 @@ ${lastMessages.map((m) => `${m.role === 'user' ? '用户' : '助手'}: ${m.conte
               role: 'assistant',
               content: currentAIResponse.value + `\n\n*${t('ai.aborted')}*`,
               thinkingContent: currentThinkingContent.value || undefined,
+              reasoning_details: currentReasoningDetails.value || undefined,
               discussionSteps:
                 currentDiscussionSteps.value.length > 0
                   ? [...currentDiscussionSteps.value]
@@ -196,6 +201,7 @@ ${lastMessages.map((m) => `${m.role === 'user' ? '用户' : '助手'}: ${m.conte
           }
           currentAIResponse.value = ''
           currentThinkingContent.value = ''
+          currentReasoningDetails.value = ''
           currentDiscussionSteps.value = []
           currentAssistantMessageId.value = null
           isGenerating.value = false
@@ -215,6 +221,10 @@ ${lastMessages.map((m) => `${m.role === 'user' ? '用户' : '助手'}: ${m.conte
           (thinking: string) => {
             currentThinkingContent.value += thinking
           },
+          // 处理推理详情 (OpenRouter)
+          (details: string) => {
+            currentReasoningDetails.value += details
+          },
           {
             ...options,
             thinkingMode: getAIThinkingMode(),
@@ -227,6 +237,10 @@ ${lastMessages.map((m) => `${m.role === 'user' ? '用户' : '助手'}: ${m.conte
           // 处理思考过程
           (thinking: string) => {
             currentThinkingContent.value += thinking
+          },
+          // 处理推理详情 (OpenRouter)
+          (details: string) => {
+            currentReasoningDetails.value += details
           },
           {
             ...options,

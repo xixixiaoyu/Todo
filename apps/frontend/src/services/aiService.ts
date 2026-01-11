@@ -9,6 +9,12 @@ import i18n from '@/i18n'
 
 const { t } = i18n.global
 
+interface ReasoningDetailItem {
+  type?: string
+  text?: string
+  [key: string]: unknown
+}
+
 export interface DiscussionStep {
   modelId: string
   modelName: string
@@ -21,6 +27,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant' | 'system'
   content: string
   thinkingContent?: string
+  reasoning_details?: string
   discussionSteps?: DiscussionStep[]
   isStreaming?: boolean
   createdAt?: Date
@@ -112,6 +119,7 @@ function injectSystemPrompts(
     ...messages.map((msg) => ({
       role: msg.role,
       content: msg.content,
+      ...(msg.reasoning_details ? { reasoning_details: msg.reasoning_details } : {}),
     })),
   )
 
@@ -123,12 +131,14 @@ function injectSystemPrompts(
  * @param messages 消息历史
  * @param onChunk 内容块回调
  * @param onThinking 思考过程回调（可选）
+ * @param onReasoningDetails 推理详情回调（可选，用于 OpenRouter）
  * @param options 请求选项
  */
 export async function getAIStreamResponse(
   messages: ChatMessage[],
   onChunk: (chunk: string) => void,
   onThinking?: (thinking: string) => void,
+  onReasoningDetails?: (details: string) => void,
   options: AIRequestOptions = {},
 ): Promise<void> {
   const aiConfig = getAIConfig()
@@ -163,7 +173,12 @@ export async function getAIStreamResponse(
       stream: true,
     }
 
-    // 始终传递 thinking 参数
+    // 适配 OpenRouter 的推理参数
+    if (thinkingMode === 'enabled') {
+      requestBody.reasoning = { enabled: true }
+    }
+
+    // 兼容 DeepSeek 等模型的 thinking 参数
     requestBody.thinking = {
       type: thinkingMode,
     }
@@ -234,6 +249,25 @@ export async function getAIStreamResponse(
           if (reasoningContent && onThinking) {
             onThinking(reasoningContent)
           }
+
+          // 处理 OpenRouter 的 reasoning_details (支持字符串或数组)
+          let reasoningDetails =
+            delta?.reasoning_details ||
+            delta?.reasoning ||
+            parsedData.choices?.[0]?.message?.reasoning_details ||
+            parsedData.choices?.[0]?.message?.reasoning
+
+          // 如果是数组格式（例如 Gemini 模型的响应），提取其中的 text 部分
+          if (Array.isArray(reasoningDetails)) {
+            reasoningDetails = (reasoningDetails as ReasoningDetailItem[])
+              .filter((item) => item.type === 'reasoning.text' || item.text)
+              .map((item) => item.text || '')
+              .join('')
+          }
+
+          if (reasoningDetails && onReasoningDetails) {
+            onReasoningDetails(reasoningDetails)
+          }
         } catch {
           // 解析失败，跳过该行
           continue
@@ -259,15 +293,19 @@ export async function getAIStreamResponse(
  */
 async function fetchNonStreamResponse(
   config: { baseUrl: string; apiKey: string; model: string; temperature?: number },
-  messages: Array<{ role: string; content: string }>,
+  messages: Array<{ role: string; content: string; reasoning_details?: string }>,
   thinkingMode?: string,
   signal?: AbortSignal,
-): Promise<string> {
+): Promise<{ content: string; reasoning_details?: string }> {
   const requestBody: Record<string, unknown> = {
     model: config.model,
     messages,
     temperature: config.temperature ?? 0.7,
     stream: false,
+  }
+
+  if (thinkingMode === 'enabled') {
+    requestBody.reasoning = { enabled: true }
   }
 
   if (thinkingMode) {
@@ -289,7 +327,21 @@ async function fetchNonStreamResponse(
   }
 
   const data = await response.json()
-  return data.choices[0]?.message?.content || ''
+  const message = data.choices[0]?.message
+  let reasoning_details = message?.reasoning_details || message?.reasoning
+
+  // 如果是数组格式，提取其中的 text 部分
+  if (Array.isArray(reasoning_details)) {
+    reasoning_details = (reasoning_details as ReasoningDetailItem[])
+      .filter((item) => item.type === 'reasoning.text' || item.text)
+      .map((item) => item.text || '')
+      .join('')
+  }
+
+  return {
+    content: message?.content || '',
+    reasoning_details,
+  }
 }
 
 /**
@@ -300,6 +352,7 @@ export async function getMultiModelDiscussionStream(
   onStepUpdate: (steps: DiscussionStep[]) => void,
   onFinalChunk: (chunk: string) => void,
   onThinking?: (thinking: string) => void,
+  onReasoningDetails?: (details: string) => void,
   options: AIRequestOptions = {},
 ): Promise<void> {
   const aiConfig = getAIConfig()
@@ -327,7 +380,7 @@ export async function getMultiModelDiscussionStream(
 
   // 如果没有选择主模型或副模型，回退到普通单模型请求
   if (!primaryPreset || selectedPresets.length === 0) {
-    return getAIStreamResponse(messages, onFinalChunk, onThinking, options)
+    return getAIStreamResponse(messages, onFinalChunk, onThinking, onReasoningDetails, options)
   }
 
   const primaryConfig = {
@@ -361,12 +414,13 @@ export async function getMultiModelDiscussionStream(
         aiConfig.todoAssistant,
       )
 
-      steps[index].content = await fetchNonStreamResponse(
+      const response = await fetchNonStreamResponse(
         preset,
         messagesForModel,
         thinkingMode, // 思考模式统一使用全局配置
         signal,
       )
+      steps[index].content = response.content
       steps[index].status = 'done'
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
@@ -415,7 +469,7 @@ export async function getMultiModelDiscussionStream(
     },
   ]
 
-  return getAIStreamResponse(synthesisMessages, onFinalChunk, onThinking, {
+  return getAIStreamResponse(synthesisMessages, onFinalChunk, onThinking, onReasoningDetails, {
     ...options,
     ...primaryConfig,
   })
@@ -425,9 +479,9 @@ export async function getMultiModelDiscussionStream(
  * 发送非流式 AI 请求（用于后台提取记忆等任务）
  */
 export async function getAIStaticResponse(
-  messages: Array<{ role: string; content: string }>,
+  messages: Array<{ role: string; content: string; reasoning_details?: string }>,
   options: AIRequestOptions = {},
-): Promise<string> {
+): Promise<{ content: string; reasoning_details?: string }> {
   const aiConfig = getAIConfig()
   const {
     model = aiConfig.model,
@@ -436,23 +490,11 @@ export async function getAIStaticResponse(
     temperature = 0.3,
   } = options
 
-  const response = await fetch(buildApiUrl(baseUrl), {
-    method: 'POST',
-    headers: getHeaders(apiKey),
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature,
-      stream: false,
-    }),
-  })
-
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status}`)
-  }
-
-  const result = await response.json()
-  return result.choices[0]?.message?.content || ''
+  return fetchNonStreamResponse(
+    { baseUrl, apiKey, model, temperature },
+    messages,
+    aiConfig.thinkingMode,
+  )
 }
 
 /**

@@ -55,4 +55,15 @@ describe('useMarkdown', () => {
     expect(output).toContain('<strong>bold 1</strong>')
     expect(output).toContain('<strong>bold 2</strong>')
   })
+
+  it('should handle non-string inputs gracefully', async () => {
+    const outputNum = await renderMarkdown(123)
+    expect(outputNum).toContain('123')
+
+    const outputObj = await renderMarkdown({ a: 1 })
+    expect(outputObj).toContain('[object Object]')
+
+    const outputNull = await renderMarkdown(null)
+    expect(outputNull).toBe('')
+  })
 })

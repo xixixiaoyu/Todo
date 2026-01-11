@@ -91,7 +91,9 @@ const renderedThinkingHtml = ref('')
 
 const isUser = computed(() => props.message.role === 'user')
 const isStreaming = computed(() => props.message.isStreaming)
-const hasThinking = computed(() => !!props.message.thinkingContent)
+const hasThinking = computed(
+  () => !!props.message.thinkingContent || !!props.message.reasoning_details,
+)
 const hasContent = computed(() => !!props.message.content)
 const hasDiscussion = computed(
   () => props.message.discussionSteps && props.message.discussionSteps.length > 0,
@@ -289,16 +291,17 @@ function initMermaidInteractions(container: HTMLElement) {
 
 // 渲染 Markdown 内容
 async function updateRenderedContent() {
-  const { content, thinkingContent, isStreaming } = props.message
+  const { content, thinkingContent, reasoning_details, isStreaming } = props.message
 
   if (content && !isUser.value) {
     renderedHtml.value = await renderMarkdown(content, isStreaming)
   }
 
-  if (thinkingContent && !isUser.value) {
+  const effectiveThinking = thinkingContent || reasoning_details
+  if (effectiveThinking && !isUser.value) {
     // 只有在正在思考且没有正文时，才给思考内容应用流式渲染效果
     const isThinkingStreaming = isStreaming && !content
-    renderedThinkingHtml.value = await renderMarkdown(thinkingContent, isThinkingStreaming)
+    renderedThinkingHtml.value = await renderMarkdown(effectiveThinking, isThinkingStreaming)
     nextTick(updateContentHeight)
   }
 
@@ -307,16 +310,27 @@ async function updateRenderedContent() {
 
 // 监听内容与状态变化
 watch(
-  [() => props.message.content, () => props.message.thinkingContent, isStreaming],
-  async ([content, thinking, streaming], [oldContent, oldThinking, oldStreaming]) => {
+  [
+    () => props.message.content,
+    () => props.message.thinkingContent,
+    () => props.message.reasoning_details,
+    isStreaming,
+  ],
+  async (
+    [content, thinking, reasoning, streaming],
+    [oldContent, oldThinking, oldReasoning, oldStreaming],
+  ) => {
     // 1. 自动折叠逻辑
     if (isExpanded.value) {
       // 场景 A: AI 开始输出正文内容 -> 立即折叠
       const hasStartedResponding = content && !oldContent
       // 场景 B: 只有思考内容，且流式结束 -> 触发 3s 延迟折叠
-      const hasFinishedThinkingOnly = !streaming && oldStreaming && thinking && !content
+      const effectiveThinking = thinking || reasoning
+      const oldEffectiveThinking = oldThinking || oldReasoning
+      const hasFinishedThinkingOnly = !streaming && oldStreaming && effectiveThinking && !content
       // 场景 C: 思考内容稳定（非流式状态下的重复触发）
-      const isThinkingStable = !streaming && thinking === oldThinking && thinking && !content
+      const isThinkingStable =
+        !streaming && effectiveThinking === oldEffectiveThinking && effectiveThinking && !content
 
       if (hasStartedResponding) {
         isExpanded.value = false
@@ -335,20 +349,17 @@ watch(
 )
 
 // 思考过程内容更新时触发高度计算
-watch(
-  () => props.message.thinkingContent,
-  () => {
-    if (isExpanded.value && thinkingContentRef.value) {
-      nextTick(() => {
-        const el = thinkingContentRef.value
-        if (el) {
-          el.scrollTop = el.scrollHeight
-          updateContentHeight()
-        }
-      })
-    }
-  },
-)
+watch([() => props.message.thinkingContent, () => props.message.reasoning_details], () => {
+  if (isExpanded.value && thinkingContentRef.value) {
+    nextTick(() => {
+      const el = thinkingContentRef.value
+      if (el) {
+        el.scrollTop = el.scrollHeight
+        updateContentHeight()
+      }
+    })
+  }
+})
 
 /**
  * 复制消息内容

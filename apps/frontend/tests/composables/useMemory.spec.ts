@@ -87,7 +87,7 @@ describe('useMemory', () => {
     const { memories, addMemories, compressMemories } = useMemory()
     const { getAIStaticResponse } = await import('@/services/aiService')
     const mockGetAIStaticResponse = vi.mocked(getAIStaticResponse)
-    mockGetAIStaticResponse.mockResolvedValue('["Compressed 1", "Compressed 2"]')
+    mockGetAIStaticResponse.mockResolvedValue({ content: '["Compressed 1", "Compressed 2"]' })
 
     addMemories(['M1', 'M2', 'M3', 'M4'])
     await compressMemories()

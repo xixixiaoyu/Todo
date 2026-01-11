@@ -40,7 +40,7 @@ vi.mock('@/services/aiService', async (importOriginal) => {
     ...actual,
     getAIStreamResponse: vi.fn(),
     getMultiModelDiscussionStream: vi.fn(),
-    getAIStaticResponse: vi.fn(),
+    getAIStaticResponse: vi.fn().mockResolvedValue({ content: '[]' }),
     abortCurrentRequest: vi.fn(),
     generateId: vi.fn(() => 'generated-id'),
   }
@@ -93,6 +93,7 @@ describe('useChat', () => {
   // 类型定义辅助
   type OnChunk = (chunk: string) => void
   type OnThinking = (thinking: string) => void
+  type OnReasoningDetails = (details: string) => void
   type OnSteps = (steps: DiscussionStep[]) => void
 
   beforeEach(() => {
@@ -176,7 +177,12 @@ describe('useChat', () => {
 
     it('should add user message and handle [DONE] chunk correctly', async () => {
       mockGetAIStreamResponse.mockImplementation(
-        async (_messages: ChatMessage[], onChunk: OnChunk) => {
+        async (
+          _messages: ChatMessage[],
+          onChunk: OnChunk,
+          _onThinking?: OnThinking,
+          _onReasoning?: OnReasoningDetails,
+        ) => {
           onChunk('Hello')
           onChunk('[DONE]')
         },
@@ -194,7 +200,12 @@ describe('useChat', () => {
 
     it('should handle [ABORTED] chunk correctly', async () => {
       mockGetAIStreamResponse.mockImplementation(
-        async (_messages: ChatMessage[], onChunk: OnChunk) => {
+        async (
+          _messages: ChatMessage[],
+          onChunk: OnChunk,
+          _onThinking?: OnThinking,
+          _onReasoning?: OnReasoningDetails,
+        ) => {
           onChunk('Partially generated...')
           onChunk('[ABORTED]')
         },
@@ -211,7 +222,12 @@ describe('useChat', () => {
 
     it('should handle thinking chunks correctly', async () => {
       mockGetAIStreamResponse.mockImplementation(
-        async (_messages: ChatMessage[], onChunk: OnChunk, onThinking?: OnThinking) => {
+        async (
+          _messages: ChatMessage[],
+          onChunk: OnChunk,
+          onThinking?: OnThinking,
+          _onReasoning?: OnReasoningDetails,
+        ) => {
           onThinking?.('Thinking process...')
           onChunk('Result')
           onChunk('[DONE]')
@@ -228,12 +244,17 @@ describe('useChat', () => {
     it('should extract memories according to frequency strategy', async () => {
       const mockGetAIStaticResponse = vi.mocked(getAIStaticResponse)
       mockGetAIStreamResponse.mockImplementation(
-        async (_messages: ChatMessage[], onChunk: OnChunk) => {
+        async (
+          _messages: ChatMessage[],
+          onChunk: OnChunk,
+          _onThinking?: OnThinking,
+          _onReasoning?: OnReasoningDetails,
+        ) => {
           onChunk('Response')
           onChunk('[DONE]')
         },
       )
-      mockGetAIStaticResponse.mockResolvedValue('["Memory A"]')
+      mockGetAIStaticResponse.mockResolvedValue({ content: '["Memory A"]' })
 
       const { sendMessage } = useChat()
 
@@ -261,7 +282,12 @@ describe('useChat', () => {
     it('should retry on failure and eventually succeed', async () => {
       let calls = 0
       mockGetAIStreamResponse.mockImplementation(
-        async (_messages: ChatMessage[], onChunk: OnChunk) => {
+        async (
+          _messages: ChatMessage[],
+          onChunk: OnChunk,
+          _onThinking?: OnThinking,
+          _onReasoning?: OnReasoningDetails,
+        ) => {
           calls++
           if (calls === 1) throw new Error('Network error')
           onChunk('Success')
@@ -310,6 +336,7 @@ describe('useChat', () => {
           onSteps: OnSteps,
           onChunk: OnChunk,
           onThinking?: OnThinking,
+          _onReasoning?: OnReasoningDetails,
         ) => {
           onSteps([{ modelId: 'm1', modelName: 'M1', content: 'step 1', status: 'done' }])
           onThinking?.('Primary thinking process...')

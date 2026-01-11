@@ -475,12 +475,15 @@ const PURIFY_CONFIG = {
 /**
  * 预处理 Markdown：修复 AI 输出的常见格式问题
  */
-function preprocessMarkdown(text: string): string {
+function preprocessMarkdown(text: unknown): string {
   if (!text) return ''
+
+  // 强制确保 text 为字符串
+  const safeText = String(text)
 
   // 1. 保护代码块，避免预处理干扰代码内容
   const codeBlocks: string[] = []
-  let processed = text.replace(/(```[\s\S]*?```|`[^`\n]+?`)/g, (match) => {
+  let processed = safeText.replace(/(```[\s\S]*?```|`[^`\n]+?`)/g, (match) => {
     const placeholder = `V_CODE_BLOCK_${codeBlocks.length}_V`
     codeBlocks.push(match)
     return placeholder
@@ -585,19 +588,22 @@ export function useMarkdown() {
   /**
    * 渲染 Markdown 核心方法
    */
-  async function renderMarkdown(markdown: string, isStreaming = false): Promise<string> {
+  async function renderMarkdown(markdown: unknown, isStreaming = false): Promise<string> {
     if (!markdown) return ''
-    isRendering.value = true
+
+    // 强制转换为字符串，防止非字符串类型导致 replace 等方法报错
+    const safeMarkdown = String(markdown)
 
     try {
+      isRendering.value = true
       // 1. 预处理 Markdown (包含公式修复和加粗修复)
-      const preprocessed = preprocessMarkdown(markdown)
+      const preprocessed = preprocessMarkdown(safeMarkdown)
 
       // 2. 识别已闭合的 Mermaid 代码块
       const closedMermaidBlocks = new Set<string>()
       if (isStreaming) {
         // 使用正则查找所有闭合的代码块内容
-        const matches = markdown.matchAll(/```mermaid\s*\n([\s\S]*?)\n```/g)
+        const matches = safeMarkdown.matchAll(/```mermaid\s*\n([\s\S]*?)\n```/g)
         for (const match of matches) {
           closedMermaidBlocks.add(match[1].trim())
         }
