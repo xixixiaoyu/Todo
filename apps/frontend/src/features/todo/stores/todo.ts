@@ -6,6 +6,7 @@ export interface Todo {
   title: string
   completed: boolean
   createdAt: Date
+  parentId?: string | null
 }
 
 export type FilterType = 'pending' | 'completed'
@@ -62,7 +63,7 @@ export const useTodoStore = defineStore(
     /**
      * 添加待办事项
      */
-    async function addTodo(title: string): Promise<boolean> {
+    async function addTodo(title: string, parentId: string | null = null): Promise<boolean> {
       const trimmedTitle = title.trim()
       if (!trimmedTitle) return false
 
@@ -78,6 +79,7 @@ export const useTodoStore = defineStore(
           title: trimmedTitle,
           completed: false,
           createdAt: new Date(),
+          parentId,
         }
         todos.value.unshift(newTodo)
         return true
@@ -94,8 +96,38 @@ export const useTodoStore = defineStore(
      */
     async function toggleTodo(id: string): Promise<void> {
       const todo = todos.value.find((t) => t.id === id)
-      if (todo) {
-        todo.completed = !todo.completed
+      if (!todo) return
+
+      todo.completed = !todo.completed
+
+      // 如果是父任务，同步切换所有子任务
+      const children = todos.value.filter((t) => t.parentId === id)
+      children.forEach((child) => {
+        child.completed = todo.completed
+      })
+
+      // 如果是子任务，检查父任务状态
+      if (todo.parentId) {
+        updateParentStatus(todo.parentId)
+      }
+    }
+
+    /**
+     * 递归更新父任务状态
+     */
+    function updateParentStatus(parentId: string): void {
+      const parent = todos.value.find((t) => t.id === parentId)
+      if (!parent) return
+
+      const siblings = todos.value.filter((t) => t.parentId === parentId)
+      const allCompleted = siblings.length > 0 && siblings.every((s) => s.completed)
+
+      if (parent.completed !== allCompleted) {
+        parent.completed = allCompleted
+        // 继续向上更新祖先任务
+        if (parent.parentId) {
+          updateParentStatus(parent.parentId)
+        }
       }
     }
 
@@ -103,9 +135,26 @@ export const useTodoStore = defineStore(
      * 删除待办事项
      */
     async function deleteTodo(id: string): Promise<void> {
-      const index = todos.value.findIndex((t) => t.id === id)
-      if (index !== -1) {
-        todos.value.splice(index, 1)
+      const todo = todos.value.find((t) => t.id === id)
+      if (!todo) return
+
+      const parentId = todo.parentId
+
+      // 递归删除子任务
+      const children = todos.value.filter((t) => t.parentId === id)
+      for (const child of children) {
+        await deleteTodo(child.id)
+      }
+
+      // 删除自己
+      const currentIndex = todos.value.findIndex((t) => t.id === id)
+      if (currentIndex !== -1) {
+        todos.value.splice(currentIndex, 1)
+      }
+
+      // 如果被删除的是子任务，更新父任务状态
+      if (parentId) {
+        updateParentStatus(parentId)
       }
     }
 

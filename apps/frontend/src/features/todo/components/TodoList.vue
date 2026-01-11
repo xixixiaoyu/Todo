@@ -47,6 +47,15 @@ const emptyState = computed(() => {
     description: t('todo.emptyCompletedDescription', '还没有已完成的任务，继续加油'),
   }
 })
+const displayTodos = computed(() => {
+  // 只显示那些父任务不在当前过滤列表中的任务
+  // 这样如果是父子都匹配，只显示父任务（子任务在父任务内部递归显示）
+  // 如果只有子任务匹配，则显示子任务
+  return props.todos.filter((todo) => {
+    if (!todo.parentId) return true
+    return !props.todos.some((t) => t.id === todo.parentId)
+  })
+})
 </script>
 
 <template>
@@ -104,11 +113,12 @@ const emptyState = computed(() => {
           move-class="transition-transform duration-300"
         >
           <TodoItem
-            v-for="todo in todos"
+            v-for="todo in displayTodos"
             :key="todo.id"
             :todo="todo"
             :editing-id="editingId"
             :editing-title="editingTitle"
+            :default-expanded="filter !== 'completed'"
             @toggle="(id, currentCompleted) => emit('toggle', id, currentCompleted)"
             @start-edit="(id, title) => emit('startEdit', id, title)"
             @save-edit="emit('saveEdit')"

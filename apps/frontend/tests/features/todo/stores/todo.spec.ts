@@ -176,10 +176,40 @@ describe('useTodoStore', () => {
       expect(store.todos[0].completed).toBe(false)
     })
 
-    it('should do nothing if todo not found', async () => {
-      store.todos = [{ ...mockTodos[0] }]
-      await store.toggleTodo('non-existent')
-      expect(store.todos[0].completed).toBe(false)
+    it('should toggle parent and children correctly', async () => {
+      store.todos = [
+        { id: 'parent', title: 'Parent', completed: false, createdAt: new Date() },
+        {
+          id: 'child1',
+          title: 'Child 1',
+          completed: false,
+          createdAt: new Date(),
+          parentId: 'parent',
+        },
+        {
+          id: 'child2',
+          title: 'Child 2',
+          completed: false,
+          createdAt: new Date(),
+          parentId: 'parent',
+        },
+      ]
+
+      // Toggle parent -> children should follow
+      await store.toggleTodo('parent')
+      expect(store.todos.find((t) => t.id === 'parent')?.completed).toBe(true)
+      expect(store.todos.find((t) => t.id === 'child1')?.completed).toBe(true)
+      expect(store.todos.find((t) => t.id === 'child2')?.completed).toBe(true)
+
+      // Toggle child1 off -> parent should be off
+      await store.toggleTodo('child1')
+      expect(store.todos.find((t) => t.id === 'child1')?.completed).toBe(false)
+      expect(store.todos.find((t) => t.id === 'parent')?.completed).toBe(false)
+
+      // Toggle child1 on again -> all children on -> parent should be on
+      await store.toggleTodo('child1')
+      expect(store.todos.find((t) => t.id === 'child1')?.completed).toBe(true)
+      expect(store.todos.find((t) => t.id === 'parent')?.completed).toBe(true)
     })
   })
 
@@ -192,10 +222,34 @@ describe('useTodoStore', () => {
       expect(store.todos).toHaveLength(0)
     })
 
-    it('should do nothing if todo not found', async () => {
-      store.todos = [{ ...mockTodos[0] }]
-      await store.deleteTodo('non-existent')
-      expect(store.todos).toHaveLength(1)
+    it('should delete parent and all children recursively', async () => {
+      store.todos = [
+        { id: 'parent', title: 'Parent', completed: false, createdAt: new Date() },
+        {
+          id: 'child1',
+          title: 'Child 1',
+          completed: false,
+          createdAt: new Date(),
+          parentId: 'parent',
+        },
+        {
+          id: 'child2',
+          title: 'Child 2',
+          completed: false,
+          createdAt: new Date(),
+          parentId: 'parent',
+        },
+        {
+          id: 'grandchild',
+          title: 'Grandchild',
+          completed: false,
+          createdAt: new Date(),
+          parentId: 'child1',
+        },
+      ]
+
+      await store.deleteTodo('parent')
+      expect(store.todos).toHaveLength(0)
     })
   })
 

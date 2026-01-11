@@ -112,6 +112,8 @@ export default {
     duplicate: '该待办事项已存在',
     addError: '添加待办事项失败',
     language: '切换语言',
+    addSubtask: '添加子任务',
+    subtaskPlaceholder: '输入子任务内容...',
   },
   ai: {
     newChat: '新对话',

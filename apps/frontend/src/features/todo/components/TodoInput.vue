@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { Plus } from 'lucide-vue-next'
+import { ref, onMounted } from 'vue'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -19,6 +20,12 @@ const emit = defineEmits<{
   add: []
   keydown: [e: KeyboardEvent]
 }>()
+
+const inputRef = ref<InstanceType<typeof Input> | null>(null)
+
+onMounted(() => {
+  inputRef.value?.$el?.focus?.()
+})
 </script>
 
 <template>
@@ -30,6 +37,7 @@ const emit = defineEmits<{
             <TooltipTrigger as-child>
               <div :class="isShaking ? 'animate-shake' : ''">
                 <Input
+                  ref="inputRef"
                   :model-value="modelValue"
                   type="text"
                   :placeholder="t('todo.inputPlaceholder')"

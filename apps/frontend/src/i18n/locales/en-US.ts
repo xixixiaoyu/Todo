@@ -114,6 +114,8 @@ export default {
     duplicate: 'Todo already exists',
     addError: 'Failed to add todo',
     language: 'Switch Language',
+    addSubtask: 'Add Subtask',
+    subtaskPlaceholder: 'Enter subtask title...',
   },
   ai: {
     newChat: 'New Chat',
