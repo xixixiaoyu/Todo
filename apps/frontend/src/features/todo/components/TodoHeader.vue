@@ -29,12 +29,12 @@ const toggleLanguage = () => {
     <header class="mb-8 flex items-center justify-between">
       <div class="flex items-center gap-3 group">
         <div
-          class="p-2 rounded-xl bg-emerald-500/10 text-emerald-700 transition-transform group-hover:rotate-12 dark:text-emerald-400"
+          class="p-2 rounded-xl bg-amber-500/10 text-amber-600 transition-transform group-hover:rotate-12"
         >
           <Clover :size="24" />
         </div>
         <h1
-          class="cursor-default bg-gradient-to-r from-emerald-700 via-teal-600 to-primary bg-clip-text text-2xl font-extrabold tracking-tight text-transparent transition-transform hover:scale-105 md:text-3xl"
+          class="cursor-default text-amber-600 text-2xl font-extrabold tracking-tight transition-transform hover:scale-105 md:text-3xl"
         >
           {{ t('todo.title') }}
         </h1>
