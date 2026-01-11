@@ -3,7 +3,7 @@ import { Sun, Moon, Monitor } from 'lucide-vue-next'
 import { useTheme } from '@/composables/useTheme'
 import { useI18n } from 'vue-i18n'
 import { Button } from '@/components/ui/button'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 const { theme, setTheme } = useTheme()
 const { t } = useI18n()
@@ -32,21 +32,19 @@ const getTitle = () => {
 </script>
 
 <template>
-  <TooltipProvider>
-    <Tooltip>
-      <TooltipTrigger as-child>
-        <Button
-          variant="outline"
-          size="icon"
-          class="h-10 w-10 rounded-xl bg-card border-border hover:bg-accent"
-          @click="toggleTheme"
-        >
-          <component :is="getIcon()" :size="18" class="transition-all" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>
-        {{ getTitle() }}
-      </TooltipContent>
-    </Tooltip>
-  </TooltipProvider>
+  <Tooltip>
+    <TooltipTrigger as-child>
+      <Button
+        variant="outline"
+        size="icon"
+        class="h-10 w-10 rounded-xl bg-card border-border hover:bg-accent"
+        @click="toggleTheme"
+      >
+        <component :is="getIcon()" :size="18" class="transition-all" />
+      </Button>
+    </TooltipTrigger>
+    <TooltipContent>
+      {{ getTitle() }}
+    </TooltipContent>
+  </Tooltip>
 </template>
