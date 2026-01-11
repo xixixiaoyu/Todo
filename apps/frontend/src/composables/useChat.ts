@@ -55,20 +55,25 @@ export function useChat(options: AIRequestOptions = {}) {
     if (!content.trim() || isGenerating.value) return
 
     error.value = null
+
+    // 清理上一轮的临时状态（无论是新发送还是重试）
+    currentAIResponse.value = ''
+    currentThinkingContent.value = ''
+    currentDiscussionSteps.value = []
+
     if (!isRetry) {
       retryCount.value = 0
+      // 创建用户消息
+      const userMessage: ChatMessage = {
+        id: generateId(),
+        role: 'user',
+        content: content.trim(),
+        createdAt: new Date(),
+      }
+      // 使用 setter 触发更新逻辑（包括标题生成）
+      chatHistory.value = [...chatHistory.value, userMessage]
     }
 
-    // 创建用户消息
-    const userMessage: ChatMessage = {
-      id: generateId(),
-      role: 'user',
-      content: content.trim(),
-      createdAt: new Date(),
-    }
-
-    // 使用 setter 触发更新逻辑（包括标题生成）
-    chatHistory.value = [...chatHistory.value, userMessage]
     isGenerating.value = true
     currentAssistantMessageId.value = generateId()
     const aiConfig = getAIConfig()
@@ -157,14 +162,14 @@ export function useChat(options: AIRequestOptions = {}) {
       if (retryCount.value < MAX_RETRIES) {
         retryCount.value++
         console.warn(`Retrying ${retryCount.value}/${MAX_RETRIES}...`)
-        // 移除失败的用户消息，允许重新发送
-        chatHistory.value.pop()
+        // 重试时不删除消息，而是直接再次调用
         isGenerating.value = false
         await sendMessage(content, true)
       } else {
         isGenerating.value = false
         currentAIResponse.value = ''
         currentThinkingContent.value = ''
+        currentDiscussionSteps.value = []
         currentAssistantMessageId.value = null
       }
     }
@@ -191,10 +196,7 @@ export function useChat(options: AIRequestOptions = {}) {
    * 删除指定消息
    */
   function deleteMessage(messageId: string): void {
-    const index = chatHistory.value.findIndex((msg) => msg.id === messageId)
-    if (index !== -1) {
-      chatHistory.value.splice(index, 1)
-    }
+    chatHistory.value = chatHistory.value.filter((msg) => msg.id !== messageId)
   }
 
   /**
@@ -251,6 +253,8 @@ export function useChat(options: AIRequestOptions = {}) {
         role: 'assistant',
         content: currentAIResponse.value,
         thinkingContent: currentThinkingContent.value,
+        discussionSteps:
+          currentDiscussionSteps.value.length > 0 ? [...currentDiscussionSteps.value] : undefined,
         isStreaming: true,
       })
     }

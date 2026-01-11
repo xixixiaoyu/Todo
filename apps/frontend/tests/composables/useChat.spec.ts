@@ -1,3 +1,6 @@
+/**
+ * @vitest-environment happy-dom
+ */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { ref, computed } from 'vue'
 import i18n from '@/i18n'
@@ -348,6 +351,26 @@ describe('useChat', () => {
       expect(messages.value).toHaveLength(2)
       expect(messages.value[0].content).toBe('new hello')
       expect(messages.value[1].content).toBe('New response')
+    })
+    it('should correctly delete a message and update history', async () => {
+      const { deleteMessage, messages } = useChat()
+
+      // 添加几条消息
+      const msg1: ChatMessage = { id: 'm1', role: 'user', content: 'Hi' }
+      const msg2: ChatMessage = { id: 'm2', role: 'assistant', content: 'Hello' }
+      mockCurrentSession.value = {
+        id: 'session-1',
+        title: 'Test',
+        messages: [msg1, msg2],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+
+      deleteMessage('m1')
+
+      expect(mockUpdateSessionMessages).toHaveBeenCalledWith('session-1', [msg2])
+      expect(messages.value).toHaveLength(1)
+      expect(messages.value[0].id).toBe('m2')
     })
   })
 })
