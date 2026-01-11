@@ -16,7 +16,13 @@
     "resolveJsonModule": true,
     "skipLibCheck": true
   },
-  "include": ["src/**/*", "prisma.config.ts", "tests/**/*", "vitest.config.ts"],
+  "include": [
+    "src/**/*",
+    "prisma.config.ts",
+    "tests/**/*",
+    "vitest.config.mts",
+    "eslint.config.mjs"
+  ],
   "exclude": ["node_modules", "dist"],
   "files": ["src/main.ts"]
 }

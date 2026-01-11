@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common'
 import * as bcrypt from 'bcryptjs'
 import { PrismaService } from '../prisma/prisma.service'
+import { Prisma } from '@prisma/client'
 import type { User, RegisterInput } from '@my-app/shared'
 import { formatUser, formatUsers } from '@my-app/shared'
 
@@ -73,7 +74,7 @@ export class UsersService {
   /**
    * 更新用户信息
    */
-  async update(id: number, data: Partial<RegisterInput>) {
+  async update(id: number, data: Prisma.UserUpdateInput) {
     return this.prisma.user.update({
       where: { id },
       data,
@@ -83,7 +84,7 @@ export class UsersService {
   /**
    * 查找第一个匹配的用户（内部使用）
    */
-  async findInternalFirst(where: Record<string, unknown>) {
+  async findInternalFirst(where: Prisma.UserWhereInput) {
     return this.prisma.user.findFirst({
       where,
     })
