@@ -180,6 +180,10 @@ const handleNewline = (event: KeyboardEvent) => {
 const handleNewChat = () => {
   clearHistory()
   chatInput.value = ''
+  // 新对话时重置 Todo 助手状态，回到通用对话模式
+  if (config.value.todoAssistant) {
+    updateConfig({ todoAssistant: false })
+  }
 }
 
 // 打开历史记录面板

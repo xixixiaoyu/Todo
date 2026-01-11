@@ -77,13 +77,16 @@ vi.mock('@/composables/useChat', () => ({
   }),
 }))
 
+const mockUpdateConfig = vi.fn()
+const mockConfig = ref({ thinkingMode: 'disabled', todoAssistant: false })
+
 vi.mock('@/composables/useAIConfig', () => ({
   useAIConfig: () => ({
     presets: ref([]),
     activePreset: ref(null),
     switchPreset: vi.fn(),
-    config: ref({ thinkingMode: 'disabled', todoAssistant: false }),
-    updateConfig: vi.fn(),
+    config: mockConfig,
+    updateConfig: mockUpdateConfig,
   }),
   aiThinkingMode: ref('disabled'),
   saveAIThinkingMode: vi.fn(),
@@ -369,5 +372,19 @@ describe('AiAssistantDrawer Navigation and Button States', () => {
       expect(textarea.style.height).toBe('40px')
       expect(textarea.style.overflowY).toBe('hidden')
     })
+  })
+
+  it('should reset todo assistant when "New Chat" button is clicked', async () => {
+    mockMessages.value = [{ id: '1', role: 'user', content: 'test' }]
+    mockConfig.value.todoAssistant = true
+
+    const wrapper = mount(AiAssistantDrawer, {
+      props: { modelValue: true },
+    })
+
+    const newChatBtn = wrapper.findAll('button').find((b) => b.text().includes('ai.newChat'))
+    await newChatBtn?.trigger('click')
+
+    expect(mockUpdateConfig).toHaveBeenCalledWith({ todoAssistant: false })
   })
 })
