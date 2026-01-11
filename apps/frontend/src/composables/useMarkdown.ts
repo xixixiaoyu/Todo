@@ -219,6 +219,12 @@ md.renderer.rules.link_open = (tokens, idx, options, env: MarkdownEnv, self) => 
   return defaultLinkRender(tokens, idx, options, env, self)
 }
 
+// 自定义行内代码渲染
+md.renderer.rules.code_inline = (tokens, idx) => {
+  const token = tokens[idx]
+  return `<code class="inline-code">${md.utils.escapeHtml(token.content)}</code>`
+}
+
 // 自定义代码块 (Fence)：处理 Mermaid 和 代码块头
 const defaultFence = md.renderer.rules.fence!
 md.renderer.rules.fence = (tokens, idx, options, env: MarkdownEnv, self) => {

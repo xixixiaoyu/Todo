@@ -43,10 +43,10 @@ describe('useMarkdown', () => {
     expect(plainText).toContain('** code block should not be touched **')
   })
 
-  it('should not break inline code', async () => {
+  it('should not break inline code and apply class', async () => {
     const input = '这是 `** inline code **` 文本'
     const output = await renderMarkdown(input)
-    expect(output).toContain('<code>** inline code **</code>')
+    expect(output).toContain('<code class="inline-code">** inline code **</code>')
   })
 
   it('should handle multiple bold blocks', async () => {
