@@ -232,63 +232,6 @@ defineOptions({
           }}</span>
         </div>
         <div class="flex items-center gap-2">
-          <!-- 预设下拉框 -->
-          <div class="relative">
-            <button
-              class="flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-1.5 text-[13px] text-white transition-all hover:bg-white/20 hover:scale-105 active:scale-95 border border-white/10"
-              @click="showPresetDropdown = !showPresetDropdown"
-            >
-              <span class="font-medium">{{ currentPresetName }}</span>
-              <ChevronDown
-                :size="14"
-                class="transition-transform duration-300"
-                :class="{ 'rotate-180': showPresetDropdown }"
-              />
-            </button>
-            <!-- 下拉菜单 -->
-            <Transition
-              enter-active-class="transition-all duration-150 ease-out"
-              leave-active-class="transition-all duration-100 ease-in"
-              enter-from-class="opacity-0 -translate-y-1"
-              enter-to-class="opacity-100 translate-y-0"
-              leave-from-class="opacity-100 translate-y-0"
-              leave-to-class="opacity-0 -translate-y-1"
-            >
-              <div
-                v-if="showPresetDropdown"
-                class="absolute right-0 top-full z-50 mt-1 min-w-[160px] overflow-hidden rounded-lg border border-border bg-card py-1 shadow-lg"
-              >
-                <button
-                  v-for="preset in presets"
-                  :key="preset.id"
-                  class="flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition-colors hover:bg-accent"
-                  :class="{
-                    'bg-accent text-primary': activePreset?.id === preset.id,
-                    'text-foreground': activePreset?.id !== preset.id,
-                  }"
-                  @click="handleSelectPreset(preset.id)"
-                >
-                  <Check v-if="activePreset?.id === preset.id" :size="12" class="text-primary" />
-                  <span :class="{ 'ml-4': activePreset?.id !== preset.id }">{{ preset.name }}</span>
-                </button>
-                <!-- 分割线 + 设置入口 -->
-                <div class="my-1 border-t border-border" />
-                <button
-                  class="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                  @click="openSettings('presets')"
-                >
-                  <Settings2 :size="12" />
-                  <span>{{ t('ai.managePresets') }}</span>
-                </button>
-              </div>
-            </Transition>
-            <!-- 点击外部关闭 -->
-            <div
-              v-if="showPresetDropdown"
-              class="fixed inset-0 z-40"
-              @click="showPresetDropdown = false"
-            />
-          </div>
           <!-- 最大化/最小化 -->
           <button
             class="flex h-7 w-7 items-center justify-center rounded-md text-white/80 transition-colors hover:bg-white/10 hover:text-white"
@@ -368,6 +311,66 @@ defineOptions({
             <Clover :size="14" :class="{ 'animate-spin-slow': isTodoAssistantEnabled }" />
             <span class="font-medium">{{ t('ai.todoAssistant') }}</span>
           </button>
+
+          <div class="h-4 w-px bg-border/60 mx-0.5" />
+
+          <!-- 预设下拉框 -->
+          <div class="relative">
+            <button
+              class="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-[13px] text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground hover:shadow-sm active:scale-95 shadow-sm"
+              @click="showPresetDropdown = !showPresetDropdown"
+            >
+              <span class="font-medium">{{ currentPresetName }}</span>
+              <ChevronDown
+                :size="14"
+                class="transition-transform duration-300"
+                :class="{ 'rotate-180': showPresetDropdown }"
+              />
+            </button>
+            <!-- 下拉菜单 -->
+            <Transition
+              enter-active-class="transition-all duration-150 ease-out"
+              leave-active-class="transition-all duration-100 ease-in"
+              enter-from-class="opacity-0 translate-y-1"
+              enter-to-class="opacity-100 translate-y-0"
+              leave-from-class="opacity-100 translate-y-0"
+              leave-to-class="opacity-0 translate-y-1"
+            >
+              <div
+                v-if="showPresetDropdown"
+                class="absolute bottom-full left-0 z-50 mb-2 min-w-[160px] overflow-hidden rounded-lg border border-border bg-card py-1 shadow-lg"
+              >
+                <button
+                  v-for="preset in presets"
+                  :key="preset.id"
+                  class="flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition-colors hover:bg-accent"
+                  :class="{
+                    'bg-accent text-primary': activePreset?.id === preset.id,
+                    'text-foreground': activePreset?.id !== preset.id,
+                  }"
+                  @click="handleSelectPreset(preset.id)"
+                >
+                  <Check v-if="activePreset?.id === preset.id" :size="12" class="text-primary" />
+                  <span :class="{ 'ml-4': activePreset?.id !== preset.id }">{{ preset.name }}</span>
+                </button>
+                <!-- 分割线 + 设置入口 -->
+                <div class="my-1 border-t border-border" />
+                <button
+                  class="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  @click="openSettings('presets')"
+                >
+                  <Settings2 :size="12" />
+                  <span>{{ t('ai.managePresets') }}</span>
+                </button>
+              </div>
+            </Transition>
+            <!-- 点击外部关闭 -->
+            <div
+              v-if="showPresetDropdown"
+              class="fixed inset-0 z-40"
+              @click="showPresetDropdown = false"
+            />
+          </div>
 
           <div class="flex-1" />
 
