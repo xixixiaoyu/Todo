@@ -127,6 +127,12 @@ export default {
     thinkingEnabled: 'Thinking Mode Enabled',
     thinkingDisabled: 'Thinking Mode Disabled',
     startChat: 'Start chatting with AI Assistant...',
+    welcomeTitle: 'Hello, I am your AI Assistant',
+    welcomeSubtitle:
+      'I can help you manage tasks, answer questions, or collaborate on creative projects.',
+    suggestion1: 'Analyze the priority and importance of my current tasks',
+    suggestion2: 'Create an efficient execution plan based on my tasks',
+    suggestion3: 'How can I better manage my time and energy given these tasks?',
     scrollToBottom: 'Back to bottom',
     isThinking: 'Thinking...',
     thoughtProcess: 'Thought Process',

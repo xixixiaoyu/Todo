@@ -201,6 +201,19 @@ const handleSelectPreset = (presetId: string) => {
   showPresetDropdown.value = false
 }
 
+// 处理建议点击
+const handleSelectSuggestion = async (text: string, options?: { requireTodo?: boolean }) => {
+  if (options?.requireTodo && !config.value.todoAssistant) {
+    updateConfig({
+      todoAssistant: true,
+    })
+  }
+  chatInput.value = text
+  await nextTick()
+  adjustTextareaHeight()
+  await handleSend()
+}
+
 // 打开设置并关闭预设下拉框
 const openSettings = (tab?: 'settings' | 'presets') => {
   if (tab) {
@@ -268,6 +281,7 @@ defineOptions({
         :is-maximized="isMaximized"
         @regenerate="regenerateLastResponse"
         @edit="editAndResendMessage"
+        @select-suggestion="handleSelectSuggestion"
       />
 
       <!-- 错误提示 -->

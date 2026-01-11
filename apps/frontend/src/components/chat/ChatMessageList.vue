@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ArrowDown } from 'lucide-vue-next'
+import { ArrowDown, Sparkles, MessageSquare, Lightbulb, Zap } from 'lucide-vue-next'
 import ChatMessage from './ChatMessage.vue'
 import type { ChatMessage as ChatMessageType } from '@/composables/useChat'
 import { useSmartScroll } from '@/composables/useSmartScroll'
@@ -14,9 +14,35 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'regenerate'): void
   (e: 'edit', id: string, content: string): void
+  (e: 'select-suggestion', text: string, options?: { requireTodo?: boolean }): void
 }>()
 
 const { t } = useI18n()
+
+// 建议选项
+const suggestions = computed(() => [
+  {
+    icon: Lightbulb,
+    text: t('ai.suggestion1'),
+    color: 'text-yellow-500',
+    bg: 'bg-yellow-500/10',
+    requireTodo: true,
+  },
+  {
+    icon: Zap,
+    text: t('ai.suggestion2'),
+    color: 'text-blue-500',
+    bg: 'bg-blue-500/10',
+    requireTodo: true,
+  },
+  {
+    icon: MessageSquare,
+    text: t('ai.suggestion3'),
+    color: 'text-green-500',
+    bg: 'bg-green-500/10',
+    requireTodo: true,
+  },
+])
 
 const containerRef = ref<HTMLElement | null>(null)
 
@@ -69,13 +95,48 @@ defineExpose({
 <template>
   <div class="relative flex-1 overflow-hidden">
     <div ref="containerRef" class="h-full overflow-y-auto px-4">
-      <div :class="['min-h-full w-full', isMaximized ? 'mx-auto max-w-4xl' : '']">
+      <div :class="['flex min-h-full w-full flex-col', isMaximized ? 'mx-auto max-w-4xl' : '']">
         <!-- 空状态 -->
         <div
           v-if="messages.length === 0"
-          class="flex h-full items-center justify-center text-muted-foreground/50"
+          class="flex flex-1 flex-col items-center justify-center p-4 pb-20 text-center"
         >
-          <p class="text-sm">{{ t('ai.startChat') }}</p>
+          <div class="relative mb-8">
+            <div class="absolute -inset-4 animate-pulse rounded-full bg-primary/5 blur-2xl"></div>
+            <div
+              class="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 shadow-inner"
+            >
+              <Sparkles class="h-10 w-10 text-primary" />
+            </div>
+          </div>
+
+          <h2 class="mb-3 text-2xl font-bold tracking-tight text-foreground">
+            {{ t('ai.welcomeTitle') }}
+          </h2>
+          <p class="mb-10 max-w-md text-muted-foreground">
+            {{ t('ai.welcomeSubtitle') }}
+          </p>
+
+          <div class="grid w-full max-w-2xl gap-4 sm:grid-cols-3">
+            <button
+              v-for="item in suggestions"
+              :key="item.text"
+              class="group flex flex-col items-start rounded-2xl border border-border bg-card p-5 text-left transition-all hover:border-primary/30 hover:bg-primary/5 hover:shadow-md active:scale-[0.98]"
+              @click="emit('select-suggestion', item.text, { requireTodo: item.requireTodo })"
+            >
+              <div
+                :class="[
+                  'mb-3 flex h-10 w-10 items-center justify-center rounded-xl transition-colors group-hover:bg-white/50 dark:group-hover:bg-black/20',
+                  item.bg,
+                ]"
+              >
+                <component :is="item.icon" :class="['h-5 w-5', item.color]" />
+              </div>
+              <p class="text-sm font-medium leading-relaxed text-foreground/80">
+                {{ item.text }}
+              </p>
+            </button>
+          </div>
         </div>
 
         <!-- 消息列表 -->
