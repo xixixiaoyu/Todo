@@ -62,6 +62,7 @@ describe('useAIConfig', () => {
         discussionMode: true,
         discussionModelIds: ['1', '2'],
         discussionPrimaryModelId: null,
+        memoryModelId: null,
       }
 
       localStorage.setItem('ai-config', JSON.stringify(savedConfig))

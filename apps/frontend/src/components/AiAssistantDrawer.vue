@@ -14,6 +14,7 @@ import {
   Square,
   History,
   Check,
+  Users,
 } from 'lucide-vue-next'
 import ResizableDrawer from '@/components/ResizableDrawer.vue'
 import ChatMessageList from '@/components/chat/ChatMessageList.vue'
@@ -49,6 +50,16 @@ const toggleTodoAssistant = () => {
 
 // Todo 助手是否开启
 const isTodoAssistantEnabled = computed(() => config.value.todoAssistant)
+
+// 切换多模型协作
+const toggleDiscussionMode = () => {
+  updateConfig({
+    discussionMode: !config.value.discussionMode,
+  })
+}
+
+// 多模型协作是否开启
+const isDiscussionEnabled = computed(() => config.value.discussionMode)
 
 // 会话历史管理
 const { lastActiveSession, switchSession } = useChatHistory()
@@ -346,6 +357,21 @@ defineOptions({
             >
               <Clover :size="14" :class="{ 'animate-spin-slow': isTodoAssistantEnabled }" />
               <span class="font-medium">{{ t('ai.todoAssistant') }}</span>
+            </button>
+
+            <!-- 多模型协同讨论 -->
+            <button
+              class="flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] transition-all hover:scale-105 active:scale-95 shadow-sm"
+              :class="
+                isDiscussionEnabled
+                  ? 'border-primary/30 bg-primary/10 text-primary shadow-primary/5'
+                  : 'border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+              "
+              :title="isDiscussionEnabled ? t('ai.discussionMode') : t('ai.discussionMode')"
+              @click="toggleDiscussionMode"
+            >
+              <Users :size="14" :class="{ 'animate-pulse-slow': isDiscussionEnabled }" />
+              <span class="font-medium">{{ t('ai.discussionMode') }}</span>
             </button>
 
             <div class="h-4 w-px bg-border/60 mx-0.5" />
