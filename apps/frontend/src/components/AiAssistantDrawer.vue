@@ -290,7 +290,7 @@ defineOptions({
       </header>
 
       <!-- 主内容区域 -->
-      <div class="relative flex-1 min-h-0">
+      <div class="relative flex-1 min-h-0 flex flex-col">
         <ChatMessageList
           ref="messageListRef"
           :messages="messages"

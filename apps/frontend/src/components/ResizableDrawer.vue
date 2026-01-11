@@ -198,8 +198,9 @@ onUnmounted(() => {
 /* 抽屉内容区 */
 .drawer-content {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   overscroll-behavior: contain;
 }
 
