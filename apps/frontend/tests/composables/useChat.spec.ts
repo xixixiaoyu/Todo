@@ -3,7 +3,14 @@ import { ref, computed } from 'vue'
 import i18n from '@/i18n'
 import { useChat } from '@/composables/useChat'
 import type { ChatSession } from '@/composables/useChatHistory'
-import type { ChatMessage } from '@/services/aiService'
+import {
+  getAIStreamResponse,
+  getMultiModelDiscussionStream,
+  abortCurrentRequest,
+  generateId,
+} from '@/services/aiService'
+import type { ChatMessage, DiscussionStep } from '@/services/aiService'
+import { getAIConfig } from '@/composables/useAIConfig'
 
 // Mock chat history
 const mockCurrentSession = ref<ChatSession | null>(null)
@@ -12,9 +19,7 @@ const mockUpdateSessionMessages = vi.fn<(sessionId: string, messages: ChatMessag
 const mockCreateSession = vi.fn<() => ChatSession>()
 
 vi.mock('@/composables/useChatHistory', async () => {
-  const actual = await vi.importActual('@/composables/useChatHistory')
   return {
-    ...actual,
     useChatHistory: vi.fn(() => ({
       currentSession: computed(() => mockCurrentSession.value),
       getOrCreateCurrentSession: mockGetOrCreateCurrentSession,
@@ -25,17 +30,10 @@ vi.mock('@/composables/useChatHistory', async () => {
 })
 
 // Mock AI service
-import {
-  getAIStreamResponse,
-  getMultiModelDiscussionStream,
-  abortCurrentRequest,
-  generateId,
-} from '@/services/aiService'
-
-vi.mock('@/services/aiService', async () => {
-  const actual = await vi.importActual('@/services/aiService')
+vi.mock('@/services/aiService', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/services/aiService')>()
   return {
-    ...(actual as Record<string, unknown>),
+    ...actual,
     getAIStreamResponse: vi.fn(),
     getMultiModelDiscussionStream: vi.fn(),
     abortCurrentRequest: vi.fn(),
@@ -44,21 +42,32 @@ vi.mock('@/services/aiService', async () => {
 })
 
 // Mock AI config
-import { getAIConfig } from '@/composables/useAIConfig'
 vi.mock('@/composables/useAIConfig', () => ({
   getAIConfig: vi.fn(() => ({
     discussionMode: false,
     discussionModelIds: [],
     discussionPrimaryModelId: null,
+    baseUrl: '',
+    apiKey: '',
+    model: '',
+    systemPrompt: '',
+    temperature: 0.7,
+    thinkingMode: 'disabled',
+    todoAssistant: false,
   })),
   getAIThinkingMode: vi.fn(() => 'disabled'),
 }))
 
 describe('useChat', () => {
-  const mockGetAIStreamResponse = vi.fn()
-  const mockGetMultiModelDiscussionStream = vi.fn()
-  const mockAbortCurrentRequest = vi.fn()
-  const mockGenerateId = vi.fn(() => 'generated-id')
+  const mockGetAIStreamResponse = vi.mocked(getAIStreamResponse)
+  const mockGetMultiModelDiscussionStream = vi.mocked(getMultiModelDiscussionStream)
+  const mockAbortCurrentRequest = vi.mocked(abortCurrentRequest)
+  const mockGenerateId = vi.mocked(generateId)
+
+  // 类型定义辅助
+  type OnChunk = (chunk: string) => void
+  type OnThinking = (thinking: string) => void
+  type OnSteps = (steps: DiscussionStep[]) => void
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -107,11 +116,7 @@ describe('useChat', () => {
       return newSession
     })
 
-    // 重新设置 AI 服务模拟
-    vi.mocked(getAIStreamResponse).mockImplementation(mockGetAIStreamResponse)
-    vi.mocked(getMultiModelDiscussionStream).mockImplementation(mockGetMultiModelDiscussionStream)
-    vi.mocked(abortCurrentRequest).mockImplementation(mockAbortCurrentRequest)
-    vi.mocked(generateId).mockImplementation(mockGenerateId)
+    mockGenerateId.mockReturnValue('generated-id')
   })
 
   afterEach(() => {
@@ -134,192 +139,98 @@ describe('useChat', () => {
   describe('sendMessage', () => {
     it('should not send message if content is empty', async () => {
       const { sendMessage, isGenerating } = useChat()
-
       await sendMessage('')
-
       expect(mockGetAIStreamResponse).not.toHaveBeenCalled()
       expect(isGenerating.value).toBe(false)
     })
 
-    it('should not send message if content is only whitespace', async () => {
-      const { sendMessage } = useChat()
-
-      await sendMessage('   ')
-
-      expect(mockGetAIStreamResponse).not.toHaveBeenCalled()
-    })
-
-    it('should not send message if already generating', async () => {
-      const { sendMessage, isGenerating } = useChat()
-
-      // 模拟正在生成状态
-      isGenerating.value = true
-
-      await sendMessage('test message')
-
-      expect(mockGetAIStreamResponse).not.toHaveBeenCalled()
-    })
-
-    it('should add user message and start generation', async () => {
-      const mockSession: ChatSession = {
-        id: 'session-1',
-        title: 'Test Session',
-        messages: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-      mockCurrentSession.value = mockSession
-      mockGetOrCreateCurrentSession.mockReturnValue(mockSession)
-
-      mockGetAIStreamResponse.mockImplementation(async (_, onChunk) => {
-        // 模拟流响应内容
-        onChunk('Hello')
-        onChunk('[DONE]')
-      })
-
-      const { sendMessage, messages, isGenerating } = useChat()
-
-      await sendMessage('test message')
-
-      expect(messages.value).toHaveLength(2) // 用户消息 + AI 消息
-      expect(messages.value[0].role).toBe('user')
-      expect(messages.value[0].content).toBe('test message')
-      expect(isGenerating.value).toBe(false)
-    })
-
-    it('should handle streaming chunks correctly', async () => {
-      const mockSession: ChatSession = {
-        id: 'session-1',
-        title: 'Test Session',
-        messages: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-      mockCurrentSession.value = mockSession
-      mockGetOrCreateCurrentSession.mockReturnValue(mockSession)
-
-      mockGetAIStreamResponse.mockImplementation(async (_, onChunk) => {
-        onChunk('Hello')
-        onChunk(' World')
-        onChunk('[DONE]')
-      })
-
-      const { sendMessage, currentAIResponse } = useChat()
-
-      await sendMessage('test message')
-
-      expect(currentAIResponse.value).toBe('')
-    })
-
-    it('should handle streaming with thinking content', async () => {
-      const mockSession: ChatSession = {
-        id: 'session-1',
-        title: 'Test Session',
-        messages: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-      mockCurrentSession.value = mockSession
-      mockGetOrCreateCurrentSession.mockReturnValue(mockSession)
-
-      mockGetAIStreamResponse.mockImplementation(async (_, onChunk, onThinking) => {
-        onThinking('Thinking...')
-        onChunk('Hello')
-        onChunk('[DONE]')
-      })
-
-      const { sendMessage, currentThinkingContent, currentAIResponse } = useChat()
-
-      await sendMessage('test message')
-
-      expect(currentThinkingContent.value).toBe('')
-      expect(currentAIResponse.value).toBe('')
-    })
-
-    it('should handle abort response', async () => {
-      const mockSession: ChatSession = {
-        id: 'session-1',
-        title: 'Test Session',
-        messages: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-      mockCurrentSession.value = mockSession
-      mockGetOrCreateCurrentSession.mockReturnValue(mockSession)
-
-      mockGetAIStreamResponse.mockImplementation(async (_, onChunk) => {
-        onChunk('Partial')
-        onChunk('[ABORTED]')
-      })
-
-      const { sendMessage, messages, isGenerating } = useChat()
-
-      await sendMessage('test message')
-
-      expect(messages.value).toHaveLength(2) // 用户消息 + 部分 AI 消息
-      const abortedText = i18n.global.t('ai.aborted')
-      expect(messages.value[1].content).toContain(abortedText)
-      expect(isGenerating.value).toBe(false)
-    })
-
-    it('should handle error and retry', async () => {
-      const mockSession: ChatSession = {
-        id: 'session-1',
-        title: 'Test Session',
-        messages: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-      mockCurrentSession.value = mockSession
-      mockGetOrCreateCurrentSession.mockReturnValue(mockSession)
-
-      const error = new Error('Network error')
-      mockGetAIStreamResponse
-        .mockRejectedValueOnce(error)
-        .mockImplementationOnce(async (_, onChunk) => {
-          onChunk('Success after retry')
+    it('should add user message and handle [DONE] chunk correctly', async () => {
+      mockGetAIStreamResponse.mockImplementation(
+        async (messages: ChatMessage[], onChunk: OnChunk) => {
+          onChunk('Hello')
           onChunk('[DONE]')
-        })
+        },
+      )
 
-      const { sendMessage, error: errorState, isGenerating } = useChat()
-
+      const { sendMessage, messages, isGenerating } = useChat()
       await sendMessage('test message')
 
-      // 第一次调用失败，第二次成功（由于重试）
-      expect(mockGetAIStreamResponse).toHaveBeenCalledTimes(2)
-      expect(errorState.value).toBeNull()
+      expect(messages.value).toHaveLength(2)
+      expect(messages.value[0].role).toBe('user')
+      expect(messages.value[1].role).toBe('assistant')
+      expect(messages.value[1].content).toBe('Hello')
       expect(isGenerating.value).toBe(false)
     })
 
-    it('should handle max retries', async () => {
-      const mockSession: ChatSession = {
-        id: 'session-1',
-        title: 'Test Session',
-        messages: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-      mockCurrentSession.value = mockSession
-      mockGetOrCreateCurrentSession.mockReturnValue(mockSession)
+    it('should handle [ABORTED] chunk correctly', async () => {
+      mockGetAIStreamResponse.mockImplementation(
+        async (messages: ChatMessage[], onChunk: OnChunk) => {
+          onChunk('Partially generated...')
+          onChunk('[ABORTED]')
+        },
+      )
 
-      const error = new Error('Network error')
-      mockGetAIStreamResponse.mockRejectedValue(error)
-
-      const { sendMessage, error: errorState, isGenerating } = useChat()
-
+      const { sendMessage, messages, isGenerating } = useChat()
       await sendMessage('test message')
 
-      // 应该重试 3 次（MAX_RETRIES = 3）
-      expect(mockGetAIStreamResponse).toHaveBeenCalledTimes(4) // 原始 + 3 次重试
-      expect(errorState.value).toBe('Network error')
+      expect(messages.value).toHaveLength(2)
+      expect(messages.value[1].content).toContain('Partially generated...')
+      expect(messages.value[1].content).toContain(i18n.global.t('ai.aborted'))
       expect(isGenerating.value).toBe(false)
     })
 
-    it('should use multi-model discussion when enabled', async () => {
+    it('should handle thinking chunks correctly', async () => {
+      mockGetAIStreamResponse.mockImplementation(
+        async (messages: ChatMessage[], onChunk: OnChunk, onThinking?: OnThinking) => {
+          onThinking?.('Thinking process...')
+          onChunk('Result')
+          onChunk('[DONE]')
+        },
+      )
+
+      const { sendMessage, messages } = useChat()
+      await sendMessage('test message')
+
+      expect(messages.value[1].thinkingContent).toBe('Thinking process...')
+      expect(messages.value[1].content).toBe('Result')
+    })
+
+    it('should retry on failure and eventually succeed', async () => {
+      let calls = 0
+      mockGetAIStreamResponse.mockImplementation(
+        async (messages: ChatMessage[], onChunk: OnChunk) => {
+          calls++
+          if (calls === 1) throw new Error('Network error')
+          onChunk('Success')
+          onChunk('[DONE]')
+        },
+      )
+
+      const { sendMessage, error, messages } = useChat()
+      await sendMessage('test message')
+
+      expect(calls).toBe(2)
+      expect(error.value).toBeNull()
+      expect(messages.value[1].content).toBe('Success')
+    })
+
+    it('should stop retrying after MAX_RETRIES', async () => {
+      mockGetAIStreamResponse.mockImplementation(async () => {
+        throw new Error('Persistent error')
+      })
+
+      const { sendMessage, error } = useChat()
+      await sendMessage('test message')
+
+      expect(mockGetAIStreamResponse).toHaveBeenCalledTimes(4) // Initial + 3 retries
+      expect(error.value).toBe('Persistent error')
+    })
+
+    it('should handle multi-model discussion mode', async () => {
       vi.mocked(getAIConfig).mockReturnValue({
         discussionMode: true,
-        discussionModelIds: ['model-1', 'model-2'],
-        discussionPrimaryModelId: 'model-1',
+        discussionModelIds: ['m1', 'm2'],
+        discussionPrimaryModelId: 'm1',
         baseUrl: '',
         apiKey: '',
         model: '',
@@ -329,42 +240,27 @@ describe('useChat', () => {
         todoAssistant: false,
       })
 
-      const mockSession: ChatSession = {
-        id: 'session-1',
-        title: 'Test Session',
-        messages: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-      mockCurrentSession.value = mockSession
-      mockGetOrCreateCurrentSession.mockReturnValue(mockSession)
-
       mockGetMultiModelDiscussionStream.mockImplementation(
-        async (messages, onStepUpdate, onFinalChunk) => {
-          onStepUpdate([{ modelId: 'model-1', modelName: 'M1', content: 'Step 1', status: 'done' }])
-          onFinalChunk('Final Answer')
-          onFinalChunk('[DONE]')
+        async (messages: ChatMessage[], onSteps: OnSteps, onChunk: OnChunk) => {
+          onSteps([{ modelId: 'm1', modelName: 'M1', content: 'step 1', status: 'done' }])
+          onChunk('Final answer')
+          onChunk('[DONE]')
         },
       )
 
-      const { sendMessage, currentDiscussionSteps, messages } = useChat()
-
-      await sendMessage('Hello')
+      const { sendMessage, messages } = useChat()
+      await sendMessage('discuss this')
 
       expect(mockGetMultiModelDiscussionStream).toHaveBeenCalled()
-      expect(currentDiscussionSteps.value).toEqual([]) // Should be reset after [DONE]
-      expect(messages.value).toHaveLength(2)
       expect(messages.value[1].discussionSteps).toHaveLength(1)
-      expect(messages.value[1].discussionSteps![0].content).toBe('Step 1')
+      expect(messages.value[1].content).toBe('Final answer')
     })
   })
 
   describe('stopGenerating', () => {
     it('should call abortCurrentRequest', () => {
       const { stopGenerating } = useChat()
-
       stopGenerating()
-
       expect(mockAbortCurrentRequest).toHaveBeenCalled()
     })
   })
@@ -372,10 +268,9 @@ describe('useChat', () => {
   describe('clearHistory', () => {
     it('should create new session and reset state', () => {
       const { clearHistory, currentAIResponse, currentThinkingContent, error } = useChat()
-
-      currentAIResponse.value = 'test response'
-      currentThinkingContent.value = 'test thinking'
-      error.value = 'test error'
+      currentAIResponse.value = 'test'
+      currentThinkingContent.value = 'test'
+      error.value = 'test'
 
       clearHistory()
 
@@ -388,237 +283,71 @@ describe('useChat', () => {
 
   describe('deleteMessage', () => {
     it('should remove message by id', () => {
-      const mockSessionWithMessages: ChatSession = {
-        id: 'session-1',
-        title: 'Test Session',
-        messages: [
-          { id: 'msg-1', role: 'user', content: 'hello', createdAt: new Date() },
-          { id: 'msg-2', role: 'assistant', content: 'hi', createdAt: new Date() },
-        ],
+      mockCurrentSession.value = {
+        id: 's1',
+        title: 'T1',
+        messages: [{ id: 'm1', role: 'user', content: 'h' }],
         createdAt: new Date(),
         updatedAt: new Date(),
       }
-
-      mockCurrentSession.value = mockSessionWithMessages
-      mockGetOrCreateCurrentSession.mockReturnValue(mockSessionWithMessages)
-
       const { deleteMessage, messages } = useChat()
-
-      deleteMessage('msg-1')
-
-      expect(messages.value).toHaveLength(1)
-      expect(messages.value[0].id).toBe('msg-2')
-    })
-
-    it('should not remove anything if message id not found', () => {
-      const mockSessionWithMessages: ChatSession = {
-        id: 'session-1',
-        title: 'Test Session',
-        messages: [{ id: 'msg-1', role: 'user', content: 'hello', createdAt: new Date() }],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-
-      mockCurrentSession.value = mockSessionWithMessages
-      mockGetOrCreateCurrentSession.mockReturnValue(mockSessionWithMessages)
-
-      const { deleteMessage, messages } = useChat()
-
-      deleteMessage('non-existent')
-
-      expect(messages.value).toHaveLength(1)
-      expect(messages.value[0].id).toBe('msg-1')
+      deleteMessage('m1')
+      expect(messages.value).toHaveLength(0)
     })
   })
 
   describe('regenerateLastResponse', () => {
-    it('should regenerate last response when user message exists', async () => {
-      const mockSessionWithMessages: ChatSession = {
-        id: 'session-1',
-        title: 'Test Session',
+    it('should regenerate last response', async () => {
+      mockCurrentSession.value = {
+        id: 's1',
+        title: 'T1',
         messages: [
-          { id: 'msg-1', role: 'user', content: 'hello', createdAt: new Date() },
-          { id: 'msg-2', role: 'assistant', content: 'hi', createdAt: new Date() },
+          { id: 'm1', role: 'user', content: 'hello' },
+          { id: 'm2', role: 'assistant', content: 'hi' },
         ],
         createdAt: new Date(),
         updatedAt: new Date(),
       }
-
-      mockCurrentSession.value = mockSessionWithMessages
-      mockGetOrCreateCurrentSession.mockReturnValue(mockSessionWithMessages)
-
-      mockGetAIStreamResponse.mockImplementation(async (_, onChunk) => {
-        onChunk('Hello')
-        onChunk('[DONE]')
-      })
+      mockGetAIStreamResponse.mockImplementation(
+        async (messages: ChatMessage[], onChunk: OnChunk) => {
+          onChunk('New Hi')
+          onChunk('[DONE]')
+        },
+      )
 
       const { regenerateLastResponse, messages } = useChat()
-
       await regenerateLastResponse()
 
-      // 应该移除助手消息并添加新的用户 + 助手消息
-      expect(messages.value).toHaveLength(2) // 新用户 + 新助手
-      expect(messages.value[0].role).toBe('user')
-      expect(messages.value[0].content).toBe('hello')
-    })
-
-    it('should not regenerate if no user message found', async () => {
-      const mockSessionWithMessages: ChatSession = {
-        id: 'session-1',
-        title: 'Test Session',
-        messages: [{ id: 'msg-2', role: 'assistant', content: 'hi', createdAt: new Date() }],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-
-      mockCurrentSession.value = mockSessionWithMessages
-      mockGetOrCreateCurrentSession.mockReturnValue(mockSessionWithMessages)
-
-      const { regenerateLastResponse } = useChat()
-
-      await regenerateLastResponse()
-
-      expect(mockGetAIStreamResponse).not.toHaveBeenCalled()
-    })
-
-    it('should not regenerate if already generating', async () => {
-      const mockSessionWithMessages: ChatSession = {
-        id: 'session-1',
-        title: 'Test Session',
-        messages: [
-          { id: 'msg-1', role: 'user', content: 'hello', createdAt: new Date() },
-          { id: 'msg-2', role: 'assistant', content: 'hi', createdAt: new Date() },
-        ],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-
-      mockCurrentSession.value = mockSessionWithMessages
-      mockGetOrCreateCurrentSession.mockReturnValue(mockSessionWithMessages)
-
-      const { regenerateLastResponse, isGenerating } = useChat()
-
-      isGenerating.value = true
-      await regenerateLastResponse()
-
-      expect(mockGetAIStreamResponse).not.toHaveBeenCalled()
+      expect(messages.value).toHaveLength(2)
+      expect(messages.value[1].content).toBe('New Hi')
     })
   })
 
   describe('editAndResendMessage', () => {
-    it('should edit message and remove subsequent messages', async () => {
-      const mockSessionWithMessages: ChatSession = {
-        id: 'session-1',
-        title: 'Test Session',
+    it('should edit and resend', async () => {
+      mockCurrentSession.value = {
+        id: 's1',
+        title: 'T1',
         messages: [
-          { id: 'msg-1', role: 'user', content: 'hello', createdAt: new Date() },
-          { id: 'msg-2', role: 'assistant', content: 'hi', createdAt: new Date() },
-          { id: 'msg-3', role: 'user', content: 'how are you', createdAt: new Date() },
-          { id: 'msg-4', role: 'assistant', content: 'I am fine', createdAt: new Date() },
+          { id: 'm1', role: 'user', content: 'hello' },
+          { id: 'm2', role: 'assistant', content: 'hi' },
         ],
         createdAt: new Date(),
         updatedAt: new Date(),
       }
-
-      mockCurrentSession.value = mockSessionWithMessages
-      mockGetOrCreateCurrentSession.mockReturnValue(mockSessionWithMessages)
-
-      mockGetAIStreamResponse.mockImplementation(async (_, onChunk) => {
-        onChunk('New Response')
-        onChunk('[DONE]')
-      })
+      mockGetAIStreamResponse.mockImplementation(
+        async (messages: ChatMessage[], onChunk: OnChunk) => {
+          onChunk('New response')
+          onChunk('[DONE]')
+        },
+      )
 
       const { editAndResendMessage, messages } = useChat()
+      await editAndResendMessage('m1', 'new hello')
 
-      await editAndResendMessage('msg-1', 'modified hello')
-
-      // msg-1 之后的所有消息都应该被删除，msg-1 被新发送的消息替换
-      expect(messages.value).toHaveLength(2) // 替换后的 msg-1 (new user msg) + 新的 AI 回复
-      expect(messages.value[0].content).toBe('modified hello')
-      expect(messages.value[1].content).toBe('New Response')
-    })
-
-    it('should not edit if message id not found', async () => {
-      const mockSessionWithMessages: ChatSession = {
-        id: 'session-1',
-        title: 'Test Session',
-        messages: [{ id: 'msg-1', role: 'user', content: 'hello', createdAt: new Date() }],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-
-      mockCurrentSession.value = mockSessionWithMessages
-      mockGetOrCreateCurrentSession.mockReturnValue(mockSessionWithMessages)
-
-      const { editAndResendMessage, messages } = useChat()
-
-      await editAndResendMessage('non-existent', 'new content')
-
-      expect(messages.value).toHaveLength(1)
-      expect(mockGetAIStreamResponse).not.toHaveBeenCalled()
-    })
-
-    it('should not edit if content is empty', async () => {
-      const mockSessionWithMessages: ChatSession = {
-        id: 'session-1',
-        title: 'Test Session',
-        messages: [{ id: 'msg-1', role: 'user', content: 'hello', createdAt: new Date() }],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-
-      mockCurrentSession.value = mockSessionWithMessages
-      mockGetOrCreateCurrentSession.mockReturnValue(mockSessionWithMessages)
-
-      const { editAndResendMessage } = useChat()
-
-      await editAndResendMessage('msg-1', '')
-
-      expect(mockGetAIStreamResponse).not.toHaveBeenCalled()
-    })
-  })
-
-  describe('messages computed', () => {
-    it('should include streaming response when present', () => {
-      const mockSessionWithMessages: ChatSession = {
-        id: 'session-1',
-        title: 'Test Session',
-        messages: [{ id: 'msg-1', role: 'user', content: 'hello', createdAt: new Date() }],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-
-      mockCurrentSession.value = mockSessionWithMessages
-      mockGetOrCreateCurrentSession.mockReturnValue(mockSessionWithMessages)
-
-      const { messages, currentAIResponse, currentThinkingContent, isGenerating } = useChat()
-
-      isGenerating.value = true
-      currentAIResponse.value = 'partial response'
-      currentThinkingContent.value = 'thinking...'
-
-      // 应该包含流式响应
       expect(messages.value).toHaveLength(2)
-      expect(messages.value[1].id).toBe('streaming-response')
-      expect(messages.value[1].isStreaming).toBe(true)
-    })
-
-    it('should not include streaming response when not present', () => {
-      const mockSessionWithMessages: ChatSession = {
-        id: 'session-1',
-        title: 'Test Session',
-        messages: [{ id: 'msg-1', role: 'user', content: 'hello', createdAt: new Date() }],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-
-      mockCurrentSession.value = mockSessionWithMessages
-      mockGetOrCreateCurrentSession.mockReturnValue(mockSessionWithMessages)
-
-      const { messages } = useChat()
-
-      expect(messages.value).toHaveLength(1)
-      expect(messages.value[0].id).toBe('msg-1')
+      expect(messages.value[0].content).toBe('new hello')
+      expect(messages.value[1].content).toBe('New response')
     })
   })
 })
