@@ -23,6 +23,28 @@ const lastActiveSessionId = ref<string | null>(null)
 let saveTimer: ReturnType<typeof setTimeout> | null = null
 
 /**
+ * 保存当前会话 ID 到 localStorage
+ */
+function saveCurrentSessionId(id: string | null): void {
+  if (id) {
+    localStorage.setItem(CURRENT_SESSION_KEY, id)
+  } else {
+    localStorage.removeItem(CURRENT_SESSION_KEY)
+  }
+}
+
+/**
+ * 保存上一个激活的会话 ID 到 localStorage
+ */
+function saveLastActiveSessionId(id: string | null): void {
+  if (id) {
+    localStorage.setItem(LAST_ACTIVE_SESSION_KEY, id)
+  } else {
+    localStorage.removeItem(LAST_ACTIVE_SESSION_KEY)
+  }
+}
+
+/**
  * 从 localStorage 加载会话列表
  */
 function loadSessions(): void {
@@ -46,7 +68,11 @@ function loadSessions(): void {
     if (savedCurrentId && sessions.value.some((s) => s.id === savedCurrentId)) {
       currentSessionId.value = savedCurrentId
     } else if (sessions.value.length > 0) {
-      currentSessionId.value = sessions.value[0].id
+      // 回退逻辑：优先选择最近更新的会话
+      const latestSession = [...sessions.value].sort(
+        (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime(),
+      )[0]
+      currentSessionId.value = latestSession.id
     }
 
     // 加载上一个激活的会话 ID
@@ -67,12 +93,6 @@ function saveSessions(): void {
   saveTimer = setTimeout(() => {
     try {
       localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(sessions.value))
-      if (currentSessionId.value) {
-        localStorage.setItem(CURRENT_SESSION_KEY, currentSessionId.value)
-      }
-      if (lastActiveSessionId.value) {
-        localStorage.setItem(LAST_ACTIVE_SESSION_KEY, lastActiveSessionId.value)
-      }
     } catch {
       console.warn('保存会话历史失败')
     }
@@ -84,18 +104,32 @@ if (typeof window !== 'undefined') {
   loadSessions()
 }
 
-// 监听变化自动保存
-watch([sessions, currentSessionId, lastActiveSessionId], saveSessions, { deep: true })
+// 监听会话列表变化自动保存
+watch(sessions, saveSessions, { deep: true })
 
-// 监听当前会话变化，更新上一个激活的会话
-watch(currentSessionId, (newId, oldId) => {
-  if (oldId && oldId !== newId && sessions.value.some((s) => s.id === oldId)) {
-    lastActiveSessionId.value = oldId
-  }
-})
+// 监听当前会话变化，更新上一个激活的会话并立即保存 ID
+watch(
+  currentSessionId,
+  (newId, oldId) => {
+    if (oldId && oldId !== newId && sessions.value.some((s) => s.id === oldId)) {
+      lastActiveSessionId.value = oldId
+    }
+    saveCurrentSessionId(newId)
+  },
+  { flush: 'sync' },
+)
+
+// 监听上一个激活的会话变化并立即保存 ID
+watch(
+  lastActiveSessionId,
+  (newId) => {
+    saveLastActiveSessionId(newId)
+  },
+  { flush: 'sync' },
+)
 
 /**
- * 导出重置函数用于测试
+ * 导出内部函数用于测试
  */
 export function _resetChatHistory() {
   sessions.value = []
@@ -105,6 +139,10 @@ export function _resetChatHistory() {
     clearTimeout(saveTimer)
     saveTimer = null
   }
+}
+
+export function _loadSessions() {
+  loadSessions()
 }
 
 /**

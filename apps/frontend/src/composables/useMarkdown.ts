@@ -253,8 +253,14 @@ md.renderer.rules.fence = (tokens, idx, options, env: MarkdownEnv, self) => {
   return `
     <div class="code-block-container">
       <div class="code-block-header">
-        <span class="code-language">${displayLanguage}</span>
-        <button class="copy-button" data-code="${encodeURIComponent(content)}">复制</button>
+        <div class="code-block-header-left">
+          <span class="code-language">${displayLanguage}</span>
+        </div>
+        <button class="code-copy-button" data-code="${encodeURIComponent(content)}" title="复制代码">
+          <svg class="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          <svg class="check-icon hidden" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          <span>复制</span>
+        </button>
       </div>
       <div class="code-content">${highlighted}</div>
     </div>
@@ -595,15 +601,6 @@ export function useMarkdown() {
 
         // 执行异步渲染（处理新图表或更新缓存）
         await processMermaidQueue(env.mermaidQueue)
-      }
-
-      // 6. 处理流式输出光标
-      if (isStreaming) {
-        if (html.endsWith('</p>')) {
-          html = html.replace(/<\/p>$/, '<span class="typing-cursor"></span></p>')
-        } else {
-          html += '<span class="typing-cursor"></span>'
-        }
       }
 
       return html

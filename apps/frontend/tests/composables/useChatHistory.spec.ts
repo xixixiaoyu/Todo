@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { nextTick } from 'vue'
 import i18n from '@/i18n'
-import { useChatHistory, _resetChatHistory } from '@/composables/useChatHistory'
+import { useChatHistory, _resetChatHistory, _loadSessions } from '@/composables/useChatHistory'
 import { type ChatMessage } from '@/services/aiService'
 
 // Mock localStorage
@@ -155,6 +155,59 @@ describe('useChatHistory', () => {
 
       expect(returnedSession).toEqual(currentSession.value)
       expect(returnedSession).toBeDefined()
+    })
+  })
+
+  describe('loadSessions', () => {
+    it('should restore currentSessionId from localStorage', () => {
+      const sessionId = 'test-session-id'
+      const sessionsData = [
+        {
+          id: sessionId,
+          title: 'Test Session',
+          messages: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      ]
+
+      localStorage.setItem('ai-chat-sessions', JSON.stringify(sessionsData))
+      localStorage.setItem('ai-chat-current-session', sessionId)
+
+      _loadSessions()
+
+      const { currentSessionId } = useChatHistory()
+      expect(currentSessionId.value).toBe(sessionId)
+    })
+
+    it('should fallback to the most recently updated session if currentSessionId is missing', () => {
+      const oldSessionId = 'old-session'
+      const newSessionId = 'new-session'
+      const now = new Date()
+      const sessionsData = [
+        {
+          id: oldSessionId,
+          title: 'Old Session',
+          messages: [],
+          createdAt: now.toISOString(),
+          updatedAt: now.toISOString(),
+        },
+        {
+          id: newSessionId,
+          title: 'New Session',
+          messages: [],
+          createdAt: new Date(now.getTime() - 1000).toISOString(),
+          updatedAt: new Date(now.getTime() + 1000).toISOString(), // Updated later
+        },
+      ]
+
+      localStorage.setItem('ai-chat-sessions', JSON.stringify(sessionsData))
+      // DO NOT set ai-chat-current-session
+
+      _loadSessions()
+
+      const { currentSessionId } = useChatHistory()
+      expect(currentSessionId.value).toBe(newSessionId)
     })
   })
 

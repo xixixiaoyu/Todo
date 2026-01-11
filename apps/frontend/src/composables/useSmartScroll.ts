@@ -119,14 +119,27 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
   }
 
   /**
-   * 滚动到底部（平滑模式）
+   * 滚动到底部（平滑模式 - 优化版）
    */
   const scrollToBottomSmooth = () => {
     const el = scrollContainer.value
     if (!el) return
-    setProgrammaticScroll(500) // 平滑滚动需要更长时间
+
+    const { scrollTop, scrollHeight, clientHeight } = el
+    const targetTop = scrollHeight - clientHeight
+    const distance = targetTop - scrollTop
+
+    // 如果距离太近，直接瞬时滚动
+    if (Math.abs(distance) < 2) {
+      scrollToBottomInstant()
+      return
+    }
+
+    setProgrammaticScroll(400)
+
+    // 使用原生 smooth 行为，但增加一个保护锁
     el.scrollTo({
-      top: el.scrollHeight,
+      top: targetTop,
       behavior: 'smooth',
     })
   }

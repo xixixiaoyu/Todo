@@ -218,17 +218,32 @@ defineOptions({
   >
     <div class="relative flex h-full flex-col bg-background">
       <!-- 顶部标题栏 -->
-      <header class="flex h-12 shrink-0 items-center justify-between bg-primary px-4">
-        <span class="text-sm font-medium text-primary-foreground">{{ t('ai.assistant') }}</span>
+      <header
+        class="flex h-14 shrink-0 items-center justify-between bg-primary/95 px-4 backdrop-blur-md shadow-sm z-10"
+      >
+        <div class="flex items-center gap-2">
+          <div
+            class="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 text-white shadow-inner"
+          >
+            <Clover :size="18" class="animate-pulse-slow" />
+          </div>
+          <span class="text-[15px] font-semibold tracking-tight text-white">{{
+            t('ai.assistant')
+          }}</span>
+        </div>
         <div class="flex items-center gap-2">
           <!-- 预设下拉框 -->
           <div class="relative">
             <button
-              class="flex items-center gap-1 rounded-md bg-white/20 px-3 py-1.5 text-xs text-white transition-colors hover:bg-white/30"
+              class="flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-1.5 text-[13px] text-white transition-all hover:bg-white/20 hover:scale-105 active:scale-95 border border-white/10"
               @click="showPresetDropdown = !showPresetDropdown"
             >
-              <span>{{ currentPresetName }}</span>
-              <ChevronDown :size="14" :class="{ 'rotate-180': showPresetDropdown }" />
+              <span class="font-medium">{{ currentPresetName }}</span>
+              <ChevronDown
+                :size="14"
+                class="transition-transform duration-300"
+                :class="{ 'rotate-180': showPresetDropdown }"
+              />
             </button>
             <!-- 下拉菜单 -->
             <Transition
@@ -309,69 +324,40 @@ defineOptions({
       </div>
 
       <!-- 底部工具栏 -->
-      <div class="shrink-0 border-t border-border bg-muted/30 p-3">
+      <div class="shrink-0 border-t border-border bg-background/80 backdrop-blur-sm p-4 space-y-3">
         <!-- 快捷操作按钮 -->
-        <div class="mb-3 flex flex-wrap items-center gap-2 text-sm">
+        <div class="flex flex-wrap items-center gap-2 text-sm">
           <button
-            class="flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-30"
+            class="flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-[13px] text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-30"
             :disabled="!hasHistory || isGenerating"
             @click="handleNewChat"
           >
             <Plus :size="14" />
             <span>{{ t('ai.newChat') }}</span>
           </button>
-          <!-- 停止生成按钮 -->
-          <button
-            v-if="isGenerating && !error"
-            class="flex items-center gap-1 rounded-full border border-error/20 bg-error/10 px-3 py-1.5 text-error transition-colors hover:bg-error/20"
-            @click="stopGenerating"
-          >
-            <Square :size="12" />
-            <span>{{ t('ai.stop') }}</span>
-          </button>
+
+          <div class="h-4 w-px bg-border/60 mx-1" />
+
           <!-- AI 思考模式开关 -->
           <button
-            class="flex h-8 w-8 items-center justify-center rounded-full border transition-colors"
+            class="flex h-8 w-8 items-center justify-center rounded-full border transition-all hover:scale-110 active:scale-95 shadow-sm"
             :class="
               isThinkingEnabled
-                ? 'border-primary bg-primary/10 text-primary'
+                ? 'border-primary/30 bg-primary/10 text-primary shadow-primary/5'
                 : 'border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground'
             "
             :title="isThinkingEnabled ? t('ai.thinkingEnabled') : t('ai.thinkingDisabled')"
             @click="toggleThinkingMode"
           >
-            <Lightbulb :size="16" />
+            <Lightbulb :size="16" :class="{ 'fill-primary/20': isThinkingEnabled }" />
           </button>
-          <!-- 返回上一个会话按钮 -->
+
+          <!-- Todo 助手 -->
           <button
-            class="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-30"
-            :title="t('ai.previousSession')"
-            :disabled="!lastActiveSession || isGenerating"
-            @click="navigateToPrevious"
-          >
-            <ChevronLeft :size="16" />
-          </button>
-          <button
-            class="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-            :title="t('ai.history')"
-            :class="{ 'cursor-not-allowed opacity-50': isGenerating }"
-            :disabled="isGenerating"
-            @click="openHistory"
-          >
-            <History :size="16" />
-          </button>
-          <button
-            class="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground"
-            :title="t('ai.settings')"
-            @click="openSettings()"
-          >
-            <Settings2 :size="16" />
-          </button>
-          <button
-            class="flex items-center gap-1 rounded-full border px-3 py-1.5 transition-colors"
+            class="flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] transition-all hover:scale-105 active:scale-95 shadow-sm"
             :class="
               isTodoAssistantEnabled
-                ? 'border-primary bg-primary/10 text-primary'
+                ? 'border-primary/30 bg-primary/10 text-primary shadow-primary/5'
                 : 'border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground'
             "
             :title="
@@ -379,40 +365,93 @@ defineOptions({
             "
             @click="toggleTodoAssistant"
           >
-            <Clover :size="14" />
-            <span>{{ t('ai.todoAssistant') }}</span>
+            <Clover :size="14" :class="{ 'animate-spin-slow': isTodoAssistantEnabled }" />
+            <span class="font-medium">{{ t('ai.todoAssistant') }}</span>
           </button>
+
+          <div class="flex-1" />
+
+          <!-- 历史与设置 -->
+          <div class="flex items-center gap-2">
+            <button
+              class="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground hover:scale-110 active:scale-95 shadow-sm"
+              :title="t('ai.history')"
+              :class="{ 'cursor-not-allowed opacity-50': isGenerating }"
+              :disabled="isGenerating"
+              @click="openHistory"
+            >
+              <History :size="16" />
+            </button>
+            <button
+              class="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground hover:scale-110 active:scale-95 shadow-sm"
+              :title="t('ai.settings')"
+              @click="openSettings()"
+            >
+              <Settings2 :size="16" />
+            </button>
+          </div>
         </div>
 
         <!-- 输入框区域 -->
         <div
-          class="flex gap-2 rounded-xl border border-border bg-card px-4 py-3"
-          :class="{ 'opacity-50': isInputDisabled }"
+          class="input-container-refined relative flex flex-col gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm"
+          :class="{ 'opacity-60 grayscale-[0.2]': isInputDisabled }"
         >
           <textarea
             ref="textareaRef"
             v-model="chatInput"
             rows="1"
             :placeholder="isInputDisabled ? t('ai.generating') : t('ai.placeholder')"
-            class="flex-1 resize-none bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground/50"
+            class="flex-1 resize-none bg-transparent px-3 py-2 text-[15px] text-foreground outline-none placeholder:text-muted-foreground/30 leading-relaxed transition-all"
             :style="{ height: `${MIN_HEIGHT}px` }"
             :disabled="isInputDisabled"
             @input="adjustTextareaHeight"
             @keydown.enter.exact.prevent="handleSend"
             @keydown.enter.shift.exact="handleNewline"
           />
-          <button
-            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-primary-foreground transition-colors"
-            :class="
-              isInputDisabled
-                ? 'cursor-not-allowed bg-primary/30'
-                : 'bg-primary hover:bg-primary-hover'
-            "
-            :disabled="isInputDisabled"
-            @click="handleSend"
-          >
-            <Send :size="16" />
-          </button>
+
+          <div class="flex items-center justify-between px-2 pb-1">
+            <div class="flex items-center gap-1.5">
+              <!-- 停止生成按钮 -->
+              <button
+                v-if="isGenerating && !error"
+                class="animate-stop-pulse flex items-center gap-1.5 rounded-lg bg-red-500 px-3 py-1.5 text-[12px] font-bold text-white transition-all hover:bg-red-600 active:scale-95"
+                @click="stopGenerating"
+              >
+                <Square :size="12" class="fill-current" />
+                <span>{{ t('ai.stop') }}</span>
+              </button>
+
+              <!-- 导航按钮 -->
+              <button
+                class="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                :title="t('ai.previousSession')"
+                :disabled="isGenerating || !lastActiveSession"
+                @click="navigateToPrevious"
+              >
+                <ChevronLeft :size="16" />
+              </button>
+            </div>
+
+            <button
+              class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-primary-foreground transition-all shadow-sm"
+              :class="[
+                isInputDisabled || !chatInput.trim()
+                  ? 'cursor-not-allowed bg-primary/20 scale-95'
+                  : 'animate-button-pop bg-primary hover:bg-primary-hover hover:scale-105 active:scale-95 shadow-primary/20',
+              ]"
+              :disabled="isInputDisabled || !chatInput.trim()"
+              @click="handleSend"
+            >
+              <Send
+                :size="18"
+                :class="{
+                  'translate-x-0.5 -translate-y-0.5 transition-transform':
+                    !isInputDisabled && chatInput.trim(),
+                }"
+              />
+            </button>
+          </div>
         </div>
       </div>
 

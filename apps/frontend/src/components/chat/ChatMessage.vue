@@ -124,34 +124,61 @@ const updateContentHeight = () => {
   }
 }
 
-// 注入 Mermaid SVG 并初始化交互
-function injectMermaidSvgs() {
+// 注入交互逻辑（Mermaid 和 代码块）
+function injectInteractions() {
+  const container = messageRef.value
+  if (!container) return
+
+  // 1. 处理 Mermaid SVG 注入与交互
   const svgMap = getMermaidSvgMap()
-  if (svgMap.size === 0) return
-
-  nextTick(() => {
-    const container = messageRef.value
-    if (!container) return
-
+  if (svgMap.size > 0) {
     svgMap.forEach((fullHtml, placeholderId) => {
       const placeholder = container.querySelector(`#${placeholderId}`)
-
       if (placeholder) {
-        // 如果占位符还在（说明是新渲染的），则进行替换
         if (placeholder.getAttribute('data-processed') !== 'true') {
           const tempWrapper = document.createElement('div')
           tempWrapper.innerHTML = fullHtml
           const containerElement = tempWrapper.querySelector('.mermaid-container')
-
           if (containerElement && placeholder.parentNode) {
             containerElement.setAttribute('data-processed', 'true')
             placeholder.parentNode.replaceChild(containerElement, placeholder)
             initMermaidInteractions(containerElement as HTMLElement)
           }
         } else {
-          // 如果已经处理过，确保交互逻辑仍然有效（应对 Vue 重新渲染 DOM 的情况）
           initMermaidInteractions(placeholder as HTMLElement)
         }
+      }
+    })
+  }
+
+  // 2. 处理代码块复制按钮
+  initCodeInteractions(container)
+}
+
+// 初始化代码块交互
+function initCodeInteractions(container: HTMLElement) {
+  const copyButtons = container.querySelectorAll('.code-copy-button')
+  copyButtons.forEach((btn) => {
+    const htmlBtn = btn as HTMLButtonElement
+    if (htmlBtn.dataset.interacted === 'true') return
+    htmlBtn.dataset.interacted = 'true'
+
+    htmlBtn.addEventListener('click', async () => {
+      const code = htmlBtn.dataset.code
+      if (!code) return
+
+      try {
+        await navigator.clipboard.writeText(decodeURIComponent(code))
+        htmlBtn.classList.add('copied')
+        const span = htmlBtn.querySelector('span')
+        if (span) span.textContent = t('ai.copied')
+
+        setTimeout(() => {
+          htmlBtn.classList.remove('copied')
+          if (span) span.textContent = t('ai.copy')
+        }, 2000)
+      } catch (err) {
+        console.error('Failed to copy code:', err)
       }
     })
   })
@@ -269,7 +296,7 @@ async function updateRenderedContent() {
     nextTick(updateContentHeight)
   }
 
-  injectMermaidSvgs()
+  nextTick(injectInteractions)
 }
 
 // 监听内容与状态变化
@@ -340,16 +367,17 @@ async function copyContent() {
       <!-- 思考过程（AI 消息） -->
       <div
         v-if="hasThinking && !isUser"
-        class="thinking-content group/thinking mb-2 overflow-hidden rounded-xl border border-ai-message-border bg-ai-message-bg transition-all duration-300 shadow-sm hover:shadow-md"
-        :class="{ 'is-collapsed': !isExpanded }"
+        class="thinking-content group/thinking mb-2 overflow-hidden rounded-xl border border-ai-message-border bg-ai-message-bg transition-all duration-300 shadow-sm hover:shadow-md hover:border-primary/20"
+        :class="{ 'is-collapsed': !isExpanded, 'ring-1 ring-primary/5': isExpanded }"
       >
         <div
-          class="thinking-header flex items-center justify-between px-3 py-2 cursor-pointer select-none"
+          class="thinking-header flex items-center justify-between px-3 py-2 cursor-pointer select-none transition-colors hover:bg-primary/5"
+          :class="{ 'shimmer-thinking': isStreaming && !hasContent }"
           @click="isExpanded = !isExpanded"
         >
           <h4 class="flex items-center gap-2">
             <div
-              class="ai-icon text-primary"
+              class="ai-icon text-primary/80 transition-transform duration-500 group-hover/thinking:scale-110"
               :class="{ 'animate-pulse-custom': isStreaming && !hasContent }"
             >
               <svg
@@ -377,37 +405,43 @@ async function copyContent() {
               </svg>
             </div>
             <span
-              class="font-medium tracking-wide text-[15px] transition-all duration-300"
-              :class="isStreaming && !hasContent ? 'shimmer-text' : 'text-muted-foreground'"
+              class="font-medium tracking-wide text-[13px] transition-all duration-300"
+              :class="
+                isStreaming && !hasContent
+                  ? 'shimmer-text'
+                  : 'text-muted-foreground/80 group-hover/thinking:text-primary/70'
+              "
             >
               {{ thinkingStatus }}
             </span>
           </h4>
-          <button
-            class="flex h-6 w-6 items-center justify-center rounded-md transition-colors hover:bg-ai-accent-hover"
-            @click.stop="isExpanded = !isExpanded"
-          >
-            <ChevronUp
-              :size="14"
-              class="text-muted-foreground transition-transform duration-300"
-              :class="{ 'rotate-180': !isExpanded }"
-            />
-          </button>
+          <div class="flex items-center gap-1.5">
+            <button
+              class="flex h-6 w-6 items-center justify-center rounded-md transition-colors hover:bg-primary/10"
+              @click.stop="isExpanded = !isExpanded"
+            >
+              <ChevronUp
+                :size="14"
+                class="text-muted-foreground transition-transform duration-300"
+                :class="{ 'rotate-180': !isExpanded }"
+              />
+            </button>
+          </div>
         </div>
         <div
-          class="thinking-body transition-all duration-300 ease-in-out overflow-hidden"
+          class="thinking-body transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden"
           :style="{ maxHeight: thinkingHeight }"
         >
-          <div class="px-3 pb-3">
+          <div class="px-3 pb-3 border-t border-primary/5 pt-2 mx-1">
             <div ref="thinkingContentRef" class="thinking-text">
               <!-- eslint-disable vue/no-v-html -->
               <div
                 v-if="renderedThinkingHtml"
-                class="markdown-content thinking-markdown italic text-muted-foreground"
+                class="markdown-content thinking-markdown italic text-muted-foreground/70 text-[14px]"
                 v-html="renderedThinkingHtml"
               />
               <!-- eslint-enable vue/no-v-html -->
-              <div v-else class="whitespace-pre-wrap italic text-muted-foreground">
+              <div v-else class="whitespace-pre-wrap italic text-muted-foreground/70 text-[14px]">
                 {{ message.thinkingContent }}
               </div>
             </div>
@@ -511,9 +545,11 @@ async function copyContent() {
             class="relative rounded-2xl px-4 py-3 shadow-sm transition-all duration-300"
             :class="[
               isUser
-                ? 'bg-primary text-primary-foreground hover:bg-primary-hover'
-                : 'border border-border bg-card text-foreground',
-              isEditing ? 'w-full !bg-card !text-foreground ring-1 ring-primary' : '',
+                ? 'bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-primary-foreground hover:shadow-md hover:scale-[1.01]'
+                : 'border border-border bg-card text-foreground hover:border-primary/20 hover:shadow-md',
+              isEditing
+                ? 'w-full !bg-card !text-foreground ring-2 ring-primary/20 border-primary'
+                : '',
             ]"
           >
             <!-- 用户消息：编辑模式 -->
@@ -561,38 +597,35 @@ async function copyContent() {
             </div>
             <!-- AI 消息：Markdown 渲染 -->
             <!-- eslint-disable vue/no-v-html -->
-            <div
-              v-else-if="renderedHtml"
-              class="markdown-content leading-relaxed"
-              v-html="renderedHtml"
-            />
+            <div v-else-if="renderedHtml" class="markdown-content relative leading-relaxed">
+              <div v-html="renderedHtml" />
+            </div>
             <!-- eslint-enable vue/no-v-html -->
             <!-- 兜底显示 -->
-            <div v-else-if="hasContent" class="text-[15px] leading-relaxed">
+            <div v-else-if="hasContent" class="relative text-[15px] leading-relaxed">
               {{ message.content }}
             </div>
 
             <!-- 操作按钮（AI 消息内部） -->
             <div
               v-if="!isUser && !isStreaming && hasContent"
-              class="mt-2 flex items-center gap-2 border-t border-ai-message-border pt-2"
+              class="mt-2 flex items-center gap-1.5 border-t border-ai-message-border pt-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
             >
               <button
-                class="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground transition-all hover:bg-ai-accent-hover hover:text-foreground"
+                class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-muted-foreground/80 transition-all hover:bg-primary/10 hover:text-primary active:scale-95"
                 :title="isCopied ? t('ai.copied') : t('ai.copy')"
                 @click="copyContent"
               >
-                <Check v-if="isCopied" :size="12" class="text-green-600" />
-                <Copy v-else :size="12" />
+                <Check v-if="isCopied" :size="14" class="text-green-600" />
+                <Copy v-else :size="14" />
                 <span>{{ isCopied ? t('ai.copied') : t('ai.copy') }}</span>
               </button>
               <button
                 v-if="isLast"
-                class="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground transition-all hover:bg-ai-accent-hover hover:text-foreground"
-                :title="t('ai.regenerate')"
+                class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-muted-foreground/80 transition-all hover:bg-primary/10 hover:text-primary active:scale-95"
                 @click="emit('regenerate')"
               >
-                <RefreshCw :size="12" />
+                <RefreshCw :size="14" />
                 <span>{{ t('ai.regenerate') }}</span>
               </button>
             </div>
