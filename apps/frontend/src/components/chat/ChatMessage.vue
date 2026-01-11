@@ -93,6 +93,9 @@ const isUser = computed(() => props.message.role === 'user')
 const isStreaming = computed(() => props.message.isStreaming)
 const hasThinking = computed(() => !!props.message.thinkingContent)
 const hasContent = computed(() => !!props.message.content)
+const hasDiscussion = computed(
+  () => props.message.discussionSteps && props.message.discussionSteps.length > 0,
+)
 
 // 思考状态描述
 const thinkingStatus = computed(() => {
@@ -367,6 +370,55 @@ async function copyContent() {
   <div ref="messageRef" class="flex py-4" :class="isUser ? 'justify-end' : 'justify-start'">
     <!-- 消息内容 -->
     <div class="max-w-[85%] space-y-2">
+      <!-- 多模型讨论过程 -->
+      <div
+        v-if="message.discussionSteps && message.discussionSteps.length > 0 && !isUser"
+        class="mb-2 space-y-2 rounded-xl border border-border bg-muted/30 p-3 shadow-sm"
+      >
+        <div class="flex items-center gap-2 border-b border-border pb-2">
+          <Users :size="14" class="text-primary" />
+          <span class="text-xs font-medium text-muted-foreground">{{
+            t('ai.discussionStatus')
+          }}</span>
+        </div>
+        <div class="space-y-2 pt-1">
+          <div
+            v-for="step in message.discussionSteps"
+            :key="step.modelId"
+            class="flex items-start gap-2 text-xs"
+          >
+            <div class="mt-0.5 shrink-0">
+              <CircleDashed
+                v-if="step.status === 'thinking'"
+                :size="12"
+                class="animate-spin text-primary"
+              />
+              <template v-else-if="step.status === 'done'">
+                <CheckCircle2
+                  v-if="step.modelId === 'primary-draft'"
+                  :size="12"
+                  class="text-blue-500"
+                />
+                <CheckCircle2 v-else :size="12" class="text-green-500" />
+              </template>
+              <AlertCircle v-else :size="12" class="text-red-500" />
+            </div>
+            <div class="flex-1">
+              <span class="font-medium text-foreground">{{ step.modelName }}: </span>
+              <span class="text-muted-foreground">
+                {{
+                  step.status === 'thinking'
+                    ? t('ai.isThinking')
+                    : step.status === 'error'
+                      ? step.content
+                      : t('ai.contributionReady')
+                }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 思考过程（AI 消息） -->
       <div
         v-if="hasThinking && !isUser"
@@ -455,55 +507,6 @@ async function copyContent() {
         </div>
       </div>
 
-      <!-- 多模型讨论过程 -->
-      <div
-        v-if="message.discussionSteps && message.discussionSteps.length > 0 && !isUser"
-        class="mb-2 space-y-2 rounded-xl border border-border bg-muted/30 p-3 shadow-sm"
-      >
-        <div class="flex items-center gap-2 border-b border-border pb-2">
-          <Users :size="14" class="text-primary" />
-          <span class="text-xs font-medium text-muted-foreground">{{
-            t('ai.discussionStatus')
-          }}</span>
-        </div>
-        <div class="space-y-2 pt-1">
-          <div
-            v-for="step in message.discussionSteps"
-            :key="step.modelId"
-            class="flex items-start gap-2 text-xs"
-          >
-            <div class="mt-0.5 shrink-0">
-              <CircleDashed
-                v-if="step.status === 'thinking'"
-                :size="12"
-                class="animate-spin text-primary"
-              />
-              <template v-else-if="step.status === 'done'">
-                <CheckCircle2
-                  v-if="step.modelId === 'primary-draft'"
-                  :size="12"
-                  class="text-blue-500"
-                />
-                <CheckCircle2 v-else :size="12" class="text-green-500" />
-              </template>
-              <AlertCircle v-else :size="12" class="text-red-500" />
-            </div>
-            <div class="flex-1">
-              <span class="font-medium text-foreground">{{ step.modelName }}: </span>
-              <span class="text-muted-foreground">
-                {{
-                  step.status === 'thinking'
-                    ? t('ai.isThinking')
-                    : step.status === 'error'
-                      ? step.content
-                      : t('ai.contributionReady')
-                }}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- 主消息气泡 / 加载状态 -->
       <Transition
         enter-active-class="transition duration-300 ease-out"
@@ -511,9 +514,9 @@ async function copyContent() {
         enter-to-class="transform translate-y-0 opacity-100"
       >
         <template v-if="isUser || hasContent || (isStreaming && !hasThinking)">
-          <!-- 加载状态：仅在既没有思考内容也没有正文内容时显示 -->
+          <!-- 加载状态：仅在既没有思考内容也没有正文内容，且没有多模型讨论时显示 -->
           <div
-            v-if="!isUser && !hasContent && isStreaming && !hasThinking"
+            v-if="!isUser && !hasContent && isStreaming && !hasThinking && !hasDiscussion"
             class="loading-container flex flex-col gap-3 rounded-2xl border border-ai-message-border bg-ai-message-bg p-4 shadow-sm"
           >
             <div class="flex items-center gap-2">

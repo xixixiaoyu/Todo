@@ -50,12 +50,14 @@ vi.mock('@/services/aiService', async (importOriginal) => {
 const mockAddMemories = vi.fn()
 const mockIsMemoryEnabled = ref(true)
 const mockMemories = ref<string[]>([])
+const mockLastError = ref<string | null>(null)
 
 vi.mock('@/composables/useMemory', () => ({
   useMemory: vi.fn(() => ({
     memories: mockMemories,
     isMemoryEnabled: mockIsMemoryEnabled,
     addMemories: mockAddMemories,
+    lastError: mockLastError,
     removeMemory: vi.fn(),
     clearMemories: vi.fn(),
     toggleMemory: vi.fn(),
@@ -287,7 +289,7 @@ describe('useChat', () => {
       expect(error.value).toBe('Persistent error')
     })
 
-    it('should handle multi-model discussion mode', async () => {
+    it('should handle multi-model discussion mode with thinking', async () => {
       vi.mocked(getAIConfig).mockReturnValue({
         discussionMode: true,
         discussionModelIds: ['m1', 'm2'],
@@ -298,13 +300,19 @@ describe('useChat', () => {
         model: '',
         systemPrompt: '',
         temperature: 0.7,
-        thinkingMode: 'disabled',
+        thinkingMode: 'enabled',
         todoAssistant: false,
       })
 
       mockGetMultiModelDiscussionStream.mockImplementation(
-        async (_messages: ChatMessage[], onSteps: OnSteps, onChunk: OnChunk) => {
+        async (
+          _messages: ChatMessage[],
+          onSteps: OnSteps,
+          onChunk: OnChunk,
+          onThinking?: OnThinking,
+        ) => {
           onSteps([{ modelId: 'm1', modelName: 'M1', content: 'step 1', status: 'done' }])
+          onThinking?.('Primary thinking process...')
           onChunk('Final answer')
           onChunk('[DONE]')
         },
@@ -315,6 +323,7 @@ describe('useChat', () => {
 
       expect(mockGetMultiModelDiscussionStream).toHaveBeenCalled()
       expect(messages.value[1].discussionSteps).toHaveLength(1)
+      expect(messages.value[1].thinkingContent).toBe('Primary thinking process...')
       expect(messages.value[1].content).toBe('Final answer')
     })
   })

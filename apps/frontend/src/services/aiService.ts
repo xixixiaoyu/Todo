@@ -299,6 +299,7 @@ export async function getMultiModelDiscussionStream(
   messages: ChatMessage[],
   onStepUpdate: (steps: DiscussionStep[]) => void,
   onFinalChunk: (chunk: string) => void,
+  onThinking?: (thinking: string) => void,
   options: AIRequestOptions = {},
 ): Promise<void> {
   const aiConfig = getAIConfig()
@@ -326,7 +327,7 @@ export async function getMultiModelDiscussionStream(
 
   // 如果没有选择主模型或副模型，回退到普通单模型请求
   if (!primaryPreset || selectedPresets.length === 0) {
-    return getAIStreamResponse(messages, onFinalChunk, undefined, options)
+    return getAIStreamResponse(messages, onFinalChunk, onThinking, options)
   }
 
   const primaryConfig = {
@@ -414,7 +415,7 @@ export async function getMultiModelDiscussionStream(
     },
   ]
 
-  return getAIStreamResponse(synthesisMessages, onFinalChunk, undefined, {
+  return getAIStreamResponse(synthesisMessages, onFinalChunk, onThinking, {
     ...options,
     ...primaryConfig,
   })

@@ -212,6 +212,9 @@ ${lastMessages.map((m) => `${m.role === 'user' ? '用户' : '助手'}: ${m.conte
             currentDiscussionSteps.value = steps
           },
           handleChunk,
+          (thinking: string) => {
+            currentThinkingContent.value += thinking
+          },
           {
             ...options,
             thinkingMode: getAIThinkingMode(),
