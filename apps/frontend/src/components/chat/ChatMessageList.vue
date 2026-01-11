@@ -126,17 +126,15 @@ defineExpose({
 .message-list-enter-active,
 .message-list-leave-active,
 .message-list-move {
-  transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .message-list-enter-from {
   opacity: 0;
-  transform: translateY(30px) scale(0.95);
 }
 
 .message-list-leave-to {
   opacity: 0;
-  transform: translateY(-20px) scale(0.98);
 }
 
 .fade-enter-active,
