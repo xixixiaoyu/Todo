@@ -26,7 +26,7 @@ const emit = defineEmits<{
       :model-value="modelValue"
       type="text"
       :placeholder="t('todo.searchPlaceholder')"
-      class="h-11 pl-11 pr-11 bg-muted/30 border-none rounded-xl focus-visible:ring-primary/20"
+      class="h-11 pl-11 pr-11 text-base bg-muted/30 border-none rounded-xl focus-visible:ring-primary/20"
       @update:model-value="emit('update:modelValue', $event as string)"
     />
     <Button

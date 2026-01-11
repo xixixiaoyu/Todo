@@ -29,7 +29,7 @@ const emit = defineEmits<{
 <template>
   <TooltipProvider>
     <div
-      class="group flex items-center gap-4 rounded-xl border border-border bg-card px-4 py-3 transition-all hover:shadow-md hover:border-primary/20 dark:hover:shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
+      class="group flex items-center gap-4 rounded-xl border border-border bg-card px-4 py-3.5 transition-all hover:shadow-md hover:border-primary/20 dark:hover:shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
     >
       <Checkbox
         :model-value="todo.completed"
@@ -42,7 +42,7 @@ const emit = defineEmits<{
         <Input
           :model-value="editingTitle"
           type="text"
-          class="h-9 flex-1 bg-background text-foreground focus-visible:ring-primary/20"
+          class="h-10 flex-1 bg-background text-foreground text-base focus-visible:ring-primary/20"
           :placeholder="t('todo.editPlaceholder')"
           auto-focus
           @update:model-value="emit('update:editingTitle', $event as string)"

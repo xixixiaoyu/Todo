@@ -33,7 +33,7 @@ const emit = defineEmits<{
                   :model-value="modelValue"
                   type="text"
                   :placeholder="t('todo.inputPlaceholder')"
-                  class="h-10 px-4 text-sm rounded-xl border-border bg-card shadow-sm transition-all focus-visible:ring-primary/20 group-hover:border-primary/30"
+                  class="h-12 px-5 text-base rounded-xl border-border bg-card shadow-sm transition-all focus-visible:ring-primary/20 group-hover:border-primary/30"
                   :class="isShaking ? 'border-destructive' : ''"
                   @update:model-value="emit('update:modelValue', $event as string)"
                   @keydown="emit('keydown', $event)"
@@ -51,10 +51,10 @@ const emit = defineEmits<{
         </TooltipProvider>
       </div>
       <Button
-        class="h-10 px-4 rounded-xl font-medium shadow-sm transition-all active:scale-95"
+        class="h-12 px-6 rounded-xl text-base font-semibold shadow-md transition-all active:scale-95"
         @click="emit('add')"
       >
-        <Plus class="mr-1.5 h-4 w-4" />
+        <Plus class="mr-1.5 h-5 w-5" />
         {{ t('todo.add') }}
       </Button>
     </div>
