@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { nextTick } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { useTodo } from '@/features/todo/composables/useTodo'
 import { useTodoStore } from '@/features/todo/stores/todo'
@@ -13,6 +12,9 @@ vi.mock('@/features/todo/stores/todo', () => ({
     clearSearch: vi.fn(),
     setSearchQuery: vi.fn(),
     clearError: vi.fn(),
+    isDrawerOpen: false,
+    setDrawerOpen: vi.fn(),
+    toggleDrawer: vi.fn(),
   })),
 }))
 
@@ -32,6 +34,9 @@ describe('useTodo', () => {
       clearSearch: vi.fn(),
       setSearchQuery: vi.fn(),
       clearError: vi.fn(),
+      isDrawerOpen: false,
+      setDrawerOpen: vi.fn(),
+      toggleDrawer: vi.fn(),
     } as unknown as ReturnType<typeof useTodoStore>
 
     vi.mocked(useTodoStore).mockReturnValue(todoStore)
@@ -56,33 +61,16 @@ describe('useTodo', () => {
     })
   })
 
-  describe('persistence', () => {
-    beforeEach(() => {
-      vi.stubGlobal('localStorage', {
-        getItem: vi.fn(),
-        setItem: vi.fn(),
-      })
-    })
-
-    afterEach(() => {
-      vi.unstubAllGlobals()
-    })
-
-    it('should load isDrawerOpen from localStorage', () => {
-      vi.mocked(localStorage.getItem).mockReturnValue('true')
-      const { isDrawerOpen } = useTodo()
-      expect(isDrawerOpen.value).toBe(true)
-      expect(localStorage.getItem).toHaveBeenCalledWith('todo_ai_drawer_open')
-    })
-
-    it('should save isDrawerOpen to localStorage when it changes', async () => {
-      vi.mocked(localStorage.getItem).mockReturnValue('false')
+  describe('drawer state', () => {
+    it('should sync isDrawerOpen with store', () => {
       const { isDrawerOpen } = useTodo()
 
+      // Initial value from mock
+      expect(isDrawerOpen.value).toBe(false)
+
+      // Update value should call store.setDrawerOpen
       isDrawerOpen.value = true
-      await nextTick()
-
-      expect(localStorage.setItem).toHaveBeenCalledWith('todo_ai_drawer_open', 'true')
+      expect(todoStore.setDrawerOpen).toHaveBeenCalledWith(true)
     })
   })
 

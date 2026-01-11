@@ -1,7 +1,5 @@
-import { ref, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { useTodoStore } from '../stores/todo'
-
-const DRAWER_STORAGE_KEY = 'todo_ai_drawer_open'
 
 export function useTodo() {
   const todoStore = useTodoStore()
@@ -11,16 +9,10 @@ export function useTodo() {
   const searchInput = ref('')
   const showFireworks = ref(false)
 
-  // 初始化侧边栏状态（从 localStorage 读取）
-  const isDrawerOpen = ref(
-    typeof window !== 'undefined' ? localStorage.getItem(DRAWER_STORAGE_KEY) === 'true' : false,
-  )
-
-  // 监听侧边栏状态变化并持久化
-  watch(isDrawerOpen, (newValue) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(DRAWER_STORAGE_KEY, String(newValue))
-    }
+  // 使用 store 中的状态
+  const isDrawerOpen = computed({
+    get: () => todoStore.isDrawerOpen,
+    set: (value) => todoStore.setDrawerOpen(value),
   })
 
   const editingId = ref<string | null>(null)

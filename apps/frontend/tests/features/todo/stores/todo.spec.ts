@@ -50,6 +50,7 @@ describe('useTodoStore', () => {
       expect(store.searchQuery).toBe('')
       expect(store.loading).toBe(false)
       expect(store.error).toBeNull()
+      expect(store.isDrawerOpen).toBe(false)
     })
   })
 
@@ -263,6 +264,21 @@ describe('useTodoStore', () => {
       store.error = 'some error'
       store.clearError()
       expect(store.error).toBeNull()
+    })
+
+    it('should set drawer open state', () => {
+      store.setDrawerOpen(true)
+      expect(store.isDrawerOpen).toBe(true)
+      store.setDrawerOpen(false)
+      expect(store.isDrawerOpen).toBe(false)
+    })
+
+    it('should toggle drawer state', () => {
+      expect(store.isDrawerOpen).toBe(false)
+      store.toggleDrawer()
+      expect(store.isDrawerOpen).toBe(true)
+      store.toggleDrawer()
+      expect(store.isDrawerOpen).toBe(false)
     })
 
     it('should fetch todos (currently empty logic)', async () => {

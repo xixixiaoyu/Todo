@@ -22,25 +22,17 @@ export const useTodoStore = defineStore(
     const searchQuery = ref('')
     const loading = ref(false)
     const error = ref<string | null>(null)
+    const isDrawerOpen = ref(false)
 
     // 计算属性
     const filteredTodos = computed(() => {
-      let result = todos.value
+      const query = searchQuery.value.trim().toLowerCase()
 
-      // 按完成状态过滤
-      if (filter.value === 'pending') {
-        result = result.filter((todo) => !todo.completed)
-      } else {
-        result = result.filter((todo) => todo.completed)
-      }
-
-      // 按搜索关键词过滤
-      if (searchQuery.value.trim()) {
-        const query = searchQuery.value.toLowerCase()
-        result = result.filter((todo) => todo.title.toLowerCase().includes(query))
-      }
-
-      return result
+      return todos.value.filter((todo) => {
+        const matchesFilter = filter.value === 'pending' ? !todo.completed : todo.completed
+        const matchesSearch = !query || todo.title.toLowerCase().includes(query)
+        return matchesFilter && matchesSearch
+      })
     })
 
     const pendingCount = computed(() => todos.value.filter((todo) => !todo.completed).length)
@@ -48,26 +40,31 @@ export const useTodoStore = defineStore(
     const completedCount = computed(() => todos.value.filter((todo) => todo.completed).length)
 
     /**
-     * 获取所有待办事项 (本地存储已由 pinia-plugin-persistedstate 处理)
+     * 检查是否存在重复的未完成待办事项
+     */
+    function isDuplicate(title: string, excludeId?: string): boolean {
+      const trimmedTitle = title.trim().toLowerCase()
+      return todos.value.some(
+        (todo) =>
+          todo.id !== excludeId && !todo.completed && todo.title.toLowerCase() === trimmedTitle,
+      )
+    }
+
+    /**
+     * 获取所有待办事项
      */
     async function fetchTodos(): Promise<void> {
-      // 纯本地存储，不需要从 API 获取
-      // 这里可以做一些初始化逻辑，如果有必要的话
+      // 纯本地存储
     }
 
     /**
      * 添加待办事项
      */
     async function addTodo(title: string): Promise<boolean> {
-      if (!title.trim()) return false
-
       const trimmedTitle = title.trim()
+      if (!trimmedTitle) return false
 
-      // 检查是否已存在相同标题的未完成待办事项
-      const exists = todos.value.some(
-        (todo) => !todo.completed && todo.title.toLowerCase() === trimmedTitle.toLowerCase(),
-      )
-      if (exists) {
+      if (isDuplicate(trimmedTitle)) {
         error.value = 'todo.duplicate'
         return false
       }
@@ -95,9 +92,9 @@ export const useTodoStore = defineStore(
      */
     async function toggleTodo(id: string): Promise<void> {
       const todo = todos.value.find((t) => t.id === id)
-      if (!todo) return
-
-      todo.completed = !todo.completed
+      if (todo) {
+        todo.completed = !todo.completed
+      }
     }
 
     /**
@@ -114,26 +111,33 @@ export const useTodoStore = defineStore(
      * 更新待办事项标题
      */
     async function updateTodo(id: string, title: string): Promise<boolean> {
-      if (!title.trim()) return false
-      const todo = todos.value.find((t) => t.id === id)
-      if (!todo) return false
-
       const trimmedTitle = title.trim()
+      if (!trimmedTitle) return false
 
-      // 如果标题没变，直接返回成功
-      if (todo.title === trimmedTitle) return true
+      const todo = todos.value.find((t) => t.id === id)
+      if (!todo || todo.title === trimmedTitle) return !!todo
 
-      // 检查是否已存在相同标题的未完成待办事项 (排除自身)
-      const exists = todos.value.some(
-        (t) => t.id !== id && !t.completed && t.title.toLowerCase() === trimmedTitle.toLowerCase(),
-      )
-      if (exists) {
+      if (isDuplicate(trimmedTitle, id)) {
         error.value = 'todo.duplicate'
         return false
       }
 
       todo.title = trimmedTitle
       return true
+    }
+
+    /**
+     * 设置侧边栏状态
+     */
+    function setDrawerOpen(open: boolean): void {
+      isDrawerOpen.value = open
+    }
+
+    /**
+     * 切换侧边栏状态
+     */
+    function toggleDrawer(): void {
+      isDrawerOpen.value = !isDrawerOpen.value
     }
 
     /**
@@ -171,6 +175,7 @@ export const useTodoStore = defineStore(
       searchQuery,
       loading,
       error,
+      isDrawerOpen,
       // 计算属性
       filteredTodos,
       pendingCount,
@@ -181,6 +186,8 @@ export const useTodoStore = defineStore(
       toggleTodo,
       deleteTodo,
       updateTodo,
+      setDrawerOpen,
+      toggleDrawer,
       setFilter,
       setSearchQuery,
       clearSearch,
@@ -191,7 +198,7 @@ export const useTodoStore = defineStore(
     persist: {
       key: 'todos',
       storage: localStorage,
-      pick: ['todos'],
+      pick: ['todos', 'isDrawerOpen'],
     },
   },
 )
