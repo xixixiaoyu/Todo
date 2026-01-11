@@ -22,6 +22,16 @@ import { useAIConfig, type AIConfig, type AIPreset } from '@/composables/useAICo
 import { useEscClose } from '@/composables/useEscClose'
 import { useMemory } from '@/composables/useMemory'
 import { useToast } from '@/composables/useToast'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 const props = defineProps<{
   initialTab?: 'settings' | 'presets' | 'memory'
@@ -69,6 +79,7 @@ const isAddingMemory = ref(false)
 const newMemoryContent = ref('')
 const editingMemoryIndex = ref<number | null>(null)
 const editingMemoryContent = ref('')
+const showClearConfirm = ref(false)
 
 /**
  * 开始新增记忆
@@ -339,9 +350,15 @@ async function handleCompressMemories() {
  * 清除记忆确认
  */
 function handleClearMemories() {
-  if (window.confirm(t('ai.memoryClearConfirm'))) {
-    clearMemories()
-  }
+  showClearConfirm.value = true
+}
+
+/**
+ * 确认清除
+ */
+function handleClearConfirm() {
+  clearMemories()
+  showClearConfirm.value = false
 }
 
 defineExpose({
@@ -1069,6 +1086,27 @@ defineExpose({
         </Transition>
       </div>
     </Transition>
+
+    <!-- 清除记忆确认弹窗 -->
+    <AlertDialog v-model:open="showClearConfirm">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{{ t('ai.memoryClear') }}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {{ t('ai.memoryClearConfirm') }}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{{ t('common.cancel') }}</AlertDialogCancel>
+          <AlertDialogAction
+            class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            @click="handleClearConfirm"
+          >
+            {{ t('common.confirm') }}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </Teleport>
 </template>
 
