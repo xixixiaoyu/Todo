@@ -588,7 +588,7 @@ async function copyContent() {
               <!-- 编辑按钮 -->
               <button
                 v-if="!isEditing"
-                class="absolute -left-10 top-0 flex h-7 w-7 items-center justify-center rounded-md bg-card/80 text-muted-foreground opacity-0 shadow-sm transition-all hover:bg-card hover:text-primary group-hover/user:opacity-100"
+                class="absolute -left-14 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md bg-card/80 text-muted-foreground opacity-0 shadow-sm transition-all hover:bg-card hover:text-primary group-hover/user:opacity-100"
                 :title="t('ai.edit')"
                 @click="startEdit"
               >
