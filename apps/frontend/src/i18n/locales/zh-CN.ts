@@ -153,6 +153,8 @@ export default {
     presetNamePlaceholder: '例如：编程助手',
     savePreset: '保存预设',
     createNewPreset: '创建新预设',
+    unnamedPreset: '未命名预设',
+    active: '当前活跃',
     noPresets: '暂无预设，点击上方按钮创建',
     noSystemPrompt: '未设置系统提示词',
     resetToDefault: '恢复默认',

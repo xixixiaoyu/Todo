@@ -155,6 +155,8 @@ export default {
     presetNamePlaceholder: 'e.g., Programming Assistant',
     savePreset: 'Save Preset',
     createNewPreset: 'Create New Preset',
+    unnamedPreset: 'Unnamed Preset',
+    active: 'Active',
     noPresets: 'No presets, click button above to create',
     noSystemPrompt: 'No system prompt set',
     resetToDefault: 'Reset to Default',
