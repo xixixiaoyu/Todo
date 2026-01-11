@@ -1,5 +1,7 @@
 export default {
   common: {
+    appName: 'Minimalist Todo',
+    appDescription: 'Efficient and pure personal todo management tool',
     loading: 'Loading...',
     refresh: 'Refresh',
     back: 'Back',

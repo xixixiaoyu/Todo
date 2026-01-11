@@ -67,11 +67,6 @@ export default [
       'vitest.config.ts',
       'vite.config.ts',
     ],
-    languageOptions: {
-      parserOptions: {
-        projectService: false,
-      },
-    },
     rules: {
       '@typescript-eslint/no-floating-promises': 'off',
       '@typescript-eslint/no-misused-promises': 'off',

@@ -70,9 +70,9 @@ export default defineConfig(async (): Promise<UserConfig> => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'vite.svg', 'apple-touch-icon-180x180.png'],
         manifest: {
-          name: 'My App',
-          short_name: 'MyApp',
-          description: 'A full-stack application built with NestJS and Vue 3',
+          name: '极简待办',
+          short_name: '极简待办',
+          description: '高效、纯粹的个人待办管理工具',
           theme_color: '#ffffff',
           background_color: '#ffffff',
           display: 'standalone',

@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "com.myapp.desktop",
-  "productName": "My App",
+  "appId": "com.minimalist.todo.desktop",
+  "productName": "极简待办",
   "directories": {
     "output": "release",
     "buildResources": "build"

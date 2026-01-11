@@ -1,5 +1,7 @@
 export default {
   common: {
+    appName: '极简待办',
+    appDescription: '高效、纯粹的个人待办管理工具',
     loading: '加载中...',
     refresh: '刷新',
     back: '返回',

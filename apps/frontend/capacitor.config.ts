@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'com.myapp.app',
-  appName: 'My App',
+  appId: 'com.minimalist.todo',
+  appName: '极简待办',
   webDir: 'dist',
   server: {
     // 开发时可启用热重载（取消注释并修改为本机 IP）

@@ -51,7 +51,8 @@ router.beforeEach((to) => {
   const { t } = i18n.global
   const titleKey = to.meta.title as string
   const translatedTitle = titleKey ? t(titleKey) : ''
-  document.title = translatedTitle ? `${translatedTitle} - My App` : 'My App'
+  const appName = t('common.appName')
+  document.title = translatedTitle ? `${translatedTitle} - ${appName}` : appName
 })
 
 export default router

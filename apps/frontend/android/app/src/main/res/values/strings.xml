@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">My App</string>
-    <string name="title_activity_main">My App</string>
-    <string name="package_name">com.myapp.app</string>
-    <string name="custom_url_scheme">com.myapp.app</string>
+    <string name="app_name">极简待办</string>
+    <string name="title_activity_main">极简待办</string>
+    <string name="package_name">com.minimalist.todo</string>
+    <string name="custom_url_scheme">com.minimalist.todo</string>
 </resources>
