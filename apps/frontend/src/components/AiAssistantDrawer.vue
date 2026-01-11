@@ -394,7 +394,7 @@ defineOptions({
 
         <!-- 输入框区域 -->
         <div
-          class="input-container-refined relative flex flex-col gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm"
+          class="input-container-refined relative flex flex-col rounded-2xl border border-border bg-card p-1.5 shadow-sm"
           :class="{ 'opacity-60 grayscale-[0.2]': isInputDisabled }"
         >
           <textarea
@@ -402,7 +402,7 @@ defineOptions({
             v-model="chatInput"
             rows="1"
             :placeholder="isInputDisabled ? t('ai.generating') : t('ai.placeholder')"
-            class="flex-1 resize-none bg-transparent px-3 py-2 text-[15px] text-foreground outline-none placeholder:text-muted-foreground/30 leading-relaxed transition-all"
+            class="flex-1 resize-none bg-transparent px-3 pt-2.5 pb-1 text-[15px] text-foreground outline-none placeholder:text-muted-foreground/30 leading-relaxed transition-all"
             :style="{ height: `${MIN_HEIGHT}px` }"
             :disabled="isInputDisabled"
             @input="adjustTextareaHeight"
@@ -410,7 +410,7 @@ defineOptions({
             @keydown.enter.shift.exact="handleNewline"
           />
 
-          <div class="flex items-center justify-between px-2 pb-1">
+          <div class="flex items-center justify-between px-1.5 pb-1.5">
             <div class="flex items-center gap-1.5">
               <!-- 停止生成按钮 -->
               <button
@@ -443,13 +443,7 @@ defineOptions({
               :disabled="isInputDisabled || !chatInput.trim()"
               @click="handleSend"
             >
-              <Send
-                :size="18"
-                :class="{
-                  'translate-x-0.5 -translate-y-0.5 transition-transform':
-                    !isInputDisabled && chatInput.trim(),
-                }"
-              />
+              <Send :size="18" />
             </button>
           </div>
         </div>
