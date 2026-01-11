@@ -330,6 +330,17 @@ defineOptions({
               <span>{{ t('ai.newChat') }}</span>
             </button>
 
+            <!-- 历史记录按钮 -->
+            <button
+              class="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground hover:scale-110 active:scale-95 shadow-sm"
+              :title="t('ai.history')"
+              :class="{ 'cursor-not-allowed opacity-50': isGenerating }"
+              :disabled="isGenerating"
+              @click="openHistory"
+            >
+              <History :size="16" />
+            </button>
+
             <div class="h-4 w-px bg-border/30 mx-1" />
 
             <!-- AI 思考模式开关 -->
@@ -444,17 +455,8 @@ defineOptions({
 
             <div class="flex-1" />
 
-            <!-- 历史与设置 -->
+            <!-- 设置 -->
             <div class="flex items-center gap-2">
-              <button
-                class="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground hover:scale-110 active:scale-95 shadow-sm"
-                :title="t('ai.history')"
-                :class="{ 'cursor-not-allowed opacity-50': isGenerating }"
-                :disabled="isGenerating"
-                @click="openHistory"
-              >
-                <History :size="16" />
-              </button>
               <button
                 class="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground hover:scale-110 active:scale-95 shadow-sm"
                 :title="t('ai.settings')"
