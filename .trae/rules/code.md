@@ -85,3 +85,4 @@ npx shadcn-vue@latest add <component-name>  # 在 frontend 目录下执行
 - **服务**: 开发前启动 `docker compose up postgres redis -d`，首次运行 `pnpm db:push`
 - **认证**: accessToken + refreshToken 双令牌，非 GET 请求携带 CSRF Token
 - **限流**: 1s/3次、10s/20次、1min/100次
+- **自动化验证**: 代码修改完成后，必须运行 `pnpm lint` 和 `pnpm test` 确保代码质量和逻辑正确性
