@@ -10,10 +10,11 @@ import {
   ChevronRight,
   GripVertical,
 } from 'lucide-vue-next'
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import draggable from 'vuedraggable'
 import { onClickOutside } from '@vueuse/core'
 import { useTodoStore, type Todo } from '../stores/todo'
+import { useGsap } from '@/composables/useGsap'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -65,6 +66,37 @@ const newChildTitle = ref('')
 const subtaskInputRef = ref<InstanceType<typeof Input> | null>(null)
 const editInputRef = ref<InstanceType<typeof Input> | null>(null)
 const subtaskContainerRef = ref<HTMLElement | null>(null)
+const itemRef = ref<HTMLElement | null>(null)
+const { gsap, ctx } = useGsap()
+
+onMounted(() => {
+  ctx.add(() => {
+    gsap.from(itemRef.value, {
+      x: -10,
+      opacity: 0,
+      duration: 0.3,
+      ease: 'power3.out',
+    })
+  })
+})
+
+function onMouseEnter() {
+  gsap.to(itemRef.value, {
+    backgroundColor: 'hsl(var(--muted) / 0.5)',
+    borderColor: 'hsl(var(--primary) / 0.3)',
+    duration: 0.2,
+    ease: 'power2.out',
+  })
+}
+
+function onMouseLeave() {
+  gsap.to(itemRef.value, {
+    backgroundColor: '',
+    borderColor: '',
+    duration: 0.2,
+    ease: 'power2.out',
+  })
+}
 
 onClickOutside(subtaskContainerRef, () => {
   if (isAddingChild.value) {
@@ -128,8 +160,11 @@ async function submitAddChild() {
 <template>
   <div class="flex flex-col gap-2">
     <div
-      class="group flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-all hover:shadow-md hover:border-primary/20 dark:hover:shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
+      ref="itemRef"
+      class="group relative flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-none"
       :class="{ 'opacity-90 scale-[0.98] bg-muted/30': level && level > 0 }"
+      @mouseenter="onMouseEnter"
+      @mouseleave="onMouseLeave"
     >
       <div class="flex items-center gap-2">
         <GripVertical

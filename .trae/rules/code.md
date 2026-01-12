@@ -12,7 +12,7 @@ packages/shared/  # 共享包（@my-app/shared）- Zod Schema、DTO、工具函�
 
 ## 技术栈
 
-**前端**: Vue 3.5+ / Vite 6 / Pinia / Tailwind + shadcn-vue / TanStack Query + Axios / VeeValidate + Zod / Vue I18n
+**前端**: Vue 3.5+ / Vite 6 / Pinia / Tailwind + shadcn-vue / GSAP / TanStack Query + Axios / VeeValidate + Zod / Vue I18n
 **跨端**: Capacitor 8 (iOS/Android) / Electron 36 / PWA
 **后端**: NestJS 10.4+ / PostgreSQL 16 + Prisma 6 / Redis 7 + BullMQ / JWT + Passport / nestjs-zod / Socket.IO
 **工具**: pnpm 9.15+ / Turbo 2.3+ / ESLint 9 + Prettier / Vitest / tsup
@@ -76,6 +76,26 @@ interface ApiResponse<T> {
 
 ```bash
 npx shadcn-vue@latest add <component-name>  # 在 frontend 目录下执行
+```
+
+## GSAP 动画约定
+
+- **优先原则**: 复杂或交互性强的动画优先使用 **GSAP** 实现。
+- **生命周期管理**: 必须使用 `useGsap` composable，它利用 `gsap.context()` 自动处理组件卸载时的动画清理，防止内存泄漏。
+- **作用域**: 动画逻辑应包裹在 `ctx.add(() => { ... })` 中。
+
+**示例**:
+```typescript
+import { useGsap } from '@/composables/useGsap'
+
+const { gsap, ctx } = useGsap()
+const box = ref(null)
+
+onMounted(() => {
+  ctx.add(() => {
+    gsap.from(box.value, { opacity: 0, y: 20, duration: 0.5 })
+  })
+})
 ```
 
 ## 注意事项
