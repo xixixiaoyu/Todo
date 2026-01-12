@@ -126,20 +126,21 @@ async function submitAddChild() {
 </script>
 
 <template>
-  <div class="flex flex-col gap-3">
+  <div class="flex flex-col gap-2">
     <div
       class="group flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-all hover:shadow-md hover:border-primary/20 dark:hover:shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
-      :style="{ marginLeft: `${(level || 0) * 2}rem` }"
+      :class="{ 'opacity-90 scale-[0.98] bg-muted/30': level && level > 0 }"
     >
       <div class="flex items-center gap-2">
         <GripVertical
           class="drag-handle h-4 w-4 cursor-grab text-muted-foreground/30 hover:text-muted-foreground transition-colors active:cursor-grabbing"
         />
         <Button
-          v-if="hasChildren"
+          v-if="!todo.parentId"
           variant="ghost"
           size="icon"
-          class="h-6 w-6 text-muted-foreground"
+          class="h-6 w-6 text-muted-foreground transition-opacity"
+          :class="{ 'opacity-0 group-hover:opacity-100': !hasChildren && !isExpanded }"
           @click="toggleExpand"
         >
           <ChevronDown v-if="isExpanded" class="h-4 w-4" />
@@ -196,7 +197,7 @@ async function submitAddChild() {
           {{ todo.title }}
         </span>
         <div class="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-          <Tooltip>
+          <Tooltip v-if="!todo.parentId">
             <TooltipTrigger as-child>
               <Button
                 variant="ghost"
@@ -251,8 +252,7 @@ async function submitAddChild() {
     <div
       v-if="isAddingChild"
       ref="subtaskContainerRef"
-      class="flex items-center gap-2 px-4 py-3"
-      :style="{ marginLeft: `${(level || 0) * 2 + 2}rem` }"
+      class="flex items-center gap-2 px-4 py-3 ml-10 border-l-2 border-primary/10"
     >
       <Input
         ref="subtaskInputRef"
@@ -283,8 +283,11 @@ async function submitAddChild() {
       </div>
     </div>
 
-    <!-- 子任务列表 -->
-    <div v-if="isExpanded && hasChildren" class="min-h-[2px]">
+    <!-- 子任务列表 (仅根节点可拥有) -->
+    <div
+      v-if="!todo.parentId && isExpanded"
+      class="ml-10 flex flex-col gap-2 border-l-2 border-primary/5 pl-2 transition-all"
+    >
       <draggable
         v-model="dragChildren"
         item-key="id"
@@ -292,7 +295,7 @@ async function submitAddChild() {
         group="todos"
         ghost-class="opacity-50"
         chosen-class="scale-[1.01]"
-        class="flex flex-col gap-3"
+        class="flex flex-col gap-2 min-h-[4px]"
         :animation="300"
       >
         <template #item="{ element: child }">

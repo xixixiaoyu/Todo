@@ -134,7 +134,7 @@ export default {
     addError: 'Failed to add todo',
     language: 'Switch Language',
     addSubtask: 'Add Subtask',
-    subtaskPlaceholder: 'Enter subtask title...',
+    subtaskPlaceholder: 'Enter subtask...',
   },
   ai: {
     newChat: 'New Chat',

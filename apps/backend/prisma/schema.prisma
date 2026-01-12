@@ -17,6 +17,23 @@ model User {
   resetPasswordExpires DateTime?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
+  todos                Todo[]
 
   @@map("users")
+}
+
+model Todo {
+  id        String   @id @default(uuid())
+  title     String
+  completed Boolean  @default(false)
+  order     Int      @default(0)
+  parentId  String?
+  parent    Todo?    @relation("SubTasks", fields: [parentId], references: [id])
+  children  Todo[]   @relation("SubTasks")
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("todos")
 }
