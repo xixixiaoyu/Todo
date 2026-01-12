@@ -48,6 +48,8 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
   const isAutoScrollEnabled = ref(initialAutoScroll)
   /** 用户是否主动向上滚动（可用于显示"返回底部"按钮） */
   const isUserScrolledUp = ref(false)
+  /** 内容是否可滚动 */
+  const isScrollable = ref(false)
   /** 当前是否处于流式更新模式 */
   const isStreamingMode = ref(false)
 
@@ -267,15 +269,24 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
    */
   const handleUserScroll = () => {
     const el = scrollContainer.value
-    if (!el || isProgrammaticScroll) return
+    if (!el) return
 
     const currentScrollTop = el.scrollTop
     const scrollDelta = currentScrollTop - lastScrollTop
     const atBottom = isAtBottom()
 
+    // 关键修复：即使在程序化滚动期间，如果检测到明显的向上滚动（负 delta），
+    // 也判定为用户交互，从而中断自动滚动。
+    const isUpwardIntent = scrollDelta < -userScrollSensitivity
+
+    if (isProgrammaticScroll && !isUpwardIntent) {
+      lastScrollTop = currentScrollTop
+      return
+    }
+
     // 检测用户是否主动向上滚动
-    if (scrollDelta < -userScrollSensitivity && !atBottom) {
-      // 用户向上滚动：禁用自动滚动
+    if (isUpwardIntent && !atBottom) {
+      // 用户向上滚动：立即禁用自动滚动和粘附模式
       isAutoScrollEnabled.value = false
       isSticking.value = false
       isUserScrolledUp.value = true
@@ -289,14 +300,29 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
     lastScrollTop = currentScrollTop
   }
 
+  /**
+   * 更新滚动状态信息（如是否可滚动、是否在底部等）
+   */
+  const updateScrollMetrics = () => {
+    const el = scrollContainer.value
+    if (!el) return
+
+    isScrollable.value = el.scrollHeight > el.clientHeight + 1
+
+    if (isAtBottom()) {
+      isUserScrolledUp.value = false
+    }
+  }
+
   // 节流的滚动处理器
   let scrollRafScheduled = false
   const throttledScrollHandler = () => {
-    if (scrollRafScheduled || isProgrammaticScroll) return
+    if (scrollRafScheduled) return
     scrollRafScheduled = true
     requestAnimationFrame(() => {
       scrollRafScheduled = false
       handleUserScroll()
+      updateScrollMetrics()
     })
   }
 
@@ -304,6 +330,7 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
    * 处理容器尺寸变化
    */
   const handleResize = () => {
+    updateScrollMetrics()
     if (isSticking.value) {
       // 如果之前在底部，尺寸变化后保持在底部
       requestAnimationFrame(() => {
@@ -320,6 +347,8 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
     if (!el) return
 
     const currentHeight = el.scrollHeight
+    updateScrollMetrics()
+
     if (currentHeight !== lastScrollHeight) {
       // 内容高度发生变化
       if (isSticking.value && isAutoScrollEnabled.value) {
@@ -344,6 +373,7 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
     // 初始化状态
     lastScrollTop = el.scrollTop
     lastScrollHeight = el.scrollHeight
+    updateScrollMetrics()
 
     // ResizeObserver 监听容器尺寸变化
     if (watchResize && typeof ResizeObserver !== 'undefined') {
@@ -453,6 +483,7 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
     isSticking,
     isAutoScrollEnabled,
     isUserScrolledUp,
+    isScrollable,
     isStreamingMode,
 
     // 方法
