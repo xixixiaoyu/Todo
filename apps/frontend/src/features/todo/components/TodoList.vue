@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { ClipboardList, CheckCircle2, SearchX } from 'lucide-vue-next'
-import { computed, watch, ref } from 'vue'
+import { computed } from 'vue'
 import draggable from 'vuedraggable'
 import type { Todo } from '../stores/todo'
 import TodoItem from './TodoItem.vue'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { useGsap } from '@/composables/useGsap'
 
 const { t } = useI18n()
 
@@ -61,31 +60,6 @@ const emptyState = computed(() => {
     description: t('todo.emptyCompletedDescription'),
   }
 })
-const { gsap, ctx } = useGsap()
-const listContainerRef = ref<HTMLElement | null>(null)
-
-// 监听 filter 变化，执行列表切换动画
-watch(
-  () => props.filter,
-  () => {
-    ctx.add(() => {
-      // 先让当前内容滑出并消失
-      gsap.fromTo(
-        listContainerRef.value,
-        {
-          opacity: 0,
-          x: props.filter === 'completed' ? -10 : 10,
-        },
-        {
-          opacity: 1,
-          x: 0,
-          duration: 0.4,
-          ease: 'power2.out',
-        },
-      )
-    })
-  },
-)
 
 const displayTodos = computed(() => {
   // 只显示那些父任务不在当前过滤列表中的任务
@@ -141,7 +115,7 @@ const displayTodos = computed(() => {
         </div>
       </div>
 
-      <div v-else ref="listContainerRef" class="min-h-[100px]">
+      <div v-else class="min-h-[100px]">
         <draggable
           v-model="dragList"
           item-key="id"

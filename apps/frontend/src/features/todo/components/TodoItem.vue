@@ -10,7 +10,7 @@ import {
   ChevronRight,
   GripVertical,
 } from 'lucide-vue-next'
-import { ref, computed, watch, nextTick, onMounted } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import draggable from 'vuedraggable'
 import { onClickOutside } from '@vueuse/core'
 import { useTodoStore, type Todo } from '../stores/todo'
@@ -67,18 +67,7 @@ const subtaskInputRef = ref<InstanceType<typeof Input> | null>(null)
 const editInputRef = ref<InstanceType<typeof Input> | null>(null)
 const subtaskContainerRef = ref<HTMLElement | null>(null)
 const itemRef = ref<HTMLElement | null>(null)
-const { gsap, ctx } = useGsap()
-
-onMounted(() => {
-  ctx.add(() => {
-    gsap.from(itemRef.value, {
-      x: -10,
-      opacity: 0,
-      duration: 0.3,
-      ease: 'power3.out',
-    })
-  })
-})
+const { gsap } = useGsap()
 
 function onMouseEnter() {
   gsap.to(itemRef.value, {
