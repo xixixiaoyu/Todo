@@ -18,6 +18,7 @@ export default {
     save: '保存',
     delete: '删除',
     clear: '清除',
+    close: '关闭',
     resizeDrawer: '调整抽屉宽度',
     error: {
       requestFailed: '请求失败',
@@ -202,6 +203,8 @@ export default {
     messageCount: '{count} 条消息',
     editTitle: '编辑标题',
     delete: '删除',
+    exportMarkdown: '导出 Markdown',
+    exportAll: '导出所有记录',
     clearAll: '清除所有记录',
     clearAllConfirm: '确定要清除所有历史记录吗？此操作不可撤销。',
     todoAssistantPrompt: '用户当前有 {count} 个未完成的待办事项：\n{todoList}',

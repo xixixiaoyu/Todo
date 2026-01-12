@@ -1,9 +1,21 @@
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
-import { Trash2, Edit3, Check, X, MessageSquare, Clock, Search, Plus, Pin } from 'lucide-vue-next'
+import {
+  Trash2,
+  Edit3,
+  Check,
+  X,
+  MessageSquare,
+  Clock,
+  Search,
+  Plus,
+  Pin,
+  FileDown,
+} from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useChatHistory, type ChatSession } from '@/composables/useChatHistory'
 import { formatRelativeTime } from '@/lib/dayjs'
+import { exportSessionToMarkdown, exportAllSessionsToMarkdown } from '@/lib/export'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,6 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 const emit = defineEmits<{
   (e: 'select', sessionId: string): void
@@ -105,6 +118,17 @@ function handleDelete(sessionId: string, event: Event): void {
   deleteSession(sessionId)
 }
 
+// 导出 Markdown
+function handleExport(session: ChatSession, event: Event): void {
+  event.stopPropagation()
+  exportSessionToMarkdown(session)
+}
+
+// 导出所有
+function handleExportAll(): void {
+  exportAllSessionsToMarkdown(sessions.value)
+}
+
 // 清除所有会话
 function handleClearAll(): void {
   showClearConfirm.value = true
@@ -127,20 +151,49 @@ function handleClearConfirm(): void {
           {{ t('ai.historyTitle') }}
         </h3>
         <div class="flex items-center gap-1">
-          <button
-            v-if="hasSessions"
-            class="flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-            @click="handleClearAll"
-          >
-            <Trash2 :size="12" />
-            {{ t('ai.clearAll') }}
-          </button>
-          <button
-            class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-            @click="emit('close')"
-          >
-            <X :size="16" />
-          </button>
+          <TooltipProvider>
+            <Tooltip v-if="hasSessions">
+              <TooltipTrigger as-child>
+                <button
+                  class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                  @click="handleExportAll"
+                >
+                  <FileDown :size="16" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{{ t('ai.exportAll') }}</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip v-if="hasSessions">
+              <TooltipTrigger as-child>
+                <button
+                  class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                  @click="handleClearAll"
+                >
+                  <Trash2 :size="16" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{{ t('ai.clearAll') }}</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger as-child>
+                <button
+                  class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                  @click="emit('close')"
+                >
+                  <X :size="16" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{{ t('common.close') }}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 
@@ -233,8 +286,8 @@ function handleClearConfirm(): void {
 
             <!-- 正常显示 -->
             <template v-else>
-              <div class="flex items-start gap-2">
-                <div class="min-w-0 flex-1">
+              <div class="relative">
+                <div class="min-w-0 pr-2 transition-all group-hover:pr-24">
                   <div class="flex items-center gap-1.5">
                     <p
                       class="truncate text-sm font-medium transition-colors"
@@ -251,11 +304,11 @@ function handleClearConfirm(): void {
                 </div>
                 <!-- 操作按钮 -->
                 <div
-                  class="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100"
+                  class="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 transition-all group-hover:opacity-100 bg-gradient-to-l from-accent/90 via-accent/80 to-transparent pl-8 py-1 rounded-r-xl"
                   @click.stop
                 >
                   <button
-                    class="rounded-md p-1.5 transition-colors hover:bg-background"
+                    class="rounded-md p-1 transition-colors hover:bg-background/80"
                     :class="
                       session.isPinned
                         ? 'text-primary'
@@ -267,14 +320,21 @@ function handleClearConfirm(): void {
                     <Pin :size="14" :class="{ 'fill-primary/20': session.isPinned }" />
                   </button>
                   <button
-                    class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+                    class="rounded-md p-1 text-muted-foreground transition-colors hover:bg-background/80 hover:text-foreground"
                     :title="t('ai.editTitle')"
                     @click="startEdit(session)"
                   >
                     <Edit3 :size="14" />
                   </button>
                   <button
-                    class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    class="rounded-md p-1 text-muted-foreground transition-colors hover:bg-background/80 hover:text-foreground"
+                    :title="t('ai.exportMarkdown')"
+                    @click="handleExport(session, $event)"
+                  >
+                    <FileDown :size="14" />
+                  </button>
+                  <button
+                    class="rounded-md p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                     :title="t('ai.delete')"
                     @click="handleDelete(session.id, $event)"
                   >
@@ -330,8 +390,8 @@ function handleClearConfirm(): void {
 
             <!-- 正常显示 -->
             <template v-else>
-              <div class="flex items-start gap-2">
-                <div class="min-w-0 flex-1">
+              <div class="relative">
+                <div class="min-w-0 pr-2 transition-all group-hover:pr-24">
                   <div class="flex items-center gap-1.5">
                     <p
                       class="truncate text-sm font-medium transition-colors"
@@ -348,11 +408,11 @@ function handleClearConfirm(): void {
                 </div>
                 <!-- 操作按钮 -->
                 <div
-                  class="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100"
+                  class="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 transition-all group-hover:opacity-100 bg-gradient-to-l from-accent/90 via-accent/80 to-transparent pl-8 py-1 rounded-r-xl"
                   @click.stop
                 >
                   <button
-                    class="rounded-md p-1.5 transition-colors hover:bg-background"
+                    class="rounded-md p-1 transition-colors hover:bg-background/80"
                     :class="
                       session.isPinned
                         ? 'text-primary'
@@ -364,14 +424,21 @@ function handleClearConfirm(): void {
                     <Pin :size="14" :class="{ 'fill-primary/20': session.isPinned }" />
                   </button>
                   <button
-                    class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+                    class="rounded-md p-1 text-muted-foreground transition-colors hover:bg-background/80 hover:text-foreground"
                     :title="t('ai.editTitle')"
                     @click="startEdit(session)"
                   >
                     <Edit3 :size="14" />
                   </button>
                   <button
-                    class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    class="rounded-md p-1 text-muted-foreground transition-colors hover:bg-background/80 hover:text-foreground"
+                    :title="t('ai.exportMarkdown')"
+                    @click="handleExport(session, $event)"
+                  >
+                    <FileDown :size="14" />
+                  </button>
+                  <button
+                    class="rounded-md p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                     :title="t('ai.delete')"
                     @click="handleDelete(session.id, $event)"
                   >

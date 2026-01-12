@@ -18,6 +18,7 @@ export default {
     save: 'Save',
     delete: 'Delete',
     clear: 'Clear',
+    close: 'Close',
     resizeDrawer: 'Resize drawer width',
     error: {
       requestFailed: 'Request failed',
@@ -205,6 +206,8 @@ export default {
     messageCount: '{count} messages',
     editTitle: 'Edit Title',
     delete: 'Delete',
+    exportMarkdown: 'Export Markdown',
+    exportAll: 'Export All Records',
     clearAll: 'Clear All History',
     clearAllConfirm:
       'Are you sure you want to clear all chat history? This action cannot be undone.',
