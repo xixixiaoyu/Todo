@@ -119,7 +119,6 @@ function injectSystemPrompts(
     ...messages.map((msg) => ({
       role: msg.role,
       content: msg.content,
-      ...(msg.reasoning_details ? { reasoning_details: msg.reasoning_details } : {}),
     })),
   )
 
