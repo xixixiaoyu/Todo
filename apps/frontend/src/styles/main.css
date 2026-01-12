@@ -239,17 +239,33 @@
 @keyframes pulse-custom {
   0%,
   100% {
-    transform: scale(1);
+    transform: scale(1) rotate(0deg);
     filter: drop-shadow(0 0 0px hsla(var(--primary) / 0));
   }
   50% {
-    transform: scale(1.15);
-    filter: drop-shadow(0 0 8px hsla(var(--primary) / 0.4));
+    transform: scale(1.12) rotate(5deg);
+    filter: drop-shadow(0 0 10px hsla(var(--primary) / 0.5));
   }
 }
 
+@keyframes ai-float {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    filter: drop-shadow(0 0 2px hsla(var(--primary) / 0.2));
+  }
+  50% {
+    transform: translateY(-4px) scale(1.05);
+    filter: drop-shadow(0 0 12px hsla(var(--primary) / 0.6));
+  }
+}
+
+.animate-ai-float {
+  animation: ai-float 3s ease-in-out infinite;
+}
+
 .animate-pulse-custom {
-  animation: pulse-custom 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: pulse-custom 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 .animate-sparkle {

@@ -443,7 +443,7 @@ async function copyContent() {
         >
           <h4 class="flex items-center gap-2">
             <div
-              class="ai-icon text-primary/60 transition-transform duration-500 group-hover/thinking:scale-110"
+              class="ai-icon translate-y-[1.5px] text-primary/60 transition-transform duration-500 group-hover/thinking:scale-110"
               :class="{ 'animate-pulse-custom': isStreaming && !hasContent }"
             >
               <svg
@@ -531,7 +531,7 @@ async function copyContent() {
             class="loading-container flex flex-col gap-3 rounded-2xl border border-ai-message-border bg-ai-message-bg p-4 shadow-sm"
           >
             <div class="flex items-center gap-2">
-              <div class="ai-icon animate-bounce text-primary">
+              <div class="ai-icon translate-y-[2px] animate-ai-float text-primary">
                 <svg
                   width="18"
                   height="18"
