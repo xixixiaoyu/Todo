@@ -233,6 +233,9 @@ export default {
       zIndex: {
         1000: '1000',
       },
+      transitionTimingFunction: {
+        'soft-spring': 'cubic-bezier(0.16, 1, 0.3, 1)',
+      },
       // 关键帧动画
       keyframes: {
         'accordion-down': {

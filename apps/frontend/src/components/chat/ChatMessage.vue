@@ -505,7 +505,7 @@ async function copyContent() {
           </div>
         </div>
         <div
-          class="thinking-body transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden"
+          class="thinking-body transition-all duration-500 ease-soft-spring overflow-hidden"
           :style="{ maxHeight: thinkingHeight }"
         >
           <div class="px-4 pb-3 pt-1">
