@@ -208,34 +208,31 @@ export async function getAIStreamResponse(
     const textDecoder = new TextDecoder()
     let buffer = ''
     let isReading = true
+    let doneReceived = false
 
-    while (isReading) {
-      const { done, value } = await reader.read()
+    /**
+     * 处理单行数据的辅助函数
+     */
+    const processPayload = (payload: string) => {
+      const trimmed = payload.trim()
+      if (!trimmed) return
 
-      if (done) {
-        isReading = false
-        break
+      let data = trimmed
+      if (trimmed.startsWith('data:')) {
+        data = trimmed.substring(5).trim()
       }
 
-      buffer += textDecoder.decode(value, { stream: true })
+      // 流结束标志
+      if (data === '[DONE]') {
+        onChunk('[DONE]')
+        doneReceived = true
+        return
+      }
 
-      // 按行分割处理 SSE 数据
-      const lines = buffer.split(/\r?\n/)
-      buffer = lines.pop() || ''
-
-      for (const line of lines) {
-        if (!line.startsWith('data:')) continue
-
-        const payload = line.substring(5).trim()
-
-        // 流结束标志
-        if (payload === '[DONE]') {
-          onChunk('[DONE]')
-          return
-        }
-
+      // 尝试解析 JSON
+      if (data.startsWith('{')) {
         try {
-          const parsedData = JSON.parse(payload)
+          const parsedData = JSON.parse(data)
           const delta = parsedData.choices?.[0]?.delta
 
           // 处理正文内容
@@ -268,15 +265,40 @@ export async function getAIStreamResponse(
           if (reasoningDetails && onReasoningDetails) {
             onReasoningDetails(reasoningDetails)
           }
-        } catch {
-          // 解析失败，跳过该行
-          continue
+        } catch (e) {
+          console.warn('Failed to parse AI stream chunk:', e, data)
         }
       }
     }
 
+    while (isReading) {
+      const { done, value } = await reader.read()
+
+      if (done) {
+        isReading = false
+        break
+      }
+
+      buffer += textDecoder.decode(value, { stream: true })
+
+      // 按行分割处理 SSE 数据
+      const lines = buffer.split(/\r?\n/)
+      buffer = lines.pop() || ''
+
+      for (const line of lines) {
+        processPayload(line)
+      }
+    }
+
+    // 处理最后剩余的 buffer
+    if (buffer.trim()) {
+      processPayload(buffer)
+    }
+
     // 如果正常结束但没有收到 [DONE]
-    onChunk('[DONE]')
+    if (!doneReceived) {
+      onChunk('[DONE]')
+    }
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
       onChunk('[ABORTED]')
