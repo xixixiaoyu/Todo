@@ -16,7 +16,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="mb-8 flex justify-center">
+  <div class="mb-6 flex justify-center">
     <Tabs :model-value="filter" @update:model-value="emit('update:filter', $event as FilterType)">
       <TabsList
         class="grid w-full max-w-[310px] grid-cols-2 h-11 p-1 bg-muted/50 backdrop-blur-sm rounded-full border border-border/50 shadow-inner"

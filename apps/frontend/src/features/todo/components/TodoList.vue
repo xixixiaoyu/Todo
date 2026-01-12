@@ -123,7 +123,7 @@ const displayTodos = computed(() => {
           ghost-class="opacity-50"
           chosen-class="scale-[1.02]"
           drag-class="rotate-1"
-          class="space-y-3 pb-6"
+          class="space-y-1 pb-6"
           :animation="300"
           :disabled="!!searchQuery"
         >

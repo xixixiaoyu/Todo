@@ -29,7 +29,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="relative mb-8">
+  <div class="relative mb-6">
     <div class="flex items-center gap-3">
       <div class="relative flex-1 group">
         <TooltipProvider :delay-duration="0">
