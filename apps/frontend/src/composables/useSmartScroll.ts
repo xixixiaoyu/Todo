@@ -72,8 +72,9 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
     const { scrollTop, scrollHeight, clientHeight } = el
     // 处理内容不足以滚动的情况
     if (scrollHeight <= clientHeight + 1) return true
-    const offsetFromBottom = scrollHeight - scrollTop - clientHeight
-    return offsetFromBottom <= threshold + 1 // 容忍 1px 的误差
+    // 增加 2px 的亚像素容错，处理浏览器缩放或渲染引擎差异
+    const offsetFromBottom = Math.ceil(scrollHeight - scrollTop - clientHeight)
+    return offsetFromBottom <= threshold + 2
   }
 
   /**
@@ -148,6 +149,9 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
    * 滚动到底部（统一入口）
    */
   const scrollToBottom = (behavior: ScrollBehaviorOption = scrollBehavior) => {
+    const el = scrollContainer.value
+    if (!el) return
+
     if (behavior === 'instant' || behavior === 'auto') {
       scrollToBottomInstant()
     } else {

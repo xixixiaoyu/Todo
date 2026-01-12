@@ -79,9 +79,15 @@ watch(
       nextTick(() => {
         scrollToBottom('smooth')
       })
+    } else if (!isStreaming && oldMessages?.[oldMessages.length - 1]?.isStreaming) {
+      // 当流式结束时，确保执行最后一次滚动检查
+      // 延迟一小段时间以等待 Markdown 最终渲染和布局稳定
+      setTimeout(() => {
+        if (isSticking.value) {
+          scrollToBottom('smooth')
+        }
+      }, 100)
     }
-    // 注意：当 isStreaming 从 true 变为 false 时，不再触发额外的滚动
-    // 因为 streamingScroll 已经保证了在输出过程中始终贴合底部
   },
   { deep: true },
 )
