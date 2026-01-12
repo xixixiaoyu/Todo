@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useRequest } from '@/composables/useRequest'
+import i18n from '@/i18n'
 
 describe('useRequest', () => {
   beforeEach(() => {
@@ -61,7 +62,7 @@ describe('useRequest', () => {
 
     await execute()
 
-    expect(error.value).toBe('请求失败')
+    expect(error.value).toBe(i18n.global.t('common.error.requestFailed'))
   })
 
   it('should reset error before each request', async () => {
