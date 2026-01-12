@@ -126,9 +126,9 @@ async function submitAddChild() {
 </script>
 
 <template>
-  <div class="flex flex-col gap-1">
+  <div class="flex flex-col gap-3">
     <div
-      class="group flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-1.5 transition-all hover:shadow-md hover:border-primary/20 dark:hover:shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
+      class="group flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-all hover:shadow-md hover:border-primary/20 dark:hover:shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
       :style="{ marginLeft: `${(level || 0) * 2}rem` }"
     >
       <div class="flex items-center gap-2">
@@ -251,7 +251,7 @@ async function submitAddChild() {
     <div
       v-if="isAddingChild"
       ref="subtaskContainerRef"
-      class="flex items-center gap-2 px-4 py-2"
+      class="flex items-center gap-2 px-4 py-3"
       :style="{ marginLeft: `${(level || 0) * 2 + 2}rem` }"
     >
       <Input
@@ -292,7 +292,7 @@ async function submitAddChild() {
         group="todos"
         ghost-class="opacity-50"
         chosen-class="scale-[1.01]"
-        class="flex flex-col gap-1"
+        class="flex flex-col gap-3"
         :animation="300"
       >
         <template #item="{ element: child }">
