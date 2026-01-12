@@ -73,7 +73,6 @@ watch(drawerWidth, (newWidth) => {
 
 const drawerStyle = computed(() => ({
   width: props.isFullscreen ? '100%' : isMobile.value ? '100%' : `${drawerWidth.value}px`,
-  transform: props.modelValue ? 'translateX(0)' : 'translateX(-100%)',
 }))
 
 const overlayStyle = computed<CSSProperties>(() => ({
@@ -235,7 +234,7 @@ onUnmounted(() => {
 /* 过渡动画 */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 0.2s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .fade-enter-from,
@@ -244,11 +243,11 @@ onUnmounted(() => {
 }
 
 .slide-enter-active {
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .slide-leave-active {
-  transition: transform 0.2s cubic-bezier(0.4, 0, 1, 1);
+  transition: transform 0.25s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .slide-enter-from,
