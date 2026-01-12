@@ -1016,7 +1016,14 @@ defineExpose({
                               {{ t('ai.active') }}
                             </span>
                           </div>
-                          <p class="mt-0.5 text-xs text-muted-foreground">{{ preset.model }}</p>
+                          <div class="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                            <span>{{ preset.model }}</span>
+                            <span class="h-2.5 w-px bg-border" />
+                            <span
+                              >{{ t('ai.temperatureLabel') }}:
+                              {{ preset.temperature.toFixed(1) }}</span
+                            >
+                          </div>
                         </div>
                         <div
                           class="flex gap-1 transition-opacity group-hover:opacity-100"

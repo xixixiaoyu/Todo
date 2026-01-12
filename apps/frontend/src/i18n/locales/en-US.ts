@@ -177,7 +177,7 @@ export default {
     apiKeyPlaceholder: 'sk-...',
     modelLabel: 'Model',
     modelPlaceholder: 'e.g., deepseek-chat',
-    temperatureLabel: 'Temperature',
+    temperatureLabel: 'Temp',
     tempPrecise: 'Precise (0)',
     tempBalanced: 'Balanced (1)',
     tempCreative: 'Creative (2)',
