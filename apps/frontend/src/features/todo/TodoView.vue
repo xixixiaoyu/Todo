@@ -48,9 +48,9 @@ function onFireworksComplete() {
 <template>
   <div class="min-h-screen bg-background p-4 pb-16 md:p-8 md:pb-20">
     <Card
-      class="mx-auto max-w-4xl border-none shadow-card dark:shadow-[0_8px_30px_rgba(0,0,0,0.3)] overflow-hidden rounded-[24px]"
+      class="mx-auto max-w-4xl h-[calc(100vh-8rem)] flex flex-col border-none shadow-card dark:shadow-[0_8px_30px_rgba(0,0,0,0.3)] overflow-hidden rounded-[24px]"
     >
-      <CardContent class="p-6 md:p-8">
+      <CardContent class="p-6 md:p-8 flex flex-col flex-1 min-h-0">
         <!-- Header -->
         <TodoHeader v-model:is-drawer-open="isDrawerOpen" v-model:show-search="showSearch" />
 
