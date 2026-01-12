@@ -283,4 +283,62 @@ describe('TodoItem', () => {
 
     expect(wrapper.emitted('saveEdit')).toBeTruthy()
   })
+
+  describe('nesting levels', () => {
+    it('should show add subtask button at level 0 (root)', () => {
+      const wrapper = mount(TodoItem, {
+        props: {
+          todo: mockTodo,
+          editingId: null,
+          editingTitle: '',
+          level: 0,
+        },
+        global: {
+          plugins: [i18n],
+        },
+      })
+
+      const buttons = wrapper.findAll('button')
+      const addSubtaskBtn = buttons.find((b) => b.find('.lucide-plus').exists())
+      expect(addSubtaskBtn?.exists()).toBe(true)
+    })
+
+    it('should show add subtask button at level 1', () => {
+      const childTodo: Todo = { ...mockTodo, parentId: 'root' }
+      const wrapper = mount(TodoItem, {
+        props: {
+          todo: childTodo,
+          editingId: null,
+          editingTitle: '',
+          level: 1,
+        },
+        global: {
+          plugins: [i18n],
+        },
+      })
+
+      const buttons = wrapper.findAll('button')
+      const addSubtaskBtn = buttons.find((b) => b.find('.lucide-plus').exists())
+      expect(addSubtaskBtn?.exists()).toBe(true)
+    })
+
+    it('should not show add subtask button at level 2', () => {
+      const grandchildTodo: Todo = { ...mockTodo, parentId: 'child' }
+      const wrapper = mount(TodoItem, {
+        props: {
+          todo: grandchildTodo,
+          editingId: null,
+          editingTitle: '',
+          level: 2,
+        },
+        global: {
+          plugins: [i18n],
+        },
+      })
+
+      const buttons = wrapper.findAll('button')
+      const addSubtaskBtn = buttons.find((b) => b.find('.lucide-plus').exists())
+      expect(addSubtaskBtn?.exists()).toBe(undefined)
+    })
+  })
 })

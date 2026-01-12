@@ -136,7 +136,7 @@ async function submitAddChild() {
           class="drag-handle h-4 w-4 cursor-grab text-muted-foreground/30 hover:text-muted-foreground transition-colors active:cursor-grabbing"
         />
         <Button
-          v-if="!todo.parentId"
+          v-if="(level || 0) < 2"
           variant="ghost"
           size="icon"
           class="h-6 w-6 text-muted-foreground transition-opacity"
@@ -197,7 +197,7 @@ async function submitAddChild() {
           {{ todo.title }}
         </span>
         <div class="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-          <Tooltip v-if="!todo.parentId">
+          <Tooltip v-if="(level || 0) < 2">
             <TooltipTrigger as-child>
               <Button
                 variant="ghost"
@@ -283,9 +283,9 @@ async function submitAddChild() {
       </div>
     </div>
 
-    <!-- 子任务列表 (仅根节点可拥有) -->
+    <!-- 子任务列表 (最多支持三层) -->
     <div
-      v-if="!todo.parentId && isExpanded"
+      v-if="(level || 0) < 2 && isExpanded"
       class="ml-10 flex flex-col gap-2 border-l-2 border-primary/5 pl-2 transition-all"
     >
       <draggable

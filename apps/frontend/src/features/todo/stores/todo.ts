@@ -126,11 +126,16 @@ export const useTodoStore = defineStore(
 
       todo.completed = !todo.completed
 
-      // 如果是父任务，同步切换所有子任务
-      const children = todos.value.filter((t) => t.parentId === id)
-      children.forEach((child) => {
-        child.completed = todo.completed
-      })
+      // 递归切换所有子任务状态
+      const toggleChildren = (parentId: string, completed: boolean) => {
+        const children = todos.value.filter((t) => t.parentId === parentId)
+        children.forEach((child) => {
+          child.completed = completed
+          toggleChildren(child.id, completed)
+        })
+      }
+
+      toggleChildren(id, todo.completed)
 
       // 如果是子任务，检查父任务状态
       if (todo.parentId) {

@@ -253,6 +253,46 @@ describe('useTodoStore', () => {
       expect(store.todos.find((t) => t.id === 'child1')?.completed).toBe(true)
       expect(store.todos.find((t) => t.id === 'parent')?.completed).toBe(true)
     })
+
+    it('should toggle status recursively for 3 levels', async () => {
+      store.todos = [
+        { id: 'root', title: 'Root', completed: false, createdAt: new Date(), order: 0 },
+        {
+          id: 'child',
+          title: 'Child',
+          completed: false,
+          createdAt: new Date(),
+          parentId: 'root',
+          order: 0,
+        },
+        {
+          id: 'grandchild',
+          title: 'Grandchild',
+          completed: false,
+          createdAt: new Date(),
+          parentId: 'child',
+          order: 0,
+        },
+      ]
+
+      // Toggle root on -> child and grandchild should be on
+      await store.toggleTodo('root')
+      expect(store.todos.find((t) => t.id === 'root')?.completed).toBe(true)
+      expect(store.todos.find((t) => t.id === 'child')?.completed).toBe(true)
+      expect(store.todos.find((t) => t.id === 'grandchild')?.completed).toBe(true)
+
+      // Toggle grandchild off -> child and root should be off
+      await store.toggleTodo('grandchild')
+      expect(store.todos.find((t) => t.id === 'grandchild')?.completed).toBe(false)
+      expect(store.todos.find((t) => t.id === 'child')?.completed).toBe(false)
+      expect(store.todos.find((t) => t.id === 'root')?.completed).toBe(false)
+
+      // Toggle grandchild on -> child and root should be on (since they only have one child)
+      await store.toggleTodo('grandchild')
+      expect(store.todos.find((t) => t.id === 'grandchild')?.completed).toBe(true)
+      expect(store.todos.find((t) => t.id === 'child')?.completed).toBe(true)
+      expect(store.todos.find((t) => t.id === 'root')?.completed).toBe(true)
+    })
   })
 
   describe('deleteTodo', () => {
