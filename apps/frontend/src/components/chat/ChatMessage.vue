@@ -11,6 +11,7 @@ import {
   CircleDashed,
   CheckCircle2,
   AlertCircle,
+  X,
 } from 'lucide-vue-next'
 import type { ChatMessage } from '@/composables/useChat'
 import { useMarkdown } from '@/composables/useMarkdown'
@@ -28,6 +29,15 @@ const emit = defineEmits<{
 const { t } = useI18n()
 
 const { renderMarkdown, getMermaidSvgMap } = useMarkdown()
+
+// 图片预览
+const previewImageUrl = ref<string | null>(null)
+const openImage = (url: string) => {
+  previewImageUrl.value = url
+}
+const closePreview = () => {
+  previewImageUrl.value = null
+}
 
 // 编辑状态
 const isEditing = ref(false)
@@ -572,6 +582,41 @@ async function copyContent() {
                 : '',
             ]"
           >
+            <!-- 图片内容 -->
+            <div
+              v-if="message.images && message.images.length > 0"
+              class="mb-2 flex flex-wrap gap-2"
+              :class="isUser ? 'justify-end' : 'justify-start'"
+            >
+              <div
+                v-for="(img, index) in message.images"
+                :key="index"
+                class="group relative h-20 w-20 overflow-hidden rounded-lg border border-white/20 bg-black/5 shadow-sm transition-all hover:scale-105 cursor-zoom-in"
+                @click="openImage(img)"
+              >
+                <img :src="img" class="h-full w-full object-cover" />
+                <div
+                  class="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all group-hover:bg-black/10 group-hover:opacity-100"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="white"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <polyline points="9 21 3 21 3 15"></polyline>
+                    <line x1="21" y1="3" x2="14" y2="10"></line>
+                    <line x1="3" y1="21" x2="10" y2="14"></line>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
             <!-- 用户消息：编辑模式 -->
             <div v-if="isUser && isEditing" class="flex flex-col gap-2">
               <textarea
@@ -654,6 +699,36 @@ async function copyContent() {
       </Transition>
     </div>
   </div>
+
+  <!-- 图片全屏预览 -->
+  <Teleport to="body">
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition duration-150 ease-in"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="previewImageUrl"
+        class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
+        @click="closePreview"
+      >
+        <button
+          class="absolute right-6 top-6 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-all hover:bg-white/20 hover:scale-110 active:scale-95"
+          @click="closePreview"
+        >
+          <X :size="24" />
+        </button>
+        <img
+          :src="previewImageUrl"
+          class="max-h-[90vh] max-w-[90vw] animate-in zoom-in-95 duration-300 rounded-lg shadow-2xl object-contain"
+          @click.stop
+        />
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <style scoped>

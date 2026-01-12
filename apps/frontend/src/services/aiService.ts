@@ -7,7 +7,7 @@ import { useTodoStore } from '@/features/todo/stores/todo'
 import { useMemory } from '@/composables/useMemory'
 import i18n from '@/i18n'
 
-const { t } = i18n.global
+const t = i18n.global.t
 
 interface ReasoningDetailItem {
   type?: string
@@ -26,6 +26,7 @@ export interface ChatMessage {
   id: string
   role: 'user' | 'assistant' | 'system'
   content: string
+  images?: string[] // 图片 URL 或 base64
   thinkingContent?: string
   reasoning_details?: string
   discussionSteps?: DiscussionStep[]
@@ -72,6 +73,14 @@ export function generateId(): string {
   return Math.random().toString(36).substring(2, 11)
 }
 
+interface MultiModalContent {
+  type: 'text' | 'image_url'
+  text?: string
+  image_url?: {
+    url: string
+  }
+}
+
 /**
  * 注入系统提示和上下文信息（待办事项、记忆等）
  */
@@ -79,8 +88,8 @@ function injectSystemPrompts(
   messages: ChatMessage[],
   systemPrompt: string,
   todoAssistant: boolean,
-): Array<{ role: string; content: string }> {
-  const result: Array<{ role: string; content: string }> = []
+): Array<{ role: string; content: string | MultiModalContent[] }> {
+  const result: Array<{ role: string; content: string | MultiModalContent[] }> = []
 
   // 1. 基础系统提示词
   if (systemPrompt) {
@@ -116,10 +125,26 @@ function injectSystemPrompts(
   }
 
   result.push(
-    ...messages.map((msg) => ({
-      role: msg.role,
-      content: msg.content,
-    })),
+    ...messages.map((msg) => {
+      // 如果有图片，使用多模态格式
+      if (msg.images && msg.images.length > 0) {
+        const content: MultiModalContent[] = [{ type: 'text', text: msg.content }]
+        msg.images.forEach((url) => {
+          content.push({
+            type: 'image_url',
+            image_url: { url },
+          })
+        })
+        return {
+          role: msg.role,
+          content,
+        }
+      }
+      return {
+        role: msg.role,
+        content: msg.content,
+      }
+    }),
   )
 
   return result
@@ -314,7 +339,11 @@ export async function getAIStreamResponse(
  */
 async function fetchNonStreamResponse(
   config: { baseUrl: string; apiKey: string; model: string; temperature?: number },
-  messages: Array<{ role: string; content: string; reasoning_details?: string }>,
+  messages: Array<{
+    role: string
+    content: string | MultiModalContent[]
+    reasoning_details?: string
+  }>,
   thinkingMode?: string,
   signal?: AbortSignal,
 ): Promise<{ content: string; reasoning_details?: string }> {
@@ -413,7 +442,9 @@ export async function getMultiModelDiscussionStream(
     temperature: primaryPreset.temperature,
   }
 
-  const userQuery = messages[messages.length - 1].content
+  const lastMsg = messages[messages.length - 1]
+  const userQuery =
+    lastMsg.content || (lastMsg.images?.length ? t('ai.visionQueryPlaceholder') : '')
 
   // 初始化步骤列表
   const steps: DiscussionStep[] = []
@@ -483,12 +514,14 @@ export async function getMultiModelDiscussionStream(
     discussionData: discussionSummary,
   })
 
+  const lastUserMessage = messages[messages.length - 1]
   const synthesisMessages: ChatMessage[] = [
     ...messages.slice(0, -1),
     {
       id: generateId(),
       role: 'user',
       content: synthesisPrompt,
+      images: lastUserMessage.images,
     },
   ]
 
@@ -502,7 +535,11 @@ export async function getMultiModelDiscussionStream(
  * 获取非流式 AI 响应
  */
 export async function getAIStaticResponse(
-  messages: Array<{ role: string; content: string; reasoning_details?: string }>,
+  messages: Array<{
+    role: string
+    content: string | MultiModalContent[]
+    reasoning_details?: string
+  }>,
   options: AIRequestOptions = {},
 ): Promise<{ content: string; reasoning_details?: string }> {
   const aiConfig = getAIConfig()

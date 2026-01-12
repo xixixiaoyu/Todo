@@ -237,13 +237,17 @@ export default {
     memoryDescription:
       'AI Assistant automatically extracts key facts, tech stacks, and personal preferences from conversations to provide more personalized responses in future chats.',
     noMemories: 'No memory snippets yet',
-    memoryCompress: 'Compress',
+    memoryCompress: 'Compress Memory',
     memoryCompressing: 'Compressing...',
     memoryModelPreset: 'Memory Management Preset',
     memoryModelTip:
-      'Specifying a dedicated preset (e.g., a more powerful model) for memory tasks can significantly improve extraction and compression quality.',
+      'Specifying a dedicated preset (e.g., a model with stronger reasoning) for memory tasks can significantly improve extraction and compression quality.',
     memoryList: 'Memory List',
-    memoryError: 'Memory operation failed',
+    memoryError: 'Memory operation error',
+    uploadImage: 'Upload Image',
+    removeImage: 'Remove Image',
+    maxImagesReached: 'Maximum {count} images allowed',
+    visionQueryPlaceholder: 'Please analyze the uploaded image',
     addMemoryPlaceholder: 'Enter facts or preferences to remember...',
     memoryExtractionPrompt: `You are a memory extraction expert. Please extract key preferences, tech stacks, background information, or habits about the user from the following conversation snippet.
 Rules:
@@ -268,4 +272,4 @@ Current memory list:
     userRole: 'User',
     assistantRole: 'Assistant',
   },
-}
+} as const

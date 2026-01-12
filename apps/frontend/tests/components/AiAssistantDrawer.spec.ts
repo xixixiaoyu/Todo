@@ -29,6 +29,7 @@ vi.mock('lucide-vue-next', () => {
     'Paperclip',
     'Bot',
     'User',
+    'Image',
   ]
   const mockIcons: Record<string, { template: string }> = {}
   icons.forEach((icon) => {

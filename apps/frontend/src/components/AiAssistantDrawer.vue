@@ -15,6 +15,7 @@ import {
   History,
   Check,
   Users,
+  Image as ImageIcon,
 } from 'lucide-vue-next'
 import ResizableDrawer from '@/components/ResizableDrawer.vue'
 import ChatMessageList from '@/components/chat/ChatMessageList.vue'
@@ -31,6 +32,69 @@ const modelValue = defineModel<boolean>({ required: true })
 
 // AI 配置与预设
 const { presets, activePreset, switchPreset, config, updateConfig } = useAIConfig()
+
+// 图片上传状态
+const selectedImages = ref<string[]>([])
+const fileInputRef = ref<HTMLInputElement>()
+
+const triggerImageUpload = () => {
+  fileInputRef.value?.click()
+}
+
+const processFiles = (files: FileList | File[]) => {
+  const MAX_IMAGES = 4
+  const remaining = MAX_IMAGES - selectedImages.value.length
+  if (remaining <= 0) return
+
+  const filesToProcess = Array.from(files).slice(0, remaining)
+
+  filesToProcess.forEach((file) => {
+    if (!file.type.startsWith('image/')) return
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const result = e.target?.result as string
+      if (result) {
+        selectedImages.value.push(result)
+      }
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+const handleImageUpload = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const files = target.files
+  if (!files) return
+
+  processFiles(files)
+
+  // 重置 input 以允许再次选择相同文件
+  target.value = ''
+}
+
+const handlePaste = (event: ClipboardEvent) => {
+  if (isInputDisabled.value) return
+
+  const items = event.clipboardData?.items
+  if (!items) return
+
+  const files: File[] = []
+  for (const item of Array.from(items)) {
+    if (item.type.indexOf('image') !== -1) {
+      const file = item.getAsFile()
+      if (file) files.push(file)
+    }
+  }
+
+  if (files.length > 0) {
+    processFiles(files)
+  }
+}
+
+const removeImage = (index: number) => {
+  selectedImages.value.splice(index, 1)
+}
 
 // 切换思考模式
 const toggleThinkingMode = () => {
@@ -167,11 +231,16 @@ const isInputDisabled = computed(() => isGenerating.value && !error.value)
 
 const handleSend = async () => {
   const content = chatInput.value.trim()
-  if (!content || isInputDisabled.value) return
+  const images = [...selectedImages.value]
+  if ((!content && images.length === 0) || isInputDisabled.value) return
 
   chatInput.value = ''
+  selectedImages.value = []
 
-  await sendMessage(content)
+  // 发送后自动调整高度
+  nextTick(() => adjustTextareaHeight())
+
+  await sendMessage(content, images)
 }
 
 const handleNewline = (event: KeyboardEvent) => {
@@ -472,6 +541,23 @@ defineOptions({
             class="input-container-refined relative flex flex-col rounded-2xl border border-border bg-card p-1.5 shadow-sm"
             :class="{ 'opacity-60 grayscale-[0.2]': isInputDisabled }"
           >
+            <!-- 图片预览区域 -->
+            <div v-if="selectedImages.length > 0" class="flex flex-wrap gap-2 px-2 pt-2">
+              <div
+                v-for="(img, index) in selectedImages"
+                :key="index"
+                class="group relative h-16 w-16 overflow-hidden rounded-lg border border-border bg-muted"
+              >
+                <img :src="img" class="h-full w-full object-cover" />
+                <button
+                  class="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                  @click="removeImage(index)"
+                >
+                  <X :size="12" />
+                </button>
+              </div>
+            </div>
+
             <textarea
               ref="textareaRef"
               v-model="chatInput"
@@ -481,10 +567,29 @@ defineOptions({
               :disabled="isInputDisabled"
               @keydown.enter.exact.prevent="handleSend"
               @keydown.enter.shift.exact="handleNewline"
+              @paste="handlePaste"
             />
 
             <div class="flex items-center justify-between px-1.5 pb-1.5">
               <div class="flex items-center gap-1.5">
+                <!-- 图片上传按钮 -->
+                <button
+                  class="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                  :title="t('ai.uploadImage')"
+                  :disabled="isInputDisabled || selectedImages.length >= 4"
+                  @click="triggerImageUpload"
+                >
+                  <ImageIcon :size="16" />
+                </button>
+                <input
+                  ref="fileInputRef"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  class="hidden"
+                  @change="handleImageUpload"
+                />
+
                 <!-- 停止生成按钮 -->
                 <button
                   v-if="isGenerating && !error"
@@ -509,11 +614,11 @@ defineOptions({
               <button
                 class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-primary-foreground transition-all shadow-sm"
                 :class="[
-                  isInputDisabled || !chatInput.trim()
+                  isInputDisabled || (!chatInput.trim() && selectedImages.length === 0)
                     ? 'cursor-not-allowed bg-primary/20 scale-95'
                     : 'animate-button-pop bg-primary hover:bg-primary-hover hover:scale-105 active:scale-95 shadow-primary/20',
                 ]"
-                :disabled="isInputDisabled || !chatInput.trim()"
+                :disabled="isInputDisabled || (!chatInput.trim() && selectedImages.length === 0)"
                 @click="handleSend"
               >
                 <Send :size="18" />

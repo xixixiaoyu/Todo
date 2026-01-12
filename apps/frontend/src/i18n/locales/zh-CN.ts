@@ -237,6 +237,10 @@ export default {
       '为记忆任务指定一个专用预设（如逻辑推理能力更强的模型）可显著提升提取和压缩的质量。',
     memoryList: '记忆列表',
     memoryError: '记忆操作出错',
+    uploadImage: '上传图片',
+    removeImage: '删除图片',
+    maxImagesReached: '最多允许上传 {count} 张图片',
+    visionQueryPlaceholder: '请分析上传的图片',
     addMemoryPlaceholder: '手动输入需要记住的事实或偏好...',
     memoryExtractionPrompt: `你是一个记忆提取专家。请从以下对话片段中提取关于用户的关键偏好、技术栈、背景信息或习惯。
 规则：
@@ -261,4 +265,4 @@ export default {
     userRole: '用户',
     assistantRole: '助手',
   },
-}
+} as const

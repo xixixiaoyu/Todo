@@ -19,12 +19,11 @@ export type { ChatMessage }
 
 const MAX_RETRIES = 3
 
-const { t } = i18n.global
-
 /**
  * 聊天功能 composable
  */
 export function useChat(options: AIRequestOptions = {}) {
+  const t = i18n.global.t
   const { currentSession, getOrCreateCurrentSession, updateSessionMessages, createSession } =
     useChatHistory()
 
@@ -118,8 +117,8 @@ export function useChat(options: AIRequestOptions = {}) {
   /**
    * 发送消息
    */
-  async function sendMessage(content: string, isRetry = false): Promise<void> {
-    if (!content.trim() || isGenerating.value) return
+  async function sendMessage(content: string, images?: string[], isRetry = false): Promise<void> {
+    if ((!content.trim() && (!images || images.length === 0)) || isGenerating.value) return
 
     error.value = null
 
@@ -136,6 +135,7 @@ export function useChat(options: AIRequestOptions = {}) {
         id: generateId(),
         role: 'user',
         content: content.trim(),
+        images: images,
         createdAt: new Date(),
       }
       // 使用 setter 触发更新逻辑（包括标题生成）
@@ -253,7 +253,7 @@ export function useChat(options: AIRequestOptions = {}) {
         console.warn(`Retrying ${retryCount.value}/${MAX_RETRIES}...`)
         // 重试时不删除消息，而是直接再次调用
         isGenerating.value = false
-        await sendMessage(content, true)
+        await sendMessage(content, images, true)
       } else {
         isGenerating.value = false
         currentAIResponse.value = ''
@@ -305,30 +305,38 @@ export function useChat(options: AIRequestOptions = {}) {
     if (lastUserMsgIndex === -1) return
 
     const userContent = chatHistory.value[lastUserMsgIndex].content
+    const userImages = chatHistory.value[lastUserMsgIndex].images
 
     // 删除最后一条用户消息及其之后的所有消息
     const newHistory = chatHistory.value.slice(0, lastUserMsgIndex)
     chatHistory.value = newHistory
 
     // 重新发送
-    await sendMessage(userContent)
+    await sendMessage(userContent, userImages)
   }
 
   /**
    * 编辑并重新发送消息
    */
-  async function editAndResendMessage(messageId: string, newContent: string): Promise<void> {
-    if (isGenerating.value || !newContent.trim()) return
+  async function editAndResendMessage(
+    messageId: string,
+    newContent: string,
+    newImages?: string[],
+  ): Promise<void> {
+    if (isGenerating.value || (!newContent.trim() && (!newImages || newImages.length === 0))) return
 
     const index = chatHistory.value.findIndex((msg) => msg.id === messageId)
     if (index === -1) return
+
+    // 如果没有传入新图片，则尝试保留原有的图片
+    const imagesToUse = newImages !== undefined ? newImages : chatHistory.value[index].images
 
     // 更新消息内容并删除后续所有消息
     const newHistory = [...chatHistory.value.slice(0, index)]
     chatHistory.value = newHistory
 
     // 重新发送新内容
-    await sendMessage(newContent)
+    await sendMessage(newContent, imagesToUse)
   }
 
   // 合并的消息列表（包含流式响应）
