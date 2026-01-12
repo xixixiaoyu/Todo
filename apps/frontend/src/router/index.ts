@@ -11,7 +11,6 @@ const router = createRouter({
       path: '/',
       name: 'todo',
       component: () => import('@/features/todo/TodoView.vue'),
-      meta: { title: 'todo.title' },
     },
     {
       path: '/login',
