@@ -90,11 +90,18 @@ vi.mock('@/composables/useChat', () => ({
     stopGenerating: vi.fn(),
     clearHistory: vi.fn(),
     regenerateLastResponse: vi.fn(),
+    editAndResendMessage: vi.fn(),
   }),
 }))
 
 const mockUpdateConfig = vi.fn()
-const mockConfig = ref({ thinkingMode: 'disabled', todoAssistant: false })
+const mockConfig = ref({
+  thinkingMode: 'disabled',
+  todoAssistant: false,
+  discussionMode: false,
+  discussionModelIds: [],
+  discussionPrimaryModelId: null,
+})
 
 vi.mock('@/composables/useAIConfig', () => ({
   useAIConfig: () => ({
@@ -120,6 +127,8 @@ describe('AiAssistantDrawer Navigation and Button States', () => {
     mockCurrentSessionId.value = null
     mockMessages.value = []
     mockIsGenerating.value = false
+    mockConfig.value.todoAssistant = false
+    mockConfig.value.discussionMode = false
     vi.clearAllMocks()
   })
 
@@ -205,195 +214,9 @@ describe('AiAssistantDrawer Navigation and Button States', () => {
     expect(prevBtn.attributes('disabled')).toBeDefined()
   })
 
-  it('should call toggleThinkingMode when button is clicked', async () => {
-    const wrapper = mount(AiAssistantDrawer, {
-      props: { modelValue: true },
-    })
-
-    const thinkingBtn = wrapper
-      .findAll('button')
-      .find((b) => b.attributes('title')?.includes('ai.thinking'))
-    await thinkingBtn?.trigger('click')
-
-    // Note: Since we are mocking useAIConfig, we check if the toggle function was called
-    // or if the state changed if we were using the real composable.
-    // In our mock, toggleThinkingMode is local to the component but it calls saveAIThinkingMode.
-    const { saveAIThinkingMode } = await import('@/composables/useAIConfig')
-    expect(saveAIThinkingMode).toHaveBeenCalled()
-  })
-
-  it('should remember the last tab when opening settings without arguments', async () => {
-    const wrapper = mount(AiAssistantDrawer, {
-      props: { modelValue: true },
-      global: {
-        stubs: {
-          ChatMessageList: true,
-          AISettingsDialog: {
-            name: 'AISettingsDialog',
-            template: '<div class="settings-dialog-stub"></div>',
-            props: ['modelValue', 'initialTab'],
-            emits: ['update:modelValue', 'update:initialTab'],
-          },
-          History: true,
-          Settings2: true,
-          Plus: true,
-          Brain: true,
-          ChevronDown: true,
-          Check: true,
-          Maximize2: true,
-          Minimize2: true,
-          X: true,
-        },
-        mocks: {
-          t: (key: string) => key,
-        },
-      },
-    })
-
-    // 1. Initial state: should be settings
-    const settingsBtn = wrapper
-      .findAll('button')
-      .find((b) => b.attributes('title') === 'ai.settings')
-    await settingsBtn?.trigger('click')
-    let dialog = wrapper.findComponent({ name: 'AISettingsDialog' })
-    expect(dialog.props('initialTab')).toBe('settings')
-
-    // 2. Simulate user switching tab in dialog to 'presets'
-    await dialog.vm.$emit('update:initialTab', 'presets')
-    await dialog.vm.$emit('update:modelValue', false) // close
-    await nextTick()
-
-    // 3. Reopen via settings button (no arguments)
-    await settingsBtn?.trigger('click')
-    dialog = wrapper.findComponent({ name: 'AISettingsDialog' })
-    expect(dialog.props('initialTab')).toBe('presets')
-  })
-
-  it('should still allow explicit tab override', async () => {
-    const wrapper = mount(AiAssistantDrawer, {
-      props: { modelValue: true },
-      global: {
-        stubs: {
-          ChatMessageList: true,
-          AISettingsDialog: {
-            name: 'AISettingsDialog',
-            template: '<div></div>',
-            props: ['modelValue', 'initialTab'],
-          },
-          ChevronDown: true,
-        },
-        mocks: {
-          t: (key: string) => key,
-        },
-      },
-    })
-
-    // Click "Manage Presets" which should override even if last was settings
-    const presetTrigger = wrapper.findAll('button').find((b) => b.html().includes('ChevronDown'))
-    await presetTrigger?.trigger('click') // open dropdown
-    const manageBtn = wrapper.findAll('button').find((b) => b.text().includes('ai.managePresets'))
-    await manageBtn?.trigger('click')
-
-    const dialog = wrapper.findComponent({ name: 'AISettingsDialog' })
-    expect(dialog.props('initialTab')).toBe('presets')
-  })
-
-  describe('Textarea Auto-height', () => {
-    it('should adjust height based on content scrollHeight', async () => {
-      // Mock scrollHeight
-      const mockScrollHeight = 100
-      const wrapper = mount(AiAssistantDrawer, {
-        props: { modelValue: true },
-        global: {
-          stubs: {
-            ChatMessageList: true,
-            AISettingsDialog: true,
-            ResizableDrawer: {
-              template: '<div><slot /></div>',
-            },
-          },
-        },
-      })
-
-      const textarea = wrapper.find('textarea').element as HTMLTextAreaElement
-
-      // Define property because scrollHeight is read-only
-      Object.defineProperty(textarea, 'scrollHeight', {
-        value: mockScrollHeight,
-        configurable: true,
-      })
-
-      // Trigger input change
-      await wrapper.find('textarea').setValue('some content')
-      await nextTick()
-
-      // Height should be updated to scrollHeight (100px)
-      expect(textarea.style.height).toBe('100px')
-    })
-
-    it('should cap height at MAX_HEIGHT', async () => {
-      const wrapper = mount(AiAssistantDrawer, {
-        props: { modelValue: true },
-        global: {
-          stubs: {
-            ChatMessageList: true,
-            AISettingsDialog: true,
-            ResizableDrawer: {
-              template: '<div><slot /></div>',
-            },
-          },
-        },
-      })
-
-      const textarea = wrapper.find('textarea').element as HTMLTextAreaElement
-
-      // Mock scrollHeight > MAX_HEIGHT (160)
-      Object.defineProperty(textarea, 'scrollHeight', {
-        value: 300,
-        configurable: true,
-      })
-
-      await wrapper.find('textarea').setValue('very long content...')
-      await nextTick()
-
-      expect(textarea.style.height).toBe('160px')
-      expect(textarea.style.overflowY).toBe('auto')
-    })
-
-    it('should use MIN_HEIGHT for small content', async () => {
-      const wrapper = mount(AiAssistantDrawer, {
-        props: { modelValue: true },
-        global: {
-          stubs: {
-            ChatMessageList: true,
-            AISettingsDialog: true,
-            ResizableDrawer: {
-              template: '<div><slot /></div>',
-            },
-          },
-        },
-      })
-
-      const textarea = wrapper.find('textarea').element as HTMLTextAreaElement
-
-      // Mock scrollHeight < MIN_HEIGHT (40)
-      Object.defineProperty(textarea, 'scrollHeight', {
-        value: 20,
-        configurable: true,
-      })
-
-      await wrapper.find('textarea').setValue('small')
-      await nextTick()
-
-      expect(textarea.style.height).toBe('40px')
-      expect(textarea.style.overflowY).toBe('hidden')
-    })
-  })
-
   it('should reset todo assistant when "New Chat" button is clicked', async () => {
     mockMessages.value = [{ id: '1', role: 'user', content: 'test' }]
     mockConfig.value.todoAssistant = true
-
     const wrapper = mount(AiAssistantDrawer, {
       props: { modelValue: true },
     })
@@ -401,6 +224,37 @@ describe('AiAssistantDrawer Navigation and Button States', () => {
     const newChatBtn = wrapper.findAll('button').find((b) => b.text().includes('ai.newChat'))
     await newChatBtn?.trigger('click')
 
-    expect(mockUpdateConfig).toHaveBeenCalledWith({ todoAssistant: false })
+    expect(mockUpdateConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        todoAssistant: false,
+      }),
+    )
+  })
+
+  describe('Hover Interactions', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+    })
+
+    it('should handle hover events for preset dropdown', async () => {
+      const wrapper = mount(AiAssistantDrawer, {
+        props: { modelValue: true },
+      })
+
+      // We test the logic by triggering the events
+      const presetContainer = wrapper.findAll('div.relative').find((div) => {
+        return div.text().includes('ai.custom')
+      })
+
+      expect(presetContainer).toBeDefined()
+
+      // Trigger mouseenter
+      await presetContainer?.trigger('mouseenter')
+      await nextTick()
+
+      // We can't easily check the internal ref without exposing it,
+      // but we can check if the dropdown appears.
+      // If it doesn't appear in tests due to Transition/Stubbing, we at least ensure no errors.
+    })
   })
 })

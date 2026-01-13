@@ -219,9 +219,35 @@ const startHistoryResize = (e: MouseEvent) => {
 
 // 预设下拉框状态
 const showPresetDropdown = ref(false)
+let presetHoverTimer: ReturnType<typeof setTimeout> | null = null
+
+const handlePresetMouseEnter = () => {
+  if (presetHoverTimer) clearTimeout(presetHoverTimer)
+  showPresetDropdown.value = true
+}
+
+const handlePresetMouseLeave = () => {
+  presetHoverTimer = setTimeout(() => {
+    showPresetDropdown.value = false
+  }, 200)
+}
 
 // 多模型协作快速选择弹窗状态
 const showDiscussionPopover = ref(false)
+let discussionHoverTimer: ReturnType<typeof setTimeout> | null = null
+
+const handleDiscussionMouseEnter = () => {
+  if (discussionHoverTimer) clearTimeout(discussionHoverTimer)
+  if (isDiscussionEnabled.value) {
+    showDiscussionPopover.value = true
+  }
+}
+
+const handleDiscussionMouseLeave = () => {
+  discussionHoverTimer = setTimeout(() => {
+    showDiscussionPopover.value = false
+  }, 200)
+}
 
 // 选择主模型
 const selectPrimaryModel = (presetId: string) => {
@@ -469,8 +495,8 @@ defineOptions({
             <!-- 多模型协同讨论 -->
             <div
               class="relative"
-              @mouseenter="isDiscussionEnabled && (showDiscussionPopover = true)"
-              @mouseleave="showDiscussionPopover = false"
+              @mouseenter="handleDiscussionMouseEnter"
+              @mouseleave="handleDiscussionMouseLeave"
             >
               <button
                 class="flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] transition-all hover:scale-105 active:scale-95 shadow-sm"
@@ -577,7 +603,11 @@ defineOptions({
             <div class="h-4 w-px bg-border/30 mx-0.5" />
 
             <!-- 预设下拉框 -->
-            <div class="relative">
+            <div
+              class="relative"
+              @mouseenter="handlePresetMouseEnter"
+              @mouseleave="handlePresetMouseLeave"
+            >
               <button
                 class="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-[13px] text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground hover:shadow-sm active:scale-95 shadow-sm"
                 @click="showPresetDropdown = !showPresetDropdown"
@@ -628,12 +658,6 @@ defineOptions({
                   </button>
                 </div>
               </Transition>
-              <!-- 点击外部关闭 -->
-              <div
-                v-if="showPresetDropdown"
-                class="fixed inset-0 z-40"
-                @click="showPresetDropdown = false"
-              />
             </div>
 
             <div class="flex-1" />
