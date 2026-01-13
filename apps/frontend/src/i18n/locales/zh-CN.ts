@@ -279,7 +279,6 @@ export default {
 {memories}`,
     userRole: '用户',
     assistantRole: '助手',
-    generateImage: '正在为你绘制',
     imageGenerated: '图片已生成',
     noImageGenerated: '抱歉，未能生成图片。请检查当前模型是否支持生图功能',
     generatingImage: '正在思考并构思画面...',

@@ -286,7 +286,6 @@ Current memory list:
 {memories}`,
     userRole: 'User',
     assistantRole: 'Assistant',
-    generateImage: 'Drawing for you',
     imageGenerated: 'Image generated',
     noImageGenerated:
       'Sorry, failed to generate image. Please check if the current model supports image generation',

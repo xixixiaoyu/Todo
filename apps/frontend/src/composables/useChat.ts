@@ -128,7 +128,7 @@ export function useChat(options: AIRequestOptions = {}) {
     const userMessage: ChatMessage = {
       id: generateId(),
       role: 'user',
-      content: `${t('ai.generateImage')}: ${prompt}`,
+      content: prompt,
       createdAt: new Date(),
     }
     chatHistory.value = [...chatHistory.value, userMessage]
