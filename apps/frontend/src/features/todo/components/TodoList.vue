@@ -64,9 +64,12 @@ const emptyState = computed(() => {
 })
 
 const displayTodos = computed(() => {
-  // 只显示那些父任务不在当前过滤列表中的任务
-  // 这样如果是父子都匹配，只显示父任务（子任务在父任务内部递归显示）
-  // 如果只有子任务匹配，则显示子任务
+  // 如果正在搜索，则显示所有匹配项（扁平化展示）
+  if (props.searchQuery) {
+    return props.todos
+  }
+
+  // 非搜索模式：保持层级结构，只显示根节点
   return props.todos.filter((todo) => {
     if (!todo.parentId) return true
     return !props.todos.some((t) => t.id === todo.parentId)
@@ -136,6 +139,7 @@ const displayTodos = computed(() => {
               :todo="todo"
               :editing-id="editingId"
               :editing-title="editingTitle"
+              :search-query="searchQuery"
               :default-expanded="todoStore.isAllExpanded"
               @toggle="(id, currentCompleted) => emit('toggle', id, currentCompleted)"
               @start-edit="(id, title) => emit('startEdit', id, title)"

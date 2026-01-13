@@ -35,6 +35,13 @@ export const useTodoStore = defineStore(
       isAllExpanded.value = newFilter !== 'completed'
     })
 
+    // 搜索时自动展开所有项
+    watch(searchQuery, (newQuery) => {
+      if (newQuery.trim()) {
+        isAllExpanded.value = true
+      }
+    })
+
     // 计算属性
     const filteredTodos = computed(() => {
       const query = searchQuery.value.trim().toLowerCase()
@@ -290,6 +297,24 @@ export const useTodoStore = defineStore(
       isAllExpanded.value = !isAllExpanded.value
     }
 
+    /**
+     * 获取待办事项的父级路径
+     */
+    function getTodoPath(todoId: string): string[] {
+      const path: string[] = []
+      let current = todos.value.find((t) => t.id === todoId)
+      while (current?.parentId) {
+        const parent = todos.value.find((t) => t.id === current!.parentId)
+        if (parent) {
+          path.unshift(parent.title)
+          current = parent
+        } else {
+          break
+        }
+      }
+      return path
+    }
+
     return {
       // 状态
       todos,
@@ -306,6 +331,7 @@ export const useTodoStore = defineStore(
       pendingCount,
       completedCount,
       // 方法
+      isDuplicate,
       fetchTodos,
       addTodo,
       toggleTodo,
@@ -320,6 +346,7 @@ export const useTodoStore = defineStore(
       clearError,
       setSilencingToast,
       toggleAllExpansion,
+      getTodoPath,
     }
   },
   {

@@ -2,6 +2,7 @@ import { ref, computed, watch } from 'vue'
 import { useTodoStore } from '../stores/todo'
 import { useToast } from '@/composables/useToast'
 import { useI18n } from 'vue-i18n'
+import { useDebounceFn } from '@vueuse/core'
 
 export function useTodo() {
   const todoStore = useTodoStore()
@@ -12,6 +13,15 @@ export function useTodo() {
   const showSearch = ref(false)
   const searchInput = ref('')
   const showFireworks = ref(false)
+
+  // 监听搜索输入，使用防抖更新 store
+  const debouncedSearch = useDebounceFn((value: string) => {
+    todoStore.setSearchQuery(value)
+  }, 300)
+
+  watch(searchInput, (newValue) => {
+    void debouncedSearch(newValue)
+  })
 
   // 监听全局错误，用于处理拖拽等非直接交互产生的错误
   watch(
@@ -69,12 +79,6 @@ export function useTodo() {
       searchInput.value = ''
       todoStore.clearSearch()
     }
-  }
-
-  function handleSearchInput(e: Event) {
-    const target = e.target as HTMLInputElement
-    searchInput.value = target.value
-    todoStore.setSearchQuery(target.value)
   }
 
   function clearSearch() {
@@ -139,7 +143,6 @@ export function useTodo() {
     handleAddTodo,
     handleKeydown,
     toggleSearch,
-    handleSearchInput,
     clearSearch,
     handleToggleTodo,
     startEditing,

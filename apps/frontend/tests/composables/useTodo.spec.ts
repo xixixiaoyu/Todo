@@ -3,6 +3,21 @@ import { createPinia, setActivePinia } from 'pinia'
 import { useTodo } from '@/features/todo/composables/useTodo'
 import { useTodoStore } from '@/features/todo/stores/todo'
 
+// Mock useToast
+vi.mock('@/composables/useToast', () => ({
+  useToast: vi.fn(() => ({
+    error: vi.fn(),
+    success: vi.fn(),
+  })),
+}))
+
+// Mock vue-i18n
+vi.mock('vue-i18n', () => ({
+  useI18n: vi.fn(() => ({
+    t: vi.fn((key: string) => key),
+  })),
+}))
+
 // Mock todoStore
 vi.mock('@/features/todo/stores/todo', () => ({
   useTodoStore: vi.fn(() => ({
@@ -15,6 +30,7 @@ vi.mock('@/features/todo/stores/todo', () => ({
     isDrawerOpen: false,
     setDrawerOpen: vi.fn(),
     toggleDrawer: vi.fn(),
+    setSilencingToast: vi.fn(),
   })),
 }))
 
@@ -37,6 +53,7 @@ describe('useTodo', () => {
       isDrawerOpen: false,
       setDrawerOpen: vi.fn(),
       toggleDrawer: vi.fn(),
+      setSilencingToast: vi.fn(),
     } as unknown as ReturnType<typeof useTodoStore>
 
     vi.mocked(useTodoStore).mockReturnValue(todoStore)
@@ -61,16 +78,41 @@ describe('useTodo', () => {
     })
   })
 
-  describe('drawer state', () => {
-    it('should sync isDrawerOpen with store', () => {
-      const { isDrawerOpen } = useTodo()
+  describe('search state', () => {
+    it('should toggle search state', () => {
+      const { showSearch, searchInput, toggleSearch } = useTodo()
 
-      // Initial value from mock
-      expect(isDrawerOpen.value).toBe(false)
+      expect(showSearch.value).toBe(false)
 
-      // Update value should call store.setDrawerOpen
-      isDrawerOpen.value = true
-      expect(todoStore.setDrawerOpen).toHaveBeenCalledWith(true)
+      toggleSearch()
+      expect(showSearch.value).toBe(true)
+
+      searchInput.value = 'test'
+      toggleSearch()
+      expect(showSearch.value).toBe(false)
+      expect(searchInput.value).toBe('')
+      expect(todoStore.clearSearch).toHaveBeenCalled()
+    })
+
+    it('should update store with debounced search query', async () => {
+      const { searchInput } = useTodo()
+
+      searchInput.value = 'hello'
+
+      // Wait for watcher and debounce (300ms)
+      await vi.runAllTimersAsync()
+
+      expect(todoStore.setSearchQuery).toHaveBeenCalledWith('hello')
+    })
+
+    it('should clear search query', () => {
+      const { searchInput, clearSearch } = useTodo()
+
+      searchInput.value = 'test'
+      clearSearch()
+
+      expect(searchInput.value).toBe('')
+      expect(todoStore.clearSearch).toHaveBeenCalled()
     })
   })
 
@@ -163,45 +205,6 @@ describe('useTodo', () => {
 
       expect(showFireworks.value).toBe(false)
       expect(todoStore.toggleTodo).toHaveBeenCalledWith('1')
-    })
-  })
-
-  describe('search functionality', () => {
-    it('should update search input and call setSearchQuery', () => {
-      const { searchInput, handleSearchInput } = useTodo()
-
-      const event = { target: { value: 'test query' } } as unknown as Event
-      handleSearchInput(event)
-
-      expect(searchInput.value).toBe('test query')
-      expect(todoStore.setSearchQuery).toHaveBeenCalledWith('test query')
-    })
-
-    it('should clear search correctly', () => {
-      const { searchInput, clearSearch } = useTodo()
-      searchInput.value = 'test query'
-
-      clearSearch()
-
-      expect(searchInput.value).toBe('')
-      expect(todoStore.clearSearch).toHaveBeenCalled()
-    })
-
-    it('should toggle search visibility and clear when closing', () => {
-      const { showSearch, searchInput, toggleSearch } = useTodo()
-
-      // Open search
-      toggleSearch()
-      expect(showSearch.value).toBe(true)
-
-      // Set some search input
-      searchInput.value = 'test'
-
-      // Close search
-      toggleSearch()
-      expect(showSearch.value).toBe(false)
-      expect(searchInput.value).toBe('')
-      expect(todoStore.clearSearch).toHaveBeenCalled()
     })
   })
 

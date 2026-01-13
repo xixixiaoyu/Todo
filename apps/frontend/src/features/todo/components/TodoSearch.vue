@@ -7,16 +7,32 @@ import { Button } from '@/components/ui/button'
 
 const { t } = useI18n()
 
-defineProps<{
+const props = defineProps<{
   modelValue: string
 }>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
   clear: []
+  close: []
 }>()
 
 const inputRef = ref<InstanceType<typeof Input> | null>(null)
+
+function handleClear() {
+  emit('clear')
+  inputRef.value?.$el?.focus()
+}
+
+function handleKeyDown(e: KeyboardEvent) {
+  if (e.key === 'Escape') {
+    if (props.modelValue) {
+      handleClear()
+    } else {
+      emit('close')
+    }
+  }
+}
 
 onMounted(() => {
   // 延迟一小会儿聚焦，确保 Transition 动画不影响聚焦效果
@@ -39,13 +55,14 @@ onMounted(() => {
       :placeholder="t('todo.searchPlaceholder')"
       class="h-11 pl-11 pr-11 text-base bg-muted/30 border-none rounded-xl focus-visible:ring-primary/20"
       @update:model-value="emit('update:modelValue', $event as string)"
+      @keydown="handleKeyDown"
     />
     <Button
       v-if="modelValue"
       variant="ghost"
       size="icon"
       class="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-foreground"
-      @click="emit('clear')"
+      @click="handleClear"
     >
       <X :size="16" />
     </Button>

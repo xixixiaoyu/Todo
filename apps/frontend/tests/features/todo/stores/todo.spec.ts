@@ -99,6 +99,43 @@ describe('useTodoStore', () => {
       expect(store.filteredTodos[0].title).toBe('First todo')
     })
 
+    it('should return only matching items when searching (flat)', () => {
+      const nestedTodos = [
+        {
+          id: 'p1',
+          title: 'Parent target',
+          completed: false,
+          createdAt: new Date(),
+          order: 0,
+        },
+        {
+          id: 'c1',
+          title: 'Child target',
+          parentId: 'p1',
+          completed: false,
+          createdAt: new Date(),
+          order: 0,
+        },
+        {
+          id: 'c2',
+          title: 'Child other',
+          parentId: 'p1',
+          completed: false,
+          createdAt: new Date(),
+          order: 1,
+        },
+      ]
+      store.todos = nestedTodos
+      store.searchQuery = 'target'
+
+      // Should ONLY include items that match the query
+      expect(store.filteredTodos).toHaveLength(2)
+      const ids = store.filteredTodos.map((t) => t.id)
+      expect(ids).toContain('p1')
+      expect(ids).toContain('c1')
+      expect(ids).not.toContain('c2')
+    })
+
     it('should sort todos by order ascending', () => {
       store.todos = [
         { id: '1', title: 'Task 1', completed: false, createdAt: new Date(), order: 1 },
@@ -108,6 +145,33 @@ describe('useTodoStore', () => {
 
       expect(store.filteredTodos[0].id).toBe('2')
       expect(store.filteredTodos[1].id).toBe('1')
+    })
+
+    it('should get correct todo path', () => {
+      store.todos = [
+        { id: '1', title: 'Parent', completed: false, createdAt: new Date(), order: 0 },
+        {
+          id: '2',
+          title: 'Child',
+          completed: false,
+          createdAt: new Date(),
+          order: 0,
+          parentId: '1',
+        },
+        {
+          id: '3',
+          title: 'Grandchild',
+          completed: false,
+          createdAt: new Date(),
+          order: 0,
+          parentId: '2',
+        },
+      ]
+
+      expect(store.getTodoPath('1')).toEqual([])
+      expect(store.getTodoPath('2')).toEqual(['Parent'])
+      expect(store.getTodoPath('3')).toEqual(['Parent', 'Child'])
+      expect(store.getTodoPath('4')).toEqual([]) // Non-existent
     })
   })
 

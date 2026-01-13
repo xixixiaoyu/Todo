@@ -1,9 +1,10 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createI18n } from 'vue-i18n'
+import { createPinia, setActivePinia } from 'pinia'
 import TodoItem from '@/features/todo/components/TodoItem.vue'
 import { Checkbox } from '@/components/ui/checkbox'
-import type { Todo } from '@/features/todo/stores/todo'
+import { useTodoStore, type Todo } from '@/features/todo/stores/todo'
 
 // Mock vue-i18n
 const i18n = createI18n({
@@ -16,12 +17,25 @@ const i18n = createI18n({
         save: '保存',
         cancel: '取消',
         edit: '编辑',
+        addSubtask: '添加子任务',
+      },
+      common: {
+        delete: '删除',
       },
     },
   },
 })
 
 describe('TodoItem', () => {
+  let store: ReturnType<typeof useTodoStore>
+  let pinia: ReturnType<typeof createPinia>
+
+  beforeEach(() => {
+    pinia = createPinia()
+    setActivePinia(pinia)
+    store = useTodoStore()
+  })
+
   const mockTodo: Todo = {
     id: '1',
     title: 'Test todo',
@@ -38,7 +52,7 @@ describe('TodoItem', () => {
         editingTitle: '',
       },
       global: {
-        plugins: [i18n],
+        plugins: [i18n, pinia],
       },
     })
 
@@ -53,7 +67,7 @@ describe('TodoItem', () => {
         editingTitle: '',
       },
       global: {
-        plugins: [i18n],
+        plugins: [i18n, pinia],
       },
     })
 
@@ -73,7 +87,7 @@ describe('TodoItem', () => {
         editingTitle: '',
       },
       global: {
-        plugins: [i18n],
+        plugins: [i18n, pinia],
       },
     })
 
@@ -91,12 +105,41 @@ describe('TodoItem', () => {
         editingTitle: 'Test todo',
       },
       global: {
-        plugins: [i18n],
+        plugins: [i18n, pinia],
       },
     })
 
     expect(wrapper.find('input[type="text"]').exists()).toBe(true)
     expect(wrapper.find('span').exists()).toBe(false)
+  })
+
+  it('should show parent path when searching', () => {
+    store.todos = [
+      { id: '1', title: 'Parent Task', completed: false, createdAt: new Date(), order: 0 },
+      {
+        id: '2',
+        title: 'Child Task',
+        completed: false,
+        createdAt: new Date(),
+        order: 0,
+        parentId: '1',
+      },
+    ]
+
+    const wrapper = mount(TodoItem, {
+      props: {
+        todo: store.todos[1],
+        editingId: null,
+        editingTitle: '',
+        searchQuery: 'Child',
+      },
+      global: {
+        plugins: [i18n, pinia],
+      },
+    })
+
+    expect(wrapper.text()).toContain('Parent Task')
+    expect(wrapper.text()).toContain('Child Task')
   })
 
   it('should emit startEdit event when edit button clicked', async () => {
@@ -107,7 +150,7 @@ describe('TodoItem', () => {
         editingTitle: '',
       },
       global: {
-        plugins: [i18n],
+        plugins: [i18n, pinia],
       },
     })
 
@@ -127,7 +170,7 @@ describe('TodoItem', () => {
         editingTitle: '',
       },
       global: {
-        plugins: [i18n],
+        plugins: [i18n, pinia],
       },
     })
 
@@ -146,7 +189,7 @@ describe('TodoItem', () => {
         editingTitle: '',
       },
       global: {
-        plugins: [i18n],
+        plugins: [i18n, pinia],
       },
     })
 
@@ -166,7 +209,7 @@ describe('TodoItem', () => {
         editingTitle: 'Test todo',
       },
       global: {
-        plugins: [i18n],
+        plugins: [i18n, pinia],
       },
     })
 
@@ -185,7 +228,7 @@ describe('TodoItem', () => {
         editingTitle: 'Test todo',
       },
       global: {
-        plugins: [i18n],
+        plugins: [i18n, pinia],
       },
     })
 
@@ -204,7 +247,7 @@ describe('TodoItem', () => {
         editingTitle: 'Test todo',
       },
       global: {
-        plugins: [i18n],
+        plugins: [i18n, pinia],
       },
     })
 
@@ -223,7 +266,7 @@ describe('TodoItem', () => {
         editingTitle: 'Test todo',
       },
       global: {
-        plugins: [i18n],
+        plugins: [i18n, pinia],
       },
     })
 
@@ -242,7 +285,7 @@ describe('TodoItem', () => {
         editingTitle: '',
       },
       global: {
-        plugins: [i18n],
+        plugins: [i18n, pinia],
       },
     })
 
@@ -258,7 +301,7 @@ describe('TodoItem', () => {
         editingTitle: '',
       },
       global: {
-        plugins: [i18n],
+        plugins: [i18n, pinia],
       },
     })
 
@@ -274,7 +317,7 @@ describe('TodoItem', () => {
         editingTitle: 'Updated todo',
       },
       global: {
-        plugins: [i18n],
+        plugins: [i18n, pinia],
       },
     })
 
@@ -293,7 +336,7 @@ describe('TodoItem', () => {
           editingTitle: '',
         },
         global: {
-          plugins: [i18n],
+          plugins: [i18n, pinia],
         },
       })
 
@@ -325,7 +368,7 @@ describe('TodoItem', () => {
           editingTitle: '',
         },
         global: {
-          plugins: [i18n],
+          plugins: [i18n, pinia],
         },
       })
 
@@ -344,7 +387,7 @@ describe('TodoItem', () => {
           level: 0,
         },
         global: {
-          plugins: [i18n],
+          plugins: [i18n, pinia],
         },
       })
 
@@ -363,7 +406,7 @@ describe('TodoItem', () => {
           level: 1,
         },
         global: {
-          plugins: [i18n],
+          plugins: [i18n, pinia],
         },
       })
 
@@ -382,7 +425,7 @@ describe('TodoItem', () => {
           level: 2,
         },
         global: {
-          plugins: [i18n],
+          plugins: [i18n, pinia],
         },
       })
 

@@ -14,6 +14,7 @@ import { ref, computed, watch, nextTick } from 'vue'
 import draggable from 'vuedraggable'
 import { onClickOutside } from '@vueuse/core'
 import { useTodoStore, type Todo } from '../stores/todo'
+import { highlightMatch } from '@/lib/utils'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -26,6 +27,7 @@ const props = defineProps<{
   todo: Todo
   editingId: string | null
   editingTitle: string
+  searchQuery?: string
   level?: number
   defaultExpanded?: boolean
 }>()
@@ -93,12 +95,20 @@ watch(
 )
 
 const children = computed(() => {
+  // 搜索模式下，不渲染子任务列表（扁平化展示）
+  if (props.searchQuery) return []
+
   return store.todos
     .filter((t) => t.parentId === props.todo.id)
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
 })
 
 const hasChildren = computed(() => children.value.length > 0)
+
+const parentPath = computed(() => {
+  if (!props.searchQuery?.trim()) return []
+  return store.getTodoPath(props.todo.id)
+})
 
 function toggleExpand() {
   isExpanded.value = !isExpanded.value
@@ -233,13 +243,33 @@ watch(
 
       <!-- 显示模式 -->
       <template v-else>
-        <span
-          class="flex-1 cursor-pointer select-text text-foreground transition-all duration-300"
-          :class="todo.completed ? 'line-through text-muted-foreground/50' : ''"
-          @dblclick="emit('startEdit', todo.id, todo.title)"
-        >
-          {{ todo.title }}
-        </span>
+        <div class="flex-1 flex flex-col min-w-0">
+          <!-- 父任务上下文 (仅在搜索时显示) -->
+          <div
+            v-if="parentPath.length > 0"
+            class="flex items-center gap-1 text-[10px] text-muted-foreground/50 mb-0.5 select-none overflow-hidden"
+          >
+            <template v-for="(name, index) in parentPath" :key="index">
+              <span
+                class="truncate max-w-[80px] hover:text-muted-foreground transition-colors cursor-default"
+              >
+                {{ name }}
+              </span>
+              <ChevronRight :size="10" class="shrink-0 opacity-40" />
+            </template>
+          </div>
+
+          <!-- eslint-disable vue/no-v-html -->
+          <span
+            class="flex-1 cursor-pointer select-text text-foreground transition-all duration-300 truncate"
+            :class="todo.completed ? 'line-through text-muted-foreground/50' : ''"
+            :title="todo.title"
+            @dblclick="emit('startEdit', todo.id, todo.title)"
+            v-html="highlightMatch(todo.title, searchQuery || '')"
+          >
+          </span>
+          <!-- eslint-enable vue/no-v-html -->
+        </div>
         <div class="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
           <TooltipProvider :delay-duration="0">
             <Tooltip v-if="(level || 0) < 2">
@@ -362,9 +392,10 @@ watch(
         <template #item="{ element: child }">
           <TodoItem
             :todo="child"
+            :level="(level || 0) + 1"
             :editing-id="editingId"
             :editing-title="editingTitle"
-            :level="(level || 0) + 1"
+            :search-query="searchQuery"
             :default-expanded="defaultExpanded"
             @toggle="(id, currentCompleted) => emit('toggle', id, currentCompleted)"
             @start-edit="(id, title) => emit('startEdit', id, title)"

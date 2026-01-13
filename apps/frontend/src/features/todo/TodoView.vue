@@ -55,7 +55,6 @@ const {
   showTooltip,
   handleAddTodo,
   handleKeydown,
-  handleSearchInput,
   clearSearch,
   handleToggleTodo,
   startEditing,
@@ -112,7 +111,7 @@ function onFireworksComplete() {
               v-if="showSearch"
               v-model="searchInput"
               @clear="clearSearch"
-              @input="handleSearchInput"
+              @close="showSearch = false"
             />
           </Transition>
 
