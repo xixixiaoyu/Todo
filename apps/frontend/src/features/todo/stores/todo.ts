@@ -8,6 +8,7 @@ export interface Todo {
   createdAt: Date
   parentId?: string | null
   order: number
+  expanded?: boolean
 }
 
 export type FilterType = 'pending' | 'completed'
@@ -28,17 +29,31 @@ export const useTodoStore = defineStore(
     const error = ref<string | null>(null)
     const isDrawerOpen = ref(false)
     const isSilencingToast = ref(false)
-    const isAllExpanded = ref(true)
+    const isAllExpanded = computed(() => {
+      // 获取当前过滤/搜索条件下的所有父节点
+      const currentParentTodos = filteredTodos.value.filter((t) =>
+        todos.value.some((child) => (child.parentId ?? null) === t.id),
+      )
+
+      if (currentParentTodos.length === 0) return true
+      // 只要有一个可见的父节点是展开的，图标就显示“全部收起”
+      return currentParentTodos.some((t) => (t.expanded ?? true) !== false)
+    })
 
     // 监听过滤器变化，同步展开状态
     watch(filter, (newFilter) => {
-      isAllExpanded.value = newFilter !== 'completed'
+      const isExpanded = newFilter !== 'completed'
+      todos.value.forEach((todo) => {
+        todo.expanded = isExpanded
+      })
     })
 
     // 搜索时自动展开所有项
     watch(searchQuery, (newQuery) => {
       if (newQuery.trim()) {
-        isAllExpanded.value = true
+        todos.value.forEach((todo) => {
+          todo.expanded = true
+        })
       }
     })
 
@@ -142,6 +157,7 @@ export const useTodoStore = defineStore(
           createdAt: new Date(),
           parentId,
           order: minOrder - 1,
+          expanded: true,
         }
         todos.value.unshift(newTodo)
         return true
@@ -290,11 +306,19 @@ export const useTodoStore = defineStore(
       isSilencingToast.value = silence
     }
 
-    /**
-     * 切换全局展开/收起状态
-     */
     function toggleAllExpansion(): void {
-      isAllExpanded.value = !isAllExpanded.value
+      const targetState = !isAllExpanded.value
+      // 只对当前过滤/搜索条件下的可见节点进行批量操作
+      filteredTodos.value.forEach((todo) => {
+        todo.expanded = targetState
+      })
+    }
+
+    function toggleTodoExpansion(id: string): void {
+      const todo = todos.value.find((t) => t.id === id)
+      if (todo) {
+        todo.expanded = !(todo.expanded ?? true)
+      }
     }
 
     /**
@@ -346,6 +370,7 @@ export const useTodoStore = defineStore(
       clearError,
       setSilencingToast,
       toggleAllExpansion,
+      toggleTodoExpansion,
       getTodoPath,
     }
   },
@@ -353,7 +378,7 @@ export const useTodoStore = defineStore(
     persist: {
       key: 'todos',
       storage: localStorage,
-      pick: ['todos', 'filter', 'isDrawerOpen', 'viewMode', 'isAllExpanded'],
+      pick: ['todos', 'filter', 'isDrawerOpen', 'viewMode'],
     },
   },
 )

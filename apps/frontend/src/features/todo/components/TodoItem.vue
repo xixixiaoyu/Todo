@@ -29,7 +29,6 @@ const props = defineProps<{
   editingTitle: string
   searchQuery?: string
   level?: number
-  defaultExpanded?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -53,16 +52,10 @@ const dragChildren = computed({
   },
 })
 
-const isExpanded = ref(props.defaultExpanded ?? false)
 const isAddingChild = ref(false)
 const showTooltip = ref(false)
 
-watch(
-  () => props.defaultExpanded,
-  (newValue) => {
-    isExpanded.value = newValue ?? false
-  },
-)
+const isExpanded = computed(() => props.todo.expanded ?? true)
 
 const newChildTitle = ref('')
 const subtaskInputRef = ref<InstanceType<typeof Input> | null>(null)
@@ -111,7 +104,7 @@ const parentPath = computed(() => {
 })
 
 function toggleExpand() {
-  isExpanded.value = !isExpanded.value
+  store.toggleTodoExpansion(props.todo.id)
 }
 
 function startAddChild() {
@@ -135,7 +128,9 @@ async function submitAddChild() {
     if (success) {
       isAddingChild.value = false
       newChildTitle.value = ''
-      isExpanded.value = true
+      if (!isExpanded.value) {
+        store.toggleTodoExpansion(props.todo.id)
+      }
       store.setSilencingToast(false)
     } else {
       triggerFeedback()
@@ -396,7 +391,6 @@ watch(
             :editing-id="editingId"
             :editing-title="editingTitle"
             :search-query="searchQuery"
-            :default-expanded="defaultExpanded"
             @toggle="(id, currentCompleted) => emit('toggle', id, currentCompleted)"
             @start-edit="(id, title) => emit('startEdit', id, title)"
             @save-edit="emit('saveEdit')"
