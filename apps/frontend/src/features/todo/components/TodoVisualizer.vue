@@ -84,6 +84,7 @@ const treeData = computed(() => {
 })
 
 const chartOptions = computed(() => ({
+  backgroundColor: 'transparent',
   tooltip: {
     trigger: 'item',
     triggerOn: 'mousemove',
@@ -95,7 +96,7 @@ const chartOptions = computed(() => ({
     backgroundColor: isDark.value ? '#1e293b' : '#ffffff',
     borderColor: isDark.value ? '#334155' : '#e2e8f0',
     textStyle: {
-      color: isDark.value ? '#f1f5f9' : '#1e293b',
+      color: isDark.value ? '#e2e8f0' : '#1e293b',
     },
   },
   series: [
@@ -104,15 +105,16 @@ const chartOptions = computed(() => ({
       data: treeData.value,
       initialTreeDepth: -1,
       top: '5%',
-      left: '10%',
+      left: '12%',
       bottom: '5%',
       right: '20%',
-      symbolSize: 12,
+      symbolSize: 14,
       label: {
         position: 'left',
         verticalAlign: 'middle',
         align: 'right',
-        fontSize: 14,
+        fontSize: 15,
+        distance: 8,
         color: isDark.value ? '#e2e8f0' : '#1e293b',
         fontFamily: 'LXGW WenKai, sans-serif',
       },
