@@ -1,6 +1,6 @@
 # 项目上下文
 
-基于 **NestJS + Vue 3** 的全栈模板，采用 **pnpm Monorepo** 架构。
+基于 **NestJS 11 + Vue 3.5** 的全栈 Todo 应用，采用 **pnpm Monorepo** 架构。
 
 ## 项目结构
 
@@ -12,10 +12,10 @@ packages/shared/  # 共享包（Zod Schema、DTO、工具函数）
 
 ## 技术栈
 
-**前端**: Vue 3.5+ / Vite 6 / Pinia / Tailwind + shadcn-vue / GSAP / TanStack Query + Axios / VeeValidate + Zod / Vue I18n
-**跨端**: Capacitor 8 / Electron 36 / PWA
-**后端**: NestJS 10.4+ / PostgreSQL 16 + Prisma 6 / Redis 7 + BullMQ / JWT + Passport / nestjs-zod / Socket.IO
-**工具**: pnpm 9.15+ / Turbo 2.3+ / ESLint 9 / Vitest
+**前端**: Vue 3.5+ / Vite 7 / Pinia / Tailwind 3.4+ / GSAP / TanStack Query + Axios / VeeValidate + Zod / Vue I18n
+**跨端**: Capacitor 8 / Electron 39 / PWA
+**后端**: NestJS 11+ / PostgreSQL 16 + Prisma 7 / Redis 7 + BullMQ / JWT + Passport / nestjs-zod / Socket.IO
+**工具**: pnpm 9.15+ / Turbo 2.7+ / ESLint 9 / Vitest
 
 ## 视觉设计
 
@@ -24,6 +24,14 @@ packages/shared/  # 共享包（Zod Schema、DTO、工具函数）
 - **字体**: 优先 `LXGW WenKai` (中文) 与 `JetBrains Mono` (等宽)，提升阅读体验。
 - **形状**: 大圆角设计 (`--radius: 0.75rem`)，柔化视觉边界。
 - **动效**: GSAP 驱动，响应迅速（<300ms），避免无意义的装饰性动画。
+
+## 布局规范
+
+- **容器**: 核心内容使用 `mx-auto max-w-4xl` 居中。
+- **间距**: 遵循 Mobile First 原则，移动端 `p-4`，中等屏幕及以上 `md:p-8`。
+- **高度**: 页面主体通常使用 `min-h-screen`，核心卡片使用 `h-[calc(100vh-5rem)]` 保持视口内滚动。
+- **弹性布局**: 优先使用 `flex flex-col` 构建垂直流式布局，复杂网格使用 `grid`。
+- **层级**: UI 组件通过 `z-index` 严格管理，如 Drawer (`z-50`)、Tooltip 等。
 
 ## 常用命令
 
