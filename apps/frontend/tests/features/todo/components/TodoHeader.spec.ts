@@ -33,10 +33,6 @@ describe('TodoHeader', () => {
 
   it('应该正确渲染标题', () => {
     const wrapper = mount(TodoHeader, {
-      props: {
-        isDrawerOpen: false,
-        showSearch: false,
-      },
       global: {
         plugins: [i18n],
       },
@@ -45,50 +41,8 @@ describe('TodoHeader', () => {
     expect(wrapper.find('h1').text()).toBe('待办事项')
   })
 
-  it('点击 Clover 按钮应该触发 update:isDrawerOpen 事件', async () => {
-    const wrapper = mount(TodoHeader, {
-      props: {
-        isDrawerOpen: false,
-        showSearch: false,
-      },
-      global: {
-        plugins: [i18n],
-      },
-    })
-
-    const buttons = wrapper.findAll('button')
-    const cloverButton = buttons.find((b) => b.find('.lucide-clover').exists())
-    await cloverButton?.trigger('click')
-
-    expect(wrapper.emitted('update:isDrawerOpen')).toBeTruthy()
-    expect(wrapper.emitted('update:isDrawerOpen')?.[0]).toEqual([true])
-  })
-
-  it('点击 Search 按钮应该触发 update:showSearch 事件', async () => {
-    const wrapper = mount(TodoHeader, {
-      props: {
-        isDrawerOpen: false,
-        showSearch: false,
-      },
-      global: {
-        plugins: [i18n],
-      },
-    })
-
-    const buttons = wrapper.findAll('button')
-    const searchButton = buttons.find((b) => b.find('.lucide-search').exists())
-    await searchButton?.trigger('click')
-
-    expect(wrapper.emitted('update:showSearch')).toBeTruthy()
-    expect(wrapper.emitted('update:showSearch')?.[0]).toEqual([true])
-  })
-
   it('点击语言切换按钮应该切换语言并保存到 localStorage', async () => {
     const wrapper = mount(TodoHeader, {
-      props: {
-        isDrawerOpen: false,
-        showSearch: false,
-      },
       global: {
         plugins: [i18n],
       },
@@ -115,10 +69,6 @@ describe('TodoHeader', () => {
 
   it('应该包含语言切换按钮', () => {
     const wrapper = mount(TodoHeader, {
-      props: {
-        isDrawerOpen: false,
-        showSearch: false,
-      },
       global: {
         plugins: [i18n],
       },

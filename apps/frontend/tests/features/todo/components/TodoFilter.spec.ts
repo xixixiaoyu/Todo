@@ -23,6 +23,8 @@ describe('TodoFilter', () => {
     const wrapper = mount(TodoFilter, {
       props: {
         filter: 'pending',
+        isDrawerOpen: false,
+        showSearch: false,
       },
       global: {
         plugins: [i18n],
@@ -30,13 +32,56 @@ describe('TodoFilter', () => {
     })
 
     const buttons = wrapper.findAll('button')
-    expect(buttons).toHaveLength(2)
+    // 2 tabs + 2 desktop tools (AI, Search) + 1 desktop expand toggle = 5 buttons
+    expect(buttons).toHaveLength(5)
+  })
+
+  it('should emit update:isDrawerOpen when AI button clicked', async () => {
+    const wrapper = mount(TodoFilter, {
+      props: {
+        filter: 'pending',
+        isDrawerOpen: false,
+        showSearch: false,
+      },
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    const buttons = wrapper.findAll('button')
+    const aiButton = buttons.find((b) => b.find('.lucide-clover').exists())
+    await aiButton?.trigger('click')
+
+    expect(wrapper.emitted('update:isDrawerOpen')).toBeTruthy()
+    expect(wrapper.emitted('update:isDrawerOpen')?.[0]).toEqual([true])
+  })
+
+  it('should emit update:showSearch when Search button clicked', async () => {
+    const wrapper = mount(TodoFilter, {
+      props: {
+        filter: 'pending',
+        isDrawerOpen: false,
+        showSearch: false,
+      },
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    const buttons = wrapper.findAll('button')
+    const searchButton = buttons.find((b) => b.find('.lucide-search').exists())
+    await searchButton?.trigger('click')
+
+    expect(wrapper.emitted('update:showSearch')).toBeTruthy()
+    expect(wrapper.emitted('update:showSearch')?.[0]).toEqual([true])
   })
 
   it('should display pending button text', () => {
     const wrapper = mount(TodoFilter, {
       props: {
         filter: 'pending',
+        isDrawerOpen: false,
+        showSearch: false,
       },
       global: {
         plugins: [i18n],
@@ -44,13 +89,16 @@ describe('TodoFilter', () => {
     })
 
     const buttons = wrapper.findAll('button')
-    expect(buttons[0].text()).toBe('待完成')
+    // buttons[0] is AI, buttons[1] is Search, buttons[2] is Pending, buttons[3] is Completed, buttons[4] is Expand
+    expect(buttons[2].text()).toBe('待完成')
   })
 
   it('should display completed button text', () => {
     const wrapper = mount(TodoFilter, {
       props: {
         filter: 'pending',
+        isDrawerOpen: false,
+        showSearch: false,
       },
       global: {
         plugins: [i18n],
@@ -58,20 +106,23 @@ describe('TodoFilter', () => {
     })
 
     const buttons = wrapper.findAll('button')
-    expect(buttons[1].text()).toBe('已完成')
+    // buttons[0] is AI, buttons[1] is Search, buttons[2] is Pending, buttons[3] is Completed, buttons[4] is Expand
+    expect(buttons[3].text()).toBe('已完成')
   })
 
   it('should apply active style to pending button when filter is pending', () => {
     const wrapper = mount(TodoFilter, {
       props: {
         filter: 'pending',
+        isDrawerOpen: false,
+        showSearch: false,
       },
       global: {
         plugins: [i18n],
       },
     })
 
-    const pendingButton = wrapper.findAll('button')[0]
+    const pendingButton = wrapper.findAll('button')[2]
     expect(pendingButton.attributes('data-state')).toBe('active')
   })
 
@@ -79,13 +130,15 @@ describe('TodoFilter', () => {
     const wrapper = mount(TodoFilter, {
       props: {
         filter: 'pending',
+        isDrawerOpen: false,
+        showSearch: false,
       },
       global: {
         plugins: [i18n],
       },
     })
 
-    const completedButton = wrapper.findAll('button')[1]
+    const completedButton = wrapper.findAll('button')[3]
     expect(completedButton.attributes('data-state')).toBe('inactive')
   })
 
@@ -93,13 +146,15 @@ describe('TodoFilter', () => {
     const wrapper = mount(TodoFilter, {
       props: {
         filter: 'completed',
+        isDrawerOpen: false,
+        showSearch: false,
       },
       global: {
         plugins: [i18n],
       },
     })
 
-    const completedButton = wrapper.findAll('button')[1]
+    const completedButton = wrapper.findAll('button')[3]
     expect(completedButton.attributes('data-state')).toBe('active')
   })
 
@@ -107,13 +162,15 @@ describe('TodoFilter', () => {
     const wrapper = mount(TodoFilter, {
       props: {
         filter: 'completed',
+        isDrawerOpen: false,
+        showSearch: false,
       },
       global: {
         plugins: [i18n],
       },
     })
 
-    const pendingButton = wrapper.findAll('button')[0]
+    const pendingButton = wrapper.findAll('button')[2]
     expect(pendingButton.attributes('data-state')).toBe('inactive')
   })
 
@@ -121,6 +178,8 @@ describe('TodoFilter', () => {
     const wrapper = mount(TodoFilter, {
       props: {
         filter: 'completed',
+        isDrawerOpen: false,
+        showSearch: false,
       },
       global: {
         plugins: [i18n],
@@ -138,6 +197,8 @@ describe('TodoFilter', () => {
     const wrapper = mount(TodoFilter, {
       props: {
         filter: 'pending',
+        isDrawerOpen: false,
+        showSearch: false,
       },
       global: {
         plugins: [i18n],

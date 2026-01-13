@@ -27,7 +27,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="mb-5 relative group">
+  <div class="mb-4 relative group">
     <Search
       :size="18"
       class="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary"

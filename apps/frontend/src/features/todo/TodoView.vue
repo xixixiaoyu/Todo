@@ -79,9 +79,27 @@ function onFireworksComplete() {
       >
         <CardContent class="todo-container p-6 md:p-8 flex flex-col flex-1 min-h-0">
           <!-- Header -->
-          <TodoHeader v-model:is-drawer-open="isDrawerOpen" v-model:show-search="showSearch" />
+          <TodoHeader />
 
-          <!-- Search Bar (Collapsible) -->
+          <!-- Input Area -->
+          <TodoInput
+            v-if="todoStore.viewMode === 'list'"
+            v-model="newTodoTitle"
+            :show-tooltip="showTooltip"
+            :error-message="todoStore.error || ''"
+            @add="handleAddTodo"
+            @keydown="handleKeydown"
+          />
+
+          <!-- Filter Tabs -->
+          <TodoFilter
+            v-if="todoStore.viewMode === 'list'"
+            v-model:filter="todoStore.filter"
+            v-model:is-drawer-open="isDrawerOpen"
+            v-model:show-search="showSearch"
+          />
+
+          <!-- Search Bar (Collapsible) - Moved below tabs -->
           <Transition
             enter-active-class="transition-all duration-300 ease-out"
             enter-from-class="opacity-0 -translate-y-2"
@@ -98,21 +116,11 @@ function onFireworksComplete() {
             />
           </Transition>
 
-          <!-- Input Area -->
-          <TodoInput
-            v-if="todoStore.viewMode === 'list'"
-            v-model="newTodoTitle"
-            :show-tooltip="showTooltip"
-            :error-message="todoStore.error || ''"
-            @add="handleAddTodo"
-            @keydown="handleKeydown"
-          />
-
-          <!-- Filter Tabs -->
-          <TodoFilter v-if="todoStore.viewMode === 'list'" v-model:filter="todoStore.filter" />
-
           <!-- List / Visualizer -->
-          <div class="flex-1 min-h-[400px] mt-4 relative flex flex-col">
+          <div
+            class="flex-1 min-h-[400px] relative flex flex-col"
+            :class="showSearch ? 'mt-2' : 'mt-4'"
+          >
             <TodoList
               v-if="todoStore.viewMode === 'list'"
               :todos="todoStore.filteredTodos"
