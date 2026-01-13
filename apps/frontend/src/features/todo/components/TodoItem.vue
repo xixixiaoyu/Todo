@@ -160,11 +160,10 @@ async function submitAddChild() {
           class="drag-handle h-4 w-4 cursor-grab text-muted-foreground/30 hover:text-muted-foreground transition-colors active:cursor-grabbing"
         />
         <Button
-          v-if="(level || 0) < 2"
+          v-if="(level || 0) < 2 && hasChildren"
           variant="ghost"
           size="icon"
           class="h-6 w-6 text-muted-foreground transition-opacity"
-          :class="{ 'opacity-0 group-hover:opacity-100': !hasChildren && !isExpanded }"
           @click="toggleExpand"
         >
           <ChevronDown v-if="isExpanded" class="h-4 w-4" />
