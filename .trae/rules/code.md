@@ -64,6 +64,19 @@ import { cn } from '@/lib/utils'                // 工具函数
 
 **Prettier**: 无分号、单引号、2 空格缩进、trailing comma。
 
+## 国际化 (i18n)
+
+**架构**: 前后端分离，各自管理语言资源。
+
+**前端** (`apps/frontend/src/i18n/`): Vue I18n + TypeScript (`MessageSchema`)，切换优先级：`localStorage` → 浏览器语言 → `en-US`
+
+**后端** (`apps/backend/src/i18n/`): NestJS I18n + JSON 格式
+
+**约定**:
+- 枚举值大写蛇形，UI 文本小写驼峰
+- 新增文案需中英文同步
+- 禁止硬编码，统一使用 `t()`
+
 ## Zod 类型共享
 
 共享包定义 Schema → 前端 `toTypedSchema(Schema)` + 后端 `createZodDto(Schema)` → 类型自动推断。
