@@ -17,6 +17,7 @@ import {
   Users,
   Star,
   Image as ImageIcon,
+  AlertCircle,
 } from 'lucide-vue-next'
 import ResizableDrawer from '@/components/ResizableDrawer.vue'
 import ChatMessageList from '@/components/chat/ChatMessageList.vue'
@@ -125,6 +126,16 @@ const toggleDiscussionMode = () => {
 
 // 多模型协作是否开启
 const isDiscussionEnabled = computed(() => config.value.discussionMode)
+
+// 切换生图功能
+const toggleImageGeneration = () => {
+  updateConfig({
+    enableImageGeneration: !config.value.enableImageGeneration,
+  })
+}
+
+// 生图功能是否开启
+const isImageGenerationEnabled = computed(() => config.value.enableImageGeneration)
 
 // 会话历史管理
 const { lastActiveSession, switchSession } = useChatHistory()
@@ -600,6 +611,21 @@ defineOptions({
               </Transition>
             </div>
 
+            <!-- 生图功能开关 -->
+            <button
+              class="flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] transition-all hover:scale-105 active:scale-95 shadow-sm"
+              :class="
+                isImageGenerationEnabled
+                  ? 'border-primary/30 bg-primary/10 text-primary shadow-primary/5'
+                  : 'border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+              "
+              :title="t('ai.enableImageGeneration')"
+              @click="toggleImageGeneration"
+            >
+              <ImageIcon :size="14" :class="{ 'animate-pulse-slow': isImageGenerationEnabled }" />
+              <span class="font-medium">{{ t('ai.enableImageGeneration') }}</span>
+            </button>
+
             <div class="h-4 w-px bg-border/30 mx-0.5" />
 
             <!-- 预设下拉框 -->
@@ -696,11 +722,35 @@ defineOptions({
               </div>
             </div>
 
+            <!-- 生图模式提示 -->
+            <Transition
+              enter-active-class="transition duration-200 ease-out"
+              enter-from-class="transform -translate-y-1 opacity-0"
+              enter-to-class="transform translate-y-0 opacity-100"
+              leave-active-class="transition duration-150 ease-in"
+              leave-from-class="transform translate-y-0 opacity-100"
+              leave-to-class="transform -translate-y-1 opacity-0"
+            >
+              <div
+                v-if="isImageGenerationEnabled"
+                class="mb-2 flex items-center gap-1.5 px-1 text-[11px] text-amber-500/80 dark:text-amber-400/70"
+              >
+                <AlertCircle :size="12" />
+                <span>{{ t('ai.imageGenerationDesc') }}</span>
+              </div>
+            </Transition>
+
             <textarea
               ref="textareaRef"
               v-model="chatInput"
               rows="1"
-              :placeholder="isInputDisabled ? t('ai.generating') : t('ai.placeholder')"
+              :placeholder="
+                isInputDisabled
+                  ? t('ai.generating')
+                  : isImageGenerationEnabled
+                    ? t('ai.imagePromptPlaceholder')
+                    : t('ai.placeholder')
+              "
               class="w-full resize-none bg-transparent px-3 pt-2.5 pb-1 text-[15px] text-foreground outline-none placeholder:text-muted-foreground/30 leading-relaxed transition-colors"
               :disabled="isInputDisabled"
               @keydown.enter.exact.prevent="handleSend"

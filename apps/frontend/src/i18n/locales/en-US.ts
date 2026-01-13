@@ -286,5 +286,14 @@ Current memory list:
 {memories}`,
     userRole: 'User',
     assistantRole: 'Assistant',
+    generateImage: 'Drawing for you',
+    imageGenerated: 'Image generated',
+    noImageGenerated:
+      'Sorry, failed to generate image. Please check if the current model supports image generation',
+    generatingImage: 'Thinking and conceptualizing the scene...',
+    enableImageGeneration: 'Drawing Mode',
+    imageGenerationDesc:
+      'Drawing mode enabled. Ensure the current model supports image generation (e.g., Gemini, DALL-E)',
+    imagePromptPlaceholder: 'Describe the image you want to generate...',
   },
 } as const

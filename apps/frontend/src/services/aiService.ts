@@ -335,6 +335,67 @@ export async function getAIStreamResponse(
 }
 
 /**
+ * 发送 AI 生图请求
+ * @param prompt 提示词
+ * @param options 请求选项
+ */
+export async function getAIImageResponse(
+  prompt: string,
+  options: AIRequestOptions = {},
+): Promise<string[]> {
+  const aiConfig = getAIConfig()
+  const { model = aiConfig.model, baseUrl = aiConfig.baseUrl, apiKey = aiConfig.apiKey } = options
+
+  const response = await fetch(buildApiUrl(baseUrl), {
+    method: 'POST',
+    headers: getHeaders(apiKey),
+    body: JSON.stringify({
+      model,
+      messages: [
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      modalities: ['image', 'text'],
+    }),
+  })
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    throw new Error(`AI Image Generation Error: ${response.status} ${errorText}`)
+  }
+
+  const result = await response.json()
+  const images: string[] = []
+
+  if (result.choices) {
+    const message = result.choices[0].message
+    if (message.images) {
+      message.images.forEach((image: { image_url: { url: string } }) => {
+        images.push(image.image_url.url)
+      })
+    } else if (message.content && message.content.includes('image_url')) {
+      // 兼容某些模型可能在 content 中返回图片 URL 的情况
+      try {
+        const content = JSON.parse(message.content)
+        if (Array.isArray(content)) {
+          content.forEach((item) => {
+            if (item.type === 'image_url' && item.image_url?.url) {
+              images.push(item.image_url.url)
+            }
+          })
+        }
+      } catch {
+        // 非 JSON 格式，忽略
+      }
+    }
+  }
+
+  return images
+}
+
+/**
  * 发送非流式 AI 请求的通用工具函数
  */
 async function fetchNonStreamResponse(

@@ -63,6 +63,7 @@ describe('useAIConfig', () => {
         discussionModelIds: ['1', '2'],
         discussionPrimaryModelId: null,
         memoryModelId: null,
+        enableImageGeneration: false,
       }
 
       localStorage.setItem('ai-config', JSON.stringify(savedConfig))
@@ -514,6 +515,39 @@ describe('useAIConfig', () => {
 
       // Active preset should still be the same
       expect(activePresetId.value).toBe(preset.id)
+    })
+
+    it('should allow switching between two identical presets', async () => {
+      const { addPreset, switchPreset, activePresetId } = useAIConfig()
+
+      const preset1 = addPreset({
+        name: 'Preset 1',
+        baseUrl: 'https://same.com',
+        apiKey: 'same',
+        model: 'same',
+        systemPrompt: 'same',
+        temperature: 0.5,
+        todoAssistant: false,
+      })
+
+      const preset2 = addPreset({
+        name: 'Preset 2',
+        baseUrl: 'https://same.com',
+        apiKey: 'same',
+        model: 'same',
+        systemPrompt: 'same',
+        temperature: 0.5,
+        todoAssistant: false,
+      })
+
+      switchPreset(preset1.id)
+      await nextTick()
+      expect(activePresetId.value).toBe(preset1.id)
+
+      switchPreset(preset2.id)
+      await nextTick()
+      // This is expected to FAIL currently because the watcher will snap back to preset1.id
+      expect(activePresetId.value).toBe(preset2.id)
     })
   })
 

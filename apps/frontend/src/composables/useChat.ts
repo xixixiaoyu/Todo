@@ -4,6 +4,7 @@ import {
   getAIStreamResponse,
   getMultiModelDiscussionStream,
   getAIStaticResponse,
+  getAIImageResponse,
   abortCurrentRequest,
   generateId,
   type ChatMessage,
@@ -115,10 +116,79 @@ export function useChat(options: AIRequestOptions = {}) {
   }
 
   /**
+   * 生成 AI 图片
+   */
+  async function generateImage(prompt: string): Promise<void> {
+    if (!prompt.trim() || isGenerating.value) return
+
+    error.value = null
+    isGenerating.value = true
+
+    // 创建用户消息
+    const userMessage: ChatMessage = {
+      id: generateId(),
+      role: 'user',
+      content: `${t('ai.generateImage')}: ${prompt}`,
+      createdAt: new Date(),
+    }
+    chatHistory.value = [...chatHistory.value, userMessage]
+
+    currentAssistantMessageId.value = generateId()
+    currentAIResponse.value = t('ai.generatingImage')
+
+    try {
+      const aiConfig = getAIConfig()
+      const imageUrls = await getAIImageResponse(prompt, {
+        model: aiConfig.model,
+        baseUrl: aiConfig.baseUrl,
+        apiKey: aiConfig.apiKey,
+      })
+
+      if (imageUrls.length > 0) {
+        const aiMessage: ChatMessage = {
+          id: currentAssistantMessageId.value!,
+          role: 'assistant',
+          content: t('ai.imageGenerated'),
+          images: imageUrls,
+          createdAt: new Date(),
+        }
+        chatHistory.value = [...chatHistory.value, aiMessage]
+      } else {
+        throw new Error(t('ai.noImageGenerated'))
+      }
+    } catch (err) {
+      let errorMessage = err instanceof Error ? err.message : String(err)
+
+      // 针对生图失败的特殊引导
+      if (
+        errorMessage.toLowerCase().includes('modalities') ||
+        errorMessage.toLowerCase().includes('not support') ||
+        errorMessage.includes('400')
+      ) {
+        errorMessage = t('ai.noImageGenerated')
+      }
+
+      error.value = errorMessage
+    } finally {
+      isGenerating.value = false
+      currentAssistantMessageId.value = null
+    }
+  }
+
+  /**
    * 发送消息
    */
   async function sendMessage(content: string, images?: string[], isRetry = false): Promise<void> {
     if ((!content.trim() && (!images || images.length === 0)) || isGenerating.value) return
+
+    const aiConfig = getAIConfig()
+
+    // 绘图模式处理：如果开启了绘图模式，或者输入以指令开头
+    const drawMatch = content.match(/^\s*\/(draw|image|画|生图|绘图)\s+(.+)/i)
+    if (aiConfig.enableImageGeneration || drawMatch) {
+      const prompt = drawMatch ? drawMatch[2].trim() : content.trim()
+      return generateImage(prompt)
+    }
 
     error.value = null
 
@@ -144,7 +214,6 @@ export function useChat(options: AIRequestOptions = {}) {
 
     isGenerating.value = true
     currentAssistantMessageId.value = generateId()
-    const aiConfig = getAIConfig()
 
     try {
       const handleChunk = (chunk: string) => {
@@ -372,6 +441,7 @@ export function useChat(options: AIRequestOptions = {}) {
 
     // 方法
     sendMessage,
+    generateImage,
     stopGenerating,
     clearHistory,
     deleteMessage,

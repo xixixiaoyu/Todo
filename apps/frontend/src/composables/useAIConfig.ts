@@ -16,6 +16,7 @@ export interface AIConfig {
   discussionModelIds: string[]
   discussionPrimaryModelId: string | null
   memoryModelId: string | null
+  enableImageGeneration: boolean
 }
 
 export interface AIPreset {
@@ -68,6 +69,7 @@ const DEFAULT_CONFIG: AIConfig = {
   discussionModelIds: [],
   discussionPrimaryModelId: null,
   memoryModelId: null,
+  enableImageGeneration: false,
 }
 
 // 全局配置状态（单例）
@@ -162,17 +164,23 @@ function saveActivePresetId(id: string | null): void {
 }
 
 /**
+ * 检查配置是否匹配预设
+ */
+function isConfigMatchPreset(cfg: AIConfig, preset: AIPreset): boolean {
+  return (
+    preset.baseUrl === cfg.baseUrl &&
+    preset.apiKey === cfg.apiKey &&
+    preset.model === cfg.model &&
+    preset.systemPrompt === cfg.systemPrompt &&
+    Math.abs(preset.temperature - cfg.temperature) < 0.001
+  )
+}
+
+/**
  * 查找匹配的预设 ID
  */
 function findMatchingPreset(cfg: AIConfig, presetList: AIPreset[]): string | null {
-  const match = presetList.find(
-    (p) =>
-      p.baseUrl === cfg.baseUrl &&
-      p.apiKey === cfg.apiKey &&
-      p.model === cfg.model &&
-      p.systemPrompt === cfg.systemPrompt &&
-      Math.abs(p.temperature - cfg.temperature) < 0.001,
-  )
+  const match = presetList.find((p) => isConfigMatchPreset(cfg, p))
   return match ? match.id : null
 }
 
@@ -185,6 +193,14 @@ watch(activePresetId, (id) => saveActivePresetId(id))
 watch(
   [config, presets],
   ([newConfig, newPresets]) => {
+    // 如果当前激活的预设仍然匹配，保持不变（解决相同配置预设无法切换的问题）
+    if (activePresetId.value) {
+      const currentPreset = (newPresets as AIPreset[]).find((p) => p.id === activePresetId.value)
+      if (currentPreset && isConfigMatchPreset(newConfig as AIConfig, currentPreset)) {
+        return
+      }
+    }
+
     const matchingId = findMatchingPreset(newConfig as AIConfig, newPresets as AIPreset[])
     if (activePresetId.value !== matchingId) {
       activePresetId.value = matchingId

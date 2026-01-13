@@ -15,6 +15,7 @@ import {
 } from 'lucide-vue-next'
 import type { ChatMessage } from '@/composables/useChat'
 import { useMarkdown } from '@/composables/useMarkdown'
+import ImageLoadingState from './ImageLoadingState.vue'
 
 const props = defineProps<{
   message: ChatMessage
@@ -108,6 +109,11 @@ const hasContent = computed(() => !!props.message.content)
 const hasDiscussion = computed(
   () => props.message.discussionSteps && props.message.discussionSteps.length > 0,
 )
+
+// 是否正在生成图片
+const isImageGenerating = computed(() => {
+  return props.message.role === 'assistant' && props.message.content === t('ai.generatingImage')
+})
 
 // 思考状态描述
 const thinkingStatus = computed(() => {
@@ -540,33 +546,39 @@ async function copyContent() {
             v-if="!isUser && !hasContent && isStreaming && !hasThinking && !hasDiscussion"
             class="loading-container flex flex-col gap-3 rounded-2xl border border-ai-message-border bg-ai-message-bg p-4 shadow-sm"
           >
-            <div class="flex items-center gap-2">
-              <div class="ai-icon translate-y-[2px] animate-ai-float text-primary">
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"
-                    fill="currentColor"
-                    class="ai-star"
-                  />
-                </svg>
+            <!-- 场景 A: 正在生成图片 -->
+            <ImageLoadingState v-if="isImageGenerating" />
+
+            <!-- 场景 B: 正在思考文字 -->
+            <template v-else>
+              <div class="flex items-center gap-2">
+                <div class="ai-icon translate-y-[2px] animate-ai-float text-primary">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"
+                      fill="currentColor"
+                      class="ai-star"
+                    />
+                  </svg>
+                </div>
+                <span class="shimmer-text font-medium">{{ t('ai.isThinking') }}</span>
               </div>
-              <span class="shimmer-text font-medium">{{ t('ai.isThinking') }}</span>
-            </div>
-            <div class="flex flex-col gap-2">
-              <div class="h-2.5 w-[90%] animate-pulse rounded-full bg-ai-message-border"></div>
-              <div
-                class="h-2.5 w-[75%] animate-pulse rounded-full bg-ai-message-border delay-75"
-              ></div>
-              <div
-                class="h-2.5 w-[85%] animate-pulse rounded-full bg-ai-message-border delay-150"
-              ></div>
-            </div>
+              <div class="flex flex-col gap-2">
+                <div class="h-2.5 w-[90%] animate-pulse rounded-full bg-ai-message-border"></div>
+                <div
+                  class="h-2.5 w-[75%] animate-pulse rounded-full bg-ai-message-border delay-75"
+                ></div>
+                <div
+                  class="h-2.5 w-[85%] animate-pulse rounded-full bg-ai-message-border delay-150"
+                ></div>
+              </div>
+            </template>
           </div>
 
           <!-- 正文气泡：用户消息或已有内容的 AI 消息 -->
@@ -580,120 +592,126 @@ async function copyContent() {
               isEditing
                 ? 'w-full !bg-card !text-foreground ring-2 ring-primary/20 border-primary'
                 : '',
+              isImageGenerating ? 'p-0 border-none bg-transparent shadow-none' : '',
             ]"
           >
-            <!-- 图片内容 -->
-            <div
-              v-if="message.images && message.images.length > 0"
-              class="mb-2 flex flex-wrap gap-2"
-              :class="isUser ? 'justify-end' : 'justify-start'"
-            >
+            <!-- 正在生成图片时显示精致加载状态 -->
+            <ImageLoadingState v-if="isImageGenerating" />
+
+            <template v-else>
+              <!-- 图片内容 -->
               <div
-                v-for="(img, index) in message.images"
-                :key="index"
-                class="group relative h-20 w-20 overflow-hidden rounded-lg border border-white/20 bg-black/5 shadow-sm transition-all hover:scale-105 cursor-zoom-in"
-                @click="openImage(img)"
+                v-if="message.images && message.images.length > 0"
+                class="mb-2 flex flex-wrap gap-2"
+                :class="isUser ? 'justify-end' : 'justify-start'"
               >
-                <img :src="img" class="h-full w-full object-cover" />
                 <div
-                  class="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all group-hover:bg-black/10 group-hover:opacity-100"
+                  v-for="(img, index) in message.images"
+                  :key="index"
+                  class="group relative h-20 w-20 overflow-hidden rounded-lg border border-white/20 bg-black/5 shadow-sm transition-all hover:scale-105 cursor-zoom-in"
+                  @click="openImage(img)"
                 >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="white"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+                  <img :src="img" class="h-full w-full object-cover" />
+                  <div
+                    class="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all group-hover:bg-black/10 group-hover:opacity-100"
                   >
-                    <polyline points="15 3 21 3 21 9"></polyline>
-                    <polyline points="9 21 3 21 3 15"></polyline>
-                    <line x1="21" y1="3" x2="14" y2="10"></line>
-                    <line x1="3" y1="21" x2="10" y2="14"></line>
-                  </svg>
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="white"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <polyline points="15 3 21 3 21 9"></polyline>
+                      <polyline points="9 21 3 21 3 15"></polyline>
+                      <line x1="21" y1="3" x2="14" y2="10"></line>
+                      <line x1="3" y1="21" x2="10" y2="14"></line>
+                    </svg>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <!-- 用户消息：编辑模式 -->
-            <div v-if="isUser && isEditing" class="flex flex-col gap-2">
-              <textarea
-                ref="editInputRef"
-                v-model="editContent"
-                class="w-full min-w-[280px] resize-none bg-transparent text-sm leading-relaxed outline-none"
-                rows="1"
-                @input="adjustEditHeight"
-                @keydown.esc="cancelEdit"
-                @keydown.enter.ctrl.exact="saveEdit"
-                @keydown.enter.meta.exact="saveEdit"
-              />
-              <div class="flex justify-end gap-2 border-t border-border pt-2">
+              <!-- 用户消息：编辑模式 -->
+              <div v-if="isUser && isEditing" class="flex flex-col gap-2">
+                <textarea
+                  ref="editInputRef"
+                  v-model="editContent"
+                  class="w-full min-w-[280px] resize-none bg-transparent text-sm leading-relaxed outline-none"
+                  rows="1"
+                  @input="adjustEditHeight"
+                  @keydown.esc="cancelEdit"
+                  @keydown.enter.ctrl.exact="saveEdit"
+                  @keydown.enter.meta.exact="saveEdit"
+                />
+                <div class="flex justify-end gap-2 border-t border-border pt-2">
+                  <button
+                    class="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    @click="cancelEdit"
+                  >
+                    {{ t('ai.cancel') }}
+                  </button>
+                  <button
+                    class="rounded bg-primary px-2 py-1 text-xs text-primary-foreground hover:bg-primary-hover"
+                    @click="saveEdit"
+                  >
+                    {{ t('ai.save') }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- 用户消息：展示模式 -->
+              <div v-else-if="isUser" class="group/user relative">
+                <div class="whitespace-pre-wrap text-[15px] leading-relaxed">
+                  {{ message.content }}
+                </div>
+                <!-- 编辑按钮 -->
                 <button
-                  class="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                  @click="cancelEdit"
+                  v-if="!isEditing"
+                  class="absolute -left-14 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md bg-card/80 text-muted-foreground opacity-0 shadow-sm transition-all hover:bg-card hover:text-primary group-hover/user:opacity-100"
+                  :title="t('ai.edit')"
+                  @click="startEdit"
                 >
-                  {{ t('ai.cancel') }}
-                </button>
-                <button
-                  class="rounded bg-primary px-2 py-1 text-xs text-primary-foreground hover:bg-primary-hover"
-                  @click="saveEdit"
-                >
-                  {{ t('ai.save') }}
+                  <Pencil :size="14" />
                 </button>
               </div>
-            </div>
-
-            <!-- 用户消息：展示模式 -->
-            <div v-else-if="isUser" class="group/user relative">
-              <div class="whitespace-pre-wrap text-[15px] leading-relaxed">
+              <!-- AI 消息：Markdown 渲染 -->
+              <!-- eslint-disable vue/no-v-html -->
+              <div v-else-if="renderedHtml" class="markdown-content relative leading-relaxed">
+                <div v-html="renderedHtml" />
+              </div>
+              <!-- eslint-enable vue/no-v-html -->
+              <!-- 兜底显示 -->
+              <div v-else-if="hasContent" class="relative text-[15px] leading-relaxed">
                 {{ message.content }}
               </div>
-              <!-- 编辑按钮 -->
-              <button
-                v-if="!isEditing"
-                class="absolute -left-14 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md bg-card/80 text-muted-foreground opacity-0 shadow-sm transition-all hover:bg-card hover:text-primary group-hover/user:opacity-100"
-                :title="t('ai.edit')"
-                @click="startEdit"
-              >
-                <Pencil :size="14" />
-              </button>
-            </div>
-            <!-- AI 消息：Markdown 渲染 -->
-            <!-- eslint-disable vue/no-v-html -->
-            <div v-else-if="renderedHtml" class="markdown-content relative leading-relaxed">
-              <div v-html="renderedHtml" />
-            </div>
-            <!-- eslint-enable vue/no-v-html -->
-            <!-- 兜底显示 -->
-            <div v-else-if="hasContent" class="relative text-[15px] leading-relaxed">
-              {{ message.content }}
-            </div>
 
-            <!-- 操作按钮（AI 消息内部） -->
-            <div
-              v-if="!isUser && !isStreaming && hasContent"
-              class="mt-2 flex items-center gap-1.5 border-t border-ai-message-border pt-2 transition-opacity duration-300"
-            >
-              <button
-                class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-muted-foreground/80 transition-all hover:bg-primary/10 hover:text-primary active:scale-95"
-                :title="isCopied ? t('ai.copied') : t('ai.copy')"
-                @click="copyContent"
+              <!-- 操作按钮（AI 消息内部） -->
+              <div
+                v-if="!isUser && !isStreaming && hasContent"
+                class="mt-2 flex items-center gap-1.5 border-t border-ai-message-border pt-2 transition-opacity duration-300"
               >
-                <Check v-if="isCopied" :size="14" class="text-green-600" />
-                <Copy v-else :size="14" />
-                <span>{{ isCopied ? t('ai.copied') : t('ai.copy') }}</span>
-              </button>
-              <button
-                v-if="isLast"
-                class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-muted-foreground/80 transition-all hover:bg-primary/10 hover:text-primary active:scale-95"
-                @click="emit('regenerate')"
-              >
-                <RefreshCw :size="14" />
-                <span>{{ t('ai.regenerate') }}</span>
-              </button>
-            </div>
+                <button
+                  class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-muted-foreground/80 transition-all hover:bg-primary/10 hover:text-primary active:scale-95"
+                  :title="isCopied ? t('ai.copied') : t('ai.copy')"
+                  @click="copyContent"
+                >
+                  <Check v-if="isCopied" :size="14" class="text-green-600" />
+                  <Copy v-else :size="14" />
+                  <span>{{ isCopied ? t('ai.copied') : t('ai.copy') }}</span>
+                </button>
+                <button
+                  v-if="isLast"
+                  class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-muted-foreground/80 transition-all hover:bg-primary/10 hover:text-primary active:scale-95"
+                  @click="emit('regenerate')"
+                >
+                  <RefreshCw :size="14" />
+                  <span>{{ t('ai.regenerate') }}</span>
+                </button>
+              </div>
+            </template>
           </div>
         </template>
       </Transition>
