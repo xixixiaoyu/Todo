@@ -436,4 +436,114 @@ describe('AISettingsDialog', () => {
 
     expect(duplicatePreset).toHaveBeenCalledWith('1')
   })
+
+  it('should show name prompt and add preset when "Save as Preset" is confirmed', async () => {
+    const wrapper = mount(AISettingsDialog, {
+      props: {
+        modelValue: true,
+        initialTab: 'settings',
+      },
+      global: {
+        stubs: {
+          Teleport: true,
+        },
+      },
+    })
+
+    await nextTick()
+
+    // 修改基础设置中的模型
+    const modelInput = wrapper.find('input[placeholder="ai.modelPlaceholder"]')
+    await modelInput.setValue('special-model')
+
+    // 查找并点击 "保存为预设" 按钮
+    const saveAsPresetBtn = wrapper
+      .findAll('button')
+      .find((b) => b.text().includes('ai.saveAsPreset'))
+    expect(saveAsPresetBtn).toBeTruthy()
+    await saveAsPresetBtn?.trigger('click')
+    await nextTick()
+
+    // 验证显示了名称输入弹窗 (通过内部状态验证，因为 AlertDialog 可能比较难在单元测试中直接查找组件)
+    expect(
+      (wrapper.vm as unknown as { showSaveAsPresetConfirm: boolean }).showSaveAsPresetConfirm,
+    ).toBe(true)
+
+    // 输入预设名称
+    ;(wrapper.vm as unknown as { saveAsPresetName: string }).saveAsPresetName = 'My New Preset'
+
+    // 确认保存
+    await (
+      wrapper.vm as unknown as { confirmSaveAsPreset: () => Promise<void> }
+    ).confirmSaveAsPreset()
+    await nextTick()
+
+    // 验证 Tab 切换到了预设管理
+    expect((wrapper.vm as unknown as { activeTab: string }).activeTab).toBe('presets')
+    // 验证 addPreset 被调用
+    expect(addPreset).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'My New Preset',
+        model: 'special-model',
+      }),
+    )
+  })
+
+  it('should disable "Save as Preset" button when configuration matches an existing preset', async () => {
+    // 设置基础配置
+    mockConfig.value = {
+      baseUrl: 'https://api.openai.com/v1',
+      apiKey: 'sk-123',
+      model: 'gpt-4',
+      systemPrompt: 'You are helpful',
+      temperature: 0.5,
+      thinkingMode: 'disabled',
+      todoAssistant: false,
+      discussionMode: false,
+      discussionModelIds: [],
+      discussionPrimaryModelId: null,
+      memoryModelId: null,
+    }
+
+    // 模拟已存在一个预设，配置与当前配置相同
+    mockPresets.value = [
+      {
+        id: '1',
+        name: 'My Preset',
+        baseUrl: 'https://api.openai.com/v1',
+        apiKey: 'sk-123',
+        model: 'gpt-4',
+        systemPrompt: 'You are helpful',
+        temperature: 0.5,
+        todoAssistant: false,
+      },
+    ]
+
+    const wrapper = mount(AISettingsDialog, {
+      props: {
+        modelValue: true,
+        initialTab: 'settings',
+      },
+      global: {
+        stubs: {
+          Teleport: true,
+        },
+      },
+    })
+
+    await nextTick()
+
+    // 检查按钮是否被禁用
+    const saveAsPresetBtn = wrapper
+      .findAll('button')
+      .find((b) => b.text().includes('ai.saveAsPreset'))
+    expect(saveAsPresetBtn?.element.disabled).toBe(true)
+
+    // 修改模型名称，按钮应该变为可用
+    const modelInput = wrapper.find('input[placeholder="ai.modelPlaceholder"]')
+    await modelInput.setValue('gpt-4o')
+    await nextTick()
+
+    expect(saveAsPresetBtn?.element.disabled).toBe(false)
+  })
 })

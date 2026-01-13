@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   X,
@@ -154,9 +154,27 @@ const formData = ref<AIConfig>({
 const showApiKey = ref(false)
 const showPresetApiKey = ref(false)
 
+/**
+ * 检查当前表单配置是否与现有预设重复
+ */
+const isDuplicatePreset = computed(() => {
+  return presets.value.some((preset) => {
+    return (
+      preset.baseUrl === formData.value.baseUrl &&
+      preset.apiKey === formData.value.apiKey &&
+      preset.model === formData.value.model &&
+      preset.systemPrompt === formData.value.systemPrompt &&
+      preset.temperature === formData.value.temperature &&
+      preset.todoAssistant === formData.value.todoAssistant
+    )
+  })
+})
+
 // 编辑预设状态
 const editingPreset = ref<AIPreset | null>(null)
 const isCreatingPreset = ref(false)
+const showSaveAsPresetConfirm = ref(false)
+const saveAsPresetName = ref('')
 const presetForm = ref<Omit<AIPreset, 'id'>>({
   name: '',
   baseUrl: '',
@@ -234,6 +252,34 @@ function toggleSecondaryModel(presetId: string) {
 function handleSave() {
   updateConfig(formData.value)
   modelValue.value = false
+}
+
+/**
+ * 保存为预设 (显示确认弹窗)
+ */
+function handleSaveAsPreset() {
+  saveAsPresetName.value = ''
+  showSaveAsPresetConfirm.value = true
+}
+
+/**
+ * 确认保存为预设
+ */
+function confirmSaveAsPreset() {
+  if (!saveAsPresetName.value.trim()) return
+
+  addPreset({
+    name: saveAsPresetName.value.trim(),
+    baseUrl: formData.value.baseUrl,
+    apiKey: formData.value.apiKey,
+    model: formData.value.model,
+    systemPrompt: formData.value.systemPrompt,
+    temperature: formData.value.temperature,
+    todoAssistant: formData.value.todoAssistant,
+  })
+
+  showSaveAsPresetConfirm.value = false
+  activeTab.value = 'presets'
 }
 
 /**
@@ -375,6 +421,9 @@ defineExpose({
   formData,
   editingPreset,
   isCreatingPreset,
+  showSaveAsPresetConfirm,
+  saveAsPresetName,
+  confirmSaveAsPreset,
   handleReset,
   saveConfig: handleSave,
   startCreatePreset,
@@ -1091,6 +1140,16 @@ defineExpose({
               </button>
               <div class="flex gap-2">
                 <button
+                  v-if="activeTab === 'settings' && !formData.discussionMode"
+                  class="flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-sm text-foreground transition-all hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+                  :disabled="isDuplicatePreset"
+                  :title="isDuplicatePreset ? t('ai.presetAlreadyExists') : ''"
+                  @click="handleSaveAsPreset"
+                >
+                  <Star :size="14" :class="{ 'fill-current': isDuplicatePreset }" />
+                  <span>{{ t('ai.saveAsPreset') }}</span>
+                </button>
+                <button
                   class="rounded-lg border border-border px-4 py-2 text-sm text-foreground transition-colors hover:bg-accent"
                   @click="handleClose"
                 >
@@ -1124,6 +1183,40 @@ defineExpose({
           <AlertDialogAction
             class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             @click="handleClearConfirm"
+          >
+            {{ t('common.confirm') }}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    <!-- 保存为预设确认 -->
+    <AlertDialog v-model:open="showSaveAsPresetConfirm">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{{ t('ai.saveAsPresetTitle') }}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {{ t('ai.saveAsPresetDescription') }}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div class="py-4">
+          <input
+            v-model="saveAsPresetName"
+            type="text"
+            :placeholder="t('ai.saveAsPresetPlaceholder')"
+            class="w-full rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
+            autofocus
+            @keyup.enter="confirmSaveAsPreset"
+          />
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel @click="showSaveAsPresetConfirm = false">{{
+            t('common.cancel')
+          }}</AlertDialogCancel>
+          <AlertDialogAction
+            :disabled="!saveAsPresetName.trim()"
+            class="bg-primary text-primary-foreground hover:bg-primary/90"
+            @click="confirmSaveAsPreset"
           >
             {{ t('common.confirm') }}
           </AlertDialogAction>
