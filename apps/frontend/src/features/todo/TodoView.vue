@@ -74,7 +74,7 @@ function onFireworksComplete() {
   <div class="min-h-screen bg-background p-4 pb-16 md:p-8 md:pb-20">
     <div ref="cardRef">
       <Card
-        class="mx-auto max-w-4xl h-[calc(100vh-8rem)] flex flex-col border-none shadow-card dark:shadow-[0_8px_30px_rgba(0,0,0,0.3)] overflow-hidden rounded-[24px]"
+        class="mx-auto max-w-4xl h-[calc(100vh-5rem)] flex flex-col border-none shadow-card dark:shadow-[0_8px_30px_rgba(0,0,0,0.3)] overflow-hidden rounded-[24px]"
       >
         <CardContent class="todo-container p-6 md:p-8 flex flex-col flex-1 min-h-0">
           <!-- Header -->
