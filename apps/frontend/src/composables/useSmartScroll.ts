@@ -1,4 +1,5 @@
 import { nextTick, onMounted, onUnmounted, ref, watch, type Ref } from 'vue'
+import gsap from 'gsap'
 
 type ScrollBehaviorOption = 'auto' | 'smooth' | 'instant'
 
@@ -115,6 +116,8 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
   const scrollToBottomInstant = () => {
     const el = scrollContainer.value
     if (!el) return
+    // 停止任何正在进行的平滑滚动动画
+    gsap.killTweensOf(el)
     setProgrammaticScroll(50)
     el.scrollTop = el.scrollHeight
     lastScrollTop = el.scrollTop
@@ -139,12 +142,18 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
     }
 
     // 设置程序化滚动锁定，防止滚动过程中触发用户滚动检测
-    // 缩短锁定时间，提升响应感
-    setProgrammaticScroll(300)
+    // 使用 GSAP 动画，时间更短、更丝滑
+    const duration = 0.4
+    setProgrammaticScroll(duration * 1000 + 50)
 
-    el.scrollTo({
-      top: targetTop,
-      behavior: 'smooth',
+    gsap.to(el, {
+      scrollTop: targetTop,
+      duration,
+      ease: 'power2.out',
+      overwrite: true,
+      onUpdate: () => {
+        lastScrollTop = el.scrollTop
+      },
     })
   }
 
@@ -407,6 +416,7 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
     const el = scrollContainer.value
     if (el) {
       el.removeEventListener('scroll', throttledScrollHandler)
+      gsap.killTweensOf(el)
     }
 
     if (resizeObserver) {
