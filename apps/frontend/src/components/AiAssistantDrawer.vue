@@ -15,6 +15,7 @@ import {
   History,
   Check,
   Users,
+  Star,
   Image as ImageIcon,
 } from 'lucide-vue-next'
 import ResizableDrawer from '@/components/ResizableDrawer.vue'
@@ -219,6 +220,30 @@ const startHistoryResize = (e: MouseEvent) => {
 // 预设下拉框状态
 const showPresetDropdown = ref(false)
 
+// 多模型协作快速选择弹窗状态
+const showDiscussionPopover = ref(false)
+
+// 选择主模型
+const selectPrimaryModel = (presetId: string) => {
+  updateConfig({
+    discussionPrimaryModelId: presetId,
+  })
+}
+
+// 切换副模型
+const toggleSecondaryModel = (presetId: string) => {
+  const currentIds = [...config.value.discussionModelIds]
+  const index = currentIds.indexOf(presetId)
+  if (index > -1) {
+    currentIds.splice(index, 1)
+  } else {
+    currentIds.push(presetId)
+  }
+  updateConfig({
+    discussionModelIds: currentIds,
+  })
+}
+
 // 使用公共 Composable 处理 ESC 关闭
 useEscClose(showHistory, () => (showHistory.value = false))
 useEscClose(showPresetDropdown, () => (showPresetDropdown.value = false))
@@ -368,10 +393,6 @@ defineOptions({
           @edit="editAndResendMessage"
           @select-suggestion="handleSelectSuggestion"
         />
-        <!-- 底部渐变遮罩，使消息在进入工具栏前自然淡出 -->
-        <div
-          class="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-background/90 via-background/40 to-transparent pointer-events-none z-10"
-        />
       </div>
 
       <!-- 错误提示 -->
@@ -386,7 +407,7 @@ defineOptions({
       </div>
 
       <!-- 底部工具栏 -->
-      <div class="shrink-0 border-t border-border/20 bg-background/60 backdrop-blur-xl p-4">
+      <div class="shrink-0 border-t border-border/10 bg-background p-4">
         <div :class="[isMaximized ? 'mx-auto max-w-4xl w-full' : '', 'space-y-3']">
           <!-- 快捷操作按钮 -->
           <div class="flex flex-wrap items-center gap-2 text-sm">
@@ -446,19 +467,112 @@ defineOptions({
             </button>
 
             <!-- 多模型协同讨论 -->
-            <button
-              class="flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] transition-all hover:scale-105 active:scale-95 shadow-sm"
-              :class="
-                isDiscussionEnabled
-                  ? 'border-primary/30 bg-primary/10 text-primary shadow-primary/5'
-                  : 'border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-              "
-              :title="isDiscussionEnabled ? t('ai.discussionMode') : t('ai.discussionMode')"
-              @click="toggleDiscussionMode"
+            <div
+              class="relative"
+              @mouseenter="isDiscussionEnabled && (showDiscussionPopover = true)"
+              @mouseleave="showDiscussionPopover = false"
             >
-              <Users :size="14" :class="{ 'animate-pulse-slow': isDiscussionEnabled }" />
-              <span class="font-medium">{{ t('ai.discussionMode') }}</span>
-            </button>
+              <button
+                class="flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] transition-all hover:scale-105 active:scale-95 shadow-sm"
+                :class="
+                  isDiscussionEnabled
+                    ? 'border-primary/30 bg-primary/10 text-primary shadow-primary/5'
+                    : 'border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                "
+                :title="isDiscussionEnabled ? t('ai.discussionMode') : t('ai.discussionMode')"
+                @click="toggleDiscussionMode"
+              >
+                <Users :size="14" :class="{ 'animate-pulse-slow': isDiscussionEnabled }" />
+                <span class="font-medium">{{ t('ai.discussionMode') }}</span>
+              </button>
+
+              <!-- 讨论模型快速选择弹窗 -->
+              <Transition
+                enter-active-class="transition-all duration-200 cubic-bezier(0.23, 1, 0.32, 1)"
+                leave-active-class="transition-all duration-150 cubic-bezier(0.23, 1, 0.32, 1)"
+                enter-from-class="opacity-0 translate-y-2"
+                enter-to-class="opacity-100 translate-y-0"
+                leave-from-class="opacity-100 translate-y-0"
+                leave-to-class="opacity-0 translate-y-2"
+              >
+                <div
+                  v-if="showDiscussionPopover && isDiscussionEnabled"
+                  class="absolute bottom-full left-0 z-50 mb-2 w-64 overflow-hidden rounded-xl border border-border bg-card p-3 shadow-lg"
+                >
+                  <div class="space-y-4">
+                    <!-- 主模型 -->
+                    <div class="space-y-2">
+                      <p
+                        class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-70"
+                      >
+                        {{ t('ai.discussionPrimaryModel') }}
+                      </p>
+                      <div
+                        v-if="presets.length === 0"
+                        class="text-[11px] text-muted-foreground/50 py-1"
+                      >
+                        {{ t('ai.noPresetsForDiscussion') }}
+                      </div>
+                      <div v-else class="flex flex-wrap gap-1.5">
+                        <button
+                          v-for="preset in presets"
+                          :key="'quick-primary-' + preset.id"
+                          class="flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition-all"
+                          :class="
+                            config.discussionPrimaryModelId === preset.id
+                              ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                              : 'border-border bg-background/50 text-muted-foreground hover:border-primary/50 hover:text-foreground'
+                          "
+                          @click="selectPrimaryModel(preset.id)"
+                        >
+                          <Star
+                            v-if="config.discussionPrimaryModelId === preset.id"
+                            :size="10"
+                            class="fill-current"
+                          />
+                          <span class="font-medium">{{ preset.name }}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- 副模型 -->
+                    <div class="space-y-2">
+                      <p
+                        class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-70"
+                      >
+                        {{ t('ai.discussionSecondaryModels') }}
+                      </p>
+                      <div
+                        v-if="presets.length === 0"
+                        class="text-[11px] text-muted-foreground/50 py-1"
+                      >
+                        {{ t('ai.noPresetsForDiscussion') }}
+                      </div>
+                      <div v-else class="flex flex-wrap gap-1.5">
+                        <button
+                          v-for="preset in presets"
+                          :key="'quick-secondary-' + preset.id"
+                          class="flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition-all"
+                          :class="
+                            config.discussionModelIds.includes(preset.id)
+                              ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                              : 'border-border bg-background/50 text-muted-foreground hover:border-primary/50 hover:text-foreground'
+                          "
+                          @click="toggleSecondaryModel(preset.id)"
+                        >
+                          <Check
+                            v-if="config.discussionModelIds.includes(preset.id)"
+                            :size="10"
+                            stroke-width="3"
+                          />
+                          <span class="font-medium">{{ preset.name }}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Transition>
+            </div>
 
             <div class="h-4 w-px bg-border/30 mx-0.5" />
 
