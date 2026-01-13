@@ -17,6 +17,7 @@ import {
   Info,
   Sparkles,
   Loader2,
+  Copy,
 } from 'lucide-vue-next'
 import { useAIConfig, type AIConfig, type AIPreset } from '@/composables/useAIConfig'
 import { useEscClose } from '@/composables/useEscClose'
@@ -54,6 +55,7 @@ const {
   addPreset,
   updatePreset,
   deletePreset,
+  duplicatePreset,
   getPresetDefaults,
   activePresetId,
   switchPreset,
@@ -320,6 +322,13 @@ function handleDeletePreset(presetId: string) {
   if (editingPreset.value?.id === presetId) {
     cancelEditPreset()
   }
+}
+
+/**
+ * 复制预设
+ */
+function handleDuplicatePreset(presetId: string) {
+  duplicatePreset(presetId)
 }
 
 // 监听切换预设，更新本地表单
@@ -1029,6 +1038,13 @@ defineExpose({
                           class="flex gap-1 transition-opacity group-hover:opacity-100"
                           :class="activePresetId === preset.id ? 'opacity-100' : 'opacity-0'"
                         >
+                          <button
+                            class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                            :title="t('ai.copyPreset')"
+                            @click="handleDuplicatePreset(preset.id)"
+                          >
+                            <Copy :size="14" />
+                          </button>
                           <button
                             class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                             :title="t('ai.edit')"

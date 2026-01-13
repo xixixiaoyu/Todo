@@ -182,6 +182,8 @@ export default {
     systemPromptPlaceholder: '设置 AI 的角色和行为...',
     createPreset: '创建预设',
     editPreset: '编辑预设',
+    copyPreset: '复制预设',
+    copySuffix: ' - 副本',
     cancel: '取消',
     save: '保存',
     presetNameLabel: '预设名称',

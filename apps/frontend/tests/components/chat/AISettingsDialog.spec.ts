@@ -14,9 +14,10 @@ vi.mock('lucide-vue-next', () => ({
   Check: { template: '<span>Check</span>' },
   Plus: { template: '<span>Plus</span>' },
   Trash2: { template: '<span>Trash2</span>' },
-  Edit3: { template: '<span>Edit3</span>' },
   Users: { template: '<span>Users</span>' },
   Star: { template: '<span>Star</span>' },
+  Copy: { template: '<span>Copy</span>' },
+  Edit3: { template: '<span>Edit3</span>' },
 }))
 
 // Mock composables
@@ -37,13 +38,85 @@ const mockConfig = ref<AIConfig>({
 const mockPresets = ref<AIPreset[]>([])
 const mockActivePresetId = ref<string | null>(null)
 
+const updateConfig = vi.fn((partial) => {
+  mockConfig.value = { ...mockConfig.value, ...partial }
+  mockActivePresetId.value = null
+})
+
+const switchPreset = vi.fn((id) => {
+  const preset = mockPresets.value.find((p) => p.id === id)
+  if (preset) {
+    mockActivePresetId.value = id
+    mockConfig.value = {
+      discussionMode: false,
+      discussionModelIds: [] as string[],
+      discussionPrimaryModelId: null,
+      memoryModelId: null,
+      ...preset,
+    } as unknown as AIConfig
+  }
+})
+
+const addPreset = vi.fn((p) => {
+  const newPreset: AIPreset = {
+    discussionMode: false,
+    discussionModelIds: [] as string[],
+    discussionPrimaryModelId: null,
+    memoryModelId: null,
+    ...p,
+    id: 'test-id',
+  } as unknown as AIPreset
+  mockPresets.value.push(newPreset)
+  return newPreset
+})
+
+const updatePreset = vi.fn((id, updates) => {
+  const index = mockPresets.value.findIndex((p) => p.id === id)
+  if (index !== -1) {
+    mockPresets.value[index] = { ...mockPresets.value[index], ...updates }
+    if (mockActivePresetId.value === id) {
+      mockConfig.value = {
+        discussionMode: false,
+        discussionModelIds: [] as string[],
+        discussionPrimaryModelId: null,
+        memoryModelId: null,
+        ...mockPresets.value[index],
+      } as unknown as AIConfig
+    }
+  }
+})
+
+const deletePreset = vi.fn((id) => {
+  mockPresets.value = mockPresets.value.filter((p) => p.id !== id)
+  if (mockActivePresetId.value === id) {
+    mockActivePresetId.value = null
+  }
+})
+
+const duplicatePreset = vi.fn((id) => {
+  const preset = mockPresets.value.find((p) => p.id === id)
+  if (preset) {
+    const duplicated = { ...preset, id: 'duplicated-id', name: `${preset.name} - 副本` }
+    mockPresets.value.push(duplicated)
+    return duplicated
+  }
+  return null
+})
+
+const getPresetDefaults = vi.fn(() => ({
+  baseUrl: '',
+  apiKey: '',
+  model: '',
+  systemPrompt: '',
+  temperature: 0.7,
+  thinkingMode: 'disabled',
+  todoAssistant: false,
+}))
+
 vi.mock('@/composables/useAIConfig', () => ({
   useAIConfig: () => ({
     config: mockConfig,
-    updateConfig: vi.fn((partial) => {
-      mockConfig.value = { ...mockConfig.value, ...partial }
-      mockActivePresetId.value = null
-    }),
+    updateConfig,
     DEFAULT_CONFIG: {
       baseUrl: '',
       apiKey: '',
@@ -59,56 +132,12 @@ vi.mock('@/composables/useAIConfig', () => ({
     },
     presets: mockPresets,
     activePresetId: mockActivePresetId,
-    switchPreset: vi.fn((id) => {
-      const preset = mockPresets.value.find((p) => p.id === id)
-      if (preset) {
-        mockActivePresetId.value = id
-        mockConfig.value = {
-          discussionMode: false,
-          discussionModelIds: [] as string[],
-          discussionPrimaryModelId: null,
-          memoryModelId: null,
-          ...preset,
-        } as unknown as AIConfig
-      }
-    }),
-    addPreset: vi.fn((p) => {
-      const newPreset: AIPreset = {
-        discussionMode: false,
-        discussionModelIds: [] as string[],
-        discussionPrimaryModelId: null,
-        memoryModelId: null,
-        ...p,
-        id: 'test-id',
-      } as unknown as AIPreset
-      mockPresets.value.push(newPreset)
-      return newPreset
-    }),
-    updatePreset: vi.fn((id, updates) => {
-      const index = mockPresets.value.findIndex((p) => p.id === id)
-      if (index !== -1) {
-        mockPresets.value[index] = { ...mockPresets.value[index], ...updates }
-        if (mockActivePresetId.value === id) {
-          mockConfig.value = {
-            discussionMode: false,
-            discussionModelIds: [] as string[],
-            discussionPrimaryModelId: null,
-            memoryModelId: null,
-            ...mockPresets.value[index],
-          } as unknown as AIConfig
-        }
-      }
-    }),
-    deletePreset: vi.fn(),
-    getPresetDefaults: vi.fn(() => ({
-      baseUrl: '',
-      apiKey: '',
-      model: '',
-      systemPrompt: '',
-      temperature: 0.7,
-      thinkingMode: 'disabled',
-      todoAssistant: false,
-    })),
+    switchPreset,
+    addPreset,
+    updatePreset,
+    deletePreset,
+    duplicatePreset,
+    getPresetDefaults,
   }),
 }))
 
@@ -371,5 +400,40 @@ describe('AISettingsDialog', () => {
     expect(mockPresets.value[0].model).toBe('new-model')
     // 验证 config 也被同步更新了 (由于 mockConfig 是 ref，且 useAIConfig 的 updatePreset 会修改它)
     expect(mockConfig.value.model).toBe('new-model')
+  })
+
+  it('should duplicate a preset when duplicate button is clicked', async () => {
+    mockPresets.value = [
+      {
+        id: '1',
+        name: 'Preset 1',
+        baseUrl: 'url',
+        apiKey: 'key',
+        model: 'model',
+        systemPrompt: 'prompt',
+        temperature: 0.7,
+        todoAssistant: false,
+      },
+    ]
+
+    const wrapper = mount(AISettingsDialog, {
+      props: {
+        modelValue: true,
+        initialTab: 'presets',
+      },
+      global: {
+        stubs: {
+          Teleport: true,
+        },
+      },
+    })
+
+    await nextTick()
+
+    const { duplicatePreset } = useAIConfig()
+    const duplicateBtn = wrapper.find('button[title="ai.copyPreset"]')
+    await duplicateBtn.trigger('click')
+
+    expect(duplicatePreset).toHaveBeenCalledWith('1')
   })
 })

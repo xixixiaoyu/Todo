@@ -185,6 +185,8 @@ export default {
     systemPromptPlaceholder: 'Set AI role and behavior...',
     createPreset: 'Create Preset',
     editPreset: 'Edit Preset',
+    copyPreset: 'Copy Preset',
+    copySuffix: ' - Copy',
     cancel: 'Cancel',
     save: 'Save',
     presetNameLabel: 'Preset Name',

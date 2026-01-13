@@ -303,7 +303,30 @@ describe('useAIConfig', () => {
       expect(presets.value).toHaveLength(0)
     })
 
-    it('should switch to a preset', () => {
+    it('should duplicate a preset', () => {
+      const { presets, addPreset, duplicatePreset } = useAIConfig()
+
+      const preset = addPreset({
+        name: 'Original',
+        baseUrl: 'https://api.test.com',
+        apiKey: 'key',
+        model: 'model',
+        systemPrompt: 'prompt',
+        temperature: 0.5,
+        todoAssistant: false,
+      })
+
+      const duplicated = duplicatePreset(preset.id)
+
+      expect(presets.value).toHaveLength(2)
+      expect(duplicated).toBeTruthy()
+      expect(duplicated!.id).not.toBe(preset.id)
+      expect(duplicated!.name).toContain('Original')
+      expect(duplicated!.model).toBe(preset.model)
+      expect(duplicated!.temperature).toBe(preset.temperature)
+    })
+
+    it('should switch presets', () => {
       const { config, activePreset, activePresetId, addPreset, switchPreset } = useAIConfig()
 
       const preset = addPreset({

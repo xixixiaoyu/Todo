@@ -303,6 +303,22 @@ export function useAIConfig() {
   }
 
   /**
+   * 复制预设
+   */
+  function duplicatePreset(presetId: string): AIPreset | null {
+    const preset = presets.value.find((p) => p.id === presetId)
+    if (!preset) return null
+
+    const newPreset: AIPreset = {
+      ...preset,
+      id: generateId(),
+      name: `${preset.name}${i18n.global.t('ai.copySuffix')}`,
+    }
+    presets.value.push(newPreset)
+    return newPreset
+  }
+
+  /**
    * 从当前配置创建预设默认值
    */
   function getPresetDefaults(): Omit<AIPreset, 'id' | 'name'> {
@@ -330,6 +346,7 @@ export function useAIConfig() {
     addPreset,
     updatePreset,
     deletePreset,
+    duplicatePreset,
     getPresetDefaults,
   }
 }
