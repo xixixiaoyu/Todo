@@ -213,7 +213,7 @@ async function submitAddChild() {
       <!-- 显示模式 -->
       <template v-else>
         <span
-          class="flex-1 cursor-pointer select-none text-foreground transition-all duration-300"
+          class="flex-1 cursor-pointer select-text text-foreground transition-all duration-300"
           :class="todo.completed ? 'line-through text-muted-foreground/50' : ''"
           @dblclick="emit('startEdit', todo.id, todo.title)"
         >
