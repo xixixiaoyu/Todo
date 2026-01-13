@@ -44,7 +44,7 @@ import { cn } from '@/lib/utils'                // 工具函数
 
 **Tailwind**: 原子化优先，动态类用 `cn()` 合并，响应式遵循 Mobile First。
 
-**GSAP 动画**: 必须使用 `useGsap` composable，动画包裹在 `ctx.add(() => { ... })` 中自动清理。
+**GSAP 动画**: 必须使用 `useGsap` composable，动画包裹在 `ctx.add(() => { ... })` 中自动清理。追求丝滑、快速的视觉体验，避免冗长拖沓。
 
 **Prettier**: 无分号、单引号、2 空格缩进、trailing comma。
 
