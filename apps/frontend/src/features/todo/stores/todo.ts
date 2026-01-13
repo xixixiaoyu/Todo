@@ -44,13 +44,20 @@ export const useTodoStore = defineStore(
     const completedCount = computed(() => todos.value.filter((todo) => todo.completed).length)
 
     /**
-     * 检查是否存在重复的未完成待办事项
+     * 检查是否存在重复的未完成待办事项 (同层级)
      */
-    function isDuplicate(title: string, excludeId?: string): boolean {
+    function isDuplicate(
+      title: string,
+      parentId: string | null = null,
+      excludeId?: string,
+    ): boolean {
       const trimmedTitle = title.trim().toLowerCase()
       return todos.value.some(
         (todo) =>
-          todo.id !== excludeId && !todo.completed && todo.title.toLowerCase() === trimmedTitle,
+          todo.id !== excludeId &&
+          (todo.parentId ?? null) === parentId &&
+          !todo.completed &&
+          todo.title.toLowerCase() === trimmedTitle,
       )
     }
 
@@ -89,7 +96,7 @@ export const useTodoStore = defineStore(
       const trimmedTitle = title.trim()
       if (!trimmedTitle) return false
 
-      if (isDuplicate(trimmedTitle)) {
+      if (isDuplicate(trimmedTitle, parentId)) {
         error.value = 'todo.duplicate'
         return false
       }
@@ -199,7 +206,7 @@ export const useTodoStore = defineStore(
       const todo = todos.value.find((t) => t.id === id)
       if (!todo || todo.title === trimmedTitle) return !!todo
 
-      if (isDuplicate(trimmedTitle, id)) {
+      if (isDuplicate(trimmedTitle, todo.parentId ?? null, id)) {
         error.value = 'todo.duplicate'
         return false
       }

@@ -21,7 +21,6 @@ const i18n = createI18n({
 describe('TodoInput', () => {
   const defaultProps = {
     modelValue: '',
-    isShaking: false,
     showTooltip: false,
     errorMessage: '',
   }
@@ -97,36 +96,32 @@ describe('TodoInput', () => {
     expect(wrapper.emitted('keydown')).toBeTruthy()
   })
 
-  it('should apply shaking class when isShaking is true', () => {
+  it('should apply destructive border when errorMessage is present', () => {
     const wrapper = mount(TodoInput, {
       props: {
         ...defaultProps,
-        isShaking: true,
+        errorMessage: 'error',
       },
       global: {
         plugins: [i18n],
       },
     })
 
-    const container = wrapper.find('.animate-shake')
-    expect(container.exists()).toBe(true)
     const input = wrapper.find('input')
     expect(input.classes()).toContain('border-destructive')
   })
 
-  it('should not apply shaking class when isShaking is false', () => {
+  it('should not apply destructive border when errorMessage is empty', () => {
     const wrapper = mount(TodoInput, {
       props: {
         ...defaultProps,
-        isShaking: false,
+        errorMessage: '',
       },
       global: {
         plugins: [i18n],
       },
     })
 
-    const container = wrapper.find('.animate-shake')
-    expect(container.exists()).toBe(false)
     const input = wrapper.find('input')
     expect(input.classes()).not.toContain('border-destructive')
   })

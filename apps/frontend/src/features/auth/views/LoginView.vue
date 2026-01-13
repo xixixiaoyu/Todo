@@ -34,7 +34,7 @@ const onSubmit = handleSubmit(async (values) => {
     <form class="space-y-6" @submit="onSubmit">
       <div
         v-if="authStore.error"
-        class="bg-error/10 border border-error text-error px-4 py-3 rounded-xl text-sm animate-shake"
+        class="bg-error/10 border border-error text-error px-4 py-3 rounded-xl text-sm"
       >
         {{ authStore.error.includes('.') ? t(authStore.error) : authStore.error }}
       </div>

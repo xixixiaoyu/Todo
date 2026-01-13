@@ -17,7 +17,6 @@ export function useTodo() {
 
   const editingId = ref<string | null>(null)
   const editingTitle = ref('')
-  const isShaking = ref(false)
   const showTooltip = ref(false)
 
   async function handleAddTodo() {
@@ -28,11 +27,7 @@ export function useTodo() {
     if (success) {
       newTodoTitle.value = ''
     } else {
-      isShaking.value = true
       showTooltip.value = true
-      setTimeout(() => {
-        isShaking.value = false
-      }, 600)
       setTimeout(() => {
         showTooltip.value = false
       }, 2000)
@@ -111,7 +106,6 @@ export function useTodo() {
     isDrawerOpen,
     editingId,
     editingTitle,
-    isShaking,
     showTooltip,
     // 方法
     handleAddTodo,

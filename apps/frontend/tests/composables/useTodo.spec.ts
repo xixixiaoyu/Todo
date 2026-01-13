@@ -105,23 +105,18 @@ describe('useTodo', () => {
       expect(newTodoTitle.value).toBe('')
     })
 
-    it('should trigger shake animation on failure', async () => {
+    it('should trigger tooltip feedback on failure', async () => {
       vi.mocked(todoStore.addTodo).mockResolvedValue(false)
 
-      const { newTodoTitle, handleAddTodo, isShaking, showTooltip } = useTodo()
+      const { newTodoTitle, handleAddTodo, showTooltip } = useTodo()
       newTodoTitle.value = 'New Todo'
 
       await handleAddTodo()
 
-      expect(isShaking.value).toBe(true)
       expect(showTooltip.value).toBe(true)
 
-      // 测试 shake 动画在 600ms 后停止
-      vi.advanceTimersByTime(600)
-      expect(isShaking.value).toBe(false)
-
       // 测试 tooltip 在 2000ms 后隐藏
-      vi.advanceTimersByTime(1400)
+      vi.advanceTimersByTime(2000)
       expect(showTooltip.value).toBe(false)
     })
   })

@@ -51,7 +51,6 @@ const {
   isDrawerOpen,
   editingId,
   editingTitle,
-  isShaking,
   showTooltip,
   handleAddTodo,
   handleKeydown,
@@ -84,7 +83,6 @@ function onFireworksComplete() {
           <!-- Input Area -->
           <TodoInput
             v-model="newTodoTitle"
-            :is-shaking="isShaking"
             :show-tooltip="showTooltip"
             :error-message="todoStore.error || ''"
             @add="handleAddTodo"

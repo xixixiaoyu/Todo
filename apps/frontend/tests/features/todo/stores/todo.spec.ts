@@ -182,20 +182,30 @@ describe('useTodoStore', () => {
       expect(store.todos).toHaveLength(0)
     })
 
-    it('should not add duplicate todo if it is pending', async () => {
-      store.todos = [{ ...mockTodos[0] }] // 'First todo', completed: false
+    it('should not add duplicate todo if it is pending at the same level', async () => {
+      store.todos = [{ ...mockTodos[0], parentId: null }] // 'First todo', completed: false
 
-      const result = await store.addTodo('First todo')
+      const result = await store.addTodo('First todo', null)
 
       expect(result).toBe(false)
       expect(store.error).toBe('todo.duplicate')
       expect(store.todos).toHaveLength(1)
     })
 
-    it('should allow adding duplicate todo if existing one is completed', async () => {
-      store.todos = [{ ...mockTodos[1] }] // 'Second todo', completed: true
+    it('should allow adding duplicate todo if it is at a different level', async () => {
+      store.todos = [{ ...mockTodos[0], parentId: null }] // 'First todo', completed: false
 
-      const result = await store.addTodo('Second todo')
+      const result = await store.addTodo('First todo', 'parent-id')
+
+      expect(result).toBe(true)
+      expect(store.todos).toHaveLength(2)
+      expect(store.todos[0].parentId).toBe('parent-id')
+    })
+
+    it('should allow adding duplicate todo if existing one is completed at the same level', async () => {
+      store.todos = [{ ...mockTodos[1], parentId: null }] // 'Second todo', completed: true
+
+      const result = await store.addTodo('Second todo', null)
 
       expect(result).toBe(true)
       expect(store.todos).toHaveLength(2)
@@ -357,29 +367,41 @@ describe('useTodoStore', () => {
       expect(store.todos[0].title).toBe('First todo')
     })
 
-    it('should not update to a duplicate title if it exists in pending todos', async () => {
+    it('should not update to a duplicate title if it exists at the same level', async () => {
       store.todos = [
-        { ...mockTodos[0], id: '1', title: 'Task 1', completed: false },
-        { ...mockTodos[1], id: '2', title: 'Task 2', completed: false },
+        { ...mockTodos[0], id: '1', title: 'Task 1', parentId: 'p1', completed: false },
+        { ...mockTodos[1], id: '2', title: 'Task 2', parentId: 'p1', completed: false },
       ]
 
       const result = await store.updateTodo('1', 'Task 2')
 
       expect(result).toBe(false)
       expect(store.error).toBe('todo.duplicate')
-      expect(store.todos[0].title).toBe('Task 1')
+      expect(store.todos.find((t) => t.id === '1')?.title).toBe('Task 1')
     })
 
-    it('should allow updating to a title that exists in completed todos', async () => {
+    it('should allow updating to a duplicate title if it exists at a different level', async () => {
       store.todos = [
-        { ...mockTodos[0], id: '1', title: 'Task 1', completed: false },
-        { ...mockTodos[1], id: '2', title: 'Task 2', completed: true },
+        { ...mockTodos[0], id: '1', title: 'Task 1', parentId: 'p1', completed: false },
+        { ...mockTodos[1], id: '2', title: 'Task 2', parentId: 'p2', completed: false },
       ]
 
       const result = await store.updateTodo('1', 'Task 2')
 
       expect(result).toBe(true)
-      expect(store.todos[0].title).toBe('Task 2')
+      expect(store.todos.find((t) => t.id === '1')?.title).toBe('Task 2')
+    })
+
+    it('should allow updating to a title that exists in completed todos at the same level', async () => {
+      store.todos = [
+        { ...mockTodos[0], id: '1', title: 'Task 1', parentId: 'p1', completed: false },
+        { ...mockTodos[1], id: '2', title: 'Task 2', parentId: 'p1', completed: true },
+      ]
+
+      const result = await store.updateTodo('1', 'Task 2')
+
+      expect(result).toBe(true)
+      expect(store.todos.find((t) => t.id === '1')?.title).toBe('Task 2')
     })
 
     it('should return true if title has not changed', async () => {

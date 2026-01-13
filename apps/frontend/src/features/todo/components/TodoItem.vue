@@ -18,7 +18,7 @@ import { useGsap } from '@/composables/useGsap'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 
 const { t } = useI18n()
 const store = useTodoStore()
@@ -54,6 +54,7 @@ const dragChildren = computed({
 
 const isExpanded = ref(props.defaultExpanded ?? false)
 const isAddingChild = ref(false)
+const showTooltip = ref(false)
 
 watch(
   () => props.defaultExpanded,
@@ -127,23 +128,49 @@ function toggleExpand() {
 function startAddChild() {
   isAddingChild.value = true
   newChildTitle.value = ''
+  store.clearError()
 }
 
 function cancelAddChild() {
   isAddingChild.value = false
   newChildTitle.value = ''
+  store.clearError()
+  showTooltip.value = false
 }
 
 async function submitAddChild() {
   if (newChildTitle.value.trim()) {
+    store.clearError()
     const success = await store.addTodo(newChildTitle.value, props.todo.id)
     if (success) {
       isAddingChild.value = false
       newChildTitle.value = ''
       isExpanded.value = true
+    } else {
+      triggerFeedback()
     }
   }
 }
+
+function triggerFeedback() {
+  showTooltip.value = true
+  setTimeout(() => {
+    showTooltip.value = false
+  }, 2000)
+}
+
+function handleSaveEdit() {
+  emit('saveEdit')
+}
+
+watch(
+  () => store.error,
+  (newError) => {
+    if (newError && props.editingId === props.todo.id) {
+      triggerFeedback()
+    }
+  },
+)
 </script>
 
 <template>
@@ -151,7 +178,7 @@ async function submitAddChild() {
     <div
       ref="itemRef"
       class="group relative flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-none"
-      :class="{ 'opacity-90 scale-[0.98] bg-muted/30': level && level > 0 }"
+      :class="[{ 'opacity-90 scale-[0.98] bg-muted/30': level && level > 0 }]"
       @mouseenter="onMouseEnter"
       @mouseleave="onMouseLeave"
     >
@@ -180,22 +207,36 @@ async function submitAddChild() {
 
       <!-- 编辑模式 -->
       <template v-if="editingId === todo.id">
-        <Input
-          ref="editInputRef"
-          :model-value="editingTitle"
-          type="text"
-          class="h-10 flex-1 bg-background text-foreground text-base focus-visible:ring-primary/20"
-          :placeholder="t('todo.editPlaceholder')"
-          @update:model-value="emit('update:editingTitle', $event as string)"
-          @keydown="emit('editKeydown', $event)"
-          @blur="emit('saveEdit')"
-        />
+        <TooltipProvider :delay-duration="0">
+          <Tooltip :open="showTooltip && editingId === todo.id">
+            <TooltipTrigger as-child>
+              <Input
+                ref="editInputRef"
+                :model-value="editingTitle"
+                type="text"
+                class="h-10 flex-1 bg-background text-foreground text-base focus-visible:ring-primary/20"
+                :class="{ 'border-destructive': store.error && editingId === todo.id }"
+                :placeholder="t('todo.editPlaceholder')"
+                @update:model-value="emit('update:editingTitle', $event as string)"
+                @keydown="emit('editKeydown', $event)"
+                @blur="handleSaveEdit"
+              />
+            </TooltipTrigger>
+            <TooltipContent
+              side="top"
+              align="start"
+              class="bg-destructive text-destructive-foreground border-none"
+            >
+              <p>{{ store.error?.includes('.') ? t(store.error) : store.error || '' }}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <div class="flex items-center gap-1">
           <Button
             variant="ghost"
             size="icon"
             class="h-8 w-8 text-success hover:bg-success/10"
-            @click="emit('saveEdit')"
+            @click="handleSaveEdit"
           >
             <Check class="h-4 w-4" />
           </Button>
@@ -220,53 +261,55 @@ async function submitAddChild() {
           {{ todo.title }}
         </span>
         <div class="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-          <Tooltip v-if="(level || 0) < 2">
-            <TooltipTrigger as-child>
-              <Button
-                variant="ghost"
-                size="icon"
-                class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                @click="startAddChild"
-              >
-                <Plus class="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{{ t('todo.addSubtask') }}</p>
-            </TooltipContent>
-          </Tooltip>
+          <TooltipProvider :delay-duration="0">
+            <Tooltip v-if="(level || 0) < 2">
+              <TooltipTrigger as-child>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                  @click="startAddChild"
+                >
+                  <Plus class="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{{ t('todo.addSubtask') }}</p>
+              </TooltipContent>
+            </Tooltip>
 
-          <Tooltip>
-            <TooltipTrigger as-child>
-              <Button
-                variant="ghost"
-                size="icon"
-                class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                @click="emit('startEdit', todo.id, todo.title)"
-              >
-                <Pencil class="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{{ t('todo.edit') }}</p>
-            </TooltipContent>
-          </Tooltip>
+            <Tooltip>
+              <TooltipTrigger as-child>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                  @click="emit('startEdit', todo.id, todo.title)"
+                >
+                  <Pencil class="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{{ t('todo.edit') }}</p>
+              </TooltipContent>
+            </Tooltip>
 
-          <Tooltip>
-            <TooltipTrigger as-child>
-              <Button
-                variant="ghost"
-                size="icon"
-                class="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                @click="emit('delete', todo.id)"
-              >
-                <Trash2 class="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{{ t('common.delete') }}</p>
-            </TooltipContent>
-          </Tooltip>
+            <Tooltip>
+              <TooltipTrigger as-child>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  @click="emit('delete', todo.id)"
+                >
+                  <Trash2 class="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{{ t('common.delete') }}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </template>
     </div>
@@ -277,15 +320,31 @@ async function submitAddChild() {
       ref="subtaskContainerRef"
       class="flex items-center gap-2 px-4 py-3 ml-10 border-l-2 border-primary/10"
     >
-      <Input
-        ref="subtaskInputRef"
-        v-model="newChildTitle"
-        type="text"
-        class="h-9 flex-1 bg-background text-sm"
-        :placeholder="t('todo.subtaskPlaceholder')"
-        @keydown.enter="submitAddChild"
-        @keydown.esc="cancelAddChild"
-      />
+      <TooltipProvider :delay-duration="0">
+        <Tooltip :open="showTooltip && isAddingChild">
+          <TooltipTrigger as-child>
+            <div class="flex-1">
+              <Input
+                ref="subtaskInputRef"
+                v-model="newChildTitle"
+                type="text"
+                class="h-9 w-full bg-background text-sm"
+                :class="{ 'border-destructive': store.error && isAddingChild }"
+                :placeholder="t('todo.subtaskPlaceholder')"
+                @keydown.enter="submitAddChild"
+                @keydown.esc="cancelAddChild"
+              />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent
+            side="top"
+            align="start"
+            class="bg-destructive text-destructive-foreground border-none"
+          >
+            <p>{{ store.error?.includes('.') ? t(store.error) : store.error || '' }}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <div class="flex items-center gap-1">
         <Button
           variant="ghost"
