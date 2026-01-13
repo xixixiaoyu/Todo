@@ -80,6 +80,23 @@ function onFireworksComplete() {
           <!-- Header -->
           <TodoHeader v-model:is-drawer-open="isDrawerOpen" v-model:show-search="showSearch" />
 
+          <!-- Search Bar (Collapsible) -->
+          <Transition
+            enter-active-class="transition-all duration-300 ease-out"
+            enter-from-class="opacity-0 -translate-y-2"
+            enter-to-class="opacity-100 translate-y-0"
+            leave-active-class="transition-all duration-200 ease-in"
+            leave-from-class="opacity-100 translate-y-0"
+            leave-to-class="opacity-0 -translate-y-2"
+          >
+            <TodoSearch
+              v-if="showSearch"
+              v-model="searchInput"
+              @clear="clearSearch"
+              @input="handleSearchInput"
+            />
+          </Transition>
+
           <!-- Input Area -->
           <TodoInput
             v-model="newTodoTitle"
@@ -92,15 +109,7 @@ function onFireworksComplete() {
           <!-- Filter Tabs -->
           <TodoFilter v-model:filter="todoStore.filter" />
 
-          <!-- Search Bar (Collapsible) -->
-          <TodoSearch
-            v-if="showSearch"
-            v-model="searchInput"
-            @clear="clearSearch"
-            @input="handleSearchInput"
-          />
-
-          <!-- Todo List -->
+          <!-- List -->
           <TodoList
             :todos="todoStore.filteredTodos"
             :filter="todoStore.filter"

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Search, X } from 'lucide-vue-next'
 import { Input } from '@/components/ui/input'
@@ -14,15 +15,25 @@ const emit = defineEmits<{
   'update:modelValue': [value: string]
   clear: []
 }>()
+
+const inputRef = ref<InstanceType<typeof Input> | null>(null)
+
+onMounted(() => {
+  // 延迟一小会儿聚焦，确保 Transition 动画不影响聚焦效果
+  setTimeout(() => {
+    inputRef.value?.$el?.focus()
+  }, 100)
+})
 </script>
 
 <template>
-  <div class="mb-6 relative group">
+  <div class="mb-5 relative group">
     <Search
       :size="18"
       class="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary"
     />
     <Input
+      ref="inputRef"
       :model-value="modelValue"
       type="text"
       :placeholder="t('todo.searchPlaceholder')"
