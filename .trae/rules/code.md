@@ -14,7 +14,7 @@ packages/shared/  # 共享包（Zod Schema、DTO、工具函数）
 
 **前端**: Vue 3.5+ / Vite 7 / Pinia / Tailwind 3.4+ / GSAP / TanStack Query + Axios / VeeValidate + Zod / Vue I18n
 **跨端**: Capacitor 8 / Electron 39 / PWA
-**后端**: NestJS 11+ / PostgreSQL 16 + Prisma 7 / Redis 7 + BullMQ / JWT + Passport / nestjs-zod / Socket.IO
+**后端**: NestJS 11+ / PostgreSQL 16 + Prisma 7 / Redis (ioredis 5.8+) + BullMQ / JWT + Passport / nestjs-zod / Socket.IO
 **工具**: pnpm 9.15+ / Turbo 2.7+ / ESLint 9 / Vitest
 
 ## 视觉设计
