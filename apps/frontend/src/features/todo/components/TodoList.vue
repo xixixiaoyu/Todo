@@ -4,10 +4,12 @@ import { ClipboardList, CheckCircle2, SearchX } from 'lucide-vue-next'
 import { computed } from 'vue'
 import draggable from 'vuedraggable'
 import type { Todo } from '../stores/todo'
+import { useTodoStore } from '../stores/todo'
 import TodoItem from './TodoItem.vue'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
 const { t } = useI18n()
+const todoStore = useTodoStore()
 
 const props = defineProps<{
   todos: Todo[]
@@ -134,7 +136,7 @@ const displayTodos = computed(() => {
               :todo="todo"
               :editing-id="editingId"
               :editing-title="editingTitle"
-              :default-expanded="filter !== 'completed'"
+              :default-expanded="todoStore.isAllExpanded"
               @toggle="(id, currentCompleted) => emit('toggle', id, currentCompleted)"
               @start-edit="(id, title) => emit('startEdit', id, title)"
               @save-edit="emit('saveEdit')"

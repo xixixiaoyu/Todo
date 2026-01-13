@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { Circle, CheckCircle2 } from 'lucide-vue-next'
+import { Circle, CheckCircle2, ChevronsDownUp, ChevronsUpDown } from 'lucide-vue-next'
 import type { FilterType } from '../stores/todo'
+import { useTodoStore } from '../stores/todo'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 const { t } = useI18n()
+const todoStore = useTodoStore()
 
 defineProps<{
   filter: FilterType
@@ -16,10 +20,14 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="mb-6 flex justify-center">
-    <Tabs :model-value="filter" @update:model-value="emit('update:filter', $event as FilterType)">
+  <div class="mb-6 flex items-center justify-center relative">
+    <Tabs
+      :model-value="filter"
+      class="w-full max-w-[310px]"
+      @update:model-value="emit('update:filter', $event as FilterType)"
+    >
       <TabsList
-        class="grid w-full max-w-[310px] grid-cols-2 h-11 p-1 bg-muted/50 backdrop-blur-sm rounded-full border border-border/50 shadow-inner"
+        class="grid w-full grid-cols-2 h-11 p-1 bg-muted/50 backdrop-blur-sm rounded-full border border-border/50 shadow-inner"
       >
         <TabsTrigger
           value="pending"
@@ -43,5 +51,28 @@ const emit = defineEmits<{
         </TabsTrigger>
       </TabsList>
     </Tabs>
+
+    <!-- 全局展开/收起按钮 - 移动到右侧，更靠近任务列表且操作便捷 -->
+    <div class="absolute right-0 hidden md:block">
+      <Tooltip>
+        <TooltipTrigger as-child>
+          <Button
+            variant="ghost"
+            size="icon"
+            class="h-10 w-10 rounded-xl text-muted-foreground/60 hover:text-primary hover:bg-primary/5 transition-all duration-300"
+            @click="todoStore.toggleAllExpansion"
+          >
+            <component
+              :is="todoStore.isAllExpanded ? ChevronsDownUp : ChevronsUpDown"
+              :size="20"
+              :stroke-width="1.5"
+            />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="left" :side-offset="10">
+          {{ todoStore.isAllExpanded ? t('todo.collapseAll') : t('todo.expandAll') }}
+        </TooltipContent>
+      </Tooltip>
+    </div>
   </div>
 </template>

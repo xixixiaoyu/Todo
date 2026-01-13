@@ -137,6 +137,8 @@ export default {
     allTasks: '所有任务',
     visualMode: '可视化视图',
     listMode: '列表视图',
+    expandAll: '全部展开',
+    collapseAll: '全部收起',
   },
   ai: {
     newChat: '新对话',

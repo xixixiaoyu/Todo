@@ -139,6 +139,8 @@ export default {
     allTasks: 'All Tasks',
     visualMode: 'Visual View',
     listMode: 'List View',
+    expandAll: 'Expand All',
+    collapseAll: 'Collapse All',
   },
   ai: {
     newChat: 'New Chat',

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 export interface Todo {
   id: string
@@ -28,6 +28,12 @@ export const useTodoStore = defineStore(
     const error = ref<string | null>(null)
     const isDrawerOpen = ref(false)
     const isSilencingToast = ref(false)
+    const isAllExpanded = ref(true)
+
+    // 监听过滤器变化，同步展开状态
+    watch(filter, (newFilter) => {
+      isAllExpanded.value = newFilter !== 'completed'
+    })
 
     // 计算属性
     const filteredTodos = computed(() => {
@@ -277,6 +283,13 @@ export const useTodoStore = defineStore(
       isSilencingToast.value = silence
     }
 
+    /**
+     * 切换全局展开/收起状态
+     */
+    function toggleAllExpansion(): void {
+      isAllExpanded.value = !isAllExpanded.value
+    }
+
     return {
       // 状态
       todos,
@@ -287,6 +300,7 @@ export const useTodoStore = defineStore(
       error,
       isDrawerOpen,
       isSilencingToast,
+      isAllExpanded,
       // 计算属性
       filteredTodos,
       pendingCount,
@@ -305,13 +319,14 @@ export const useTodoStore = defineStore(
       clearSearch,
       clearError,
       setSilencingToast,
+      toggleAllExpansion,
     }
   },
   {
     persist: {
       key: 'todos',
       storage: localStorage,
-      pick: ['todos', 'isDrawerOpen', 'viewMode'],
+      pick: ['todos', 'filter', 'isDrawerOpen', 'viewMode', 'isAllExpanded'],
     },
   },
 )
