@@ -132,15 +132,16 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
     const targetTop = scrollHeight - clientHeight
     const distance = targetTop - scrollTop
 
-    // 如果距离太近，直接瞬时滚动
+    // 如果距离很近，直接瞬间滚动
     if (Math.abs(distance) < 2) {
       scrollToBottomInstant()
       return
     }
 
-    setProgrammaticScroll(400)
+    // 设置程序化滚动锁定，防止滚动过程中触发用户滚动检测
+    // 缩短锁定时间，提升响应感
+    setProgrammaticScroll(300)
 
-    // 使用原生 smooth 行为，但增加一个保护锁
     el.scrollTo({
       top: targetTop,
       behavior: 'smooth',

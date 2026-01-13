@@ -5,6 +5,7 @@ import { ArrowDown, Sparkles, MessageSquare, Lightbulb, Zap } from 'lucide-vue-n
 import ChatMessage from './ChatMessage.vue'
 import type { ChatMessage as ChatMessageType } from '@/composables/useChat'
 import { useSmartScroll } from '@/composables/useSmartScroll'
+import { useChatHistory } from '@/composables/useChatHistory'
 
 const props = defineProps<{
   messages: ChatMessageType[]
@@ -18,6 +19,10 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const { currentSessionId } = useChatHistory()
+
+// 是否正在切换会话（用于跳过冗余动画）
+const isSwitchingSession = ref(false)
 
 // 建议选项
 const suggestions = computed(() => [
@@ -61,6 +66,19 @@ const {
   streamingInstant: true,
 })
 
+// 监听会话 ID 变化
+watch(currentSessionId, () => {
+  isSwitchingSession.value = true
+  // 切换会话时，立即滚动到底部，不使用平滑滚动以提升响应感
+  nextTick(() => {
+    scrollToBottom('instant')
+    // 短暂延迟后恢复动画标记
+    setTimeout(() => {
+      isSwitchingSession.value = false
+    }, 100)
+  })
+})
+
 // 监听消息变化
 watch(
   () => props.messages,
@@ -75,6 +93,9 @@ watch(
     if (isStreaming) {
       // 正在流式输出时，使用专门的高频滚动处理
       streamingScroll()
+    } else if (isSwitchingSession.value) {
+      // 切换会话中，已经在 currentSessionId 的 watch 中处理了
+      return
     } else if (isNewMessage && oldMessages && oldMessages.length > 0) {
       // 仅当新消息到达时（如用户发送消息），执行平滑滚动到底部
       nextTick(() => {
@@ -148,16 +169,20 @@ defineExpose({
 
         <!-- 消息列表 -->
         <div v-else class="py-4">
-          <TransitionGroup name="message-list" tag="div" class="space-y-4">
-            <ChatMessage
-              v-for="(msg, index) in messages"
-              :key="msg.id"
-              :message="msg"
-              :is-last="index === messages.length - 1"
-              @regenerate="emit('regenerate')"
-              @edit="(content) => emit('edit', msg.id, content)"
-            />
-          </TransitionGroup>
+          <Transition name="session-fade" mode="out-in">
+            <div :key="currentSessionId || 'empty'">
+              <TransitionGroup name="message-list" tag="div" class="space-y-4">
+                <ChatMessage
+                  v-for="(msg, index) in messages"
+                  :key="msg.id"
+                  :message="msg"
+                  :is-last="index === messages.length - 1"
+                  @regenerate="emit('regenerate')"
+                  @edit="(content) => emit('edit', msg.id, content)"
+                />
+              </TransitionGroup>
+            </div>
+          </Transition>
         </div>
       </div>
     </div>
@@ -194,22 +219,38 @@ defineExpose({
 .message-list-enter-active,
 .message-list-leave-active,
 .message-list-move {
-  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
 }
 
 .message-list-enter-from {
   opacity: 0;
+  transform: translateY(8px);
 }
 
 .message-list-leave-to {
+  opacity: 0;
+  transform: scale(0.98);
+}
+
+/* 会话切换时的整体淡入淡出 */
+.session-fade-enter-active {
+  transition: opacity 0.2s ease-out;
+}
+
+.session-fade-leave-active {
+  transition: opacity 0.1s ease-in;
+}
+
+.session-fade-enter-from,
+.session-fade-leave-to {
   opacity: 0;
 }
 
 .fade-enter-active,
 .fade-leave-active {
   transition:
-    opacity 0.3s ease,
-    transform 0.3s ease;
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
 
 .fade-enter-from,

@@ -530,8 +530,8 @@ async function copyContent() {
 
       <!-- 主消息气泡 / 加载状态 -->
       <Transition
-        enter-active-class="transition duration-300 ease-out"
-        enter-from-class="transform translate-y-2 opacity-0"
+        enter-active-class="transition duration-200 cubic-bezier(0.2, 0, 0, 1)"
+        enter-from-class="transform translate-y-1.5 opacity-0"
         enter-to-class="transform translate-y-0 opacity-100"
       >
         <template v-if="isUser || hasContent || (isStreaming && !hasThinking)">

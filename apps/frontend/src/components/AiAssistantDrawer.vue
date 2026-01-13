@@ -768,8 +768,8 @@ defineOptions({
 
       <!-- 历史记录面板遮罩 -->
       <Transition
-        enter-active-class="transition-opacity duration-200 cubic-bezier(0.23, 1, 0.32, 1)"
-        leave-active-class="transition-opacity duration-200 cubic-bezier(0.23, 1, 0.32, 1)"
+        enter-active-class="transition-opacity duration-150 ease-out"
+        leave-active-class="transition-opacity duration-150 ease-in"
         enter-from-class="opacity-0"
         enter-to-class="opacity-100"
         leave-from-class="opacity-100"
@@ -784,8 +784,8 @@ defineOptions({
 
       <!-- 历史记录面板 -->
       <Transition
-        enter-active-class="transition-transform duration-300 cubic-bezier(0.23, 1, 0.32, 1)"
-        leave-active-class="transition-transform duration-250 cubic-bezier(0.23, 1, 0.32, 1)"
+        enter-active-class="transition-transform duration-250 cubic-bezier(0.16, 1, 0.3, 1)"
+        leave-active-class="transition-transform duration-200 cubic-bezier(0.16, 1, 0.3, 1)"
         enter-from-class="-translate-x-full"
         enter-to-class="translate-x-0"
         leave-from-class="translate-x-0"
