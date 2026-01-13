@@ -25,6 +25,7 @@ export const useTodoStore = defineStore(
     const loading = ref(false)
     const error = ref<string | null>(null)
     const isDrawerOpen = ref(false)
+    const isSilencingToast = ref(false)
 
     // 计算属性
     const filteredTodos = computed(() => {
@@ -77,6 +78,19 @@ export const useTodoStore = defineStore(
      * 重新排序
      */
     function reorderTodos(orderedIds: string[], parentId: string | null = null): void {
+      // 1. 检查是否存在导致重复名称的移动
+      for (const id of orderedIds) {
+        const todo = todos.value.find((t) => t.id === id)
+        if (todo && (todo.parentId ?? null) !== parentId) {
+          // 只有当父级发生变化时才检查重复
+          if (isDuplicate(todo.title, parentId, id)) {
+            error.value = 'todo.duplicate'
+            return // 终止整个排序操作，防止出现同名
+          }
+        }
+      }
+
+      // 2. 执行排序和父级更新
       orderedIds.forEach((id, index) => {
         const todo = todos.value.find((t) => t.id === id)
         if (todo) {
@@ -257,6 +271,10 @@ export const useTodoStore = defineStore(
       error.value = null
     }
 
+    function setSilencingToast(silence: boolean): void {
+      isSilencingToast.value = silence
+    }
+
     return {
       // 状态
       todos,
@@ -265,6 +283,7 @@ export const useTodoStore = defineStore(
       loading,
       error,
       isDrawerOpen,
+      isSilencingToast,
       // 计算属性
       filteredTodos,
       pendingCount,
@@ -282,6 +301,7 @@ export const useTodoStore = defineStore(
       setSearchQuery,
       clearSearch,
       clearError,
+      setSilencingToast,
     }
   },
   {

@@ -140,14 +140,19 @@ function cancelAddChild() {
 
 async function submitAddChild() {
   if (newChildTitle.value.trim()) {
+    store.setSilencingToast(true)
     store.clearError()
     const success = await store.addTodo(newChildTitle.value, props.todo.id)
     if (success) {
       isAddingChild.value = false
       newChildTitle.value = ''
       isExpanded.value = true
+      store.setSilencingToast(false)
     } else {
       triggerFeedback()
+      setTimeout(() => {
+        store.setSilencingToast(false)
+      }, 2000)
     }
   }
 }
@@ -215,7 +220,6 @@ watch(
                 :model-value="editingTitle"
                 type="text"
                 class="h-10 flex-1 bg-background text-foreground text-base focus-visible:ring-primary/20"
-                :class="{ 'border-destructive': store.error && editingId === todo.id }"
                 :placeholder="t('todo.editPlaceholder')"
                 @update:model-value="emit('update:editingTitle', $event as string)"
                 @keydown="emit('editKeydown', $event)"
@@ -329,7 +333,6 @@ watch(
                 v-model="newChildTitle"
                 type="text"
                 class="h-9 w-full bg-background text-sm"
-                :class="{ 'border-destructive': store.error && isAddingChild }"
                 :placeholder="t('todo.subtaskPlaceholder')"
                 @keydown.enter="submitAddChild"
                 @keydown.esc="cancelAddChild"

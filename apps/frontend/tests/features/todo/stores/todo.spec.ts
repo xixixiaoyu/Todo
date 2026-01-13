@@ -148,6 +148,62 @@ describe('useTodoStore', () => {
       expect(t1?.order).toBe(1)
       expect(t1?.parentId).toBe('newParent')
     })
+
+    it('should not allow reordering if it creates a duplicate in the target level', () => {
+      store.todos = [
+        {
+          id: '1',
+          title: 'Task',
+          completed: false,
+          createdAt: new Date(),
+          order: 0,
+          parentId: 'p1',
+        },
+        {
+          id: '2',
+          title: 'Task',
+          completed: false,
+          createdAt: new Date(),
+          order: 0,
+          parentId: 'p2',
+        },
+      ]
+
+      store.reorderTodos(['2'], 'p1')
+
+      const t2 = store.todos.find((t) => t.id === '2')
+      expect(t2?.parentId).toBe('p2') // Should not have changed
+      expect(store.error).toBe('todo.duplicate')
+    })
+
+    it('should allow reordering if parentId has not changed (just reordering)', () => {
+      store.todos = [
+        {
+          id: '1',
+          title: 'Task',
+          completed: false,
+          createdAt: new Date(),
+          order: 0,
+          parentId: 'p1',
+        },
+        {
+          id: '2',
+          title: 'Other',
+          completed: false,
+          createdAt: new Date(),
+          order: 1,
+          parentId: 'p1',
+        },
+      ]
+
+      store.reorderTodos(['2', '1'], 'p1')
+
+      const t1 = store.todos.find((t) => t.id === '1')
+      const t2 = store.todos.find((t) => t.id === '2')
+      expect(t1?.order).toBe(1)
+      expect(t2?.order).toBe(0)
+      expect(store.error).toBeNull()
+    })
   })
 
   describe('addTodo', () => {
