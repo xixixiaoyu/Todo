@@ -17,6 +17,14 @@ packages/shared/  # 共享包（Zod Schema、DTO、工具函数）
 **后端**: NestJS 10.4+ / PostgreSQL 16 + Prisma 6 / Redis 7 + BullMQ / JWT + Passport / nestjs-zod / Socket.IO
 **工具**: pnpm 9.15+ / Turbo 2.3+ / ESLint 9 / Vitest
 
+## 视觉设计
+
+- **风格**: 现代简约，强调留白与呼吸感，追求精致的微交互。
+- **色彩**: 温暖大地色系（Light）与低对比度深灰（Dark），支持自动切换。
+- **字体**: 优先 `LXGW WenKai` (中文) 与 `JetBrains Mono` (等宽)，提升阅读体验。
+- **形状**: 大圆角设计 (`--radius: 0.75rem`)，柔化视觉边界。
+- **动效**: GSAP 驱动，响应迅速（<300ms），避免无意义的装饰性动画。
+
 ## 常用命令
 
 ```bash
