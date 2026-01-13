@@ -39,6 +39,12 @@ import { Button } from '@/components/ui/button' // UI 组件
 import { cn } from '@/lib/utils'                // 工具函数
 ```
 
+## Vue 组件规范
+
+- **结构顺序**: 严格遵循 `<script setup>` -> `<template>` -> `<style>`。
+- **语言**: 必须使用 TypeScript (`lang="ts"`)。
+- **风格**: 优先使用 Composition API 模式。
+
 ## Zod 类型共享
 
 ```
@@ -77,6 +83,13 @@ interface ApiResponse<T> {
 ```bash
 npx shadcn-vue@latest add <component-name>  # 在 frontend 目录下执行
 ```
+
+## Tailwind CSS 约定
+
+- **原子化**: 优先使用 Tailwind 原子类，避免编写传统的 CSS 代码。
+- **动态类**: 涉及条件逻辑的类名必须使用 `cn()` 工具函数进行合并。
+- **响应式**: 遵循 Mobile First（移动优先）原则，使用 `sm:`, `md:`, `lg:` 等前缀。
+- **一致性**: 保持类名顺序一致，推荐按照 Layout -> Box Model -> Typography -> Visual -> Misc 的逻辑排列。
 
 ## GSAP 动画约定
 
