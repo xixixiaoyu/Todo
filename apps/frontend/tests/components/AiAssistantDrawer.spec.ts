@@ -96,11 +96,18 @@ vi.mock('@/composables/useChat', () => ({
 
 const mockUpdateConfig = vi.fn()
 const mockConfig = ref({
+  baseUrl: '',
+  apiKey: '',
+  model: '',
+  systemPrompt: '',
+  temperature: 0.7,
   thinkingMode: 'disabled',
   todoAssistant: false,
   discussionMode: false,
   discussionModelIds: [],
   discussionPrimaryModelId: null,
+  memoryModelId: null,
+  enableImageGeneration: false,
 })
 
 vi.mock('@/composables/useAIConfig', () => ({

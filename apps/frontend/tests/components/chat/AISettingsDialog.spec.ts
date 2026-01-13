@@ -33,6 +33,7 @@ const mockConfig = ref<AIConfig>({
   discussionModelIds: [],
   discussionPrimaryModelId: null,
   memoryModelId: null,
+  enableImageGeneration: false,
 })
 
 const mockPresets = ref<AIPreset[]>([])
@@ -129,6 +130,7 @@ vi.mock('@/composables/useAIConfig', () => ({
       discussionModelIds: [],
       discussionPrimaryModelId: null,
       memoryModelId: null,
+      enableImageGeneration: false,
     },
     presets: mockPresets,
     activePresetId: mockActivePresetId,
@@ -367,7 +369,24 @@ describe('AISettingsDialog', () => {
       discussionModelIds: [],
       discussionPrimaryModelId: null,
       memoryModelId: null,
+      enableImageGeneration: false,
     }
+  })
+
+  it('should update a preset when edit is saved', async () => {
+    mockPresets.value = [
+      {
+        id: '1',
+        name: 'Original',
+        baseUrl: 'https://api.openai.com/v1',
+        apiKey: 'sk-123',
+        model: 'gpt-4',
+        systemPrompt: 'You are helpful',
+        temperature: 0.5,
+        todoAssistant: false,
+      },
+    ]
+    mockActivePresetId.value = '1'
 
     const wrapper = mount(AISettingsDialog, {
       props: {
@@ -503,6 +522,7 @@ describe('AISettingsDialog', () => {
       discussionModelIds: [],
       discussionPrimaryModelId: null,
       memoryModelId: null,
+      enableImageGeneration: false,
     }
 
     // 模拟已存在一个预设，配置与当前配置相同

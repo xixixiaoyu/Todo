@@ -80,6 +80,7 @@ vi.mock('@/composables/useAIConfig', () => ({
     temperature: 0.7,
     thinkingMode: 'disabled',
     todoAssistant: false,
+    enableImageGeneration: false,
   })),
   getAIThinkingMode: vi.fn(() => 'disabled'),
 }))
@@ -117,6 +118,7 @@ describe('useChat', () => {
       temperature: 0.7,
       thinkingMode: 'disabled',
       todoAssistant: false,
+      enableImageGeneration: false,
     })
     mockUpdateSessionMessages.mockImplementation((sessionId, messages) => {
       if (mockCurrentSession.value && mockCurrentSession.value.id === sessionId) {
@@ -328,6 +330,7 @@ describe('useChat', () => {
         temperature: 0.7,
         thinkingMode: 'enabled',
         todoAssistant: false,
+        enableImageGeneration: false,
       })
 
       mockGetMultiModelDiscussionStream.mockImplementation(
