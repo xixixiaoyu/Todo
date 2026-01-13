@@ -5,17 +5,17 @@
 ## 项目结构
 
 ```
-apps/backend/     # NestJS 后端（@my-app/backend）
-apps/frontend/    # Vue 3 前端（@my-app/frontend）
-packages/shared/  # 共享包（@my-app/shared）- Zod Schema、DTO、工具函数
+apps/backend/     # NestJS 后端
+apps/frontend/    # Vue 3 前端
+packages/shared/  # 共享包（Zod Schema、DTO、工具函数）
 ```
 
 ## 技术栈
 
 **前端**: Vue 3.5+ / Vite 6 / Pinia / Tailwind + shadcn-vue / GSAP / TanStack Query + Axios / VeeValidate + Zod / Vue I18n
-**跨端**: Capacitor 8 (iOS/Android) / Electron 36 / PWA
+**跨端**: Capacitor 8 / Electron 36 / PWA
 **后端**: NestJS 10.4+ / PostgreSQL 16 + Prisma 6 / Redis 7 + BullMQ / JWT + Passport / nestjs-zod / Socket.IO
-**工具**: pnpm 9.15+ / Turbo 2.3+ / ESLint 9 + Prettier / Vitest / tsup
+**工具**: pnpm 9.15+ / Turbo 2.3+ / ESLint 9 / Vitest
 
 ## 常用命令
 
@@ -24,98 +24,66 @@ pnpm dev                              # 同时启动前后端
 pnpm --filter @my-app/backend dev     # 仅后端 (localhost:3000)
 pnpm --filter @my-app/frontend dev    # 仅前端 (localhost:5173)
 pnpm db:push                          # 推送 Schema 到数据库
-pnpm db:studio                        # Prisma Studio
 pnpm lint && pnpm format              # 代码检查与格式化
 pnpm --filter @my-app/shared build    # 构建共享包
-docker compose up postgres redis -d   # 启动数据库服务
+pnpm test                             # 运行测试
+docker compose up postgres redis -d    # 启动数据库服务
+docker compose up -d                  # 启动完整服务栈
 ```
 
-## 模块导入约定
+## 代码规范
 
+**模块导入**:
 ```typescript
 import { xxx } from '@my-app/shared'           // 共享包
-import type { User } from '@my-app/shared'     // 共享类型
 import { Button } from '@/components/ui/button' // UI 组件
 import { cn } from '@/lib/utils'                // 工具函数
 ```
 
-## Vue 组件规范
+**Vue 组件**: `<script setup lang="ts">` -> `<template>` -> `<style>`，优先 Composition API。
 
-- **结构顺序**: 严格遵循 `<script setup>` -> `<template>` -> `<style>`。
-- **语言**: 必须使用 TypeScript (`lang="ts"`)。
-- **风格**: 优先使用 Composition API 模式。
+**Tailwind**: 原子化优先，动态类用 `cn()` 合并，响应式遵循 Mobile First。
+
+**GSAP 动画**: 必须使用 `useGsap` composable，动画包裹在 `ctx.add(() => { ... })` 中自动清理。
+
+**Prettier**: 无分号、单引号、2 空格缩进、trailing comma。
 
 ## Zod 类型共享
 
-```
-共享包定义 Schema → 前端表单验证 + 后端 DTO 验证 → 类型自动推断
-```
-
-**后端 DTO**:
-```typescript
-import { createZodDto } from 'nestjs-zod'
-import { LoginSchema } from '@my-app/shared'
-export class LoginDto extends createZodDto(LoginSchema) {}
-```
-
-**前端表单**:
-```typescript
-import { toTypedSchema } from '@vee-validate/zod'
-import { LoginSchema } from '@my-app/shared'
-const validationSchema = toTypedSchema(LoginSchema)
-```
+共享包定义 Schema → 前端 `toTypedSchema(Schema)` + 后端 `createZodDto(Schema)` → 类型自动推断。
 
 ## API 响应格式
 
 ```typescript
-interface ApiResponse<T> {
-  success: boolean
-  data: T
-  message?: string
-  timestamp: string
-}
+interface ApiResponse<T> { success: boolean; data: T; message?: string; timestamp: string }
 ```
 
-## shadcn-vue
+## 测试规范
 
-- **优先原则**: 通用组件优先从 **shadcn-vue** 中使用、创建或修改。
+- **前端**: Vitest + Happy DOM，`@vue/test-utils`，文件在 `apps/frontend/tests/`
+- **后端**: Vitest + Node，`@nestjs/testing`，文件在 `apps/backend/tests/`
+- **命令**: `pnpm test` / `pnpm test:watch` / `pnpm test:coverage`
 
-```bash
-npx shadcn-vue@latest add <component-name>  # 在 frontend 目录下执行
-```
+## 后端关键功能
 
-## Tailwind CSS 约定
+- **缓存**: `@Cacheable()` 装饰器，TTL 常量：`CacheableTTL.FIVE_MINUTES` / `ONE_HOUR` 等
+- **WebSocket**: `EventsGateway`，`broadcastToRoom()` / `broadcastToAll()`
+- **任务队列**: BullMQ + Redis，`InjectQueue('scheduled-tasks')`
+- **Swagger**: `http://localhost:3000/api/docs`
+- **邮件**: `MailService.sendVerificationCode()` / `sendPasswordReset()`
+- **文件上传**: `StorageService.upload()` / `uploadMany()` / `delete()`，S3/OSS/MinIO
 
-- **原子化**: 优先使用 Tailwind 原子类，避免编写传统的 CSS 代码。
-- **动态类**: 涉及条件逻辑的类名必须使用 `cn()` 工具函数进行合并。
-- **响应式**: 遵循 Mobile First（移动优先）原则，使用 `sm:`, `md:`, `lg:` 等前缀。
-- **一致性**: 保持类名顺序一致，推荐按照 Layout -> Box Model -> Typography -> Visual -> Misc 的逻辑排列。
+## 跨端与部署
 
-## GSAP 动画约定
-
-- **优先原则**: 复杂或交互性强的动画优先使用 **GSAP** 实现。
-- **生命周期管理**: 必须使用 `useGsap` composable，它利用 `gsap.context()` 自动处理组件卸载时的动画清理，防止内存泄漏。
-- **作用域**: 动画逻辑应包裹在 `ctx.add(() => { ... })` 中。
-
-**示例**:
-```typescript
-import { useGsap } from '@/composables/useGsap'
-
-const { gsap, ctx } = useGsap()
-const box = ref(null)
-
-onMounted(() => {
-  ctx.add(() => {
-    gsap.from(box.value, { opacity: 0, y: 20, duration: 0.5 })
-  })
-})
-```
+- **Capacitor**: `pnpm cap:sync` / `cap:open:ios` / `cap:run:android`
+- **Electron**: `pnpm electron:dev` / `electron:build:mac`
+- **Docker**: `docker compose up -d`（含健康检查、资源限制、安全配置）
 
 ## 注意事项
 
-- **共享包**: 修改后需 `pnpm --filter @my-app/shared build`
-- **依赖**: 前端 `zod` 必须显式声明，否则 Docker 构建失败
-- **服务**: 开发前启动 `docker compose up postgres redis -d`，首次运行 `pnpm db:push`
-- **认证**: accessToken + refreshToken 双令牌，非 GET 请求携带 CSRF Token
-- **限流**: 1s/3次、10s/20次、1min/100次
-- **自动化验证**: 代码修改完成后，必须运行 `pnpm lint` 和 `pnpm test` 确保代码质量和逻辑正确性
+- 共享包修改后需 `pnpm --filter @my-app/shared build`
+- 前端 `zod` 必须显式声明
+- 开发前启动 `docker compose up postgres redis -d`，首次运行 `pnpm db:push`
+- 认证：accessToken + refreshToken，非 GET 请求携带 CSRF Token
+- 限流：1s/3次、10s/20次、1min/100次
+- 代码修改后必须运行 `pnpm lint` 和 `pnpm test`
