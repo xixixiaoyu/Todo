@@ -8,6 +8,7 @@ import TodoInput from './components/TodoInput.vue'
 import TodoFilter from './components/TodoFilter.vue'
 import TodoSearch from './components/TodoSearch.vue'
 import TodoList from './components/TodoList.vue'
+import TodoVisualizer from './components/TodoVisualizer.vue'
 import Fireworks from '@/components/Fireworks.vue'
 import AiAssistantDrawer from '@/components/AiAssistantDrawer.vue'
 import { Card, CardContent } from '@/components/ui/card'
@@ -99,6 +100,7 @@ function onFireworksComplete() {
 
           <!-- Input Area -->
           <TodoInput
+            v-if="todoStore.viewMode === 'list'"
             v-model="newTodoTitle"
             :show-tooltip="showTooltip"
             :error-message="todoStore.error || ''"
@@ -107,24 +109,28 @@ function onFireworksComplete() {
           />
 
           <!-- Filter Tabs -->
-          <TodoFilter v-model:filter="todoStore.filter" />
+          <TodoFilter v-if="todoStore.viewMode === 'list'" v-model:filter="todoStore.filter" />
 
-          <!-- List -->
-          <TodoList
-            :todos="todoStore.filteredTodos"
-            :filter="todoStore.filter"
-            :search-query="todoStore.searchQuery"
-            :editing-id="editingId"
-            :editing-title="editingTitle"
-            @toggle="(id, currentCompleted) => handleToggleTodo(id, currentCompleted)"
-            @start-edit="startEditing"
-            @save-edit="saveEditing"
-            @cancel-edit="cancelEditing"
-            @delete="todoStore.deleteTodo"
-            @reorder="(ids, pId) => todoStore.reorderTodos(ids, pId)"
-            @update:editing-title="editingTitle = $event"
-            @edit-keydown="handleEditKeydown"
-          />
+          <!-- List / Visualizer -->
+          <div class="flex-1 min-h-[400px] mt-4 relative flex flex-col">
+            <TodoList
+              v-if="todoStore.viewMode === 'list'"
+              :todos="todoStore.filteredTodos"
+              :filter="todoStore.filter"
+              :search-query="todoStore.searchQuery"
+              :editing-id="editingId"
+              :editing-title="editingTitle"
+              @toggle="(id, currentCompleted) => handleToggleTodo(id, currentCompleted)"
+              @start-edit="startEditing"
+              @save-edit="saveEditing"
+              @cancel-edit="cancelEditing"
+              @delete="todoStore.deleteTodo"
+              @reorder="(ids, pId) => todoStore.reorderTodos(ids, pId)"
+              @update:editing-title="editingTitle = $event"
+              @edit-keydown="handleEditKeydown"
+            />
+            <TodoVisualizer v-else />
+          </div>
         </CardContent>
       </Card>
     </div>

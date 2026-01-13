@@ -4,12 +4,13 @@ import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { BarChart, LineChart, PieChart } from 'echarts/charts'
+import { BarChart, LineChart, PieChart, TreeChart } from 'echarts/charts'
 import {
   TitleComponent,
   TooltipComponent,
   LegendComponent,
   GridComponent,
+  VisualMapComponent,
 } from 'echarts/components'
 import VChart from 'vue-echarts'
 import App from './App.vue'
@@ -31,10 +32,12 @@ use([
   BarChart,
   LineChart,
   PieChart,
+  TreeChart,
   TitleComponent,
   TooltipComponent,
   LegendComponent,
   GridComponent,
+  VisualMapComponent,
 ])
 
 const app = createApp(App)

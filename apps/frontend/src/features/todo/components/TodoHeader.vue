@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { Search, Clover, Languages } from 'lucide-vue-next'
+import { Search, Clover, Languages, Network, List } from 'lucide-vue-next'
 import ThemeToggle from './ThemeToggle.vue'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useTodoStore } from '../stores/todo'
 
 const { t, locale } = useI18n()
+const todoStore = useTodoStore()
 
 defineProps<{
   isDrawerOpen: boolean
@@ -54,6 +56,23 @@ const toggleLanguage = () => {
           </Button>
         </TooltipTrigger>
         <TooltipContent>{{ t('ai.assistant') }}</TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger as-child>
+          <Button
+            variant="outline"
+            size="icon"
+            class="h-10 w-10 rounded-xl bg-card border-border hover:bg-accent transition-all"
+            :class="todoStore.viewMode === 'visual' ? 'text-primary border-primary' : ''"
+            @click="todoStore.viewMode = todoStore.viewMode === 'list' ? 'visual' : 'list'"
+          >
+            <component :is="todoStore.viewMode === 'list' ? Network : List" :size="18" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{{
+          todoStore.viewMode === 'list' ? t('todo.visualMode') : t('todo.listMode')
+        }}</TooltipContent>
       </Tooltip>
 
       <Tooltip>

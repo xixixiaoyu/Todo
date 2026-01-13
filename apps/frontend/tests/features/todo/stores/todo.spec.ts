@@ -49,10 +49,20 @@ describe('useTodoStore', () => {
     it('should initialize with default values', () => {
       expect(store.todos).toEqual([])
       expect(store.filter).toBe('pending')
+      expect(store.viewMode).toBe('list')
       expect(store.searchQuery).toBe('')
       expect(store.loading).toBe(false)
       expect(store.error).toBeNull()
       expect(store.isDrawerOpen).toBe(false)
+    })
+  })
+
+  describe('viewMode', () => {
+    it('should update view mode', () => {
+      store.viewMode = 'visual'
+      expect(store.viewMode).toBe('visual')
+      store.viewMode = 'list'
+      expect(store.viewMode).toBe('list')
     })
   })
 

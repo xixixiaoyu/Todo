@@ -11,6 +11,7 @@ export interface Todo {
 }
 
 export type FilterType = 'pending' | 'completed'
+export type ViewMode = 'list' | 'visual'
 
 /**
  * 待办事项状态管理 (纯本地存储)
@@ -21,6 +22,7 @@ export const useTodoStore = defineStore(
     // 状态
     const todos = ref<Todo[]>([])
     const filter = ref<FilterType>('pending')
+    const viewMode = ref<ViewMode>('list')
     const searchQuery = ref('')
     const loading = ref(false)
     const error = ref<string | null>(null)
@@ -279,6 +281,7 @@ export const useTodoStore = defineStore(
       // 状态
       todos,
       filter,
+      viewMode,
       searchQuery,
       loading,
       error,
@@ -308,7 +311,7 @@ export const useTodoStore = defineStore(
     persist: {
       key: 'todos',
       storage: localStorage,
-      pick: ['todos', 'isDrawerOpen'],
+      pick: ['todos', 'isDrawerOpen', 'viewMode'],
     },
   },
 )

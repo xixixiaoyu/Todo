@@ -134,6 +134,9 @@ export default {
     language: '切换语言',
     addSubtask: '添加子任务',
     subtaskPlaceholder: '输入子任务内容...',
+    allTasks: '所有任务',
+    visualMode: '可视化视图',
+    listMode: '列表视图',
   },
   ai: {
     newChat: '新对话',

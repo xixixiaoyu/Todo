@@ -136,6 +136,9 @@ export default {
     language: 'Switch Language',
     addSubtask: 'Add Subtask',
     subtaskPlaceholder: 'Enter subtask...',
+    allTasks: 'All Tasks',
+    visualMode: 'Visual View',
+    listMode: 'List View',
   },
   ai: {
     newChat: 'New Chat',
