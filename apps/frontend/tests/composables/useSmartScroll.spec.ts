@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest'
 import { ref, defineComponent, nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
+import gsap from 'gsap'
 import { useSmartScroll } from '@/composables/useSmartScroll'
 
 describe('useSmartScroll', () => {
@@ -167,13 +168,17 @@ describe('useSmartScroll', () => {
     expect(el.scrollTop).toBe(1000)
 
     // Test smooth scroll
+    const gsapSpy = vi.spyOn(gsap, 'to')
     vm.scrollToBottom('smooth')
-    vi.runAllTimers()
-    expect(el.scrollTo).toHaveBeenCalledWith(
+    // No need to run all timers here as gsap might cause infinite loop with fake timers
+    // and we only care if it was called with correct arguments
+    expect(gsapSpy).toHaveBeenCalledWith(
+      el,
       expect.objectContaining({
-        behavior: 'smooth',
+        scrollTop: 500, // 1000 (scrollHeight) - 500 (clientHeight)
       }),
     )
+    gsapSpy.mockRestore()
   })
 
   it('should disable auto-scroll when user scrolls up', async () => {

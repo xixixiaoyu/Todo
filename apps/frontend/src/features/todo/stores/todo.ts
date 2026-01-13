@@ -35,7 +35,7 @@ export const useTodoStore = defineStore(
         todos.value.some((child) => (child.parentId ?? null) === t.id),
       )
 
-      if (currentParentTodos.length === 0) return true
+      if (currentParentTodos.length === 0) return false
       // 只要有一个可见的父节点是展开的，图标就显示“全部收起”
       return currentParentTodos.some((t) => (t.expanded ?? true) !== false)
     })
