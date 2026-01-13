@@ -27,11 +27,9 @@ packages/shared/  # 共享包（Zod Schema、DTO、工具函数）
 
 ## 布局规范
 
-- **容器**: 核心内容使用 `mx-auto max-w-4xl` 居中。
-- **间距**: 遵循 Mobile First 原则，移动端 `p-4`，中等屏幕及以上 `md:p-8`。
-- **高度**: 页面主体通常使用 `min-h-screen`，核心卡片使用 `h-[calc(100vh-5rem)]` 保持视口内滚动。
-- **弹性布局**: 优先使用 `flex flex-col` 构建垂直流式布局，复杂网格使用 `grid`。
-- **层级**: UI 组件通过 `z-index` 严格管理，如 Drawer (`z-50`)、Tooltip 等。
+- **响应式优先**: 坚持 Mobile First 原则，确保在不同设备（Mobile/Desktop/PWA）上均有极致的自适应体验。
+- **灵活容器**: 核心内容推荐使用 `mx-auto` 居中并配合 `max-w-*` 限制，确保大屏下的视觉聚焦与阅读舒适度。
+- **流式结构**: 优先采用 `Flexbox` 与 `Grid` 构建灵活布局，避免硬编码尺寸，保持界面的呼吸感与弹性。
 
 ## 常用命令
 
