@@ -284,6 +284,56 @@ describe('TodoItem', () => {
     expect(wrapper.emitted('saveEdit')).toBeTruthy()
   })
 
+  describe('expand arrow visibility', () => {
+    it('should not show expand arrow when there are no children', () => {
+      const wrapper = mount(TodoItem, {
+        props: {
+          todo: mockTodo,
+          editingId: null,
+          editingTitle: '',
+        },
+        global: {
+          plugins: [i18n],
+        },
+      })
+
+      const expandBtn = wrapper.find('button .lucide-chevron-right')
+      expect(expandBtn.exists()).toBe(false)
+      const expandBtnDown = wrapper.find('button .lucide-chevron-down')
+      expect(expandBtnDown.exists()).toBe(false)
+    })
+
+    it('should show expand arrow when there are children', async () => {
+      const { useTodoStore } = await import('@/features/todo/stores/todo')
+      const store = useTodoStore()
+      store.todos = [
+        mockTodo,
+        {
+          id: '2',
+          title: 'Child todo',
+          completed: false,
+          parentId: '1',
+          createdAt: new Date(),
+          order: 0,
+        },
+      ]
+
+      const wrapper = mount(TodoItem, {
+        props: {
+          todo: mockTodo,
+          editingId: null,
+          editingTitle: '',
+        },
+        global: {
+          plugins: [i18n],
+        },
+      })
+
+      const expandBtn = wrapper.find('.lucide-chevron-right, .lucide-chevron-down')
+      expect(expandBtn.exists()).toBe(true)
+    })
+  })
+
   describe('nesting levels', () => {
     it('should show add subtask button at level 0 (root)', () => {
       const wrapper = mount(TodoItem, {
