@@ -108,6 +108,7 @@ interface ApiResponse<T> { success: boolean; data: T; message?: string; timestam
 
 ## 注意事项
 
+- **版本锁定**: 所有依赖必须使用 **精确版本** (移除 `^` 和 `~`)，以确保环境一致性。Workspace 内部引用保留 `workspace:*`。
 - 共享包修改后需 `pnpm --filter @my-app/shared build`
 - 前端 `zod` 必须显式声明
 - 开发前启动 `docker compose up postgres redis -d`，首次运行 `pnpm db:push`
