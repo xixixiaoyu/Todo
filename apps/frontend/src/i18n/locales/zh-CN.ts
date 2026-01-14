@@ -20,6 +20,7 @@ export default {
     clear: '清除',
     close: '关闭',
     resizeDrawer: '调整抽屉宽度',
+    toggleLanguage: '切换语言',
     error: {
       requestFailed: '请求失败',
       networkError: '网络错误，请稍后再试',

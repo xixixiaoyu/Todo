@@ -13,8 +13,16 @@ const i18n = createI18n({
     'zh-CN': {
       todo: {
         emptyPending: '没有待办事项',
+        emptyPendingDescription: '快去添加一个吧',
         emptyCompleted: '没有已完成事项',
+        emptyCompletedDescription: '继续加油',
         emptySearch: '未找到相关事项',
+        emptySearchDescription: '尝试换个关键词',
+        addSubtask: '添加子任务',
+        edit: '编辑',
+      },
+      common: {
+        delete: '删除',
       },
     },
   },

@@ -5,6 +5,9 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    env: {
+      TZ: 'UTC',
+    },
     include: ['tests/**/*.{test,spec}.ts'],
     exclude: ['node_modules', 'dist'],
     root: './',

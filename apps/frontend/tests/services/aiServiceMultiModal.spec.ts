@@ -47,7 +47,7 @@ vi.mock('@/composables/useMemory', () => ({
   }),
 }))
 
-vi.mock('@/stores/todo', () => ({
+vi.mock('@/features/todo/stores/todo', () => ({
   useTodoStore: () => ({
     todos: [],
   }),

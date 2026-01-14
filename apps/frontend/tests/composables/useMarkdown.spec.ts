@@ -1,10 +1,11 @@
 import { describe, it, expect, vi } from 'vitest'
+import { ref } from 'vue'
 import { useMarkdown } from '@/composables/useMarkdown'
 
 // Mock useTheme
 vi.mock('@/composables/useTheme', () => ({
   useTheme: () => ({
-    theme: { value: 'light' },
+    theme: ref('light'),
   }),
 }))
 

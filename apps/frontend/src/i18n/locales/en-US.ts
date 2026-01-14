@@ -20,6 +20,7 @@ export default {
     clear: 'Clear',
     close: 'Close',
     resizeDrawer: 'Resize drawer width',
+    toggleLanguage: 'Switch Language',
     error: {
       requestFailed: 'Request failed',
       networkError: 'Network error, please try again later',

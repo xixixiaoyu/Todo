@@ -13,6 +13,13 @@ const i18n = createI18n({
         title: '待办事项',
         language: '切换语言',
         search: '搜索',
+        visualMode: '视觉模式',
+      },
+      common: {
+        theme: {
+          system: '系统默认',
+        },
+        toggleLanguage: '切换语言',
       },
     },
     'en-US': {
@@ -20,6 +27,13 @@ const i18n = createI18n({
         title: 'Todo List',
         language: 'Switch Language',
         search: 'Search',
+        visualMode: 'Visual Mode',
+      },
+      common: {
+        theme: {
+          system: 'System',
+        },
+        toggleLanguage: 'Switch Language',
       },
     },
   },

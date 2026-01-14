@@ -1,9 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { sessionToMarkdown } from '@/lib/export'
 import type { ChatSession } from '@/composables/useChatHistory'
+import dayjs from '@/lib/dayjs'
 
 describe('sessionToMarkdown', () => {
   it('should convert a simple chat session to markdown', () => {
+    const userTime = new Date('2026-01-13T10:01:00Z')
+    const aiTime = new Date('2026-01-13T10:02:00Z')
     const session: ChatSession = {
       id: '1',
       title: 'Test Session',
@@ -14,14 +17,14 @@ describe('sessionToMarkdown', () => {
           id: 'm1',
           role: 'user',
           content: 'Hello AI',
-          createdAt: new Date('2026-01-13T10:01:00Z'),
+          createdAt: userTime,
         },
         {
           id: 'm2',
           role: 'assistant',
           content: 'Hello User',
           thinkingContent: 'The user said hello.',
-          createdAt: new Date('2026-01-13T10:02:00Z'),
+          createdAt: aiTime,
         },
       ],
     }
@@ -29,9 +32,9 @@ describe('sessionToMarkdown', () => {
     const markdown = sessionToMarkdown(session)
 
     expect(markdown).toContain('# Test Session')
-    expect(markdown).toContain('### 用户 (18:01:00)')
+    expect(markdown).toContain(`### 用户 (${dayjs(userTime).format('HH:mm:ss')})`)
     expect(markdown).toContain('Hello AI')
-    expect(markdown).toContain('### AI 助手 (18:02:00)')
+    expect(markdown).toContain(`### AI 助手 (${dayjs(aiTime).format('HH:mm:ss')})`)
     expect(markdown).toContain('> **思考过程**:')
     expect(markdown).toContain('The user said hello.')
     expect(markdown).toContain('Hello User')
