@@ -6,6 +6,10 @@ const escStack: (() => void)[] = []
 // 全局监听器处理函数
 const globalHandleEsc = (e: KeyboardEvent) => {
   if (e.key === 'Escape' && escStack.length > 0) {
+    // 阻止默认行为和冒泡，防止触发多个关闭逻辑
+    e.preventDefault()
+    e.stopPropagation()
+
     // 仅执行栈顶（最后加入）的回调
     const topHandler = escStack[escStack.length - 1]
     topHandler()

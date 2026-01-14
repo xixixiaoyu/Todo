@@ -17,6 +17,8 @@ import type { ChatMessage } from '@/composables/useChat'
 import { useMarkdown } from '@/composables/useMarkdown'
 import ImageLoadingState from './ImageLoadingState.vue'
 
+import { useEscClose } from '@/composables/useEscClose'
+
 const props = defineProps<{
   message: ChatMessage
   isLast?: boolean
@@ -33,12 +35,17 @@ const { renderMarkdown, getMermaidSvgMap } = useMarkdown()
 
 // 图片预览
 const previewImageUrl = ref<string | null>(null)
+const isPreviewOpen = computed(() => !!previewImageUrl.value)
+
 const openImage = (url: string) => {
   previewImageUrl.value = url
 }
 const closePreview = () => {
   previewImageUrl.value = null
 }
+
+// 使用公共 Composable 处理图片预览的 ESC 关闭
+useEscClose(isPreviewOpen, closePreview)
 
 // 编辑状态
 const isEditing = ref(false)
@@ -730,9 +737,7 @@ async function copyContent() {
         <div
           v-if="previewImageUrl"
           class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
-          tabindex="0"
           @click="closePreview"
-          @keydown.esc="closePreview"
         >
           <button
             class="absolute right-6 top-6 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-all hover:bg-white/20 hover:scale-110 active:scale-95"
