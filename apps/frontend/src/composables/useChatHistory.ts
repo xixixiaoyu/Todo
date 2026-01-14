@@ -60,8 +60,8 @@ function loadSessions(): void {
         messages: s.messages.map((msg: ChatMessage) => ({
           ...msg,
           createdAt: msg.createdAt ? new Date(msg.createdAt) : undefined,
-          // 确保 images 数组存在且为新引用
-          images: Array.isArray(msg.images) ? [...msg.images] : undefined,
+          // 确保 images 数组被正确加载
+          images: msg.images,
         })),
       }))
     }
@@ -235,11 +235,7 @@ export function useChatHistory() {
     const session = sessions.value.find((s) => s.id === sessionId)
     if (!session) return
 
-    // 确保消息对象中的 images 数组被正确保留
-    session.messages = messages.map((msg) => ({
-      ...msg,
-      images: Array.isArray(msg.images) ? [...msg.images] : msg.images || undefined,
-    }))
+    session.messages = messages
     session.updatedAt = new Date()
 
     // 如果是第一条用户消息，且标题仍为默认值，则更新标题为消息内容
@@ -255,9 +251,6 @@ export function useChatHistory() {
         session.title = title.slice(0, 100) // 限制标题长度，防止极端情况
       }
     }
-
-    // 显式触发保存，确保消息（特别是包含图片的消息）能立即进入节流队列或被保存
-    saveSessions()
   }
 
   /**
