@@ -4,7 +4,7 @@
 
 import { getAIConfig, getAIPresets, type AIPreset } from '@/composables/useAIConfig'
 import i18n from '@/i18n'
-import type { ChatMessage, AIRequestOptions, DiscussionStep } from './types'
+import type { ChatMessage, AIRequestOptions, DiscussionStep, MultiModalContent } from './types'
 import { buildApiUrl, getHeaders, generateId, injectSystemPrompts } from './utils'
 import { getAIStreamResponse, fetchNonStreamResponse, resetAbortSignal } from './core'
 
@@ -13,14 +13,27 @@ const t = i18n.global.t
 /**
  * 发送 AI 生图请求
  * @param prompt 提示词
+ * @param images 可选的参考图片列表
  * @param options 请求选项
  */
 export async function getAIImageResponse(
   prompt: string,
+  images: string[] = [],
   options: AIRequestOptions = {},
 ): Promise<string[]> {
   const aiConfig = getAIConfig()
   const { model = aiConfig.model, baseUrl = aiConfig.baseUrl, apiKey = aiConfig.apiKey } = options
+
+  // 构建多模态内容
+  const content: MultiModalContent[] = [{ type: 'text', text: prompt }]
+  if (images && images.length > 0) {
+    images.forEach((url) => {
+      content.push({
+        type: 'image_url',
+        image_url: { url },
+      })
+    })
+  }
 
   const response = await fetch(buildApiUrl(baseUrl), {
     method: 'POST',
@@ -30,9 +43,10 @@ export async function getAIImageResponse(
       messages: [
         {
           role: 'user',
-          content: prompt,
+          content,
         },
       ],
+      // 开启图片生成能力 (针对 Gemini 2.0+ 或其他支持 modalities 的模型)
       modalities: ['image', 'text'],
     }),
   })
@@ -43,13 +57,13 @@ export async function getAIImageResponse(
   }
 
   const result = await response.json()
-  const images: string[] = []
+  const generatedImages: string[] = []
 
   if (result.choices) {
     const message = result.choices[0].message
     if (message.images) {
       message.images.forEach((image: { image_url: { url: string } }) => {
-        images.push(image.image_url.url)
+        generatedImages.push(image.image_url.url)
       })
     } else if (message.content && message.content.includes('image_url')) {
       // 兼容某些模型可能在 content 中返回图片 URL 的情况
@@ -58,7 +72,7 @@ export async function getAIImageResponse(
         if (Array.isArray(content)) {
           content.forEach((item) => {
             if (item.type === 'image_url' && item.image_url?.url) {
-              images.push(item.image_url.url)
+              generatedImages.push(item.image_url.url)
             }
           })
         }
@@ -68,7 +82,7 @@ export async function getAIImageResponse(
     }
   }
 
-  return images
+  return generatedImages
 }
 
 /**

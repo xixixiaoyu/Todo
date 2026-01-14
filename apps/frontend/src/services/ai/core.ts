@@ -236,10 +236,7 @@ export async function fetchNonStreamResponse(
 
   const response = await fetch(buildApiUrl(config.baseUrl), {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${config.apiKey}`,
-    },
+    headers: getHeaders(config.apiKey),
     body: JSON.stringify(requestBody),
     signal,
   })

@@ -156,7 +156,7 @@ export function useChat(options: AIRequestOptions = {}) {
   /**
    * 生成 AI 图片
    */
-  async function generateImage(prompt: string): Promise<void> {
+  async function generateImage(prompt: string, images?: string[]): Promise<void> {
     if (!prompt.trim() || isGenerating.value) return
 
     error.value = null
@@ -167,6 +167,7 @@ export function useChat(options: AIRequestOptions = {}) {
       id: generateId(),
       role: 'user',
       content: prompt,
+      images,
       createdAt: new Date(),
     }
     chatHistory.value = [...chatHistory.value, userMessage]
@@ -176,7 +177,7 @@ export function useChat(options: AIRequestOptions = {}) {
 
     try {
       const aiConfig = getAIConfig()
-      const imageUrls = await getAIImageResponse(prompt, {
+      const imageUrls = await getAIImageResponse(prompt, images, {
         model: aiConfig.model,
         baseUrl: aiConfig.baseUrl,
         apiKey: aiConfig.apiKey,
@@ -225,7 +226,7 @@ export function useChat(options: AIRequestOptions = {}) {
     const drawMatch = content.match(/^\s*\/(draw|image|画|生图|绘图)\s+(.+)/i)
     if (aiConfig.enableImageGeneration || drawMatch) {
       const prompt = drawMatch ? drawMatch[2].trim() : content.trim()
-      return generateImage(prompt)
+      return generateImage(prompt, images)
     }
 
     error.value = null

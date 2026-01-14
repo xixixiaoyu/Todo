@@ -36,6 +36,7 @@ describe('useAIConfig - Presets', () => {
   describe('preset management', () => {
     it('should add a new preset', () => {
       const { presets, addPreset } = useAIConfig()
+      const initialLength = presets.value.length
 
       const newPreset = addPreset({
         name: 'Test Preset',
@@ -47,14 +48,15 @@ describe('useAIConfig - Presets', () => {
         todoAssistant: false,
       })
 
-      expect(presets.value).toHaveLength(1)
-      expect(presets.value[0]).toEqual(newPreset)
+      expect(presets.value).toHaveLength(initialLength + 1)
+      expect(presets.value[presets.value.length - 1]).toEqual(newPreset)
       expect(newPreset.id).toBeDefined()
       expect(newPreset.name).toBe('Test Preset')
     })
 
     it('should persist presets to localStorage', async () => {
-      const { addPreset } = useAIConfig()
+      const { presets, addPreset } = useAIConfig()
+      const initialLength = presets.value.length
 
       addPreset({
         name: 'Persistent Preset',
@@ -71,12 +73,13 @@ describe('useAIConfig - Presets', () => {
       const saved = localStorage.getItem('ai-presets')
       expect(saved).toBeTruthy()
       const parsed = JSON.parse(saved!)
-      expect(parsed).toHaveLength(1)
-      expect(parsed[0]).toHaveProperty('name', 'Persistent Preset')
+      expect(parsed).toHaveLength(initialLength + 1)
+      expect(parsed[parsed.length - 1]).toHaveProperty('name', 'Persistent Preset')
     })
 
     it('should update a preset', () => {
       const { presets, addPreset, updatePreset } = useAIConfig()
+      const initialLength = presets.value.length
 
       const preset = addPreset({
         name: 'Original Preset',
@@ -90,14 +93,16 @@ describe('useAIConfig - Presets', () => {
 
       updatePreset(preset.id, { name: 'Updated Preset', model: 'updated-model' })
 
-      expect(presets.value).toHaveLength(1)
-      expect(presets.value[0].name).toBe('Updated Preset')
-      expect(presets.value[0].model).toBe('updated-model')
-      expect(presets.value[0].baseUrl).toBe('https://api.test.com') // Should remain unchanged
+      expect(presets.value).toHaveLength(initialLength + 1)
+      const updatedPreset = presets.value.find((p) => p.id === preset.id)
+      expect(updatedPreset?.name).toBe('Updated Preset')
+      expect(updatedPreset?.model).toBe('updated-model')
+      expect(updatedPreset?.baseUrl).toBe('https://api.test.com') // Should remain unchanged
     })
 
     it('should delete a preset', () => {
       const { presets, addPreset, deletePreset } = useAIConfig()
+      const initialLength = presets.value.length
 
       const preset = addPreset({
         name: 'To Delete Preset',
@@ -109,16 +114,17 @@ describe('useAIConfig - Presets', () => {
         todoAssistant: false,
       })
 
-      expect(presets.value).toHaveLength(1)
+      expect(presets.value).toHaveLength(initialLength + 1)
       deletePreset(preset.id)
-      expect(presets.value).toHaveLength(0)
+      expect(presets.value).toHaveLength(initialLength)
     })
 
     it('should duplicate a preset', () => {
       const { presets, addPreset, duplicatePreset } = useAIConfig()
+      const initialLength = presets.value.length
 
       const preset = addPreset({
-        name: 'Original',
+        name: 'To Duplicate',
         baseUrl: 'https://api.test.com',
         apiKey: 'key',
         model: 'model',
@@ -129,10 +135,10 @@ describe('useAIConfig - Presets', () => {
 
       const duplicated = duplicatePreset(preset.id)
 
-      expect(presets.value).toHaveLength(2)
+      expect(presets.value).toHaveLength(initialLength + 2)
       expect(duplicated).toBeTruthy()
       expect(duplicated!.id).not.toBe(preset.id)
-      expect(duplicated!.name).toContain('Original')
+      expect(duplicated!.name).toContain('To Duplicate') // It uses "name (copy)" or similar
       expect(duplicated!.model).toBe(preset.model)
       expect(duplicated!.temperature).toBe(preset.temperature)
     })
