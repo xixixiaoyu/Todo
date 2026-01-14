@@ -142,6 +142,8 @@ export default {
     listMode: 'List View',
     expandAll: 'Expand All',
     collapseAll: 'Collapse All',
+    pin: 'Pin',
+    unpin: 'Unpin',
   },
   ai: {
     newChat: 'New Chat',

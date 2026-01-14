@@ -8,6 +8,7 @@ export interface Todo {
   createdAt: Date
   parentId?: string | null
   order: number
+  isPinned?: boolean
   expanded?: boolean
 }
 
@@ -67,7 +68,13 @@ export const useTodoStore = defineStore(
           const matchesSearch = !query || todo.title.toLowerCase().includes(query)
           return matchesFilter && matchesSearch
         })
-        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+        .sort((a, b) => {
+          // 1. 置顶优先
+          if (a.isPinned && !b.isPinned) return -1
+          if (!a.isPinned && b.isPinned) return 1
+          // 2. 其次按 order 排序
+          return (a.order ?? 0) - (b.order ?? 0)
+        })
     })
 
     const pendingCount = computed(() => todos.value.filter((todo) => !todo.completed).length)
@@ -192,6 +199,16 @@ export const useTodoStore = defineStore(
       // 如果是子任务，检查父任务状态
       if (todo.parentId) {
         updateParentStatus(todo.parentId)
+      }
+    }
+
+    /**
+     * 切换置顶状态
+     */
+    async function togglePin(id: string): Promise<void> {
+      const todo = todos.value.find((t) => t.id === id)
+      if (todo) {
+        todo.isPinned = !todo.isPinned
       }
     }
 
@@ -359,6 +376,7 @@ export const useTodoStore = defineStore(
       fetchTodos,
       addTodo,
       toggleTodo,
+      togglePin,
       deleteTodo,
       updateTodo,
       reorderTodos,

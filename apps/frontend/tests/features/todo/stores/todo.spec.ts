@@ -587,6 +587,39 @@ describe('useTodoStore', () => {
       expect(store.isDrawerOpen).toBe(false)
     })
 
+    describe('pin', () => {
+      it('should toggle pin state', async () => {
+        store.todos = [{ id: '1', title: 'T1', completed: false, createdAt: new Date(), order: 0 }]
+        expect(store.todos[0].isPinned).toBeFalsy()
+
+        await store.togglePin('1')
+        expect(store.todos[0].isPinned).toBe(true)
+
+        await store.togglePin('1')
+        expect(store.todos[0].isPinned).toBe(false)
+      })
+
+      it('should sort pinned items to the top', () => {
+        store.todos = [
+          { id: '1', title: 'T1', completed: false, createdAt: new Date(), order: 0 },
+          { id: '2', title: 'T2', completed: false, createdAt: new Date(), order: 1 },
+          {
+            id: '3',
+            title: 'T3',
+            completed: false,
+            createdAt: new Date(),
+            order: 2,
+            isPinned: true,
+          },
+        ]
+
+        const filtered = store.filteredTodos
+        expect(filtered[0].id).toBe('3') // Pinned
+        expect(filtered[1].id).toBe('1') // Order 0
+        expect(filtered[2].id).toBe('2') // Order 1
+      })
+    })
+
     describe('expansion', () => {
       it('should toggle all expansion', () => {
         store.todos = [

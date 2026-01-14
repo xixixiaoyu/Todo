@@ -140,6 +140,8 @@ export default {
     listMode: '列表视图',
     expandAll: '全部展开',
     collapseAll: '全部收起',
+    pin: '置顶',
+    unpin: '取消置顶',
   },
   ai: {
     newChat: '新对话',

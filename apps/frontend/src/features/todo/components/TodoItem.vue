@@ -9,6 +9,8 @@ import {
   ChevronDown,
   ChevronRight,
   GripVertical,
+  Pin,
+  PinOff,
 } from 'lucide-vue-next'
 import { ref, computed, watch, nextTick } from 'vue'
 import draggable from 'vuedraggable'
@@ -93,7 +95,13 @@ const children = computed(() => {
 
   return store.todos
     .filter((t) => t.parentId === props.todo.id)
-    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    .sort((a, b) => {
+      // 1. 置顶优先
+      if (a.isPinned && !b.isPinned) return -1
+      if (!a.isPinned && b.isPinned) return 1
+      // 2. 其次按 order 排序
+      return (a.order ?? 0) - (b.order ?? 0)
+    })
 })
 
 const hasChildren = computed(() => children.value.length > 0)
@@ -166,7 +174,10 @@ watch(
   <div class="flex flex-col gap-2">
     <div
       class="group relative flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-all duration-200 hover:bg-muted/50 hover:border-primary/30"
-      :class="[{ 'opacity-90 scale-[0.98] bg-muted/30': level && level > 0 }]"
+      :class="[
+        { 'opacity-90 scale-[0.98] bg-muted/30': level && level > 0 },
+        { 'border-primary/20 bg-primary/[0.02]': todo.isPinned },
+      ]"
     >
       <div class="flex items-center gap-2">
         <GripVertical
@@ -255,18 +266,42 @@ watch(
           </div>
 
           <!-- eslint-disable vue/no-v-html -->
-          <span
-            class="flex-1 cursor-pointer select-text text-foreground transition-all duration-300 truncate"
-            :class="todo.completed ? 'line-through text-muted-foreground/50' : ''"
-            :title="todo.title"
-            @dblclick="emit('startEdit', todo.id, todo.title)"
-            v-html="highlightMatch(todo.title, searchQuery || '')"
-          >
-          </span>
+          <div class="flex items-center gap-1.5 min-w-0">
+            <Pin
+              v-if="todo.isPinned"
+              class="h-3.5 w-3.5 text-primary/70 shrink-0 group-hover:hidden animate-in fade-in zoom-in duration-300"
+            />
+            <span
+              class="flex-1 cursor-pointer select-text text-foreground transition-all duration-300 truncate"
+              :class="todo.completed ? 'line-through text-muted-foreground/50' : ''"
+              :title="todo.title"
+              @dblclick="emit('startEdit', todo.id, todo.title)"
+              v-html="highlightMatch(todo.title, searchQuery || '')"
+            >
+            </span>
+          </div>
           <!-- eslint-enable vue/no-v-html -->
         </div>
         <div class="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
           <TooltipProvider :delay-duration="0">
+            <Tooltip>
+              <TooltipTrigger as-child>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                  :class="{ 'text-primary bg-primary/5': todo.isPinned }"
+                  @click="store.togglePin(todo.id)"
+                >
+                  <PinOff v-if="todo.isPinned" class="h-4 w-4" />
+                  <Pin v-else class="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{{ todo.isPinned ? t('todo.unpin') : t('todo.pin') }}</p>
+              </TooltipContent>
+            </Tooltip>
+
             <Tooltip v-if="(level || 0) < 2">
               <TooltipTrigger as-child>
                 <Button
