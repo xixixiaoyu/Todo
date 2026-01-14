@@ -33,8 +33,10 @@ export default [
   {
     ignores: [
       '**/dist',
+      '**/dev-dist',
       '**/node_modules',
       '**/dist-electron',
+      '**/dev-dist-electron',
       'apps/frontend/ios',
       'apps/frontend/android',
       '.husky',

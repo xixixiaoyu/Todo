@@ -11,7 +11,9 @@ export default [
   {
     ignores: [
       'dist',
+      'dev-dist',
       'dist-electron',
+      'dev-dist-electron',
       'node_modules',
       'ios',
       'android',
