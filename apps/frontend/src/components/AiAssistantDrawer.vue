@@ -1,28 +1,12 @@
 <script setup lang="ts">
-import { ref, nextTick, computed, onMounted, watch } from 'vue'
-import {
-  Clover,
-  Plus,
-  X,
-  Maximize2,
-  Minimize2,
-  Send,
-  Lightbulb,
-  Settings2,
-  ChevronDown,
-  ChevronLeft,
-  Square,
-  History,
-  Check,
-  Users,
-  Star,
-  Image as ImageIcon,
-  AlertCircle,
-} from 'lucide-vue-next'
+import { ref, nextTick, computed } from 'vue'
 import ResizableDrawer from '@/components/ResizableDrawer.vue'
 import ChatMessageList from '@/components/chat/ChatMessageList.vue'
 import AISettingsDialog from '@/components/chat/AISettingsDialog.vue'
 import ChatHistoryPanel from '@/components/chat/ChatHistoryPanel.vue'
+import AiAssistantHeader from '@/components/ai/AiAssistantHeader.vue'
+import AiAssistantToolbar from '@/components/ai/AiAssistantToolbar.vue'
+import AiAssistantInput from '@/components/ai/AiAssistantInput.vue'
 import { useChat } from '@/composables/useChat'
 import { useAIConfig, aiThinkingMode, saveAIThinkingMode } from '@/composables/useAIConfig'
 import { useChatHistory } from '@/composables/useChatHistory'
@@ -37,10 +21,10 @@ const { presets, activePreset, switchPreset, config, updateConfig } = useAIConfi
 
 // 图片上传状态
 const selectedImages = ref<string[]>([])
-const fileInputRef = ref<HTMLInputElement>()
+const assistantInputRef = ref<InstanceType<typeof AiAssistantInput>>()
 
 const triggerImageUpload = () => {
-  fileInputRef.value?.click()
+  assistantInputRef.value?.$el.querySelector('input[type="file"]')?.click()
 }
 
 const processFiles = (files: FileList | File[]) => {
@@ -147,7 +131,7 @@ const navigateToPrevious = () => {
   }
 }
 
-// 使用聊天 composable（不传入固定 systemPrompt，使用配置中的值）
+// 使用聊天 composable
 const {
   messages,
   isGenerating,
@@ -161,7 +145,6 @@ const {
 
 const isMaximized = ref(false)
 const chatInput = ref('')
-const textareaRef = ref<HTMLTextAreaElement>()
 const messageListRef = ref<InstanceType<typeof ChatMessageList>>()
 
 // 设置弹窗状态
@@ -175,37 +158,13 @@ const isResizingHistory = ref(false)
 const startHistoryX = ref(0)
 const startHistoryWidth = ref(0)
 
-const MIN_HEIGHT = 40
-const MAX_HEIGHT = 160
-
-const adjustTextareaHeight = () => {
-  const textarea = textareaRef.value
-  if (!textarea) return
-
-  textarea.style.height = 'auto'
-  const scrollHeight = textarea.scrollHeight
-  const newHeight = Math.min(Math.max(scrollHeight, MIN_HEIGHT), MAX_HEIGHT)
-  textarea.style.height = `${newHeight}px`
-
-  // 处理滚动条显示
-  textarea.style.overflowY = scrollHeight > MAX_HEIGHT ? 'auto' : 'hidden'
-}
-
-onMounted(() => {
-  adjustTextareaHeight()
-})
-
-// 监听输入内容变化，自动调整高度
-watch(chatInput, () => {
-  nextTick(() => adjustTextareaHeight())
-})
-
 const onHistoryResize = (e: MouseEvent) => {
   if (!isResizingHistory.value) return
   const deltaX = e.clientX - startHistoryX.value
   const newWidth = startHistoryWidth.value + deltaX
   // 限制最小宽度 240px，最大宽度不超过 AI 助手抽屉的 80%
-  const containerWidth = (textareaRef.value?.closest('.drawer') as HTMLElement)?.offsetWidth || 400
+  const containerWidth =
+    (assistantInputRef.value?.$el.closest('.drawer') as HTMLElement)?.offsetWidth || 400
   historyWidth.value = Math.max(240, Math.min(newWidth, containerWidth * 0.8))
 }
 
@@ -228,37 +187,9 @@ const startHistoryResize = (e: MouseEvent) => {
   window.addEventListener('mouseup', stopHistoryResize)
 }
 
-// 预设下拉框状态
+// 快捷操作状态
 const showPresetDropdown = ref(false)
-let presetHoverTimer: ReturnType<typeof setTimeout> | null = null
-
-const handlePresetMouseEnter = () => {
-  if (presetHoverTimer) clearTimeout(presetHoverTimer)
-  showPresetDropdown.value = true
-}
-
-const handlePresetMouseLeave = () => {
-  presetHoverTimer = setTimeout(() => {
-    showPresetDropdown.value = false
-  }, 200)
-}
-
-// 多模型协作快速选择弹窗状态
 const showDiscussionPopover = ref(false)
-let discussionHoverTimer: ReturnType<typeof setTimeout> | null = null
-
-const handleDiscussionMouseEnter = () => {
-  if (discussionHoverTimer) clearTimeout(discussionHoverTimer)
-  if (isDiscussionEnabled.value) {
-    showDiscussionPopover.value = true
-  }
-}
-
-const handleDiscussionMouseLeave = () => {
-  discussionHoverTimer = setTimeout(() => {
-    showDiscussionPopover.value = false
-  }, 200)
-}
 
 // 选择主模型
 const selectPrimaryModel = (presetId: string) => {
@@ -288,7 +219,7 @@ useEscClose(showPresetDropdown, () => (showPresetDropdown.value = false))
 // 是否有聊天历史
 const hasHistory = computed(() => messages.value.length > 0)
 
-// 输入框是否禁用（生成中且没有报错时禁用）
+// 输入框是否禁用
 const isInputDisabled = computed(() => isGenerating.value && !error.value)
 
 const handleSend = async () => {
@@ -300,29 +231,14 @@ const handleSend = async () => {
   selectedImages.value = []
 
   // 发送后自动调整高度
-  nextTick(() => adjustTextareaHeight())
+  nextTick(() => assistantInputRef.value?.adjustHeight())
 
   await sendMessage(content, images)
-}
-
-const handleNewline = (event: KeyboardEvent) => {
-  event.preventDefault()
-  const textarea = event.target as HTMLTextAreaElement
-  const start = textarea.selectionStart
-  const end = textarea.selectionEnd
-  const value = textarea.value
-  const newValue = value.substring(0, start) + '\n' + value.substring(end)
-  chatInput.value = newValue
-  nextTick(() => {
-    textarea.selectionStart = textarea.selectionEnd = start + 1
-    textarea.scrollTop = textarea.scrollHeight
-  })
 }
 
 const handleNewChat = () => {
   clearHistory()
   chatInput.value = ''
-  // 新对话时重置 Todo 助手状态，回到通用对话模式
   if (config.value.todoAssistant) {
     updateConfig({ todoAssistant: false })
   }
@@ -356,11 +272,11 @@ const handleSelectSuggestion = async (text: string, options?: { requireTodo?: bo
   }
   chatInput.value = text
   await nextTick()
-  adjustTextareaHeight()
+  assistantInputRef.value?.adjustHeight()
   await handleSend()
 }
 
-// 打开设置并关闭预设下拉框
+// 打开设置
 const openSettings = (tab?: 'settings' | 'presets') => {
   if (tab) {
     lastActiveTab.value = tab
@@ -387,38 +303,11 @@ defineOptions({
     v-bind="$attrs"
   >
     <div class="relative flex h-full flex-col bg-background">
-      <!-- 顶部标题栏 -->
-      <header
-        class="flex h-14 shrink-0 items-center justify-between bg-primary/95 px-4 backdrop-blur-md shadow-sm z-10"
-      >
-        <div class="flex items-center gap-2">
-          <div
-            class="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 text-white shadow-inner"
-          >
-            <Clover :size="18" class="animate-pulse-slow" />
-          </div>
-          <span class="text-[15px] font-semibold tracking-tight text-white">{{
-            t('ai.assistant')
-          }}</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <!-- 最大化/最小化 -->
-          <button
-            class="flex h-7 w-7 items-center justify-center rounded-md text-white/80 transition-colors hover:bg-white/10 hover:text-white"
-            @click="isMaximized = !isMaximized"
-          >
-            <Maximize2 v-if="!isMaximized" :size="16" />
-            <Minimize2 v-else :size="16" />
-          </button>
-          <!-- 关闭按钮 -->
-          <button
-            class="flex h-7 w-7 items-center justify-center rounded-md text-white/80 transition-colors hover:bg-white/10 hover:text-white"
-            @click="modelValue = false"
-          >
-            <X :size="16" />
-          </button>
-        </div>
-      </header>
+      <AiAssistantHeader
+        :is-maximized="isMaximized"
+        @toggle-maximize="isMaximized = !isMaximized"
+        @close="modelValue = false"
+      />
 
       <!-- 主内容区域 -->
       <div class="relative flex-1 min-h-0 flex flex-col">
@@ -443,378 +332,52 @@ defineOptions({
         {{ error }}
       </div>
 
-      <!-- 底部工具栏 -->
-      <div class="shrink-0 border-t border-border/10 bg-background p-4">
-        <div :class="[isMaximized ? 'mx-auto max-w-4xl w-full' : '', 'space-y-3']">
-          <!-- 快捷操作按钮 -->
-          <div class="flex flex-wrap items-center gap-2 text-sm">
-            <button
-              class="flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-[13px] text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-30"
-              :disabled="!hasHistory || isGenerating"
-              @click="handleNewChat"
-            >
-              <Plus :size="14" />
-              <span>{{ t('ai.newChat') }}</span>
-            </button>
-
-            <!-- 历史记录按钮 -->
-            <button
-              class="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground hover:scale-110 active:scale-95 shadow-sm"
-              :title="t('ai.history')"
-              :class="{ 'cursor-not-allowed opacity-50': isGenerating }"
-              :disabled="isGenerating"
-              @click="openHistory"
-            >
-              <History :size="16" />
-            </button>
-
-            <div class="h-4 w-px bg-border/30 mx-1" />
-
-            <!-- AI 思考模式开关 -->
-            <button
-              class="flex h-8 w-8 items-center justify-center rounded-full border transition-all hover:scale-110 active:scale-95 shadow-sm"
-              :class="
-                isThinkingEnabled
-                  ? 'border-primary/30 bg-primary/10 text-primary shadow-primary/5'
-                  : 'border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-              "
-              :title="isThinkingEnabled ? t('ai.thinkingEnabled') : t('ai.thinkingDisabled')"
-              @click="toggleThinkingMode"
-            >
-              <Lightbulb :size="16" :class="{ 'fill-primary/20': isThinkingEnabled }" />
-            </button>
-
-            <!-- Todo 助手 -->
-            <button
-              class="flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] transition-all hover:scale-105 active:scale-95 shadow-sm"
-              :class="
-                isTodoAssistantEnabled
-                  ? 'border-primary/30 bg-primary/10 text-primary shadow-primary/5'
-                  : 'border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-              "
-              :title="
-                isTodoAssistantEnabled
-                  ? t('ai.todoAssistantEnabled')
-                  : t('ai.todoAssistantDisabled')
-              "
-              @click="toggleTodoAssistant"
-            >
-              <Clover :size="14" :class="{ 'animate-spin-slow': isTodoAssistantEnabled }" />
-              <span class="font-medium">{{ t('ai.todoAssistant') }}</span>
-            </button>
-
-            <!-- 多模型协同讨论 -->
-            <div
-              class="relative"
-              @mouseenter="handleDiscussionMouseEnter"
-              @mouseleave="handleDiscussionMouseLeave"
-            >
-              <button
-                class="flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] transition-all hover:scale-105 active:scale-95 shadow-sm"
-                :class="
-                  isDiscussionEnabled
-                    ? 'border-primary/30 bg-primary/10 text-primary shadow-primary/5'
-                    : 'border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                "
-                :title="isDiscussionEnabled ? t('ai.discussionMode') : t('ai.discussionMode')"
-                @click="toggleDiscussionMode"
-              >
-                <Users :size="14" :class="{ 'animate-pulse-slow': isDiscussionEnabled }" />
-                <span class="font-medium">{{ t('ai.discussionMode') }}</span>
-              </button>
-
-              <!-- 讨论模型快速选择弹窗 -->
-              <Transition
-                enter-active-class="transition-all duration-200 cubic-bezier(0.23, 1, 0.32, 1)"
-                leave-active-class="transition-all duration-150 cubic-bezier(0.23, 1, 0.32, 1)"
-                enter-from-class="opacity-0 translate-y-2"
-                enter-to-class="opacity-100 translate-y-0"
-                leave-from-class="opacity-100 translate-y-0"
-                leave-to-class="opacity-0 translate-y-2"
-              >
-                <div
-                  v-if="showDiscussionPopover && isDiscussionEnabled"
-                  class="absolute bottom-full left-0 z-50 mb-2 w-64 overflow-hidden rounded-xl border border-border bg-card p-3 shadow-lg"
-                >
-                  <div class="space-y-4">
-                    <!-- 主模型 -->
-                    <div class="space-y-2">
-                      <p
-                        class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-70"
-                      >
-                        {{ t('ai.discussionPrimaryModel') }}
-                      </p>
-                      <div
-                        v-if="presets.length === 0"
-                        class="text-[11px] text-muted-foreground/50 py-1"
-                      >
-                        {{ t('ai.noPresetsForDiscussion') }}
-                      </div>
-                      <div v-else class="flex flex-wrap gap-1.5">
-                        <button
-                          v-for="preset in presets"
-                          :key="'quick-primary-' + preset.id"
-                          class="flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition-all"
-                          :class="
-                            config.discussionPrimaryModelId === preset.id
-                              ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                              : 'border-border bg-background/50 text-muted-foreground hover:border-primary/50 hover:text-foreground'
-                          "
-                          @click="selectPrimaryModel(preset.id)"
-                        >
-                          <Star
-                            v-if="config.discussionPrimaryModelId === preset.id"
-                            :size="10"
-                            class="fill-current"
-                          />
-                          <span class="font-medium">{{ preset.name }}</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <!-- 副模型 -->
-                    <div class="space-y-2">
-                      <p
-                        class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-70"
-                      >
-                        {{ t('ai.discussionSecondaryModels') }}
-                      </p>
-                      <div
-                        v-if="presets.length === 0"
-                        class="text-[11px] text-muted-foreground/50 py-1"
-                      >
-                        {{ t('ai.noPresetsForDiscussion') }}
-                      </div>
-                      <div v-else class="flex flex-wrap gap-1.5">
-                        <button
-                          v-for="preset in presets"
-                          :key="'quick-secondary-' + preset.id"
-                          class="flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition-all"
-                          :class="
-                            config.discussionModelIds.includes(preset.id)
-                              ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                              : 'border-border bg-background/50 text-muted-foreground hover:border-primary/50 hover:text-foreground'
-                          "
-                          @click="toggleSecondaryModel(preset.id)"
-                        >
-                          <Check
-                            v-if="config.discussionModelIds.includes(preset.id)"
-                            :size="10"
-                            stroke-width="3"
-                          />
-                          <span class="font-medium">{{ preset.name }}</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Transition>
-            </div>
-
-            <!-- 生图功能开关 -->
-            <button
-              class="flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] transition-all hover:scale-105 active:scale-95 shadow-sm"
-              :class="
-                isImageGenerationEnabled
-                  ? 'border-primary/30 bg-primary/10 text-primary shadow-primary/5'
-                  : 'border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-              "
-              :title="t('ai.enableImageGeneration')"
-              @click="toggleImageGeneration"
-            >
-              <ImageIcon :size="14" :class="{ 'animate-pulse-slow': isImageGenerationEnabled }" />
-              <span class="font-medium">{{ t('ai.enableImageGeneration') }}</span>
-            </button>
-
-            <div class="h-4 w-px bg-border/30 mx-0.5" />
-
-            <!-- 预设下拉框 -->
-            <div
-              class="relative"
-              @mouseenter="handlePresetMouseEnter"
-              @mouseleave="handlePresetMouseLeave"
-            >
-              <button
-                class="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-[13px] text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground hover:shadow-sm active:scale-95 shadow-sm"
-                @click="showPresetDropdown = !showPresetDropdown"
-              >
-                <span class="font-medium">{{ currentPresetName }}</span>
-                <ChevronDown
-                  :size="14"
-                  class="transition-transform duration-300"
-                  :class="{ 'rotate-180': showPresetDropdown }"
-                />
-              </button>
-              <!-- 下拉菜单 -->
-              <Transition
-                enter-active-class="transition-all duration-200 cubic-bezier(0.23, 1, 0.32, 1)"
-                leave-active-class="transition-all duration-150 cubic-bezier(0.23, 1, 0.32, 1)"
-                enter-from-class="opacity-0 translate-y-2"
-                enter-to-class="opacity-100 translate-y-0"
-                leave-from-class="opacity-100 translate-y-0"
-                leave-to-class="opacity-0 translate-y-2"
-              >
-                <div
-                  v-if="showPresetDropdown"
-                  class="absolute bottom-full left-0 z-50 mb-2 min-w-[160px] overflow-hidden rounded-lg border border-border bg-card py-1 shadow-lg"
-                >
-                  <button
-                    v-for="preset in presets"
-                    :key="preset.id"
-                    class="flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition-colors hover:bg-accent"
-                    :class="{
-                      'bg-accent text-primary': activePreset?.id === preset.id,
-                      'text-foreground': activePreset?.id !== preset.id,
-                    }"
-                    @click="handleSelectPreset(preset.id)"
-                  >
-                    <Check v-if="activePreset?.id === preset.id" :size="12" class="text-primary" />
-                    <span :class="{ 'ml-4': activePreset?.id !== preset.id }">{{
-                      preset.name
-                    }}</span>
-                  </button>
-                  <!-- 分割线 + 设置入口 -->
-                  <div class="my-1 border-t border-border" />
-                  <button
-                    class="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                    @click="openSettings('presets')"
-                  >
-                    <Settings2 :size="12" />
-                    <span>{{ t('ai.managePresets') }}</span>
-                  </button>
-                </div>
-              </Transition>
-            </div>
-
-            <div class="flex-1" />
-
-            <!-- 设置 -->
-            <div class="flex items-center gap-2">
-              <button
-                class="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground hover:scale-110 active:scale-95 shadow-sm"
-                :title="t('ai.settings')"
-                @click="openSettings()"
-              >
-                <Settings2 :size="16" />
-              </button>
-            </div>
-          </div>
-
-          <!-- 输入框区域 -->
-          <div
-            class="input-container-refined relative flex flex-col rounded-2xl border border-border bg-card p-1.5 shadow-sm"
-            :class="{ 'opacity-60 grayscale-[0.2]': isInputDisabled }"
-          >
-            <!-- 图片预览区域 -->
-            <div v-if="selectedImages.length > 0" class="flex flex-wrap gap-2 px-2 pt-2">
-              <div
-                v-for="(img, index) in selectedImages"
-                :key="index"
-                class="group relative h-16 w-16 overflow-hidden rounded-lg border border-border bg-muted"
-              >
-                <img :src="img" class="h-full w-full object-cover" />
-                <button
-                  class="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100"
-                  @click="removeImage(index)"
-                >
-                  <X :size="12" />
-                </button>
-              </div>
-            </div>
-
-            <!-- 生图模式提示 -->
-            <Transition
-              enter-active-class="transition duration-200 ease-out"
-              enter-from-class="transform -translate-y-1 opacity-0"
-              enter-to-class="transform translate-y-0 opacity-100"
-              leave-active-class="transition duration-150 ease-in"
-              leave-from-class="transform translate-y-0 opacity-100"
-              leave-to-class="transform -translate-y-1 opacity-0"
-            >
-              <div
-                v-if="isImageGenerationEnabled"
-                class="mb-2 flex items-center gap-1.5 px-1 text-[11px] text-amber-500/80 dark:text-amber-400/70"
-              >
-                <AlertCircle :size="12" />
-                <span>{{ t('ai.imageGenerationDesc') }}</span>
-              </div>
-            </Transition>
-
-            <textarea
-              ref="textareaRef"
-              v-model="chatInput"
-              rows="1"
-              :placeholder="
-                isInputDisabled
-                  ? t('ai.generating')
-                  : isImageGenerationEnabled
-                    ? t('ai.imagePromptPlaceholder')
-                    : t('ai.placeholder')
-              "
-              class="w-full resize-none bg-transparent px-3 pt-2.5 pb-1 text-[15px] text-foreground outline-none placeholder:text-muted-foreground/30 leading-relaxed transition-colors"
-              :disabled="isInputDisabled"
-              @keydown.enter.exact.prevent="handleSend"
-              @keydown.enter.shift.exact="handleNewline"
-              @paste="handlePaste"
-            />
-
-            <div class="flex items-center justify-between px-1.5 pb-1.5">
-              <div class="flex items-center gap-1.5">
-                <!-- 图片上传按钮 -->
-                <button
-                  class="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-                  :title="t('ai.uploadImage')"
-                  :disabled="isInputDisabled || selectedImages.length >= 4"
-                  @click="triggerImageUpload"
-                >
-                  <ImageIcon :size="16" />
-                </button>
-                <input
-                  ref="fileInputRef"
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  class="hidden"
-                  @change="handleImageUpload"
-                />
-
-                <!-- 停止生成按钮 -->
-                <button
-                  v-if="isGenerating && !error"
-                  class="animate-stop-pulse flex items-center gap-1.5 rounded-lg bg-red-500 px-3 py-1.5 text-[12px] font-bold text-white transition-all hover:bg-red-600 active:scale-95"
-                  @click="stopGenerating"
-                >
-                  <Square :size="12" class="fill-current" />
-                  <span>{{ t('ai.stop') }}</span>
-                </button>
-
-                <!-- 导航按钮 -->
-                <button
-                  class="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-                  :title="t('ai.previousSession')"
-                  :disabled="isGenerating || !lastActiveSession"
-                  @click="navigateToPrevious"
-                >
-                  <ChevronLeft :size="16" />
-                </button>
-              </div>
-
-              <button
-                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-primary-foreground transition-all shadow-sm"
-                :class="[
-                  isInputDisabled || (!chatInput.trim() && selectedImages.length === 0)
-                    ? 'cursor-not-allowed bg-primary/20 scale-95'
-                    : 'animate-button-pop bg-primary hover:bg-primary-hover hover:scale-105 active:scale-95 shadow-primary/20',
-                ]"
-                :disabled="isInputDisabled || (!chatInput.trim() && selectedImages.length === 0)"
-                @click="handleSend"
-              >
-                <Send :size="18" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <!-- 底部工具栏与输入框 -->
+      <AiAssistantToolbar
+        v-model:show-preset-dropdown="showPresetDropdown"
+        v-model:show-discussion-popover="showDiscussionPopover"
+        :has-history="hasHistory"
+        :is-generating="isGenerating"
+        :is-thinking-enabled="isThinkingEnabled"
+        :is-todo-assistant-enabled="isTodoAssistantEnabled"
+        :is-discussion-enabled="isDiscussionEnabled"
+        :is-image-generation-enabled="isImageGenerationEnabled"
+        :current-preset-name="currentPresetName"
+        :presets="presets"
+        :config="config"
+        :active-preset="activePreset"
+        :is-maximized="isMaximized"
+        @new-chat="handleNewChat"
+        @open-history="openHistory"
+        @toggle-thinking="toggleThinkingMode"
+        @toggle-todo="toggleTodoAssistant"
+        @toggle-discussion="toggleDiscussionMode"
+        @toggle-image-gen="toggleImageGeneration"
+        @select-primary-model="selectPrimaryModel"
+        @toggle-secondary-model="toggleSecondaryModel"
+        @select-preset="handleSelectPreset"
+        @open-settings="openSettings"
+      >
+        <template #input>
+          <AiAssistantInput
+            ref="assistantInputRef"
+            v-model="chatInput"
+            :is-input-disabled="isInputDisabled"
+            :is-image-generation-enabled="isImageGenerationEnabled"
+            :selected-images="selectedImages"
+            :is-generating="isGenerating"
+            :error="error"
+            :last-active-session="lastActiveSession"
+            @send="handleSend"
+            @stop="stopGenerating"
+            @navigate-previous="navigateToPrevious"
+            @remove-image="removeImage"
+            @trigger-image-upload="triggerImageUpload"
+            @handle-image-upload="handleImageUpload"
+            @paste="handlePaste"
+          />
+        </template>
+      </AiAssistantToolbar>
 
       <!-- 历史记录面板遮罩 -->
       <Transition
