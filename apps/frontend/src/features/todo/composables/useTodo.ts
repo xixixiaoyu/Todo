@@ -1,4 +1,4 @@
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useTodoStore } from '../stores/todo'
 import { useToast } from '@/composables/useToast'
 import { useI18n } from 'vue-i18n'
@@ -128,6 +128,38 @@ export function useTodo() {
       cancelEditing()
     }
   }
+
+  /**
+   * 全局快捷键处理
+   * Command+E (Mac) 或 Alt+E (Windows/Mac/Linux) 切换 AI 助手
+   */
+  function handleGlobalKeydown(e: KeyboardEvent) {
+    // 如果焦点在输入框中，不触发全局快捷键
+    const activeElement = document.activeElement
+    const isInput =
+      activeElement instanceof HTMLInputElement ||
+      activeElement instanceof HTMLTextAreaElement ||
+      (activeElement as HTMLElement)?.isContentEditable
+
+    if (isInput) return
+
+    const isE = e.key.toLowerCase() === 'e'
+    const isMac = /Mac|iPod|iPhone|iPad/.test(navigator.userAgent)
+    const isCmdOrAlt = isMac ? e.metaKey || e.altKey : e.altKey
+
+    if (isE && isCmdOrAlt) {
+      e.preventDefault()
+      isDrawerOpen.value = !isDrawerOpen.value
+    }
+  }
+
+  onMounted(() => {
+    window.addEventListener('keydown', handleGlobalKeydown)
+  })
+
+  onUnmounted(() => {
+    window.removeEventListener('keydown', handleGlobalKeydown)
+  })
 
   return {
     // 状态

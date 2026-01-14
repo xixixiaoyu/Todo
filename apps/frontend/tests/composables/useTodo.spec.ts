@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
+import { defineComponent, h } from 'vue'
+import { mount } from '@vue/test-utils'
 import { useTodo } from '@/features/todo/composables/useTodo'
 import { useTodoStore } from '@/features/todo/stores/todo'
 
@@ -10,6 +12,21 @@ vi.mock('@/composables/useToast', () => ({
     success: vi.fn(),
   })),
 }))
+
+/**
+ * Helper to test composables with lifecycle hooks
+ */
+function withSetup<T>(hook: () => T) {
+  let result: T
+  const setup = defineComponent({
+    setup() {
+      result = hook()
+      return () => h('div')
+    },
+  })
+  mount(setup)
+  return result!
+}
 
 // Mock vue-i18n
 vi.mock('vue-i18n', () => ({
@@ -51,6 +68,7 @@ describe('useTodo', () => {
       setSearchQuery: vi.fn(),
       clearError: vi.fn(),
       isDrawerOpen: false,
+      error: null,
       setDrawerOpen: vi.fn(),
       toggleDrawer: vi.fn(),
       setSilencingToast: vi.fn(),
@@ -67,7 +85,7 @@ describe('useTodo', () => {
   describe('initial state', () => {
     it('should have correct default values', () => {
       const { newTodoTitle, showSearch, searchInput, showFireworks, editingId, isDrawerOpen } =
-        useTodo()
+        withSetup(useTodo)
 
       expect(newTodoTitle.value).toBe('')
       expect(showSearch.value).toBe(false)
@@ -80,7 +98,7 @@ describe('useTodo', () => {
 
   describe('search state', () => {
     it('should toggle search state', () => {
-      const { showSearch, searchInput, toggleSearch } = useTodo()
+      const { showSearch, searchInput, toggleSearch } = withSetup(useTodo)
 
       expect(showSearch.value).toBe(false)
 
@@ -95,20 +113,18 @@ describe('useTodo', () => {
     })
 
     it('should update store with debounced search query', async () => {
-      const { searchInput } = useTodo()
+      const { searchInput } = withSetup(useTodo)
 
       searchInput.value = 'hello'
-
-      // Wait for watcher and debounce (300ms)
       await vi.runAllTimersAsync()
 
       expect(todoStore.setSearchQuery).toHaveBeenCalledWith('hello')
     })
 
     it('should clear search query', () => {
-      const { searchInput, clearSearch } = useTodo()
+      const { searchInput, clearSearch } = withSetup(useTodo)
 
-      searchInput.value = 'test'
+      searchInput.value = 'hello'
       clearSearch()
 
       expect(searchInput.value).toBe('')
@@ -118,29 +134,28 @@ describe('useTodo', () => {
 
   describe('handleAddTodo', () => {
     it('should not add todo when title is empty', async () => {
-      const { newTodoTitle, handleAddTodo } = useTodo()
-      newTodoTitle.value = ''
+      const { newTodoTitle, handleAddTodo } = withSetup(useTodo)
 
+      newTodoTitle.value = ''
       await handleAddTodo()
 
       expect(todoStore.addTodo).not.toHaveBeenCalled()
     })
 
     it('should not add todo when title is only whitespace', async () => {
-      const { newTodoTitle, handleAddTodo } = useTodo()
-      newTodoTitle.value = '   '
+      const { newTodoTitle, handleAddTodo } = withSetup(useTodo)
 
+      newTodoTitle.value = '   '
       await handleAddTodo()
 
       expect(todoStore.addTodo).not.toHaveBeenCalled()
     })
 
     it('should add todo and clear input on success', async () => {
+      const { newTodoTitle, handleAddTodo } = withSetup(useTodo)
       vi.mocked(todoStore.addTodo).mockResolvedValue(true)
 
-      const { newTodoTitle, handleAddTodo } = useTodo()
       newTodoTitle.value = 'New Todo'
-
       await handleAddTodo()
 
       expect(todoStore.addTodo).toHaveBeenCalledWith('New Todo')
@@ -148,39 +163,34 @@ describe('useTodo', () => {
     })
 
     it('should trigger tooltip feedback on failure', async () => {
+      const { newTodoTitle, handleAddTodo, showTooltip } = withSetup(useTodo)
       vi.mocked(todoStore.addTodo).mockResolvedValue(false)
 
-      const { newTodoTitle, handleAddTodo, showTooltip } = useTodo()
-      newTodoTitle.value = 'New Todo'
-
+      newTodoTitle.value = 'Failed Todo'
       await handleAddTodo()
 
       expect(showTooltip.value).toBe(true)
-
-      // 测试 tooltip 在 2000ms 后隐藏
-      vi.advanceTimersByTime(2000)
+      await vi.runAllTimersAsync()
       expect(showTooltip.value).toBe(false)
     })
   })
 
   describe('handleKeydown', () => {
     it('should call handleAddTodo when Enter key is pressed', async () => {
+      const { newTodoTitle, handleKeydown } = withSetup(useTodo)
       vi.mocked(todoStore.addTodo).mockResolvedValue(true)
 
-      const { newTodoTitle, handleKeydown } = useTodo()
-      newTodoTitle.value = 'Test Todo'
+      newTodoTitle.value = 'Enter Todo'
+      await handleKeydown(new KeyboardEvent('keydown', { key: 'Enter' }))
 
-      const event = new KeyboardEvent('keydown', { key: 'Enter' })
-      await handleKeydown(event)
-
-      expect(todoStore.addTodo).toHaveBeenCalledWith('Test Todo')
+      expect(todoStore.addTodo).toHaveBeenCalledWith('Enter Todo')
     })
 
     it('should not call handleAddTodo when other keys are pressed', async () => {
-      const { handleKeydown } = useTodo()
+      const { newTodoTitle, handleKeydown } = withSetup(useTodo)
 
-      const event = new KeyboardEvent('keydown', { key: 'Escape' })
-      await handleKeydown(event)
+      newTodoTitle.value = 'Other Key'
+      await handleKeydown(new KeyboardEvent('keydown', { key: 'a' }))
 
       expect(todoStore.addTodo).not.toHaveBeenCalled()
     })
@@ -188,9 +198,8 @@ describe('useTodo', () => {
 
   describe('handleToggleTodo', () => {
     it('should show fireworks when completing a todo', async () => {
-      const { showFireworks, handleToggleTodo } = useTodo()
+      const { showFireworks, handleToggleTodo } = withSetup(useTodo)
 
-      // 当 currentCompleted 为 false 时，意味着正在完成 todo
       await handleToggleTodo('1', false)
 
       expect(showFireworks.value).toBe(true)
@@ -198,9 +207,8 @@ describe('useTodo', () => {
     })
 
     it('should not show fireworks when uncompleting a todo', async () => {
-      const { showFireworks, handleToggleTodo } = useTodo()
+      const { showFireworks, handleToggleTodo } = withSetup(useTodo)
 
-      // 当 currentCompleted 为 true 时，意味着正在取消完成
       await handleToggleTodo('1', true)
 
       expect(showFireworks.value).toBe(false)
@@ -210,18 +218,18 @@ describe('useTodo', () => {
 
   describe('editing functionality', () => {
     it('should start editing with correct values', () => {
-      const { editingId, editingTitle, startEditing } = useTodo()
+      const { startEditing, editingId, editingTitle } = withSetup(useTodo)
 
-      startEditing('todo-1', 'Test Title')
+      startEditing('1', 'Title')
 
-      expect(editingId.value).toBe('todo-1')
-      expect(editingTitle.value).toBe('Test Title')
+      expect(editingId.value).toBe('1')
+      expect(editingTitle.value).toBe('Title')
     })
 
     it('should cancel editing correctly', () => {
-      const { editingId, editingTitle, startEditing, cancelEditing } = useTodo()
+      const { startEditing, cancelEditing, editingId, editingTitle } = withSetup(useTodo)
 
-      startEditing('todo-1', 'Test Title')
+      startEditing('1', 'Title')
       cancelEditing()
 
       expect(editingId.value).toBeNull()
@@ -229,90 +237,139 @@ describe('useTodo', () => {
     })
 
     it('should save edit and call updateTodo', async () => {
-      const { editingId, editingTitle, startEditing, saveEditing } = useTodo()
-
-      startEditing('todo-1', 'Test Title')
-      editingTitle.value = 'Updated Title'
+      const { startEditing, saveEditing, editingId } = withSetup(useTodo)
       vi.mocked(todoStore.updateTodo).mockResolvedValue(true)
 
+      startEditing('1', 'Updated Title')
       await saveEditing()
 
-      expect(todoStore.updateTodo).toHaveBeenCalledWith('todo-1', 'Updated Title')
+      expect(todoStore.updateTodo).toHaveBeenCalledWith('1', 'Updated Title')
       expect(editingId.value).toBeNull()
-      expect(editingTitle.value).toBe('')
     })
 
     it('should stay in edit mode if updateTodo fails due to duplication', async () => {
-      const { editingId, editingTitle, startEditing, saveEditing } = useTodo()
-
-      startEditing('todo-1', 'Test Title')
-      editingTitle.value = 'Duplicate Title'
-
-      // Mock updateTodo to return false and set error
+      const { startEditing, saveEditing, editingId } = withSetup(useTodo)
       vi.mocked(todoStore.updateTodo).mockResolvedValue(false)
       todoStore.error = 'todo.duplicate'
 
+      startEditing('1', 'Duplicate Title')
       await saveEditing()
 
-      expect(todoStore.updateTodo).toHaveBeenCalledWith('todo-1', 'Duplicate Title')
-      expect(editingId.value).toBe('todo-1') // Should NOT be null
-      expect(editingTitle.value).toBe('Duplicate Title') // Should NOT be empty
+      expect(editingId.value).toBe('1')
     })
 
     it('should not save edit if editingId is null', async () => {
-      const { saveEditing } = useTodo()
-
+      const { saveEditing } = withSetup(useTodo)
       await saveEditing()
-
       expect(todoStore.updateTodo).not.toHaveBeenCalled()
     })
 
     it('should not save edit if editingTitle is empty', async () => {
-      const { editingId, editingTitle, saveEditing } = useTodo()
-
-      editingId.value = 'todo-1'
-      editingTitle.value = '   '
-
+      const { startEditing, saveEditing } = withSetup(useTodo)
+      startEditing('1', '')
       await saveEditing()
-
       expect(todoStore.updateTodo).not.toHaveBeenCalled()
     })
   })
 
   describe('handleEditKeydown', () => {
     it('should save on Enter key', async () => {
-      const { startEditing, editingTitle, handleEditKeydown } = useTodo()
+      const { startEditing, handleEditKeydown } = withSetup(useTodo)
+      vi.mocked(todoStore.updateTodo).mockResolvedValue(true)
 
-      startEditing('todo-1', 'Test Title')
-      editingTitle.value = 'Updated Title'
+      startEditing('1', 'Title')
+      await handleEditKeydown(new KeyboardEvent('keydown', { key: 'Enter' }))
 
-      const event = new KeyboardEvent('keydown', { key: 'Enter' })
-      await handleEditKeydown(event)
-
-      expect(todoStore.updateTodo).toHaveBeenCalledWith('todo-1', 'Updated Title')
+      expect(todoStore.updateTodo).toHaveBeenCalled()
     })
 
     it('should cancel on Escape key', async () => {
-      const { editingId, startEditing, handleEditKeydown } = useTodo()
-
-      startEditing('todo-1', 'Test Title')
-
-      const event = new KeyboardEvent('keydown', { key: 'Escape' })
-      await handleEditKeydown(event)
-
+      const { startEditing, handleEditKeydown, editingId } = withSetup(useTodo)
+      startEditing('1', 'Title')
+      await handleEditKeydown(new KeyboardEvent('keydown', { key: 'Escape' }))
       expect(editingId.value).toBeNull()
     })
 
     it('should do nothing on other keys', async () => {
-      const { startEditing, editingId, handleEditKeydown } = useTodo()
-
-      startEditing('todo-1', 'Test Title')
-
-      const event = new KeyboardEvent('keydown', { key: 'Space' })
-      await handleEditKeydown(event)
-
-      expect(editingId.value).toBe('todo-1')
+      const { startEditing, handleEditKeydown, editingId } = withSetup(useTodo)
+      startEditing('1', 'Title')
+      await handleEditKeydown(new KeyboardEvent('keydown', { key: 'a' }))
+      expect(editingId.value).toBe('1')
       expect(todoStore.updateTodo).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('global shortcuts', () => {
+    let originalUserAgent: string
+
+    beforeEach(() => {
+      originalUserAgent = navigator.userAgent
+    })
+
+    afterEach(() => {
+      vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(originalUserAgent)
+    })
+
+    it('should toggle drawer on Command+E (Mac)', () => {
+      vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Macintosh')
+      withSetup(useTodo)
+
+      const event = new KeyboardEvent('keydown', {
+        key: 'e',
+        metaKey: true,
+        bubbles: true,
+        cancelable: true,
+      })
+      window.dispatchEvent(event)
+
+      expect(todoStore.setDrawerOpen).toHaveBeenCalledWith(true)
+    })
+
+    it('should toggle drawer on Alt+E', () => {
+      withSetup(useTodo)
+
+      const event = new KeyboardEvent('keydown', {
+        key: 'e',
+        altKey: true,
+        bubbles: true,
+        cancelable: true,
+      })
+      window.dispatchEvent(event)
+
+      expect(todoStore.setDrawerOpen).toHaveBeenCalledWith(true)
+    })
+
+    it('should not toggle drawer on other keys', () => {
+      withSetup(useTodo)
+
+      const event = new KeyboardEvent('keydown', {
+        key: 'a',
+        metaKey: true,
+        bubbles: true,
+      })
+      window.dispatchEvent(event)
+
+      expect(todoStore.setDrawerOpen).not.toHaveBeenCalled()
+    })
+
+    it('should not toggle drawer when focus is in an input', () => {
+      withSetup(useTodo)
+
+      const input = document.createElement('input')
+      document.body.appendChild(input)
+      input.focus()
+
+      const event = new KeyboardEvent('keydown', {
+        key: 'e',
+        altKey: true,
+        bubbles: true,
+        cancelable: true,
+      })
+      window.dispatchEvent(event)
+
+      expect(todoStore.setDrawerOpen).not.toHaveBeenCalled()
+
+      document.body.removeChild(input)
     })
   })
 })

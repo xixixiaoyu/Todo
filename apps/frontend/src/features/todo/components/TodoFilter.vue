@@ -46,7 +46,7 @@ const emit = defineEmits<{
               <Clover :size="18" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>{{ t('ai.assistant') }}</TooltipContent>
+          <TooltipContent>{{ t('ai.assistant') }} (Cmd+E / Alt+E)</TooltipContent>
         </Tooltip>
 
         <Tooltip>
