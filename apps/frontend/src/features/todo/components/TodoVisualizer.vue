@@ -3,13 +3,12 @@ import { computed, ref } from 'vue'
 import { Clover } from 'lucide-vue-next'
 import type { CallbackDataParams } from 'echarts/types/dist/shared'
 import VChart from 'vue-echarts'
+import { useDark } from '@vueuse/core'
 import { useTodoStore } from '../stores/todo'
-import { useTheme } from '@/composables/useTheme'
 import { useI18n } from 'vue-i18n'
 
 const todoStore = useTodoStore()
-const { theme } = useTheme()
-const isDark = computed(() => theme.value === 'dark')
+const isDark = useDark()
 const { t } = useI18n()
 
 const vChartRef = ref<InstanceType<typeof VChart> | null>(null)
@@ -44,8 +43,8 @@ const treeData = computed(() => {
       completed: todo.completed,
       children: [],
       itemStyle: {
-        color: isDark.value ? '#94a3b8' : '#64748b',
-        borderColor: isDark.value ? '#64748b' : '#475569',
+        color: isDark.value ? '#cbd5e1' : '#64748b',
+        borderColor: isDark.value ? '#94a3b8' : '#475569',
       },
     })
   })
@@ -96,7 +95,7 @@ const chartOptions = computed(() => ({
     backgroundColor: isDark.value ? '#1e293b' : '#ffffff',
     borderColor: isDark.value ? '#334155' : '#e2e8f0',
     textStyle: {
-      color: isDark.value ? '#e2e8f0' : '#1e293b',
+      color: isDark.value ? '#f8fafc' : '#1e293b',
     },
   },
   series: [
@@ -115,7 +114,7 @@ const chartOptions = computed(() => ({
         align: 'right',
         fontSize: 15,
         distance: 8,
-        color: isDark.value ? '#e2e8f0' : '#1e293b',
+        color: isDark.value ? '#f8fafc' : '#1e293b',
         fontFamily: 'LXGW WenKai, sans-serif',
       },
       leaves: {
@@ -131,7 +130,7 @@ const chartOptions = computed(() => ({
       animationDuration: 550,
       animationDurationUpdate: 750,
       lineStyle: {
-        color: isDark.value ? '#475569' : '#cbd5e1',
+        color: isDark.value ? '#64748b' : '#cbd5e1',
         width: 2,
         curveness: 0.5,
       },
