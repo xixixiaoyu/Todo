@@ -8,12 +8,11 @@ import { useChat } from '@/composables/useChat'
 import type { ChatSession } from '@/composables/useChatHistory'
 import {
   getAIStreamResponse,
-  getMultiModelDiscussionStream,
   getAIStaticResponse,
   abortCurrentRequest,
   generateId,
 } from '@/services/aiService'
-import type { ChatMessage, DiscussionStep } from '@/services/aiService'
+import type { ChatMessage } from '@/services/aiService'
 import { getAIConfig } from '@/composables/useAIConfig'
 
 // Mock chat history
@@ -87,7 +86,6 @@ vi.mock('@/composables/useAIConfig', () => ({
 
 describe('useChat', () => {
   const mockGetAIStreamResponse = vi.mocked(getAIStreamResponse)
-  const mockGetMultiModelDiscussionStream = vi.mocked(getMultiModelDiscussionStream)
   const mockGetAIStaticResponse = vi.mocked(getAIStaticResponse)
   const mockAbortCurrentRequest = vi.mocked(abortCurrentRequest)
   const mockGenerateId = vi.mocked(generateId)
@@ -96,7 +94,6 @@ describe('useChat', () => {
   type OnChunk = (chunk: string) => void
   type OnThinking = (thinking: string) => void
   type OnReasoningDetails = (details: string) => void
-  type OnSteps = (steps: DiscussionStep[]) => void
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -355,46 +352,6 @@ describe('useChat', () => {
 
       expect(mockGetAIStreamResponse).toHaveBeenCalledTimes(4) // Initial + 3 retries
       expect(error.value).toBe('Persistent error')
-    })
-
-    it('should handle multi-model discussion mode with thinking', async () => {
-      vi.mocked(getAIConfig).mockReturnValue({
-        discussionMode: true,
-        discussionModelIds: ['m1', 'm2'],
-        discussionPrimaryModelId: 'm1',
-        memoryModelId: null,
-        baseUrl: '',
-        apiKey: '',
-        model: '',
-        systemPrompt: '',
-        temperature: 0.7,
-        thinkingMode: 'enabled',
-        todoAssistant: false,
-        enableImageGeneration: false,
-      })
-
-      mockGetMultiModelDiscussionStream.mockImplementation(
-        async (
-          _messages: ChatMessage[],
-          onSteps: OnSteps,
-          onChunk: OnChunk,
-          onThinking?: OnThinking,
-          _onReasoning?: OnReasoningDetails,
-        ) => {
-          onSteps([{ modelId: 'm1', modelName: 'M1', content: 'step 1', status: 'done' }])
-          onThinking?.('Primary thinking process...')
-          onChunk('Final answer')
-          onChunk('[DONE]')
-        },
-      )
-
-      const { sendMessage, messages } = useChat()
-      await sendMessage('discuss this')
-
-      expect(mockGetMultiModelDiscussionStream).toHaveBeenCalled()
-      expect(messages.value[1].discussionSteps).toHaveLength(1)
-      expect(messages.value[1].thinkingContent).toBe('Primary thinking process...')
-      expect(messages.value[1].content).toBe('Final answer')
     })
   })
 

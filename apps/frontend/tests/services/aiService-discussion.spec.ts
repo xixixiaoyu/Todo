@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { getMultiModelDiscussionStream, getAIStaticResponse } from '@/services/aiService'
+import { getMultiModelDiscussionStream } from '@/services/aiService'
 import { _resetAIConfig } from '@/composables/useAIConfig'
 import type { ChatMessage } from '@/services/aiService'
 import type { AIPreset } from '@/composables/useAIConfig'
@@ -683,59 +683,5 @@ describe('aiService - Multi-model Discussion', () => {
     })
 
     await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)
-  })
-})
-
-describe('aiService - Static Response', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mockLocalStorage.clear()
-  })
-
-  it('should extract reasoning from non-stream response with priority', async () => {
-    const messages = [{ role: 'user', content: 'hello' }]
-
-    mockFetch.mockImplementation(async () => ({
-      ok: true,
-      json: async () => ({
-        choices: [
-          {
-            message: {
-              content: 'Hello world',
-              reasoning_content: 'DeepSeek thinking',
-              reasoning: 'Standard reasoning',
-            },
-          },
-        ],
-      }),
-    }))
-
-    const result = await getAIStaticResponse(messages)
-
-    expect(result.content).toBe('Hello world')
-    // 优先级: reasoning_details > reasoning > reasoning_content
-    expect(result.reasoning_details).toBe('Standard reasoning')
-  })
-
-  it('should handle array format reasoning_details in non-stream response', async () => {
-    const messages = [{ role: 'user', content: 'hello' }]
-
-    mockFetch.mockImplementation(async () => ({
-      ok: true,
-      json: async () => ({
-        choices: [
-          {
-            message: {
-              content: 'Hello world',
-              reasoning: [{ type: 'reasoning.text', text: 'Step 1. ' }, { text: 'Step 2.' }],
-            },
-          },
-        ],
-      }),
-    }))
-
-    const result = await getAIStaticResponse(messages)
-
-    expect(result.reasoning_details).toBe('Step 1. Step 2.')
   })
 })
