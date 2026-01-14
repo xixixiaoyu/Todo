@@ -65,6 +65,20 @@ describe('useMemory', () => {
     expect(memories.value).toHaveLength(1)
   })
 
+  it('should detect similar memories and avoid duplication', () => {
+    const { memories, addMemory } = useMemory()
+    addMemory('User likes TypeScript')
+    addMemory('user likes typescript') // Case-insensitive
+    expect(memories.value).toHaveLength(1)
+
+    addMemory('likes TypeScript') // Partial match (substring but full word)
+    expect(memories.value).toHaveLength(1)
+
+    addMemory('Memory 1')
+    addMemory('Memory 10') // Should NOT be considered same as Memory 1
+    expect(memories.value).toHaveLength(3)
+  })
+
   it('should respect MAX_MEMORIES when adding manually', () => {
     const { memories, addMemory } = useMemory()
     for (let i = 0; i < 105; i++) {

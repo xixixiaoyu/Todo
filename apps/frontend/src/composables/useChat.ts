@@ -56,6 +56,7 @@ export function useChat(options: AIRequestOptions = {}) {
 
   // 记忆功能
   const {
+    memories,
     addMemories,
     isMemoryEnabled,
     getMemoryModelOptions,
@@ -64,15 +65,47 @@ export function useChat(options: AIRequestOptions = {}) {
   const messageCounterSinceLastExtraction = ref(0)
 
   /**
+   * 检查是否包含暗示需要记忆的语义关键词
+   */
+  function hasMemoryKeywords(history: ChatMessage[]) {
+    const lastUserMsg = [...history].reverse().find((m) => m.role === 'user')
+    if (!lastUserMsg) return false
+
+    const keywords = [
+      '我喜欢',
+      '我不喜欢',
+      '习惯',
+      '偏好',
+      '我的技术栈',
+      '常用',
+      '记住',
+      '记得',
+      '以后都',
+      '总是',
+      'i like',
+      'i prefer',
+      'my stack',
+      'remember',
+      'always',
+    ]
+    const content = lastUserMsg.content.toLowerCase()
+    return keywords.some((k) => content.includes(k))
+  }
+
+  /**
    * 提取并存储记忆
    */
   async function extractAndStoreMemories(history: ChatMessage[]) {
     if (!isMemoryEnabled.value) return
 
-    // 策略：每 3 轮对话（6 条消息）提取一次，或者在会话刚开始的前 2 轮提取
+    // 策略：
+    // 1. 语义触发：如果用户提到了明显的偏好关键词，立即提取
+    // 2. 周期触发：对话初期（前 10 条消息）每轮提取，之后每 2 轮提取一次
+    const hasKeywords = hasMemoryKeywords(history)
     messageCounterSinceLastExtraction.value++
     const totalMessages = history.length
-    const shouldExtract = totalMessages <= 4 || messageCounterSinceLastExtraction.value >= 3
+    const shouldExtract =
+      hasKeywords || totalMessages <= 10 || messageCounterSinceLastExtraction.value >= 2
 
     if (!shouldExtract) return
 
@@ -80,17 +113,22 @@ export function useChat(options: AIRequestOptions = {}) {
     messageCounterSinceLastExtraction.value = 0
     memoryError.value = null
 
-    // 提取最后几轮对话作为上下文（最多 3 轮）
-    const lastMessages = history.slice(-6)
-    if (lastMessages.length < 2) return
-
-    const conversation = lastMessages
-      .map((m) => `${m.role === 'user' ? t('ai.userRole') : t('ai.assistantRole')}: ${m.content}`)
-      .join('\n')
-
-    const prompt = t('ai.memoryExtractionPrompt', { conversation })
-
     try {
+      // 仅取最近 10 条消息作为上下文，减少 Token 消耗并提高聚焦度
+      const recentHistory = history.slice(-10)
+      const conversation = recentHistory
+        .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
+        .join('\n')
+
+      const memoriesStr =
+        memories.value.length > 0
+          ? memories.value.map((m, i) => `${i + 1}. ${m}`).join('\n')
+          : t('ai.noMemories')
+
+      const prompt = t('ai.memoryExtractionPrompt', {
+        conversation,
+        memories: memoriesStr,
+      })
       const options = getMemoryModelOptions()
       const response = await getAIStaticResponse([{ role: 'user', content: prompt }], options)
       const result = response.content

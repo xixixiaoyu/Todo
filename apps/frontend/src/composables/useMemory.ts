@@ -8,6 +8,7 @@ const { t } = i18n.global
 const MEMORY_STORAGE_KEY = 'ai-memories'
 const MEMORY_ENABLED_KEY = 'ai-memory-enabled'
 const MAX_MEMORIES = 100 // 扩充记忆容量至 100 条
+const AUTO_COMPRESS_THRESHOLD = 20 // 当记忆超过 20 条时自动触发压缩
 
 // 定义全局状态，确保在不同组件/Composable 之间共享
 const memories = ref<string[]>(JSON.parse(localStorage.getItem(MEMORY_STORAGE_KEY) || '[]'))
@@ -40,26 +41,83 @@ export function useMemory() {
   }
 
   /**
+   * 检查记忆库中是否已存在相似或相同的记忆
+   * 采用大小写不敏感匹配及单词边界匹配，避免 "Memory 1" 错误匹配 "Memory 10"
+   */
+  const findSimilarMemory = (content: string) => {
+    const normalized = content.trim().toLowerCase()
+    if (!normalized) return null
+
+    return memories.value.find((m) => {
+      const existingNormalized = m.trim().toLowerCase()
+      if (existingNormalized === normalized) return true
+
+      // 使用单词边界匹配，确保是完整的语义包含，而非简单的子串
+      try {
+        // 转义正则特殊字符
+        const escaped = normalized.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        const regex = new RegExp(`\\b${escaped}\\b`, 'i')
+        return (
+          regex.test(existingNormalized) ||
+          new RegExp(
+            `\\b${existingNormalized.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`,
+            'i',
+          ).test(normalized)
+        )
+      } catch {
+        return false
+      }
+    })
+  }
+
+  /**
    * 添加新记忆并去重，限制最大存储量
    */
   const addMemories = (newMemories: string[]) => {
     if (!newMemories || !newMemories.length) return
 
-    const current = new Set(memories.value)
     let hasNew = false
+    const currentMemories = [...memories.value]
 
     newMemories.forEach((m) => {
       const trimmed = m.trim()
-      if (trimmed && !current.has(trimmed)) {
-        current.add(trimmed)
+      if (!trimmed) return
+
+      // 检查相似性
+      const isDuplicate = currentMemories.some((existing) => {
+        const normalized = trimmed.toLowerCase()
+        const existingNormalized = existing.trim().toLowerCase()
+        if (existingNormalized === normalized) return true
+
+        try {
+          const escaped = normalized.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+          const regex = new RegExp(`\\b${escaped}\\b`, 'i')
+          const existingEscaped = existingNormalized.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+          const existingRegex = new RegExp(`\\b${existingEscaped}\\b`, 'i')
+          return regex.test(existingNormalized) || existingRegex.test(normalized)
+        } catch {
+          return false
+        }
+      })
+
+      if (!isDuplicate) {
+        currentMemories.push(trimmed)
         hasNew = true
       }
     })
 
     if (hasNew) {
       // 保持数组长度不超过 MAX_MEMORIES，保留最新的
-      memories.value = Array.from(current).slice(-MAX_MEMORIES)
+      memories.value = currentMemories.slice(-MAX_MEMORIES)
       localStorage.setItem(MEMORY_STORAGE_KEY, JSON.stringify(memories.value))
+
+      // 自动触发压缩策略：超过阈值且当前未在压缩中
+      if (memories.value.length >= AUTO_COMPRESS_THRESHOLD && !isCompressing.value) {
+        // 使用异步执行，不阻塞主流程
+        compressMemories().catch((err) => {
+          console.error('[Memory] Auto-compression failed:', err)
+        })
+      }
     }
   }
 
@@ -69,7 +127,8 @@ export function useMemory() {
   const addMemory = (content: string) => {
     const trimmed = content.trim()
     if (!trimmed) return
-    if (memories.value.includes(trimmed)) return
+
+    if (findSimilarMemory(trimmed)) return
 
     memories.value = [...memories.value, trimmed].slice(-MAX_MEMORIES)
     localStorage.setItem(MEMORY_STORAGE_KEY, JSON.stringify(memories.value))
@@ -102,6 +161,11 @@ export function useMemory() {
     try {
       const options = getMemoryModelOptions()
       const response = await getAIStaticResponse([{ role: 'user', content: prompt }], options)
+
+      if (!response || !response.content) {
+        throw new Error('Empty response from AI')
+      }
+
       const result = response.content
       const jsonStr = result.replace(/```json\n?|\n?```/g, '').trim()
       const compressed = JSON.parse(jsonStr)

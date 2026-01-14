@@ -88,6 +88,7 @@ vi.mock('@/composables/useAIConfig', () => ({
 describe('useChat', () => {
   const mockGetAIStreamResponse = vi.mocked(getAIStreamResponse)
   const mockGetMultiModelDiscussionStream = vi.mocked(getMultiModelDiscussionStream)
+  const mockGetAIStaticResponse = vi.mocked(getAIStaticResponse)
   const mockAbortCurrentRequest = vi.mocked(abortCurrentRequest)
   const mockGenerateId = vi.mocked(generateId)
 
@@ -260,25 +261,64 @@ describe('useChat', () => {
 
       const { sendMessage } = useChat()
 
-      // 1. 第一轮：应提取（前 2 轮强制提取）
+      // 1. 第一轮：应提取（前 10 条消息强制提取）
       await sendMessage('msg 1')
       expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(1)
 
-      // 2. 第二轮：应提取（前 2 轮强制提取）
+      // 2. 第二轮：应提取（前 10 条消息强制提取）
       await sendMessage('msg 2')
       expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(2)
 
-      // 3. 第三轮：不应提取（计数器为 1，未到 3）
+      // 3. 第三轮：应提取（前 10 条消息强制提取）
       await sendMessage('msg 3')
-      expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(2)
-
-      // 4. 第四轮：不应提取（计数器为 2，未到 3）
-      await sendMessage('msg 4')
-      expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(2)
-
-      // 5. 第五轮：应提取（计数器达到 3）
-      await sendMessage('msg 5')
       expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(3)
+
+      // 4. 第四轮：应提取（前 10 条消息强制提取）
+      await sendMessage('msg 4')
+      expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(4)
+
+      // 5. 第五轮：应提取（前 10 条消息强制提取）
+      await sendMessage('msg 5')
+      expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(5)
+
+      // 6. 第六轮：不应提取（total > 10，计数器为 1）
+      await sendMessage('msg 6')
+      expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(5)
+
+      // 7. 第七轮：应提取（计数器达到 2）
+      await sendMessage('msg 7')
+      expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(6)
+    })
+
+    it('should extract memories immediately when semantic keywords are detected', async () => {
+      mockGetAIStreamResponse.mockImplementation(
+        async (
+          _messages: ChatMessage[],
+          onChunk: OnChunk,
+          _onThinking?: OnThinking,
+          _onReasoning?: OnReasoningDetails,
+        ) => {
+          onChunk('Response')
+          onChunk('[DONE]')
+        },
+      )
+      mockGetAIStaticResponse.mockResolvedValue({ content: '["Memory Keyword"]' })
+
+      const { sendMessage } = useChat()
+
+      // 模拟一个已经提取过的情景，计数器被重置为 0
+      // 发送一个不带关键词的消息，totalMessages 假设已经很多了（比如 20）
+      // 这里通过连续发送来模拟
+      for (let i = 0; i < 11; i++) {
+        await sendMessage(`msg ${i}`)
+      }
+      const baseCalls = mockGetAIStaticResponse.mock.calls.length
+
+      // 发送带关键词的消息
+      await sendMessage('我喜欢用 TypeScript 开发项目')
+
+      // 应该立即触发提取，即使距离上次提取只有 1 条消息
+      expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(baseCalls + 1)
     })
 
     it('should retry on failure and eventually succeed', async () => {

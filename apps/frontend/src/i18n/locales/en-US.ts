@@ -267,15 +267,18 @@ export default {
     maxImagesReached: 'Maximum {count} images allowed',
     visionQueryPlaceholder: 'Please analyze the uploaded image',
     addMemoryPlaceholder: 'Enter facts or preferences to remember...',
-    memoryExtractionPrompt: `You are a memory extraction expert. Please extract key preferences, tech stacks, background information, or habits about the user from the following conversation snippet.
+    memoryExtractionPrompt: `You are a memory extraction expert. Please extract key preferences, tech stacks, background info, or habits about the user from the following conversation snippet.
 Rules:
-1. Return in JSON array format (e.g., ["User prefers using TypeScript", "User is developing a Todo app"]).
-2. Extract facts only, do not explain.
-3. If no valuable new information is found, return an empty array [].
-4. Extracted information should be concise and powerful, no more than 20 words each.
-5. Must return ONLY JSON, do not include Markdown code blocks.
+1. Return in JSON array format (e.g., ["User prefers TypeScript", "User is developing a Todo app"]).
+2. Extract facts only, no explanations.
+3. If no valuable new information is found, or if the information already exists in the "Current Memory List", return an empty array [].
+4. Extracted info should be concise and powerful, no more than 20 words each.
+5. MUST return JSON only, do not include Markdown code blocks.
 
-Conversation snippet:
+Current Memory List:
+{memories}
+
+Conversation Snippet:
 {conversation}`,
     memoryCompressionPrompt: `You are a memory management expert. Please compress and merge the following user memory fragments.
 Rules:
