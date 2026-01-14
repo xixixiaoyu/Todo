@@ -1,28 +1,9 @@
 <script setup lang="ts">
-import { ref, watch, computed, nextTick } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import {
-  X,
-  RotateCcw,
-  Eye,
-  EyeOff,
-  Check,
-  Plus,
-  Trash2,
-  Edit3,
-  Users,
-  Star,
-  Brain,
-  Trash,
-  Info,
-  Sparkles,
-  Loader2,
-  Copy,
-} from 'lucide-vue-next'
+import { X, RotateCcw } from 'lucide-vue-next'
 import { useAIConfig, type AIConfig, type AIPreset } from '@/composables/useAIConfig'
 import { useEscClose } from '@/composables/useEscClose'
-import { useMemory } from '@/composables/useMemory'
-import { useToast } from '@/composables/useToast'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,6 +14,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+
+// 导入子组件
+import AISettingsBasic from './AISettingsBasic.vue'
+import AIMemoryManager from './AIMemoryManager.vue'
+import AIPresetManager from './AIPresetManager.vue'
 
 const props = defineProps<{
   initialTab?: 'settings' | 'presets' | 'memory'
@@ -45,105 +31,15 @@ const emit = defineEmits<{
 const modelValue = defineModel<boolean>({ required: true })
 
 const { t } = useI18n()
-const { error: toastError } = useToast()
 
-const {
-  config,
-  updateConfig,
-  DEFAULT_CONFIG,
-  presets,
-  addPreset,
-  updatePreset,
-  deletePreset,
-  duplicatePreset,
-  getPresetDefaults,
-  activePresetId,
-  switchPreset,
-} = useAIConfig()
+const { config, updateConfig, DEFAULT_CONFIG, presets, addPreset, activePresetId, switchPreset } =
+  useAIConfig()
 
-const {
-  memories,
-  isMemoryEnabled,
-  isCompressing,
-  removeMemory,
-  clearMemories,
-  toggleMemory,
-  compressMemories,
-  addMemory,
-  updateMemory,
-} = useMemory()
+// 子组件引用
+const presetManagerRef = ref<InstanceType<typeof AIPresetManager> | null>(null)
 
 // 当前 Tab
 const activeTab = ref<'settings' | 'presets' | 'memory'>(props.initialTab || 'settings')
-
-// 记忆管理相关状态
-const isAddingMemory = ref(false)
-const newMemoryContent = ref('')
-const editingMemoryIndex = ref<number | null>(null)
-const editingMemoryContent = ref('')
-const showClearConfirm = ref(false)
-const addMemoryInputRef = ref<HTMLInputElement | null>(null)
-const editMemoryInputRef = ref<HTMLInputElement | null>(null)
-
-/**
- * 开始新增记忆
- */
-function startAddMemory() {
-  isAddingMemory.value = true
-  newMemoryContent.value = ''
-  nextTick(() => {
-    addMemoryInputRef.value?.focus()
-  })
-}
-
-/**
- * 保存新增记忆
- */
-function handleAddMemory() {
-  if (newMemoryContent.value.trim()) {
-    addMemory(newMemoryContent.value)
-    isAddingMemory.value = false
-    newMemoryContent.value = ''
-  }
-}
-
-/**
- * 取消新增
- */
-function cancelAddMemory() {
-  isAddingMemory.value = false
-  newMemoryContent.value = ''
-}
-
-/**
- * 开始编辑记忆
- */
-function startEditMemory(index: number, content: string) {
-  editingMemoryIndex.value = index
-  editingMemoryContent.value = content
-  nextTick(() => {
-    editMemoryInputRef.value?.focus()
-  })
-}
-
-/**
- * 保存编辑
- */
-function handleSaveEditMemory() {
-  if (editingMemoryIndex.value !== null && editingMemoryContent.value.trim()) {
-    updateMemory(editingMemoryIndex.value, editingMemoryContent.value)
-    editingMemoryIndex.value = null
-    editingMemoryContent.value = ''
-  }
-}
-
-/**
- * 取消编辑
- */
-function cancelEditMemory() {
-  editingMemoryIndex.value = null
-  editingMemoryContent.value = ''
-}
 
 // 监听内部 Tab 变化并通知外部
 watch(activeTab, (newTab) => {
@@ -157,10 +53,6 @@ const formData = ref<AIConfig>({
   discussionPrimaryModelId: config.value.discussionPrimaryModelId,
   memoryModelId: config.value.memoryModelId,
 })
-
-// API Key 显示/隐藏
-const showApiKey = ref(false)
-const showPresetApiKey = ref(false)
 
 /**
  * 检查当前表单配置是否与现有预设重复
@@ -178,20 +70,9 @@ const isDuplicatePreset = computed(() => {
   })
 })
 
-// 编辑预设状态
-const editingPreset = ref<AIPreset | null>(null)
-const isCreatingPreset = ref(false)
+// 预设相关状态 (保留在父组件以便处理 "保存为预设" 逻辑)
 const showSaveAsPresetConfirm = ref(false)
 const saveAsPresetName = ref('')
-const presetForm = ref<Omit<AIPreset, 'id'>>({
-  name: '',
-  baseUrl: '',
-  apiKey: '',
-  model: '',
-  systemPrompt: '',
-  temperature: 0.3,
-  todoAssistant: false,
-})
 
 // 监听弹窗打开，或者初始 Tab 变化时，设置当前 Tab 以及重置内部状态
 watch(
@@ -207,9 +88,6 @@ watch(
         discussionPrimaryModelId: config.value.discussionPrimaryModelId,
         memoryModelId: config.value.memoryModelId,
       }
-      editingPreset.value = null
-      isCreatingPreset.value = false
-      showPresetApiKey.value = false
     }
   },
   { immediate: true },
@@ -228,31 +106,6 @@ watch(
   },
   { immediate: true },
 )
-
-/**
- * 选择讨论主模型
- */
-function selectPrimaryModel(presetId: string | null) {
-  if (formData.value.discussionPrimaryModelId === presetId) {
-    formData.value.discussionPrimaryModelId = null
-    return
-  }
-
-  formData.value.discussionPrimaryModelId = presetId
-}
-
-/**
- * 切换讨论副模型
- */
-function toggleSecondaryModel(presetId: string) {
-  if (formData.value.discussionModelIds.includes(presetId)) {
-    formData.value.discussionModelIds = formData.value.discussionModelIds.filter(
-      (id) => id !== presetId,
-    )
-  } else {
-    formData.value.discussionModelIds = [...formData.value.discussionModelIds, presetId]
-  }
-}
 
 /**
  * 保存配置
@@ -312,79 +165,6 @@ function handleClose() {
 // 使用公共 Composable 处理 ESC 关闭
 useEscClose(modelValue, handleClose)
 
-/**
- * 开始创建预设
- */
-function startCreatePreset() {
-  isCreatingPreset.value = true
-  editingPreset.value = null
-  showPresetApiKey.value = false
-  const defaults = getPresetDefaults()
-  presetForm.value = {
-    name: '',
-    ...defaults,
-  }
-}
-
-/**
- * 开始编辑预设
- */
-function startEditPreset(preset: AIPreset) {
-  editingPreset.value = preset
-  isCreatingPreset.value = false
-  showPresetApiKey.value = false
-  presetForm.value = {
-    name: preset.name,
-    baseUrl: preset.baseUrl,
-    apiKey: preset.apiKey,
-    model: preset.model,
-    systemPrompt: preset.systemPrompt,
-    temperature: preset.temperature,
-    todoAssistant: preset.todoAssistant,
-  }
-}
-
-/**
- * 保存预设
- */
-function savePreset() {
-  if (!presetForm.value.name.trim()) return
-
-  if (isCreatingPreset.value) {
-    addPreset(presetForm.value)
-  } else if (editingPreset.value) {
-    updatePreset(editingPreset.value.id, presetForm.value)
-  }
-
-  isCreatingPreset.value = false
-  editingPreset.value = null
-}
-
-/**
- * 取消编辑
- */
-function cancelEditPreset() {
-  isCreatingPreset.value = false
-  editingPreset.value = null
-}
-
-/**
- * 删除预设
- */
-function handleDeletePreset(presetId: string) {
-  deletePreset(presetId)
-  if (editingPreset.value?.id === presetId) {
-    cancelEditPreset()
-  }
-}
-
-/**
- * 复制预设
- */
-function handleDuplicatePreset(presetId: string) {
-  duplicatePreset(presetId)
-}
-
 // 监听切换预设，更新本地表单
 watch(activePresetId, () => {
   if (activeTab.value === 'presets') {
@@ -397,51 +177,23 @@ watch(activePresetId, () => {
   }
 })
 
-/**
- * 压缩记忆并处理错误
- */
-async function handleCompressMemories() {
-  try {
-    await compressMemories()
-  } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : 'Unknown error'
-    toastError(`${t('ai.memoryError')}: ${errorMsg}`)
-  }
-}
-
-/**
- * 清除记忆确认
- */
-function handleClearMemories() {
-  showClearConfirm.value = true
-}
-
-/**
- * 确认清除
- */
-function handleClearConfirm() {
-  clearMemories()
-  showClearConfirm.value = false
-}
-
 defineExpose({
   activeTab,
   formData,
-  editingPreset,
-  isCreatingPreset,
   showSaveAsPresetConfirm,
   saveAsPresetName,
   confirmSaveAsPreset,
   handleReset,
   saveConfig: handleSave,
-  startCreatePreset,
-  startEditPreset,
-  savePreset,
-  handleDeletePreset,
-  cancelEditPreset,
   handleClose,
   activePresetId,
   switchPreset,
+  // 代理子组件的方法和状态，以保持测试兼容性
+  startCreatePreset: () => presetManagerRef.value?.startCreatePreset(),
+  startEditPreset: (preset: AIPreset) => presetManagerRef.value?.startEditPreset(preset),
+  savePreset: () => presetManagerRef.value?.savePreset(),
+  handleDeletePreset: (id: string) => presetManagerRef.value?.handleDeletePreset(id),
+  cancelEditPreset: () => presetManagerRef.value?.cancelEditPreset(),
 })
 </script>
 
@@ -523,654 +275,50 @@ defineExpose({
             <!-- 内容区域 -->
             <div class="flex-1 overflow-y-auto">
               <!-- 基础设置 Tab -->
-              <div v-if="activeTab === 'settings'" class="space-y-5 px-6 py-5">
-                <!-- 多模型协同讨论 -->
-                <div class="space-y-3 rounded-xl border border-border bg-muted/30 p-4">
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                      <div
-                        class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"
-                      >
-                        <Users :size="16" />
-                      </div>
-                      <div>
-                        <p class="text-sm font-medium text-foreground">
-                          {{ t('ai.discussionMode') }}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus:outline-none"
-                      :class="formData.discussionMode ? 'bg-primary' : 'bg-border'"
-                      @click="formData.discussionMode = !formData.discussionMode"
-                    >
-                      <span
-                        class="inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform duration-200"
-                        :class="
-                          formData.discussionMode ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                        "
-                      />
-                    </button>
-                  </div>
-
-                  <div v-if="formData.discussionMode" class="space-y-4 border-t border-border pt-3">
-                    <!-- 主模型选择 -->
-                    <div class="space-y-2">
-                      <p class="text-xs font-medium text-muted-foreground">
-                        {{ t('ai.discussionPrimaryModel') }}
-                      </p>
-                      <div
-                        v-if="presets.length === 0"
-                        class="py-2 text-center text-xs text-muted-foreground/50"
-                      >
-                        {{ t('ai.noPresetsForDiscussion') }}
-                      </div>
-                      <div v-else class="flex flex-wrap gap-2">
-                        <button
-                          v-for="preset in presets"
-                          :key="'primary-' + preset.id"
-                          class="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-all"
-                          :class="
-                            formData.discussionPrimaryModelId === preset.id
-                              ? 'border-primary bg-primary text-primary-foreground'
-                              : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground'
-                          "
-                          @click="selectPrimaryModel(preset.id)"
-                        >
-                          <Star v-if="formData.discussionPrimaryModelId === preset.id" :size="12" />
-                          <span>{{ preset.name }}</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <!-- 副模型选择 -->
-                    <div class="space-y-2">
-                      <p class="text-xs font-medium text-muted-foreground">
-                        {{ t('ai.discussionSecondaryModels') }}
-                      </p>
-                      <div
-                        v-if="presets.length === 0"
-                        class="py-2 text-center text-xs text-muted-foreground/50"
-                      >
-                        {{ t('ai.noPresetsForDiscussion') }}
-                      </div>
-                      <div v-else class="flex flex-wrap gap-2">
-                        <button
-                          v-for="preset in presets"
-                          :key="'secondary-' + preset.id"
-                          class="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-all"
-                          :class="
-                            formData.discussionModelIds.includes(preset.id)
-                              ? 'border-primary bg-primary text-primary-foreground'
-                              : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground'
-                          "
-                          @click="toggleSecondaryModel(preset.id)"
-                        >
-                          <Check
-                            v-if="formData.discussionModelIds.includes(preset.id)"
-                            :size="12"
-                          />
-                          <span>{{ preset.name }}</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 基础设置项 (当开启协同讨论时隐藏) -->
-                <div v-if="!formData.discussionMode" class="space-y-5">
-                  <!-- Base URL -->
-                  <div class="space-y-2">
-                    <label class="text-sm font-medium text-foreground">{{
-                      t('ai.baseUrlLabel')
-                    }}</label>
-                    <input
-                      v-model="formData.baseUrl"
-                      type="text"
-                      :placeholder="t('ai.baseUrlPlaceholder')"
-                      class="w-full rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    />
-                    <p class="text-xs text-muted-foreground">{{ t('ai.baseUrlHint') }}</p>
-                  </div>
-
-                  <!-- API Key -->
-                  <div class="space-y-2">
-                    <label class="text-sm font-medium text-foreground">{{
-                      t('ai.apiKeyLabel')
-                    }}</label>
-                    <div class="relative">
-                      <input
-                        v-model="formData.apiKey"
-                        :type="showApiKey ? 'text' : 'password'"
-                        :placeholder="t('ai.apiKeyPlaceholder')"
-                        class="w-full rounded-lg border border-border bg-muted/30 px-4 py-2.5 pr-10 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
-                      />
-                      <button
-                        type="button"
-                        class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
-                        @click="showApiKey = !showApiKey"
-                      >
-                        <EyeOff v-if="showApiKey" :size="16" />
-                        <Eye v-else :size="16" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <!-- 模型 -->
-                  <div class="space-y-2">
-                    <label class="text-sm font-medium text-foreground">{{
-                      t('ai.modelLabel')
-                    }}</label>
-                    <input
-                      v-model="formData.model"
-                      type="text"
-                      :placeholder="t('ai.modelPlaceholder')"
-                      class="w-full rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    />
-                  </div>
-
-                  <!-- 温度参数 -->
-                  <div class="space-y-2">
-                    <div class="flex items-center justify-between">
-                      <label class="text-sm font-medium text-foreground">{{
-                        t('ai.temperatureLabel')
-                      }}</label>
-                      <span class="text-sm text-muted-foreground">{{
-                        formData.temperature.toFixed(1)
-                      }}</span>
-                    </div>
-                    <input
-                      v-model.number="formData.temperature"
-                      type="range"
-                      min="0"
-                      max="2"
-                      step="0.1"
-                      class="h-2 w-full cursor-pointer appearance-none rounded-full bg-border accent-primary"
-                    />
-                    <div class="flex justify-between text-xs text-muted-foreground/50">
-                      <span>{{ t('ai.tempPrecise') }}</span>
-                      <span>{{ t('ai.tempBalanced') }}</span>
-                      <span>{{ t('ai.tempCreative') }}</span>
-                    </div>
-                  </div>
-
-                  <!-- System Prompt -->
-                  <div class="space-y-2">
-                    <label class="text-sm font-medium text-foreground">{{
-                      t('ai.systemPromptLabel')
-                    }}</label>
-                    <textarea
-                      v-model="formData.systemPrompt"
-                      rows="4"
-                      :placeholder="t('ai.systemPromptPlaceholder')"
-                      class="w-full resize-none rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm leading-relaxed text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    />
-                  </div>
-                </div>
-              </div>
+              <AISettingsBasic
+                v-if="activeTab === 'settings'"
+                v-model="formData"
+                :presets="presets"
+              />
 
               <!-- 记忆管理 Tab -->
-              <div v-else-if="activeTab === 'memory'" class="space-y-5 px-6 py-5">
-                <!-- 记忆开关 -->
-                <div class="space-y-4 rounded-xl border border-border bg-muted/30 p-4">
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                      <div
-                        class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"
-                      >
-                        <Brain :size="16" />
-                      </div>
-                      <div>
-                        <p class="text-sm font-medium text-foreground">
-                          {{ t('ai.memoryManagement') }}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus:outline-none"
-                      :class="isMemoryEnabled ? 'bg-primary' : 'bg-border'"
-                      @click="toggleMemory(!isMemoryEnabled)"
-                    >
-                      <span
-                        class="inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform duration-200"
-                        :class="isMemoryEnabled ? 'translate-x-[22px]' : 'translate-x-[2px]'"
-                      />
-                    </button>
-                  </div>
-                  <p class="text-xs leading-relaxed text-muted-foreground">
-                    {{ t('ai.memoryDescription') }}
-                  </p>
-
-                  <!-- 记忆专用模型选择 -->
-                  <div v-if="isMemoryEnabled" class="space-y-3 border-t border-border pt-3">
-                    <div class="flex items-center justify-between">
-                      <label class="text-xs font-medium text-muted-foreground">{{
-                        t('ai.memoryModelPreset')
-                      }}</label>
-                      <div class="group relative">
-                        <Info :size="12" class="text-muted-foreground/50 cursor-help" />
-                        <div
-                          class="absolute bottom-full right-0 mb-2 hidden w-48 rounded-lg border border-border bg-popover p-2 text-[10px] leading-relaxed text-popover-foreground shadow-xl group-hover:block"
-                        >
-                          {{ t('ai.memoryModelTip') }}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div
-                      v-if="presets.length === 0"
-                      class="py-2 text-center text-xs text-muted-foreground/50"
-                    >
-                      {{ t('ai.noPresetsForDiscussion') }}
-                    </div>
-                    <div v-else class="flex flex-wrap gap-2">
-                      <button
-                        v-for="preset in presets"
-                        :key="'memory-' + preset.id"
-                        class="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-all"
-                        :class="
-                          formData.memoryModelId === preset.id
-                            ? 'border-primary bg-primary text-primary-foreground'
-                            : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground'
-                        "
-                        @click="formData.memoryModelId = preset.id"
-                      >
-                        <Brain v-if="formData.memoryModelId === preset.id" :size="12" />
-                        <span>{{ preset.name }}</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 记忆列表 -->
-                <div v-if="isMemoryEnabled" class="space-y-3">
-                  <div class="flex items-center justify-between">
-                    <h3 class="text-sm font-medium text-foreground">
-                      {{ t('ai.memoryManagement') }}
-                      <span class="ml-1 text-xs font-normal text-muted-foreground">
-                        ({{ memories.length }}/100)
-                      </span>
-                    </h3>
-                    <div class="flex items-center gap-3">
-                      <button
-                        v-if="!isAddingMemory"
-                        class="flex items-center gap-1 text-xs text-primary transition-colors hover:text-primary/80"
-                        @click="startAddMemory"
-                      >
-                        <Plus :size="12" />
-                        {{ t('common.add') }}
-                      </button>
-                      <button
-                        v-if="memories.length > 3"
-                        class="flex items-center gap-1.5 text-xs font-medium text-primary transition-colors hover:text-primary/80 disabled:cursor-not-allowed disabled:opacity-50"
-                        :disabled="isCompressing"
-                        @click="handleCompressMemories"
-                      >
-                        <component
-                          :is="isCompressing ? Loader2 : Sparkles"
-                          :size="12"
-                          :class="{ 'animate-spin': isCompressing }"
-                        />
-                        {{ isCompressing ? t('ai.memoryCompressing') : t('ai.memoryCompress') }}
-                      </button>
-                      <button
-                        v-if="memories.length > 0"
-                        class="flex items-center gap-1 text-xs text-destructive transition-colors hover:text-destructive/80"
-                        @click="handleClearMemories"
-                      >
-                        <Trash :size="12" />
-                        {{ t('ai.memoryClear') }}
-                      </button>
-                    </div>
-                  </div>
-
-                  <!-- 新增记忆输入框 -->
-                  <div
-                    v-if="isAddingMemory"
-                    class="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 p-2"
-                  >
-                    <input
-                      ref="addMemoryInputRef"
-                      v-model="newMemoryContent"
-                      type="text"
-                      class="flex-1 bg-transparent px-2 py-1 text-sm text-foreground outline-none placeholder:text-muted-foreground/50"
-                      :placeholder="t('ai.addMemoryPlaceholder')"
-                      @keyup.enter="handleAddMemory"
-                      @keyup.esc="cancelAddMemory"
-                    />
-                    <div class="flex items-center gap-1">
-                      <button
-                        class="rounded p-1 text-primary hover:bg-primary/10"
-                        :title="t('common.save')"
-                        @click="handleAddMemory"
-                      >
-                        <Check :size="14" />
-                      </button>
-                      <button
-                        class="rounded p-1 text-muted-foreground hover:bg-muted"
-                        :title="t('common.cancel')"
-                        @click="cancelAddMemory"
-                      >
-                        <X :size="14" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div
-                    v-if="memories.length === 0"
-                    class="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-10 text-center"
-                  >
-                    <div
-                      class="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted/50 text-muted-foreground/30"
-                    >
-                      <Info :size="20" />
-                    </div>
-                    <p class="text-sm text-muted-foreground">{{ t('ai.noMemories') }}</p>
-                  </div>
-
-                  <div v-else class="space-y-2">
-                    <div
-                      v-for="(memory, index) in memories"
-                      :key="index"
-                      class="group flex items-center gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:border-primary/30"
-                    >
-                      <div class="h-1.5 w-1.5 shrink-0 rounded-full bg-primary/40" />
-
-                      <!-- 编辑模式 -->
-                      <div
-                        v-if="editingMemoryIndex === index"
-                        class="flex flex-1 items-center gap-2"
-                      >
-                        <input
-                          ref="editMemoryInputRef"
-                          v-model="editingMemoryContent"
-                          type="text"
-                          class="flex-1 bg-transparent text-sm text-foreground outline-none"
-                          @keyup.enter="handleSaveEditMemory"
-                          @keyup.esc="cancelEditMemory"
-                        />
-                        <div class="flex items-center gap-1">
-                          <button
-                            class="rounded p-1 text-primary hover:bg-primary/10"
-                            @click="handleSaveEditMemory"
-                          >
-                            <Check :size="14" />
-                          </button>
-                          <button
-                            class="rounded p-1 text-muted-foreground hover:bg-muted"
-                            @click="cancelEditMemory"
-                          >
-                            <X :size="14" />
-                          </button>
-                        </div>
-                      </div>
-
-                      <!-- 显示模式 -->
-                      <template v-else>
-                        <p class="flex-1 text-sm leading-relaxed text-foreground">
-                          {{ memory }}
-                        </p>
-                        <div
-                          class="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100"
-                        >
-                          <button
-                            class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                            :title="t('common.edit')"
-                            @click="startEditMemory(index, memory)"
-                          >
-                            <Edit3 :size="14" />
-                          </button>
-                          <button
-                            class="rounded p-1 text-muted-foreground hover:text-destructive"
-                            :title="t('common.delete')"
-                            @click="removeMemory(index)"
-                          >
-                            <X :size="14" />
-                          </button>
-                        </div>
-                      </template>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <AIMemoryManager
+                v-else-if="activeTab === 'memory'"
+                v-model="formData"
+                :presets="presets"
+              />
 
               <!-- 预设管理 Tab -->
-              <div v-else-if="activeTab === 'presets'" class="px-6 py-5">
-                <!-- 编辑/创建预设表单 -->
-                <div v-if="isCreatingPreset || editingPreset" class="space-y-4">
-                  <div class="flex items-center justify-between">
-                    <h3 class="text-sm font-medium text-foreground">
-                      {{ isCreatingPreset ? t('ai.createPreset') : t('ai.editPreset') }}
-                    </h3>
-                    <button
-                      class="text-xs text-muted-foreground hover:text-foreground"
-                      @click="cancelEditPreset"
-                    >
-                      {{ t('ai.cancel') }}
-                    </button>
-                  </div>
-
-                  <div class="space-y-3">
-                    <div>
-                      <label class="mb-1 block text-xs text-muted-foreground">{{
-                        t('ai.presetNameLabel')
-                      }}</label>
-                      <input
-                        v-model="presetForm.name"
-                        type="text"
-                        :placeholder="t('ai.presetNamePlaceholder')"
-                        class="w-full rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
-                      />
-                    </div>
-                    <div>
-                      <label class="mb-1 block text-xs text-muted-foreground">{{
-                        t('ai.baseUrlLabel')
-                      }}</label>
-                      <input
-                        v-model="presetForm.baseUrl"
-                        type="text"
-                        :placeholder="t('ai.baseUrlPlaceholder')"
-                        class="w-full rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
-                      />
-                    </div>
-                    <div>
-                      <label class="mb-1 block text-xs text-muted-foreground">{{
-                        t('ai.apiKeyLabel')
-                      }}</label>
-                      <div class="relative">
-                        <input
-                          v-model="presetForm.apiKey"
-                          :type="showPresetApiKey ? 'text' : 'password'"
-                          :placeholder="t('ai.apiKeyPlaceholder')"
-                          class="w-full rounded-lg border border-border bg-muted/30 px-3 py-2 pr-9 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
-                        />
-                        <button
-                          type="button"
-                          class="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
-                          @click="showPresetApiKey = !showPresetApiKey"
-                        >
-                          <EyeOff v-if="showPresetApiKey" :size="14" />
-                          <Eye v-else :size="14" />
-                        </button>
-                      </div>
-                    </div>
-                    <div>
-                      <label class="mb-1 block text-xs text-muted-foreground">{{
-                        t('ai.modelLabel')
-                      }}</label>
-                      <input
-                        v-model="presetForm.model"
-                        type="text"
-                        :placeholder="t('ai.modelPlaceholder')"
-                        class="w-full rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
-                      />
-                    </div>
-                    <div>
-                      <label class="mb-1 block text-xs text-muted-foreground">{{
-                        t('ai.systemPromptLabel')
-                      }}</label>
-                      <textarea
-                        v-model="presetForm.systemPrompt"
-                        rows="3"
-                        :placeholder="t('ai.systemPromptPlaceholder')"
-                        class="w-full resize-none rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
-                      />
-                    </div>
-                    <div class="flex items-center justify-between">
-                      <label class="text-xs text-muted-foreground">{{
-                        t('ai.temperatureLabel')
-                      }}</label>
-                      <div class="flex items-center gap-2">
-                        <input
-                          v-model.number="presetForm.temperature"
-                          type="range"
-                          min="0"
-                          max="2"
-                          step="0.1"
-                          class="h-1.5 w-24 cursor-pointer appearance-none rounded-full bg-border accent-primary"
-                        />
-                        <span class="w-8 text-right text-xs text-muted-foreground">{{
-                          presetForm.temperature.toFixed(1)
-                        }}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    class="w-full rounded-lg bg-primary py-2 text-sm text-primary-foreground transition-colors hover:bg-primary-hover"
-                    @click="savePreset"
-                  >
-                    {{ t('ai.savePreset') }}
-                  </button>
-                </div>
-
-                <!-- 预设列表 -->
-                <div v-else class="space-y-4">
-                  <!-- 添加按钮 -->
-                  <button
-                    class="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-primary py-2.5 text-sm text-primary transition-colors hover:bg-primary/5"
-                    @click="startCreatePreset"
-                  >
-                    <Plus :size="14" />
-                    <span>{{ t('ai.createNewPreset') }}</span>
-                  </button>
-
-                  <!-- 预设列表 -->
-                  <div v-if="presets.length" class="space-y-2">
-                    <div
-                      v-for="preset in presets"
-                      :key="preset.id"
-                      class="group relative rounded-lg border p-3 transition-all hover:border-primary"
-                      :class="[
-                        activePresetId === preset.id
-                          ? 'border-primary bg-primary/5 shadow-sm'
-                          : 'border-border bg-card',
-                      ]"
-                    >
-                      <div class="flex items-start justify-between">
-                        <div
-                          class="flex-1 cursor-pointer"
-                          @click="activePresetId !== preset.id && switchPreset(preset.id)"
-                        >
-                          <div class="flex items-center gap-2">
-                            <p class="text-sm font-medium text-foreground">
-                              {{ preset.name || t('ai.unnamedPreset') }}
-                            </p>
-                            <span
-                              v-if="activePresetId === preset.id"
-                              class="inline-flex items-center rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary"
-                            >
-                              <Check :size="10" class="mr-0.5" />
-                              {{ t('ai.active') }}
-                            </span>
-                          </div>
-                          <div class="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                            <span>{{ preset.model }}</span>
-                            <span class="h-2.5 w-px bg-border" />
-                            <span
-                              >{{ t('ai.temperatureLabel') }}:
-                              {{ preset.temperature.toFixed(1) }}</span
-                            >
-                          </div>
-                        </div>
-                        <div
-                          class="flex gap-1 transition-opacity group-hover:opacity-100"
-                          :class="activePresetId === preset.id ? 'opacity-100' : 'opacity-0'"
-                        >
-                          <button
-                            class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                            :title="t('ai.copyPreset')"
-                            @click="handleDuplicatePreset(preset.id)"
-                          >
-                            <Copy :size="14" />
-                          </button>
-                          <button
-                            class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                            :title="t('ai.edit')"
-                            @click="startEditPreset(preset)"
-                          >
-                            <Edit3 :size="14" />
-                          </button>
-                          <button
-                            class="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                            :title="t('ai.delete')"
-                            @click="handleDeletePreset(preset.id)"
-                          >
-                            <Trash2 :size="14" />
-                          </button>
-                        </div>
-                      </div>
-                      <p
-                        class="mt-2 line-clamp-2 cursor-pointer text-xs text-muted-foreground"
-                        @click="activePresetId !== preset.id && switchPreset(preset.id)"
-                      >
-                        {{ preset.systemPrompt || t('ai.noSystemPrompt') }}
-                      </p>
-                    </div>
-                  </div>
-
-                  <p v-else class="py-4 text-center text-xs text-muted-foreground/50">
-                    {{ t('ai.noPresets') }}
-                  </p>
-                </div>
-              </div>
+              <AIPresetManager v-else-if="activeTab === 'presets'" ref="presetManagerRef" />
             </div>
 
-            <!-- 底部操作栏 -->
+            <!-- 底部按钮 -->
             <div
-              v-if="activeTab === 'settings' || activeTab === 'memory'"
               class="flex shrink-0 items-center justify-between border-t border-border px-6 py-4"
             >
-              <button
-                class="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-                @click="handleReset"
-              >
-                <RotateCcw :size="14" />
-                <span>{{ t('ai.resetToDefault') }}</span>
-              </button>
-              <div class="flex gap-2">
+              <div class="flex items-center gap-3">
+                <button
+                  class="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                  @click="handleReset"
+                >
+                  <RotateCcw :size="14" />
+                  {{ t('ai.resetToDefault') }}
+                </button>
+              </div>
+              <div class="flex items-center gap-3">
                 <button
                   v-if="activeTab === 'settings' && !formData.discussionMode"
-                  class="flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-sm text-foreground transition-all hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+                  class="rounded-lg px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50"
                   :disabled="isDuplicatePreset"
-                  :title="isDuplicatePreset ? t('ai.presetAlreadyExists') : ''"
                   @click="handleSaveAsPreset"
                 >
-                  <Star :size="14" :class="{ 'fill-current': isDuplicatePreset }" />
-                  <span>{{ t('ai.saveAsPreset') }}</span>
+                  {{ t('ai.saveAsPreset') }}
                 </button>
                 <button
-                  class="rounded-lg border border-border px-4 py-2 text-sm text-foreground transition-colors hover:bg-accent"
-                  @click="handleClose"
-                >
-                  {{ t('ai.cancel') }}
-                </button>
-                <button
-                  class="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground transition-colors hover:bg-primary-hover"
+                  class="rounded-lg bg-primary px-6 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover"
                   @click="handleSave"
                 >
-                  <Check :size="14" />
-                  <span>{{ t('ai.save') }}</span>
+                  {{ t('common.save') }}
                 </button>
               </div>
             </div>
@@ -1178,62 +326,38 @@ defineExpose({
         </Transition>
       </div>
     </Transition>
-
-    <!-- 清除记忆确认弹窗 -->
-    <AlertDialog v-model:open="showClearConfirm">
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{{ t('ai.memoryClear') }}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {{ t('ai.memoryClearConfirm') }}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>{{ t('common.cancel') }}</AlertDialogCancel>
-          <AlertDialogAction
-            class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            @click="handleClearConfirm"
-          >
-            {{ t('common.confirm') }}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-
-    <!-- 保存为预设确认 -->
-    <AlertDialog v-model:open="showSaveAsPresetConfirm">
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{{ t('ai.saveAsPresetTitle') }}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {{ t('ai.saveAsPresetDescription') }}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <div class="py-4">
-          <input
-            v-model="saveAsPresetName"
-            type="text"
-            :placeholder="t('ai.saveAsPresetPlaceholder')"
-            class="w-full rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
-            autofocus
-            @keyup.enter="confirmSaveAsPreset"
-          />
-        </div>
-        <AlertDialogFooter>
-          <AlertDialogCancel @click="showSaveAsPresetConfirm = false">{{
-            t('common.cancel')
-          }}</AlertDialogCancel>
-          <AlertDialogAction
-            :disabled="!saveAsPresetName.trim()"
-            class="bg-primary text-primary-foreground hover:bg-primary/90"
-            @click="confirmSaveAsPreset"
-          >
-            {{ t('common.confirm') }}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
   </Teleport>
+
+  <!-- 保存为预设确认弹窗 -->
+  <AlertDialog :open="showSaveAsPresetConfirm" @update:open="showSaveAsPresetConfirm = $event">
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>{{ t('ai.saveAsPresetTitle') }}</AlertDialogTitle>
+        <AlertDialogDescription>
+          {{ t('ai.saveAsPresetDescription') }}
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <div class="py-4">
+        <input
+          v-model="saveAsPresetName"
+          type="text"
+          :placeholder="t('ai.saveAsPresetPlaceholder')"
+          class="w-full rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
+          @keyup.enter="confirmSaveAsPreset"
+        />
+      </div>
+      <AlertDialogFooter>
+        <AlertDialogCancel>{{ t('common.cancel') }}</AlertDialogCancel>
+        <AlertDialogAction
+          class="bg-primary text-primary-foreground hover:bg-primary-hover"
+          :disabled="!saveAsPresetName.trim()"
+          @click="confirmSaveAsPreset"
+        >
+          {{ t('common.confirm') }}
+        </AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
 </template>
 
 <style scoped>
@@ -1249,7 +373,9 @@ defineExpose({
 
 .scale-enter-active,
 .scale-leave-active {
-  transition: all 0.2s ease;
+  transition:
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.2s ease;
 }
 
 .scale-enter-from,
