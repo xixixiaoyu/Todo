@@ -1,6 +1,7 @@
 import { defineConfig, type UserConfig, type PluginOption } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
+import viteCompression from 'vite-plugin-compression'
 import { resolve } from 'path'
 
 const isElectron = process.env.ELECTRON === 'true'
@@ -66,6 +67,22 @@ export default defineConfig(async (): Promise<UserConfig> => {
     plugins: [
       vue(),
       ...electronPlugins,
+      // Gzip 压缩
+      viteCompression({
+        verbose: true,
+        disable: false,
+        threshold: 1024,
+        algorithm: 'gzip',
+        ext: '.gz',
+      }),
+      // Brotli 压缩
+      viteCompression({
+        verbose: true,
+        disable: false,
+        threshold: 1024,
+        algorithm: 'brotliCompress',
+        ext: '.br',
+      }),
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'vite.svg', 'apple-touch-icon-180x180.png'],

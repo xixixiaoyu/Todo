@@ -37,9 +37,9 @@ RUN pnpm --filter @my-app/shared build
 RUN pnpm --filter @my-app/frontend build
 
 # ============================================
-# Stage 3: Production image with Nginx
+# Stage 3: Production image with Nginx (Brotli supported)
 # ============================================
-FROM nginx:alpine AS production
+FROM fholzer/nginx-brotli:alpine AS production
 
 # 移除默认 nginx 配置和 IPv6 自动配置脚本（解决只读文件系统报错）
 RUN rm /etc/nginx/conf.d/default.conf && \
