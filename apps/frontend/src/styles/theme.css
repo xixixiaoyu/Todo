@@ -1,0 +1,107 @@
+@layer base {
+  :root {
+    --font-sans: 'LXGW WenKai', system-ui, -apple-system, sans-serif;
+
+    /* 基础颜色 */
+    --background: 40 25% 97%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+
+    /* 主题色 */
+    --primary: 32 45% 45%;
+    --primary-hover: 32 45% 40%;
+    --primary-foreground: 0 0% 100%;
+
+    /* 次要色 */
+    --secondary: 32 15% 95%;
+    --secondary-foreground: 32 10% 23%;
+    --muted: 32 15% 95%;
+    --muted-foreground: 32 5% 45%;
+    --accent: 32 15% 95%;
+    --accent-foreground: 32 10% 23%;
+
+    /* 警告/错误色 */
+    --destructive: 15 65% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* 边框和输入 */
+    --border: 32 15% 88%;
+    --input: 32 15% 88%;
+    --ring: 32 45% 45%;
+
+    /* 圆角 */
+    --radius: 0.75rem;
+    --border-radius: 0.75rem;
+
+    /* 图表色 */
+    --chart-1: 32 45% 45%;
+    --chart-2: 155 35% 45%;
+    --chart-3: 20 65% 55%;
+    --chart-4: 45 65% 55%;
+    --chart-5: 32 25% 65%;
+
+    /* 语义化变量 */
+    --text-color: 32 10% 23%;
+    --text-secondary: 32 5% 45%;
+    --todo-completed: 32 5% 45%;
+    --success: 145 35% 45%;
+    --error: 15 65% 55%;
+
+    /* AI 助手相关变量 */
+    --primary-color: var(--primary);
+    --text-color-base: var(--text-color);
+    --text-secondary-color: var(--text-secondary);
+    --ai-message-bg: var(--muted);
+    --ai-message-border: var(--border);
+    --ai-accent-hover: var(--accent);
+  }
+
+  .dark {
+    /* 基础颜色 - 调浅背景，降低对比度 */
+    --background: 240 6% 10%;
+    --foreground: 0 0% 92%;
+    --card: 240 6% 12%;
+    --card-foreground: 0 0% 92%;
+    --popover: 240 6% 12%;
+    --popover-foreground: 0 0% 92%;
+
+    /* 主题色 - 降低主色亮度，使其更柔和 */
+    --primary: 32 35% 60%;
+    --primary-hover: 32 35% 65%;
+    --primary-foreground: 32 10% 12%;
+
+    /* 次要色 */
+    --secondary: 240 4% 18%;
+    --secondary-foreground: 0 0% 92%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 4% 60%;
+    --accent: 240 4% 18%;
+    --accent-foreground: 0 0% 92%;
+
+    /* 警告/错误色 */
+    --destructive: 15 50% 50%;
+    --destructive-foreground: 0 0% 92%;
+
+    /* 边框和输入 - 调亮边框使其更自然 */
+    --border: 240 4% 20%;
+    --input: 240 4% 20%;
+    --ring: 32 35% 60%;
+
+    --text-color: 0 0% 92%;
+    --text-secondary: 240 4% 60%;
+    --todo-completed: 240 4% 45%;
+    --success: 145 30% 50%;
+    --error: 15 50% 50%;
+
+    /* AI 助手相关变量 */
+    --primary-color: var(--primary);
+    --text-color-base: var(--text-color);
+    --text-secondary-color: var(--text-secondary);
+    --ai-message-bg: var(--muted);
+    --ai-message-border: var(--border);
+    --ai-accent-hover: var(--accent);
+  }
+}

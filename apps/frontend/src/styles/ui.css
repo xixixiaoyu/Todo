@@ -1,0 +1,35 @@
+.ai-star {
+  transform-origin: center;
+}
+
+/* 输入框呼吸感与微交互 */
+.input-container-refined {
+  @apply transition-all duration-300 ease-in-out;
+}
+
+.input-container-refined:focus-within {
+  @apply border-primary/40 shadow-[0_0_15px_-3px_rgba(var(--primary),0.15)] ring-4 ring-primary/5;
+}
+
+@media (max-width: 640px) {
+  .thinking-content {
+    margin: 0.5rem -0.5rem;
+    border-radius: 0;
+    border-left: none !important;
+    border-right: none !important;
+  }
+
+  .loading-container {
+    padding: 6px 12px;
+    gap: 6px;
+  }
+
+  .shimmer-text {
+    font-size: 13px;
+  }
+
+  .ai-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+}
