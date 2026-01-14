@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   X,
@@ -82,6 +82,8 @@ const newMemoryContent = ref('')
 const editingMemoryIndex = ref<number | null>(null)
 const editingMemoryContent = ref('')
 const showClearConfirm = ref(false)
+const addMemoryInputRef = ref<HTMLInputElement | null>(null)
+const editMemoryInputRef = ref<HTMLInputElement | null>(null)
 
 /**
  * 开始新增记忆
@@ -89,6 +91,9 @@ const showClearConfirm = ref(false)
 function startAddMemory() {
   isAddingMemory.value = true
   newMemoryContent.value = ''
+  nextTick(() => {
+    addMemoryInputRef.value?.focus()
+  })
 }
 
 /**
@@ -116,6 +121,9 @@ function cancelAddMemory() {
 function startEditMemory(index: number, content: string) {
   editingMemoryIndex.value = index
   editingMemoryContent.value = content
+  nextTick(() => {
+    editMemoryInputRef.value?.focus()
+  })
 }
 
 /**
@@ -822,6 +830,7 @@ defineExpose({
                     class="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 p-2"
                   >
                     <input
+                      ref="addMemoryInputRef"
                       v-model="newMemoryContent"
                       type="text"
                       class="flex-1 bg-transparent px-2 py-1 text-sm text-foreground outline-none placeholder:text-muted-foreground/50"
@@ -873,6 +882,7 @@ defineExpose({
                         class="flex flex-1 items-center gap-2"
                       >
                         <input
+                          ref="editMemoryInputRef"
                           v-model="editingMemoryContent"
                           type="text"
                           class="flex-1 bg-transparent text-sm text-foreground outline-none"
