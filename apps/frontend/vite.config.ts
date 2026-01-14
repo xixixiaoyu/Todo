@@ -55,8 +55,8 @@ const getBase = () => {
   if (isElectron) return './'
   // 生产环境部署到 GitHub Pages
   if (process.env.NODE_ENV === 'production') return '/vue3-nest-template/'
-  // Capacitor 需要相对路径
-  return './'
+  // 常规开发环境使用 '/'，Capacitor/Electron 会在各自的构建流程中处理
+  return '/'
 }
 
 export default defineConfig(async (): Promise<UserConfig> => {
@@ -85,7 +85,18 @@ export default defineConfig(async (): Promise<UserConfig> => {
       }),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.ico', 'vite.svg', 'apple-touch-icon-180x180.png'],
+        devOptions: {
+          enabled: true,
+        },
+        includeAssets: [
+          'favicon.ico',
+          'vite.svg',
+          'apple-touch-icon-180x180.png',
+          'pwa-64x64.png',
+          'pwa-192x192.png',
+          'pwa-512x512.png',
+          'maskable-icon-512x512.png',
+        ],
         manifest: {
           name: '极简待办',
           short_name: '极简待办',

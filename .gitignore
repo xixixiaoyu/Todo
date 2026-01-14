@@ -55,6 +55,10 @@ apps/frontend/android/app/src/main/assets/public
 apps/frontend/android/.gradle
 apps/frontend/android/app/build
 
+# PWA
+dev-dist
+apps/frontend/dev-dist
+
 # Electron
 apps/frontend/dist-electron
 apps/frontend/release
