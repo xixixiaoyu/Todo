@@ -145,7 +145,6 @@ const {
 
 const isMaximized = ref(false)
 const chatInput = ref('')
-const messageListRef = ref<InstanceType<typeof ChatMessageList>>()
 
 // 设置弹窗状态
 const showSettings = ref(false)
@@ -312,7 +311,6 @@ defineOptions({
       <!-- 主内容区域 -->
       <div class="relative flex-1 min-h-0 flex flex-col">
         <ChatMessageList
-          ref="messageListRef"
           :messages="messages"
           :is-maximized="isMaximized"
           @regenerate="regenerateLastResponse"

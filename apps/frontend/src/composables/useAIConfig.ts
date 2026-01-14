@@ -13,7 +13,7 @@ export interface AIConfig {
   thinkingMode: ThinkingMode
   todoAssistant: boolean
   discussionMode: boolean
-  discussionModelIds: string[]
+  discussionModelIds: readonly string[]
   discussionPrimaryModelId: string | null
   memoryModelId: string | null
   enableImageGeneration: boolean
