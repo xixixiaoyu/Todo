@@ -191,6 +191,7 @@ export function useChat(options: AIRequestOptions = {}) {
           images: imageUrls,
           createdAt: new Date(),
         }
+        // 直接更新 chatHistory.value 以触发持久化
         chatHistory.value = [...chatHistory.value, aiMessage]
       } else {
         throw new Error(t('ai.noImageGenerated'))

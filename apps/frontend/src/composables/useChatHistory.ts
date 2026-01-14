@@ -60,6 +60,8 @@ function loadSessions(): void {
         messages: s.messages.map((msg: ChatMessage) => ({
           ...msg,
           createdAt: msg.createdAt ? new Date(msg.createdAt) : undefined,
+          // 确保 images 数组存在且为新引用
+          images: Array.isArray(msg.images) ? [...msg.images] : undefined,
         })),
       }))
     }
@@ -98,9 +100,19 @@ function saveSessions(immediate = false): void {
 
   const doSave = () => {
     try {
-      localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(sessions.value))
-    } catch {
-      console.warn('保存会话历史失败')
+      const data = JSON.stringify(sessions.value)
+      localStorage.setItem(SESSIONS_STORAGE_KEY, data)
+    } catch (e) {
+      if (e instanceof Error && e.name === 'QuotaExceededError') {
+        console.warn('会话历史保存失败：存储配额已满。尝试清理旧数据...')
+        // 如果空间不足，尝试只保留最近的 20 条会话
+        if (sessions.value.length > 20) {
+          sessions.value = sessions.value.slice(0, 20)
+          doSave()
+        }
+      } else {
+        console.warn('保存会话历史失败', e)
+      }
     }
   }
 
@@ -223,7 +235,11 @@ export function useChatHistory() {
     const session = sessions.value.find((s) => s.id === sessionId)
     if (!session) return
 
-    session.messages = messages
+    // 确保消息对象中的 images 数组被正确保留
+    session.messages = messages.map((msg) => ({
+      ...msg,
+      images: Array.isArray(msg.images) ? [...msg.images] : msg.images || undefined,
+    }))
     session.updatedAt = new Date()
 
     // 如果是第一条用户消息，且标题仍为默认值，则更新标题为消息内容
@@ -239,6 +255,9 @@ export function useChatHistory() {
         session.title = title.slice(0, 100) // 限制标题长度，防止极端情况
       }
     }
+
+    // 显式触发保存，确保消息（特别是包含图片的消息）能立即进入节流队列或被保存
+    saveSessions()
   }
 
   /**
