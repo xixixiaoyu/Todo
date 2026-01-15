@@ -37,7 +37,7 @@ const { t } = useI18n()
           </template>
           <AlertCircle v-else :size="12" class="text-red-500" />
         </div>
-        <div class="flex-1">
+        <div class="flex-1 break-words">
           <span class="font-medium text-foreground">{{ step.modelName }}: </span>
           <span class="text-muted-foreground">
             {{

@@ -330,7 +330,7 @@ watch(
           <!-- 正文气泡：用户消息或已有内容的 AI 消息 -->
           <div
             v-else-if="isUser || hasContent"
-            class="relative rounded-2xl px-4 py-3 shadow-sm transition-all duration-300"
+            class="relative break-words rounded-2xl px-4 py-3 shadow-sm transition-all duration-300"
             :class="[
               isUser
                 ? 'bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-primary-foreground hover:shadow-md hover:scale-[1.01]'
@@ -390,7 +390,7 @@ watch(
 
               <!-- 用户消息：展示模式 -->
               <div v-else-if="isUser" class="group/user relative">
-                <div class="whitespace-pre-wrap text-[15px] leading-relaxed">
+                <div class="break-words whitespace-pre-wrap text-[15px] leading-relaxed">
                   {{ message.content }}
                 </div>
                 <!-- 编辑按钮 -->
@@ -405,12 +405,15 @@ watch(
               </div>
               <!-- AI 消息：Markdown 渲染 -->
               <!-- eslint-disable vue/no-v-html -->
-              <div v-else-if="renderedHtml" class="markdown-content relative leading-relaxed">
+              <div
+                v-else-if="renderedHtml"
+                class="markdown-content relative break-words leading-relaxed"
+              >
                 <div v-html="renderedHtml" />
               </div>
               <!-- eslint-enable vue/no-v-html -->
               <!-- 兜底显示 -->
-              <div v-else-if="hasContent" class="relative text-[15px] leading-relaxed">
+              <div v-else-if="hasContent" class="relative break-words text-[15px] leading-relaxed">
                 {{ message.content }}
               </div>
 

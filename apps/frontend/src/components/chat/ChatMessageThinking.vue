@@ -179,13 +179,13 @@ watch([() => props.message.thinkingContent, () => props.message.reasoning_detail
           <!-- eslint-disable vue/no-v-html -->
           <div
             v-if="renderedThinkingHtml"
-            class="markdown-content thinking-markdown text-muted-foreground/70 text-[13.5px] leading-relaxed"
+            class="markdown-content thinking-markdown break-words text-muted-foreground/70 text-[13.5px] leading-relaxed"
             v-html="renderedThinkingHtml"
           />
           <!-- eslint-enable vue/no-v-html -->
           <div
             v-else
-            class="whitespace-pre-wrap text-muted-foreground/70 text-[13.5px] leading-relaxed"
+            class="break-words whitespace-pre-wrap text-muted-foreground/70 text-[13.5px] leading-relaxed"
           >
             {{ message.thinkingContent }}
           </div>
