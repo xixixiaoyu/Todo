@@ -6,8 +6,10 @@ defineProps<{
 </script>
 
 <template>
-  <div class="flex-1 flex items-center justify-center bg-background px-4 py-12">
-    <div class="w-full max-w-[480px] bg-card rounded-[20px] p-12 shadow-card animate-fade-in-up">
+  <div class="flex-1 flex items-center justify-center bg-background px-4 py-12 overflow-y-auto">
+    <div
+      class="w-full max-w-[480px] bg-card rounded-[20px] p-12 shadow-card animate-fade-in-up my-auto"
+    >
       <div class="mb-8">
         <h2 class="text-3xl font-bold text-foreground text-center">
           {{ title }}
