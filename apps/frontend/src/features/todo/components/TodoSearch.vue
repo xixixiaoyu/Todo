@@ -2,10 +2,12 @@
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Search, X } from 'lucide-vue-next'
+import { useIsMobile } from '@/composables/useWindowSize'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 
 const { t } = useI18n()
+const { isMobile } = useIsMobile()
 
 const props = defineProps<{
   modelValue: string
@@ -35,10 +37,13 @@ function handleKeyDown(e: KeyboardEvent) {
 }
 
 onMounted(() => {
+  // 仅在非移动端自动聚焦
   // 延迟一小会儿聚焦，确保 Transition 动画不影响聚焦效果
-  setTimeout(() => {
-    inputRef.value?.$el?.focus()
-  }, 100)
+  if (!isMobile.value) {
+    setTimeout(() => {
+      inputRef.value?.$el?.focus()
+    }, 150)
+  }
 })
 </script>
 

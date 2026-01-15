@@ -2,11 +2,13 @@
 import { useI18n } from 'vue-i18n'
 import { Plus } from 'lucide-vue-next'
 import { ref, onMounted } from 'vue'
+import { useIsMobile } from '@/composables/useWindowSize'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 const { t } = useI18n()
+const { isMobile } = useIsMobile()
 
 defineProps<{
   modelValue: string
@@ -23,7 +25,12 @@ const emit = defineEmits<{
 const inputRef = ref<InstanceType<typeof Input> | null>(null)
 
 onMounted(() => {
-  inputRef.value?.$el?.focus?.()
+  // 仅在非移动端自动聚焦，且稍微延迟以配合页面入场动画
+  if (!isMobile.value) {
+    setTimeout(() => {
+      inputRef.value?.$el?.focus?.()
+    }, 400)
+  }
 })
 </script>
 
