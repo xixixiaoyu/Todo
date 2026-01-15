@@ -134,14 +134,13 @@ export function useTodo() {
    * Command+E (Mac) 或 Alt+E (Windows/Mac/Linux) 切换 AI 助手
    */
   function handleGlobalKeydown(e: KeyboardEvent) {
-    // 如果焦点在输入框中，不触发全局快捷键
+    // 允许在输入框中触发，但如果是在 AI 助手输入框中则不触发（避免冲突）
     const activeElement = document.activeElement
-    const isInput =
-      activeElement instanceof HTMLInputElement ||
-      activeElement instanceof HTMLTextAreaElement ||
-      (activeElement as HTMLElement)?.isContentEditable
+    const isAiInput =
+      activeElement?.closest('.ai-assistant-input') ||
+      activeElement?.getAttribute('data-ai-input') === 'true'
 
-    if (isInput) return
+    if (isAiInput) return
 
     const isE = e.key.toLowerCase() === 'e'
     const isMac = /Mac|iPod|iPhone|iPad/.test(navigator.userAgent)

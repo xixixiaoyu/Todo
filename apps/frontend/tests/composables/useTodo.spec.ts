@@ -352,10 +352,31 @@ describe('useTodo', () => {
       expect(todoStore.setDrawerOpen).not.toHaveBeenCalled()
     })
 
-    it('should not toggle drawer when focus is in an input', () => {
+    it('should toggle drawer even when focus is in a normal input', () => {
       withSetup(useTodo)
 
       const input = document.createElement('input')
+      document.body.appendChild(input)
+      input.focus()
+
+      const event = new KeyboardEvent('keydown', {
+        key: 'e',
+        altKey: true,
+        bubbles: true,
+        cancelable: true,
+      })
+      window.dispatchEvent(event)
+
+      expect(todoStore.setDrawerOpen).toHaveBeenCalledWith(true)
+
+      document.body.removeChild(input)
+    })
+
+    it('should not toggle drawer when focus is in AI input', () => {
+      withSetup(useTodo)
+
+      const input = document.createElement('input')
+      input.setAttribute('data-ai-input', 'true')
       document.body.appendChild(input)
       input.focus()
 
