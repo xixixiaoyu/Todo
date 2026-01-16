@@ -58,7 +58,7 @@
       "cross-env NODE_OPTIONS='--max-old-space-size=4096' eslint --fix --cache --config packages/shared/eslint.config.mjs",
       "prettier --write"
     ],
-    "*.{json,css,scss,html}": [
+    "**/*.{json,css,scss,html,yml,yaml,md}": [
       "prettier --write"
     ]
   },
