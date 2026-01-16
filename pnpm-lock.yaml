@@ -231,6 +231,9 @@ importers:
       '@types/sanitize-html':
         specifier: 2.16.0
         version: 2.16.0
+      cross-env:
+        specifier: 10.1.0
+        version: 10.1.0
       eslint:
         specifier: 9.39.2
         version: 9.39.2(jiti@2.6.1)
@@ -452,6 +455,9 @@ importers:
         specifier: 3.25.76
         version: 3.25.76
     devDependencies:
+      cross-env:
+        specifier: 10.1.0
+        version: 10.1.0
       tsup:
         specifier: 8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(typescript@5.9.3)(yaml@2.8.2)
