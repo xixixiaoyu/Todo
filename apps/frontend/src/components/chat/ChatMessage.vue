@@ -333,7 +333,7 @@ watch(
             class="relative break-words rounded-2xl px-4 py-3 shadow-sm transition-all duration-300"
             :class="[
               isUser
-                ? 'bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-primary-foreground hover:shadow-md hover:scale-[1.01]'
+                ? 'bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-primary-foreground hover:shadow-md'
                 : 'border border-border bg-card text-foreground hover:border-primary/20 hover:shadow-md',
               isEditing
                 ? 'w-full !bg-card !text-foreground ring-2 ring-primary/20 border-primary'
@@ -396,7 +396,7 @@ watch(
                 <!-- 编辑按钮 -->
                 <button
                   v-if="!isEditing"
-                  class="absolute -left-14 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md bg-card/80 text-muted-foreground opacity-0 shadow-sm transition-all hover:bg-card hover:text-primary group-hover/user:opacity-100"
+                  class="absolute -left-12 top-0 flex h-7 w-7 items-center justify-center rounded-md bg-card/80 text-muted-foreground opacity-0 shadow-sm transition-all hover:bg-card hover:text-primary group-hover/user:opacity-100"
                   :title="t('ai.edit')"
                   @click="startEdit"
                 >
