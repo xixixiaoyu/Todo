@@ -56,6 +56,9 @@ export default defineConfig(async (): Promise<UserConfig> => {
 
   return {
     base: getBase(),
+    define: {
+      'import.meta.env.IS_ELECTRON': JSON.stringify(isElectron),
+    },
     plugins: [
       vue(),
       ...electronPlugins,
