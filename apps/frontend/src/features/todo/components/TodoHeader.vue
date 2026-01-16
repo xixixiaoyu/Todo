@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Clover, Languages, Network, List } from 'lucide-vue-next'
 import ThemeToggle from './ThemeToggle.vue'
@@ -9,6 +10,8 @@ import { useTodoStore } from '../stores/todo'
 const { t, locale } = useI18n()
 const todoStore = useTodoStore()
 
+const isElectron = computed(() => !!window.electronAPI)
+
 const toggleLanguage = () => {
   const newLocale = locale.value === 'zh-CN' ? 'en-US' : 'zh-CN'
   locale.value = newLocale
@@ -17,8 +20,11 @@ const toggleLanguage = () => {
 </script>
 
 <template>
-  <header class="mb-8 flex items-center justify-between transition-all duration-300">
-    <div class="flex items-center gap-3 group">
+  <header
+    class="mb-8 flex items-center justify-between transition-all duration-300"
+    :class="{ 'drag-region select-none': isElectron }"
+  >
+    <div class="flex items-center gap-3 group" :class="{ 'no-drag': isElectron }">
       <div
         class="p-2 rounded-xl bg-amber-500/10 text-amber-600 transition-transform group-hover:rotate-12"
       >
@@ -30,7 +36,7 @@ const toggleLanguage = () => {
         {{ t('todo.title') }}
       </h1>
     </div>
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2" :class="{ 'no-drag': isElectron }">
       <Tooltip>
         <TooltipTrigger as-child>
           <Button
@@ -66,3 +72,13 @@ const toggleLanguage = () => {
     </div>
   </header>
 </template>
+
+<style scoped>
+.drag-region {
+  -webkit-app-region: drag;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+</style>

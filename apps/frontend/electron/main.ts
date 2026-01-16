@@ -31,6 +31,8 @@ function createWindow() {
     minWidth: 800,
     minHeight: 600,
     show: false,
+    titleBarStyle: 'hidden',
+    trafficLightPosition: { x: 16, y: 16 },
     webPreferences: {
       preload: join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -46,21 +48,21 @@ function createWindow() {
   // 外部链接用默认浏览器打开
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('https:') || url.startsWith('http:')) {
-      shell.openExternal(url)
+      void shell.openExternal(url)
     }
     return { action: 'deny' }
   })
 
   // 开发环境加载 dev server，生产环境加载打包文件
   if (VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(VITE_DEV_SERVER_URL)
+    void mainWindow.loadURL(VITE_DEV_SERVER_URL)
     mainWindow.webContents.openDevTools()
   } else {
-    mainWindow.loadFile(join(__dirname, '../dist/index.html'))
+    void mainWindow.loadFile(join(__dirname, '../dist/index.html'))
   }
 }
 
-app.whenReady().then(() => {
+void app.whenReady().then(() => {
   // 设置 Content Security Policy
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     const csp = VITE_DEV_SERVER_URL
