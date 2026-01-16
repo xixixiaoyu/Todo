@@ -17,14 +17,15 @@ const getElectronPlugins = async (): Promise<PluginOption[]> => {
         entry: 'electron/main.ts',
         vite: {
           build: {
+            lib: {
+              entry: 'electron/main.ts',
+              formats: ['es'],
+              fileName: () => 'main.mjs',
+            },
             outDir: 'dist-electron',
             minify: false,
             rollupOptions: {
               external: ['electron'],
-              output: {
-                format: 'es',
-                entryFileNames: '[name].mjs',
-              },
             },
           },
         },
@@ -33,15 +34,6 @@ const getElectronPlugins = async (): Promise<PluginOption[]> => {
         entry: 'electron/preload.ts',
         onstart(args) {
           args.reload()
-        },
-        vite: {
-          build: {
-            outDir: 'dist-electron',
-            minify: false,
-            rollupOptions: {
-              external: ['electron'],
-            },
-          },
         },
       },
     ]) as unknown as PluginOption,

@@ -1,5 +1,3 @@
-import type { IpcRendererEvent } from 'electron'
-/* eslint-disable @typescript-eslint/no-require-imports */
 const { contextBridge, ipcRenderer } = require('electron')
 
 // 暴露安全的 API 到渲染进程
@@ -14,7 +12,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
     electron: process.versions.electron,
   },
 
-  // IPC 通信示例
+  // 窗口控制
+  window: {
+    minimize: () => ipcRenderer.send('window-minimize'),
+    maximize: () => ipcRenderer.send('window-maximize'),
+    unmaximize: () => ipcRenderer.send('window-unmaximize'),
+    close: () => ipcRenderer.send('window-close'),
+    isMaximized: () => ipcRenderer.invoke('window-is-maximized'),
+  },
+
+  // IPC 通信
   send: (channel: string, ...args: unknown[]) => {
     const validChannels = ['toMain']
     if (validChannels.includes(channel)) {
@@ -25,8 +32,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   receive: (channel: string, callback: (...args: unknown[]) => void) => {
     const validChannels = ['fromMain']
     if (validChannels.includes(channel)) {
-      ipcRenderer.on(channel, (_event: IpcRendererEvent, ...args: unknown[]) => callback(...args))
+      const subscription = (_event: any, ...args: unknown[]) => callback(...args)
+      ipcRenderer.on(channel, subscription)
+      return () => ipcRenderer.removeListener(channel, subscription)
     }
+    return undefined
   },
 
   invoke: async (channel: string, ...args: unknown[]) => {

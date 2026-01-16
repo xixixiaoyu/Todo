@@ -61,20 +61,6 @@ export default [
     },
   },
   {
-    files: [
-      'capacitor.config.ts',
-      'electron/main.ts',
-      'electron/preload.ts',
-      'pwa-assets.config.ts',
-      'vitest.config.ts',
-      'vite.config.ts',
-    ],
-    rules: {
-      '@typescript-eslint/no-floating-promises': 'off',
-      '@typescript-eslint/no-misused-promises': 'off',
-    },
-  },
-  {
     files: ['**/*.vue'],
     rules: {
       'vue/block-order': [
@@ -96,6 +82,22 @@ export default [
       'vue/multiline-html-element-content-newline': 'off',
       'vue/first-attribute-linebreak': 'off',
       'vue/html-self-closing': 'off',
+    },
+  },
+  {
+    files: [
+      '**/capacitor.config.ts',
+      '**/electron/main.ts',
+      '**/electron/preload.ts',
+      '**/pwa-assets.config.ts',
+      '**/vitest.config.ts',
+      '**/vite.config.ts',
+    ],
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'off',
+      '@typescript-eslint/no-misused-promises': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
     },
   },
 ]
