@@ -106,6 +106,11 @@ interface ApiResponse<T> { success: boolean; data: T; message?: string; timestam
 - **Electron**: `pnpm electron:dev` / `electron:build:mac`
 - **Docker**: `docker compose up -d`（含健康检查、资源限制、安全配置）
 
+## 开发策略
+
+- **前后端交互限制**: 当前阶段，仅 **登录 (Login)** 与 **注册 (Register)** 相关功能与后端进行 API 交互。
+- **前端优先原则**: 除认证功能外，所有新功能（如 Todo 管理、AI 助手、设置等）优先在前端完成逻辑开发与 UI 实现，暂不接入后端接口。
+
 ## 注意事项
 
 - **版本锁定**: 所有依赖必须使用 **精确版本** (移除 `^` 和 `~`)，以确保环境一致性。Workspace 内部引用保留 `workspace:*`。
