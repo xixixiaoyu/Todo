@@ -6,6 +6,13 @@ import { fileURLToPath } from 'url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
+const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
+
+// 开发环境下禁用安全警告（因为 Vite 必须使用 unsafe-inline 和 unsafe-eval 才能运行 HMR）
+if (VITE_DEV_SERVER_URL) {
+  process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
+}
+
 // 禁用 Windows 7 的 GPU 加速
 app.disableHardwareAcceleration()
 
@@ -16,8 +23,6 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 let mainWindow: BrowserWindow | null = null
-
-const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 
 function createWindow() {
   mainWindow = new BrowserWindow({
