@@ -23,32 +23,30 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: 设置 Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-
       - name: 安装 pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 9.15.0
 
-      - name: 获取 pnpm store 路径
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-
-      - name: 配置 pnpm 缓存
-        uses: actions/cache@v4
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
         with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
+          node-version: '20.x'
+          cache: 'pnpm'
 
       - name: 安装依赖
         run: pnpm install --frozen-lockfile
+
+      - name: 配置 Turbo 缓存
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
+      - name: 生成 Prisma Client
+        run: pnpm db:generate
 
       - name: 格式检查
         run: pnpm format:check
@@ -56,8 +54,14 @@ jobs:
       - name: Lint 检查
         run: pnpm lint
 
+      - name: 类型检查
+        run: pnpm type-check
+
       - name: 运行测试
         run: pnpm test
+
+      - name: 安全审计
+        run: pnpm audit --prod --audit-level moderate
 
   build:
     name: Build
@@ -68,41 +72,30 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: 设置 Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-
       - name: 安装 pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 9.15.0
 
-      - name: 获取 pnpm store 路径
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-
-      - name: 配置 pnpm 缓存
-        uses: actions/cache@v4
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
         with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
+          node-version: '20.x'
+          cache: 'pnpm'
 
       - name: 安装依赖
         run: pnpm install --frozen-lockfile
 
+      - name: 配置 Turbo 缓存
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
       - name: 生成 Prisma Client
         run: pnpm db:generate
 
-      - name: 构建共享包
-        run: pnpm --filter @my-app/shared build
-
-      - name: 构建后端
-        run: pnpm --filter @my-app/backend build
-
-      - name: 构建前端
-        run: pnpm --filter @my-app/frontend build
+      - name: 构建项目
+        run: pnpm build
