@@ -25,6 +25,7 @@
   ],
   "scripts": {
     "build": "tsup",
+    "type-check": "tsc --noEmit",
     "dev": "tsup",
     "lint": "eslint src --fix --cache",
     "clean": "rm -rf dist"

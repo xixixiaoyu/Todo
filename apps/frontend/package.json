@@ -6,7 +6,8 @@
   "main": "dist-electron/main.mjs",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc -b && vite build",
+    "type-check": "vue-tsc -b",
+    "build": "pnpm type-check && vite build",
     "preview": "vite preview",
     "lint": "eslint . --fix --cache",
     "clean": "rm -rf dist",
