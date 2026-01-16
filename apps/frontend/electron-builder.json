@@ -8,6 +8,10 @@
   },
   "files": ["dist/**/*", "dist-electron/**/*"],
   "asar": true,
+  "compression": "maximum",
+  "extraMetadata": {
+    "main": "dist-electron/main.mjs"
+  },
   "mac": {
     "target": [
       {
