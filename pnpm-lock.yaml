@@ -14,6 +14,9 @@ importers:
       '@eslint/js':
         specifier: 9.39.2
         version: 9.39.2
+      cross-env:
+        specifier: 10.1.0
+        version: 10.1.0
       eslint:
         specifier: 9.39.2
         version: 9.39.2(jiti@2.6.1)

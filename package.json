@@ -11,8 +11,8 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "type-check": "turbo run type-check",
-    "lint": "turbo run lint",
-    "lint:fix": "turbo run lint -- --fix --cache",
+    "lint": "cross-env NODE_OPTIONS='--max-old-space-size=4096' turbo run lint",
+    "lint:fix": "cross-env NODE_OPTIONS='--max-old-space-size=4096' turbo run lint -- --fix --cache",
     "test": "turbo run test",
     "test:watch": "turbo run test:watch",
     "test:coverage": "turbo run test:coverage",
@@ -32,6 +32,7 @@
   },
   "devDependencies": {
     "@eslint/js": "9.39.2",
+    "cross-env": "10.1.0",
     "eslint": "9.39.2",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "5.5.4",
@@ -46,15 +47,15 @@
   },
   "lint-staged": {
     "apps/frontend/**/*.{ts,tsx,vue}": [
-      "eslint --fix --cache --config apps/frontend/eslint.config.mjs",
+      "cross-env NODE_OPTIONS='--max-old-space-size=4096' eslint --fix --cache --config apps/frontend/eslint.config.mjs",
       "prettier --write"
     ],
     "apps/backend/**/*.ts": [
-      "eslint --fix --cache --config apps/backend/eslint.config.mjs",
+      "cross-env NODE_OPTIONS='--max-old-space-size=4096' eslint --fix --cache --config apps/backend/eslint.config.mjs",
       "prettier --write"
     ],
     "packages/shared/**/*.ts": [
-      "eslint --fix --cache --config packages/shared/eslint.config.mjs",
+      "cross-env NODE_OPTIONS='--max-old-space-size=4096' eslint --fix --cache --config packages/shared/eslint.config.mjs",
       "prettier --write"
     ],
     "*.{json,css,scss,html}": [
