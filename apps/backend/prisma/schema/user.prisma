@@ -1,0 +1,14 @@
+model User {
+    id                   Int       @id @default(autoincrement())
+    email                String    @unique
+    name                 String
+    password             String
+    avatar               String?
+    resetPasswordToken   String?
+    resetPasswordExpires DateTime?
+    createdAt            DateTime  @default(now())
+    updatedAt            DateTime  @updatedAt
+    todos                Todo[]
+
+    @@map("users")
+}
