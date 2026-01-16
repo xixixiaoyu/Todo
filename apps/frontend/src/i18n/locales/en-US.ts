@@ -226,7 +226,8 @@ export default {
     clearAll: 'Clear All History',
     clearAllConfirm:
       'Are you sure you want to clear all chat history? This action cannot be undone.',
-    todoAssistantPrompt: 'User currently has {count} pending tasks:\n{todoList}',
+    todoAssistantPrompt:
+      '[Todo Assistant Context]\nThe user currently has {count} pending tasks (tasks marked with 📌 are pinned):\n{todoList}\n\nBased on these tasks, you can provide:\n1. Priority suggestions and time management plans\n2. Task decomposition and execution details\n3. Technical solutions or relevant knowledge support\nPlease keep your responses concise and action-oriented.',
     apiError: 'API Request failed: {status} - {error}',
     noStream: 'Unable to get response stream',
     defaultSystemPrompt:

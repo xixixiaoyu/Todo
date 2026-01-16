@@ -222,7 +222,8 @@ export default {
     exportAll: '导出所有记录',
     clearAll: '清除所有记录',
     clearAllConfirm: '确定要清除所有历史记录吗？此操作不可撤销。',
-    todoAssistantPrompt: '用户当前有 {count} 个未完成的待办事项：\n{todoList}',
+    todoAssistantPrompt:
+      '[Todo 助手上下文]\n用户当前有 {count} 个待完成的待办事项（带有 📌 的为置顶任务）：\n{todoList}\n\n你可以基于这些任务为用户提供：\n1. 优先级建议与时间管理方案\n2. 任务拆解与执行细节建议\n3. 关联知识的补充或技术方案支持\n请保持回复简洁且具有行动导向。',
     apiError: 'API 请求失败: {status} - {error}',
     noStream: '无法获取响应流',
     defaultSystemPrompt: '你是一个友好的 AI 助手，请用简洁明了的中文回答用户的问题。',
