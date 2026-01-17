@@ -111,6 +111,11 @@ watch(
  * 保存配置
  */
 function handleSave() {
+  // 如果在预设管理 Tab 且正在编辑/创建，先保存预设
+  if (activeTab.value === 'presets' && presetManagerRef.value) {
+    presetManagerRef.value.savePreset()
+  }
+
   updateConfig(formData.value)
   modelValue.value = false
 }

@@ -290,7 +290,8 @@ export function useAIConfig() {
     const index = presets.value.findIndex((p) => p.id === presetId)
     if (index !== -1) {
       const updatedPreset = { ...presets.value[index], ...updates }
-      presets.value[index] = updatedPreset
+      // 使用 splice 确保触发 Vue 3 的响应式更新
+      presets.value.splice(index, 1, updatedPreset)
 
       // 如果更新的是当前激活的预设，同步更新配置
       if (activePresetId.value === presetId) {
