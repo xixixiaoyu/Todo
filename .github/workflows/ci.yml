@@ -61,7 +61,7 @@ jobs:
         run: pnpm test
 
       - name: 安全审计
-        run: pnpm audit --prod --audit-level moderate
+        run: pnpm security-audit
 
   build:
     name: Build
