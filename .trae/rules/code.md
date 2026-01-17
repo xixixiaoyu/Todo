@@ -11,6 +11,18 @@ apps/wails/       # Wails (Go) 桌面端
 packages/shared/  # 共享包（Zod Schema、DTO、工具函数）
 ```
 
+## 架构哲学
+
+**Thin Native Shell + Thick Cloud Brain** (轻原生壳 + 重云端大脑)
+
+- **职责分工**:
+  - **UI 层 (Vue 3)**: 界面展示、交互逻辑、Pinia 状态管理。
+  - **原生壳 (Wails/Capacitor)**: 系统托盘、全局快捷键、本地文件、窗口控制。
+  - **业务大脑 (NestJS)**: 数据库 (Prisma)、用户认证、多端同步、AI 逻辑。
+- **通信策略**:
+  - **业务流 (Vue ↔ NestJS)**: 标准 HTTPS/WS 直接通信，不经原生层转发，确保多端高度复用。
+  - **原生流 (Vue ↔ Wails/Capacitor)**: 仅在调用系统底层功能时使用 JS Bridge (`window.go...` 或插件)。
+
 ## 技术栈
 
 **前端**: Vue 3.5+ / Vite 7 / Pinia / Tailwind 3.4+ / GSAP / TanStack Query + Axios / VeeValidate + Zod / Vue I18n
@@ -105,6 +117,7 @@ interface ApiResponse<T> { success: boolean; data: T; message?: string; timestam
 
 ## 跨端与部署
 
+- **适配路径**: UI 与业务逻辑 90% 复用。进军移动端时，仅需使用 Capacitor 替换 Wails 原生层实现。
 - **Capacitor**: `pnpm cap:sync` / `cap:open:ios` / `cap:run:android`
 - **Wails**: `pnpm wails:dev` / `pnpm wails:build`
 - **Docker**: `docker compose up -d`（含健康检查、资源限制、安全配置）
