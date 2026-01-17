@@ -17,7 +17,10 @@ const toggleLanguage = () => {
 </script>
 
 <template>
-  <header class="mb-8 flex items-center justify-between transition-all duration-300">
+  <header
+    class="mb-8 flex items-center justify-between transition-all duration-300"
+    style="--wails-draggable: drag"
+  >
     <div class="flex items-center gap-3 group">
       <div
         class="p-2 rounded-xl bg-amber-500/10 text-amber-600 transition-transform group-hover:rotate-12"
