@@ -14,17 +14,25 @@ defineEmits<{
 
 const { t } = useI18n()
 const isElectron = computed(() => !!window.electronAPI)
-const isMac = computed(() => window.electronAPI?.platform === 'darwin')
+const isWails = computed(() => !!window.go)
+const isDesktop = computed(() => isElectron.value || isWails.value)
+const isMac = computed(
+  () =>
+    window.electronAPI?.platform === 'darwin' ||
+    (isWails.value && navigator.platform.toLowerCase().includes('mac')),
+)
 </script>
 
 <template>
   <header
     class="flex h-14 shrink-0 items-center justify-between border-b border-[#e9d8c3] bg-[#f2e6d5] px-4 backdrop-blur-md z-10 dark:border-border/60 dark:bg-background/90"
-    :class="[isElectron ? 'drag-region select-none cursor-default' : '']"
+    :class="[isDesktop ? 'drag-region select-none cursor-default' : '']"
+    style="--wails-draggable: drag"
+    data-wails-drag
   >
     <div
       class="flex items-center gap-2.5 transition-all duration-300"
-      :class="[{ 'no-drag': isElectron }, isElectron && isMac ? 'pl-20' : '']"
+      :class="[{ 'no-drag': isDesktop }, isDesktop && isMac ? 'pl-20' : '']"
     >
       <div
         class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary shadow-sm"
@@ -35,10 +43,10 @@ const isMac = computed(() => window.electronAPI?.platform === 'darwin')
         t('ai.assistant')
       }}</span>
     </div>
-    <div class="flex items-center gap-1.5" :class="{ 'no-drag': isElectron }">
+    <div class="flex items-center gap-1.5" :class="{ 'no-drag': isDesktop }">
       <!-- 最大化/最小化 -->
       <button
-        class="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-95"
+        class="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-95 no-drag"
         @click="$emit('toggleMaximize')"
       >
         <Maximize2 v-if="!isMaximized" :size="15" />
@@ -46,7 +54,7 @@ const isMac = computed(() => window.electronAPI?.platform === 'darwin')
       </button>
       <!-- 关闭按钮 -->
       <button
-        class="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive active:scale-95"
+        class="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive active:scale-95 no-drag"
         @click="$emit('close')"
       >
         <X :size="16" />

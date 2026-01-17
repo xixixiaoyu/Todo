@@ -2,23 +2,52 @@
 import { computed, onMounted, ref } from 'vue'
 
 const isElectron = computed(() => !!window.electronAPI)
-const isMac = computed(() => window.electronAPI?.platform === 'darwin')
-const isLinux = computed(() => window.electronAPI?.platform === 'linux')
+const isWails = computed(() => !!window.go)
+const isDesktop = computed(() => isElectron.value || isWails.value)
+const isMac = computed(
+  () =>
+    window.electronAPI?.platform === 'darwin' ||
+    (isWails.value && navigator.platform.toLowerCase().includes('mac')),
+)
+const isLinux = computed(
+  () =>
+    window.electronAPI?.platform === 'linux' ||
+    (isWails.value && navigator.platform.toLowerCase().includes('linux')),
+)
 
 const isMaximized = ref(false)
 
-const handleMinimize = () => window.electronAPI?.window.minimize()
-const handleMaximize = async () => {
-  if (!window.electronAPI) return
-  if (await window.electronAPI.window.isMaximized()) {
-    window.electronAPI.window.unmaximize()
-    isMaximized.value = false
-  } else {
-    window.electronAPI.window.maximize()
-    isMaximized.value = true
+const handleMinimize = () => {
+  if (isElectron.value) {
+    window.electronAPI?.window.minimize()
+  } else if (isWails.value) {
+    window.runtime.WindowMinimize()
   }
 }
-const handleClose = () => window.electronAPI?.window.close()
+
+const handleMaximize = async () => {
+  if (isElectron.value && window.electronAPI) {
+    if (await window.electronAPI.window.isMaximized()) {
+      window.electronAPI.window.unmaximize()
+      isMaximized.value = false
+    } else {
+      window.electronAPI.window.maximize()
+      isMaximized.value = true
+    }
+  } else if (isWails.value) {
+    window.runtime.WindowToggleMaximise()
+    // Wails doesn't have a direct isMaximized check in JS easily without calling Go,
+    // but we can toggle it.
+  }
+}
+
+const handleClose = () => {
+  if (isElectron.value) {
+    window.electronAPI?.window.close()
+  } else if (isWails.value) {
+    window.runtime.Quit()
+  }
+}
 
 onMounted(async () => {
   if (isElectron.value && window.electronAPI) {
@@ -29,12 +58,16 @@ onMounted(async () => {
 
 <template>
   <div
-    v-if="isElectron"
+    v-if="isDesktop"
     class="electron-titlebar pointer-events-none fixed top-0 left-0 right-0 z-[100] flex select-none items-center h-10"
-    :class="[isMac ? 'px-4' : 'pl-4']"
+    :class="[isMac ? 'pl-[72px] pr-4' : 'pl-4']"
   >
     <!-- Draggable area -->
-    <div class="pointer-events-auto h-full w-full drag-region" />
+    <div
+      class="pointer-events-auto h-full w-full drag-region"
+      style="--wails-draggable: drag"
+      data-wails-drag
+    />
 
     <!-- Window Controls (Linux only, Windows uses overlay, Mac uses traffic lights) -->
     <div v-if="isLinux" class="pointer-events-auto flex items-center h-full no-drag">

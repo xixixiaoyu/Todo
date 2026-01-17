@@ -20,6 +20,7 @@ export default [
       'public',
       'src/assets',
       'capacitor.config.ts',
+      'wailsjs',
     ],
   },
   ...baseConfig,

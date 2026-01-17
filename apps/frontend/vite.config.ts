@@ -5,6 +5,7 @@ import viteCompression from 'vite-plugin-compression'
 import { resolve } from 'path'
 
 const isElectron = process.env.ELECTRON === 'true'
+const isWails = process.env.WAILS === 'true'
 
 // 动态导入 electron 插件，避免在非 electron 环境下加载
 const getElectronPlugins = async (): Promise<PluginOption[]> => {
@@ -43,8 +44,8 @@ const getElectronPlugins = async (): Promise<PluginOption[]> => {
 
 // 根据环境和构建目标设置 base 路径
 const getBase = () => {
-  // Electron 模式使用相对路径
-  if (isElectron) return './'
+  // Electron 或 Wails 模式使用相对路径
+  if (isElectron || isWails) return './'
   // 生产环境部署到 GitHub Pages
   if (process.env.NODE_ENV === 'production') return '/vue3-nest-template/'
   // 常规开发环境使用 '/'，Capacitor/Electron 会在各自的构建流程中处理
@@ -58,6 +59,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
     base: getBase(),
     define: {
       'import.meta.env.IS_ELECTRON': JSON.stringify(isElectron),
+      'import.meta.env.IS_WAILS': JSON.stringify(isWails),
     },
     plugins: [
       vue(),

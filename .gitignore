@@ -62,3 +62,8 @@ apps/frontend/dev-dist
 # Electron
 apps/frontend/dist-electron
 apps/frontend/release
+
+# Wails
+apps/wails/build/bin
+apps/wails/frontend
+wailsjs

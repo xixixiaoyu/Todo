@@ -17,9 +17,20 @@ export interface ElectronAPI {
   invoke: (channel: string, ...args: unknown[]) => Promise<unknown>
 }
 
+export interface WailsRuntime {
+  WindowMinimize: () => void
+  WindowMaximize: () => void
+  WindowUnmaximize: () => void
+  WindowToggleMaximise: () => void
+  WindowSetTitle: (title: string) => void
+  Quit: () => void
+}
+
 declare global {
   interface Window {
     electronAPI?: ElectronAPI
+    go?: unknown
+    runtime: WailsRuntime
   }
 }
 

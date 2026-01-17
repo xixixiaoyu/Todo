@@ -30,7 +30,8 @@
     "electron:build:mac:arm64": "pnpm electron:clean && cross-env ELECTRON=true vite build && electron-builder --mac --arm64",
     "electron:build:mac:x64": "pnpm electron:clean && cross-env ELECTRON=true vite build && electron-builder --mac --x64",
     "electron:build:win": "pnpm electron:clean && cross-env ELECTRON=true vite build && electron-builder --win",
-    "electron:build:linux": "pnpm electron:clean && cross-env ELECTRON=true vite build && electron-builder --linux"
+    "electron:build:linux": "pnpm electron:clean && cross-env ELECTRON=true vite build && electron-builder --linux",
+    "build:wails": "cross-env WAILS=true pnpm build && rm -rf ../wails/frontend/dist && mkdir -p ../wails/frontend/dist && cp -r dist/* ../wails/frontend/dist/"
   },
   "dependencies": {
     "@capacitor/android": "8.0.0",

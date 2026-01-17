@@ -5,9 +5,10 @@ import i18n from '@/i18n'
  * 应用路由配置
  */
 const router = createRouter({
-  history: import.meta.env.IS_ELECTRON
-    ? createWebHashHistory(import.meta.env.BASE_URL)
-    : createWebHistory(import.meta.env.BASE_URL),
+  history:
+    import.meta.env.IS_ELECTRON || import.meta.env.IS_WAILS
+      ? createWebHashHistory(import.meta.env.BASE_URL)
+      : createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
