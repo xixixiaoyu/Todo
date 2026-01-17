@@ -11,10 +11,6 @@ interface ImportMetaEnv {
   readonly IS_WAILS: boolean
 }
 
-interface Window {
-  go: unknown
-}
-
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }

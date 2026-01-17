@@ -8,7 +8,13 @@
   "frontend:dev:watcher": "pnpm dev",
   "frontend:dev:serverUrl": "http://localhost:5173",
   "author": {
-    "name": "Your Name",
-    "email": "your@email.com"
+    "name": "Todo Team",
+    "email": "contact@todo.app"
+  },
+  "info": {
+    "productName": "Todo",
+    "productVersion": "1.0.0",
+    "copyright": "Copyright © 2024",
+    "comments": "A modern minimalist Todo application"
   }
 }

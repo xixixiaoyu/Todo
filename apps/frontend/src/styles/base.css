@@ -22,7 +22,44 @@
       radial-gradient(circle at 0% 0%, hsla(var(--primary) / 0.03) 0%, transparent 50%),
       radial-gradient(circle at 100% 100%, hsla(var(--primary) / 0.03) 0%, transparent 50%);
     background-attachment: fixed;
+    user-select: none;
   }
+
+  /* Allow text selection in specific areas */
+  input,
+  textarea,
+  [contenteditable='true'],
+  .selectable,
+  .markdown-content {
+    user-select: text;
+  }
+}
+
+/* Wails specific utilities */
+.wails-drag {
+  --wails-draggable: drag;
+}
+
+.wails-no-drag {
+  --wails-draggable: no-drag;
+}
+
+/* Hide elements when not in Wails */
+.wails-only {
+  display: none !important;
+}
+
+.is-wails .wails-only {
+  display: block !important;
+}
+
+/* Hide elements when in Wails */
+.no-wails {
+  display: block !important;
+}
+
+.is-wails .no-wails {
+  display: none !important;
 }
 
 /* Scrollbar styling */
