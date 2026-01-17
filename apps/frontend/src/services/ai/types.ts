@@ -23,6 +23,8 @@ export interface ChatMessage {
   thinkingContent?: string
   reasoning_details?: string
   discussionSteps?: DiscussionStep[]
+  todoActions?: import('@/features/todo/stores/todo').ProposedTodoChange[] // AI 建议的 Todo 变更
+  todoActionsProcessed?: 'applied' | 'discarded' // AI 建议的处理状态
   isStreaming?: boolean
   createdAt?: Date
 }

@@ -119,7 +119,9 @@ function onFireworksComplete() {
           <div class="flex-1 relative flex flex-col" :class="showSearch ? 'mt-2' : 'mt-4'">
             <TodoList
               v-if="todoStore.viewMode === 'list'"
-              :todos="todoStore.filteredTodos"
+              :todos="
+                todoStore.hasProposedChanges ? todoStore.previewTodos : todoStore.filteredTodos
+              "
               :filter="todoStore.filter"
               :search-query="todoStore.searchQuery"
               :editing-id="editingId"

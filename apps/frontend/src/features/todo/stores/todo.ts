@@ -10,6 +10,14 @@ export interface Todo {
   order: number
   isPinned?: boolean
   expanded?: boolean
+  isProposed?: boolean
+  isProposedDelete?: boolean
+}
+
+export interface ProposedTodoChange {
+  id: string
+  type: 'add' | 'update' | 'delete' | 'toggle'
+  data: Partial<Todo> & { title?: string; parentId?: string | null }
 }
 
 export type FilterType = 'pending' | 'completed'
@@ -30,6 +38,7 @@ export const useTodoStore = defineStore(
     const error = ref<string | null>(null)
     const isDrawerOpen = ref(false)
     const isSilencingToast = ref(false)
+    const proposedChanges = ref<ProposedTodoChange[]>([])
     const isAllExpanded = computed(() => {
       // 获取当前过滤/搜索条件下的所有父节点
       const currentParentTodos = filteredTodos.value.filter((t) =>
@@ -60,12 +69,63 @@ export const useTodoStore = defineStore(
 
     // 计算属性
     const filteredTodos = computed(() => {
+      return applyFilterAndSort(todos.value)
+    })
+
+    const previewTodos = computed(() => {
+      if (proposedChanges.value.length === 0) return filteredTodos.value
+
+      const result = todos.value.map((t) => ({ ...t }))
+
+      for (const change of proposedChanges.value) {
+        if (change.type === 'add') {
+          result.push({
+            id: change.id,
+            title: change.data.title || '',
+            completed: false,
+            createdAt: new Date(),
+            parentId: change.data.parentId,
+            order: result.length,
+            isProposed: true,
+            expanded: true,
+          })
+        } else if (change.type === 'update') {
+          const todo = result.find((t) => t.id === change.data.id)
+          if (todo) {
+            if (change.data.title) todo.title = change.data.title
+            todo.isProposed = true
+          }
+        } else if (change.type === 'delete') {
+          const todo = result.find((t) => t.id === change.data.id)
+          if (todo) {
+            todo.isProposedDelete = true
+          }
+        } else if (change.type === 'toggle') {
+          const todo = result.find((t) => t.id === change.data.id)
+          if (todo) {
+            todo.completed = !todo.completed
+            todo.isProposed = true
+          }
+        }
+      }
+
+      return applyFilterAndSort(result)
+    })
+
+    /**
+     * 对任务列表应用当前的过滤、搜索和排序规则
+     */
+    function applyFilterAndSort(items: Todo[]): Todo[] {
       const query = searchQuery.value.trim().toLowerCase()
 
-      return todos.value
+      return items
         .filter((todo) => {
           const matchesFilter = filter.value === 'pending' ? !todo.completed : todo.completed
+          // 如果是建议修改的任务，强制显示在当前视图中（除非被搜索过滤）
+          const isProposedAction = todo.isProposed || todo.isProposedDelete
           const matchesSearch = !query || todo.title.toLowerCase().includes(query)
+
+          if (isProposedAction) return matchesSearch
           return matchesFilter && matchesSearch
         })
         .sort((a, b) => {
@@ -75,7 +135,7 @@ export const useTodoStore = defineStore(
           // 2. 其次按 order 排序
           return (a.order ?? 0) - (b.order ?? 0)
         })
-    })
+    }
 
     const pendingCount = computed(() => todos.value.filter((todo) => !todo.completed).length)
 
@@ -143,13 +203,17 @@ export const useTodoStore = defineStore(
     /**
      * 添加待办事项
      */
-    async function addTodo(title: string, parentId: string | null = null): Promise<boolean> {
+    async function addTodo(
+      title: string,
+      parentId: string | null = null,
+      id?: string,
+    ): Promise<string | null> {
       const trimmedTitle = title.trim()
-      if (!trimmedTitle) return false
+      if (!trimmedTitle) return null
 
       if (isDuplicate(trimmedTitle, parentId)) {
         error.value = 'todo.duplicate'
-        return false
+        return null
       }
 
       loading.value = true
@@ -158,7 +222,7 @@ export const useTodoStore = defineStore(
           todos.value.length > 0 ? Math.min(...todos.value.map((t) => t.order ?? 0)) : 0
 
         const newTodo: Todo = {
-          id: crypto.randomUUID(),
+          id: id || crypto.randomUUID(),
           title: trimmedTitle,
           completed: false,
           createdAt: new Date(),
@@ -167,10 +231,10 @@ export const useTodoStore = defineStore(
           expanded: true,
         }
         todos.value.unshift(newTodo)
-        return true
+        return newTodo.id
       } catch {
         error.value = 'todo.addError'
-        return false
+        return null
       } finally {
         loading.value = false
       }
@@ -356,6 +420,45 @@ export const useTodoStore = defineStore(
       return path
     }
 
+    const hasProposedChanges = computed(() => proposedChanges.value.length > 0)
+
+    function addProposedChanges(changes: ProposedTodoChange[]): void {
+      proposedChanges.value = [...proposedChanges.value, ...changes]
+    }
+
+    function clearProposedChanges(): void {
+      proposedChanges.value = []
+    }
+
+    async function applyProposedChanges(): Promise<void> {
+      if (proposedChanges.value.length === 0) return
+
+      for (const change of proposedChanges.value) {
+        switch (change.type) {
+          case 'add':
+            if (change.data.title) {
+              await addTodo(change.data.title, change.data.parentId ?? null, change.id)
+            }
+            break
+          case 'update':
+            if (change.data.id && change.data.title)
+              await updateTodo(change.data.id, change.data.title)
+            break
+          case 'delete':
+            if (change.data.id) await deleteTodo(change.data.id)
+            break
+          case 'toggle':
+            if (change.data.id) await toggleTodo(change.data.id)
+            break
+        }
+      }
+      clearProposedChanges()
+    }
+
+    function discardProposedChanges(): void {
+      clearProposedChanges()
+    }
+
     return {
       // 状态
       todos,
@@ -367,10 +470,13 @@ export const useTodoStore = defineStore(
       isDrawerOpen,
       isSilencingToast,
       isAllExpanded,
+      proposedChanges,
       // 计算属性
       filteredTodos,
       pendingCount,
       completedCount,
+      hasProposedChanges,
+      previewTodos,
       // 方法
       isDuplicate,
       fetchTodos,
@@ -390,6 +496,10 @@ export const useTodoStore = defineStore(
       toggleAllExpansion,
       toggleTodoExpansion,
       getTodoPath,
+      addProposedChanges,
+      clearProposedChanges,
+      applyProposedChanges,
+      discardProposedChanges,
     }
   },
   {

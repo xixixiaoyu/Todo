@@ -18,7 +18,10 @@ export default {
     save: '保存',
     delete: '删除',
     clear: '清除',
+    apply: '应用',
+    discard: '放弃',
     close: '关闭',
+    none: '无',
     resizeDrawer: '调整抽屉宽度',
     toggleLanguage: '切换语言',
     error: {
@@ -142,6 +145,10 @@ export default {
     collapseAll: '全部收起',
     pin: '置顶',
     unpin: '取消置顶',
+    proposedChangesTitle: 'AI 建议的更改',
+    proposedChangesDesc: 'AI 为你生成了 {count} 项待办变更建议',
+    changesApplied: '已成功应用 {count} 项更改',
+    changesDiscarded: '已放弃 {count} 项更改',
   },
   ai: {
     newChat: '新对话',
@@ -223,7 +230,7 @@ export default {
     clearAll: '清除所有记录',
     clearAllConfirm: '确定要清除所有历史记录吗？此操作不可撤销。',
     todoAssistantPrompt:
-      '[Todo 助手上下文]\n用户当前有 {count} 个待完成的待办事项（带有 📌 的为置顶任务）：\n{todoList}\n\n你可以基于这些任务为用户提供：\n1. 优先级建议与时间管理方案\n2. 任务拆解与执行细节建议\n3. 关联知识的补充或技术方案支持\n请保持回复简洁且具有行动导向。',
+      '[Todo 助手上下文]\n用户当前有 {count} 个待完成的待办事项（带有 📌 的为置顶任务）：\n{todoList}\n\n你可以基于这些任务为用户提供建议。如果你认为需要修改待办事项（增加、删除、修改、切换完成状态），请在回复的最后添加一个 JSON 块（不要包含在 Markdown 代码块中），格式如下：\n\n[TODO_ACTIONS_START]\n[\n  { "type": "add", "data": { "title": "任务标题", "parentId": "可选父级ID" } },\n  { "type": "update", "data": { "id": "任务ID", "title": "新标题" } },\n  { "type": "delete", "data": { "id": "任务ID" } },\n  { "type": "toggle", "data": { "id": "任务ID" } }\n]\n[TODO_ACTIONS_END]\n\n注意：\n1. 只有在用户明确要求或强烈暗示需要操作时才输出 JSON 块。\n2. 务必使用正确的任务 ID。\n3. 请保持回复简洁且具有行动导向。',
     apiError: 'API 请求失败: {status} - {error}',
     noStream: '无法获取响应流',
     defaultSystemPrompt: '你是一个友好的 AI 助手，请用简洁明了的中文回答用户的问题。',
@@ -288,9 +295,11 @@ export default {
     assistantRole: '助手',
     imageGenerated: '图片已生成',
     noImageGenerated: '抱歉，未能生成图片。请检查当前模型是否支持生图功能',
+    noChangesProposed: '暂无建议的变更',
     generatingImage: '正在思考并构思画面...',
     enableImageGeneration: '绘图模式',
     imageGenerationDesc: '绘图模式已开启，请确保当前预设模型支持生图（如 Gemini, DALL-E）',
     imagePromptPlaceholder: '描述你想要生成的画面...',
+    dragToMove: '可拖拽平移 / 滚轮缩放',
   },
 } as const

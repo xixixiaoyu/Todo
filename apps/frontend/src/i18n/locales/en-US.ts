@@ -18,8 +18,11 @@ export default {
     save: 'Save',
     delete: 'Delete',
     clear: 'Clear',
+    apply: 'Apply',
+    discard: 'Discard',
     close: 'Close',
-    resizeDrawer: 'Resize drawer width',
+    none: 'None',
+    resizeDrawer: 'Resize Drawer',
     toggleLanguage: 'Switch Language',
     error: {
       requestFailed: 'Request failed',
@@ -144,6 +147,10 @@ export default {
     collapseAll: 'Collapse All',
     pin: 'Pin',
     unpin: 'Unpin',
+    proposedChangesTitle: 'AI Proposed Changes',
+    proposedChangesDesc: 'AI has generated {count} proposed changes for you',
+    changesApplied: 'Successfully applied {count} changes',
+    changesDiscarded: 'Discarded {count} changes',
   },
   ai: {
     newChat: 'New Chat',
@@ -227,7 +234,7 @@ export default {
     clearAllConfirm:
       'Are you sure you want to clear all chat history? This action cannot be undone.',
     todoAssistantPrompt:
-      '[Todo Assistant Context]\nThe user currently has {count} pending tasks (tasks marked with 📌 are pinned):\n{todoList}\n\nBased on these tasks, you can provide:\n1. Priority suggestions and time management plans\n2. Task decomposition and execution details\n3. Technical solutions or relevant knowledge support\nPlease keep your responses concise and action-oriented.',
+      '[Todo Assistant Context]\nThe user currently has {count} pending tasks (tasks marked with 📌 are pinned):\n{todoList}\n\nBased on these tasks, you can provide suggestions. If you think tasks need to be modified (add, delete, update, toggle completion), please add a JSON block at the end of your response (do not include it in a Markdown code block), in the following format:\n\n[TODO_ACTIONS_START]\n[\n  { "type": "add", "data": { "title": "Task Title", "parentId": "Optional parent ID" } },\n  { "type": "update", "data": { "id": "Task ID", "title": "New Title" } },\n  { "type": "delete", "data": { "id": "Task ID" } },\n  { "type": "toggle", "data": { "id": "Task ID" } }\n]\n[TODO_ACTIONS_END]\n\nNote:\n1. Only output the JSON block when the user explicitly requests or strongly implies a task operation.\n2. Ensure you use the correct task IDs.\n3. Please keep your responses concise and action-oriented.',
     apiError: 'API Request failed: {status} - {error}',
     noStream: 'Unable to get response stream',
     defaultSystemPrompt:
@@ -295,11 +302,13 @@ Current memory list:
     assistantRole: 'Assistant',
     imageGenerated: 'Image generated',
     noImageGenerated:
-      'Sorry, failed to generate image. Please check if the current model supports image generation',
-    generatingImage: 'Thinking and conceptualizing the scene...',
+      'Sorry, failed to generate image. Please check if the current model supports image generation.',
+    noChangesProposed: 'No changes proposed',
+    generatingImage: 'Thinking and conceptualizing...',
     enableImageGeneration: 'Drawing Mode',
     imageGenerationDesc:
       'Drawing mode enabled. Ensure the current model supports image generation (e.g., Gemini, DALL-E)',
     imagePromptPlaceholder: 'Describe the image you want to generate...',
+    dragToMove: 'Drag to move / Scroll to zoom',
   },
 } as const

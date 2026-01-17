@@ -10,6 +10,7 @@ import ChatMessageThinking from './ChatMessageThinking.vue'
 import ChatMessageEditor from './ChatMessageEditor.vue'
 import ChatMessageActions from './ChatMessageActions.vue'
 import ChatMessageImagePreview from './ChatMessageImagePreview.vue'
+import ChatVisualizerPreview from '@/features/todo/components/ChatVisualizerPreview.vue'
 
 import { useEscClose } from '@/composables/useEscClose'
 
@@ -403,19 +404,33 @@ watch(
                   <Pencil :size="14" />
                 </button>
               </div>
-              <!-- AI 消息：Markdown 渲染 -->
-              <!-- eslint-disable vue/no-v-html -->
-              <div
-                v-else-if="renderedHtml"
-                class="markdown-content relative break-words leading-relaxed"
-              >
-                <div v-html="renderedHtml" />
-              </div>
-              <!-- eslint-enable vue/no-v-html -->
-              <!-- 兜底显示 -->
-              <div v-else-if="hasContent" class="relative break-words text-[15px] leading-relaxed">
-                {{ message.content }}
-              </div>
+
+              <!-- AI 消息内容 -->
+              <template v-else>
+                <!-- AI 消息：Markdown 渲染 -->
+                <div
+                  v-if="renderedHtml"
+                  class="markdown-content relative break-words leading-relaxed"
+                >
+                  <div v-html="renderedHtml" />
+                </div>
+
+                <!-- AI 消息：兜底显示（渲染完成前或渲染失败时） -->
+                <div
+                  v-else-if="hasContent"
+                  class="relative break-words text-[15px] leading-relaxed"
+                >
+                  {{ message.content }}
+                </div>
+
+                <!-- AI 建议的思维导图预览 -->
+                <ChatVisualizerPreview
+                  v-if="message.todoActions && message.todoActions.length > 0"
+                  :actions="message.todoActions"
+                  :message-id="message.id"
+                  :processed-status="message.todoActionsProcessed"
+                />
+              </template>
 
               <!-- 操作按钮（AI 消息内部） -->
               <ChatMessageActions

@@ -11,6 +11,7 @@ import {
   GripVertical,
   Pin,
   PinOff,
+  Sparkles,
 } from 'lucide-vue-next'
 import { ref, computed, watch, nextTick } from 'vue'
 import draggable from 'vuedraggable'
@@ -173,10 +174,15 @@ watch(
 <template>
   <div class="flex flex-col gap-2">
     <div
-      class="group relative flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-all duration-200 hover:bg-muted/50 hover:border-primary/30"
+      class="group relative flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-all duration-300 hover:bg-muted/50 hover:border-primary/30"
       :class="[
         { 'opacity-90 scale-[0.98] bg-muted/30': level && level > 0 },
-        { 'border-primary/20 bg-primary/[0.02]': todo.isPinned },
+        { 'border-primary/30 bg-primary/[0.03] shadow-sm shadow-primary/5': todo.isPinned },
+        { 'border-success/40 bg-success/[0.04] ring-1 ring-success/20': todo.isProposed },
+        {
+          'border-destructive/40 bg-destructive/[0.04] opacity-70 grayscale-[0.5]':
+            todo.isProposedDelete,
+        },
       ]"
     >
       <div class="flex items-center gap-2">
@@ -271,9 +277,17 @@ watch(
               v-if="todo.isPinned"
               class="h-3.5 w-3.5 text-primary/70 shrink-0 group-hover:hidden animate-in fade-in zoom-in duration-300"
             />
+            <Sparkles
+              v-if="todo.isProposed"
+              class="h-3.5 w-3.5 text-success/70 shrink-0 animate-in fade-in zoom-in duration-500"
+            />
             <span
               class="flex-1 cursor-pointer select-text text-foreground transition-all duration-300 truncate"
-              :class="todo.completed ? 'line-through text-muted-foreground/50' : ''"
+              :class="[
+                todo.completed ? 'line-through text-muted-foreground/50' : '',
+                todo.isProposedDelete ? 'line-through text-destructive/50' : '',
+                todo.isProposed ? 'text-success/90 font-medium' : '',
+              ]"
               :title="todo.title"
               @dblclick="emit('startEdit', todo.id, todo.title)"
               v-html="highlightMatch(todo.title, searchQuery || '')"

@@ -81,7 +81,7 @@ function formatTodoItems(todos: Todo[]): string {
   const traverse = (item: TodoWithChildren, depth: number) => {
     const indent = '  '.repeat(depth)
     const pinIcon = item.isPinned ? '📌 ' : ''
-    lines.push(`${indent}- ${pinIcon}${item.title}`)
+    lines.push(`${indent}- ${pinIcon}${item.title} (ID: ${item.id})`)
     item.children.forEach((child) => traverse(child, depth + 1))
   }
 
@@ -116,21 +116,23 @@ export function injectSystemPrompts(
     })
   }
 
-  // 3. Todo 助手：注入未完成的 Todo 列表
+  // 3. Todo 助手：注入待办事项列表上下文
   if (todoAssistant) {
     const todoStore = useTodoStore()
     const todoList = formatTodoItems(todoStore.todos)
+    const pendingCount = todoStore.todos.filter((t) => !t.completed).length
 
-    if (todoList) {
-      const pendingCount = todoStore.todos.filter((t) => !t.completed).length
-      result.push({
-        role: 'system',
-        content: t('ai.todoAssistantPrompt', {
-          count: pendingCount,
-          todoList,
-        }),
-      })
-    }
+    // 将上下文和指令分开，指令放在最后以提高依从性
+    result.push({
+      role: 'system',
+      content: `[Todo 助手上下文]
+用户当前有 ${pendingCount} 个待完成的待办事项（带有 📌 的为置顶任务）：
+${todoList || t('common.none') || 'None'}
+
+支持层级结构：
+- 如果要创建子任务，请在 add 操作中指定 parentId。
+- 你可以一次性创建父任务和子任务：先为父任务生成一个唯一的临时 ID（如 "temp-1"），然后在子任务的 parentId 中引用该 ID。`,
+    })
   }
 
   result.push(
@@ -155,6 +157,32 @@ export function injectSystemPrompts(
       }
     }),
   )
+
+  // 4. Todo 助手指令：在消息历史之后再次注入指令，确保 AI 遵循格式要求
+  if (todoAssistant) {
+    result.push({
+      role: 'system',
+      content: `[重要指令：Todo 操作格式]
+如果你认为需要修改待办事项（增加、删除、修改、切换完成状态），请在回复的最后添加一个 JSON 块（不要包含在 Markdown 代码块中），格式如下：
+
+[TODO_ACTIONS_START]
+[
+  { "type": "add", "id": "temp-parent-1", "data": { "title": "父任务标题" } },
+  { "type": "add", "id": "temp-child-1", "data": { "title": "子任务标题", "parentId": "temp-parent-1" } },
+  { "type": "update", "data": { "id": "现有任务ID", "title": "新标题" } },
+  { "type": "delete", "data": { "id": "现有任务ID" } },
+  { "type": "toggle", "data": { "id": "现有任务ID" } }
+]
+[TODO_ACTIONS_END]
+
+注意：
+1. 只有在用户明确要求或强烈暗示需要操作时才输出 JSON 块。
+2. 对于新任务，必须生成唯一的临时 ID（如 "temp-1"），并在需要关联父子关系时正确引用。
+3. 对于现有任务，务必使用上下文提供的真实 ID。
+4. 请保持回复简洁且具有行动导向。
+5. 严禁在 JSON 块中使用任何注释或 Markdown 标记。`,
+    })
+  }
 
   return result
 }

@@ -15,6 +15,7 @@ import { useChatHistory } from './useChatHistory'
 import { getAIThinkingMode, getAIConfig } from './useAIConfig'
 import { useMemory } from './useMemory'
 import { useToast } from './useToast'
+import { useTodoStore, type ProposedTodoChange } from '@/features/todo/stores/todo'
 
 export type { ChatMessage }
 
@@ -42,6 +43,7 @@ export function useChat(options: AIRequestOptions = {}) {
   const currentThinkingContent = ref('')
   const currentReasoningDetails = ref('')
   const currentDiscussionSteps = ref<DiscussionStep[]>([])
+  const currentTodoActions = ref<ProposedTodoChange[]>([])
   const currentAssistantMessageId = ref<string | null>(null)
 
   // 加载/生成状态
@@ -50,6 +52,7 @@ export function useChat(options: AIRequestOptions = {}) {
   const error = ref<string | null>(null)
 
   const { error: toastError } = useToast()
+  const todoStore = useTodoStore()
 
   // 重试计数
   const retryCount = ref(0)
@@ -260,6 +263,39 @@ export function useChat(options: AIRequestOptions = {}) {
         if (chunk === '[DONE]') {
           // 流式结束，将临时内容合并为完整消息
           if (currentAIResponse.value) {
+            // 解析 Todo 助手动作
+            if (aiConfig.todoAssistant) {
+              const content = currentAIResponse.value
+              const startTag = '[TODO_ACTIONS_START]'
+              const endTag = '[TODO_ACTIONS_END]'
+
+              if (content.includes(startTag) && content.includes(endTag)) {
+                const startIndex = content.indexOf(startTag) + startTag.length
+                const endIndex = content.indexOf(endTag)
+                const jsonStr = content.substring(startIndex, endIndex).trim()
+
+                try {
+                  const actions = JSON.parse(jsonStr)
+                  if (Array.isArray(actions)) {
+                    const proposedActions: ProposedTodoChange[] = actions.map((action) => ({
+                      ...action,
+                      id: action.id || generateId(),
+                    }))
+                    currentTodoActions.value = proposedActions
+                    todoStore.addProposedChanges(proposedActions)
+                  }
+                } catch (e) {
+                  console.error('Failed to parse todo actions:', e)
+                }
+
+                // 清理回复内容，移除标签和 JSON 块
+                currentAIResponse.value = (
+                  content.substring(0, content.indexOf(startTag)) +
+                  content.substring(endIndex + endTag.length)
+                ).trim()
+              }
+            }
+
             const aiMessage: ChatMessage = {
               id: currentAssistantMessageId.value!,
               role: 'assistant',
@@ -270,6 +306,8 @@ export function useChat(options: AIRequestOptions = {}) {
                 currentDiscussionSteps.value.length > 0
                   ? [...currentDiscussionSteps.value]
                   : undefined,
+              todoActions:
+                currentTodoActions.value.length > 0 ? [...currentTodoActions.value] : undefined,
               createdAt: new Date(),
             }
             const newHistory = [...chatHistory.value, aiMessage]
@@ -284,6 +322,7 @@ export function useChat(options: AIRequestOptions = {}) {
           currentThinkingContent.value = ''
           currentReasoningDetails.value = ''
           currentDiscussionSteps.value = []
+          currentTodoActions.value = []
           currentAssistantMessageId.value = null
           isGenerating.value = false
         } else if (chunk === '[ABORTED]') {
@@ -454,15 +493,62 @@ export function useChat(options: AIRequestOptions = {}) {
 
     // 如果正在生成，添加流式消息占位
     if (isGenerating.value) {
-      allMessages.push({
-        id: currentAssistantMessageId.value || 'streaming-response',
-        role: 'assistant',
-        content: currentAIResponse.value,
-        thinkingContent: currentThinkingContent.value,
-        discussionSteps:
-          currentDiscussionSteps.value.length > 0 ? [...currentDiscussionSteps.value] : undefined,
-        isStreaming: true,
-      })
+      const lastMessage = allMessages[allMessages.length - 1]
+      const streamingId = currentAssistantMessageId.value || 'streaming-response'
+
+      // 避免在流式结束瞬间（isGenerating 仍为 true 但消息已进入 history）产生重复
+      if (!lastMessage || lastMessage.id !== streamingId) {
+        let displayContent = currentAIResponse.value
+        let actions: ProposedTodoChange[] | undefined
+
+        // 流式过程中尝试解析完整的 TODO_ACTIONS 块
+        const startTag = '[TODO_ACTIONS_START]'
+        const endTag = '[TODO_ACTIONS_END]'
+
+        if (displayContent.includes(startTag)) {
+          const startIndex = displayContent.indexOf(startTag)
+          const contentBefore = displayContent.substring(0, startIndex)
+
+          if (displayContent.includes(endTag)) {
+            const endIndex = displayContent.indexOf(endTag)
+            const contentAfter = displayContent.substring(endIndex + endTag.length)
+            const jsonStr = displayContent.substring(startIndex + startTag.length, endIndex).trim()
+
+            try {
+              const parsedActions = JSON.parse(jsonStr)
+              if (Array.isArray(parsedActions)) {
+                actions = parsedActions.map((a: unknown) => {
+                  const action = a as ProposedTodoChange
+                  return {
+                    ...action,
+                    id: action.id || `stream-${Math.random().toString(36).slice(2, 9)}`,
+                  }
+                })
+              }
+            } catch {
+              // 解析失败说明可能还没传输完或者格式不对，忽略
+            }
+            displayContent = (contentBefore + contentAfter).trim()
+          } else {
+            // 还没出现结束标签，直接隐藏整个开始标签之后的内容
+            displayContent = contentBefore.trim()
+          }
+        }
+
+        allMessages.push({
+          id: streamingId,
+          role: 'assistant',
+          content: displayContent,
+          thinkingContent: currentThinkingContent.value,
+          reasoning_details: currentReasoningDetails.value || undefined,
+          discussionSteps:
+            currentDiscussionSteps.value.length > 0 ? [...currentDiscussionSteps.value] : undefined,
+          todoActions:
+            actions ||
+            (currentTodoActions.value.length > 0 ? [...currentTodoActions.value] : undefined),
+          isStreaming: true,
+        })
+      }
     }
 
     return allMessages
