@@ -226,11 +226,9 @@ export function useChat(options: AIRequestOptions = {}) {
 
     const aiConfig = getAIConfig()
 
-    // 绘图模式处理：如果开启了绘图模式，或者输入以指令开头
-    const drawMatch = content.match(/^\s*\/(draw|image|画|生图|绘图)\s+(.+)/i)
-    if (aiConfig.enableImageGeneration || drawMatch) {
-      const prompt = drawMatch ? drawMatch[2].trim() : content.trim()
-      return generateImage(prompt, images)
+    // 绘图模式处理：如果开启了绘图模式
+    if (aiConfig.enableImageGeneration) {
+      return generateImage(content.trim(), images)
     }
 
     error.value = null
