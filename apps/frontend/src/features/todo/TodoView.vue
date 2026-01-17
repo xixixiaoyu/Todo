@@ -71,8 +71,8 @@ function onFireworksComplete() {
 </script>
 
 <template>
-  <div class="flex-1 bg-background p-4 md:p-8 flex items-center justify-center overflow-hidden">
-    <div ref="cardRef" class="w-full max-w-4xl h-full flex flex-col">
+  <div class="flex-1 bg-background p-4 md:p-8 flex items-end justify-center overflow-hidden">
+    <div ref="cardRef" class="w-full max-w-4xl h-[92vh] flex flex-col">
       <Card
         class="flex-1 flex flex-col border-none shadow-card dark:shadow-[0_8px_30px_rgba(0,0,0,0.3)] overflow-hidden rounded-[24px]"
       >
