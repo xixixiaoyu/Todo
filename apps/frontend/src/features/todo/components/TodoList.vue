@@ -81,38 +81,19 @@ const displayTodos = computed(() => {
       <!-- Empty State -->
       <div
         v-if="todos.length === 0"
-        class="flex flex-col items-center justify-center py-32 animate-in fade-in zoom-in duration-700"
+        class="flex flex-col items-center justify-center py-20 animate-in fade-in zoom-in-95 duration-1000 ease-out"
       >
-        <div class="relative mb-8 group">
-          <!-- Background Glow -->
-          <div
-            class="absolute inset-0 bg-primary/10 blur-3xl rounded-full scale-150 group-hover:bg-primary/20 transition-colors duration-500"
-          />
-
-          <!-- Icon Container -->
-          <div
-            class="relative flex items-center justify-center w-24 h-24 rounded-3xl bg-card border border-border/50 shadow-sm transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3"
-          >
-            <component
-              :is="emptyState.icon"
-              :size="40"
-              :stroke-width="1.5"
-              class="text-primary/40 group-hover:text-primary/60 transition-colors duration-500"
-            />
-          </div>
-
-          <!-- Decorative Elements -->
-          <div class="absolute -top-2 -right-2 w-4 h-4 rounded-full bg-primary/20 animate-pulse" />
-          <div
-            class="absolute -bottom-1 -left-1 w-3 h-3 rounded-full bg-primary/10 animate-bounce delay-300"
-          />
+        <div
+          class="mb-6 flex items-center justify-center w-20 h-20 rounded-full bg-primary/5 border border-primary/10"
+        >
+          <component :is="emptyState.icon" :size="32" :stroke-width="1.5" class="text-primary/40" />
         </div>
 
-        <div class="text-center space-y-2 px-6">
-          <h3 class="text-xl font-semibold tracking-tight text-foreground/80">
+        <div class="text-center space-y-1.5 px-6">
+          <h3 class="text-lg font-medium tracking-tight text-foreground/60">
             {{ emptyState.title }}
           </h3>
-          <p class="text-sm text-muted-foreground/60 max-w-[200px] mx-auto leading-relaxed">
+          <p class="text-sm text-muted-foreground/40 max-w-[240px] mx-auto leading-relaxed">
             {{ emptyState.description }}
           </p>
         </div>

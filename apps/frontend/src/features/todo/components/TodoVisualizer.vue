@@ -254,12 +254,21 @@ const chartOptions = computed(() => ({
     />
     <div
       v-if="treeData.length === 0"
-      class="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground gap-4"
+      class="absolute inset-0 flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-1000 ease-out"
     >
-      <div class="p-4 rounded-full bg-muted/30">
-        <Clover :size="48" class="text-muted-foreground/40" />
+      <div
+        class="mb-6 flex items-center justify-center w-20 h-20 rounded-full bg-primary/5 border border-primary/10"
+      >
+        <Clover :size="32" :stroke-width="1.5" class="text-primary/40" />
       </div>
-      <p class="text-lg font-medium">{{ t('todo.emptyPending') }}</p>
+      <div class="text-center space-y-1.5 px-6">
+        <h3 class="text-lg font-medium tracking-tight text-foreground/60">
+          {{ t('todo.emptyPending') }}
+        </h3>
+        <p class="text-sm text-muted-foreground/40 max-w-[240px] mx-auto leading-relaxed">
+          {{ t('todo.emptyPendingDescription') }}
+        </p>
+      </div>
     </div>
   </div>
 </template>
