@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, nextTick, computed } from 'vue'
+import { ref, nextTick, computed, watch } from 'vue'
 import ResizableDrawer from '@/components/ResizableDrawer.vue'
 import ChatMessageList from '@/components/chat/ChatMessageList.vue'
 import AISettingsDialog from '@/components/chat/AISettingsDialog.vue'
@@ -143,8 +143,12 @@ const {
   editAndResendMessage,
 } = useChat()
 
-const isMaximized = ref(false)
+const isMaximized = ref(localStorage.getItem('ai-assistant-maximized') === 'true')
 const chatInput = ref('')
+
+watch(isMaximized, (val) => {
+  localStorage.setItem('ai-assistant-maximized', String(val))
+})
 
 // 设置弹窗状态
 const showSettings = ref(false)
