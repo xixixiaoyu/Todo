@@ -3,13 +3,19 @@ import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 import ToastProvider from '@/components/ui/ToastProvider.vue'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { isWails } from '@/lib/wails'
+import { isWails, system } from '@/lib/wails'
 
 onMounted(() => {
   if (isWails()) {
     document.body.classList.add('is-wails')
   }
 })
+
+const handleDblClick = () => {
+  if (isWails()) {
+    system.toggleMaximise()
+  }
+}
 </script>
 
 <template>
@@ -20,8 +26,9 @@ onMounted(() => {
       <!-- Wails 顶部拖拽区域 (macOS HiddenInset 模式下需要) -->
       <div
         v-if="isWails()"
-        class="wails-drag h-8 shrink-0 flex items-center justify-center"
+        class="wails-drag h-8 shrink-0 flex items-center justify-center cursor-default select-none"
         style="--wails-draggable: drag"
+        @dblclick="handleDblClick"
       >
         <span
           class="text-[10px] text-muted-foreground/30 font-medium tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity"

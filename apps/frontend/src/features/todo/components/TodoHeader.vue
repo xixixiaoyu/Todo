@@ -5,6 +5,7 @@ import ThemeToggle from './ThemeToggle.vue'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useTodoStore } from '../stores/todo'
+import { isWails, system } from '@/lib/wails'
 
 const { t, locale } = useI18n()
 const todoStore = useTodoStore()
@@ -14,12 +15,19 @@ const toggleLanguage = () => {
   locale.value = newLocale
   localStorage.setItem('locale', newLocale)
 }
+
+const handleDblClick = () => {
+  if (isWails()) {
+    system.toggleMaximise()
+  }
+}
 </script>
 
 <template>
   <header
-    class="mb-8 flex items-center justify-between transition-all duration-300"
+    class="mb-8 flex items-center justify-between transition-all duration-300 select-none"
     style="--wails-draggable: drag"
+    @dblclick="handleDblClick"
   >
     <div class="flex items-center gap-3 group">
       <div

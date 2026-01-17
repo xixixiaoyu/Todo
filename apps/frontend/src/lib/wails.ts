@@ -4,10 +4,15 @@
  */
 
 // 声明 Wails 注入的全局变量
+interface WailsRuntime {
+  WindowToggleMaximise?: () => void
+  [key: string]: unknown
+}
+
 declare global {
   interface Window {
-    go: unknown
-    runtime: unknown
+    go: Record<string, unknown>
+    runtime: WailsRuntime
   }
 }
 
@@ -69,4 +74,13 @@ export const system = {
    * 退出应用
    */
   quit: () => callGo('main.App.Quit'),
+
+  /**
+   * 切换窗口最大化
+   */
+  toggleMaximise: () => {
+    if (isWails() && window.runtime?.WindowToggleMaximise) {
+      window.runtime.WindowToggleMaximise()
+    }
+  },
 }
