@@ -12,6 +12,7 @@ import {
   Settings2,
   Check,
   Star,
+  Sparkles,
 } from 'lucide-vue-next'
 
 const props = defineProps<{
@@ -78,17 +79,18 @@ const handlePresetMouseLeave = () => {
 </script>
 
 <template>
-  <div class="shrink-0 border-t border-border/10 bg-background p-4">
+  <div class="toolbar-container shrink-0 border-t border-border/10 bg-background p-4">
     <div :class="[isMaximized ? 'mx-auto max-w-4xl w-full' : '', 'space-y-3']">
       <!-- 快捷操作按钮 -->
       <div class="flex flex-wrap items-center gap-2 text-sm">
         <button
           class="flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-[13px] text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-30"
           :disabled="!hasHistory || isGenerating"
+          :title="t('ai.newChat')"
           @click="emit('newChat')"
         >
           <Plus :size="14" />
-          <span>{{ t('ai.newChat') }}</span>
+          <span class="toolbar-text">{{ t('ai.newChat') }}</span>
         </button>
 
         <!-- 历史记录按钮 -->
@@ -132,7 +134,7 @@ const handlePresetMouseLeave = () => {
           @click="emit('toggleTodo')"
         >
           <Clover :size="14" :class="{ 'animate-spin-slow': isTodoAssistantEnabled }" />
-          <span class="font-medium">{{ t('ai.todoAssistant') }}</span>
+          <span class="toolbar-text font-medium">{{ t('ai.todoAssistant') }}</span>
         </button>
 
         <!-- 多模型协同讨论 -->
@@ -152,7 +154,7 @@ const handlePresetMouseLeave = () => {
             @click="emit('toggleDiscussion')"
           >
             <Users :size="14" :class="{ 'animate-pulse-slow': isDiscussionEnabled }" />
-            <span class="font-medium">{{ t('ai.discussionMode') }}</span>
+            <span class="toolbar-text font-medium">{{ t('ai.discussionMode') }}</span>
           </button>
 
           <!-- 讨论模型快速选择弹窗 -->
@@ -255,7 +257,7 @@ const handlePresetMouseLeave = () => {
           @click="emit('toggleImageGen')"
         >
           <ImageIcon :size="14" :class="{ 'animate-pulse-slow': isImageGenerationEnabled }" />
-          <span class="font-medium">{{ t('ai.enableImageGeneration') }}</span>
+          <span class="toolbar-text font-medium">{{ t('ai.enableImageGeneration') }}</span>
         </button>
 
         <div class="h-4 w-px bg-border/30 mx-0.5" />
@@ -268,9 +270,11 @@ const handlePresetMouseLeave = () => {
         >
           <button
             class="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-[13px] text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground hover:shadow-sm active:scale-95 shadow-sm"
+            :title="t('ai.managePresets')"
             @click="showPresetDropdown = !showPresetDropdown"
           >
-            <span class="font-medium">{{ currentPresetName }}</span>
+            <Sparkles :size="14" class="toolbar-icon-only hidden" />
+            <span class="toolbar-text font-medium">{{ currentPresetName }}</span>
             <ChevronDown
               :size="14"
               class="transition-transform duration-300"
@@ -333,3 +337,24 @@ const handlePresetMouseLeave = () => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.toolbar-container {
+  container-type: inline-size;
+}
+
+@container (max-width: 520px) {
+  .toolbar-text {
+    display: none;
+  }
+
+  .toolbar-icon-only {
+    display: block !important;
+  }
+
+  .toolbar-container button {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+}
+</style>
