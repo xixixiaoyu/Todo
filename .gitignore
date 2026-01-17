@@ -47,6 +47,7 @@ prisma/*.db-journal
 *.tsbuildinfo
 .cache
 .eslintcache
+apps/frontend/package.json.md5
 
 # Capacitor
 apps/frontend/ios/App/App/public
