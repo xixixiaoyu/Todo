@@ -14,7 +14,7 @@ packages/shared/  # 共享包（Zod Schema、DTO、工具函数）
 ## 技术栈
 
 **前端**: Vue 3.5+ / Vite 7 / Pinia / Tailwind 3.4+ / GSAP / TanStack Query + Axios / VeeValidate + Zod / Vue I18n
-**跨端**: Capacitor 8 / Electron 39 / Wails 2.11 / PWA
+**跨端**: Capacitor 8 / Wails 2.11 / PWA
 **后端**: NestJS 11+ / PostgreSQL 16 + Prisma 7 / Redis (ioredis 5.8+) + BullMQ / JWT + Passport / nestjs-zod / Socket.IO
 **工具**: pnpm 9.15+ / Turbo 2.7+ / ESLint 9 / Vitest
 
@@ -106,7 +106,6 @@ interface ApiResponse<T> { success: boolean; data: T; message?: string; timestam
 ## 跨端与部署
 
 - **Capacitor**: `pnpm cap:sync` / `cap:open:ios` / `cap:run:android`
-- **Electron**: `pnpm electron:dev` / `electron:build:mac`
 - **Wails**: `pnpm wails:dev` / `pnpm wails:build`
 - **Docker**: `docker compose up -d`（含健康检查、资源限制、安全配置）
 
