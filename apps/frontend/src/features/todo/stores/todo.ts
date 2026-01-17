@@ -16,7 +16,7 @@ export interface Todo {
 
 export interface ProposedTodoChange {
   id: string
-  type: 'add' | 'update' | 'delete' | 'toggle'
+  type: 'add' | 'update' | 'delete' | 'toggle' | 'pin'
   data: Partial<Todo> & { title?: string; parentId?: string | null }
 }
 
@@ -104,6 +104,12 @@ export const useTodoStore = defineStore(
           const todo = result.find((t) => t.id === change.data.id)
           if (todo) {
             todo.completed = !todo.completed
+            todo.isProposed = true
+          }
+        } else if (change.type === 'pin') {
+          const todo = result.find((t) => t.id === change.data.id)
+          if (todo) {
+            todo.isPinned = !todo.isPinned
             todo.isProposed = true
           }
         }
@@ -449,6 +455,9 @@ export const useTodoStore = defineStore(
             break
           case 'toggle':
             if (change.data.id) await toggleTodo(change.data.id)
+            break
+          case 'pin':
+            if (change.data.id) await togglePin(change.data.id)
             break
         }
       }

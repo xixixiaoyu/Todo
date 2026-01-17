@@ -163,7 +163,7 @@ ${todoList || t('common.none') || 'None'}
     result.push({
       role: 'system',
       content: `[重要指令：Todo 操作格式]
-如果你认为需要修改待办事项（增加、删除、修改、切换完成状态），请在回复的最后添加一个 JSON 块（不要包含在 Markdown 代码块中），格式如下：
+如果你认为需要修改待办事项（增加、删除、修改、切换完成状态、置顶/取消置顶），请在回复的最后添加一个 JSON 块（不要包含在 Markdown 代码块中），格式如下：
 
 [TODO_ACTIONS_START]
 [
@@ -171,7 +171,8 @@ ${todoList || t('common.none') || 'None'}
   { "type": "add", "id": "temp-child-1", "data": { "title": "子任务标题", "parentId": "temp-parent-1" } },
   { "type": "update", "data": { "id": "现有任务ID", "title": "新标题" } },
   { "type": "delete", "data": { "id": "现有任务ID" } },
-  { "type": "toggle", "data": { "id": "现有任务ID" } }
+  { "type": "toggle", "data": { "id": "现有任务ID" } },
+  { "type": "pin", "data": { "id": "现有任务ID" } }
 ]
 [TODO_ACTIONS_END]
 
@@ -179,8 +180,9 @@ ${todoList || t('common.none') || 'None'}
 1. 只要你在回复中建议了新的待办事项、任务拆解或对现有任务的修改，就必须输出对应的 JSON 块。不用担心用户是否同意，用户会在可视化界面预览并手动点击“应用”后才会真正修改数据。
 2. 对于新任务，必须生成唯一的临时 ID（如 "temp-1"），并在需要关联父子关系时正确引用。
 3. 对于现有任务，务必使用上下文提供的真实 ID。
-4. 请保持回复简洁且具有行动导向。
-5. 严禁在 JSON 块中使用任何注释或 Markdown 标记。`,
+4. "pin" 操作用于切换置顶状态，如果任务当前已置顶，发送 "pin" 将取消置顶。
+5. 请保持回复简洁且具有行动导向。
+6. 严禁在 JSON 块中使用任何注释或 Markdown 标记。`,
     })
   }
 

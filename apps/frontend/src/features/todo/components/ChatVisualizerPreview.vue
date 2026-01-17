@@ -52,9 +52,11 @@ function updateMessageStatus(status: 'applied' | 'discarded') {
 }
 
 const stats = computed(() => {
-  const counts = { add: 0, update: 0, delete: 0, toggle: 0 }
+  const counts = { add: 0, update: 0, delete: 0, toggle: 0, pin: 0 }
   props.actions.forEach((a) => {
-    counts[a.type]++
+    if (a.type in counts) {
+      counts[a.type as keyof typeof counts]++
+    }
   })
   return counts
 })
@@ -178,6 +180,18 @@ const treeData = computed(() => {
           node.label = { formatter: `{proposed|✨ ${action.data.title}}` }
         }
       }
+    } else if (action.type === 'pin') {
+      const node = todoMap.get(action.data.id!)
+      if (node) {
+        node.itemStyle = {
+          ...node.itemStyle,
+          color: '#fbbf24',
+          borderWidth: 2,
+        }
+        node.label = {
+          formatter: `{pin|📌 ${node.name}}`,
+        }
+      }
     } else if (action.type === 'delete') {
       const node = todoMap.get(action.data.id!)
       if (node) {
@@ -273,6 +287,7 @@ const chartOptions = computed(() => ({
             opacity: 0.6,
             padding: [2, 4],
           },
+          pin: { color: '#fbbf24', fontWeight: 'bold', padding: [2, 4] },
           root: { color: '#fbbf24', fontWeight: 'bold', padding: [2, 4] },
           normal: { padding: [2, 4] },
         },
@@ -317,9 +332,9 @@ const chartOptions = computed(() => ({
               >+{{ stats.add }}</span
             >
             <span
-              v-if="stats.update > 0 || stats.toggle > 0"
+              v-if="stats.update > 0 || stats.toggle > 0 || stats.pin > 0"
               class="text-[9px] px-1 rounded-sm bg-primary/20 text-primary font-bold"
-              >~{{ stats.update + stats.toggle }}</span
+              >~{{ stats.update + stats.toggle + stats.pin }}</span
             >
             <span
               v-if="stats.delete > 0"
