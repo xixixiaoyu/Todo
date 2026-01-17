@@ -122,28 +122,7 @@ function loadPresets(): AIPreset[] {
   }
 
   // 默认预设
-  return [
-    {
-      id: 'deepseek-chat',
-      name: 'DeepSeek Chat',
-      baseUrl: 'https://api.deepseek.com',
-      apiKey: '',
-      model: 'deepseek-chat',
-      systemPrompt: i18n.global.t('ai.defaultSystemPrompt'),
-      temperature: 0.3,
-      todoAssistant: true,
-    },
-    {
-      id: 'gemini-2.0-flash',
-      name: 'Gemini 2.0 Flash',
-      baseUrl: 'https://openrouter.ai/api/v1',
-      apiKey: '',
-      model: 'google/gemini-2.0-flash-exp:free',
-      systemPrompt: i18n.global.t('ai.defaultSystemPrompt'),
-      temperature: 0.7,
-      todoAssistant: true,
-    },
-  ]
+  return []
 }
 
 /**
