@@ -18,7 +18,7 @@
     "test:coverage": "turbo run test:coverage",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "security-audit": "pnpm audit --prod --audit-level moderate --registry=https://registry.npmjs.org/",
+    "security-audit": "node scripts/security-audit.js",
     "clean": "turbo run clean",
     "db:generate": "pnpm --filter @my-app/backend prisma:generate",
     "db:push": "pnpm --filter @my-app/backend prisma:push",
@@ -66,6 +66,14 @@
     ]
   },
   "pnpm": {
-    "overrides": {}
+    "overrides": {
+      "nodemailer": "^7.0.12",
+      "glob": "^10.5.0",
+      "qs": "^6.14.1",
+      "tar": "^7.5.3",
+      "diff": "^8.0.3",
+      "hono": "^4.11.4",
+      "katex": "^0.16.21"
+    }
   }
 }
