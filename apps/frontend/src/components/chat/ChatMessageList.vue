@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, watch, nextTick, computed } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ArrowDown, Sparkles, MessageSquare, Lightbulb, Zap } from 'lucide-vue-next'
+import { ArrowDown, Sparkles } from 'lucide-vue-next'
 import ChatMessage from './ChatMessage.vue'
+import ChatSuggestions from './ChatSuggestions.vue'
 import type { ChatMessage as ChatMessageType } from '@/composables/useChat'
 import { useSmartScroll } from '@/composables/useSmartScroll'
 import { useChatHistory } from '@/composables/useChatHistory'
@@ -23,31 +24,6 @@ const { currentSessionId } = useChatHistory()
 
 // 是否正在切换会话（用于跳过冗余动画）
 const isSwitchingSession = ref(false)
-
-// 建议选项
-const suggestions = computed(() => [
-  {
-    icon: Lightbulb,
-    text: t('ai.suggestion1'),
-    color: 'text-yellow-500',
-    bg: 'bg-yellow-500/10',
-    requireTodo: true,
-  },
-  {
-    icon: Zap,
-    text: t('ai.suggestion2'),
-    color: 'text-blue-500',
-    bg: 'bg-blue-500/10',
-    requireTodo: true,
-  },
-  {
-    icon: MessageSquare,
-    text: t('ai.suggestion3'),
-    color: 'text-green-500',
-    bg: 'bg-green-500/10',
-    requireTodo: true,
-  },
-])
 
 const containerRef = ref<HTMLElement | null>(null)
 
@@ -145,26 +121,7 @@ defineExpose({
             {{ t('ai.welcomeSubtitle') }}
           </p>
 
-          <div class="grid w-full max-w-2xl gap-4 sm:grid-cols-3">
-            <button
-              v-for="item in suggestions"
-              :key="item.text"
-              class="group flex flex-col items-start rounded-2xl border border-border bg-card p-5 text-left transition-all hover:border-primary/30 hover:bg-primary/5 hover:shadow-md active:scale-[0.98]"
-              @click="emit('select-suggestion', item.text, { requireTodo: item.requireTodo })"
-            >
-              <div
-                :class="[
-                  'mb-3 flex h-10 w-10 items-center justify-center rounded-xl transition-colors group-hover:bg-white/50 dark:group-hover:bg-black/20',
-                  item.bg,
-                ]"
-              >
-                <component :is="item.icon" :class="['h-5 w-5', item.color]" />
-              </div>
-              <p class="text-sm font-medium leading-relaxed text-foreground/80">
-                {{ item.text }}
-              </p>
-            </button>
-          </div>
+          <ChatSuggestions @select="(text, options) => emit('select-suggestion', text, options)" />
         </div>
 
         <!-- 消息列表 -->
