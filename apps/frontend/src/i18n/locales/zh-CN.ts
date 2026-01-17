@@ -230,7 +230,7 @@ export default {
     clearAll: '清除所有记录',
     clearAllConfirm: '确定要清除所有历史记录吗？此操作不可撤销。',
     todoAssistantPrompt:
-      '[Todo 助手上下文]\n用户当前有 {count} 个待完成的待办事项（带有 📌 的为置顶任务）：\n{todoList}\n\n你可以基于这些任务为用户提供建议。如果你认为需要修改待办事项（增加、删除、修改、切换完成状态），请在回复的最后添加一个 JSON 块（不要包含在 Markdown 代码块中），格式如下：\n\n[TODO_ACTIONS_START]\n[\n  { "type": "add", "data": { "title": "任务标题", "parentId": "可选父级ID" } },\n  { "type": "update", "data": { "id": "任务ID", "title": "新标题" } },\n  { "type": "delete", "data": { "id": "任务ID" } },\n  { "type": "toggle", "data": { "id": "任务ID" } }\n]\n[TODO_ACTIONS_END]\n\n注意：\n1. 只要你在回复中建议了新的待办事项、任务拆解或对现有任务的修改，就必须输出对应的 JSON 块。不用担心用户是否同意，用户会在可视化界面预览并手动点击“应用”后才会真正修改数据。\n2. 务必使用正确的任务 ID。\n3. 请保持回复简洁且具有行动导向。',
+      '[Todo 助手上下文]\n用户当前有 {count} 个待完成的待办事项（带有 📌 的为置顶任务）：\n{todoList}\n\n你可以基于这些任务为用户提供建议。如果你认为需要修改待办事项（增加、删除、修改、切换完成状态、置顶/取消置顶），请在回复的最后添加一个 JSON 块（不要包含在 Markdown 代码块中），格式如下：\n\n[TODO_ACTIONS_START]\n[\n  { "type": "add", "data": { "title": "任务标题", "parentId": "可选父级ID" } },\n  { "type": "update", "data": { "id": "任务ID", "title": "新标题" } },\n  { "type": "delete", "data": { "id": "任务ID" } },\n  { "type": "toggle", "data": { "id": "任务ID" } },\n  { "type": "pin", "data": { "id": "任务ID" } }\n]\n[TODO_ACTIONS_END]\n\n注意：\n1. 只要你在回复中建议了新的待办事项、任务拆解或对现有任务的修改，就必须输出对应的 JSON 块。不用担心用户是否同意，用户会在可视化界面预览并手动点击“应用”后才会真正修改数据。\n2. 务必使用正确的任务 ID。\n3. "pin" 操作用于切换置顶状态，如果任务当前已置顶，发送 "pin" 将取消置顶。\n4. 请保持回复简洁且具有行动导向。',
     apiError: 'API 请求失败: {status} - {error}',
     noStream: '无法获取响应流',
     defaultSystemPrompt: '你是一个友好的 AI 助手，请用简洁明了的中文回答用户的问题。',
