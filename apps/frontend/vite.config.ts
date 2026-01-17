@@ -1,3 +1,4 @@
+import { resolve } from 'path'
 import { defineConfig, type UserConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -86,6 +87,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
     resolve: {
       alias: {
         '@': resolve(__dirname, './src'),
+        '@my-app/shared': resolve(__dirname, '../../packages/shared/src/index.ts'),
       },
     },
     server: {
@@ -110,5 +112,3 @@ export default defineConfig(async (): Promise<UserConfig> => {
     },
   }
 })
-
-import { resolve } from 'path'
