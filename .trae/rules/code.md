@@ -7,13 +7,14 @@
 ```
 apps/backend/     # NestJS 后端
 apps/frontend/    # Vue 3 前端
+apps/wails/       # Wails (Go) 桌面端
 packages/shared/  # 共享包（Zod Schema、DTO、工具函数）
 ```
 
 ## 技术栈
 
 **前端**: Vue 3.5+ / Vite 7 / Pinia / Tailwind 3.4+ / GSAP / TanStack Query + Axios / VeeValidate + Zod / Vue I18n
-**跨端**: Capacitor 8 / Electron 39 / PWA
+**跨端**: Capacitor 8 / Electron 39 / Wails 2.11 / PWA
 **后端**: NestJS 11+ / PostgreSQL 16 + Prisma 7 / Redis (ioredis 5.8+) + BullMQ / JWT + Passport / nestjs-zod / Socket.IO
 **工具**: pnpm 9.15+ / Turbo 2.7+ / ESLint 9 / Vitest
 
@@ -41,6 +42,8 @@ pnpm db:push                          # 推送 Schema 到数据库
 pnpm lint && pnpm format              # 代码检查与格式化
 pnpm --filter @my-app/shared build    # 构建共享包
 pnpm test                             # 运行测试
+pnpm wails:dev                        # 启动 Wails 开发模式
+pnpm wails:build                      # 打包 Wails 应用
 docker compose up postgres redis -d    # 启动数据库服务
 docker compose up -d                  # 启动完整服务栈
 ```
@@ -104,6 +107,7 @@ interface ApiResponse<T> { success: boolean; data: T; message?: string; timestam
 
 - **Capacitor**: `pnpm cap:sync` / `cap:open:ios` / `cap:run:android`
 - **Electron**: `pnpm electron:dev` / `electron:build:mac`
+- **Wails**: `pnpm wails:dev` / `pnpm wails:build`
 - **Docker**: `docker compose up -d`（含健康检查、资源限制、安全配置）
 
 ## 开发策略
