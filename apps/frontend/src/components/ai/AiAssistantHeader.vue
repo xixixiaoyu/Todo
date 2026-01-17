@@ -19,7 +19,7 @@ const isMac = computed(() => window.electronAPI?.platform === 'darwin')
 
 <template>
   <header
-    class="flex h-14 shrink-0 items-center justify-between border-b border-[#e5d5bc] bg-[#efe3d0] px-4 backdrop-blur-md z-10 dark:border-border/60 dark:bg-background/90"
+    class="flex h-14 shrink-0 items-center justify-between border-b border-[#e9d8c3] bg-[#f2e6d5] px-4 backdrop-blur-md z-10 dark:border-border/60 dark:bg-background/90"
     :class="[isElectron ? 'drag-region select-none cursor-default' : '']"
   >
     <div
