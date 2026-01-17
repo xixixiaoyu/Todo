@@ -93,8 +93,11 @@ const isThinkingEnabled = computed(() => aiThinkingMode.value === 'enabled')
 
 // 切换 Todo 助手
 const toggleTodoAssistant = () => {
+  const newValue = !config.value.todoAssistant
   updateConfig({
-    todoAssistant: !config.value.todoAssistant,
+    todoAssistant: newValue,
+    // 互斥：开启 Todo 助手时，关闭其他模式
+    ...(newValue ? { discussionMode: false, enableImageGeneration: false } : {}),
   })
 }
 
@@ -103,8 +106,11 @@ const isTodoAssistantEnabled = computed(() => config.value.todoAssistant)
 
 // 切换多模型协作
 const toggleDiscussionMode = () => {
+  const newValue = !config.value.discussionMode
   updateConfig({
-    discussionMode: !config.value.discussionMode,
+    discussionMode: newValue,
+    // 互斥：开启多模型协作时，关闭其他模式
+    ...(newValue ? { todoAssistant: false, enableImageGeneration: false } : {}),
   })
 }
 
@@ -113,8 +119,11 @@ const isDiscussionEnabled = computed(() => config.value.discussionMode)
 
 // 切换生图功能
 const toggleImageGeneration = () => {
+  const newValue = !config.value.enableImageGeneration
   updateConfig({
-    enableImageGeneration: !config.value.enableImageGeneration,
+    enableImageGeneration: newValue,
+    // 互斥：开启生图模式时，关闭其他模式
+    ...(newValue ? { todoAssistant: false, discussionMode: false } : {}),
   })
 }
 
@@ -366,6 +375,9 @@ defineOptions({
             v-model="chatInput"
             :is-input-disabled="isInputDisabled"
             :is-image-generation-enabled="isImageGenerationEnabled"
+            :is-todo-assistant-enabled="isTodoAssistantEnabled"
+            :is-discussion-enabled="isDiscussionEnabled"
+            :is-thinking-enabled="isThinkingEnabled"
             :selected-images="selectedImages"
             :is-generating="isGenerating"
             :error="error"
@@ -377,6 +389,10 @@ defineOptions({
             @trigger-image-upload="triggerImageUpload"
             @handle-image-upload="handleImageUpload"
             @paste="handlePaste"
+            @toggle-todo="toggleTodoAssistant"
+            @toggle-discussion="toggleDiscussionMode"
+            @toggle-image-gen="toggleImageGeneration"
+            @toggle-thinking="toggleThinkingMode"
           />
         </template>
       </AiAssistantToolbar>

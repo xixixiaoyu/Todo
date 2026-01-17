@@ -1,13 +1,26 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, onMounted, watch, nextTick, computed, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ChatSession } from '@/composables/useChatHistory'
-import { X, AlertCircle, Image as ImageIcon, Square, ChevronLeft, Send } from 'lucide-vue-next'
+import {
+  X,
+  AlertCircle,
+  Image as ImageIcon,
+  Square,
+  ChevronLeft,
+  Send,
+  Clover,
+  Users,
+  Lightbulb,
+} from 'lucide-vue-next'
 
 const props = defineProps<{
   modelValue: string
   isInputDisabled: boolean
   isImageGenerationEnabled: boolean
+  isTodoAssistantEnabled: boolean
+  isDiscussionEnabled: boolean
+  isThinkingEnabled: boolean
   selectedImages: string[]
   isGenerating: boolean
   error: string | null
@@ -23,11 +36,88 @@ const emit = defineEmits<{
   (e: 'triggerImageUpload'): void
   (e: 'paste', event: ClipboardEvent): void
   (e: 'handleImageUpload', event: Event): void
+  (e: 'toggleTodo'): void
+  (e: 'toggleDiscussion'): void
+  (e: 'toggleImageGen'): void
+  (e: 'toggleThinking'): void
 }>()
 
 const { t } = useI18n()
 const textareaRef = ref<HTMLTextAreaElement>()
 const fileInputRef = ref<HTMLInputElement>()
+
+// 快捷指令相关
+const showSlashCommands = ref(false)
+const selectedCommandIndex = ref(0)
+const slashCommands = computed(() => [
+  {
+    id: 'thinking',
+    title: t('ai.thinkingMode'),
+    icon: Lightbulb,
+    active: props.isThinkingEnabled,
+    action: () => emit('toggleThinking'),
+  },
+  {
+    id: 'todo',
+    title: t('ai.todoAssistant'),
+    icon: Clover,
+    active: props.isTodoAssistantEnabled,
+    action: () => emit('toggleTodo'),
+  },
+  {
+    id: 'discuss',
+    title: t('ai.discussionMode'),
+    icon: Users,
+    active: props.isDiscussionEnabled,
+    action: () => emit('toggleDiscussion'),
+  },
+  {
+    id: 'draw',
+    title: t('ai.enableImageGeneration'),
+    icon: ImageIcon,
+    active: props.isImageGenerationEnabled,
+    action: () => emit('toggleImageGen'),
+  },
+])
+
+const handleSlashCommand = (index: number) => {
+  slashCommands.value[index].action()
+  emit('update:modelValue', '')
+  showSlashCommands.value = false
+  nextTick(() => textareaRef.value?.focus())
+}
+
+const handleKeydown = (event: KeyboardEvent) => {
+  if (showSlashCommands.value) {
+    if (event.key === 'ArrowUp') {
+      event.preventDefault()
+      selectedCommandIndex.value =
+        (selectedCommandIndex.value - 1 + slashCommands.value.length) % slashCommands.value.length
+    } else if (event.key === 'ArrowDown') {
+      event.preventDefault()
+      selectedCommandIndex.value = (selectedCommandIndex.value + 1) % slashCommands.value.length
+    } else if (event.key === 'Enter') {
+      event.preventDefault()
+      handleSlashCommand(selectedCommandIndex.value)
+    } else if (event.key === 'Escape') {
+      event.preventDefault()
+      showSlashCommands.value = false
+    } else if (event.key === 'Backspace' && props.modelValue === '/') {
+      showSlashCommands.value = false
+    }
+    return
+  }
+
+  if (event.key === '/' && !props.modelValue && !props.isInputDisabled) {
+    showSlashCommands.value = true
+    selectedCommandIndex.value = 0
+  }
+
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault()
+    emit('send')
+  }
+}
 
 const MIN_HEIGHT = 40
 const MAX_HEIGHT = 160
@@ -45,14 +135,31 @@ const adjustTextareaHeight = () => {
   textarea.style.overflowY = scrollHeight > MAX_HEIGHT ? 'auto' : 'hidden'
 }
 
+const handleClickOutside = (event: MouseEvent) => {
+  if (showSlashCommands.value) {
+    const target = event.target as HTMLElement
+    if (!target.closest('.slash-commands-menu') && !target.closest('textarea')) {
+      showSlashCommands.value = false
+    }
+  }
+}
+
 onMounted(() => {
   adjustTextareaHeight()
+  window.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('click', handleClickOutside)
 })
 
 watch(
   () => props.modelValue,
-  () => {
+  (newVal) => {
     nextTick(() => adjustTextareaHeight())
+    if (showSlashCommands.value && !newVal.startsWith('/')) {
+      showSlashCommands.value = false
+    }
   },
 )
 
@@ -116,6 +223,57 @@ defineExpose({
       </div>
     </Transition>
 
+    <!-- 快捷指令菜单 -->
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="transform translate-y-2 opacity-0 scale-95"
+      enter-to-class="transform translate-y-0 opacity-100 scale-100"
+      leave-active-class="transition duration-150 ease-in"
+      leave-from-class="transform translate-y-0 opacity-100 scale-100"
+      leave-to-class="transform translate-y-2 opacity-0 scale-95"
+    >
+      <div
+        v-if="showSlashCommands"
+        class="slash-commands-menu absolute bottom-full left-0 z-50 mb-3 w-64 overflow-hidden rounded-xl border border-border bg-card p-1.5 shadow-xl shadow-black/5 dark:shadow-black/20"
+      >
+        <div class="flex flex-col gap-0.5">
+          <button
+            v-for="(cmd, index) in slashCommands"
+            :key="cmd.id"
+            class="group flex items-center justify-between rounded-lg px-3 py-2 text-left transition-all"
+            :class="[
+              selectedCommandIndex === index
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+            ]"
+            @click="handleSlashCommand(index)"
+            @mouseenter="selectedCommandIndex = index"
+          >
+            <div class="flex items-center gap-2.5">
+              <div
+                class="flex h-7 w-7 items-center justify-center rounded-md"
+                :class="[
+                  selectedCommandIndex === index
+                    ? 'bg-white/20 text-white'
+                    : cmd.active
+                      ? 'bg-primary/10 text-primary'
+                      : 'bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary',
+                ]"
+              >
+                <component :is="cmd.icon" :size="16" />
+              </div>
+              <span class="text-[13px] font-medium">{{ cmd.title }}</span>
+            </div>
+            <div
+              v-if="cmd.active"
+              class="h-1.5 w-1.5 rounded-full"
+              :class="selectedCommandIndex === index ? 'bg-white' : 'bg-primary'"
+            />
+          </button>
+        </div>
+      </div>
+    </Transition>
+
     <textarea
       ref="textareaRef"
       :value="modelValue"
@@ -130,7 +288,7 @@ defineExpose({
       class="w-full resize-none bg-transparent px-3 pt-2.5 pb-1 text-[15px] text-foreground outline-none placeholder:text-muted-foreground/30 leading-relaxed transition-colors"
       :disabled="isInputDisabled"
       @input="(e) => emit('update:modelValue', (e.target as HTMLTextAreaElement).value)"
-      @keydown.enter.exact.prevent="emit('send')"
+      @keydown.exact="handleKeydown"
       @keydown.enter.shift.exact="handleNewline"
       @paste="(e) => emit('paste', e)"
     />
