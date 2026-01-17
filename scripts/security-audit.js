@@ -6,30 +6,32 @@ const IGNORED_ADVISORIES = [
   '1111537', // mjml: directory traversal, no patched versions yet
 ]
 
-const IGNORED_MODULES = [
-  'html-minifier',
-  'mjml'
-]
+const IGNORED_MODULES = ['html-minifier', 'mjml']
 
 try {
   console.log('Running pnpm audit...')
   // 使用 --json 方便解析，--prod 仅检查生产依赖
-  const output = execSync('pnpm audit --prod --audit-level moderate --registry=https://registry.npmjs.org/ --json', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })
+  const output = execSync(
+    'pnpm audit --prod --audit-level moderate --registry=https://registry.npmjs.org/ --json',
+    { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] },
+  )
   console.log('No vulnerabilities found.')
 } catch (error) {
   if (error.stdout) {
     try {
       const auditResult = JSON.parse(error.stdout)
       const advisories = auditResult.advisories || {}
-      
-      const realVulnerabilities = Object.values(advisories).filter(advisory => {
-        return !IGNORED_ADVISORIES.includes(String(advisory.id)) && 
-               !IGNORED_MODULES.includes(advisory.module_name)
+
+      const realVulnerabilities = Object.values(advisories).filter((advisory) => {
+        return (
+          !IGNORED_ADVISORIES.includes(String(advisory.id)) &&
+          !IGNORED_MODULES.includes(advisory.module_name)
+        )
       })
 
       if (realVulnerabilities.length > 0) {
         console.error(`Found ${realVulnerabilities.length} unignored vulnerabilities:`)
-        realVulnerabilities.forEach(v => {
+        realVulnerabilities.forEach((v) => {
           console.error(`- [${v.severity}] ${v.module_name}: ${v.title}`)
           console.error(`  More info: ${v.url}\n`)
         })
