@@ -85,7 +85,6 @@ export default defineConfig(async (): Promise<UserConfig> => {
         },
         includeAssets: [
           'favicon.ico',
-          'vite.svg',
           'apple-touch-icon-180x180.png',
           'pwa-64x64.png',
           'pwa-192x192.png',
