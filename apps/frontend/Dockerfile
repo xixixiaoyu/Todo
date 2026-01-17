@@ -16,8 +16,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json .npmrc ./
 COPY apps/frontend/package.json ./apps/frontend/
 COPY packages/shared/package.json ./packages/shared/
 
-# 安装依赖，跳过 Electron 二进制下载 (构建 Web 版本无需)
-ENV ELECTRON_SKIP_BINARY_DOWNLOAD=1
+# 安装依赖
 RUN pnpm install --frozen-lockfile
 
 # ============================================

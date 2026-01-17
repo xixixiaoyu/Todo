@@ -11,7 +11,7 @@
 - **类型至上 (Type-Safe)**：利用 Zod 实现从数据库、后端 DTO 到前端表单的“单一事实源”类型推断，杜绝 `any`。
 - **直击本质 (Simplicity)**：坚持逻辑扁平化，避免过度设计，确保模块间高内聚、低耦合。
 - **极致交互 (Exquisite UX)**：基于 GSAP 与 Tailwind 打造丝滑的动效与响应式布局，追求像素级的细节。
-- **跨端原生 (Cross-Platform)**：一套代码，通过 Capacitor 和 Electron 覆盖 Web、iOS、Android 及桌面端。
+- **跨端原生 (Cross-Platform)**：一套代码，通过 Capacitor 覆盖 Web、iOS 和 Android。
 
 ---
 
@@ -48,7 +48,6 @@
 
 ### 跨端能力 (Universal)
 - **移动端**: Capacitor 8 (iOS/Android 原生访问)
-- **桌面端**: Electron 39 (Windows/macOS/Linux)
 - **离线能力**: Vite PWA (Service Workers)
 
 ---
@@ -131,7 +130,6 @@ const { handleSubmit } = useForm({ validationSchema: toTypedSchema(LoginSchema) 
 | **测试** | `pnpm test` | 运行全栈单元与集成测试 |
 | **代码规范** | `pnpm lint:fix` | 自动修复 ESLint 与 Prettier 问题 |
 | **移动端** | `pnpm cap:sync` | 同步 Web 资源至 iOS/Android |
-| **桌面端** | `pnpm electron:dev` | 启动 Electron 预览 |
 
 ---
 

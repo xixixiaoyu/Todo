@@ -59,10 +59,6 @@ apps/frontend/android/app/build
 dev-dist
 apps/frontend/dev-dist
 
-# Electron
-apps/frontend/dist-electron
-apps/frontend/release
-
 # Wails
 apps/wails/build/bin
 apps/wails/frontend

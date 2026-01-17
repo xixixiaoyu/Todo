@@ -20,7 +20,6 @@
     "vitest.config.ts",
     "capacitor.config.ts",
     "pwa-assets.config.ts",
-    "electron/**/*.ts",
     "tests/**/*.ts",
     "tests/**/*.vue"
   ],

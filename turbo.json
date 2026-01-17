@@ -6,7 +6,7 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["src/**", "package.json", "tsconfig.json"],
-      "outputs": ["dist/**", "dist-electron/**"]
+      "outputs": ["dist/**"]
     },
     "dev": {
       "dependsOn": ["^build"],

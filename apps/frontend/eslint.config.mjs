@@ -12,8 +12,6 @@ export default [
     ignores: [
       'dist',
       'dev-dist',
-      'dist-electron',
-      'dev-dist-electron',
       'node_modules',
       'ios',
       'android',
@@ -88,8 +86,6 @@ export default [
   {
     files: [
       '**/capacitor.config.ts',
-      '**/electron/main.ts',
-      '**/electron/preload.ts',
       '**/pwa-assets.config.ts',
       '**/vitest.config.ts',
       '**/vite.config.ts',
