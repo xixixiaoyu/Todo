@@ -92,15 +92,15 @@ describe('AI Utils - injectSystemPrompts', () => {
     const result = injectSystemPrompts([], '', true)
     const systemMessage = result.find((m) => m.role === 'system')
 
-    expect(systemMessage?.content).toContain('Context: 3 tasks')
+    expect(systemMessage?.content).toContain('用户当前有 3 个待完成的待办事项')
     // Check sorting and hierarchy
     // Pinned task should be first
     // Task 1 should be next
     // Child task should be indented under Task 1
-    const lines = (systemMessage?.content as string).split('\n')
-    expect(lines[1]).toBe('- 📌 Pinned Task')
-    expect(lines[2]).toBe('- Task 1')
-    expect(lines[3]).toBe('  - Child Task')
+    const content = systemMessage?.content as string
+    expect(content).toContain('- 📌 Pinned Task (ID: 2)')
+    expect(content).toContain('- Task 1 (ID: 1)')
+    expect(content).toContain('  - Child Task (ID: 3)')
     // Completed task should not be present
     expect(systemMessage?.content).not.toContain('Completed Task')
   })

@@ -153,7 +153,7 @@ describe('useTodo', () => {
 
     it('should add todo and clear input on success', async () => {
       const { newTodoTitle, handleAddTodo } = withSetup(useTodo)
-      vi.mocked(todoStore.addTodo).mockResolvedValue(true)
+      vi.mocked(todoStore.addTodo).mockResolvedValue('new-id')
 
       newTodoTitle.value = 'New Todo'
       await handleAddTodo()
@@ -164,7 +164,7 @@ describe('useTodo', () => {
 
     it('should trigger tooltip feedback on failure', async () => {
       const { newTodoTitle, handleAddTodo, showTooltip } = withSetup(useTodo)
-      vi.mocked(todoStore.addTodo).mockResolvedValue(false)
+      vi.mocked(todoStore.addTodo).mockResolvedValue(null)
 
       newTodoTitle.value = 'Failed Todo'
       await handleAddTodo()
@@ -178,7 +178,7 @@ describe('useTodo', () => {
   describe('handleKeydown', () => {
     it('should call handleAddTodo when Enter key is pressed', async () => {
       const { newTodoTitle, handleKeydown } = withSetup(useTodo)
-      vi.mocked(todoStore.addTodo).mockResolvedValue(true)
+      vi.mocked(todoStore.addTodo).mockResolvedValue('new-id')
 
       newTodoTitle.value = 'Enter Todo'
       await handleKeydown(new KeyboardEvent('keydown', { key: 'Enter' }))

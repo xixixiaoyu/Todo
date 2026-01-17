@@ -28,12 +28,16 @@ describe('useTodoStore - Actions', () => {
     vi.clearAllMocks()
 
     // Mock crypto.randomUUID
-    if (!global.crypto) {
-      // @ts-expect-error - Mocking crypto.randomUUID for testing environment
+    if (typeof crypto === 'undefined') {
+      // @ts-expect-error - Mocking crypto for testing environment
       global.crypto = {
         randomUUID: () =>
           '00000000-0000-0000-0000-000000000000' as `${string}-${string}-${string}-${string}-${string}`,
       }
+    } else {
+      vi.spyOn(crypto, 'randomUUID').mockReturnValue(
+        '00000000-0000-0000-0000-000000000000' as `${string}-${string}-${string}-${string}-${string}`,
+      )
     }
   })
 
@@ -63,14 +67,14 @@ describe('useTodoStore - Actions', () => {
     it('should trim whitespace from title', async () => {
       const result = await store.addTodo('  Trimmed todo  ')
 
-      expect(result).toBe(true)
+      expect(result).toBe('00000000-0000-0000-0000-000000000000')
       expect(store.todos[0].title).toBe('Trimmed todo')
     })
 
     it('should not add empty todo', async () => {
       const result = await store.addTodo('   ')
 
-      expect(result).toBe(false)
+      expect(result).toBeNull()
       expect(store.todos).toHaveLength(0)
     })
 
@@ -79,7 +83,7 @@ describe('useTodoStore - Actions', () => {
 
       const result = await store.addTodo('First todo', null)
 
-      expect(result).toBe(false)
+      expect(result).toBeNull()
       expect(store.error).toBe('todo.duplicate')
       expect(store.todos).toHaveLength(1)
     })
@@ -89,7 +93,7 @@ describe('useTodoStore - Actions', () => {
 
       const result = await store.addTodo('First todo', 'parent-id')
 
-      expect(result).toBe(true)
+      expect(result).toBe('00000000-0000-0000-0000-000000000000')
       expect(store.todos).toHaveLength(2)
       expect(store.todos[0].parentId).toBe('parent-id')
     })
@@ -99,7 +103,7 @@ describe('useTodoStore - Actions', () => {
 
       const result = await store.addTodo('Second todo', null)
 
-      expect(result).toBe(true)
+      expect(result).toBe('00000000-0000-0000-0000-000000000000')
       expect(store.todos).toHaveLength(2)
       expect(store.todos[0].title).toBe('Second todo')
       expect(store.todos[0].completed).toBe(false)
