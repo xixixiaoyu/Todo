@@ -6,8 +6,8 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   server: {
     // 开发时可启用热重载（取消注释并修改为本机 IP）
-    // url: 'http://192.168.x.x:5173',
-    // cleartext: true,
+    url: 'http://192.168.3.23:5173',
+    cleartext: true,
     androidScheme: 'https',
   },
   plugins: {
