@@ -1,27 +1,16 @@
-import baseConfig from '../../eslint.config.mjs'
+import { baseConfig, ignoreConfig } from '../../eslint.config.mjs'
 import vue from 'eslint-plugin-vue'
 import ts from 'typescript-eslint'
 import globals from 'globals'
+import prettier from 'eslint-plugin-prettier/recommended'
 
 /**
  * Frontend ESLint 配置
  * 继承根目录配置，添加 Vue 相关规则
  */
 export default [
-  {
-    ignores: [
-      'dist',
-      'dev-dist',
-      'node_modules',
-      'ios',
-      'android',
-      'public',
-      'src/assets',
-      'capacitor.config.ts',
-      'wailsjs',
-    ],
-  },
   ...baseConfig,
+  ignoreConfig,
   ...vue.configs['flat/recommended'],
   {
     languageOptions: {
@@ -68,19 +57,7 @@ export default [
           order: ['script', 'template', 'style'],
         },
       ],
-    },
-  },
-  {
-    rules: {
       'vue/multi-word-component-names': 'off',
-      // 关闭与 Prettier 冲突的格式规则
-      'vue/html-indent': 'off',
-      'vue/max-attributes-per-line': 'off',
-      'vue/html-closing-bracket-newline': 'off',
-      'vue/singleline-html-element-content-newline': 'off',
-      'vue/multiline-html-element-content-newline': 'off',
-      'vue/first-attribute-linebreak': 'off',
-      'vue/html-self-closing': 'off',
     },
   },
   {
@@ -97,4 +74,18 @@ export default [
       '@typescript-eslint/no-explicit-any': 'off',
     },
   },
+  {
+    ignores: [
+      'dist',
+      'dev-dist',
+      'node_modules',
+      'ios',
+      'android',
+      'public',
+      'src/assets',
+      'capacitor.config.ts',
+      'wailsjs',
+    ],
+  },
+  prettier, // Prettier 必须放在最后，自动关闭所有格式冲突规则
 ]

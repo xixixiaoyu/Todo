@@ -1,4 +1,5 @@
-import baseConfig from '../../eslint.config.mjs'
+import { baseConfig, ignoreConfig } from '../../eslint.config.mjs'
+import prettier from 'eslint-plugin-prettier/recommended'
 
 /**
  * Shared Package ESLint 配置
@@ -6,6 +7,7 @@ import baseConfig from '../../eslint.config.mjs'
  */
 export default [
   ...baseConfig,
+  ignoreConfig,
   {
     languageOptions: {
       parserOptions: {
@@ -17,4 +19,5 @@ export default [
   {
     ignores: ['dist', 'node_modules'],
   },
+  prettier,
 ]

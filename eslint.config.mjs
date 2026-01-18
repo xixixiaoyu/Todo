@@ -1,15 +1,13 @@
 import js from '@eslint/js'
 import ts from 'typescript-eslint'
-import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
+import prettier from 'eslint-plugin-prettier/recommended'
 
 /**
- * 根目录通用 ESLint 配置
- * 前后端继承此配置
+ * 基础规则配置（不包含 Prettier）
  */
-export default [
+export const baseConfig = [
   js.configs.recommended,
   ...ts.configs.recommended,
-  eslintPluginPrettierRecommended,
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.mts', '**/*.cts'],
     languageOptions: {
@@ -30,15 +28,24 @@ export default [
       'no-console': ['warn', { allow: ['warn', 'error'] }],
     },
   },
-  {
-    ignores: [
-      '**/dist',
-      '**/dev-dist',
-      '**/node_modules',
-      'apps/frontend/ios',
-      'apps/frontend/android',
-      '.husky',
-      '.trae',
-    ],
-  },
 ]
+
+/**
+ * 忽略文件配置
+ */
+export const ignoreConfig = {
+  ignores: [
+    '**/dist',
+    '**/dev-dist',
+    '**/node_modules',
+    'apps/frontend/ios',
+    'apps/frontend/android',
+    '.husky',
+    '.trae',
+  ],
+}
+
+/**
+ * 导出默认配置，方便简单使用
+ */
+export default [...baseConfig, ignoreConfig, prettier]
