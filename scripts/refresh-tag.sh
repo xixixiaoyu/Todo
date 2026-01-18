@@ -60,7 +60,17 @@ fi
 
 echo -e "${YELLOW}🚀 开始处理标签: ${TAG_NAME}...${NC}"
 
-# --- 3. 智能处理本地标签 ---
+# --- 3. 智能处理远程标签 ---
+# 检查远程是否存在该标签
+REMOTE_EXISTS=$(git ls-remote --tags origin "$TAG_NAME")
+if [ -n "$REMOTE_EXISTS" ]; then
+  echo -e "  - [感知] 远程已存在该标签，正在从 origin 删除..."
+  git push origin --delete "$TAG_NAME"
+else
+  echo -e "  - [感知] 远程没有该标签，跳过删除步骤..."
+fi
+
+# --- 4. 智能处理本地标签 ---
 if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
   echo -e "  - [感知] 本地已存在该标签，正在执行刷新操作..."
   git tag -d "$TAG_NAME"
@@ -68,19 +78,9 @@ else
   echo -e "  - [感知] 本地是一个新标签，准备创建..."
 fi
 
-# --- 4. 智能处理远程标签 ---
-# 检查远程是否存在该标签
-REMOTE_EXISTS=$(git ls-remote --tags origin "$TAG_NAME")
-if [ -n "$REMOTE_EXISTS" ]; then
-  echo -e "  - [感知] 远程已存在该标签，正在从 origin 删除..."
-  git push origin :refs/tags/"$TAG_NAME"
-else
-  echo -e "  - [感知] 远程没有该标签，跳过删除步骤..."
-fi
-
 # --- 5. 创建并发布 ---
 echo -e "  - 正在最新提交处创建标签 ${TAG_NAME}..."
-git tag "$TAG_NAME"
+git tag -f "$TAG_NAME"
 
 echo -e "  - 正在推送到远程并触发 GitHub Actions..."
 git push origin "$TAG_NAME"
