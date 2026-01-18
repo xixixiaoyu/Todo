@@ -5,9 +5,18 @@
 # Description: Automatically deploys the built Wails app to /Applications on macOS.
 # ==============================================================================
 
+# 严格模式：遇到错误即退出，未定义变量报错
+set -euo pipefail
+
+# 颜色定义
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
 # 确保在 macOS 上运行
 if [[ "$OSTYPE" != "darwin"* ]]; then
-  echo "⚠️  此脚本仅支持 macOS 系统。"
+  echo -e "${YELLOW}⚠️  此脚本仅支持 macOS 系统。${NC}"
   exit 0
 fi
 
@@ -20,31 +29,55 @@ APP_NAME="Todo"
 BUILD_PATH="${PROJECT_ROOT}/apps/wails/build/bin/${APP_NAME}.app"
 DEST_PATH="/Applications/${APP_NAME}.app"
 
-echo "🚀 开始部署 ${APP_NAME}.app 到 /Applications..."
+echo -e "${GREEN}🚀 开始部署 ${APP_NAME}.app 到 /Applications...${NC}"
 
 # 检查构建产物是否存在
-if [ -d "$BUILD_PATH" ]; then
-  echo "📦 找到构建产物: ${BUILD_PATH}"
-  
-  # 如果目标位置已存在同名应用，先删除
-  if [ -d "$DEST_PATH" ]; then
-    echo "🗑️  正在移除旧版本: ${DEST_PATH}"
-    rm -rf "$DEST_PATH"
-  fi
-  
-  # 复制应用到 /Applications
-  echo "🚚 正在复制到 /Applications..."
-  cp -R "$BUILD_PATH" "$DEST_PATH"
-  
-  # 验证是否成功
-  if [ -d "$DEST_PATH" ]; then
-    echo "✅ 部署成功！你现在可以在「应用程序」中找到 ${APP_NAME} 了。"
-  else
-    echo "❌ 复制失败，请检查权限。"
-    exit 1
-  fi
-else
-  echo "❌ 错误: 未能在 ${BUILD_PATH} 找到构建产物。"
+if [ ! -d "$BUILD_PATH" ]; then
+  echo -e "${RED}❌ 错误: 未能在 ${BUILD_PATH} 找到构建产物。${NC}"
   echo "请确保已成功运行 'pnpm wails:build'。"
+  exit 1
+fi
+
+echo -e "📦 找到构建产物: ${BUILD_PATH}"
+
+# 检查应用是否正在运行
+if pgrep -x "$APP_NAME" > /dev/null; then
+  echo -e "${YELLOW}⚠️  检测到 ${APP_NAME} 正在运行，正在尝试关闭...${NC}"
+  # 尝试优雅关闭
+  osascript -e "quit app \"$APP_NAME\"" > /dev/null 2>&1
+  
+  # 等待应用退出（最多等待 5 秒）
+  COUNT=0
+  while pgrep -x "$APP_NAME" > /dev/null && [ $COUNT -lt 5 ]; do
+    sleep 1
+    ((COUNT++))
+  done
+  
+  # 如果还在运行，强制关闭
+  if pgrep -x "$APP_NAME" > /dev/null; then
+    echo -e "${RED}🛑 应用未能响应关闭请求，正在强制终止...${NC}"
+    pkill -9 -x "$APP_NAME"
+  fi
+  echo -e "${GREEN}✅ 应用已关闭。${NC}"
+fi
+
+# 如果目标位置已存在同名应用，先删除
+if [ -d "$DEST_PATH" ]; then
+  echo -e "🗑️  正在移除旧版本: ${DEST_PATH}"
+  rm -rf "$DEST_PATH"
+fi
+
+# 复制应用到 /Applications
+# 使用 -a 以保留元数据、软链接和权限
+echo -e "🚚 正在复制到 /Applications..."
+cp -a "$BUILD_PATH" "$DEST_PATH"
+
+# 验证并启动
+if [ -d "$DEST_PATH" ]; then
+  echo -e "${GREEN}✅ 部署成功！${NC}"
+  echo -e "🔄 正在启动新版本 ${APP_NAME}..."
+  open "$DEST_PATH"
+else
+  echo -e "${RED}❌ 复制失败，请检查 /Applications 写入权限。${NC}"
   exit 1
 fi
