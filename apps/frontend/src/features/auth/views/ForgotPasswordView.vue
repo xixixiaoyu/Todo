@@ -5,7 +5,7 @@ import { toTypedSchema } from '@vee-validate/zod'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
 import { ForgotPasswordSchema } from '@my-app/shared'
-import { CheckCircle2 } from 'lucide-vue-next'
+import { CheckCircle2, Mail, KeyRound } from 'lucide-vue-next'
 import AuthCard from '@/components/auth/AuthCard.vue'
 import FormInput from '@/components/auth/FormInput.vue'
 import { PrimaryButton } from '@/components/ui/button'
@@ -33,7 +33,10 @@ const onSubmit = handleSubmit(async (values) => {
     :title="t('forgotPassword.title')"
     :description="success ? '' : t('forgotPassword.description')"
   >
-    <div v-if="success" class="text-center space-y-6">
+    <template #icon>
+      <KeyRound :size="40" stroke-width="2" />
+    </template>
+    <div v-if="success" class="text-center space-y-8">
       <div class="flex justify-center">
         <div class="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center">
           <CheckCircle2 class="w-8 h-8 text-success" />
@@ -71,7 +74,11 @@ const onSubmit = handleSubmit(async (values) => {
         :placeholder="t('login.emailPlaceholder')"
         type="email"
         :error="errors.email"
-      />
+      >
+        <template #icon>
+          <Mail :size="20" stroke-width="2.5" />
+        </template>
+      </FormInput>
 
       <PrimaryButton :loading="authStore.loading" full-width>
         <template #loading>{{ t('forgotPassword.submitting') }}</template>

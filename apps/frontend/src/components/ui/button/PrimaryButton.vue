@@ -11,14 +11,20 @@ defineProps<{
     type="submit"
     :disabled="disabled || loading"
     :class="[
-      'px-8 py-3 rounded-xl font-medium transition-all duration-200',
-      'bg-primary text-primary-foreground hover:bg-primary-hover',
-      'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
-      'disabled:opacity-50 disabled:cursor-not-allowed',
-      'transform hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0',
+      'relative overflow-hidden px-8 py-4 rounded-2xl font-black tracking-wide transition-all duration-500',
+      'bg-primary text-primary-foreground',
+      'shadow-[0_20px_40px_-12px_rgba(var(--primary-rgb),0.4)]',
+      'hover:bg-primary-hover hover:shadow-[0_25px_50px_-12px_rgba(var(--primary-rgb),0.5)]',
+      'focus:outline-none focus:ring-4 focus:ring-primary/20 active:scale-[0.96]',
+      'disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 disabled:shadow-none',
+      'transform hover:-translate-y-1.5',
       fullWidth ? 'w-full' : '',
     ]"
   >
+    <div
+      v-if="!disabled && !loading"
+      class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full hover:animate-[shimmer_1.5s_infinite] pointer-events-none"
+    ></div>
     <span v-if="loading" class="flex items-center justify-center gap-2">
       <svg
         class="animate-spin h-5 w-5"
@@ -45,3 +51,11 @@ defineProps<{
     <slot v-else />
   </button>
 </template>
+
+<style scoped>
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+</style>

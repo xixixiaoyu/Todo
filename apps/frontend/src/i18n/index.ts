@@ -19,13 +19,12 @@ function getDefaultLocale(): string {
   return 'en-US'
 }
 
-const i18n = createI18n<[MessageSchema], 'zh-CN' | 'en-US' | 'zh'>({
+const i18n = createI18n<[MessageSchema], 'zh-CN' | 'en-US'>({
   legacy: false,
   locale: getDefaultLocale(),
-  fallbackLocale: 'en-US',
+  fallbackLocale: 'zh-CN',
   messages: {
     'zh-CN': zhCN as unknown as MessageSchema,
-    zh: zhCN as unknown as MessageSchema,
     'en-US': enUS as unknown as MessageSchema,
   },
 })

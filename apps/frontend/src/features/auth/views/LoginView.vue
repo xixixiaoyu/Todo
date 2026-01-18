@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
 import { LoginSchema } from '@my-app/shared'
+import { Mail } from 'lucide-vue-next'
 import AuthCard from '@/components/auth/AuthCard.vue'
 import FormInput from '@/components/auth/FormInput.vue'
 import PasswordInput from '@/components/auth/PasswordInput.vue'
@@ -45,7 +46,11 @@ const onSubmit = handleSubmit(async (values) => {
         :placeholder="t('login.emailPlaceholder')"
         type="email"
         :error="errors.email"
-      />
+      >
+        <template #icon>
+          <Mail :size="20" stroke-width="2.5" />
+        </template>
+      </FormInput>
 
       <PasswordInput
         v-model="password"

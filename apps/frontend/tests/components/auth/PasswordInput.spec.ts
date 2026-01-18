@@ -9,6 +9,7 @@ vi.mock('vue-i18n', () => ({
       const translations: Record<string, string> = {
         'password.show': '显示密码',
         'password.hide': '隐藏密码',
+        'password.strength.label': '强度',
         'password.strength.weak': '弱',
         'password.strength.medium': '中',
         'password.strength.strong': '强',
@@ -128,8 +129,7 @@ describe('PasswordInput', () => {
       },
     })
 
-    const strengthIndicator = wrapper.find('.flex.items-center.gap-2')
-    expect(strengthIndicator.exists()).toBe(false)
+    expect(wrapper.find('.px-1.pt-1').exists()).toBe(false)
   })
 
   it('should show password strength when showStrength is true and value exists', () => {
@@ -141,8 +141,7 @@ describe('PasswordInput', () => {
       },
     })
 
-    const strengthIndicator = wrapper.find('.flex.items-center.gap-2')
-    expect(strengthIndicator.exists()).toBe(true)
+    expect(wrapper.find('.px-1.pt-1').exists()).toBe(true)
   })
 
   it('should calculate weak password strength', () => {
@@ -154,8 +153,7 @@ describe('PasswordInput', () => {
       },
     })
 
-    const strengthIndicator = wrapper.find('.flex.items-center.gap-2')
-    expect(strengthIndicator.text()).toContain('弱')
+    expect(wrapper.find('.px-1.pt-1').text()).toContain('弱')
   })
 
   it('should calculate medium password strength', () => {
@@ -167,9 +165,7 @@ describe('PasswordInput', () => {
       },
     })
 
-    const strengthIndicator = wrapper.find('.flex.items-center.gap-2')
-    // 'password' has length 8 (1 point) + letters (1 point) + numbers (0) + special (0) + length >= 8 (1 point) = 3 points = medium
-    expect(strengthIndicator.text()).toContain('中')
+    expect(wrapper.find('.px-1.pt-1').text()).toContain('中')
   })
 
   it('should calculate strong password strength', () => {
@@ -181,8 +177,7 @@ describe('PasswordInput', () => {
       },
     })
 
-    const strengthIndicator = wrapper.find('.flex.items-center.gap-2')
-    expect(strengthIndicator.text()).toContain('强')
+    expect(wrapper.find('.px-1.pt-1').text()).toContain('强')
   })
 
   it('should not show password strength when value is empty', () => {
@@ -194,8 +189,7 @@ describe('PasswordInput', () => {
       },
     })
 
-    const strengthIndicator = wrapper.find('.flex.items-center.gap-2')
-    expect(strengthIndicator.exists()).toBe(false)
+    expect(wrapper.find('.px-1.pt-1').exists()).toBe(false)
   })
 
   it('should display placeholder when provided', () => {

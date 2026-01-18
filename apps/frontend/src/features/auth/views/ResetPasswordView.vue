@@ -7,7 +7,7 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
 import { z } from 'zod'
 import { passwordSchema } from '@my-app/shared'
-import { CheckCircle2, AlertCircle } from 'lucide-vue-next'
+import { CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-vue-next'
 import AuthCard from '@/components/auth/AuthCard.vue'
 import PasswordInput from '@/components/auth/PasswordInput.vue'
 import { PrimaryButton } from '@/components/ui/button'
@@ -62,7 +62,10 @@ const onSubmit = handleSubmit(async (values) => {
 
 <template>
   <AuthCard :title="t('resetPassword.title')">
-    <div v-if="invalidToken" class="text-center space-y-6">
+    <template #icon>
+      <ShieldCheck :size="40" stroke-width="2" />
+    </template>
+    <div v-if="invalidToken" class="text-center space-y-8">
       <div class="flex justify-center">
         <div class="w-16 h-16 rounded-full bg-error/10 flex items-center justify-center">
           <AlertCircle class="w-8 h-8 text-error" />

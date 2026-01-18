@@ -1,14 +1,26 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { Clover, Languages, Network, List } from 'lucide-vue-next'
+import { Clover, Languages, Network, List, User, LogOut, LogIn } from 'lucide-vue-next'
 import ThemeToggle from './ThemeToggle.vue'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { useTodoStore } from '../stores/todo'
+import { useAuthStore } from '../../auth/stores/auth'
+import { useRouter } from 'vue-router'
 import { isWails, system } from '@/lib/wails'
 
 const { t, locale } = useI18n()
 const todoStore = useTodoStore()
+const authStore = useAuthStore()
+const router = useRouter()
 
 const toggleLanguage = () => {
   const newLocale = locale.value === 'zh-CN' ? 'en-US' : 'zh-CN'
@@ -60,6 +72,56 @@ const handleDblClick = () => {
       </Tooltip>
 
       <ThemeToggle />
+
+      <!-- Auth Section -->
+      <DropdownMenu v-if="authStore.isAuthenticated">
+        <DropdownMenuTrigger as-child>
+          <Button
+            variant="outline"
+            size="icon"
+            class="h-10 w-10 rounded-xl bg-card border-border hover:bg-accent transition-all overflow-hidden"
+          >
+            <div
+              v-if="authStore.user?.avatar"
+              class="w-full h-full bg-cover bg-center"
+              :style="{ backgroundImage: `url(${authStore.user.avatar})` }"
+            ></div>
+            <User v-else :size="18" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" class="w-56 rounded-xl p-2">
+          <DropdownMenuLabel class="font-normal">
+            <div class="flex flex-col space-y-1">
+              <p class="text-sm font-medium leading-none">{{ authStore.user?.name }}</p>
+              <p class="text-xs leading-none text-muted-foreground">
+                {{ authStore.user?.email }}
+              </p>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            class="rounded-lg cursor-pointer text-error focus:text-error focus:bg-error/10"
+            @click="authStore.logout"
+          >
+            <LogOut class="mr-2 h-4 w-4" />
+            <span>{{ t('common.logout') }}</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <Tooltip v-else>
+        <TooltipTrigger as-child>
+          <Button
+            variant="outline"
+            size="icon"
+            class="h-10 w-10 rounded-xl bg-card border-border hover:bg-accent transition-all"
+            @click="router.push('/login')"
+          >
+            <LogIn :size="18" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{{ t('login.title') }}</TooltipContent>
+      </Tooltip>
 
       <Tooltip>
         <TooltipTrigger as-child>
