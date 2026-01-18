@@ -412,6 +412,7 @@ watch(
                   v-if="renderedHtml"
                   class="markdown-content relative break-words leading-relaxed"
                 >
+                  <!-- eslint-disable-next-line vue/no-v-html -->
                   <div v-html="renderedHtml" />
                 </div>
 
