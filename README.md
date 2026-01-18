@@ -47,6 +47,7 @@
 - **动效**: GSAP 3.14 (高性能动画引擎)
 
 ### 跨端能力 (Universal)
+- **桌面端**: Wails 2.11 (Go + WebKit)
 - **移动端**: Capacitor 8 (iOS/Android 原生访问)
 - **离线能力**: Vite PWA (Service Workers)
 
@@ -77,6 +78,10 @@ pnpm db:generate
 
 # 5. 启动开发服务器
 pnpm dev
+
+# 6. 桌面端开发与打包 (Wails)
+pnpm wails:dev        # 启动桌面端开发模式
+pnpm wails:build      # 打包桌面端应用 (根据当前 OS 生成)
 ```
 
 ---

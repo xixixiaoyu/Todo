@@ -6,7 +6,9 @@ import { useAuthStore } from '@/features/auth/stores/auth'
  * HTTP 客户端实例
  */
 export const httpClient = axios.create({
-  baseURL: '/api',
+  baseURL:
+    import.meta.env.VITE_API_BASE_URL ||
+    (import.meta.env.IS_WAILS ? 'http://localhost:3000/api' : '/api'),
   timeout: 10000,
   withCredentials: true,
   headers: {

@@ -64,7 +64,7 @@ export class CsrfMiddleware implements NestMiddleware {
       res.cookie(this.cookieName, token, {
         httpOnly: false, // 允许 JavaScript 读取
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        sameSite: 'lax', // Wails 跨域请求需要使用 lax
         path: '/',
         maxAge: 24 * 60 * 60 * 1000, // 24 小时
       })

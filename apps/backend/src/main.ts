@@ -55,12 +55,16 @@ async function bootstrap() {
     }),
   )
 
-  // 启用 CORS（通过代理访问）
+  // 启用 CORS
   app.enableCors({
-    origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:5173'],
+    origin: process.env.CORS_ORIGIN?.split(',') || [
+      'http://localhost:5173',
+      'wails://localhost', // macOS Wails
+      'http://wails.localhost', // Windows Wails
+    ],
     credentials: true, // 允许携带凭证
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-XSRF-TOKEN', 'X-Requested-With'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-XSRF-TOKEN', 'X-Requested-With', 'x-lang'],
   })
 
   // 全局 Zod 验证管道（替代 class-validator）

@@ -7,6 +7,7 @@
   "frontend:build": "pnpm build:wails",
   "frontend:dev:watcher": "pnpm dev",
   "frontend:dev:serverUrl": "http://localhost:5173",
+  "wailsjs:dir": "../frontend/src/wailsjs",
   "author": {
     "name": "Todo Team",
     "email": "contact@todo.app"
