@@ -3,15 +3,19 @@ updates:
   - package-ecosystem: 'npm'
     directory: '/'
     schedule:
-      interval: 'weekly'
-    open-pull-requests-limit: 10
-    versioning-strategy: increase
+      interval: 'monthly'
+    open-pull-requests-limit: 1
     groups:
-      dependencies:
+      all-dependencies:
         patterns:
           - '*'
+    versioning-strategy: increase
 
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
-      interval: 'weekly'
+      interval: 'monthly'
+    groups:
+      all-actions:
+        patterns:
+          - '*'
