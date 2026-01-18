@@ -92,6 +92,7 @@ pnpm wails:build      # 打包桌面端应用 (根据当前 OS 生成)
 1. **GitHub Actions (推荐)**: 
    - 我已经为你配置了 [wails-build.yml](file:///.github/workflows/wails-build.yml)。
    - 只要推送一个以 `v` 开头的标签（如 `git tag v1.0.0 && git push --tags`），GitHub 就会自动在 Windows 和 macOS 虚拟机上并行打包，并生成可下载的产物。
+   - **小技巧**: 如果你推送标签后发现代码有误，修复后可以使用 `pnpm tag:refresh <tag_name>` 快速重置标签并重新触发打包。
 2. **虚拟机**: 在 Mac 上安装 Windows 虚拟机（如 Parallels 或 UTM），在虚拟机内配置 Go 环境进行打包。
 3. **Docker**: 使用专门的跨平台构建镜像（如 `wailsapp/wails-build`），但这需要配置较复杂的 CGO 交叉编译环境。
 ```
