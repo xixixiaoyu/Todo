@@ -1,0 +1,69 @@
+name: Wails Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+            arch: amd64
+          - os: macos-latest
+            platform: darwin
+            arch: universal
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Install Frontend Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Shared Package
+        run: pnpm --filter @my-app/shared build
+
+      - name: Build Wails App
+        shell: bash
+        run: |
+          cd apps/wails
+          if [ "${{ matrix.platform }}" == "windows" ]; then
+            wails build -platform windows/${{ matrix.arch }} -clean -ldflags "-s -w"
+          else
+            wails build -platform darwin/universal -clean -ldflags "-s -w"
+          fi
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wails-build-${{ matrix.platform }}-${{ matrix.arch }}
+          path: |
+            apps/wails/build/bin/*.exe
+            apps/wails/build/bin/*.app
+            apps/wails/build/bin/*.dmg

@@ -82,6 +82,18 @@ pnpm dev
 # 6. 桌面端开发与打包 (Wails)
 pnpm wails:dev        # 启动桌面端开发模式
 pnpm wails:build      # 打包桌面端应用 (根据当前 OS 生成)
+
+### 跨平台打包指南
+
+由于 Wails 依赖于各系统的原生 WebView 引擎（Windows 使用 WebView2/Edge，macOS 使用 WebKit），在 macOS 上**无法直接**通过本地命令行打包出 Windows 的 `.exe` 文件。
+
+推荐的解决方法有：
+
+1. **GitHub Actions (推荐)**: 
+   - 我已经为你配置了 [wails-build.yml](file:///.github/workflows/wails-build.yml)。
+   - 只要推送一个以 `v` 开头的标签（如 `git tag v1.0.0 && git push --tags`），GitHub 就会自动在 Windows 和 macOS 虚拟机上并行打包，并生成可下载的产物。
+2. **虚拟机**: 在 Mac 上安装 Windows 虚拟机（如 Parallels 或 UTM），在虚拟机内配置 Go 环境进行打包。
+3. **Docker**: 使用专门的跨平台构建镜像（如 `wailsapp/wails-build`），但这需要配置较复杂的 CGO 交叉编译环境。
 ```
 
 ---
