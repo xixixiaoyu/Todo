@@ -4,6 +4,10 @@ import { RouterView } from 'vue-router'
 import ToastProvider from '@/components/ui/ToastProvider.vue'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { isWails, system } from '@/lib/wails'
+import { useTheme } from '@/composables/useTheme'
+
+// 初始化主题
+useTheme()
 
 onMounted(() => {
   if (isWails()) {
