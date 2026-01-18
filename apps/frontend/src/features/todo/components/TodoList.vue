@@ -81,19 +81,27 @@ const displayTodos = computed(() => {
       <!-- Empty State -->
       <div
         v-if="todos.length === 0"
-        class="flex flex-col items-center justify-center py-20 animate-in fade-in zoom-in-95 duration-1000 ease-out"
+        class="flex flex-col items-center justify-center py-24 animate-in fade-in zoom-in-95 duration-1000 ease-out"
       >
         <div
-          class="mb-6 flex items-center justify-center w-20 h-20 rounded-full bg-primary/5 border border-primary/10"
+          class="mb-8 flex items-center justify-center w-24 h-24 rounded-full bg-primary/5 border border-primary/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative group"
         >
-          <component :is="emptyState.icon" :size="32" :stroke-width="1.5" class="text-primary/40" />
+          <div
+            class="absolute inset-0 rounded-full bg-primary/5 scale-110 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"
+          ></div>
+          <component
+            :is="emptyState.icon"
+            :size="40"
+            :stroke-width="1.25"
+            class="text-primary/30 group-hover:text-primary/50 transition-colors duration-500 relative z-10"
+          />
         </div>
 
-        <div class="text-center space-y-1.5 px-6">
-          <h3 class="text-lg font-medium tracking-tight text-foreground/60">
+        <div class="text-center space-y-2.5 px-6 relative z-10">
+          <h3 class="text-xl font-medium tracking-tight text-foreground/70">
             {{ emptyState.title }}
           </h3>
-          <p class="text-sm text-muted-foreground/40 max-w-[240px] mx-auto leading-relaxed">
+          <p class="text-base text-muted-foreground/50 max-w-[280px] mx-auto leading-relaxed">
             {{ emptyState.description }}
           </p>
         </div>

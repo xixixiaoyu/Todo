@@ -73,29 +73,33 @@ const emit = defineEmits<{
     <!-- 中间切换卡 -->
     <Tabs
       :model-value="filter"
-      class="w-full max-w-[310px]"
+      class="w-full max-w-[320px]"
       @update:model-value="emit('update:filter', $event as FilterType)"
     >
       <TabsList
-        class="grid w-full grid-cols-2 h-11 p-1 bg-muted/50 backdrop-blur-sm rounded-full border border-border/50 shadow-inner"
+        class="grid w-full grid-cols-2 h-12 p-1.5 bg-muted/80 backdrop-blur-md rounded-full border border-border/40 shadow-sm"
       >
         <TabsTrigger
           value="pending"
-          class="flex items-center gap-2 rounded-full px-5 text-sm font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-[0_2px_8px_rgba(0,0,0,0.08)] hover:text-foreground/80"
+          class="flex items-center justify-center gap-2 rounded-full px-4 text-sm font-medium transition-all duration-300 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:font-semibold hover:text-primary/80"
         >
           <Circle
-            class="h-4 w-4"
-            :class="filter === 'pending' ? 'text-primary' : 'text-muted-foreground/60'"
+            class="h-4 w-4 transition-colors"
+            :class="
+              filter === 'pending' ? 'text-primary fill-primary/10' : 'text-muted-foreground/50'
+            "
           />
           {{ t('todo.pending') }}
         </TabsTrigger>
         <TabsTrigger
           value="completed"
-          class="flex items-center gap-2 rounded-full px-5 text-sm font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-success data-[state=active]:shadow-sm hover:text-foreground/80"
+          class="flex items-center justify-center gap-2 rounded-full px-4 text-sm font-medium transition-all duration-300 data-[state=active]:bg-background data-[state=active]:text-success data-[state=active]:shadow-md data-[state=active]:font-semibold hover:text-success/80"
         >
           <CheckCircle2
-            class="h-4 w-4"
-            :class="filter === 'completed' ? 'text-success' : 'text-muted-foreground/60'"
+            class="h-4 w-4 transition-colors"
+            :class="
+              filter === 'completed' ? 'text-success fill-success/10' : 'text-muted-foreground/50'
+            "
           />
           {{ t('todo.completed') }}
         </TabsTrigger>
