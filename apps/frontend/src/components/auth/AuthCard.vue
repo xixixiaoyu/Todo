@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useGsap } from '@/composables/useGsap'
+import { useI18n } from 'vue-i18n'
+import { Home } from 'lucide-vue-next'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 defineProps<{
   title: string
@@ -8,7 +11,9 @@ defineProps<{
   alignTop?: boolean
 }>()
 
+const { t } = useI18n()
 const cardRef = ref<HTMLElement | null>(null)
+const backButtonRef = ref<HTMLElement | null>(null)
 const { gsap } = useGsap()
 
 onMounted(() => {
@@ -20,6 +25,16 @@ onMounted(() => {
       ease: 'power3.out',
     })
   }
+
+  if (backButtonRef.value) {
+    gsap.from(backButtonRef.value, {
+      x: -20,
+      opacity: 0,
+      duration: 0.8,
+      delay: 0.2,
+      ease: 'power3.out',
+    })
+  }
 })
 </script>
 
@@ -28,6 +43,24 @@ onMounted(() => {
     class="relative flex min-h-full w-full items-start justify-center px-4"
     :class="[alignTop ? 'py-12 md:py-16' : 'py-20 md:py-32']"
   >
+    <!-- 返回首页按钮 -->
+    <div ref="backButtonRef" class="fixed left-6 top-6 z-50 md:left-10 md:top-10">
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger as-child>
+            <router-link
+              to="/"
+              class="group flex h-12 w-12 items-center justify-center rounded-2xl bg-card/50 backdrop-blur-xl border border-white/20 dark:border-white/5 text-muted-foreground hover:text-primary hover:border-primary/30 transition-all duration-300 shadow-lg hover:shadow-primary/10"
+            >
+              <Home :size="22" class="transition-transform duration-300 group-hover:scale-110" />
+            </router-link>
+          </TooltipTrigger>
+          <TooltipContent side="right" :side-offset="12">
+            <p class="font-medium">{{ t('common.backToHome') }}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </div>
     <!-- 背景装饰点缀：更丰富的层次感 -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none">
       <div
