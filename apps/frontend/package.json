@@ -11,7 +11,7 @@
     "build": "pnpm type-check && vite build",
     "preview": "vite preview",
     "lint": "cross-env NODE_OPTIONS='--max-old-space-size=4096' eslint . --fix --cache",
-    "clean": "rm -rf dist",
+    "clean": "shx rm -rf dist",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -22,7 +22,7 @@
     "cap:run:android": "cap run android",
     "cap:build": "pnpm build && cap sync",
     "pwa:generate-icons": "pwa-assets-generator",
-    "build:wails": "cross-env WAILS=true pnpm build && rm -rf ../wails/frontend/dist && mkdir -p ../wails/frontend/dist && cp -r dist/* ../wails/frontend/dist/"
+    "build:wails": "cross-env WAILS=true pnpm build && shx rm -rf ../wails/frontend/dist && shx mkdir -p ../wails/frontend/dist && shx cp -r dist/* ../wails/frontend/dist/"
   },
   "dependencies": {
     "@capacitor/android": "8.0.0",
@@ -80,6 +80,7 @@
     "globals": "16.5.0",
     "happy-dom": "20.0.11",
     "postcss": "8.5.6",
+    "shx": "0.3.4",
     "tailwindcss": "3.4.19",
     "tailwindcss-animate": "1.0.7",
     "typescript": "5.9.3",

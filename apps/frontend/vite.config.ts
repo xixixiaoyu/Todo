@@ -105,6 +105,8 @@ export default defineConfig(async (): Promise<UserConfig> => {
           manualChunks: {
             'vue-vendor': ['vue', 'vue-router', 'pinia'],
             'ui-vendor': ['lucide-vue-next', 'gsap'],
+            'chart-vendor': ['echarts', 'vue-echarts'],
+            'markdown-vendor': ['markdown-it', 'mermaid', 'highlight.js', 'katex'],
           },
         },
       },

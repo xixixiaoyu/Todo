@@ -64,10 +64,10 @@ onMounted(() => {
     <!-- 背景装饰点缀：更丰富的层次感 -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none">
       <div
-        class="absolute -top-[20%] -left-[10%] w-[70%] h-[70%] rounded-full bg-primary/5 dark:bg-primary/10 blur-[120px] transition-opacity duration-[3000ms] animate-[pulse_8s_cubic-bezier(0.4,0,0.6,1)_infinite]"
+        class="absolute -top-[20%] -left-[10%] w-[70%] h-[70%] rounded-full bg-primary/5 dark:bg-primary/10 blur-[120px] transition-opacity [transition-duration:3000ms] animate-[pulse_8s_cubic-bezier(0.4,0,0.6,1)_infinite]"
       ></div>
       <div
-        class="absolute -bottom-[20%] -right-[10%] w-[70%] h-[70%] rounded-full bg-primary/5 dark:bg-primary/10 blur-[120px] transition-opacity duration-[3000ms] animate-[pulse_8s_cubic-bezier(0.4,0,0.6,1)_infinite]"
+        class="absolute -bottom-[20%] -right-[10%] w-[70%] h-[70%] rounded-full bg-primary/5 dark:bg-primary/10 blur-[120px] transition-opacity [transition-duration:3000ms] animate-[pulse_8s_cubic-bezier(0.4,0,0.6,1)_infinite]"
         style="animation-delay: 4s"
       ></div>
       <div
