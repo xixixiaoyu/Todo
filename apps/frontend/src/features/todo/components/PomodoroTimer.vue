@@ -7,11 +7,14 @@ import { useGsap } from '@/composables/useGsap'
 import { watch, ref, computed } from 'vue'
 import { useDraggable, useWindowSize } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
-import { isWails, system } from '@/lib/wails'
+import { nativeService } from '@/services/native'
 
 const pomodoroStore = usePomodoroStore()
 const { t } = useI18n()
 const { gsap } = useGsap()
+
+const isWails = () => nativeService.platform === 'wails'
+
 const containerRef = ref<HTMLElement | null>(null)
 const handleRef = ref<HTMLElement | null>(null)
 
@@ -30,13 +33,7 @@ const { x, y, style } = useDraggable(containerRef, {
 // Toggle Mini Mode with Wails support
 async function toggleMiniMode() {
   pomodoroStore.toggleMiniMode()
-  if (isWails()) {
-    try {
-      await system.setMiniMode(pomodoroStore.isMiniMode)
-    } catch {
-      // Ignore error if setMiniMode fails
-    }
-  }
+  await nativeService.setMiniMode(pomodoroStore.isMiniMode)
 }
 
 // Reset draggable position when exiting mini mode

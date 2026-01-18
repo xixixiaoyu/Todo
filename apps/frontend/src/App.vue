@@ -3,22 +3,20 @@ import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 import ToastProvider from '@/components/ui/ToastProvider.vue'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { isWails, system } from '@/lib/wails'
+import { nativeService } from '@/services/native'
 import { useTheme } from '@/composables/useTheme'
 
 // 初始化主题
 useTheme()
 
 onMounted(() => {
-  if (isWails()) {
+  if (nativeService.platform === 'wails') {
     document.body.classList.add('is-wails')
   }
 })
 
 const handleDblClick = () => {
-  if (isWails()) {
-    system.toggleMaximise()
-  }
+  void nativeService.toggleMaximise()
 }
 </script>
 
@@ -29,7 +27,7 @@ const handleDblClick = () => {
     >
       <!-- Wails 顶部拖拽区域 (macOS HiddenInset 模式下需要) -->
       <div
-        v-if="isWails()"
+        v-if="nativeService.platform === 'wails'"
         class="wails-drag h-8 shrink-0 flex items-center justify-center cursor-default select-none"
         style="--wails-draggable: drag"
         @dblclick="handleDblClick"

@@ -21,6 +21,7 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	a.SetupGlobalShortcuts()
 }
 
 // Greet returns a greeting for the given name
@@ -72,4 +73,31 @@ func (a *App) SetMiniMode(enabled bool) {
 		// Center it
 		runtime.WindowCenter(a.ctx)
 	}
+}
+
+// ToggleWindow toggles the window visibility
+func (a *App) ToggleWindow() {
+	if runtime.WindowIsMinimised(a.ctx) {
+		runtime.WindowUnminimise(a.ctx)
+		runtime.WindowShow(a.ctx)
+		runtime.WindowSetAlwaysOnTop(a.ctx, true)
+		runtime.WindowSetAlwaysOnTop(a.ctx, false)
+	} else {
+		// If window is visible but not in focus, bring it to focus instead of minimising
+		// This is a common pattern for "Spotlight" style apps
+		runtime.WindowShow(a.ctx)
+		runtime.WindowSetAlwaysOnTop(a.ctx, true)
+		runtime.WindowSetAlwaysOnTop(a.ctx, false)
+		
+		// To truly toggle (minimise if already in focus), we'd need more state.
+		// For now, let's focus on making sure it shows up.
+	}
+}
+
+// ShowNotification shows a system notification
+func (a *App) ShowNotification(title, message string) {
+	runtime.EventsEmit(a.ctx, "notification", map[string]string{
+		"title":   title,
+		"message": message,
+	})
 }

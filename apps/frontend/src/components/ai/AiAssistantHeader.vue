@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Clover, Maximize2, Minimize2, X } from 'lucide-vue-next'
+import { nativeService } from '@/services/native'
 
 defineProps<{
   isMaximized: boolean
@@ -13,7 +14,7 @@ defineEmits<{
 }>()
 
 const { t } = useI18n()
-const isWails = computed(() => !!window.go)
+const isWails = computed(() => nativeService.platform === 'wails')
 const isDesktop = computed(() => isWails.value)
 const isMac = computed(() => isWails.value && navigator.platform.toLowerCase().includes('mac'))
 </script>

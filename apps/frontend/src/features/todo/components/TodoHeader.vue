@@ -15,7 +15,7 @@ import {
 import { useTodoStore } from '../stores/todo'
 import { useAuthStore } from '../../auth/stores/auth'
 import { useRouter } from 'vue-router'
-import { isWails, system } from '@/lib/wails'
+import { nativeService } from '@/services/native'
 import { useToast } from '@/composables/useToast'
 
 const { t, locale } = useI18n()
@@ -23,6 +23,8 @@ const todoStore = useTodoStore()
 const authStore = useAuthStore()
 const router = useRouter()
 const toast = useToast()
+
+const isWails = () => nativeService.platform === 'wails'
 
 const toggleLanguage = () => {
   const newLocale = locale.value === 'zh-CN' ? 'en-US' : 'zh-CN'
@@ -32,7 +34,7 @@ const toggleLanguage = () => {
 
 const handleDblClick = () => {
   if (isWails()) {
-    system.toggleMaximise()
+    nativeService.toggleMaximise()
   }
 }
 

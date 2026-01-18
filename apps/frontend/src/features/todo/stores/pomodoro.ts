@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
-import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics'
+import { ImpactStyle, NotificationType } from '@capacitor/haptics'
 import { useTodoStore } from './todo'
-import { isWails, system } from '@/lib/wails'
+import { nativeService } from '@/services/native'
 
 export type PomodoroStatus = 'idle' | 'focus' | 'short_break' | 'long_break'
 
@@ -26,13 +26,7 @@ export const usePomodoroStore = defineStore(
 
     // Actions
     async function syncWailsWindow() {
-      if (isWails()) {
-        try {
-          await system.setMiniMode(isMiniMode.value)
-        } catch (e) {
-          console.error('Failed to sync Wails window state:', e)
-        }
-      }
+      await nativeService.setMiniMode(isMiniMode.value)
     }
 
     // Watch for mini mode changes to sync with Wails
@@ -73,11 +67,7 @@ export const usePomodoroStore = defineStore(
       status.value = 'focus'
       timeLeft.value = FOCUS_TIME * 60
 
-      try {
-        await Haptics.impact({ style: ImpactStyle.Medium })
-      } catch {
-        // Ignore if not on mobile
-      }
+      await nativeService.haptic(ImpactStyle.Medium)
 
       startTimer()
     }
@@ -134,11 +124,7 @@ export const usePomodoroStore = defineStore(
       }
 
       // Haptic feedback for completion
-      try {
-        await Haptics.notification({ type: NotificationType.Success })
-      } catch {
-        // Ignore if not on mobile
-      }
+      await nativeService.hapticNotification(NotificationType.Success)
     }
 
     function toggleMiniMode() {
