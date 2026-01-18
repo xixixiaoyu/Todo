@@ -27,7 +27,7 @@ const ResetPasswordWithConfirmSchema = z
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: t('password.mismatch'),
+    message: 'password.mismatch',
     path: ['confirmPassword'],
   })
 

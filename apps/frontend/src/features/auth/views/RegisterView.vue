@@ -16,9 +16,9 @@ const router = useRouter()
 const authStore = useAuthStore()
 const { t } = useI18n()
 const RegisterWithConfirmSchema = RegisterSchema.extend({
-  confirmPassword: z.string().min(1, t('validation.REQUIRED')),
+  confirmPassword: z.string().min(1, 'validation.REQUIRED'),
 }).refine((data) => data.password === data.confirmPassword, {
-  message: t('password.mismatch'),
+  message: 'password.mismatch',
   path: ['confirmPassword'],
 })
 
