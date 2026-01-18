@@ -21,7 +21,6 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
-	a.SetupGlobalShortcuts()
 }
 
 // Greet returns a greeting for the given name
@@ -88,7 +87,7 @@ func (a *App) ToggleWindow() {
 		runtime.WindowShow(a.ctx)
 		runtime.WindowSetAlwaysOnTop(a.ctx, true)
 		runtime.WindowSetAlwaysOnTop(a.ctx, false)
-		
+
 		// To truly toggle (minimise if already in focus), we'd need more state.
 		// For now, let's focus on making sure it shows up.
 	}
