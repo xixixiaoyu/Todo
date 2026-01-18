@@ -31,7 +31,9 @@
     "docker:logs": "docker compose logs -f",
     "docker:clean": "docker compose down -v --rmi local",
     "wails:dev": "cd apps/wails && wails dev",
-    "wails:build": "cd apps/wails && wails build -clean -ldflags \"-s -w\""
+    "wails:build": "cd apps/wails && wails build -clean -ldflags \"-s -w\"",
+    "wails:install": "./scripts/deploy-app.sh",
+    "wails:deploy": "pnpm wails:build && pnpm wails:install"
   },
   "devDependencies": {
     "@eslint/js": "9.39.2",
