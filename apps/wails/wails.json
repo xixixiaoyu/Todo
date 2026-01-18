@@ -14,7 +14,7 @@
   },
   "info": {
     "productName": "Todo",
-    "productVersion": "1.0.0",
+    "productVersion": "1.0.0-beta.1",
     "copyright": "Copyright © 2024",
     "comments": "A modern minimalist Todo application"
   }

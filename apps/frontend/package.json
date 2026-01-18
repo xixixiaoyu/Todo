@@ -1,6 +1,6 @@
 {
   "name": "@my-app/frontend",
-  "version": "1.0.0",
+  "version": "1.0.0-beta.1",
   "description": "基于 NestJS + Vue 3 的极简待办应用",
   "author": "Your Name",
   "private": true,
