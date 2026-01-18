@@ -118,13 +118,6 @@ export const usePomodoroStore = defineStore(
     async function handleTimerComplete() {
       pauseTimer()
 
-      // Haptic feedback for completion
-      try {
-        await Haptics.notification({ type: NotificationType.Success })
-      } catch {
-        // Ignore if not on mobile
-      }
-
       if (status.value === 'focus') {
         completedSessions.value++
         if (completedSessions.value % 4 === 0) {
@@ -138,6 +131,13 @@ export const usePomodoroStore = defineStore(
       } else {
         status.value = 'idle'
         timeLeft.value = FOCUS_TIME * 60
+      }
+
+      // Haptic feedback for completion
+      try {
+        await Haptics.notification({ type: NotificationType.Success })
+      } catch {
+        // Ignore if not on mobile
       }
     }
 
