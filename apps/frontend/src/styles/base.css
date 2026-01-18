@@ -33,6 +33,18 @@
   .markdown-content {
     user-select: text;
   }
+
+  /* 修复暗黑模式下浏览器自动填充导致的背景色问题 */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-transition-delay: 99999s;
+    transition-delay: 99999s;
+    -webkit-text-fill-color: hsl(var(--foreground)) !important;
+    box-shadow: 0 0 0 1000px hsl(var(--card)) inset !important;
+    -webkit-box-shadow: 0 0 0 1000px hsl(var(--card)) inset !important;
+  }
 }
 
 /* Wails specific utilities */
