@@ -34,9 +34,17 @@ const displayError = computed(() => {
   // 2. 如果是纯键名（不含空格，含点号），尝试翻译
   if (props.error.includes('.') && !props.error.includes('{')) {
     const translated = t(props.error)
-    // 如果翻译后出现了占位符（如 {min}），说明该键名需要参数但此处未提供
-    // 这种情况下不应显示带占位符的文本，而是返回原键名或交给上层处理
-    if (translated.includes('{')) {
+    // 如果翻译后出现了占位符（如 {min}），或者翻译结果与原键名相同（说明未找到翻译）
+    // 或者翻译结果中出现了明显的占位符缺失迹象（例如“至少需要  个字符”中的连续空格，或者末尾的“需要 ”）
+    // 这种情况下不应显示不完整的文本，而是返回原键名或交给上层处理
+    if (translated.includes('{') || translated === props.error) {
+      return props.error
+    }
+    // 特殊处理：如果翻译结果中包含“需要 ”但后面跟着空值，通常说明占位符未填充
+    if (
+      translated.includes('需要 ') &&
+      (translated.endsWith('需要 ') || translated.includes('需要  '))
+    ) {
       return props.error
     }
     return translated

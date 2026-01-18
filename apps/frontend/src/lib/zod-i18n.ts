@@ -15,8 +15,15 @@ export const zodErrorMap: ZodErrorMap = (issue, ctx) => {
   // 我们需要确保 params 中包含 min/max 等参数
   if (issue.message && issue.message.includes('.') && !issue.message.includes(' ')) {
     const p: Record<string, unknown> = { ...issue }
-    if ('minimum' in issue) p.min = issue.minimum
-    if ('maximum' in issue) p.max = issue.maximum
+    // 统一参数名，兼容不同版本的 translation keys
+    if ('minimum' in issue) {
+      p.min = issue.minimum
+      p.minimum = issue.minimum
+    }
+    if ('maximum' in issue) {
+      p.max = issue.maximum
+      p.maximum = issue.maximum
+    }
     return { message: t(issue.message, p) }
   }
 
@@ -34,11 +41,11 @@ export const zodErrorMap: ZodErrorMap = (issue, ctx) => {
       }
     case zLocal.ZodIssueCode.too_small: {
       const minKey = issue.type === 'string' ? 'validation.MIN_LENGTH' : 'validation.MIN_VALUE'
-      return { message: t(minKey, { min: issue.minimum }) }
+      return { message: t(minKey, { min: issue.minimum, minimum: issue.minimum }) }
     }
     case zLocal.ZodIssueCode.too_big: {
       const maxKey = issue.type === 'string' ? 'validation.MAX_LENGTH' : 'validation.MAX_VALUE'
-      return { message: t(maxKey, { max: issue.maximum }) }
+      return { message: t(maxKey, { max: issue.maximum, maximum: issue.maximum }) }
     }
     case zLocal.ZodIssueCode.invalid_string:
       if (issue.validation === 'email') {
