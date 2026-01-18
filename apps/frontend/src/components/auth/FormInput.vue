@@ -25,17 +25,16 @@ const inputValue = computed({
 const displayError = computed(() => {
   if (!props.error) return ''
 
-  // 1. 如果包含空格，说明已经是翻译后的文本（或者包含参数的提示），直接返回
+  // 1. 如果包含空格，说明可能是翻译后的文本，直接返回
   if (props.error.includes(' ')) {
     return props.error
   }
 
-  // 2. 如果是纯键名（不含空格，含点号），且不包含占位符，尝试翻译
-  // 注意：如果 Zod 映射成功，这里收到的应该是翻译后的文本
-  // 如果收到的还是键名，说明 Zod 映射未生效或这是后端返回的错误键名
+  // 2. 如果是纯键名（不含空格，含点号），尝试翻译
   if (props.error.includes('.') && !props.error.includes('{')) {
     const translated = t(props.error)
-    // 如果翻译后出现了占位符，说明缺少参数，此时不应显示翻译后的半成品
+    // 如果翻译后出现了占位符（如 {min}），说明该键名需要参数但此处未提供
+    // 这种情况下不应显示带占位符的文本，而是返回原键名或交给上层处理
     if (translated.includes('{')) {
       return props.error
     }
