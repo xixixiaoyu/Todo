@@ -79,7 +79,6 @@ const onSubmit = handleSubmit(async (values) => {
         :label="t('register.password')"
         :placeholder="t('register.passwordPlaceholder')"
         :error="errors.password"
-        show-strength
       />
 
       <PasswordInput

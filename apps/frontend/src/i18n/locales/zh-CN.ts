@@ -57,6 +57,8 @@ export default {
     title: '创建账号',
     email: '邮箱',
     emailPlaceholder: '邮箱地址',
+    password: '密码',
+    passwordPlaceholder: '请输入密码（6-100 个字符）',
     name: '用户名',
     namePlaceholder: '请输入用户名（2-50 个字符）',
     confirmPassword: '确认密码',

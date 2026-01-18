@@ -9,7 +9,6 @@ const props = defineProps<{
   placeholder?: string
   error?: string
   disabled?: boolean
-  showStrength?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -22,22 +21,6 @@ const showPassword = ref(false)
 const inputValue = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value),
-})
-
-const passwordStrength = computed(() => {
-  if (!props.showStrength || !props.modelValue) return null
-
-  let strength = 0
-  if (props.modelValue.length >= 6) strength++
-  if (/[A-Za-z]/.test(props.modelValue)) strength++
-  if (/[0-9]/.test(props.modelValue)) strength++
-  if (/[^A-Za-z0-9]/.test(props.modelValue)) strength++
-  if (props.modelValue.length >= 8) strength++
-
-  if (strength <= 2) return { level: 'weak', color: 'bg-error', text: t('password.strength.weak') }
-  if (strength === 3)
-    return { level: 'medium', color: 'bg-primary', text: t('password.strength.medium') }
-  return { level: 'strong', color: 'bg-success', text: t('password.strength.strong') }
 })
 </script>
 
@@ -77,41 +60,6 @@ const passwordStrength = computed(() => {
       >
         <component :is="showPassword ? EyeOff : Eye" class="w-5 h-5" />
       </button>
-    </div>
-
-    <div
-      v-if="showStrength && passwordStrength && modelValue"
-      class="flex flex-col gap-1.5 px-1 pt-1"
-    >
-      <div
-        class="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60"
-      >
-        <span>{{ t('password.strength.label') || 'Strength' }}</span>
-        <span
-          :class="
-            passwordStrength.level === 'strong'
-              ? 'text-success'
-              : passwordStrength.level === 'medium'
-                ? 'text-primary'
-                : 'text-error'
-          "
-        >
-          {{ passwordStrength.text }}
-        </span>
-      </div>
-      <div class="flex h-1.5 w-full gap-1">
-        <div
-          v-for="i in 3"
-          :key="i"
-          class="h-full flex-1 rounded-full transition-all duration-500"
-          :class="[
-            i <=
-            (passwordStrength.level === 'weak' ? 1 : passwordStrength.level === 'medium' ? 2 : 3)
-              ? passwordStrength.color
-              : 'bg-border/40',
-          ]"
-        ></div>
-      </div>
     </div>
 
     <Transition

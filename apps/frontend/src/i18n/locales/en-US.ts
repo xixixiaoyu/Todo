@@ -57,6 +57,8 @@ export default {
     title: 'Create Account',
     email: 'Email',
     emailPlaceholder: 'Email address',
+    password: 'Password',
+    passwordPlaceholder: 'Enter password (6-100 characters)',
     name: 'Username',
     namePlaceholder: 'Enter username (2-50 characters)',
     confirmPassword: 'Confirm Password',

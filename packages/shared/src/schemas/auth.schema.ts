@@ -37,9 +37,7 @@ export const RegisterSchema = z.object({
     .min(2, ValidationKeys.MIN_LENGTH)
     .max(50, ValidationKeys.MAX_LENGTH)
     .trim(),
-  password: passwordSchema
-    .regex(/[A-Za-z]/, ValidationKeys.PASSWORD_LETTER)
-    .regex(/[0-9]/, ValidationKeys.PASSWORD_NUMBER),
+  password: passwordSchema,
 })
 
 /**
@@ -99,9 +97,7 @@ export const ForgotPasswordSchema = z.object({
  */
 export const ResetPasswordSchema = z.object({
   token: z.string({ required_error: ValidationKeys.REQUIRED }).min(1, ValidationKeys.REQUIRED),
-  password: passwordSchema
-    .regex(/[A-Za-z]/, ValidationKeys.PASSWORD_LETTER)
-    .regex(/[0-9]/, ValidationKeys.PASSWORD_NUMBER),
+  password: passwordSchema,
 })
 
 export type LoginInput = z.infer<typeof LoginSchema>

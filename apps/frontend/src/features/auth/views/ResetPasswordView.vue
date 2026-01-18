@@ -23,9 +23,7 @@ const invalidToken = ref(false)
 
 const ResetPasswordWithConfirmSchema = z
   .object({
-    password: passwordSchema
-      .regex(/[A-Za-z]/, t('password.requireLetter'))
-      .regex(/[0-9]/, t('password.requireNumber')),
+    password: passwordSchema,
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -123,7 +121,6 @@ const onSubmit = handleSubmit(async (values) => {
         :label="t('resetPassword.newPassword')"
         :placeholder="t('resetPassword.newPasswordPlaceholder')"
         :error="errors.password"
-        show-strength
       />
 
       <PasswordInput

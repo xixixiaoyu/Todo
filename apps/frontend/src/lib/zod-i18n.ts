@@ -14,8 +14,14 @@ export const zodErrorMap: z.ZodErrorMap = (issue, ctx) => {
   if (issue.message && issue.message.includes('.')) {
     // 映射 Zod 的参数名到 i18n 模板中的参数名
     const params: Record<string, unknown> = { ...issue }
-    if ('minimum' in issue) params.min = issue.minimum
-    if ('maximum' in issue) params.max = issue.maximum
+    if ('minimum' in issue) {
+      params.min = issue.minimum
+      params.minimum = issue.minimum
+    }
+    if ('maximum' in issue) {
+      params.max = issue.maximum
+      params.maximum = issue.maximum
+    }
     if ('expected' in issue) params.expected = issue.expected
     if ('received' in issue) params.received = issue.received
 
