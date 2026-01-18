@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { ClipboardList, CheckCircle2, SearchX } from 'lucide-vue-next'
-import { computed } from 'vue'
+import { computed, watch, nextTick } from 'vue'
 import draggable from 'vuedraggable'
 import type { Todo } from '../stores/todo'
 import TodoItem from './TodoItem.vue'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { useGsap } from '@/composables/useGsap'
 
 const { t } = useI18n()
+const { gsap, Flip } = useGsap()
 
 const props = defineProps<{
   todos: Todo[]
@@ -73,6 +75,43 @@ const displayTodos = computed(() => {
     return !props.todos.some((t) => t.id === todo.parentId)
   })
 })
+
+// GSAP Flip 动画处理
+watch(
+  () => props.todos,
+  async () => {
+    const state = Flip.getState('.todo-item-container')
+
+    await nextTick()
+
+    Flip.from(state, {
+      duration: 0.35,
+      ease: 'power2.out',
+      stagger: 0.01,
+      absolute: true,
+      onEnter: (elements) =>
+        gsap.fromTo(
+          elements,
+          { opacity: 0, scale: 0.96, y: 5 },
+          {
+            duration: 0.25,
+            opacity: 1,
+            scale: 1,
+            y: 0,
+            ease: 'back.out(1.2)',
+          },
+        ),
+      onLeave: (elements) =>
+        gsap.to(elements, {
+          duration: 0.2,
+          opacity: 0,
+          scale: 0.96,
+          ease: 'power2.in',
+        }),
+    })
+  },
+  { deep: true },
+)
 </script>
 
 <template>
@@ -121,20 +160,22 @@ const displayTodos = computed(() => {
           :disabled="!!searchQuery"
         >
           <template #item="{ element: todo }">
-            <TodoItem
-              :key="todo.id"
-              :todo="todo"
-              :editing-id="editingId"
-              :editing-title="editingTitle"
-              :search-query="searchQuery"
-              @toggle="(id, currentCompleted) => emit('toggle', id, currentCompleted)"
-              @start-edit="(id, title) => emit('startEdit', id, title)"
-              @save-edit="emit('saveEdit')"
-              @cancel-edit="emit('cancelEdit')"
-              @delete="(id) => emit('delete', id)"
-              @update:editing-title="(value) => emit('update:editingTitle', value)"
-              @edit-keydown="(e) => emit('editKeydown', e)"
-            />
+            <div :data-flip-id="todo.id" class="todo-item-container">
+              <TodoItem
+                :key="todo.id"
+                :todo="todo"
+                :editing-id="editingId"
+                :editing-title="editingTitle"
+                :search-query="searchQuery"
+                @toggle="(id, currentCompleted) => emit('toggle', id, currentCompleted)"
+                @start-edit="(id, title) => emit('startEdit', id, title)"
+                @save-edit="emit('saveEdit')"
+                @cancel-edit="emit('cancelEdit')"
+                @delete="(id) => emit('delete', id)"
+                @update:editing-title="(value) => emit('update:editingTitle', value)"
+                @edit-keydown="(e) => emit('editKeydown', e)"
+              />
+            </div>
           </template>
         </draggable>
       </div>

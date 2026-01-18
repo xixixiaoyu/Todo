@@ -16,7 +16,9 @@ import {
 import { ref, computed, watch, nextTick } from 'vue'
 import draggable from 'vuedraggable'
 import { onClickOutside } from '@vueuse/core'
+import { Haptics, ImpactStyle } from '@capacitor/haptics'
 import { useTodoStore, type Todo } from '../stores/todo'
+import { useGsap } from '@/composables/useGsap'
 import { highlightMatch } from '@/lib/utils'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
@@ -25,6 +27,7 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/comp
 
 const { t } = useI18n()
 const store = useTodoStore()
+const { Flip } = useGsap()
 
 const props = defineProps<{
   todo: Todo
@@ -107,6 +110,24 @@ const children = computed(() => {
 
 const hasChildren = computed(() => children.value.length > 0)
 
+// GSAP Flip 动画处理 (子任务)
+watch(
+  () => children.value,
+  async () => {
+    const state = Flip.getState(`.subtask-item-${props.todo.id}`)
+
+    await nextTick()
+
+    Flip.from(state, {
+      duration: 0.3,
+      ease: 'power2.out',
+      stagger: 0.01,
+      absolute: true,
+    })
+  },
+  { deep: true },
+)
+
 const parentPath = computed(() => {
   if (!props.searchQuery?.trim()) return []
   return store.getTodoPath(props.todo.id)
@@ -135,6 +156,7 @@ async function submitAddChild() {
     store.clearError()
     const success = await store.addTodo(newChildTitle.value, props.todo.id)
     if (success) {
+      hapticImpact(ImpactStyle.Light)
       isAddingChild.value = false
       newChildTitle.value = ''
       if (!isExpanded.value) {
@@ -157,8 +179,30 @@ function triggerFeedback() {
   }, 2000)
 }
 
+// 触觉反馈
+const hapticImpact = async (style: ImpactStyle = ImpactStyle.Light) => {
+  try {
+    await Haptics.impact({ style })
+  } catch {
+    // 忽略非移动端环境错误
+  }
+}
+
+const hapticSelectionStart = async () => {
+  try {
+    await Haptics.selectionStart()
+  } catch {
+    // Silence error
+  }
+}
+
 function handleSaveEdit() {
   emit('saveEdit')
+}
+
+function handleDelete() {
+  hapticImpact(ImpactStyle.Medium)
+  emit('delete', props.todo.id)
 }
 
 watch(
@@ -188,6 +232,7 @@ watch(
       <div class="flex items-center gap-2">
         <GripVertical
           class="drag-handle h-4 w-4 cursor-grab text-muted-foreground/30 hover:text-muted-foreground transition-colors active:cursor-grabbing"
+          @touchstart="hapticSelectionStart"
         />
         <Button
           v-if="(level || 0) < 2 && hasChildren"
@@ -203,8 +248,14 @@ watch(
 
         <Checkbox
           :model-value="todo.completed"
+          :disabled="todo.isProposedDelete"
           class="h-5 w-5 rounded-full border-2 data-[state=checked]:bg-success data-[state=checked]:border-success transition-transform active:scale-90"
-          @update:model-value="emit('toggle', todo.id, todo.completed)"
+          @update:model-value="
+            () => {
+              hapticImpact(ImpactStyle.Light)
+              emit('toggle', todo.id, todo.completed)
+            }
+          "
         />
       </div>
 
@@ -354,7 +405,7 @@ watch(
                   variant="ghost"
                   size="icon"
                   class="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                  @click="emit('delete', todo.id)"
+                  @click="handleDelete"
                 >
                   <Trash2 class="h-4 w-4" />
                 </Button>
@@ -434,21 +485,23 @@ watch(
         :animation="300"
       >
         <template #item="{ element: child }">
-          <TodoItem
-            :todo="child"
-            :level="(level || 0) + 1"
-            :editing-id="editingId"
-            :editing-title="editingTitle"
-            :search-query="searchQuery"
-            @toggle="(id, currentCompleted) => emit('toggle', id, currentCompleted)"
-            @start-edit="(id, title) => emit('startEdit', id, title)"
-            @save-edit="emit('saveEdit')"
-            @cancel-edit="emit('cancelEdit')"
-            @delete="(id) => emit('delete', id)"
-            @reorder="(ids, pId) => emit('reorder', ids, pId)"
-            @update:editing-title="(value) => emit('update:editingTitle', value)"
-            @edit-keydown="(e) => emit('editKeydown', e)"
-          />
+          <div :class="`subtask-item-${todo.id}`" :data-flip-id="child.id">
+            <TodoItem
+              :todo="child"
+              :level="(level || 0) + 1"
+              :editing-id="editingId"
+              :editing-title="editingTitle"
+              :search-query="searchQuery"
+              @toggle="(id, currentCompleted) => emit('toggle', id, currentCompleted)"
+              @start-edit="(id, title) => emit('startEdit', id, title)"
+              @save-edit="emit('saveEdit')"
+              @cancel-edit="emit('cancelEdit')"
+              @delete="(id) => emit('delete', id)"
+              @reorder="(ids, pId) => emit('reorder', ids, pId)"
+              @update:editing-title="(value) => emit('update:editingTitle', value)"
+              @edit-keydown="(e) => emit('editKeydown', e)"
+            />
+          </div>
         </template>
       </draggable>
     </div>

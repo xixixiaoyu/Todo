@@ -25,21 +25,21 @@ onMounted(() => {
     // 整体卡片入场：更快的 Power4 曲线，减少位移
     if (cardRef.value) {
       gsap.from(cardRef.value, {
-        y: 20,
+        y: 10,
         opacity: 0,
-        duration: 0.6,
-        ease: 'power4.out',
+        duration: 0.4,
+        ease: 'power3.out',
       })
     }
 
-    // 内部元素交错入场：更紧凑的节奏
+    // 内部元素交错入场：极致响应
     gsap.from('.todo-container > *', {
-      y: 15,
+      y: 8,
       opacity: 0,
-      duration: 0.4,
-      stagger: 0.05,
+      duration: 0.3,
+      stagger: 0.03,
       ease: 'power2.out',
-      delay: 0.2,
+      delay: 0.1,
     })
   })
 })
