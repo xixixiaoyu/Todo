@@ -12,12 +12,16 @@ import {
   Pin,
   PinOff,
   Sparkles,
+  Target,
+  Wand2,
+  Loader2,
 } from 'lucide-vue-next'
 import { ref, computed, watch, nextTick } from 'vue'
 import draggable from 'vuedraggable'
 import { onClickOutside } from '@vueuse/core'
 import { Haptics, ImpactStyle } from '@capacitor/haptics'
 import { useTodoStore, type Todo } from '../stores/todo'
+import { usePomodoroStore } from '../stores/pomodoro'
 import { useGsap } from '@/composables/useGsap'
 import { highlightMatch } from '@/lib/utils'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -27,6 +31,7 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/comp
 
 const { t } = useI18n()
 const store = useTodoStore()
+const pomodoroStore = usePomodoroStore()
 const { Flip } = useGsap()
 
 const props = defineProps<{
@@ -47,6 +52,18 @@ const emit = defineEmits<{
   'update:editingTitle': [value: string]
   editKeydown: [e: KeyboardEvent]
 }>()
+
+const isBreakingDown = ref(false)
+
+async function handleBreakdown() {
+  isBreakingDown.value = true
+  try {
+    await store.breakdownTaskWithAI(props.todo.id)
+    hapticImpact(ImpactStyle.Medium)
+  } finally {
+    isBreakingDown.value = false
+  }
+}
 
 const dragChildren = computed({
   get: () => children.value,
@@ -349,6 +366,44 @@ watch(
         </div>
         <div class="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
           <TooltipProvider :delay-duration="0">
+            <Tooltip v-if="!todo.completed && !todo.isProposedDelete">
+              <TooltipTrigger as-child>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                  :disabled="isBreakingDown"
+                  @click="handleBreakdown"
+                >
+                  <component
+                    :is="isBreakingDown ? Loader2 : Wand2"
+                    class="h-4 w-4"
+                    :class="{ 'animate-spin': isBreakingDown }"
+                  />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{{ t('todo.breakdown') }}</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip v-if="!todo.completed">
+              <TooltipTrigger as-child>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                  :class="{ 'text-primary bg-primary/5': pomodoroStore.activeTodoId === todo.id }"
+                  @click="pomodoroStore.startFocus(todo.id)"
+                >
+                  <Target class="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{{ t('todo.focus') }}</p>
+              </TooltipContent>
+            </Tooltip>
+
             <Tooltip>
               <TooltipTrigger as-child>
                 <Button

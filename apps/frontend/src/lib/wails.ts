@@ -76,6 +76,11 @@ export const system = {
   quit: () => callGo('main.App.Quit'),
 
   /**
+   * 设置迷你模式 (小组件模式)
+   */
+  setMiniMode: (enabled: boolean) => callGo('main.App.SetMiniMode', enabled),
+
+  /**
    * 切换窗口最大化
    */
   toggleMaximise: () => {

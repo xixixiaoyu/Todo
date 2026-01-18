@@ -55,3 +55,21 @@ func (a *App) OpenBrowser(url string) {
 func (a *App) Quit() {
 	runtime.Quit(a.ctx)
 }
+
+// SetMiniMode toggles the mini mode for Pomodoro
+func (a *App) SetMiniMode(enabled bool) {
+	if enabled {
+		// Set to mini size
+		runtime.WindowSetSize(a.ctx, 280, 200)
+		// Set always on top
+		runtime.WindowSetAlwaysOnTop(a.ctx, true)
+		// Move to a convenient place if needed, or let the user drag it
+	} else {
+		// Restore to default size
+		runtime.WindowSetSize(a.ctx, 1024, 768)
+		// Disable always on top
+		runtime.WindowSetAlwaysOnTop(a.ctx, false)
+		// Center it
+		runtime.WindowCenter(a.ctx)
+	}
+}

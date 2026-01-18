@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useTodoStore } from './stores/todo'
+import { usePomodoroStore } from './stores/pomodoro'
 import { useTodo } from './composables/useTodo'
 import { useGsap } from '@/composables/useGsap'
 import TodoHeader from './components/TodoHeader.vue'
@@ -9,11 +10,13 @@ import TodoFilter from './components/TodoFilter.vue'
 import TodoSearch from './components/TodoSearch.vue'
 import TodoList from './components/TodoList.vue'
 import TodoVisualizer from './components/TodoVisualizer.vue'
+import PomodoroTimer from './components/PomodoroTimer.vue'
 import Fireworks from '@/components/Fireworks.vue'
 import AiAssistantDrawer from '@/components/AiAssistantDrawer.vue'
 import { Card, CardContent } from '@/components/ui/card'
 
 const todoStore = useTodoStore()
+const pomodoroStore = usePomodoroStore()
 
 const cardRef = ref<HTMLElement | null>(null)
 const { gsap, ctx } = useGsap()
@@ -71,8 +74,15 @@ function onFireworksComplete() {
 </script>
 
 <template>
-  <div class="flex-1 bg-background p-4 md:p-8 flex items-end justify-center overflow-hidden">
-    <div ref="cardRef" class="w-full max-w-4xl h-[92vh] flex flex-col">
+  <div
+    class="flex-1 bg-background p-4 md:p-8 flex items-end justify-center overflow-hidden"
+    :class="{ 'p-0 items-center': pomodoroStore.isMiniMode }"
+  >
+    <div
+      v-if="!pomodoroStore.isMiniMode"
+      ref="cardRef"
+      class="w-full max-w-4xl h-[92vh] flex flex-col"
+    >
       <Card
         class="flex-1 flex flex-col border-none shadow-card dark:shadow-[0_8px_30px_rgba(0,0,0,0.3)] overflow-hidden rounded-[24px]"
       >
@@ -142,9 +152,17 @@ function onFireworksComplete() {
     </div>
 
     <!-- Fireworks -->
-    <Fireworks ref="fireworksRef" :active="showFireworks" @complete="onFireworksComplete" />
+    <Fireworks
+      v-if="!pomodoroStore.isMiniMode"
+      ref="fireworksRef"
+      :active="showFireworks"
+      @complete="onFireworksComplete"
+    />
 
     <!-- AI 助手抽屉 -->
-    <AiAssistantDrawer v-model="isDrawerOpen" />
+    <AiAssistantDrawer v-if="!pomodoroStore.isMiniMode" v-model="isDrawerOpen" />
+
+    <!-- 番茄钟 -->
+    <PomodoroTimer />
   </div>
 </template>

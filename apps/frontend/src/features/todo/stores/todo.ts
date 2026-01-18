@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
+import { getAIStaticResponse } from '@/services/ai'
 
 export interface Todo {
   id: string
@@ -283,6 +284,36 @@ export const useTodoStore = defineStore(
     }
 
     /**
+     * 使用 AI 拆解任务
+     */
+    async function breakdownTaskWithAI(id: string): Promise<void> {
+      const todo = todos.value.find((t) => t.id === id)
+      if (!todo) return
+
+      loading.value = true
+      try {
+        const prompt = `请将以下待办任务拆解为 3-5 个具体的子任务。只需返回子任务标题列表，每行一个。任务名称：${todo.title}`
+        const response = await getAIStaticResponse([{ role: 'user', content: prompt }])
+
+        const subtasks = response.content
+          .split('\n')
+          .map((s) => s.replace(/^\d+\.\s*|[-*]\s*/, '').trim())
+          .filter((s) => s.length > 0)
+
+        for (const subtask of subtasks) {
+          await addTodo(subtask, id)
+        }
+
+        todo.expanded = true
+      } catch (err) {
+        console.error('AI breakdown failed:', err)
+        error.value = 'AI breakdown failed'
+      } finally {
+        loading.value = false
+      }
+    }
+
+    /**
      * 递归更新父任务状态
      */
     function updateParentStatus(parentId: string): void {
@@ -492,6 +523,7 @@ export const useTodoStore = defineStore(
       addTodo,
       toggleTodo,
       togglePin,
+      breakdownTaskWithAI,
       deleteTodo,
       updateTodo,
       reorderTodos,
