@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { Clover, Languages, Network, List, User, LogOut, LogIn } from 'lucide-vue-next'
+import { Clover, Languages, Network, List, User, LogOut, LogIn, Fingerprint } from 'lucide-vue-next'
 import ThemeToggle from './ThemeToggle.vue'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -16,11 +16,13 @@ import { useTodoStore } from '../stores/todo'
 import { useAuthStore } from '../../auth/stores/auth'
 import { useRouter } from 'vue-router'
 import { isWails, system } from '@/lib/wails'
+import { useToast } from '@/composables/useToast'
 
 const { t, locale } = useI18n()
 const todoStore = useTodoStore()
 const authStore = useAuthStore()
 const router = useRouter()
+const toast = useToast()
 
 const toggleLanguage = () => {
   const newLocale = locale.value === 'zh-CN' ? 'en-US' : 'zh-CN'
@@ -31,6 +33,18 @@ const toggleLanguage = () => {
 const handleDblClick = () => {
   if (isWails()) {
     system.toggleMaximise()
+  }
+}
+
+const handleRegisterPasskey = async () => {
+  const name = window.prompt(t('passkey.enterName'), 'My Device')
+  if (name === null) return // 用户取消
+  const success = await authStore.registerPasskey(name)
+  if (success) {
+    toast.success(t('passkey.registrationSuccess'))
+    await authStore.fetchCurrentUser()
+  } else if (authStore.error) {
+    toast.error(t(authStore.error))
   }
 }
 </script>
@@ -99,6 +113,16 @@ const handleDblClick = () => {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+          <DropdownMenuItem
+            class="rounded-lg cursor-pointer focus:bg-accent"
+            :disabled="authStore.loading"
+            @click="handleRegisterPasskey"
+          >
+            <Fingerprint class="mr-2 h-4 w-4" />
+            <span>{{
+              authStore.user?.hasPasskey ? t('passkey.manage') : t('passkey.register')
+            }}</span>
+          </DropdownMenuItem>
           <DropdownMenuItem
             class="rounded-lg cursor-pointer text-error focus:text-error focus:bg-error/10"
             @click="authStore.logout"

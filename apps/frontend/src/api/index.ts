@@ -8,6 +8,7 @@ import { useAuthStore } from '@/features/auth/stores/auth'
 export const httpClient = axios.create({
   baseURL: '/api',
   timeout: 10000,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },

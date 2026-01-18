@@ -25,11 +25,12 @@ export class MailService {
   /**
    * 获取当前语言
    */
-  private getLang(): string {
+  private getLang(): string | undefined {
     try {
-      return I18nContext.current()?.lang || 'zh-CN'
+      // 优先从 I18nContext 获取，如果获取失败或不存在，则返回 undefined 让 i18n 使用 fallbackLanguage
+      return I18nContext.current()?.lang
     } catch {
-      return 'zh-CN'
+      return undefined
     }
   }
 

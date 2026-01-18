@@ -52,6 +52,17 @@ export default {
     registerLink: 'Sign up',
     forgotPassword: 'Forgot Password?',
     failed: 'Login failed',
+    orContinueWith: 'Or continue with',
+    emailRequiredForPasskey: 'Please enter your email before using Passkey login',
+  },
+  passkey: {
+    registrationFailed: 'Passkey registration failed',
+    registrationSuccess: 'Passkey registration successful',
+    loginFailed: 'Passkey login failed',
+    register: 'Register Passkey',
+    registered: 'Passkey Registered',
+    manage: 'Manage Passkeys',
+    enterName: 'Give this Passkey a name (e.g., My MacBook)',
   },
   register: {
     title: 'Create Account',

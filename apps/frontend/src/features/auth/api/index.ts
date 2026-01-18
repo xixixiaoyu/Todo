@@ -1,5 +1,11 @@
 import { httpClient } from '@/api'
 import type { User, ApiResponse, AuthResponse, RegisterInput, LoginInput } from '@my-app/shared'
+import type {
+  PublicKeyCredentialCreationOptionsJSON,
+  RegistrationResponseJSON,
+  PublicKeyCredentialRequestOptionsJSON,
+  AuthenticationResponseJSON,
+} from '@simplewebauthn/browser'
 
 /**
  * 认证相关 API
@@ -30,6 +36,58 @@ export const authApi = {
   },
 
   /**
+   * 获取 Passkey 注册选项
+   */
+  async getPasskeyRegistrationOptions(): Promise<PublicKeyCredentialCreationOptionsJSON> {
+    const { data } = await httpClient.get<PublicKeyCredentialCreationOptionsJSON>(
+      '/auth/passkey/register/options',
+    )
+    return data
+  },
+
+  /**
+   * 验证 Passkey 注册
+   */
+  async verifyPasskeyRegistration(
+    options: RegistrationResponseJSON,
+    name?: string,
+  ): Promise<ApiResponse<{ success: boolean }>> {
+    const { data } = await httpClient.post<ApiResponse<{ success: boolean }>>(
+      '/auth/passkey/register/verify',
+      { response: options, name },
+    )
+    return data
+  },
+
+  /**
+   * 获取 Passkey 登录选项
+   */
+  async getPasskeyLoginOptions(email: string): Promise<PublicKeyCredentialRequestOptionsJSON> {
+    const { data } = await httpClient.post<PublicKeyCredentialRequestOptionsJSON>(
+      '/auth/passkey/login/options',
+      { email },
+    )
+    return data
+  },
+
+  /**
+   * 验证 Passkey 登录
+   */
+  async verifyPasskeyLogin(
+    email: string,
+    response: AuthenticationResponseJSON,
+  ): Promise<ApiResponse<AuthResponse>> {
+    const { data } = await httpClient.post<ApiResponse<AuthResponse>>(
+      '/auth/passkey/login/verify',
+      {
+        email,
+        response,
+      },
+    )
+    return data
+  },
+
+  /**
    * 请求密码重置
    */
   async forgotPassword(email: string): Promise<ApiResponse<{ message: string }>> {
@@ -53,6 +111,14 @@ export const authApi = {
         password,
       },
     )
+    return data
+  },
+
+  /**
+   * OAuth 登录
+   */
+  async oauthLogin(): Promise<ApiResponse<AuthResponse>> {
+    const { data } = await httpClient.get<ApiResponse<AuthResponse>>('/auth/oauth/login')
     return data
   },
 

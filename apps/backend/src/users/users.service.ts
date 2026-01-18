@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, ConflictException } from '@nestjs/common
 import * as bcrypt from 'bcryptjs'
 import { PrismaService } from '../prisma/prisma.service'
 import { Prisma } from '@prisma/client'
-import type { User, RegisterInput } from '@my-app/shared'
+import type { User, RegisterInput, PrismaUser } from '@my-app/shared'
 import { formatUser, formatUsers } from '@my-app/shared'
 
 /**
@@ -17,8 +17,10 @@ export class UsersService {
    * 获取所有用户
    */
   async findAll(): Promise<User[]> {
-    const users = await this.prisma.user.findMany()
-    return formatUsers(users)
+    const users = await this.prisma.user.findMany({
+      include: { authenticators: true },
+    })
+    return formatUsers(users as unknown as PrismaUser[])
   }
 
   /**
@@ -31,13 +33,14 @@ export class UsersService {
 
     const user = await this.prisma.user.findUnique({
       where: { id },
+      include: { authenticators: true },
     })
 
     if (!user) {
       throw new NotFoundException('auth.USER_ID_NOT_FOUND')
     }
 
-    return formatUser(user)
+    return formatUser(user as unknown as PrismaUser)
   }
 
   /**
@@ -46,11 +49,12 @@ export class UsersService {
   async findByEmail(email: string): Promise<User | null> {
     const user = await this.prisma.user.findUnique({
       where: { email },
+      include: { authenticators: true },
     })
 
     if (!user) return null
 
-    return formatUser(user)
+    return formatUser(user as unknown as PrismaUser)
   }
 
   /**
@@ -59,7 +63,29 @@ export class UsersService {
   async findInternalByEmail(email: string) {
     return this.prisma.user.findUnique({
       where: { email },
+      include: { authenticators: true },
     })
+  }
+
+  /**
+   * 创建 Google 用户
+   */
+  async createWithGoogle(data: {
+    email: string
+    name: string
+    googleId: string
+    avatar?: string
+  }): Promise<User> {
+    const user = await this.prisma.user.create({
+      data: {
+        email: data.email,
+        name: data.name,
+        googleId: data.googleId,
+        avatar: data.avatar,
+      },
+      include: { authenticators: true },
+    })
+    return formatUser(user as unknown as PrismaUser)
   }
 
   /**
@@ -68,6 +94,7 @@ export class UsersService {
   async findInternalById(id: number) {
     return this.prisma.user.findUnique({
       where: { id },
+      include: { authenticators: true },
     })
   }
 

@@ -7,9 +7,23 @@ import {
 } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { ConfigService } from '@nestjs/config'
+import {
+  generateRegistrationOptions,
+  verifyRegistrationResponse,
+  generateAuthenticationOptions,
+  verifyAuthenticationResponse,
+} from '@simplewebauthn/server'
+import type {
+  AuthenticatorTransportFuture,
+  RegistrationResponseJSON,
+  AuthenticationResponseJSON,
+} from '@simplewebauthn/server'
+import { isoBase64URL } from '@simplewebauthn/server/helpers'
+import { Authenticator, Prisma } from '@prisma/client'
 import { UsersService } from '../users/users.service'
 import { MailService } from '../mail/mail.service'
 import { RedisService, CachePrefix } from '../redis/redis.service'
+import { PrismaService } from '../prisma/prisma.service'
 import * as bcrypt from 'bcryptjs'
 import * as crypto from 'crypto'
 import type { LoginInput, RegisterInput, User, AuthResponse } from '@my-app/shared'
@@ -32,6 +46,192 @@ export class AuthService {
   private readonly accessTokenExpiresIn: number // 访问令牌过期时间（秒）
   private readonly refreshTokenExpiresIn: number // 刷新令牌过期时间（秒）
 
+  /**
+   * 生成 WebAuthn 注册选项
+   */
+  async generatePasskeyRegistrationOptions(user: User) {
+    const userAuthenticators = await this.prismaService.authenticator.findMany({
+      where: { userId: user.id },
+    })
+
+    const rpName = this.configService.get<string>('APP_NAME', 'Todo App')
+    const rpID = this.configService.get<string>('RP_ID', 'localhost')
+
+    const options = await generateRegistrationOptions({
+      rpName,
+      rpID,
+      userID: Buffer.from(user.id.toString()),
+      userName: user.email,
+      userDisplayName: user.name,
+      attestationType: 'none',
+      excludeCredentials: userAuthenticators.map((auth: Authenticator) => ({
+        id: isoBase64URL.fromBuffer(auth.credentialID),
+        type: 'public-key',
+        transports: auth.transports
+          ? (JSON.parse(auth.transports) as AuthenticatorTransportFuture[])
+          : undefined,
+      })),
+      authenticatorSelection: {
+        residentKey: 'preferred',
+        userVerification: 'preferred',
+      },
+    })
+
+    // 存储 challenge 到 Redis 用于验证
+    await this.redisService.set(`passkey-registration:${user.id}`, options.challenge, {
+      prefix: CachePrefix.AUTH,
+      ttl: 300, // 5 分钟
+    })
+
+    return options
+  }
+
+  /**
+   * 验证 WebAuthn 注册响应
+   */
+  async verifyPasskeyRegistration(user: User, body: RegistrationResponseJSON, name?: string) {
+    // 验证 challenge 是否存在且有效
+    const expectedChallenge = await this.redisService.get(`passkey-registration:${user.id}`, {
+      prefix: CachePrefix.AUTH,
+    })
+
+    if (typeof expectedChallenge !== 'string') {
+      throw new BadRequestException('auth.CHALLENGE_EXPIRED')
+    }
+
+    const rpID = this.configService.get<string>('RP_ID', 'localhost')
+    const origin = this.configService.get<string>('FRONTEND_URL', 'http://localhost:5173')
+
+    const verification = await verifyRegistrationResponse({
+      response: body,
+      expectedChallenge,
+      expectedOrigin: origin,
+      expectedRPID: rpID,
+    })
+
+    if (verification.verified && verification.registrationInfo) {
+      const { credential } = verification.registrationInfo
+
+      await this.prismaService.authenticator.create({
+        data: {
+          id: credential.id,
+          credentialID: Buffer.from(isoBase64URL.toBuffer(credential.id)),
+          credentialPublicKey: Buffer.from(credential.publicKey),
+          counter: credential.counter,
+          credentialDeviceType: verification.registrationInfo.credentialDeviceType,
+          credentialBackedUp: verification.registrationInfo.credentialBackedUp,
+          userId: user.id,
+          name: name || 'Passkey',
+          transports: body.response.transports
+            ? JSON.stringify(body.response.transports)
+            : undefined,
+        } as Prisma.AuthenticatorUncheckedCreateInput,
+      })
+
+      return { success: true }
+    }
+
+    throw new BadRequestException('auth.REGISTRATION_FAILED')
+  }
+
+  /**
+   * 生成 WebAuthn 认证选项
+   */
+  async generatePasskeyAuthenticationOptions(email: string) {
+    const user = await this.usersService.findInternalByEmail(email)
+    if (!user) {
+      throw new BadRequestException('auth.USER_NOT_FOUND')
+    }
+
+    const userAuthenticators = await this.prismaService.authenticator.findMany({
+      where: { userId: user.id },
+    })
+
+    const rpID = this.configService.get<string>('RP_ID', 'localhost')
+
+    const options = await generateAuthenticationOptions({
+      rpID,
+      allowCredentials: userAuthenticators.map((auth: Authenticator) => ({
+        id: isoBase64URL.fromBuffer(auth.credentialID),
+        type: 'public-key',
+        transports: auth.transports
+          ? (JSON.parse(auth.transports) as AuthenticatorTransportFuture[])
+          : undefined,
+      })),
+      userVerification: 'preferred',
+    })
+
+    // 存储 challenge 到 Redis 用于验证
+    await this.redisService.set(`passkey-authentication:${email}`, options.challenge, {
+      prefix: CachePrefix.AUTH,
+      ttl: 300,
+    })
+
+    return options
+  }
+
+  /**
+   * 验证 WebAuthn 认证响应
+   */
+  async verifyPasskeyAuthentication(email: string, body: AuthenticationResponseJSON) {
+    const user = await this.usersService.findInternalByEmail(email)
+    if (!user) {
+      throw new BadRequestException('auth.USER_NOT_FOUND')
+    }
+
+    const expectedChallenge = await this.redisService.get(`passkey-authentication:${email}`, {
+      prefix: CachePrefix.AUTH,
+    })
+
+    if (typeof expectedChallenge !== 'string') {
+      throw new BadRequestException('auth.CHALLENGE_EXPIRED')
+    }
+
+    const authenticator = await this.prismaService.authenticator.findUnique({
+      where: { id: body.id },
+    })
+
+    if (!authenticator) {
+      throw new BadRequestException('auth.AUTHENTICATOR_NOT_FOUND')
+    }
+
+    const rpID = this.configService.get<string>('RP_ID', 'localhost')
+    const origin = this.configService.get<string>('FRONTEND_URL', 'http://localhost:5173')
+
+    const verification = await verifyAuthenticationResponse({
+      response: body,
+      expectedChallenge,
+      expectedOrigin: origin,
+      expectedRPID: rpID,
+      credential: {
+        id: isoBase64URL.fromBuffer(authenticator.credentialID),
+        publicKey: authenticator.credentialPublicKey,
+        counter: Number(authenticator.counter),
+      },
+    })
+
+    if (verification.verified) {
+      // 更新计数器
+      await this.prismaService.authenticator.update({
+        where: { id: body.id },
+        data: { counter: verification.authenticationInfo.newCounter },
+      })
+
+      const formattedUser = formatUser(user)
+      const accessToken = this.generateAccessToken(user.id, user.email)
+      const refreshToken = this.generateRefreshToken(user.id, user.email)
+
+      return {
+        accessToken,
+        refreshToken,
+        expiresIn: this.accessTokenExpiresIn,
+        user: formattedUser,
+      }
+    }
+
+    throw new UnauthorizedException('auth.AUTHENTICATION_FAILED')
+  }
+
   constructor(
     @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
@@ -39,6 +239,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly mailService: MailService,
     private readonly redisService: RedisService,
+    private readonly prismaService: PrismaService,
   ) {
     // 访问令牌默认 15 分钟
     this.accessTokenExpiresIn = this.configService.get<number>('JWT_ACCESS_EXPIRES_IN', 900)
@@ -47,12 +248,63 @@ export class AuthService {
   }
 
   /**
+   * 验证 Google 用户
+   */
+  async validateGoogleUser(profile: {
+    id: string
+    emails: Array<{ value: string }>
+    displayName: string
+    photos?: Array<{ value: string }>
+  }): Promise<User> {
+    const { id, emails, displayName, photos } = profile
+    const email = emails[0].value
+
+    const user = await this.usersService.findInternalByEmail(email)
+
+    if (!user) {
+      // 如果用户不存在，创建新用户
+      return await this.usersService.createWithGoogle({
+        email,
+        name: displayName,
+        googleId: id,
+        avatar: photos?.[0]?.value,
+      })
+    }
+
+    if (!user.googleId) {
+      // 如果用户存在但没有绑定 Google ID，进行绑定
+      const updatedUser = await this.usersService.update(user.id, {
+        googleId: id,
+        avatar: user.avatar || photos?.[0]?.value,
+      })
+      return formatUser(updatedUser)
+    }
+
+    return formatUser(user)
+  }
+
+  /**
+   * Google 登录成功后生成令牌
+   */
+  async googleLogin(user: User): Promise<AuthResponse> {
+    const accessToken = this.generateAccessToken(user.id, user.email)
+    const refreshToken = this.generateRefreshToken(user.id, user.email)
+
+    return {
+      accessToken,
+      refreshToken,
+      expiresIn: this.accessTokenExpiresIn,
+      user,
+    }
+  }
+
+  /**
    * 验证用户凭据
    */
   async validateUser(email: string, password: string): Promise<User | null> {
     const user = await this.usersService.findInternalByEmail(email)
 
-    if (!user) {
+    if (!user || !user.password) {
       return null
     }
 

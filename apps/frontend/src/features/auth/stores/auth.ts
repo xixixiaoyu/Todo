@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { authApi } from '../api'
 import type { User, LoginInput, RegisterInput } from '@my-app/shared'
+import { startRegistration, startAuthentication } from '@simplewebauthn/browser'
 
 /**
  * 认证状态管理
@@ -18,7 +19,7 @@ export const useAuthStore = defineStore(
     const error = ref<string | null>(null)
 
     // 计算属性
-    const isAuthenticated = computed(() => !!token.value)
+    const isAuthenticated = computed(() => !!token.value || !!user.value)
 
     /**
      * 登录
@@ -86,16 +87,95 @@ export const useAuthStore = defineStore(
     /**
      * 重置密码
      */
-    async function resetPassword(token: string, password: string): Promise<boolean> {
+    async function resetPassword(tokenValue: string, password: string): Promise<boolean> {
       loading.value = true
       error.value = null
 
       try {
-        await authApi.resetPassword(token, password)
+        await authApi.resetPassword(tokenValue, password)
         return true
       } catch (e: unknown) {
         const err = e as { response?: { data?: { message?: string } } }
         error.value = err.response?.data?.message || 'resetPassword.failed'
+        return false
+      } finally {
+        loading.value = false
+      }
+    }
+
+    /**
+     * 注册 Passkey
+     */
+    async function registerPasskey(name?: string): Promise<boolean> {
+      loading.value = true
+      error.value = null
+
+      try {
+        const options = await authApi.getPasskeyRegistrationOptions()
+        const attResp = await startRegistration({ optionsJSON: options })
+        await authApi.verifyPasskeyRegistration(attResp, name)
+        return true
+      } catch (e: unknown) {
+        console.error('Passkey registration error:', e)
+        const err = e as { response?: { data?: { message?: string } } }
+        error.value = err.response?.data?.message || 'passkey.registrationFailed'
+        return false
+      } finally {
+        loading.value = false
+      }
+    }
+
+    /**
+     * 使用 Passkey 登录
+     */
+    async function loginWithPasskey(email: string): Promise<boolean> {
+      loading.value = true
+      error.value = null
+
+      try {
+        const options = await authApi.getPasskeyLoginOptions(email)
+        const asseResp = await startAuthentication({ optionsJSON: options })
+        const response = await authApi.verifyPasskeyLogin(email, asseResp)
+
+        token.value = response.data.accessToken
+        refreshToken.value = response.data.refreshToken || null
+        user.value = response.data.user
+        return true
+      } catch (e: unknown) {
+        console.error('Passkey login error:', e)
+        const err = e as { response?: { data?: { message?: string } } }
+        error.value = err.response?.data?.message || 'passkey.loginFailed'
+        return false
+      } finally {
+        loading.value = false
+      }
+    }
+
+    /**
+     * Google 登录
+     */
+    function loginWithGoogle() {
+      const apiUrl = import.meta.env.VITE_API_BASE_URL
+      window.location.href = `${apiUrl}/auth/google`
+    }
+
+    /**
+     * 处理 OAuth 登录（从 Cookie 获取令牌）
+     */
+    async function handleOAuthLogin(): Promise<boolean> {
+      loading.value = true
+      error.value = null
+
+      try {
+        const response = await authApi.oauthLogin()
+        token.value = response.data.accessToken
+        refreshToken.value = response.data.refreshToken || null
+        user.value = response.data.user
+        return true
+      } catch (e: unknown) {
+        console.error('OAuth login error:', e)
+        const err = e as { response?: { data?: { message?: string } } }
+        error.value = err.response?.data?.message || 'auth.oauthFailed'
         return false
       } finally {
         loading.value = false
@@ -174,6 +254,10 @@ export const useAuthStore = defineStore(
       register,
       forgotPassword,
       resetPassword,
+      registerPasskey,
+      loginWithPasskey,
+      loginWithGoogle,
+      handleOAuthLogin,
       logout,
       fetchCurrentUser,
       refreshAccessToken,

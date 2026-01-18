@@ -6,8 +6,19 @@ import { ConfigService } from '@nestjs/config'
 import { UsersService } from '../../src/users/users.service'
 import { MailService } from '../../src/mail/mail.service'
 import { RedisService } from '../../src/redis/redis.service'
+import { PrismaService } from '../../src/prisma/prisma.service'
 import * as bcrypt from 'bcryptjs'
 import type { User } from '@my-app/shared'
+import * as simplewebauthn from '@simplewebauthn/server'
+import type { PublicKeyCredentialCreationOptionsJSON } from '@simplewebauthn/server'
+
+// Mock simplewebauthn
+vi.mock('@simplewebauthn/server', () => ({
+  generateRegistrationOptions: vi.fn(),
+  verifyRegistrationResponse: vi.fn(),
+  generateAuthenticationOptions: vi.fn(),
+  verifyAuthenticationResponse: vi.fn(),
+}))
 
 // Mock dependencies
 const mockUsersService = {
@@ -15,6 +26,8 @@ const mockUsersService = {
   findOne: vi.fn(),
   create: vi.fn(),
   getUserById: vi.fn(),
+  createWithGoogle: vi.fn(),
+  update: vi.fn(),
 }
 
 const mockJwtService = {
@@ -33,6 +46,16 @@ const mockMailService = {
 const mockRedisService = {
   has: vi.fn(),
   set: vi.fn(),
+  get: vi.fn(),
+}
+
+const mockPrismaService = {
+  authenticator: {
+    findMany: vi.fn(),
+    create: vi.fn(),
+    findUnique: vi.fn(),
+    update: vi.fn(),
+  },
 }
 
 describe('AuthService', () => {
@@ -46,6 +69,7 @@ describe('AuthService', () => {
       mockConfigService as unknown as ConfigService,
       mockMailService as unknown as MailService,
       mockRedisService as unknown as RedisService,
+      mockPrismaService as unknown as PrismaService,
     )
   })
 
@@ -112,6 +136,75 @@ describe('AuthService', () => {
       expect(result.accessToken).toBe('mock-token')
       expect(result.refreshToken).toBe('mock-token')
       expect(result.user).toEqual(mockUser)
+    })
+  })
+
+  describe('validateGoogleUser', () => {
+    it('should return user if googleId exists', async () => {
+      const mockUser = {
+        id: 1,
+        email: 'google@test.com',
+        googleId: 'google-123',
+        name: 'Google User',
+        avatar: 'photo-url',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+      mockUsersService.findInternalByEmail.mockResolvedValue(mockUser)
+
+      const profile = {
+        id: 'google-123',
+        emails: [{ value: 'google@test.com' }],
+        displayName: 'Google User',
+        photos: [{ value: 'photo-url' }],
+      }
+      const result = await service.validateGoogleUser(profile)
+
+      expect(result.id).toBe(1)
+      expect(mockUsersService.createWithGoogle).not.toHaveBeenCalled()
+    })
+
+    it('should create user if googleId does not exist', async () => {
+      mockUsersService.findInternalByEmail.mockResolvedValue(null)
+      mockUsersService.createWithGoogle.mockResolvedValue({
+        id: 2,
+        email: 'new@google.com',
+        googleId: 'new-123',
+      })
+
+      const profile = {
+        id: 'new-123',
+        emails: [{ value: 'new@google.com' }],
+        displayName: 'New User',
+        photos: [{ value: 'photo-url' }],
+      }
+      const result = await service.validateGoogleUser(profile)
+
+      expect(result.id).toBe(2)
+      expect(mockUsersService.createWithGoogle).toHaveBeenCalled()
+    })
+  })
+
+  describe('Passkeys', () => {
+    const mockUser: User = {
+      id: 1,
+      email: 'test@example.com',
+      name: 'Test',
+      avatar: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    it('should generate registration options', async () => {
+      mockPrismaService.authenticator.findMany.mockResolvedValue([])
+      vi.mocked(simplewebauthn.generateRegistrationOptions).mockResolvedValue({
+        challenge: 'mock-challenge',
+      } as unknown as PublicKeyCredentialCreationOptionsJSON)
+
+      const options = await service.generatePasskeyRegistrationOptions(mockUser)
+
+      expect(options.challenge).toBe('mock-challenge')
+      expect(mockRedisService.set).toHaveBeenCalled()
     })
   })
 })

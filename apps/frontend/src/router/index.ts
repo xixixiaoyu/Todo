@@ -39,6 +39,11 @@ const router = createRouter({
       meta: { title: 'resetPassword.title' },
     },
     {
+      path: '/auth/callback',
+      name: 'auth-callback',
+      component: () => import('@/features/auth/views/AuthCallbackView.vue'),
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: () => import('@/views/error/NotFoundView.vue'),

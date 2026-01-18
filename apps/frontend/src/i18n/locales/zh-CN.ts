@@ -52,6 +52,17 @@ export default {
     registerLink: '立即注册',
     forgotPassword: '忘记密码？',
     failed: '登录失败',
+    orContinueWith: '或通过以下方式继续',
+    emailRequiredForPasskey: '使用 Passkey 登录前请先输入邮箱',
+  },
+  passkey: {
+    registrationFailed: 'Passkey 注册失败',
+    registrationSuccess: 'Passkey 注册成功',
+    loginFailed: 'Passkey 登录失败',
+    register: '注册 Passkey',
+    registered: '已注册 Passkey',
+    manage: '管理 Passkey',
+    enterName: '请为这个 Passkey 命名（例如：我的 MacBook）',
   },
   register: {
     title: '创建账号',
