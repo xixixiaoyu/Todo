@@ -32,8 +32,9 @@
     "docker:clean": "docker compose down -v --rmi local",
     "wails:dev": "cd apps/wails && wails dev",
     "wails:build": "cd apps/wails && wails build -clean -ldflags \"-s -w\"",
+    "wails:kill": "./scripts/close-app.sh",
     "wails:install": "./scripts/deploy-app.sh",
-    "wails:deploy": "pnpm wails:build && pnpm wails:install",
+    "wails:deploy": "pnpm wails:kill && pnpm wails:build && pnpm wails:install",
     "tag:refresh": "./scripts/refresh-tag.sh"
   },
   "devDependencies": {

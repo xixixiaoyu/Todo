@@ -40,26 +40,8 @@ fi
 
 echo -e "📦 找到构建产物: ${BUILD_PATH}"
 
-# 检查应用是否正在运行
-if pgrep -x "$APP_NAME" > /dev/null; then
-  echo -e "${YELLOW}⚠️  检测到 ${APP_NAME} 正在运行，正在尝试关闭...${NC}"
-  # 尝试优雅关闭
-  osascript -e "quit app \"$APP_NAME\"" > /dev/null 2>&1
-  
-  # 等待应用退出（最多等待 5 秒）
-  COUNT=0
-  while pgrep -x "$APP_NAME" > /dev/null && [ $COUNT -lt 5 ]; do
-    sleep 1
-    ((COUNT++))
-  done
-  
-  # 如果还在运行，强制关闭
-  if pgrep -x "$APP_NAME" > /dev/null; then
-    echo -e "${RED}🛑 应用未能响应关闭请求，正在强制终止...${NC}"
-    pkill -9 -x "$APP_NAME"
-  fi
-  echo -e "${GREEN}✅ 应用已关闭。${NC}"
-fi
+# 检查并关闭正在运行的应用
+"${SCRIPT_DIR}/close-app.sh"
 
 # 如果目标位置已存在同名应用，先删除
 if [ -d "$DEST_PATH" ]; then
