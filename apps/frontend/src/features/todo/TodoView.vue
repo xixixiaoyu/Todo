@@ -66,8 +66,6 @@ const {
   handleEditKeydown,
 } = useTodo()
 
-const fireworksRef = ref<InstanceType<typeof Fireworks> | null>(null)
-
 function onFireworksComplete() {
   showFireworks.value = false
 }
@@ -154,7 +152,6 @@ function onFireworksComplete() {
     <!-- Fireworks -->
     <Fireworks
       v-if="!pomodoroStore.isMiniMode"
-      ref="fireworksRef"
       :active="showFireworks"
       @complete="onFireworksComplete"
     />
