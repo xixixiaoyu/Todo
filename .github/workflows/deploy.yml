@@ -7,11 +7,15 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
   build-and-deploy:
     name: Build and Deploy
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://johndoe:randompassword@localhost:5432/mydb?schema=public
 
     steps:
       - name: 检出代码
@@ -29,7 +33,7 @@ jobs:
           cache: 'pnpm'
 
       - name: 安装依赖
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: 配置 Turbo 缓存
         uses: actions/cache@v4
@@ -38,6 +42,9 @@ jobs:
           key: ${{ runner.os }}-turbo-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-turbo-
+
+      - name: 生成 Prisma Client
+        run: pnpm db:generate
 
       - name: 构建前端项目
         run: pnpm --filter @my-app/frontend build
@@ -56,3 +63,17 @@ jobs:
           force_orphan: true
           user_name: 'github-actions[bot]'
           user_email: 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Deploy Summary
+        if: always()
+        run: |
+          echo "### 🚀 部署状态摘要" >> $GITHUB_STEP_SUMMARY
+          echo "- **依赖安装**: ${{ job.status == 'success' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **项目构建**: ${{ steps['构建前端项目'].outcome == 'success' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Pages 部署**: ${{ steps['部署到 GitHub Pages'].outcome == 'success' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ job.status }}" != "success" ]; then
+            echo "#### 🔍 故障排查" >> $GITHUB_STEP_SUMMARY
+            echo "1. **构建失败？** 请检查是否有 TypeScript 类型错误或缺失环境变量。" >> $GITHUB_STEP_SUMMARY
+            echo "2. **部署失败？** 请确保仓库设置中 \`Settings -> Pages -> Build and deployment -> Source\` 设置为 \`Deploy from a branch\` 并选择 \`gh-pages\`。" >> $GITHUB_STEP_SUMMARY
+            echo "3. **权限问题？** 检查 \`Settings -> Actions -> General -> Workflow permissions\` 是否已开启 \`Read and write permissions\`。" >> $GITHUB_STEP_SUMMARY
+          fi
