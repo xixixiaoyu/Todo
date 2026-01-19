@@ -56,9 +56,12 @@ jobs:
         run: |
           cd apps/wails
           if [ "${{ matrix.platform }}" == "windows" ]; then
-            wails build -platform windows/${{ matrix.arch }} -clean -ldflags "-s -w"
+            wails build -trimpath -platform windows/${{ matrix.arch }} -clean -ldflags "-s -w"
           else
-            wails build -platform darwin/universal -clean -ldflags "-s -w"
+            wails build -trimpath -platform darwin/universal -clean -ldflags "-s -w"
+            # macOS 下将 .app 打包为 zip，因为 release 不支持上传目录
+            cd build/bin
+            zip -r Todo_macOS_universal.zip Todo.app
           fi
 
       - name: Upload Artifacts
@@ -67,7 +70,7 @@ jobs:
           name: wails-build-${{ matrix.platform }}-${{ matrix.arch }}
           path: |
             apps/wails/build/bin/*.exe
-            apps/wails/build/bin/*.app
+            apps/wails/build/bin/*.zip
             apps/wails/build/bin/*.dmg
           retention-days: 1
 
@@ -91,7 +94,7 @@ jobs:
           files: |
             ./artifacts/*.exe
             ./artifacts/*.dmg
-            ./artifacts/*.app
+            ./artifacts/*.zip
           generate_release_notes: true
           draft: false
           prerelease: contains(github.ref, 'beta') || contains(github.ref, 'alpha')
