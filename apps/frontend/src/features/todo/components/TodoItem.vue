@@ -213,9 +213,9 @@ watch(
 </script>
 
 <template>
-  <div class="flex flex-col gap-2">
+  <div class="flex flex-col gap-1.5">
     <div
-      class="group relative flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3"
+      class="group relative flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-2.5"
       :class="[
         { 'opacity-90 scale-[0.98] bg-muted/30': level && level > 0 },
         { 'border-primary/30 bg-primary/[0.03] shadow-sm shadow-primary/5': todo.isPinned },
@@ -455,7 +455,7 @@ watch(
     <div
       v-if="isAddingChild"
       ref="subtaskContainerRef"
-      class="flex items-center gap-2 px-4 py-3 ml-10 border-l-2 border-primary/10"
+      class="flex items-center gap-2 px-4 py-2.5 ml-10 border-l-2 border-primary/10"
     >
       <TooltipProvider :delay-duration="0">
         <Tooltip :open="showTooltip && isAddingChild">
@@ -504,7 +504,7 @@ watch(
     <!-- 子任务列表 (最多支持三层) -->
     <div
       v-if="(level || 0) < 2 && isExpanded"
-      class="ml-10 flex flex-col gap-2 border-l-2 border-primary/5 pl-2 transition-all"
+      class="ml-10 flex flex-col gap-1.5 border-l-2 border-primary/5 pl-2 transition-all"
     >
       <draggable
         v-model="dragChildren"
@@ -513,7 +513,7 @@ watch(
         group="todos"
         ghost-class="opacity-50"
         chosen-class="scale-[1.01]"
-        class="flex flex-col gap-2 min-h-[4px]"
+        class="flex flex-col gap-1.5 min-h-[4px]"
         :animation="0"
       >
         <template #item="{ element: child }">

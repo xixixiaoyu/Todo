@@ -124,7 +124,10 @@ function onFireworksComplete() {
           </Transition>
 
           <!-- List / Visualizer -->
-          <div class="flex-1 relative flex flex-col min-h-0" :class="showSearch ? 'mt-2' : 'mt-4'">
+          <div
+            class="flex-1 relative flex flex-col min-h-0"
+            :class="showSearch ? 'mt-1.5' : 'mt-3'"
+          >
             <TodoList
               v-if="todoStore.viewMode === 'list'"
               :todos="
