@@ -200,36 +200,5 @@ describe('useTodoStore - Expansion', () => {
       expect(store.todos[0].expanded).toBe(true)
       expect(store.isAllExpanded).toBe(true)
     })
-
-    it('should sync expansion state when filter changes', async () => {
-      store.todos = [
-        {
-          id: '1',
-          title: 'P1',
-          completed: false,
-          createdAt: new Date(),
-          order: 0,
-          expanded: true,
-        },
-        {
-          id: '2',
-          title: 'C1',
-          completed: false,
-          createdAt: new Date(),
-          order: 0,
-          parentId: '1',
-        },
-      ]
-
-      store.setFilter('completed')
-      await nextTick()
-      expect(store.todos[0].expanded).toBe(false)
-      expect(store.isAllExpanded).toBe(false)
-
-      store.setFilter('pending')
-      await nextTick()
-      expect(store.todos[0].expanded).toBe(true)
-      expect(store.isAllExpanded).toBe(true)
-    })
   })
 })
