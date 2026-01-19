@@ -406,6 +406,38 @@ describe('TodoItem', () => {
       expect(wrapper.find('.lucide-plus').element.closest('button')).toBeTruthy()
     })
 
+    it('should not show add subtask button when todo is completed', () => {
+      const wrapper = mount(TodoItem, {
+        props: {
+          todo: { ...mockTodo, completed: true },
+          editingId: null,
+          editingTitle: '',
+          level: 0,
+        },
+        global: {
+          plugins: [i18n],
+        },
+      })
+
+      expect(wrapper.find('.lucide-plus').exists()).toBe(false)
+    })
+
+    it('should not show AI breakdown button when todo is completed', () => {
+      const wrapper = mount(TodoItem, {
+        props: {
+          todo: { ...mockTodo, completed: true },
+          editingId: null,
+          editingTitle: '',
+          level: 0,
+        },
+        global: {
+          plugins: [i18n],
+        },
+      })
+
+      expect(wrapper.find('.lucide-sparkles').exists()).toBe(false)
+    })
+
     it('should not show add subtask button at level 2', () => {
       const wrapper = mount(TodoItem, {
         props: {

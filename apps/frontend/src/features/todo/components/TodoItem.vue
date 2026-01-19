@@ -399,7 +399,7 @@ watch(
               </TooltipContent>
             </Tooltip>
 
-            <Tooltip v-if="(level || 0) < 2">
+            <Tooltip v-if="(level || 0) < 2 && !todo.completed">
               <TooltipTrigger as-child>
                 <Button
                   variant="ghost"
@@ -415,7 +415,7 @@ watch(
               </TooltipContent>
             </Tooltip>
 
-            <Tooltip>
+            <Tooltip v-if="!todo.completed">
               <TooltipTrigger as-child>
                 <Button
                   variant="ghost"

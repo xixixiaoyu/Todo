@@ -166,6 +166,7 @@ export default {
     language: 'Switch Language',
     addSubtask: 'Add Subtask',
     subtaskPlaceholder: 'Enter subtask...',
+    parentCompleted: 'Cannot add subtasks to a completed task',
     allTasks: 'All Tasks',
     visualMode: 'Visual View',
     listMode: 'List View',

@@ -98,6 +98,18 @@ describe('useTodoStore - Actions', () => {
       expect(store.todos[0].parentId).toBe('parent-id')
     })
 
+    it('should not add subtask if parent is completed', async () => {
+      store.todos = [
+        { id: 'parent-1', title: 'Parent Task', completed: true, createdAt: new Date(), order: 0 },
+      ]
+
+      const result = await store.addTodo('Subtask', 'parent-1')
+
+      expect(result).toBeNull()
+      expect(store.error).toBe('todo.parentCompleted')
+      expect(store.todos).toHaveLength(1)
+    })
+
     it('should allow adding duplicate todo if existing one is completed at the same level', async () => {
       store.todos = [{ ...mockTodos[1], parentId: null }] // 'Second todo', completed: true
 

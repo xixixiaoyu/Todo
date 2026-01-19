@@ -223,6 +223,15 @@ export const useTodoStore = defineStore(
         return null
       }
 
+      // 禁止向已完成的任务添加子任务
+      if (parentId) {
+        const parent = todos.value.find((t) => t.id === parentId)
+        if (parent?.completed) {
+          error.value = 'todo.parentCompleted'
+          return null
+        }
+      }
+
       loading.value = true
       try {
         const minOrder =
