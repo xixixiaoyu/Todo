@@ -185,7 +185,7 @@ watch([() => props.message.thinkingContent, () => props.message.reasoning_detail
           <!-- eslint-enable vue/no-v-html -->
           <div
             v-else
-            class="break-words whitespace-pre-wrap text-muted-foreground/70 text-[13.5px] leading-relaxed"
+            class="selectable select-text break-words whitespace-pre-wrap text-muted-foreground/70 text-[13.5px] leading-relaxed"
           >
             {{ message.thinkingContent }}
           </div>

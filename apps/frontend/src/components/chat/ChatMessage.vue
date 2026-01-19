@@ -331,7 +331,7 @@ watch(
           <!-- 正文气泡：用户消息或已有内容的 AI 消息 -->
           <div
             v-else-if="isUser || hasContent"
-            class="relative break-words rounded-2xl px-4 py-3 shadow-sm transition-all duration-300"
+            class="selectable relative select-text break-words rounded-2xl px-4 py-3 shadow-sm transition-all duration-300"
             :class="[
               isUser
                 ? 'bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-primary-foreground hover:shadow-md'
@@ -390,7 +390,7 @@ watch(
               />
 
               <!-- 用户消息：展示模式 -->
-              <div v-else-if="isUser" class="group/user relative">
+              <div v-else-if="isUser" class="group/user relative selectable select-text">
                 <div class="break-words whitespace-pre-wrap text-[15px] leading-relaxed">
                   {{ message.content }}
                 </div>
@@ -410,7 +410,7 @@ watch(
                 <!-- AI 消息：Markdown 渲染 -->
                 <div
                   v-if="renderedHtml"
-                  class="markdown-content relative break-words leading-relaxed"
+                  class="markdown-content selectable relative break-words leading-relaxed select-text"
                 >
                   <!-- eslint-disable-next-line vue/no-v-html -->
                   <div v-html="renderedHtml" />
@@ -419,7 +419,7 @@ watch(
                 <!-- AI 消息：兜底显示（渲染完成前或渲染失败时） -->
                 <div
                   v-else-if="hasContent"
-                  class="relative break-words text-[15px] leading-relaxed"
+                  class="relative selectable select-text break-words text-[15px] leading-relaxed"
                 >
                   {{ message.content }}
                 </div>
