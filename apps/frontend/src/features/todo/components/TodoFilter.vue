@@ -77,28 +77,28 @@ const emit = defineEmits<{
       @update:model-value="emit('update:filter', $event as FilterType)"
     >
       <TabsList
-        class="grid w-full grid-cols-2 h-12 p-1.5 bg-muted/80 backdrop-blur-md rounded-full border border-border/40 shadow-sm"
+        class="grid w-full grid-cols-2 h-12 p-1 bg-muted/40 dark:bg-muted/20 backdrop-blur-xl rounded-full border border-border/60 dark:border-border/40 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)]"
       >
         <TabsTrigger
           value="pending"
-          class="flex items-center justify-center gap-2 rounded-full px-4 text-sm font-medium transition-all duration-300 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:font-semibold hover:text-primary/80"
+          class="flex items-center justify-center gap-2 rounded-full px-4 text-sm font-medium transition-all duration-300 border border-transparent data-[state=active]:border-primary/20 data-[state=active]:bg-gradient-to-b data-[state=active]:from-background data-[state=active]:to-background/95 data-[state=active]:text-primary data-[state=active]:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.08),0_0_1px_rgba(0,0,0,0.1)] dark:data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.6),0_0_1px_rgba(255,255,255,0.1)] data-[state=active]:scale-[1.02] data-[state=active]:font-semibold hover:text-primary/80"
         >
           <Circle
             class="h-4 w-4 transition-colors"
             :class="
-              filter === 'pending' ? 'text-primary fill-primary/10' : 'text-muted-foreground/50'
+              filter === 'pending' ? 'text-primary fill-primary/10' : 'text-muted-foreground/60'
             "
           />
           {{ t('todo.pending') }}
         </TabsTrigger>
         <TabsTrigger
           value="completed"
-          class="flex items-center justify-center gap-2 rounded-full px-4 text-sm font-medium transition-all duration-300 data-[state=active]:bg-background data-[state=active]:text-success data-[state=active]:shadow-md data-[state=active]:font-semibold hover:text-success/80"
+          class="flex items-center justify-center gap-2 rounded-full px-4 text-sm font-medium transition-all duration-300 border border-transparent data-[state=active]:border-success/20 data-[state=active]:bg-gradient-to-b data-[state=active]:from-background data-[state=active]:to-background/95 data-[state=active]:text-success data-[state=active]:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.08),0_0_1px_rgba(0,0,0,0.1)] dark:data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.6),0_0_1px_rgba(255,255,255,0.1)] data-[state=active]:scale-[1.02] data-[state=active]:font-semibold hover:text-success/80"
         >
           <CheckCircle2
             class="h-4 w-4 transition-colors"
             :class="
-              filter === 'completed' ? 'text-success fill-success/10' : 'text-muted-foreground/50'
+              filter === 'completed' ? 'text-success fill-success/10' : 'text-muted-foreground/60'
             "
           />
           {{ t('todo.completed') }}
