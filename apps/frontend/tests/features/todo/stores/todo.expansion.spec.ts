@@ -173,11 +173,6 @@ describe('useTodoStore - Expansion', () => {
       // When filter is 'completed', only Completed Parent is visible
       store.setFilter('completed')
       await nextTick()
-      // The watch on filter will collapse all when switching to 'completed'
-      // So we manually expand it to test the computed property logic
-      const completedParent = store.todos.find((t) => t.id === '3')
-      if (completedParent) completedParent.expanded = true
-      await nextTick()
       expect(store.isAllExpanded).toBe(true) // Completed Parent is expanded
     })
 
