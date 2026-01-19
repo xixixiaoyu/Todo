@@ -51,14 +51,6 @@ export const useTodoStore = defineStore(
       return currentParentTodos.some((t) => (t.expanded ?? true) !== false)
     })
 
-    // 监听过滤器变化，同步展开状态
-    watch(filter, (newFilter) => {
-      const isExpanded = newFilter !== 'completed'
-      todos.value.forEach((todo) => {
-        todo.expanded = isExpanded
-      })
-    })
-
     // 搜索时自动展开所有项
     watch(searchQuery, (newQuery) => {
       if (newQuery.trim()) {

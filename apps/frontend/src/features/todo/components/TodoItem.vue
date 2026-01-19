@@ -76,7 +76,7 @@ const dragChildren = computed({
 const isAddingChild = ref(false)
 const showTooltip = ref(false)
 
-const isExpanded = computed(() => props.todo.expanded ?? true)
+const isExpanded = computed(() => props.todo.expanded ?? false)
 
 const newChildTitle = ref('')
 const subtaskInputRef = ref<InstanceType<typeof Input> | null>(null)
