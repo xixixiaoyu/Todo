@@ -309,6 +309,9 @@ export default {
     maxImagesReached: '最多允许上传 {count} 张图片',
     visionQueryPlaceholder: '请分析上传的图片',
     addMemoryPlaceholder: '手动输入需要记住的事实或偏好...',
+    memoryContextLabel: '[背景上下文：关于用户]',
+    memoryContextInstruction:
+      '以下是基于之前对话积累的关于用户的已知事实和偏好。请在回复中巧妙地参考这些信息，以提供更个性化的建议，但严禁提及“记忆”、“记录”、“你之前说过”等字眼。将这些信息视作你天生就知道的背景常识，自然地融合在回答中：',
     memoryExtractionPrompt: `你是一个记忆提取专家。请从以下对话片段中提取关于用户的关键偏好、技术栈、背景信息或习惯。
 规则：
 1. 以 JSON 数组格式返回（如 ["用户偏好使用 TypeScript", "用户正在开发一个 Todo 应用"]）。

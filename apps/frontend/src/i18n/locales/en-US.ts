@@ -316,6 +316,9 @@ export default {
     maxImagesReached: 'Maximum {count} images allowed',
     visionQueryPlaceholder: 'Please analyze the uploaded image',
     addMemoryPlaceholder: 'Enter facts or preferences to remember...',
+    memoryContextLabel: '[Background Context: About User]',
+    memoryContextInstruction:
+      'The following are known facts and preferences about the user accumulated from previous conversations. Please skillfully refer to this information in your response to provide more personalized suggestions, but strictly avoid using words like "memory", "record", or "you previously said". Treat this information as innate background knowledge and integrate it naturally into your answer:',
     memoryExtractionPrompt: `You are a memory extraction expert. Please extract key preferences, tech stacks, background info, or habits about the user from the following conversation snippet.
 Rules:
 1. Return in JSON array format (e.g., ["User prefers TypeScript", "User is developing a Todo app"]).

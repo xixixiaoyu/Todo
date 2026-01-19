@@ -112,7 +112,7 @@ export function injectSystemPrompts(
   if (isMemoryEnabled.value && memories.value.length > 0) {
     result.push({
       role: 'system',
-      content: `[用户已知信息记录]\n${memories.value.map((m) => `- ${m}`).join('\n')}`,
+      content: `${t('ai.memoryContextLabel')}\n${t('ai.memoryContextInstruction')}\n${memories.value.map((m) => `- ${m}`).join('\n')}`,
     })
   }
 

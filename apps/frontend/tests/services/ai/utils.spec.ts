@@ -122,7 +122,12 @@ describe('AI Utils - injectSystemPrompts', () => {
     } as ReturnType<typeof useMemory>)
 
     const result = injectSystemPrompts([], '', false)
-    const memoryMessage = result.find((m) => (m.content as string).includes('用户已知信息记录'))
+    const memoryMessage = result.find(
+      (m) =>
+        typeof m.content === 'string' &&
+        (m.content.includes('ai.memoryContextLabel') || m.content.includes('用户已知信息记录')),
+    )
+    expect(memoryMessage).toBeDefined()
     expect(memoryMessage?.content).toContain('- Memory 1')
     expect(memoryMessage?.content).toContain('- Memory 2')
   })
