@@ -22,7 +22,6 @@ import { onClickOutside } from '@vueuse/core'
 import { Haptics, ImpactStyle } from '@capacitor/haptics'
 import { useTodoStore, type Todo } from '../stores/todo'
 import { usePomodoroStore } from '../stores/pomodoro'
-import { useGsap } from '@/composables/useGsap'
 import { highlightMatch } from '@/lib/utils'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
@@ -32,7 +31,6 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/comp
 const { t } = useI18n()
 const store = useTodoStore()
 const pomodoroStore = usePomodoroStore()
-const { Flip } = useGsap()
 
 const props = defineProps<{
   todo: Todo
@@ -127,24 +125,6 @@ const children = computed(() => {
 
 const hasChildren = computed(() => children.value.length > 0)
 
-// GSAP Flip 动画处理 (子任务)
-watch(
-  () => children.value,
-  async () => {
-    const state = Flip.getState(`.subtask-item-${props.todo.id}`)
-
-    await nextTick()
-
-    Flip.from(state, {
-      duration: 0.3,
-      ease: 'power2.out',
-      stagger: 0.01,
-      absolute: true,
-    })
-  },
-  { deep: true },
-)
-
 const parentPath = computed(() => {
   if (!props.searchQuery?.trim()) return []
   return store.getTodoPath(props.todo.id)
@@ -235,7 +215,7 @@ watch(
 <template>
   <div class="flex flex-col gap-2">
     <div
-      class="group relative flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-all duration-300 hover:bg-muted/50 hover:border-primary/30"
+      class="group relative flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3"
       :class="[
         { 'opacity-90 scale-[0.98] bg-muted/30': level && level > 0 },
         { 'border-primary/30 bg-primary/[0.03] shadow-sm shadow-primary/5': todo.isPinned },
@@ -343,14 +323,11 @@ watch(
           <div class="flex items-center gap-1.5 min-w-0">
             <Pin
               v-if="todo.isPinned"
-              class="h-3.5 w-3.5 text-primary/70 shrink-0 group-hover:hidden animate-in fade-in zoom-in duration-300"
+              class="h-3.5 w-3.5 text-primary/70 shrink-0 group-hover:hidden"
             />
-            <Sparkles
-              v-if="todo.isProposed"
-              class="h-3.5 w-3.5 text-success/70 shrink-0 animate-in fade-in zoom-in duration-500"
-            />
+            <Sparkles v-if="todo.isProposed" class="h-3.5 w-3.5 text-success/70 shrink-0" />
             <span
-              class="flex-1 cursor-pointer select-text text-foreground transition-all duration-300 truncate"
+              class="flex-1 cursor-pointer select-text text-foreground truncate"
               :class="[
                 todo.completed ? 'line-through text-muted-foreground/50' : '',
                 todo.isProposedDelete ? 'line-through text-destructive/50' : '',
@@ -537,26 +514,24 @@ watch(
         ghost-class="opacity-50"
         chosen-class="scale-[1.01]"
         class="flex flex-col gap-2 min-h-[4px]"
-        :animation="300"
+        :animation="0"
       >
         <template #item="{ element: child }">
-          <div :class="`subtask-item-${todo.id}`" :data-flip-id="child.id">
-            <TodoItem
-              :todo="child"
-              :level="(level || 0) + 1"
-              :editing-id="editingId"
-              :editing-title="editingTitle"
-              :search-query="searchQuery"
-              @toggle="(id, currentCompleted) => emit('toggle', id, currentCompleted)"
-              @start-edit="(id, title) => emit('startEdit', id, title)"
-              @save-edit="emit('saveEdit')"
-              @cancel-edit="emit('cancelEdit')"
-              @delete="(id) => emit('delete', id)"
-              @reorder="(ids, pId) => emit('reorder', ids, pId)"
-              @update:editing-title="(value) => emit('update:editingTitle', value)"
-              @edit-keydown="(e) => emit('editKeydown', e)"
-            />
-          </div>
+          <TodoItem
+            :todo="child"
+            :level="(level || 0) + 1"
+            :editing-id="editingId"
+            :editing-title="editingTitle"
+            :search-query="searchQuery"
+            @toggle="(id, currentCompleted) => emit('toggle', id, currentCompleted)"
+            @start-edit="(id, title) => emit('startEdit', id, title)"
+            @save-edit="emit('saveEdit')"
+            @cancel-edit="emit('cancelEdit')"
+            @delete="(id) => emit('delete', id)"
+            @reorder="(ids, pId) => emit('reorder', ids, pId)"
+            @update:editing-title="(value) => emit('update:editingTitle', value)"
+            @edit-keydown="(e) => emit('editKeydown', e)"
+          />
         </template>
       </draggable>
     </div>

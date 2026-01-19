@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { ClipboardList, CheckCircle2, SearchX } from 'lucide-vue-next'
-import { computed, watch, nextTick } from 'vue'
+import { computed } from 'vue'
 import draggable from 'vuedraggable'
 import type { Todo } from '../stores/todo'
 import TodoItem from './TodoItem.vue'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { useGsap } from '@/composables/useGsap'
 
 const { t } = useI18n()
-const { gsap, Flip } = useGsap()
 
 const props = defineProps<{
   todos: Todo[]
@@ -75,53 +73,13 @@ const displayTodos = computed(() => {
     return !props.todos.some((t) => t.id === todo.parentId)
   })
 })
-
-// GSAP Flip 动画处理
-watch(
-  () => props.todos,
-  async () => {
-    const state = Flip.getState('.todo-item-container')
-
-    await nextTick()
-
-    Flip.from(state, {
-      duration: 0.35,
-      ease: 'power2.out',
-      stagger: 0.01,
-      absolute: true,
-      onEnter: (elements) =>
-        gsap.fromTo(
-          elements,
-          { opacity: 0, scale: 0.96, y: 5 },
-          {
-            duration: 0.25,
-            opacity: 1,
-            scale: 1,
-            y: 0,
-            ease: 'back.out(1.2)',
-          },
-        ),
-      onLeave: (elements) =>
-        gsap.to(elements, {
-          duration: 0.2,
-          opacity: 0,
-          scale: 0.96,
-          ease: 'power2.in',
-        }),
-    })
-  },
-  { deep: true },
-)
 </script>
 
 <template>
   <div class="flex-1 flex flex-col min-h-0">
     <ScrollArea class="flex-1 min-h-0 w-full -mx-4 px-4">
       <!-- Empty State -->
-      <div
-        v-if="todos.length === 0"
-        class="flex flex-col items-center justify-center py-24 animate-in fade-in zoom-in-95 duration-1000 ease-out"
-      >
+      <div v-if="todos.length === 0" class="flex flex-col items-center justify-center py-24">
         <div
           class="mb-8 flex items-center justify-center w-24 h-24 rounded-full bg-primary/5 border border-primary/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative group"
         >
@@ -156,26 +114,25 @@ watch(
           chosen-class="scale-[1.02]"
           drag-class="rotate-1"
           class="space-y-3 pb-6"
-          :animation="300"
+          :animation="0"
           :disabled="!!searchQuery"
         >
           <template #item="{ element: todo }">
-            <div :data-flip-id="todo.id" class="todo-item-container">
-              <TodoItem
-                :key="todo.id"
-                :todo="todo"
-                :editing-id="editingId"
-                :editing-title="editingTitle"
-                :search-query="searchQuery"
-                @toggle="(id, currentCompleted) => emit('toggle', id, currentCompleted)"
-                @start-edit="(id, title) => emit('startEdit', id, title)"
-                @save-edit="emit('saveEdit')"
-                @cancel-edit="emit('cancelEdit')"
-                @delete="(id) => emit('delete', id)"
-                @update:editing-title="(value) => emit('update:editingTitle', value)"
-                @edit-keydown="(e) => emit('editKeydown', e)"
-              />
-            </div>
+            <TodoItem
+              :key="todo.id"
+              :todo="todo"
+              :editing-id="editingId"
+              :editing-title="editingTitle"
+              :search-query="searchQuery"
+              @toggle="(id, currentCompleted) => emit('toggle', id, currentCompleted)"
+              @start-edit="(id, title) => emit('startEdit', id, title)"
+              @save-edit="emit('saveEdit')"
+              @cancel-edit="emit('cancelEdit')"
+              @delete="(id) => emit('delete', id)"
+              @reorder="(ids, pId) => emit('reorder', ids, pId)"
+              @update:editing-title="(value) => emit('update:editingTitle', value)"
+              @edit-keydown="(e) => emit('editKeydown', e)"
+            />
           </template>
         </draggable>
       </div>
