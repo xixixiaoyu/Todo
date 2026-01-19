@@ -10,6 +10,7 @@ export default defineConfig({
     },
     include: ['tests/**/*.{test,spec}.ts'],
     exclude: ['node_modules', 'dist'],
+    reporters: process.env.GITHUB_ACTIONS ? ['default', 'github-actions'] : ['default'],
     root: './',
     coverage: {
       provider: 'v8',

@@ -35,7 +35,14 @@ jobs:
           cache: 'pnpm'
 
       - name: 安装依赖
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: 验证依赖状态
+        if: failure()
+        run: |
+          echo "### 📦 依赖安装失败" >> $GITHUB_STEP_SUMMARY
+          echo "请检查 pnpm-lock.yaml 是否与 package.json 一致。" >> $GITHUB_STEP_SUMMARY
+          pnpm list --depth 0
 
       - name: 配置 Turbo 缓存
         uses: actions/cache@v4
@@ -50,17 +57,36 @@ jobs:
           echo "DATABASE_URL=postgresql://johndoe:randompassword@localhost:5432/mydb?schema=public" > .env
           pnpm db:generate
 
+      - name: Setup ESLint Problem Matcher
+        run: echo "::add-matcher::.github/eslint-matcher.json"
+
       - name: 格式检查
         run: pnpm format:check
 
       - name: Lint 检查
-        run: pnpm lint
+        run: pnpm lint -- --format stylish
 
       - name: 类型检查
         run: pnpm type-check
 
       - name: 运行测试
         run: pnpm test
+
+      - name: CI Summary
+        if: always()
+        run: |
+          echo "### CI 运行摘要 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "- **Prisma Client**: 生成成功 ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- **代码格式**: ${{ job.status == 'success' && '通过 ✅' || '未检查或失败 ❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Lint 检查**: ${{ job.status == 'success' && '通过 ✅' || '存在问题 ❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **单元测试**: ${{ job.status == 'success' && '通过 ✅' || '存在失败 ❌' }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ job.status }}" != "success" ]; then
+            echo "#### 🔍 如何查看具体错误？" >> $GITHUB_STEP_SUMMARY
+            echo "1. 点击左侧 **'Lint and Test'** 任务。" >> $GITHUB_STEP_SUMMARY
+            echo "2. 展开失败的步骤（如 'Lint 检查' 或 '运行测试'）。" >> $GITHUB_STEP_SUMMARY
+            echo "3. 查看日志中的具体错误信息。" >> $GITHUB_STEP_SUMMARY
+            echo "4. 检查页面上方的 **'Annotations'** 区域，直接查看代码报错行。" >> $GITHUB_STEP_SUMMARY
+          fi
 
       - name: 安全审计
         run: pnpm security-audit
