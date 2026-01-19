@@ -46,7 +46,9 @@ jobs:
             ${{ runner.os }}-turbo-
 
       - name: 生成 Prisma Client
-        run: pnpm db:generate
+        run: |
+          echo "DATABASE_URL=postgresql://johndoe:randompassword@localhost:5432/mydb?schema=public" > .env
+          pnpm db:generate
 
       - name: 格式检查
         run: pnpm format:check
@@ -95,7 +97,9 @@ jobs:
             ${{ runner.os }}-turbo-
 
       - name: 生成 Prisma Client
-        run: pnpm db:generate
+        run: |
+          echo "DATABASE_URL=postgresql://johndoe:randompassword@localhost:5432/mydb?schema=public" > .env
+          pnpm db:generate
 
       - name: 构建项目
         run: pnpm build

@@ -27,8 +27,12 @@ export const nativeService = {
       return system.info(title, message)
     }
 
-    // Web/Capacitor 降级使用 alert (生产环境可替换为更美观的 Toast)
-    console.log(`[${type.toUpperCase()}] ${title}: ${message}`)
+    // Web/Capacitor 降级使用 console.warn/error
+    if (type === 'error') {
+      console.error(`[${type.toUpperCase()}] ${title}: ${message}`)
+    } else {
+      console.warn(`[${type.toUpperCase()}] ${title}: ${message}`)
+    }
     // 这里可以集成前端的 Toast 逻辑，但作为 Bridge 层，我们保持底层调用
   },
 

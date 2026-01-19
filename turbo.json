@@ -15,7 +15,7 @@
     },
     "lint": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**", "test/**", "eslint.config.mjs", "package.json"]
+      "inputs": ["src/**", "tests/**", "eslint.config.*", "package.json"]
     },
     "type-check": {
       "dependsOn": ["^build"],
@@ -23,7 +23,7 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**", "test/**", "vitest.config.mts", "package.json"],
+      "inputs": ["src/**", "tests/**", "vitest.config.*", "package.json"],
       "outputs": ["coverage/**"]
     },
     "clean": {

@@ -10,7 +10,7 @@
     "type-check": "vue-tsc -b",
     "build": "pnpm type-check && vite build",
     "preview": "vite preview",
-    "lint": "cross-env NODE_OPTIONS='--max-old-space-size=4096' eslint . --fix --cache",
+    "lint": "cross-env NODE_OPTIONS='--max-old-space-size=2048' eslint . --fix --cache",
     "clean": "shx rm -rf dist",
     "test": "vitest run",
     "test:watch": "vitest",

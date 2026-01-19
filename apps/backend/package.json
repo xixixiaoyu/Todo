@@ -9,7 +9,7 @@
     "start": "node dist/main",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "lint": "cross-env NODE_OPTIONS='--max-old-space-size=4096' eslint src --fix --cache",
+    "lint": "cross-env NODE_OPTIONS='--max-old-space-size=2048' eslint src --fix --cache",
     "clean": "rm -rf dist",
     "test": "vitest run",
     "test:watch": "vitest",
