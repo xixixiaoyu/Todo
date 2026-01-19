@@ -319,26 +319,33 @@ export default {
     memoryContextLabel: '[Background Context: About User]',
     memoryContextInstruction:
       'The following are known facts and preferences about the user accumulated from previous conversations. Please skillfully refer to this information in your response to provide more personalized suggestions, but strictly avoid using words like "memory", "record", or "you previously said". Treat this information as innate background knowledge and integrate it naturally into your answer:',
-    memoryExtractionPrompt: `You are a memory extraction expert. Please extract key preferences, tech stacks, background info, or habits about the user from the following conversation snippet.
-Rules:
-1. Return in JSON array format (e.g., ["User prefers TypeScript", "User is developing a Todo app"]).
-2. Extract facts only, no explanations.
-3. If no valuable new information is found, or if the information already exists in the "Current Memory List", return an empty array [].
-4. Extracted info should be concise and powerful, no more than 20 words each.
-5. MUST return JSON only, do not include Markdown code blocks.
+    memoryExtractionPrompt: `You are a keen memory extraction expert, skilled at distilling a "core profile" with long-term value for future interactions from conversations.
+Extraction Principles:
+1. **Long-term Value**: Extract only info reflecting user preferences, tech stacks, background, habits, or key facts. Ignore transient or trivial info like mood swings or weather.
+2. **Conflict Identification**: If new facts conflict with the "Current Memory List" (e.g., user changed preferences), extract the latest facts for subsequent processing.
+3. **Atomization**: Each piece should be an independent, complete semantic unit, no more than 20 words.
+4. **De-duplication**: Do not extract info already present in the "Current Memory List".
+
+Output Specification:
+- Return in JSON array format (e.g., ["Prefers TS development", "Learning Go"]).
+- If no new valuable info, return an empty array [].
+- Strictly NO Markdown blocks or any explanatory text.
 
 Current Memory List:
 {memories}
 
 Conversation Snippet:
 {conversation}`,
-    memoryCompressionPrompt: `You are a memory management expert. Please compress and merge the following user memory fragments.
+    memoryCompressionPrompt: `You are a memory management expert, responsible for maintaining a pure and efficient user profile. Please perform deep compression and conflict resolution on the following memory fragments.
 Rules:
-1. Identify and merge duplicate or semantically similar information (e.g., "User likes TypeScript" and "User tends to use TS for development" should be merged into one).
-2. Keep information factual and accurate, each piece should be concise and powerful (no more than 20 words).
-3. Remove outdated, contradictory, or meaningless trivial information.
-4. Return the result in JSON array format (e.g., ["Memory A", "Memory B"]).
-5. Must return ONLY JSON, do not include Markdown code blocks.
+1. **Semantic Merging**: Merge similar or related fragments (e.g., "Likes TS" and "Tends to use TypeScript") into a single more accurate statement.
+2. **Conflict Resolution**: If contradictions exist (e.g., "Likes React" followed by "Loves Vue"), take the latest fact as truth and remove obsolete info.
+3. **Importance Ranking**: Remove outdated, trivial, or no longer relevant information.
+4. **Format Consistency**: Keep each piece concise and powerful, no more than 20 words.
+
+Output Specification:
+- Return strictly in JSON array format.
+- Strictly NO Markdown blocks or any explanations.
 
 Current memory list:
 {memories}`,
