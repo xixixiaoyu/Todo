@@ -8,7 +8,7 @@ const { t } = i18n.global
 const MEMORY_STORAGE_KEY = 'ai-memories'
 const MEMORY_ENABLED_KEY = 'ai-memory-enabled'
 const MAX_MEMORIES = 100 // 扩充记忆容量至 100 条
-const AUTO_COMPRESS_THRESHOLD = 20 // 当记忆超过 20 条时自动触发压缩
+const AUTO_COMPRESS_THRESHOLD = 30 // 当记忆达到 30 条时触发自动压缩，平衡细节保留与上下文效率
 
 // 定义全局状态，确保在不同组件/Composable 之间共享
 const memories = ref<string[]>(JSON.parse(localStorage.getItem(MEMORY_STORAGE_KEY) || '[]'))
@@ -44,11 +44,12 @@ export function useMemory() {
    * 检查记忆库中是否已存在相似或相同的记忆
    * 采用大小写不敏感匹配及单词边界匹配，避免 "Memory 1" 错误匹配 "Memory 10"
    */
-  const findSimilarMemory = (content: string) => {
+  const findSimilarMemory = (content: string, targetMemories?: string[]) => {
     const normalized = content.trim().toLowerCase()
     if (!normalized) return null
 
-    return memories.value.find((m) => {
+    const listToSearch = targetMemories || memories.value
+    return listToSearch.find((m) => {
       const existingNormalized = m.trim().toLowerCase()
       if (existingNormalized === normalized) return true
 
@@ -71,6 +72,21 @@ export function useMemory() {
   }
 
   /**
+   * 自动触发压缩策略
+   */
+  const checkAutoCompress = () => {
+    if (
+      isMemoryEnabled.value &&
+      memories.value.length >= AUTO_COMPRESS_THRESHOLD &&
+      !isCompressing.value
+    ) {
+      compressMemories().catch((err) => {
+        console.error('[Memory] Auto-compression failed:', err)
+      })
+    }
+  }
+
+  /**
    * 添加新记忆并去重，限制最大存储量
    */
   const addMemories = (newMemories: string[]) => {
@@ -84,21 +100,7 @@ export function useMemory() {
       if (!trimmed) return
 
       // 检查相似性
-      const isDuplicate = currentMemories.some((existing) => {
-        const normalized = trimmed.toLowerCase()
-        const existingNormalized = existing.trim().toLowerCase()
-        if (existingNormalized === normalized) return true
-
-        try {
-          const escaped = normalized.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-          const regex = new RegExp(`\\b${escaped}\\b`, 'i')
-          const existingEscaped = existingNormalized.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-          const existingRegex = new RegExp(`\\b${existingEscaped}\\b`, 'i')
-          return regex.test(existingNormalized) || existingRegex.test(normalized)
-        } catch {
-          return false
-        }
-      })
+      const isDuplicate = !!findSimilarMemory(trimmed, currentMemories)
 
       if (!isDuplicate) {
         currentMemories.push(trimmed)
@@ -110,28 +112,17 @@ export function useMemory() {
       // 保持数组长度不超过 MAX_MEMORIES，保留最新的
       memories.value = currentMemories.slice(-MAX_MEMORIES)
       localStorage.setItem(MEMORY_STORAGE_KEY, JSON.stringify(memories.value))
-
-      // 自动触发压缩策略：超过阈值且当前未在压缩中
-      if (memories.value.length >= AUTO_COMPRESS_THRESHOLD && !isCompressing.value) {
-        // 使用异步执行，不阻塞主流程
-        compressMemories().catch((err) => {
-          console.error('[Memory] Auto-compression failed:', err)
-        })
-      }
     }
+
+    // 只要有提取尝试且当前超过阈值，就尝试触发压缩（即便本次没有新记忆加入，也可能是之前漏掉了或手动添加导致的）
+    checkAutoCompress()
   }
 
   /**
    * 手动添加单条记忆
    */
   const addMemory = (content: string) => {
-    const trimmed = content.trim()
-    if (!trimmed) return
-
-    if (findSimilarMemory(trimmed)) return
-
-    memories.value = [...memories.value, trimmed].slice(-MAX_MEMORIES)
-    localStorage.setItem(MEMORY_STORAGE_KEY, JSON.stringify(memories.value))
+    addMemories([content])
   }
 
   /**
