@@ -7,12 +7,16 @@ const { t } = i18n.global
 
 const MEMORY_STORAGE_KEY = 'ai-memories'
 const MEMORY_ENABLED_KEY = 'ai-memory-enabled'
+const MEMORY_THRESHOLD_KEY = 'ai-memory-threshold'
 const MAX_MEMORIES = 100 // 扩充记忆容量至 100 条
-const AUTO_COMPRESS_THRESHOLD = 30 // 当记忆达到 30 条时触发自动压缩，平衡细节保留与上下文效率
+const DEFAULT_THRESHOLD = 30 // 默认触发自动压缩的阈值
 
 // 定义全局状态，确保在不同组件/Composable 之间共享
 const memories = ref<string[]>(JSON.parse(localStorage.getItem(MEMORY_STORAGE_KEY) || '[]'))
 const isMemoryEnabled = ref(localStorage.getItem(MEMORY_ENABLED_KEY) === 'true')
+const autoCompressThreshold = ref(
+  Number(localStorage.getItem(MEMORY_THRESHOLD_KEY)) || DEFAULT_THRESHOLD,
+)
 const isCompressing = ref(false)
 const lastError = ref<string | null>(null)
 
@@ -77,7 +81,7 @@ export function useMemory() {
   const checkAutoCompress = () => {
     if (
       isMemoryEnabled.value &&
-      memories.value.length >= AUTO_COMPRESS_THRESHOLD &&
+      memories.value.length >= autoCompressThreshold.value &&
       !isCompressing.value
     ) {
       compressMemories().catch((err) => {
@@ -198,19 +202,28 @@ export function useMemory() {
     localStorage.setItem(MEMORY_ENABLED_KEY, String(enabled))
   }
 
+  /**
+   * 更新自动压缩阈值
+   */
+  const updateAutoCompressThreshold = (value: number) => {
+    autoCompressThreshold.value = value
+    localStorage.setItem(MEMORY_THRESHOLD_KEY, String(value))
+  }
+
   return {
     memories,
     isMemoryEnabled,
+    autoCompressThreshold,
     isCompressing,
     lastError,
-    addMemories,
     addMemory,
-    updateMemory,
-    compressMemories,
+    addMemories,
     removeMemory,
+    updateMemory,
     clearMemories,
     toggleMemory,
-    getMemoryModelOptions,
+    compressMemories,
+    updateAutoCompressThreshold,
   }
 }
 

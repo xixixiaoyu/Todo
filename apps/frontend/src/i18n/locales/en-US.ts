@@ -310,6 +310,10 @@ export default {
     memoryModelTip:
       'Specifying a dedicated preset (e.g., a model with stronger reasoning) for memory tasks can significantly improve extraction and compression quality.',
     memoryList: 'Memory List',
+    memoryAutoCompressThreshold: 'Auto-Compression Threshold',
+    memoryAutoCompressThresholdTip:
+      'When the number of memory snippets reaches this value, the system will automatically trigger compression to balance information completeness and conversation efficiency. Recommended range: 10-50.',
+    memoryItemsCount: '{count} items',
     memoryError: 'Memory operation error',
     uploadImage: 'Upload Image',
     removeImage: 'Remove Image',

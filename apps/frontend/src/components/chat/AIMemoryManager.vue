@@ -34,6 +34,8 @@ const {
   compressMemories,
   addMemory,
   updateMemory,
+  autoCompressThreshold,
+  updateAutoCompressThreshold,
 } = useMemory()
 
 // 记忆管理相关状态
@@ -199,6 +201,39 @@ function handleClearConfirm() {
             <Brain v-if="formData.memoryModelId === preset.id" :size="12" />
             <span>{{ preset.name }}</span>
           </button>
+        </div>
+
+        <!-- 自动压缩阈值设置 -->
+        <div class="space-y-3 border-t border-border pt-3">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-medium text-muted-foreground">{{
+              t('ai.memoryAutoCompressThreshold')
+            }}</label>
+            <div class="group relative">
+              <Info :size="12" class="text-muted-foreground/50 cursor-help" />
+              <div
+                class="absolute bottom-full right-0 mb-2 hidden w-64 rounded-lg border border-border bg-popover p-2 text-[10px] leading-relaxed text-popover-foreground shadow-xl group-hover:block"
+              >
+                {{ t('ai.memoryAutoCompressThresholdTip') }}
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-4">
+            <input
+              type="range"
+              min="10"
+              max="100"
+              step="5"
+              :value="autoCompressThreshold"
+              class="h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-border accent-primary transition-all hover:bg-border/80"
+              @input="
+                (e) => updateAutoCompressThreshold(Number((e.target as HTMLInputElement).value))
+              "
+            />
+            <span class="min-w-[3rem] text-right text-xs font-mono font-medium text-primary">
+              {{ t('ai.memoryItemsCount', { count: autoCompressThreshold }) }}
+            </span>
+          </div>
         </div>
       </div>
     </div>

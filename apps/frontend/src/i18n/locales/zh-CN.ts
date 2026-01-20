@@ -303,6 +303,10 @@ export default {
     memoryModelTip:
       '为记忆任务指定一个专用预设（如逻辑推理能力更强的模型）可显著提升提取和压缩的质量。',
     memoryList: '记忆列表',
+    memoryAutoCompressThreshold: '自动压缩阈值',
+    memoryAutoCompressThresholdTip:
+      '当记忆片段达到此数量时，系统将自动触发压缩逻辑，以平衡信息完整度与对话效率。建议范围：10-50。',
+    memoryItemsCount: '{count} 条',
     memoryError: '记忆操作出错',
     uploadImage: '上传图片',
     removeImage: '删除图片',
