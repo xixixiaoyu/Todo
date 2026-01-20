@@ -66,7 +66,7 @@ const handleRegisterPasskey = async () => {
       <h1
         class="cursor-default text-amber-600 text-2xl font-extrabold tracking-tight transition-transform hover:scale-105 md:text-3xl"
       >
-        {{ t('todo.title') }}
+        {{ t('common.appName') }}
       </h1>
     </div>
     <div class="flex items-center gap-2">

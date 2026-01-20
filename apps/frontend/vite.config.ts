@@ -54,9 +54,9 @@ export default defineConfig(async (): Promise<UserConfig> => {
           'maskable-icon-512x512.png',
         ],
         manifest: {
-          name: '极简待办',
-          short_name: '极简待办',
-          description: '高效、纯粹的个人待办管理工具',
+          name: '极简 AI 待办',
+          short_name: '极简 AI 待办',
+          description: '高效、纯粹的 AI 个人待办管理工具',
           theme_color: '#ffffff',
           icons: [
             {

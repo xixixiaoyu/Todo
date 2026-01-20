@@ -1,8 +1,8 @@
-# NestJS + Vue 全栈现代化模板
+# 极简 AI 待办 (Minimalist AI Todo)
 
 [![Tech Stack](https://img.shields.io/badge/Stack-NestJS%20%7C%20Vue%203.5%20%7C%20TypeScript-blue)](https://github.com/your-repo)
 
-基于 **NestJS 11** 与 **Vue 3.5** 构建的全栈 Todo 应用模板。采用 **pnpm Monorepo** 架构，集成了现代 Web 开发的最佳实践、严谨的工程规范与极致的跨端能力。
+基于 **NestJS 11** 与 **Vue 3.5** 构建的极简 AI 待办应用。采用 **pnpm Monorepo** 架构，集成了现代 Web 开发的最佳实践、严谨的工程规范与极致的跨端能力。
 
 ## 核心设计哲学
 

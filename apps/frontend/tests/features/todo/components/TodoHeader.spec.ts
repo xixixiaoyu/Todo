@@ -33,11 +33,11 @@ const i18n = createI18n({
   messages: {
     'zh-CN': {
       todo: {
-        title: '待办事项',
         visualMode: '可视化视图',
         listMode: '列表视图',
       },
       common: {
+        appName: '极简 AI 待办',
         toggleLanguage: '切换语言',
         logout: '退出登录',
       },
@@ -47,11 +47,11 @@ const i18n = createI18n({
     },
     'en-US': {
       todo: {
-        title: 'To-Do',
-        visualMode: 'Visual View',
-        listMode: 'List View',
+        visualMode: 'Visual Mode',
+        listMode: 'List Mode',
       },
       common: {
+        appName: 'Minimalist AI Todo',
         toggleLanguage: 'Switch Language',
         logout: 'Logout',
       },

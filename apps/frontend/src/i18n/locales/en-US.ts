@@ -1,7 +1,7 @@
 export default {
   common: {
-    appName: 'Minimalist Todo',
-    appDescription: 'Efficient and pure personal todo management tool',
+    appName: 'Minimalist AI Todo',
+    appDescription: 'Efficient and pure AI personal todo management tool',
     loading: 'Loading...',
     refresh: 'Refresh',
     back: 'Back',
@@ -44,7 +44,7 @@ export default {
     },
   },
   home: {
-    welcomeMessage: 'Welcome to My App',
+    welcomeMessage: 'Welcome to Minimalist AI Todo',
   },
   login: {
     title: 'Sign in to your account',
@@ -196,9 +196,9 @@ export default {
     stop: 'Stop',
     previousSession: 'Previous Session',
     history: 'History',
-    todoAssistant: 'Todo Assistant',
-    todoAssistantEnabled: 'Todo Assistant Enabled',
-    todoAssistantDisabled: 'Todo Assistant Disabled',
+    todoAssistant: 'AI Todo Assistant',
+    todoAssistantEnabled: 'AI Todo Assistant Enabled',
+    todoAssistantDisabled: 'AI Todo Assistant Disabled',
     placeholder: 'Ask AI Assistant... (Shift + Enter for newline, Enter to send)',
     generating: 'AI is replying...',
     managePresets: 'Manage Presets...',

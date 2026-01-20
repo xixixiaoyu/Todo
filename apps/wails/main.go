@@ -42,7 +42,7 @@ func main() {
 	})
 
 	err = wails.Run(&options.App{
-		Title:             "Todo",
+		Title:             "极简 AI 待办",
 		Menu:              appMenu,
 		Width:             1024,
 		Height:            768,
@@ -90,8 +90,8 @@ func main() {
 			WebviewIsTransparent: true,
 			WindowIsTranslucent:  true,
 			About: &mac.AboutInfo{
-				Title:   "Todo",
-				Message: "© 2024 Todo Team",
+				Title:   "极简 AI 待办",
+				Message: "© 2024 Minimalist AI Todo Team",
 			},
 		},
 	})

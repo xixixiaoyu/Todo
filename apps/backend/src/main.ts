@@ -81,7 +81,7 @@ async function bootstrap() {
 
   // Swagger API 文档配置
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('极简待办 API')
+    .setTitle('极简 AI 待办 API')
     .setDescription('API 接口文档')
     .setVersion('1.0')
     .addBearerAuth()

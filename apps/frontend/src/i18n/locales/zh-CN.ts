@@ -1,7 +1,7 @@
 export default {
   common: {
-    appName: '极简待办',
-    appDescription: '高效、纯粹的个人待办管理工具',
+    appName: '极简 AI 待办',
+    appDescription: '高效、纯粹的 AI 个人待办管理工具',
     loading: '加载中...',
     refresh: '刷新',
     back: '返回',
@@ -44,7 +44,7 @@ export default {
     },
   },
   home: {
-    welcomeMessage: '欢迎使用 My App',
+    welcomeMessage: '欢迎使用极简 AI 待办',
   },
   login: {
     title: '登录账户',
@@ -194,9 +194,9 @@ export default {
     stop: '停止',
     previousSession: '返回上一个会话',
     history: '历史记录',
-    todoAssistant: 'Todo 助手',
-    todoAssistantEnabled: 'Todo 助手已开启',
-    todoAssistantDisabled: 'Todo 助手已关闭',
+    todoAssistant: 'AI 待办助手',
+    todoAssistantEnabled: 'AI 待办助手已开启',
+    todoAssistantDisabled: 'AI 待办助手已关闭',
     placeholder: '询问 AI 助手... (按 Shift + Enter 换行，Enter 发送)',
     generating: 'AI 正在回复...',
     managePresets: '管理预设...',

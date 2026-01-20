@@ -35,7 +35,7 @@ const handleDblClick = () => {
         <span
           class="text-[10px] text-muted-foreground/30 font-medium tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity"
         >
-          Todo
+          Minimalist AI Todo
         </span>
       </div>
 

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">极简待办</string>
-    <string name="title_activity_main">极简待办</string>
-    <string name="package_name">com.minimalist.todo</string>
-    <string name="custom_url_scheme">com.minimalist.todo</string>
+    <string name="app_name">极简 AI 待办</string>
+    <string name="title_activity_main">极简 AI 待办</string>
+    <string name="package_name">com.minimalist.ai.todo</string>
+    <string name="custom_url_scheme">com.minimalist.ai.todo</string>
 </resources>
