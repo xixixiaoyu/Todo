@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, useId } from 'vue'
 import {
   Trash2,
   Edit3,
@@ -37,6 +37,9 @@ const emit = defineEmits<{
 const { t, locale } = useI18n()
 const { sessions, currentSessionId, renameSession, deleteSession, clearAllSessions, togglePin } =
   useChatHistory()
+
+const searchInputId = useId()
+const editTitleInputId = useId()
 
 // 搜索
 const searchQuery = ref('')
@@ -204,8 +207,11 @@ function handleClearConfirm(): void {
             :size="14"
             class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary"
           />
+          <label :for="searchInputId" class="sr-only">{{ t('common.search') }}</label>
           <input
+            :id="searchInputId"
             v-model="searchQuery"
+            name="history-search"
             :placeholder="t('common.search')"
             class="w-full rounded-lg border border-border bg-muted/50 py-1.5 pl-9 pr-3 text-xs outline-none transition-all focus:border-primary/50 focus:bg-background focus:ring-2 focus:ring-primary/10"
           />
@@ -261,9 +267,12 @@ function handleClearConfirm(): void {
           >
             <!-- 编辑模式 -->
             <div v-if="editingId === session.id" class="flex items-center gap-2" @click.stop>
+              <label :for="editTitleInputId" class="sr-only">{{ t('ai.renameSession') }}</label>
               <input
+                :id="editTitleInputId"
                 ref="editInputRef"
                 v-model="editingTitle"
+                name="session-title-edit"
                 class="flex-1 rounded-md border border-primary bg-background px-2 py-1.5 text-sm text-foreground outline-none ring-2 ring-primary/10"
                 @keydown.enter="saveEdit"
                 @keydown.escape="cancelEdit"
@@ -365,9 +374,12 @@ function handleClearConfirm(): void {
           >
             <!-- 编辑模式 -->
             <div v-if="editingId === session.id" class="flex items-center gap-2" @click.stop>
+              <label :for="editTitleInputId" class="sr-only">{{ t('ai.editTitle') }}</label>
               <input
+                :id="editTitleInputId"
                 ref="editInputRef"
                 v-model="editingTitle"
+                name="history-session-title"
                 class="flex-1 rounded-md border border-primary bg-background px-2 py-1.5 text-sm text-foreground outline-none ring-2 ring-primary/10"
                 @keydown.enter="saveEdit"
                 @keydown.escape="cancelEdit"

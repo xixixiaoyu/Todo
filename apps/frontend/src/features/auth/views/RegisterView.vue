@@ -53,6 +53,7 @@ const onSubmit = handleSubmit(async (values) => {
 
       <FormInput
         v-model="email"
+        name="email"
         :label="t('register.email')"
         :placeholder="t('register.emailPlaceholder')"
         type="email"
@@ -65,6 +66,7 @@ const onSubmit = handleSubmit(async (values) => {
 
       <FormInput
         v-model="name"
+        name="name"
         :label="t('register.name')"
         :placeholder="t('register.namePlaceholder')"
         type="text"
@@ -77,6 +79,7 @@ const onSubmit = handleSubmit(async (values) => {
 
       <PasswordInput
         v-model="password"
+        name="password"
         :label="t('register.password')"
         :placeholder="t('register.passwordPlaceholder')"
         :error="errors.password"
@@ -84,6 +87,7 @@ const onSubmit = handleSubmit(async (values) => {
 
       <PasswordInput
         v-model="confirmPassword"
+        name="confirmPassword"
         :label="t('register.confirmPassword')"
         :placeholder="t('register.confirmPasswordPlaceholder')"
         :error="errors.confirmPassword"

@@ -54,6 +54,7 @@ const onPasskeyLogin = async () => {
 
       <FormInput
         v-model="email"
+        name="email"
         :label="t('login.email')"
         :placeholder="t('login.emailPlaceholder')"
         type="email"
@@ -66,6 +67,7 @@ const onPasskeyLogin = async () => {
 
       <PasswordInput
         v-model="password"
+        name="password"
         :label="t('login.password')"
         :placeholder="t('login.passwordPlaceholder')"
         :error="errors.password"

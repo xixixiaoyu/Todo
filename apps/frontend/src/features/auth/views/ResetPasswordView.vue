@@ -118,6 +118,7 @@ const onSubmit = handleSubmit(async (values) => {
 
       <PasswordInput
         v-model="password"
+        name="password"
         :label="t('resetPassword.newPassword')"
         :placeholder="t('resetPassword.newPasswordPlaceholder')"
         :error="errors.password"
@@ -125,6 +126,7 @@ const onSubmit = handleSubmit(async (values) => {
 
       <PasswordInput
         v-model="confirmPassword"
+        name="confirmPassword"
         :label="t('resetPassword.confirmNewPassword')"
         :placeholder="t('resetPassword.confirmNewPasswordPlaceholder')"
         :error="errors.confirmPassword"

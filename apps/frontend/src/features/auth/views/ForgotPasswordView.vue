@@ -70,6 +70,7 @@ const onSubmit = handleSubmit(async (values) => {
 
       <FormInput
         v-model="email"
+        name="email"
         :label="t('login.email')"
         :placeholder="t('login.emailPlaceholder')"
         type="email"

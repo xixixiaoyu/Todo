@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Brain, Info, Plus, Loader2, Sparkles, Trash, Check, X, Edit3 } from 'lucide-vue-next'
 import { useMemory } from '@/composables/useMemory'
@@ -24,6 +24,11 @@ const formData = defineModel<AIConfig>({ required: true })
 
 const { t } = useI18n()
 const { error: toastError } = useToast()
+
+const thresholdInputId = useId()
+const addMemoryInputId = useId()
+const editMemoryInputId = useId()
+
 const {
   memories,
   isMemoryEnabled,
@@ -219,11 +224,16 @@ function handleClearConfirm() {
             </div>
           </div>
           <div class="flex items-center gap-4">
+            <label :for="thresholdInputId" class="sr-only">{{
+              t('ai.memoryAutoCompressThreshold')
+            }}</label>
             <input
+              :id="thresholdInputId"
               type="range"
               min="10"
               max="100"
               step="5"
+              name="memory-threshold"
               :value="autoCompressThreshold"
               class="h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-border accent-primary transition-all hover:bg-border/80"
               @input="
@@ -285,9 +295,12 @@ function handleClearConfirm() {
         v-if="isAddingMemory"
         class="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 p-2"
       >
+        <label :for="addMemoryInputId" class="sr-only">{{ t('ai.addMemoryPlaceholder') }}</label>
         <input
+          :id="addMemoryInputId"
           ref="addMemoryInputRef"
           v-model="newMemoryContent"
+          name="new-memory"
           type="text"
           class="flex-1 bg-transparent px-2 py-1 text-sm text-foreground outline-none placeholder:text-muted-foreground/50"
           :placeholder="t('ai.addMemoryPlaceholder')"
@@ -334,9 +347,12 @@ function handleClearConfirm() {
 
           <!-- 编辑模式 -->
           <div v-if="editingMemoryIndex === index" class="flex flex-1 items-center gap-2">
+            <label :for="editMemoryInputId" class="sr-only">{{ t('common.edit') }}</label>
             <input
+              :id="editMemoryInputId"
               ref="editMemoryInputRef"
               v-model="editingMemoryContent"
+              name="memory-edit"
               type="text"
               class="flex-1 bg-transparent text-sm text-foreground outline-none"
               @keyup.enter="handleSaveEditMemory"

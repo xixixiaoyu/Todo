@@ -16,7 +16,7 @@ import {
   Wand2,
   Loader2,
 } from 'lucide-vue-next'
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, useId } from 'vue'
 import draggable from 'vuedraggable'
 import { onClickOutside } from '@vueuse/core'
 import { Haptics, ImpactStyle } from '@capacitor/haptics'
@@ -31,6 +31,8 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/comp
 const { t } = useI18n()
 const store = useTodoStore()
 const pomodoroStore = usePomodoroStore()
+const editInputId = useId()
+const subtaskInputId = useId()
 
 const props = defineProps<{
   todo: Todo
@@ -262,16 +264,21 @@ watch(
         <TooltipProvider :delay-duration="0">
           <Tooltip :open="showTooltip && editingId === todo.id">
             <TooltipTrigger as-child>
-              <Input
-                ref="editInputRef"
-                :model-value="editingTitle"
-                type="text"
-                class="h-10 flex-1 bg-background text-foreground text-base focus-visible:ring-primary/20"
-                :placeholder="t('todo.editPlaceholder')"
-                @update:model-value="emit('update:editingTitle', $event as string)"
-                @keydown="emit('editKeydown', $event)"
-                @blur="handleSaveEdit"
-              />
+              <div class="flex-1">
+                <label :for="editInputId" class="sr-only">{{ t('todo.editPlaceholder') }}</label>
+                <Input
+                  :id="editInputId"
+                  ref="editInputRef"
+                  name="edit-todo"
+                  :model-value="editingTitle"
+                  type="text"
+                  class="h-10 w-full bg-background text-foreground text-base focus-visible:ring-primary/20"
+                  :placeholder="t('todo.editPlaceholder')"
+                  @update:model-value="emit('update:editingTitle', $event as string)"
+                  @keydown="emit('editKeydown', $event)"
+                  @blur="handleSaveEdit"
+                />
+              </div>
             </TooltipTrigger>
             <TooltipContent
               side="top"
@@ -462,9 +469,14 @@ watch(
         <Tooltip :open="showTooltip && isAddingChild">
           <TooltipTrigger as-child>
             <div class="flex-1">
+              <label :for="subtaskInputId" class="sr-only">{{
+                t('todo.subtaskPlaceholder')
+              }}</label>
               <Input
+                :id="subtaskInputId"
                 ref="subtaskInputRef"
                 v-model="newChildTitle"
+                name="new-subtask"
                 type="text"
                 class="h-9 w-full bg-background text-sm"
                 :placeholder="t('todo.subtaskPlaceholder')"

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Search, X } from 'lucide-vue-next'
 import { useIsMobile } from '@/composables/useWindowSize'
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 
 const { t } = useI18n()
 const { isMobile } = useIsMobile()
+const inputId = useId()
 
 const props = defineProps<{
   modelValue: string
@@ -53,8 +54,11 @@ onMounted(() => {
       :size="18"
       class="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary"
     />
+    <label :for="inputId" class="sr-only">{{ t('todo.searchPlaceholder') }}</label>
     <Input
+      :id="inputId"
       ref="inputRef"
+      name="todo-search"
       :model-value="modelValue"
       type="text"
       :placeholder="t('todo.searchPlaceholder')"

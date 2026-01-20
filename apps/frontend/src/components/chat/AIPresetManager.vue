@@ -1,10 +1,18 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Plus, Eye, EyeOff, Edit3, Copy, Trash2 } from 'lucide-vue-next'
 import { useAIConfig, type AIPreset } from '@/composables/useAIConfig'
 
 const { t } = useI18n()
+
+const nameId = useId()
+const baseUrlId = useId()
+const apiKeyId = useId()
+const modelId = useId()
+const systemPromptId = useId()
+const temperatureId = useId()
+
 const {
   presets,
   addPreset,
@@ -130,30 +138,40 @@ defineExpose({
 
       <div class="space-y-3">
         <div>
-          <label class="mb-1 block text-xs text-muted-foreground">{{
+          <label :for="nameId" class="mb-1 block text-xs text-muted-foreground">{{
             t('ai.presetNameLabel')
           }}</label>
           <input
+            :id="nameId"
             v-model="presetForm.name"
+            name="preset-name"
             type="text"
             :placeholder="t('ai.presetNamePlaceholder')"
             class="w-full rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
         </div>
         <div>
-          <label class="mb-1 block text-xs text-muted-foreground">{{ t('ai.baseUrlLabel') }}</label>
+          <label :for="baseUrlId" class="mb-1 block text-xs text-muted-foreground">{{
+            t('ai.baseUrlLabel')
+          }}</label>
           <input
+            :id="baseUrlId"
             v-model="presetForm.baseUrl"
+            name="preset-base-url"
             type="text"
             :placeholder="t('ai.baseUrlPlaceholder')"
             class="w-full rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
         </div>
         <div>
-          <label class="mb-1 block text-xs text-muted-foreground">{{ t('ai.apiKeyLabel') }}</label>
+          <label :for="apiKeyId" class="mb-1 block text-xs text-muted-foreground">{{
+            t('ai.apiKeyLabel')
+          }}</label>
           <div class="relative">
             <input
+              :id="apiKeyId"
               v-model="presetForm.apiKey"
+              name="preset-api-key"
               :type="showPresetApiKey ? 'text' : 'password'"
               :placeholder="t('ai.apiKeyPlaceholder')"
               class="w-full rounded-lg border border-border bg-muted/30 px-3 py-2 pr-9 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
@@ -169,37 +187,47 @@ defineExpose({
           </div>
         </div>
         <div>
-          <label class="mb-1 block text-xs text-muted-foreground">{{ t('ai.modelLabel') }}</label>
+          <label :for="modelId" class="mb-1 block text-xs text-muted-foreground">{{
+            t('ai.modelLabel')
+          }}</label>
           <input
+            :id="modelId"
             v-model="presetForm.model"
+            name="preset-model"
             type="text"
             :placeholder="t('ai.modelPlaceholder')"
             class="w-full rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
         </div>
         <div>
-          <label class="mb-1 block text-xs text-muted-foreground">{{
+          <label :for="systemPromptId" class="mb-1 block text-xs text-muted-foreground">{{
             t('ai.systemPromptLabel')
           }}</label>
           <textarea
+            :id="systemPromptId"
             v-model="presetForm.systemPrompt"
+            name="preset-system-prompt"
             rows="3"
             :placeholder="t('ai.systemPromptPlaceholder')"
             class="w-full resize-none rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
         </div>
         <div class="flex items-center justify-between">
-          <label class="text-xs text-muted-foreground">{{ t('ai.temperatureLabel') }}</label>
+          <label :for="temperatureId" class="text-xs text-muted-foreground">{{
+            t('ai.temperatureLabel')
+          }}</label>
           <div class="flex items-center gap-2">
             <input
+              :id="temperatureId"
               v-model.number="presetForm.temperature"
+              name="preset-temperature"
               type="range"
               min="0"
               max="2"
               step="0.1"
               class="h-1.5 w-24 cursor-pointer appearance-none rounded-full bg-border accent-primary"
             />
-            <span class="w-8 text-right text-xs text-muted-foreground">{{
+            <span class="w-6 text-right font-mono text-xs text-muted-foreground">{{
               presetForm.temperature.toFixed(1)
             }}</span>
           </div>

@@ -2,7 +2,7 @@
 
 @font-face {
   font-family: 'LXGW WenKai';
-  src: url('/LXGWWenKai-Medium.ttf') format('truetype');
+  src: url('../../public/LXGWWenKai-Medium.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;

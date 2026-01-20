@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { Plus, Calendar } from 'lucide-vue-next'
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, useId } from 'vue'
 import { useIsMobile } from '@/composables/useWindowSize'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -10,6 +10,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 const { t } = useI18n()
 const { isMobile } = useIsMobile()
+const inputId = useId()
 
 const props = defineProps<{
   modelValue: string
@@ -88,8 +89,11 @@ onMounted(() => {
           <Tooltip :open="showTooltip">
             <TooltipTrigger as-child>
               <div>
+                <label :for="inputId" class="sr-only">{{ t('todo.inputPlaceholder') }}</label>
                 <Input
+                  :id="inputId"
                   ref="inputRef"
+                  name="todo-input"
                   :model-value="modelValue"
                   type="text"
                   :placeholder="t('todo.inputPlaceholder')"

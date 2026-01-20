@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { X, RotateCcw } from 'lucide-vue-next'
 import { useAIConfig, type AIConfig, type AIPreset } from '@/composables/useAIConfig'
@@ -31,6 +31,7 @@ const emit = defineEmits<{
 const modelValue = defineModel<boolean>({ required: true })
 
 const { t } = useI18n()
+const presetNameInputId = useId()
 
 const { config, updateConfig, DEFAULT_CONFIG, presets, addPreset, activePresetId, switchPreset } =
   useAIConfig()
@@ -327,8 +328,13 @@ defineExpose({
         </AlertDialogDescription>
       </AlertDialogHeader>
       <div class="py-4">
+        <label :for="presetNameInputId" class="sr-only">{{
+          t('ai.saveAsPresetPlaceholder')
+        }}</label>
         <input
+          :id="presetNameInputId"
           v-model="saveAsPresetName"
+          name="save-as-preset-name"
           type="text"
           :placeholder="t('ai.saveAsPresetPlaceholder')"
           class="w-full rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"

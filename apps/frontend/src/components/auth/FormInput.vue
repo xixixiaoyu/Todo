@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
   modelValue: string | undefined
   label: string
+  name?: string
+  id?: string
   placeholder?: string
   type?: 'text' | 'email' | 'password'
   error?: string
@@ -16,6 +18,8 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const generatedId = useId()
+const inputId = computed(() => props.id || generatedId)
 
 const inputValue = computed({
   get: () => props.modelValue,
@@ -56,6 +60,7 @@ const displayError = computed(() => {
 <template>
   <div class="group space-y-2">
     <label
+      :for="inputId"
       class="block text-sm font-semibold text-foreground/80 transition-colors group-focus-within:text-primary"
     >
       {{ label }}
@@ -68,7 +73,9 @@ const displayError = computed(() => {
         <slot name="icon" />
       </div>
       <input
+        :id="inputId"
         v-model="inputValue"
+        :name="name"
         :type="type || 'text'"
         :placeholder="placeholder"
         :disabled="disabled"

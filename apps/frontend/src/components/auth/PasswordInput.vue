@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, useId } from 'vue'
 import { Eye, EyeOff, Lock } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
   modelValue: string | undefined
   label: string
+  name?: string
+  id?: string
   placeholder?: string
   error?: string
   disabled?: boolean
@@ -16,6 +18,8 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const generatedId = useId()
+const inputId = computed(() => props.id || generatedId)
 const showPassword = ref(false)
 
 const inputValue = computed({
@@ -57,6 +61,7 @@ const displayError = computed(() => {
 <template>
   <div class="group space-y-2">
     <label
+      :for="inputId"
       class="block text-sm font-semibold text-foreground/80 transition-colors group-focus-within:text-primary"
     >
       {{ label }}
@@ -68,7 +73,9 @@ const displayError = computed(() => {
         <Lock :size="20" stroke-width="2.5" />
       </div>
       <input
+        :id="inputId"
         v-model="inputValue"
+        :name="name"
         :type="showPassword ? 'text' : 'password'"
         :placeholder="placeholder"
         :disabled="disabled"

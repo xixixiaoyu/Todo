@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 defineProps<{
@@ -14,6 +14,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const editInputRef = ref<HTMLTextAreaElement>()
+const textareaId = useId()
 
 function adjustEditHeight() {
   const textarea = editInputRef.value
@@ -39,8 +40,11 @@ onMounted(() => {
 
 <template>
   <div class="flex flex-col gap-2">
+    <label :for="textareaId" class="sr-only">{{ t('ai.editMessage') }}</label>
     <textarea
+      :id="textareaId"
       ref="editInputRef"
+      name="chat-message-edit"
       :value="modelValue"
       class="w-full min-w-[280px] resize-none bg-transparent text-sm leading-relaxed outline-none"
       rows="1"

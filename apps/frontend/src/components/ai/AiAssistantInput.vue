@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, nextTick, computed, onUnmounted } from 'vue'
+import { ref, onMounted, watch, nextTick, computed, onUnmounted, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ChatSession } from '@/composables/useChatHistory'
 import {
@@ -45,6 +45,8 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const textareaRef = ref<HTMLTextAreaElement>()
 const fileInputRef = ref<HTMLInputElement>()
+const textareaId = useId()
+const fileInputId = useId()
 
 // 快捷指令相关
 const showSlashCommands = ref(false)
@@ -274,8 +276,11 @@ defineExpose({
       </div>
     </Transition>
 
+    <label :for="textareaId" class="sr-only">{{ t('ai.placeholder') }}</label>
     <textarea
+      :id="textareaId"
       ref="textareaRef"
+      name="ai-input"
       :value="modelValue"
       rows="1"
       :placeholder="
@@ -304,8 +309,11 @@ defineExpose({
         >
           <ImageIcon :size="16" />
         </button>
+        <label :for="fileInputId" class="sr-only">{{ t('ai.uploadImage') }}</label>
         <input
+          :id="fileInputId"
           ref="fileInputRef"
+          name="ai-file-upload"
           type="file"
           accept="image/*"
           multiple

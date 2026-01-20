@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useGsap } from '@/composables/useGsap'
 import {
@@ -24,6 +24,14 @@ defineProps<{
 const formData = defineModel<AIConfig>({ required: true })
 
 const { t } = useI18n()
+
+const baseUrlId = useId()
+const apiKeyId = useId()
+const modelId = useId()
+const temperatureId = useId()
+const systemPromptId = useId()
+const discussionModeId = useId()
+
 const { gsap, ctx } = useGsap()
 
 // API Key 显示/隐藏
@@ -99,9 +107,12 @@ function toggleSecondaryModel(presetId: string) {
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <p class="text-sm font-bold tracking-tight text-foreground">
+              <label
+                :for="discussionModeId"
+                class="text-sm font-bold tracking-tight text-foreground cursor-pointer"
+              >
                 {{ t('ai.discussionMode') }}
-              </p>
+              </label>
             </div>
             <p
               class="text-[11px] leading-relaxed text-muted-foreground/80 dark:text-muted-foreground/70"
@@ -111,6 +122,7 @@ function toggleSecondaryModel(presetId: string) {
           </div>
         </div>
         <button
+          :id="discussionModeId"
           class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-primary/10"
           :class="formData.discussionMode ? 'bg-primary shadow-sm shadow-primary/30' : 'bg-border'"
           @click="formData.discussionMode = !formData.discussionMode"
@@ -211,7 +223,10 @@ function toggleSecondaryModel(presetId: string) {
         </h3>
         <!-- Base URL -->
         <div class="group space-y-2">
-          <label class="flex items-center gap-2 text-[13px] font-semibold text-foreground/70">
+          <label
+            :for="baseUrlId"
+            class="flex items-center gap-2 text-[13px] font-semibold text-foreground/70"
+          >
             <Globe
               :size="14"
               class="text-muted-foreground transition-colors group-focus-within:text-primary"
@@ -220,7 +235,9 @@ function toggleSecondaryModel(presetId: string) {
           </label>
           <div class="relative">
             <input
+              :id="baseUrlId"
               v-model="formData.baseUrl"
+              name="ai-base-url"
               type="text"
               :placeholder="t('ai.baseUrlPlaceholder')"
               class="w-full rounded-2xl border border-border/80 bg-muted/40 px-4 py-3 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground/40 hover:bg-muted/60 focus:border-primary/50 focus:bg-background focus:ring-4 focus:ring-primary/5 dark:border-border dark:bg-muted/20 dark:hover:bg-muted/30"
@@ -241,7 +258,10 @@ function toggleSecondaryModel(presetId: string) {
 
         <!-- API Key -->
         <div class="group space-y-2">
-          <label class="flex items-center gap-2 text-[13px] font-semibold text-foreground/70">
+          <label
+            :for="apiKeyId"
+            class="flex items-center gap-2 text-[13px] font-semibold text-foreground/70"
+          >
             <Key
               :size="14"
               class="text-muted-foreground transition-colors group-focus-within:text-primary"
@@ -250,7 +270,9 @@ function toggleSecondaryModel(presetId: string) {
           </label>
           <div class="relative">
             <input
+              :id="apiKeyId"
               v-model="formData.apiKey"
+              name="ai-api-key"
               :type="showApiKey ? 'text' : 'password'"
               :placeholder="t('ai.apiKeyPlaceholder')"
               class="w-full rounded-2xl border border-border/80 bg-muted/40 px-4 py-3 pr-10 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground/40 hover:bg-muted/60 focus:border-primary/50 focus:bg-background focus:ring-4 focus:ring-primary/5 dark:border-border dark:bg-muted/20 dark:hover:bg-muted/30"
@@ -268,7 +290,10 @@ function toggleSecondaryModel(presetId: string) {
 
         <!-- 模型 -->
         <div class="group space-y-2">
-          <label class="flex items-center gap-2 text-[13px] font-semibold text-foreground/70">
+          <label
+            :for="modelId"
+            class="flex items-center gap-2 text-[13px] font-semibold text-foreground/70"
+          >
             <Cpu
               :size="14"
               class="text-muted-foreground transition-colors group-focus-within:text-primary"
@@ -276,7 +301,9 @@ function toggleSecondaryModel(presetId: string) {
             {{ t('ai.modelLabel') }}
           </label>
           <input
+            :id="modelId"
             v-model="formData.model"
+            name="ai-model"
             type="text"
             :placeholder="t('ai.modelPlaceholder')"
             class="w-full rounded-2xl border border-border/80 bg-muted/40 px-4 py-3 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground/40 hover:bg-muted/60 focus:border-primary/50 focus:bg-background focus:ring-4 focus:ring-primary/5 dark:border-border dark:bg-muted/20 dark:hover:bg-muted/30"
@@ -294,7 +321,10 @@ function toggleSecondaryModel(presetId: string) {
         <!-- 温度参数 -->
         <div class="group space-y-3">
           <div class="flex items-center justify-between">
-            <label class="flex items-center gap-2 text-[13px] font-semibold text-foreground/70">
+            <label
+              :for="temperatureId"
+              class="flex items-center gap-2 text-[13px] font-semibold text-foreground/70"
+            >
               <Thermometer
                 :size="14"
                 class="text-muted-foreground transition-colors group-focus-within:text-primary"
@@ -310,7 +340,9 @@ function toggleSecondaryModel(presetId: string) {
 
           <div class="relative px-1 pt-1.5">
             <input
+              :id="temperatureId"
               v-model.number="formData.temperature"
+              name="ai-temperature"
               type="range"
               min="0"
               max="2"
@@ -343,7 +375,10 @@ function toggleSecondaryModel(presetId: string) {
 
         <!-- System Prompt -->
         <div class="group space-y-2">
-          <label class="flex items-center gap-2 text-[13px] font-semibold text-foreground/70">
+          <label
+            :for="systemPromptId"
+            class="flex items-center gap-2 text-[13px] font-semibold text-foreground/70"
+          >
             <MessageSquare
               :size="14"
               class="text-muted-foreground transition-colors group-focus-within:text-primary"
@@ -351,7 +386,9 @@ function toggleSecondaryModel(presetId: string) {
             {{ t('ai.systemPromptLabel') }}
           </label>
           <textarea
+            :id="systemPromptId"
             v-model="formData.systemPrompt"
+            name="ai-system-prompt"
             rows="5"
             :placeholder="t('ai.systemPromptPlaceholder')"
             class="w-full resize-none rounded-2xl border border-border/80 bg-muted/40 px-4 py-3.5 text-sm leading-relaxed text-foreground outline-none transition-all placeholder:text-muted-foreground/40 hover:bg-muted/60 focus:border-primary/50 focus:bg-background focus:ring-4 focus:ring-primary/5 dark:border-border dark:bg-muted/20 dark:hover:bg-muted/30"
