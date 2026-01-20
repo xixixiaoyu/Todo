@@ -5,13 +5,13 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  nodemailer: ^7.0.12
-  glob: ^10.5.0
-  qs: ^6.14.1
-  tar: ^7.5.3
-  diff: ^8.0.3
-  hono: ^4.11.4
-  katex: ^0.16.21
+  nodemailer: 7.0.12
+  glob: 10.5.0
+  qs: 6.14.1
+  tar: 7.5.3
+  diff: 8.0.3
+  hono: 4.11.4
+  katex: 0.16.21
 
 importers:
 
@@ -171,7 +171,7 @@ importers:
         specifier: 5.0.1
         version: 5.0.1(@nestjs/common@11.1.10(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/swagger@11.2.3(@nestjs/common@11.1.10(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.10)(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2))(rxjs@7.8.2)(zod@4.2.1)
       nodemailer:
-        specifier: ^7.0.12
+        specifier: 7.0.12
         version: 7.0.12
       passport:
         specifier: 0.7.0
@@ -241,7 +241,7 @@ importers:
         specifier: 7.0.4
         version: 7.0.4
       '@types/passport-google-oauth20':
-        specifier: ^2.0.17
+        specifier: 2.0.17
         version: 2.0.17
       '@types/passport-jwt':
         specifier: 4.0.1
@@ -295,13 +295,13 @@ importers:
         specifier: 8.0.0
         version: 8.0.0(@capacitor/core@8.0.0)
       '@iktakahiro/markdown-it-katex':
-        specifier: ^4.0.1
+        specifier: 4.0.1
         version: 4.0.1
       '@my-app/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       '@simplewebauthn/browser':
-        specifier: ^13.1.0
+        specifier: 13.1.0
         version: 13.1.0
       '@tanstack/vue-query':
         specifier: 5.92.1
@@ -340,8 +340,8 @@ importers:
         specifier: 11.11.1
         version: 11.11.1
       katex:
-        specifier: ^0.16.21
-        version: 0.16.27
+        specifier: 0.16.21
+        version: 0.16.21
       lodash-es:
         specifier: 4.17.22
         version: 4.17.22
@@ -1696,7 +1696,7 @@ packages:
     resolution: {integrity: sha512-Shz/KjlIeAhfiuE93NDKVdZ7HdBVLQAfdbaXEaoAVO3ic9ibRSLGIQGkcBbFyuLr+7/1D5ZCINM8B+6IvXeMtw==}
     engines: {node: '>=18.14.1'}
     peerDependencies:
-      hono: ^4.11.4
+      hono: 4.11.4
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -2121,7 +2121,7 @@ packages:
     peerDependencies:
       '@nestjs/common': '>=7.0.9'
       '@nestjs/core': '>=7.0.9'
-      nodemailer: ^7.0.12
+      nodemailer: 7.0.12
 
   '@nestjs/bull-shared@11.0.4':
     resolution: {integrity: sha512-VBJcDHSAzxQnpcDfA0kt9MTGUD1XZzfByV70su0W0eDCQ9aqIEBlzWRW21tv9FG9dIut22ysgDidshdjlnczLw==}
@@ -5559,8 +5559,8 @@ packages:
   jws@4.0.1:
     resolution: {integrity: sha512-EKI/M/yqPncGUUh44xz0PxSidXFr/+r0pA70+gIYhjv+et7yxM+s29Y+VGDkovRofQem0fs7Uvf4+YmAdyRduA==}
 
-  katex@0.16.27:
-    resolution: {integrity: sha512-aeQoDkuRWSqQN6nSvVCEFvfXdqo1OQiCmmW1kc9xSdjutPv7BGO7pqY9sQRJpMOGrEdfDgF2TfRXe5eUAD2Waw==}
+  katex@0.16.21:
+    resolution: {integrity: sha512-XvqR7FgOHtWupfMiigNzmh+MgUVmDGU2kXZm899ZkPfcuoPuFxyHmXsgATDpFZDAXCI8tvinaVcDo8PIIJSo4A==}
     hasBin: true
 
   keyv@4.5.4:
@@ -10073,7 +10073,7 @@ snapshots:
 
   '@iktakahiro/markdown-it-katex@4.0.1':
     dependencies:
-      katex: 0.16.27
+      katex: 0.16.21
 
   '@img/sharp-darwin-arm64@0.33.5':
     optionalDependencies:
@@ -14565,7 +14565,7 @@ snapshots:
       jwa: 2.0.1
       safe-buffer: 5.2.1
 
-  katex@0.16.27:
+  katex@0.16.21:
     dependencies:
       commander: 8.3.0
 
@@ -14870,7 +14870,7 @@ snapshots:
       dagre-d3-es: 7.0.13
       dayjs: 1.11.19
       dompurify: 3.3.1
-      katex: 0.16.27
+      katex: 0.16.21
       khroma: 2.1.0
       lodash-es: 4.17.22
       marked: 16.4.2

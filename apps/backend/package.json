@@ -80,7 +80,7 @@
     "@types/multer": "2.0.0",
     "@types/node": "25.0.3",
     "@types/nodemailer": "7.0.4",
-    "@types/passport-google-oauth20": "^2.0.17",
+    "@types/passport-google-oauth20": "2.0.17",
     "@types/passport-jwt": "4.0.1",
     "@types/pg": "8.16.0",
     "@types/sanitize-html": "2.16.0",

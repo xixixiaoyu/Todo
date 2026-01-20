@@ -10,10 +10,8 @@ const isWails = process.env.WAILS === 'true'
 const getBase = () => {
   // Wails 模式使用相对路径
   if (isWails) return './'
-  // 生产环境部署到 GitHub Pages
-  if (process.env.NODE_ENV === 'production') return '/vue3-nest-template/'
-  // 常规开发环境使用 '/'
-  return '/'
+  // 生产环境优先从环境变量获取，否则默认为 '/'
+  return process.env.VITE_BASE_URL || '/'
 }
 
 export default defineConfig(async (): Promise<UserConfig> => {
