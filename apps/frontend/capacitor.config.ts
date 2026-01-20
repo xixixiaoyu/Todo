@@ -5,8 +5,8 @@ const config: CapacitorConfig = {
   appName: '简思',
   webDir: 'dist',
   server: {
-    // 开发时可启用热重载（取消注释并修改为本机 IP）
-    url: 'http://192.168.3.23:5173',
+    // 开发时可启用热重载（修改为本机 IP）
+    // url: 'http://192.168.3.23:5173',
     cleartext: true,
     androidScheme: 'https',
   },

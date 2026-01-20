@@ -101,10 +101,11 @@ export default defineConfig(async (): Promise<UserConfig> => {
       rollupOptions: {
         output: {
           manualChunks: {
-            'vue-vendor': ['vue', 'vue-router', 'pinia'],
-            'ui-vendor': ['lucide-vue-next', 'gsap'],
+            'vue-vendor': ['vue', 'vue-router', 'pinia', 'pinia-plugin-persistedstate'],
+            'ui-vendor': ['lucide-vue-next', 'gsap', 'reka-ui', 'clsx', 'tailwind-merge'],
             'chart-vendor': ['echarts', 'vue-echarts'],
             'markdown-vendor': ['markdown-it', 'mermaid', 'highlight.js', 'katex'],
+            'utils-vendor': ['axios', 'dayjs', 'lodash-es', 'zod', 'vee-validate'],
           },
         },
       },
