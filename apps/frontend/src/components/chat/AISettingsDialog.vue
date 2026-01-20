@@ -217,62 +217,46 @@ defineExpose({
           >
             <!-- 标题栏 -->
             <div
-              class="flex shrink-0 items-center justify-between border-b border-border px-6 py-4"
+              class="relative flex shrink-0 items-center justify-between overflow-hidden border-b border-border px-8 py-5"
             >
-              <h2 class="text-lg font-medium text-foreground">{{ t('ai.settings') }}</h2>
+              <div
+                class="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-transparent"
+              />
+              <div class="relative flex items-center gap-3">
+                <div class="h-1.5 w-1.5 rounded-full bg-primary" />
+                <h2 class="text-lg font-bold tracking-tight text-foreground">
+                  {{ t('ai.settings') }}
+                </h2>
+              </div>
               <button
-                class="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                class="relative flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground transition-all hover:bg-muted hover:text-foreground active:scale-90"
                 @click="handleClose"
               >
-                <X :size="18" />
+                <X :size="18" stroke-width="2.5" />
               </button>
             </div>
 
             <!-- Tab 切换 -->
-            <div class="flex shrink-0 gap-4 border-b border-border px-6">
+            <div class="flex shrink-0 gap-8 border-b border-border bg-muted/5 px-8">
               <button
-                class="relative py-3 text-sm transition-colors"
+                v-for="tab in ['settings', 'presets', 'memory'] as const"
+                :key="tab"
+                class="group relative py-4 text-sm font-bold tracking-tight transition-all"
                 :class="
-                  activeTab === 'settings'
-                    ? 'text-foreground font-medium'
+                  activeTab === tab
+                    ? 'text-foreground'
                     : 'text-muted-foreground hover:text-foreground'
                 "
-                @click="activeTab = 'settings'"
+                @click="activeTab = tab"
               >
-                {{ t('ai.basicSettings') }}
+                {{
+                  t(
+                    `ai.${tab === 'settings' ? 'basicSettings' : tab === 'presets' ? 'presetManagement' : 'memory'}`,
+                  )
+                }}
                 <span
-                  v-if="activeTab === 'settings'"
-                  class="absolute bottom-0 left-0 h-0.5 w-full bg-primary"
-                />
-              </button>
-              <button
-                class="relative py-3 text-sm transition-colors"
-                :class="
-                  activeTab === 'presets'
-                    ? 'text-foreground font-medium'
-                    : 'text-muted-foreground hover:text-foreground'
-                "
-                @click="activeTab = 'presets'"
-              >
-                {{ t('ai.presetManagement') }}
-                <span
-                  v-if="activeTab === 'presets'"
-                  class="absolute bottom-0 left-0 h-0.5 w-full bg-primary"
-                />
-              </button>
-              <button
-                class="relative py-3 text-sm transition-colors"
-                :class="
-                  activeTab === 'memory'
-                    ? 'text-foreground font-medium'
-                    : 'text-muted-foreground hover:text-foreground'
-                "
-                @click="activeTab = 'memory'"
-              >
-                {{ t('ai.memory') }}
-                <span
-                  v-if="activeTab === 'memory'"
-                  class="absolute bottom-0 left-0 h-0.5 w-full bg-primary"
+                  v-if="activeTab === tab"
+                  class="absolute bottom-0 left-0 h-0.5 w-full bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)]"
                 />
               </button>
             </div>
@@ -299,28 +283,28 @@ defineExpose({
 
             <!-- 底部按钮 -->
             <div
-              class="flex shrink-0 items-center justify-between border-t border-border px-6 py-4"
+              class="flex shrink-0 items-center justify-between border-t border-border px-8 py-5 bg-muted/5"
             >
-              <div class="flex items-center gap-3">
+              <div class="flex items-center gap-4">
                 <button
-                  class="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                  class="group flex items-center gap-2 text-xs font-medium text-muted-foreground transition-all hover:text-foreground"
                   @click="handleReset"
                 >
-                  <RotateCcw :size="14" />
+                  <RotateCcw :size="14" class="transition-transform group-hover:-rotate-45" />
                   {{ t('ai.resetToDefault') }}
                 </button>
               </div>
               <div class="flex items-center gap-3">
                 <button
                   v-if="activeTab === 'settings' && !formData.discussionMode"
-                  class="rounded-lg px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                  class="rounded-xl px-5 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
                   :disabled="isDuplicatePreset"
                   @click="handleSaveAsPreset"
                 >
                   {{ t('ai.saveAsPreset') }}
                 </button>
                 <button
-                  class="rounded-lg bg-primary px-6 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover"
+                  class="rounded-xl bg-primary px-8 py-2.5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary-hover hover:shadow-primary/30 active:scale-[0.98]"
                   @click="handleSave"
                 >
                   {{ t('common.save') }}

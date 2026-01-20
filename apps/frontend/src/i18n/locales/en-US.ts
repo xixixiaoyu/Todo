@@ -281,6 +281,10 @@ export default {
     defaultSystemPrompt:
       'You are a friendly AI assistant. Please answer user questions in clear and concise English.',
     discussionMode: 'Multi-model Discussion',
+    discussionModeDesc:
+      'AI will think deeply based on context to provide more logical and coherent answers',
+    apiSettings: 'API Settings',
+    parameterSettings: 'Parameter Settings',
     discussionModels: 'Models',
     discussionPrimaryModel: 'Primary Model',
     discussionSecondaryModels: 'Secondary Models',
