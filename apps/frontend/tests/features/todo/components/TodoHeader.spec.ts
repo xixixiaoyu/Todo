@@ -37,7 +37,7 @@ const i18n = createI18n({
         listMode: '列表视图',
       },
       common: {
-        appName: '极简 AI 待办',
+        appName: '简思',
         toggleLanguage: '切换语言',
         logout: '退出登录',
       },
@@ -51,7 +51,7 @@ const i18n = createI18n({
         listMode: 'List Mode',
       },
       common: {
-        appName: 'Minimalist AI Todo',
+        appName: 'Lumina',
         toggleLanguage: 'Switch Language',
         logout: 'Logout',
       },

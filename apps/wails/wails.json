@@ -1,7 +1,7 @@
 {
   "$schema": "https://wails.io/schemas/config.v2.json",
-  "name": "MinimalistAITodo",
-  "outputfilename": "MinimalistAITodo",
+  "name": "Lumina",
+  "outputfilename": "Lumina",
   "frontend:dir": "../frontend",
   "frontend:install": "pnpm install",
   "frontend:build": "pnpm build:wails",
@@ -13,9 +13,9 @@
     "email": "contact@todo.app"
   },
   "info": {
-    "productName": "极简 AI 待办",
+    "productName": "简思",
     "productVersion": "1.0.0-beta.1",
     "copyright": "Copyright © 2024",
-    "comments": "A modern minimalist AI Todo application"
+    "comments": "Lumina — A modern minimalist AI Todo application"
   }
 }

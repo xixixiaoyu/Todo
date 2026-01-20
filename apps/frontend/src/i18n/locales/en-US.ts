@@ -1,7 +1,7 @@
 export default {
   common: {
-    appName: 'Minimalist AI Todo',
-    appDescription: 'Efficient and pure AI personal todo management tool',
+    appName: 'Lumina',
+    appDescription: 'Lumina — Efficient and pure AI personal todo management',
     loading: 'Loading...',
     refresh: 'Refresh',
     back: 'Back',
@@ -44,7 +44,7 @@ export default {
     },
   },
   home: {
-    welcomeMessage: 'Welcome to Minimalist AI Todo',
+    welcomeMessage: 'Welcome to Lumina',
   },
   login: {
     title: 'Sign in to your account',
@@ -196,9 +196,9 @@ export default {
     stop: 'Stop',
     previousSession: 'Previous Session',
     history: 'History',
-    todoAssistant: 'AI Todo Assistant',
-    todoAssistantEnabled: 'AI Todo Assistant Enabled',
-    todoAssistantDisabled: 'AI Todo Assistant Disabled',
+    todoAssistant: 'Lumina Assistant',
+    todoAssistantEnabled: 'Lumina Assistant Enabled',
+    todoAssistantDisabled: 'Lumina Assistant Disabled',
     placeholder: 'Ask AI Assistant... (Shift + Enter for newline, Enter to send)',
     generating: 'AI is replying...',
     managePresets: 'Manage Presets...',
@@ -275,7 +275,7 @@ export default {
     clearAllConfirm:
       'Are you sure you want to clear all chat history? This action cannot be undone.',
     todoAssistantPrompt:
-      '[Todo Assistant Context]\nThe user currently has {count} pending tasks (tasks marked with 📌 are pinned):\n{todoList}\n\nBased on these tasks, you can provide suggestions. If you think tasks need to be modified (add, delete, update, toggle completion, pin/unpin), please add a JSON block at the end of your response (do not include it in a Markdown code block), in the following format:\n\n[TODO_ACTIONS_START]\n[\n  { "type": "add", "data": { "title": "Task Title", "parentId": "Optional parent ID" } },\n  { "type": "update", "data": { "id": "Task ID", "title": "New Title" } },\n  { "type": "delete", "data": { "id": "Task ID" } },\n  { "type": "toggle", "data": { "id": "Task ID" } },\n  { "type": "pin", "data": { "id": "Task ID" } }\n]\n[TODO_ACTIONS_END]\n\nNote:\n1. Whenever you suggest new tasks, task breakdowns, or modifications to existing tasks, you MUST output the corresponding JSON block. Do not worry about user consent, as the user will preview and manually click "Apply" in the visual interface before any data is actually modified.\n2. Ensure you use the correct task IDs.\n3. The "pin" action toggles the pinned status; if a task is already pinned, sending "pin" will unpin it.\n4. Please keep your responses concise and action-oriented.',
+      '[Lumina Assistant Context]\nUser currently has {count} pending tasks (pinned tasks are marked with 📌):\n{todoList}\n\nBased on these tasks, you can provide suggestions. If you think tasks need to be modified (add, delete, update, toggle completion, pin/unpin), please append a JSON block at the end of your response (do not include it in Markdown code blocks), formatted as follows:\n\n[TODO_ACTIONS_START]\n[\n  { "type": "add", "data": { "title": "Task Title", "parentId": "Optional Parent ID" } },\n  { "type": "update", "data": { "id": "Task ID", "title": "New Title" } },\n  { "type": "delete", "data": { "id": "Task ID" } },\n  { "type": "toggle", "data": { "id": "Task ID" } },\n  { "type": "pin", "data": { "id": "Task ID" } }\n]\n[TODO_ACTIONS_END]\n\nNote:\n1. Whenever you suggest new tasks, task breakdowns, or modifications to existing tasks, you must output the corresponding JSON block. Do not worry about user consent; users will preview and manually click "Apply" in the visual interface before data is actually modified.\n2. Always use correct task IDs.\n3. "pin" action toggles pin status; if a task is already pinned, sending "pin" will unpin it.\n4. Keep responses concise and action-oriented.',
     apiError: 'API Request failed: {status} - {error}',
     noStream: 'Unable to get response stream',
     defaultSystemPrompt:
