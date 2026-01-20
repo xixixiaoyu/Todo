@@ -26,7 +26,7 @@ const [password] = defineField('password')
 const onSubmit = handleSubmit(async (values) => {
   const success = await authStore.login(values)
   if (success) {
-    router.push('/')
+    await router.push('/')
   }
 })
 
@@ -37,7 +37,7 @@ const onPasskeyLogin = async () => {
   }
   const success = await authStore.loginWithPasskey(email.value as string)
   if (success) {
-    router.push('/')
+    await router.push('/')
   }
 }
 </script>

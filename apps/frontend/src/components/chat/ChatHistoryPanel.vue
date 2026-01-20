@@ -86,7 +86,7 @@ function formatTime(date: Date): string {
 function startEdit(session: ChatSession): void {
   editingId.value = session.id
   editingTitle.value = session.title
-  nextTick(() => {
+  void nextTick(() => {
     editInputRef.value?.focus()
     editInputRef.value?.select()
   })

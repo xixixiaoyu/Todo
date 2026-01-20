@@ -243,7 +243,7 @@ const handleSend = async () => {
   selectedImages.value = []
 
   // 发送后自动调整高度
-  nextTick(() => assistantInputRef.value?.adjustHeight())
+  void nextTick(() => assistantInputRef.value?.adjustHeight())
 
   await sendMessage(content, images)
 }

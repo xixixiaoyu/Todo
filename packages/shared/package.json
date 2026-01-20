@@ -27,7 +27,7 @@
     "build": "tsup",
     "type-check": "tsc --noEmit",
     "dev": "tsup",
-    "lint": "cross-env NODE_OPTIONS='--max-old-space-size=4096' eslint src --fix --cache",
+    "lint": "cross-env NODE_OPTIONS='--max-old-space-size=4096' eslint . --fix --cache",
     "clean": "rm -rf dist"
   },
   "dependencies": {

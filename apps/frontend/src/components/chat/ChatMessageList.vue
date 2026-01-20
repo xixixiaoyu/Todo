@@ -46,7 +46,7 @@ const {
 watch(currentSessionId, () => {
   isSwitchingSession.value = true
   // 切换会话时，立即滚动到底部，不使用平滑滚动以提升响应感
-  nextTick(() => {
+  void nextTick(() => {
     scrollToBottom('instant')
     // 短暂延迟后恢复动画标记
     setTimeout(() => {
@@ -74,7 +74,7 @@ watch(
       return
     } else if (isNewMessage && oldMessages && oldMessages.length > 0) {
       // 仅当新消息到达时（如用户发送消息），执行平滑滚动到底部
-      nextTick(() => {
+      void nextTick(() => {
         scrollToBottom('smooth')
       })
     } else if (!isStreaming && oldMessages?.[oldMessages.length - 1]?.isStreaming) {

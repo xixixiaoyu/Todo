@@ -9,6 +9,8 @@ export default [
   ...baseConfig,
   ignoreConfig,
   {
+    files: ['**/*.ts', '**/*.tsx', '**/*.mts', '**/*.cts'],
+    ignores: ['**/*.config.ts', '**/tsup.config.ts'],
     languageOptions: {
       parserOptions: {
         projectService: true,

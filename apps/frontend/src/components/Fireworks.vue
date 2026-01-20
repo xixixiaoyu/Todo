@@ -12,7 +12,7 @@ const emit = defineEmits<{
 
 function startFireworks() {
   requestAnimationFrame(() => {
-    confetti({
+    void confetti({
       particleCount: 100,
       spread: 70,
       origin: { y: 0.6 },

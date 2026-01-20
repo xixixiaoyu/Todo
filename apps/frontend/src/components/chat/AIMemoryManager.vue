@@ -53,7 +53,7 @@ const editMemoryInputRef = ref<HTMLInputElement | null>(null)
 function startAddMemory() {
   isAddingMemory.value = true
   newMemoryContent.value = ''
-  nextTick(() => {
+  void nextTick(() => {
     addMemoryInputRef.value?.focus()
   })
 }
@@ -83,7 +83,7 @@ function cancelAddMemory() {
 function startEditMemory(index: number, content: string) {
   editingMemoryIndex.value = index
   editingMemoryContent.value = content
-  nextTick(() => {
+  void nextTick(() => {
     editMemoryInputRef.value?.focus()
   })
 }

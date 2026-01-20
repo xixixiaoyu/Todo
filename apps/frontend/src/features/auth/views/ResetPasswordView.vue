@@ -52,7 +52,7 @@ const onSubmit = handleSubmit(async (values) => {
   if (result) {
     success.value = true
     setTimeout(() => {
-      router.push('/login')
+      void router.push('/login')
     }, 3000)
   }
 })

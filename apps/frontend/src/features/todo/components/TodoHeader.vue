@@ -44,7 +44,7 @@ const toggleLanguage = () => {
 
 const handleDblClick = () => {
   if (isWails()) {
-    nativeService.toggleMaximise()
+    void nativeService.toggleMaximise()
   }
 }
 
@@ -180,7 +180,7 @@ const handleRegisterPasskey = async () => {
           </DropdownMenuItem>
           <DropdownMenuItem
             class="rounded-lg cursor-pointer text-error focus:text-error focus:bg-error/10"
-            @click="authStore.logout"
+            @click="void authStore.logout()"
           >
             <LogOut class="mr-2 h-4 w-4" />
             <span>{{ t('common.logout') }}</span>
@@ -194,7 +194,7 @@ const handleRegisterPasskey = async () => {
             variant="outline"
             size="icon"
             class="h-10 w-10 rounded-xl bg-card border-border hover:bg-accent transition-all"
-            @click="router.push('/login')"
+            @click="void router.push('/login')"
           >
             <LogIn :size="18" />
           </Button>

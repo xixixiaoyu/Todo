@@ -127,23 +127,25 @@ function initCodeInteractions(container: HTMLElement) {
     if (htmlBtn.dataset.interacted === 'true') return
     htmlBtn.dataset.interacted = 'true'
 
-    htmlBtn.addEventListener('click', async () => {
-      const code = htmlBtn.dataset.code
-      if (!code) return
+    htmlBtn.addEventListener('click', () => {
+      void (async () => {
+        const code = htmlBtn.dataset.code
+        if (!code) return
 
-      try {
-        await navigator.clipboard.writeText(decodeURIComponent(code))
-        htmlBtn.classList.add('copied')
-        const span = htmlBtn.querySelector('span')
-        if (span) span.textContent = t('ai.copied')
+        try {
+          await navigator.clipboard.writeText(decodeURIComponent(code))
+          htmlBtn.classList.add('copied')
+          const span = htmlBtn.querySelector('span')
+          if (span) span.textContent = t('ai.copied')
 
-        setTimeout(() => {
-          htmlBtn.classList.remove('copied')
-          if (span) span.textContent = t('ai.copy')
-        }, 2000)
-      } catch (err) {
-        console.error('Failed to copy code:', err)
-      }
+          setTimeout(() => {
+            htmlBtn.classList.remove('copied')
+            if (span) span.textContent = t('ai.copy')
+          }, 2000)
+        } catch (err) {
+          console.error('Failed to copy code:', err)
+        }
+      })()
     })
   })
 }
@@ -171,37 +173,39 @@ function initMermaidInteractions(container: HTMLElement) {
   }
 
   // 缩放按钮处理
-  container.addEventListener('click', async (e) => {
-    const btn = (e.target as HTMLElement).closest('.mermaid-zoom-btn') as HTMLButtonElement
-    if (!btn) return
+  container.addEventListener('click', (e) => {
+    void (async () => {
+      const btn = (e.target as HTMLElement).closest('.mermaid-zoom-btn') as HTMLButtonElement
+      if (!btn) return
 
-    const action = btn.dataset.action
-    if (action === 'copy') {
-      const rawCode = container.dataset.raw
-      if (rawCode) {
-        try {
-          await navigator.clipboard.writeText(decodeURIComponent(rawCode))
-          const originalInner = btn.innerHTML
-          btn.innerHTML =
-            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500"><polyline points="20 6 9 17 4 12"></polyline></svg>'
-          setTimeout(() => {
-            btn.innerHTML = originalInner
-          }, 2000)
-        } catch (err) {
-          console.error('Failed to copy mermaid code:', err)
+      const action = btn.dataset.action
+      if (action === 'copy') {
+        const rawCode = container.dataset.raw
+        if (rawCode) {
+          try {
+            await navigator.clipboard.writeText(decodeURIComponent(rawCode))
+            const originalInner = btn.innerHTML
+            btn.innerHTML =
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500"><polyline points="20 6 9 17 4 12"></polyline></svg>'
+            setTimeout(() => {
+              btn.innerHTML = originalInner
+            }, 2000)
+          } catch (err) {
+            console.error('Failed to copy mermaid code:', err)
+          }
         }
+        return
       }
-      return
-    }
 
-    if (action === 'in') scale = Math.min(scale + 0.2, 5)
-    else if (action === 'out') scale = Math.max(scale - 0.2, 0.5)
-    else if (action === 'reset') {
-      scale = 1
-      translateX = 0
-      translateY = 0
-    }
-    updateTransform()
+      if (action === 'in') scale = Math.min(scale + 0.2, 5)
+      else if (action === 'out') scale = Math.max(scale - 0.2, 0.5)
+      else if (action === 'reset') {
+        scale = 1
+        translateX = 0
+        translateY = 0
+      }
+      updateTransform()
+    })()
   })
 
   // 鼠标滚轮缩放
@@ -253,7 +257,7 @@ async function updateRenderedContent() {
     renderedHtml.value = await renderMarkdown(content, isStreaming)
   }
 
-  nextTick(injectInteractions)
+  void nextTick(injectInteractions)
 }
 
 // 监听内容与状态变化

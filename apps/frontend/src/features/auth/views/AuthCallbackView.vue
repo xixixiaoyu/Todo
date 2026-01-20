@@ -16,7 +16,7 @@ onMounted(async () => {
   if (accessToken && refreshToken) {
     // 已废弃的 URL 参数方式，仅做简单提示或静默失败
     console.warn('URL token transfer is deprecated for security reasons.')
-    router.push('/login')
+    void router.push('/login')
     return
   }
 
@@ -24,13 +24,13 @@ onMounted(async () => {
   try {
     const success = await authStore.handleOAuthLogin()
     if (success) {
-      router.push('/')
+      await router.push('/')
     } else {
-      router.push('/login')
+      await router.push('/login')
     }
   } catch (error) {
     console.error('Auth callback failed:', error)
-    router.push('/login')
+    await router.push('/login')
   }
 })
 </script>

@@ -23,7 +23,7 @@ const cardRef = ref<HTMLElement | null>(null)
 const { gsap, ctx } = useGsap()
 
 onMounted(() => {
-  todoStore.fetchTodos()
+  void todoStore.fetchTodos()
 
   ctx.add(() => {
     // 整体卡片入场：更快的 Power4 曲线，减少位移

@@ -57,7 +57,7 @@ async function handleBreakdown() {
   isBreakingDown.value = true
   try {
     await store.breakdownTaskWithAI(props.todo.id)
-    hapticImpact(ImpactStyle.Medium)
+    await hapticImpact(ImpactStyle.Medium)
   } finally {
     isBreakingDown.value = false
   }
@@ -91,7 +91,7 @@ onClickOutside(subtaskContainerRef, () => {
 
 watch(isAddingChild, (newValue) => {
   if (newValue) {
-    nextTick(() => {
+    void nextTick(() => {
       subtaskInputRef.value?.$el?.focus?.()
     })
   }
@@ -101,7 +101,7 @@ watch(
   () => props.editingId,
   (newId) => {
     if (newId === props.todo.id) {
-      nextTick(() => {
+      void nextTick(() => {
         editInputRef.value?.$el?.focus?.()
       })
     }
@@ -153,7 +153,7 @@ async function submitAddChild() {
     store.clearError()
     const success = await store.addTodo(newChildTitle.value, props.todo.id)
     if (success) {
-      hapticImpact(ImpactStyle.Light)
+      await hapticImpact(ImpactStyle.Light)
       isAddingChild.value = false
       newChildTitle.value = ''
       if (!isExpanded.value) {
@@ -194,11 +194,12 @@ const hapticSelectionStart = async () => {
 }
 
 function handleSaveEdit() {
+  void store.clearError()
   emit('saveEdit')
 }
 
 function handleDelete() {
-  hapticImpact(ImpactStyle.Medium)
+  void hapticImpact(ImpactStyle.Medium)
   emit('delete', props.todo.id)
 }
 
@@ -249,7 +250,7 @@ watch(
           class="h-5 w-5 rounded-full border-2 data-[state=checked]:bg-success data-[state=checked]:border-success transition-transform active:scale-90"
           @update:model-value="
             () => {
-              hapticImpact(ImpactStyle.Light)
+              void hapticImpact(ImpactStyle.Light)
               emit('toggle', todo.id, todo.completed)
             }
           "

@@ -84,7 +84,7 @@ const handleSlashCommand = (index: number) => {
   slashCommands.value[index].action()
   emit('update:modelValue', '')
   showSlashCommands.value = false
-  nextTick(() => textareaRef.value?.focus())
+  void nextTick(() => textareaRef.value?.focus())
 }
 
 const handleKeydown = (event: KeyboardEvent) => {
@@ -156,7 +156,7 @@ onUnmounted(() => {
 watch(
   () => props.modelValue,
   (newVal) => {
-    nextTick(() => adjustTextareaHeight())
+    void nextTick(() => adjustTextareaHeight())
     if (showSlashCommands.value && !newVal.startsWith('/')) {
       showSlashCommands.value = false
     }
@@ -171,7 +171,7 @@ const handleNewline = (event: KeyboardEvent) => {
   const value = textarea.value
   const newValue = value.substring(0, start) + '\n' + value.substring(end)
   emit('update:modelValue', newValue)
-  nextTick(() => {
+  void nextTick(() => {
     textarea.selectionStart = textarea.selectionEnd = start + 1
     textarea.scrollTop = textarea.scrollHeight
   })

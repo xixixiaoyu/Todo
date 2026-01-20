@@ -41,14 +41,6 @@ export default [
     },
   },
   {
-    files: ['*.mjs', '*.cjs', '*.js'],
-    languageOptions: {
-      parserOptions: {
-        projectService: false,
-      },
-    },
-  },
-  {
     files: ['**/*.vue'],
     rules: {
       'vue/block-order': [

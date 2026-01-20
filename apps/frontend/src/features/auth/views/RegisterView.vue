@@ -36,7 +36,7 @@ const onSubmit = handleSubmit(async (values) => {
   const { email, name, password } = values
   const success = await authStore.register({ email, name, password })
   if (success) {
-    router.push('/')
+    await router.push('/')
   }
 })
 </script>

@@ -9,7 +9,7 @@ export const baseConfig = [
   js.configs.recommended,
   ...ts.configs.recommended,
   {
-    files: ['**/*.ts', '**/*.tsx', '**/*.mts', '**/*.cts'],
+    files: ['**/*.ts', '**/*.tsx', '**/*.mts', '**/*.cts', '**/*.vue'],
     languageOptions: {
       parserOptions: {
         projectService: true,
@@ -19,8 +19,17 @@ export const baseConfig = [
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-      '@typescript-eslint/no-floating-promises': 'warn',
-      '@typescript-eslint/no-misused-promises': 'warn',
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
+    },
+  },
+  {
+    files: ['**/*.js', '**/*.mjs', '**/*.cjs', '**/*.config.ts', '**/tsup.config.ts'],
+    ...ts.configs.disableTypeChecked,
+    languageOptions: {
+      parserOptions: {
+        projectService: false,
+      },
     },
   },
   {

@@ -53,7 +53,7 @@ async function updateRenderedContent() {
   if (effectiveThinking) {
     const isThinkingStreaming = props.isStreaming && !props.hasContent
     renderedThinkingHtml.value = await renderMarkdown(effectiveThinking, isThinkingStreaming)
-    nextTick(updateContentHeight)
+    void nextTick(updateContentHeight)
   }
 }
 
@@ -96,11 +96,10 @@ watch(
 
 watch([() => props.message.thinkingContent, () => props.message.reasoning_details], () => {
   if (isExpanded.value && thinkingContentRef.value) {
-    nextTick(() => {
+    void nextTick(() => {
       const el = thinkingContentRef.value
       if (el) {
         el.scrollTop = el.scrollHeight
-        updateContentHeight()
       }
     })
   }

@@ -30,7 +30,7 @@ function handleInput(e: Event) {
 }
 
 onMounted(() => {
-  nextTick(() => {
+  void nextTick(() => {
     editInputRef.value?.focus()
     adjustEditHeight()
   })
