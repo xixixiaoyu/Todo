@@ -23,6 +23,7 @@ import {
   LegendComponent,
   GridComponent,
 } from 'echarts/components'
+import { LegacyGridContainLabel } from 'echarts/features'
 
 use([
   CanvasRenderer,
@@ -33,6 +34,7 @@ use([
   TooltipComponent,
   LegendComponent,
   GridComponent,
+  LegacyGridContainLabel,
 ])
 
 const { t } = useI18n()

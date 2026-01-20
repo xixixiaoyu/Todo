@@ -12,6 +12,7 @@ import {
   GridComponent,
   VisualMapComponent,
 } from 'echarts/components'
+import { LegacyGridContainLabel } from 'echarts/features'
 import VChart from 'vue-echarts'
 import App from './App.vue'
 import router from './router'
@@ -38,6 +39,7 @@ use([
   LegendComponent,
   GridComponent,
   VisualMapComponent,
+  LegacyGridContainLabel,
 ])
 
 const app = createApp(App)
