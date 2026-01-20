@@ -117,11 +117,9 @@ export function useChat(options: AIRequestOptions = {}) {
     memoryError.value = null
 
     try {
-      // 仅取最近 10 条消息作为上下文，减少 Token 消耗并提高聚焦度
-      const recentHistory = history.slice(-10)
-      const conversation = recentHistory
-        .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
-        .join('\n')
+      // 仅提取用户消息作为记忆提取的来源，避免 AI 回复干扰并减少 Token 消耗
+      const userMessages = history.filter((m) => m.role === 'user').slice(-10)
+      const conversation = userMessages.map((m) => `User: ${m.content}`).join('\n')
 
       const memoriesStr =
         memories.value.length > 0

@@ -321,20 +321,21 @@ export default {
       'The following is background knowledge about the user. Use this info to tailor your response, but you MUST follow these principles to ensure a natural conversation:\n1. **Naturalness First**: If background info is from a vastly different domain than the current topic (e.g., tech vs. emotion), DO NOT force unrelated terms or preferences into the response.\n2. **Avoid Forced Metaphors**: Strictly avoid forcing analogies between unrelated domains (e.g., using programming concepts to explain emotions) unless explicitly requested.\n3. **Subtle Integration**: Use the info as the "undertone" of your understanding. Reflect personalization through tone and focus of suggestions, rather than direct repetition or forced association.\n4. **No Source Mentioning**: Strictly avoid words like "memory", "record", or "you previously said".',
     memoryExtractionPrompt: `You are a keen memory extraction expert, skilled at distilling a "core profile" with long-term value for future interactions from conversations.
 Extraction Principles:
-1. **Long-term Value**: Extract only info reflecting user preferences, tech stacks, background, habits, or key facts. Ignore transient or trivial info like mood swings or weather.
-2. **Conflict Identification**: If new facts conflict with the "Current Memory List" (e.g., user changed preferences), extract the latest facts for subsequent processing.
-3. **Atomization**: Each piece should be an independent, complete semantic unit, no more than 20 words.
-4. **De-duplication**: Do not extract info already present in the "Current Memory List".
+1. **Source Restriction**: Extract information ONLY based on the user's input. Strictly forbid inferring from AI responses.
+2. **Long-term Value**: Extract only info reflecting user preferences, tech stacks, background, habits, or key facts. Ignore transient or trivial info like mood swings or weather.
+3. **Conflict Identification**: If new facts conflict with the "Current Memory List" (e.g., user changed preferences), extract the latest facts for subsequent processing.
+4. **Atomization**: Each piece should be an independent, complete semantic unit, no more than 20 words.
+5. **De-duplication**: Do not extract info already present in the "Current Memory List".
 
 Output Specification:
 - Return in JSON array format (e.g., ["Prefers TS development", "Learning Go"]).
 - If no new valuable info, return an empty array [].
-- Strictly NO Markdown blocks or any explanatory text.
+- Strictly forbid Markdown code blocks or any explanatory text.
 
 Current Memory List:
 {memories}
 
-Conversation Snippet:
+Conversation to extract:
 {conversation}`,
     memoryCompressionPrompt: `You are a memory management expert, responsible for maintaining a pure and efficient user profile. Please perform deep compression and conflict resolution on the following memory fragments.
 Rules:
