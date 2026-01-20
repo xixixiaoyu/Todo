@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Plus, Eye, EyeOff, Edit3, Copy, Trash2, Check } from 'lucide-vue-next'
+import { Plus, Eye, EyeOff, Edit3, Copy, Trash2 } from 'lucide-vue-next'
 import { useAIConfig, type AIPreset } from '@/composables/useAIConfig'
 
 const { t } = useI18n()
@@ -218,71 +218,86 @@ defineExpose({
     <div v-else class="space-y-4">
       <!-- 添加按钮 -->
       <button
-        class="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-primary py-2.5 text-sm text-primary transition-colors hover:bg-primary/5"
+        class="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-primary/40 py-3 text-sm font-medium text-primary transition-all hover:border-primary hover:bg-primary/5 active:scale-[0.98]"
         @click="startCreatePreset"
       >
-        <Plus :size="14" />
+        <Plus :size="16" />
         <span>{{ t('ai.createNewPreset') }}</span>
       </button>
 
       <!-- 预设列表 -->
-      <div v-if="presets.length" class="space-y-2">
+      <div v-if="presets.length" class="grid grid-cols-1 gap-2.5">
         <div
           v-for="preset in presets"
           :key="preset.id"
-          class="group relative rounded-lg border p-3 transition-all hover:border-primary"
+          class="group relative flex flex-col justify-center rounded-xl border p-3.5 transition-all hover:border-primary/50"
           :class="[
             activePresetId === preset.id
-              ? 'border-primary bg-primary/10 shadow-sm'
-              : 'border-border bg-card',
+              ? 'border-primary bg-primary/5 shadow-sm'
+              : 'border-border bg-card/40 hover:bg-card/60',
           ]"
         >
-          <div class="flex items-start justify-between">
+          <div class="flex items-center justify-between gap-3">
             <div
-              class="flex-1 cursor-pointer"
+              class="flex flex-1 cursor-pointer flex-col gap-0.5 overflow-hidden"
               @click="activePresetId !== preset.id && switchPreset(preset.id)"
             >
               <div class="flex items-center gap-2">
-                <span class="text-sm font-medium text-foreground">{{ preset.name }}</span>
+                <span class="truncate text-sm font-semibold tracking-tight text-foreground">{{
+                  preset.name || t('ai.unnamedPreset')
+                }}</span>
+                <!-- 活跃状态：精致的小圆点 -->
                 <div
                   v-if="activePresetId === preset.id"
-                  class="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground"
+                  class="h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)]"
+                />
+                <!-- 助手标识：极简文本 -->
+                <div
+                  v-if="preset.todoAssistant"
+                  class="shrink-0 text-[10px] font-bold tracking-widest text-amber-500/80"
                 >
-                  <Check :size="10" />
+                  AI
                 </div>
               </div>
-              <div class="mt-1 flex items-center gap-2 text-xs text-muted-foreground/60">
-                <span class="truncate">{{ preset.model }}</span>
-                <span class="flex-shrink-0 text-[10px] opacity-40">/</span>
-                <span class="flex-shrink-0 font-mono text-[10px] tracking-tight">
-                  {{ preset.temperature.toFixed(1) }}
-                </span>
+
+              <!-- 极简单行元数据 -->
+              <div class="flex items-center gap-1.5 text-[11px] text-muted-foreground/40">
+                <span class="shrink-0">{{ preset.model }}</span>
+                <span class="shrink-0 opacity-50">·</span>
+                <span class="shrink-0 font-mono tracking-tighter"
+                  >T{{ preset.temperature.toFixed(1) }}</span
+                >
+                <template v-if="preset.systemPrompt">
+                  <span class="shrink-0 opacity-50">·</span>
+                  <span class="truncate">{{ preset.systemPrompt }}</span>
+                </template>
               </div>
             </div>
 
+            <!-- 操作按钮 -->
             <div
-              class="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100"
+              class="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100"
             >
               <button
-                class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                class="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                 :title="t('ai.edit')"
                 @click="startEditPreset(preset)"
               >
-                <Edit3 :size="14" />
+                <Edit3 :size="13" />
               </button>
               <button
-                class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                class="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                 :title="t('ai.copyPreset')"
                 @click="handleDuplicatePreset(preset.id)"
               >
-                <Copy :size="14" />
+                <Copy :size="13" />
               </button>
               <button
-                class="rounded p-1 text-muted-foreground hover:text-destructive"
+                class="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                 :title="t('ai.delete')"
                 @click="handleDeletePreset(preset.id)"
               >
-                <Trash2 :size="14" />
+                <Trash2 :size="13" />
               </button>
             </div>
           </div>
