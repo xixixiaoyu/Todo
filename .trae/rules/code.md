@@ -103,7 +103,9 @@ interface ApiResponse<T> { success: boolean; data: T; message?: string; timestam
 ## 测试规范
 
 - **前端**: Vitest + Happy DOM，`@vue/test-utils`，文件在 `apps/frontend/tests/`
-- **后端**: Vitest + Node，`@nestjs/testing`，文件在 `apps/backend/tests/`
+- **后端**: Vitest + Node，`@nestjs/testing`，文件在 `apps/backend/tests/`，配置使用 `vitest.config.mts`
+- **共享包**: Vitest + Node，文件在 `packages/shared/src/**/*.spec.ts`
+- **覆盖率**: 统一使用 `@vitest/coverage-v8`，报告输出为 `text`、`json`、`html`
 - **命令**: `pnpm test` / `pnpm test:watch` / `pnpm test:coverage`
 
 ## 后端关键功能

@@ -1,0 +1,62 @@
+import { describe, it, expect } from 'vitest'
+import { formatUser, formatUsers, type PrismaUser } from './user.utils'
+
+describe('user.utils', () => {
+  const mockDate = new Date('2024-01-21T00:00:00.000Z')
+  const mockPrismaUser: PrismaUser = {
+    id: 1,
+    email: 'test@example.com',
+    name: 'Test User',
+    avatar: 'https://example.com/avatar.png',
+    googleId: null,
+    createdAt: mockDate,
+    updatedAt: mockDate,
+    authenticators: [],
+  }
+
+  describe('formatUser', () => {
+    it('should format a Prisma user correctly', () => {
+      const result = formatUser(mockPrismaUser)
+      expect(result).toEqual({
+        id: 1,
+        email: 'test@example.com',
+        name: 'Test User',
+        avatar: 'https://example.com/avatar.png',
+        googleId: null,
+        hasPasskey: false,
+        createdAt: '2024-01-21T00:00:00.000Z',
+        updatedAt: '2024-01-21T00:00:00.000Z',
+      })
+    })
+
+    it('should correctly identify if user has passkey', () => {
+      const userWithPasskey: PrismaUser = {
+        ...mockPrismaUser,
+        authenticators: [{ id: 'auth1' }],
+      }
+      const result = formatUser(userWithPasskey)
+      expect(result.hasPasskey).toBe(true)
+    })
+
+    it('should handle null avatar and googleId', () => {
+      const userMinimal: PrismaUser = {
+        ...mockPrismaUser,
+        avatar: null,
+        googleId: null,
+      }
+      const result = formatUser(userMinimal)
+      expect(result.avatar).toBeNull()
+      expect(result.googleId).toBeNull()
+    })
+  })
+
+  describe('formatUsers', () => {
+    it('should format an array of Prisma users', () => {
+      const users = [mockPrismaUser, { ...mockPrismaUser, id: 2 }]
+      const result = formatUsers(users)
+      expect(result).toHaveLength(2)
+      expect(result[0].id).toBe(1)
+      expect(result[1].id).toBe(2)
+    })
+  })
+})

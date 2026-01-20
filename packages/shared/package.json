@@ -27,6 +27,9 @@
     "build": "tsup",
     "type-check": "tsc --noEmit",
     "dev": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "lint": "cross-env NODE_OPTIONS='--max-old-space-size=4096' eslint . --fix --cache",
     "clean": "rm -rf dist"
   },
@@ -36,6 +39,8 @@
   "devDependencies": {
     "tsup": "8.5.1",
     "typescript": "5.9.3",
+    "vitest": "4.0.16",
+    "@vitest/coverage-v8": "4.0.16",
     "cross-env": "10.1.0"
   }
 }
