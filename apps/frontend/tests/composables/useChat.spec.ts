@@ -55,6 +55,7 @@ vi.mock('@/composables/useMemory', () => ({
   useMemory: vi.fn(() => ({
     memories: mockMemories,
     isMemoryEnabled: mockIsMemoryEnabled,
+    autoCompressThreshold: ref(30),
     addMemories: mockAddMemories,
     lastError: mockLastError,
     removeMemory: vi.fn(),
@@ -62,6 +63,7 @@ vi.mock('@/composables/useMemory', () => ({
     toggleMemory: vi.fn(),
     getMemoryModelOptions: vi.fn(() => ({})),
     compressMemories: vi.fn(),
+    updateAutoCompressThreshold: vi.fn(),
   })),
 }))
 

@@ -36,6 +36,7 @@ describe('AI Utils - injectSystemPrompts', () => {
     vi.mocked(useMemory).mockReturnValue({
       memories: ref<string[]>([]),
       isMemoryEnabled: ref(false),
+      autoCompressThreshold: ref(30),
       isCompressing: ref(false),
       lastError: ref(null),
       addMemories: vi.fn(),
@@ -45,6 +46,7 @@ describe('AI Utils - injectSystemPrompts', () => {
       removeMemory: vi.fn(),
       clearMemories: vi.fn(),
       toggleMemory: vi.fn(),
+      updateAutoCompressThreshold: vi.fn(),
       getMemoryModelOptions: vi.fn(),
     } as ReturnType<typeof useMemory>)
   })
@@ -109,6 +111,7 @@ describe('AI Utils - injectSystemPrompts', () => {
     vi.mocked(useMemory).mockReturnValue({
       memories: ref<string[]>(['Memory 1', 'Memory 2']),
       isMemoryEnabled: ref(true),
+      autoCompressThreshold: ref(30),
       isCompressing: ref(false),
       lastError: ref(null),
       addMemories: vi.fn(),
@@ -118,6 +121,7 @@ describe('AI Utils - injectSystemPrompts', () => {
       removeMemory: vi.fn(),
       clearMemories: vi.fn(),
       toggleMemory: vi.fn(),
+      updateAutoCompressThreshold: vi.fn(),
       getMemoryModelOptions: vi.fn(),
     } as ReturnType<typeof useMemory>)
 

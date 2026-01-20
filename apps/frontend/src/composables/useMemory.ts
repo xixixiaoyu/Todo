@@ -224,6 +224,7 @@ export function useMemory() {
     toggleMemory,
     compressMemories,
     updateAutoCompressThreshold,
+    getMemoryModelOptions,
   }
 }
 
