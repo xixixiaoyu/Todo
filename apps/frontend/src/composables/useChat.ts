@@ -74,6 +74,9 @@ export function useChat(options: AIRequestOptions = {}) {
     const lastUserMsg = [...history].reverse().find((m) => m.role === 'user')
     if (!lastUserMsg) return false
 
+    // 如果消息太短（如 "好的", "OK", "谢谢"），通常不包含可提取记忆
+    if (lastUserMsg.content.trim().length < 5) return false
+
     const keywords = [
       '我喜欢',
       '我不喜欢',
@@ -117,9 +120,11 @@ export function useChat(options: AIRequestOptions = {}) {
     memoryError.value = null
 
     try {
-      // 仅提取用户消息作为记忆提取的来源，避免 AI 回复干扰并减少 Token 消耗
-      const userMessages = history.filter((m) => m.role === 'user').slice(-10)
-      const conversation = userMessages.map((m) => `User: ${m.content}`).join('\n')
+      // 获取最近 6 条消息（约 3 轮对话）作为上下文，包含 AI 回复以解决代词指代问题（如“我喜欢它”中的“它”）
+      const recentHistory = history.slice(-6)
+      const conversation = recentHistory
+        .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
+        .join('\n')
 
       const memoriesStr =
         memories.value.length > 0
