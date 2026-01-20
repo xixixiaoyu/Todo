@@ -18,6 +18,13 @@ vi.mock('lucide-vue-next', () => ({
   Star: { template: '<span>Star</span>' },
   Copy: { template: '<span>Copy</span>' },
   Edit3: { template: '<span>Edit3</span>' },
+  Globe: { template: '<span>Globe</span>' },
+  Key: { template: '<span>Key</span>' },
+  Cpu: { template: '<span>Cpu</span>' },
+  Thermometer: { template: '<span>Thermometer</span>' },
+  MessageSquare: { template: '<span>MessageSquare</span>' },
+  Info: { template: '<span>Info</span>' },
+  Sparkles: { template: '<span>Sparkles</span>' },
 }))
 
 // Mock composables
@@ -186,7 +193,7 @@ describe('AISettingsDialog', () => {
       },
     })
 
-    expect(wrapper.find('button.relative').text()).toContain('ai.basicSettings')
+    expect(wrapper.find('button.group.relative').text()).toContain('ai.basicSettings')
   })
 
   it('should emit update:initialTab when activeTab changes', async () => {
@@ -242,7 +249,7 @@ describe('AISettingsDialog', () => {
     await presetItem.trigger('click')
 
     expect(mockActivePresetId.value).toBe(preset.id)
-    expect(wrapper.find('.bg-primary\\/10').exists()).toBe(true) // 激活标签
+    expect(wrapper.find('.bg-primary\\/5').exists()).toBe(true) // 激活标签
   })
 
   it('should toggle discussion mode and show model selection', async () => {

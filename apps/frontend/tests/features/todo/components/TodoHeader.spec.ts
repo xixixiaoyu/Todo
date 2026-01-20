@@ -24,6 +24,7 @@ vi.mock('lucide-vue-next', () => ({
   Monitor: { template: '<span>Monitor</span>' },
   Sun: { template: '<span>Sun</span>' },
   Moon: { template: '<span>Moon</span>' },
+  BarChart3: { template: '<span>BarChart3</span>' },
 }))
 
 // Mock vue-i18n
@@ -88,7 +89,7 @@ describe('TodoHeader', () => {
       },
     })
 
-    expect(wrapper.find('h1').text()).toBe('待办事项')
+    expect(wrapper.find('h1').text()).toBe('简思')
   })
 
   it('点击语言切换按钮应该切换语言并保存到 localStorage', async () => {

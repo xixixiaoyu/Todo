@@ -7,6 +7,7 @@ export interface Todo {
   title: string
   completed: boolean
   createdAt: Date
+  completedAt?: Date
   parentId?: string | null
   order: number
   isPinned?: boolean
@@ -22,7 +23,7 @@ export interface ProposedTodoChange {
 }
 
 export type FilterType = 'pending' | 'completed'
-export type ViewMode = 'list' | 'visual'
+export type ViewMode = 'list' | 'visual' | 'stats'
 
 /**
  * 待办事项状态管理 (纯本地存储)
@@ -97,6 +98,11 @@ export const useTodoStore = defineStore(
           const todo = result.find((t) => t.id === change.data.id)
           if (todo) {
             todo.completed = !todo.completed
+            if (todo.completed) {
+              todo.completedAt = new Date()
+            } else {
+              delete todo.completedAt
+            }
             todo.isProposed = true
           }
         } else if (change.type === 'pin') {
@@ -256,12 +262,22 @@ export const useTodoStore = defineStore(
       if (!todo) return
 
       todo.completed = !todo.completed
+      if (todo.completed) {
+        todo.completedAt = new Date()
+      } else {
+        delete todo.completedAt
+      }
 
       // 递归切换所有子任务状态
       const toggleChildren = (parentId: string, completed: boolean) => {
         const children = todos.value.filter((t) => t.parentId === parentId)
         children.forEach((child) => {
           child.completed = completed
+          if (completed) {
+            child.completedAt = new Date()
+          } else {
+            delete child.completedAt
+          }
           toggleChildren(child.id, completed)
         })
       }
@@ -326,6 +342,11 @@ export const useTodoStore = defineStore(
 
       if (parent.completed !== allCompleted) {
         parent.completed = allCompleted
+        if (allCompleted) {
+          parent.completedAt = new Date()
+        } else {
+          delete parent.completedAt
+        }
         // 继续向上更新祖先任务
         if (parent.parentId) {
           updateParentStatus(parent.parentId)

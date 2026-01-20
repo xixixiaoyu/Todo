@@ -1,6 +1,16 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { Clover, Languages, Network, List, User, LogOut, LogIn, Fingerprint } from 'lucide-vue-next'
+import {
+  Clover,
+  Languages,
+  Network,
+  List,
+  User,
+  LogOut,
+  LogIn,
+  Fingerprint,
+  BarChart3,
+} from 'lucide-vue-next'
 import ThemeToggle from './ThemeToggle.vue'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -70,22 +80,65 @@ const handleRegisterPasskey = async () => {
       </h1>
     </div>
     <div class="flex items-center gap-2">
-      <Tooltip>
-        <TooltipTrigger as-child>
-          <Button
-            variant="outline"
-            size="icon"
-            class="h-10 w-10 rounded-xl bg-card border-border hover:bg-accent transition-all"
-            :class="todoStore.viewMode === 'visual' ? 'text-primary border-primary' : ''"
-            @click="todoStore.viewMode = todoStore.viewMode === 'list' ? 'visual' : 'list'"
-          >
-            <component :is="todoStore.viewMode === 'list' ? Network : List" :size="18" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>{{
-          todoStore.viewMode === 'list' ? t('todo.visualMode') : t('todo.listMode')
-        }}</TooltipContent>
-      </Tooltip>
+      <!-- View Mode Toggle Group -->
+      <div class="flex items-center gap-1.5 p-1 bg-muted/50 rounded-2xl border border-border/50">
+        <Tooltip>
+          <TooltipTrigger as-child>
+            <Button
+              variant="ghost"
+              size="icon"
+              class="h-9 w-9 rounded-xl transition-all"
+              :class="
+                todoStore.viewMode === 'list'
+                  ? 'bg-background text-primary shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+              "
+              @click="todoStore.viewMode = 'list'"
+            >
+              <List :size="18" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{{ t('todo.listMode') }}</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger as-child>
+            <Button
+              variant="ghost"
+              size="icon"
+              class="h-9 w-9 rounded-xl transition-all"
+              :class="
+                todoStore.viewMode === 'visual'
+                  ? 'bg-background text-primary shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+              "
+              @click="todoStore.viewMode = 'visual'"
+            >
+              <Network :size="18" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{{ t('todo.visualMode') }}</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger as-child>
+            <Button
+              variant="ghost"
+              size="icon"
+              class="h-9 w-9 rounded-xl transition-all"
+              :class="
+                todoStore.viewMode === 'stats'
+                  ? 'bg-background text-primary shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+              "
+              @click="todoStore.viewMode = 'stats'"
+            >
+              <BarChart3 :size="18" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{{ t('todo.statsMode') }}</TooltipContent>
+        </Tooltip>
+      </div>
 
       <ThemeToggle />
 

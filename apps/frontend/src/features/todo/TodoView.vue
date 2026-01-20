@@ -10,6 +10,7 @@ import TodoFilter from './components/TodoFilter.vue'
 import TodoSearch from './components/TodoSearch.vue'
 import TodoList from './components/TodoList.vue'
 import TodoVisualizer from './components/TodoVisualizer.vue'
+import TodoStatistics from './components/TodoStatistics.vue'
 import PomodoroTimer from './components/PomodoroTimer.vue'
 import Fireworks from '@/components/Fireworks.vue'
 import AiAssistantDrawer from '@/components/AiAssistantDrawer.vue'
@@ -146,7 +147,8 @@ function onFireworksComplete() {
               @update:editing-title="editingTitle = $event"
               @edit-keydown="handleEditKeydown"
             />
-            <TodoVisualizer v-else />
+            <TodoVisualizer v-else-if="todoStore.viewMode === 'visual'" />
+            <TodoStatistics v-else-if="todoStore.viewMode === 'stats'" />
           </div>
         </CardContent>
       </Card>
