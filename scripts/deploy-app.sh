@@ -25,7 +25,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( dirname "$SCRIPT_DIR" )"
 
 # 配置信息
-APP_NAME="Todo"
+APP_NAME="Lumina"
 BUILD_PATH="${PROJECT_ROOT}/apps/wails/build/bin/${APP_NAME}.app"
 DEST_PATH="/Applications/${APP_NAME}.app"
 

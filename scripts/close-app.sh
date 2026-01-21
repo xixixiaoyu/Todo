@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-APP_NAME="Todo"
+APP_NAME="Lumina"
 YELLOW='\033[1;33m'
 GREEN='\033[0;32m'
 RED='\033[0;31m'
