@@ -6,6 +6,11 @@ import { nativeService } from '@/services/native'
 
 export type PomodoroStatus = 'idle' | 'focus' | 'short_break' | 'long_break'
 
+export interface PomodoroHistory {
+  date: string // YYYY-MM-DD
+  minutes: number
+}
+
 export const usePomodoroStore = defineStore(
   'pomodoro',
   () => {
@@ -22,6 +27,7 @@ export const usePomodoroStore = defineStore(
     const activeTodoId = ref<string | null>(null)
     const timerInterval = ref<number | null>(null)
     const completedSessions = ref(0)
+    const history = ref<PomodoroHistory[]>([])
     const isMiniMode = ref(false)
 
     // Actions
@@ -110,6 +116,16 @@ export const usePomodoroStore = defineStore(
 
       if (status.value === 'focus') {
         completedSessions.value++
+
+        // Record history
+        const today = new Date().toLocaleDateString('sv-SE')
+        const existingEntry = history.value.find((h) => h.date === today)
+        if (existingEntry) {
+          existingEntry.minutes += FOCUS_TIME
+        } else {
+          history.value.push({ date: today, minutes: FOCUS_TIME })
+        }
+
         if (completedSessions.value % 4 === 0) {
           status.value = 'long_break'
           timeLeft.value = LONG_BREAK * 60
@@ -139,6 +155,7 @@ export const usePomodoroStore = defineStore(
       progress,
       formattedTime,
       completedSessions,
+      history,
       isMiniMode,
       isRunning: computed(() => !!timerInterval.value),
       startFocus,
@@ -152,7 +169,7 @@ export const usePomodoroStore = defineStore(
     persist: {
       key: 'pomodoro',
       storage: localStorage,
-      pick: ['completedSessions', 'isMiniMode', 'status', 'timeLeft', 'activeTodoId'],
+      pick: ['completedSessions', 'history', 'isMiniMode', 'status', 'timeLeft', 'activeTodoId'],
     },
   },
 )

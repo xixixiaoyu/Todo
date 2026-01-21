@@ -25,6 +25,7 @@ export default {
     discard: 'Discard',
     close: 'Close',
     none: 'None',
+    minutes: 'Minutes',
     focusing: 'Focusing',
     paused: 'Paused',
     current_task: 'Current Task',

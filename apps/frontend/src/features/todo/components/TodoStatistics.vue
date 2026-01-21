@@ -206,41 +206,20 @@ const completionChartOption = computed(() => ({
   ],
 }))
 
-// 近 7 天完成趋势（累计）
-const trendChartOption = computed(() => {
+// 近 7 天专注时长趋势
+const focusDurationOption = computed(() => {
   const last7Days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date()
     d.setDate(d.getDate() - (6 - i))
     return d.toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })
   })
 
-  // 计算过去 7 天每天的累计完成任务数
-  const startDate = new Date()
-  startDate.setDate(startDate.getDate() - 6)
-  startDate.setHours(0, 0, 0, 0)
-
-  // 初始值为 7 天前的总完成数
-  let cumulativeCount = todoStore.todos.filter(
-    (t) => t.completed && t.completedAt && new Date(t.completedAt) < startDate,
-  ).length
-
-  const completedData = Array.from({ length: 7 }, (_, i) => {
+  const focusData = Array.from({ length: 7 }, (_, i) => {
     const d = new Date()
     d.setDate(d.getDate() - (6 - i))
-    d.setHours(0, 0, 0, 0)
-    const nextD = new Date(d)
-    nextD.setDate(nextD.getDate() + 1)
-
-    const dailyCount = todoStore.todos.filter(
-      (t) =>
-        t.completed &&
-        t.completedAt &&
-        new Date(t.completedAt) >= d &&
-        new Date(t.completedAt) < nextD,
-    ).length
-
-    cumulativeCount += dailyCount
-    return cumulativeCount
+    const dateStr = d.toLocaleDateString('sv-SE')
+    const entry = pomodoroStore.history.find((h) => h.date === dateStr)
+    return entry ? entry.minutes : 0
   })
 
   return {
@@ -274,6 +253,7 @@ const trendChartOption = computed(() => {
       axisLabel: {
         color: isDark.value ? '#94a3b8' : '#64748b',
         fontSize: 10,
+        formatter: (value: number) => (value > 0 ? `${value}m` : value),
       },
     },
     tooltip: {
@@ -281,12 +261,18 @@ const trendChartOption = computed(() => {
       backgroundColor: isDark.value ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
       borderColor: isDark.value ? '#334155' : '#e2e8f0',
       textStyle: { color: isDark.value ? '#f8fafc' : '#1e293b' },
+      formatter: (
+        params: { name: string; marker: string; seriesName: string; value: number }[],
+      ) => {
+        const item = params[0]
+        return `${item.name}<br/>${item.marker} ${item.seriesName}: <b>${item.value} ${t('common.minutes')}</b>`
+      },
       extraCssText: 'backdrop-filter: blur(4px); border-radius: 8px;',
     },
     series: [
       {
-        name: t('statistics.completedTasks'),
-        data: completedData,
+        name: t('statistics.focusTime'),
+        data: focusData,
         type: 'line',
         smooth: true,
         symbol: 'circle',
@@ -422,16 +408,16 @@ const trendChartOption = computed(() => {
       </Card>
     </div>
 
-    <!-- 趋势图 -->
+    <!-- 专注时长图 -->
     <Card class="border-none shadow-sm overflow-hidden bg-card/50 backdrop-blur-sm">
       <CardHeader class="pb-2">
         <CardTitle class="text-sm font-semibold flex items-center gap-2">
-          <TrendingUp class="w-4 h-4 text-amber-500" />
-          {{ t('statistics.completionTrend') }}
+          <Timer class="w-4 h-4 text-amber-500" />
+          {{ t('statistics.focusTime') }}
         </CardTitle>
       </CardHeader>
       <CardContent class="h-[280px]">
-        <VChart :option="trendChartOption" autoresize />
+        <VChart :option="focusDurationOption" autoresize />
       </CardContent>
     </Card>
   </div>

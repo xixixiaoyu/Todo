@@ -25,6 +25,7 @@ export default {
     discard: '放弃',
     close: '关闭',
     none: '无',
+    minutes: '分钟',
     focusing: '专注中',
     paused: '已暂停',
     current_task: '当前任务',
