@@ -55,7 +55,7 @@ onMounted(() => {
     />
     <div class="flex justify-end gap-2 border-t border-border pt-2">
       <button
-        class="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+        class="rounded px-2 py-1 text-xs text-foreground/70 transition-colors hover:bg-muted hover:text-foreground"
         @click="emit('cancel')"
       >
         {{ t('ai.cancel') }}
