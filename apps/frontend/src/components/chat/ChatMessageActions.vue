@@ -5,7 +5,6 @@ import { Copy, Check, RefreshCw } from 'lucide-vue-next'
 
 const props = defineProps<{
   content: string
-  isLast?: boolean
 }>()
 
 const emit = defineEmits<{

@@ -441,7 +441,6 @@ watch(
               <ChatMessageActions
                 v-if="!isUser && !isStreaming && hasContent"
                 :content="message.content"
-                :is-last="isLast"
                 @regenerate="emit('regenerate', message.id)"
               />
             </template>
