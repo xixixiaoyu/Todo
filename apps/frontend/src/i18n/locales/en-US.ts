@@ -189,7 +189,8 @@ export default {
     totalTasks: 'Total Tasks',
     pendingTasks: 'Pending',
     completedTasks: 'Completed',
-    trend7Days: '7-Day Trend',
+    trend7Days: 'Last 7 Days Trend',
+    createdTasks: 'Created Tasks',
     focusTime: 'Focus Time',
     focusSessions: 'Focus Sessions',
     pomodoroSessions: 'Pomodoros',
@@ -197,6 +198,7 @@ export default {
     completionTrend: 'Completion Trend',
     taskDistribution: 'Task Distribution',
     productivityScore: 'Productivity Score',
+    weeklyActivity: 'Weekly Activity',
   },
   pomodoro: {
     status: {

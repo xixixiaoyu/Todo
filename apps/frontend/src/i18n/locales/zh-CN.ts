@@ -188,6 +188,7 @@ export default {
     pendingTasks: '待完成',
     completedTasks: '已完成',
     trend7Days: '近 7 天趋势',
+    createdTasks: '新增任务',
     focusTime: '专注时长',
     focusSessions: '专注次数',
     pomodoroSessions: '番茄数',
@@ -195,6 +196,7 @@ export default {
     completionTrend: '完成趋势',
     taskDistribution: '任务分布',
     productivityScore: '生产力指数',
+    weeklyActivity: '每周活跃度',
   },
   pomodoro: {
     status: {
@@ -251,7 +253,7 @@ export default {
     tempBalanced: '平衡 (1)',
     tempCreative: '创意 (2)',
     systemPromptLabel: '系统提示词 (System Prompt)',
-    systemPromptPlaceholder: '设置 AI 的角色和行为...',
+    systemPromptPlaceholder: '设置 AI 的角色 and 行为...',
     createPreset: '创建预设',
     editPreset: '编辑预设',
     copyPreset: '复制预设',
@@ -364,7 +366,7 @@ export default {
 4. **格式一致性**：保持每条信息简洁有力，不超过 20 字。
 
 输出规范：
-- 严格返回 JSON 数组格式。
+- 严格返回 JSON 数组格式.
 - 严禁包含 Markdown 代码块或任何解释。
 
 当前记忆列表：

@@ -50,6 +50,113 @@ const completionRate = computed(() =>
   totalTasks.value > 0 ? Math.round((completedTasks.value / totalTasks.value) * 100) : 0,
 )
 
+// 每周活跃度（新增 vs 完成）
+const weeklyActivityOption = computed(() => {
+  const weekDays =
+    t('common.language') === 'zh-CN'
+      ? ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+      : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
+  // 计算过去 7 天每天新增和完成的任务数
+  const createdData = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date()
+    d.setDate(d.getDate() - (6 - i))
+    d.setHours(0, 0, 0, 0)
+    const nextD = new Date(d)
+    nextD.setDate(nextD.getDate() + 1)
+
+    return todoStore.todos.filter(
+      (t) => new Date(t.createdAt) >= d && new Date(t.createdAt) < nextD,
+    ).length
+  })
+
+  const completedData = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date()
+    d.setDate(d.getDate() - (6 - i))
+    d.setHours(0, 0, 0, 0)
+    const nextD = new Date(d)
+    nextD.setDate(nextD.getDate() + 1)
+
+    return todoStore.todos.filter(
+      (t) =>
+        t.completed &&
+        t.completedAt &&
+        new Date(t.completedAt) >= d &&
+        new Date(t.completedAt) < nextD,
+    ).length
+  })
+
+  return {
+    backgroundColor: 'transparent',
+    legend: {
+      data: [t('statistics.createdTasks'), t('statistics.completedTasks')],
+      top: 0,
+      right: '10%',
+      textStyle: {
+        color: isDark.value ? '#94a3b8' : '#64748b',
+        fontSize: 10,
+      },
+      icon: 'circle',
+    },
+    grid: {
+      top: '15%',
+      left: '3%',
+      right: '3%',
+      bottom: '10%',
+      containLabel: true,
+    },
+    xAxis: {
+      type: 'category',
+      data: weekDays,
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: {
+        color: isDark.value ? '#94a3b8' : '#64748b',
+        fontSize: 10,
+      },
+    },
+    yAxis: {
+      type: 'value',
+      splitLine: {
+        lineStyle: {
+          color: isDark.value ? '#334155' : '#f1f5f9',
+          type: 'dashed',
+        },
+      },
+      axisLabel: { show: false },
+    },
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: isDark.value ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+      borderColor: isDark.value ? '#334155' : '#e2e8f0',
+      textStyle: { color: isDark.value ? '#f8fafc' : '#1e293b' },
+      extraCssText: 'backdrop-filter: blur(4px); border-radius: 8px;',
+    },
+    series: [
+      {
+        name: t('statistics.createdTasks'),
+        data: createdData,
+        type: 'bar',
+        barWidth: '25%',
+        itemStyle: {
+          color: isDark.value ? '#38bdf8' : '#0ea5e9',
+          borderRadius: [4, 4, 0, 0],
+        },
+      },
+      {
+        name: t('statistics.completedTasks'),
+        data: completedData,
+        type: 'bar',
+        barWidth: '25%',
+        itemStyle: {
+          color: isDark.value ? '#8b5cf6' : '#7c3aed',
+          borderRadius: [4, 4, 0, 0],
+        },
+      },
+    ],
+  }
+})
+
 // 完成率饼图配置
 const completionChartOption = computed(() => ({
   backgroundColor: 'transparent',
@@ -99,7 +206,7 @@ const completionChartOption = computed(() => ({
   ],
 }))
 
-// 近 7 天完成趋势
+// 近 7 天完成趋势（累计）
 const trendChartOption = computed(() => {
   const last7Days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date()
@@ -107,8 +214,16 @@ const trendChartOption = computed(() => {
     return d.toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })
   })
 
-  // 模拟数据：根据 createdAt 和 completedAt 计算
-  // 实际项目中这里应该从后端获取或通过更复杂的逻辑计算
+  // 计算过去 7 天每天的累计完成任务数
+  const startDate = new Date()
+  startDate.setDate(startDate.getDate() - 6)
+  startDate.setHours(0, 0, 0, 0)
+
+  // 初始值为 7 天前的总完成数
+  let cumulativeCount = todoStore.todos.filter(
+    (t) => t.completed && t.completedAt && new Date(t.completedAt) < startDate,
+  ).length
+
   const completedData = Array.from({ length: 7 }, (_, i) => {
     const d = new Date()
     d.setDate(d.getDate() - (6 - i))
@@ -116,22 +231,25 @@ const trendChartOption = computed(() => {
     const nextD = new Date(d)
     nextD.setDate(nextD.getDate() + 1)
 
-    return todoStore.todos.filter(
+    const dailyCount = todoStore.todos.filter(
       (t) =>
         t.completed &&
         t.completedAt &&
         new Date(t.completedAt) >= d &&
         new Date(t.completedAt) < nextD,
     ).length
+
+    cumulativeCount += dailyCount
+    return cumulativeCount
   })
 
   return {
     backgroundColor: 'transparent',
     grid: {
-      top: '10%',
+      top: '15%',
       left: '3%',
-      right: '4%',
-      bottom: '3%',
+      right: '3%',
+      bottom: '10%',
       containLabel: true,
     },
     xAxis: {
@@ -142,7 +260,7 @@ const trendChartOption = computed(() => {
       axisTick: { show: false },
       axisLabel: {
         color: isDark.value ? '#94a3b8' : '#64748b',
-        fontSize: 12,
+        fontSize: 10,
       },
     },
     yAxis: {
@@ -150,10 +268,12 @@ const trendChartOption = computed(() => {
       splitLine: {
         lineStyle: {
           color: isDark.value ? '#334155' : '#f1f5f9',
+          type: 'dashed',
         },
       },
       axisLabel: {
         color: isDark.value ? '#94a3b8' : '#64748b',
+        fontSize: 10,
       },
     },
     tooltip: {
@@ -165,13 +285,14 @@ const trendChartOption = computed(() => {
     },
     series: [
       {
+        name: t('statistics.completedTasks'),
         data: completedData,
         type: 'line',
         smooth: true,
         symbol: 'circle',
         symbolSize: 8,
-        itemStyle: { color: '#fbbf24' },
-        lineStyle: { width: 3 },
+        itemStyle: { color: '#f59e0b' },
+        lineStyle: { width: 3, color: '#f59e0b' },
         areaStyle: {
           color: {
             type: 'linear',
@@ -180,8 +301,8 @@ const trendChartOption = computed(() => {
             x2: 0,
             y2: 1,
             colorStops: [
-              { offset: 0, color: 'rgba(251, 191, 36, 0.2)' },
-              { offset: 1, color: 'rgba(251, 191, 36, 0)' },
+              { offset: 0, color: 'rgba(245, 158, 11, 0.3)' },
+              { offset: 1, color: 'rgba(245, 158, 11, 0)' },
             ],
           },
         },
@@ -193,92 +314,126 @@ const trendChartOption = computed(() => {
 
 <template>
   <div class="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-1">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <!-- 总任务 -->
-      <Card class="border-none shadow-sm bg-primary/5">
+      <Card
+        class="border-none shadow-sm bg-gradient-to-br from-primary/10 to-primary/5 hover:from-primary/15 hover:to-primary/10 transition-colors"
+      >
         <CardContent class="p-4 flex items-center space-x-4">
-          <div class="p-2.5 bg-primary/10 rounded-xl">
-            <ListTodo class="w-5 h-5 text-primary" />
+          <div class="p-3 bg-primary/10 rounded-2xl shadow-inner">
+            <ListTodo class="w-6 h-6 text-primary" />
           </div>
           <div>
-            <p class="text-xs text-muted-foreground">{{ t('statistics.totalTasks') }}</p>
-            <h3 class="text-xl font-bold">{{ totalTasks }}</h3>
+            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              {{ t('statistics.totalTasks') }}
+            </p>
+            <h3 class="text-2xl font-black mt-0.5">{{ totalTasks }}</h3>
           </div>
         </CardContent>
       </Card>
 
       <!-- 已完成 -->
-      <Card class="border-none shadow-sm bg-green-500/5">
+      <Card
+        class="border-none shadow-sm bg-gradient-to-br from-green-500/10 to-green-500/5 hover:from-green-500/15 hover:to-green-500/10 transition-colors"
+      >
         <CardContent class="p-4 flex items-center space-x-4">
-          <div class="p-2.5 bg-green-500/10 rounded-xl">
-            <CheckCircle2 class="w-5 h-5 text-green-500" />
+          <div class="p-3 bg-green-500/10 rounded-2xl shadow-inner">
+            <CheckCircle2 class="w-6 h-6 text-green-500" />
           </div>
           <div>
-            <p class="text-xs text-muted-foreground">{{ t('statistics.completedTasks') }}</p>
-            <h3 class="text-xl font-bold">{{ completedTasks }}</h3>
+            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              {{ t('statistics.completedTasks') }}
+            </p>
+            <h3 class="text-2xl font-black mt-0.5">{{ completedTasks }}</h3>
           </div>
         </CardContent>
       </Card>
 
       <!-- 待完成 -->
-      <Card class="border-none shadow-sm bg-blue-500/5">
+      <Card
+        class="border-none shadow-sm bg-gradient-to-br from-blue-500/10 to-blue-500/5 hover:from-blue-500/15 hover:to-blue-500/10 transition-colors"
+      >
         <CardContent class="p-4 flex items-center space-x-4">
-          <div class="p-2.5 bg-blue-500/10 rounded-xl">
-            <Circle class="w-5 h-5 text-blue-500" />
+          <div class="p-3 bg-blue-500/10 rounded-2xl shadow-inner">
+            <Circle class="w-6 h-6 text-blue-500" />
           </div>
           <div>
-            <p class="text-xs text-muted-foreground">{{ t('statistics.pendingTasks') }}</p>
-            <h3 class="text-xl font-bold">{{ pendingTasks }}</h3>
+            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              {{ t('statistics.pendingTasks') }}
+            </p>
+            <h3 class="text-2xl font-black mt-0.5">{{ pendingTasks }}</h3>
           </div>
         </CardContent>
       </Card>
 
       <!-- 番茄数 -->
-      <Card class="border-none shadow-sm bg-amber-500/5">
+      <Card
+        class="border-none shadow-sm bg-gradient-to-br from-amber-500/10 to-amber-500/5 hover:from-amber-500/15 hover:to-amber-500/10 transition-colors"
+      >
         <CardContent class="p-4 flex items-center space-x-4">
-          <div class="p-2.5 bg-amber-500/10 rounded-xl">
-            <Timer class="w-5 h-5 text-amber-500" />
+          <div class="p-3 bg-amber-500/10 rounded-2xl shadow-inner">
+            <Timer class="w-6 h-6 text-amber-500" />
           </div>
           <div>
-            <p class="text-xs text-muted-foreground">{{ t('statistics.pomodoroSessions') }}</p>
-            <h3 class="text-xl font-bold">{{ pomodoroStore.completedSessions }}</h3>
+            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              {{ t('statistics.pomodoroSessions') }}
+            </p>
+            <h3 class="text-2xl font-black mt-0.5">{{ pomodoroStore.completedSessions }}</h3>
           </div>
         </CardContent>
       </Card>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
       <!-- 完成率饼图 -->
-      <Card class="lg:col-span-1 border-none shadow-sm overflow-hidden bg-card/50 backdrop-blur-sm">
+      <Card
+        class="lg:col-span-4 border-none shadow-sm overflow-hidden bg-card/50 backdrop-blur-sm group"
+      >
         <CardHeader class="pb-2">
-          <CardTitle class="text-sm font-medium flex items-center gap-2">
+          <CardTitle class="text-sm font-semibold flex items-center gap-2">
             <PieChartIcon class="w-4 h-4 text-primary" />
             {{ t('statistics.completionRate') }}
           </CardTitle>
         </CardHeader>
-        <CardContent class="h-[240px] relative">
+        <CardContent class="h-[300px] relative">
           <VChart :option="completionChartOption" autoresize />
           <div
             class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pt-8"
           >
-            <span class="text-3xl font-bold text-primary">{{ completionRate }}%</span>
+            <span
+              class="text-4xl font-black text-primary group-hover:scale-110 transition-transform duration-500"
+              >{{ completionRate }}%</span
+            >
           </div>
         </CardContent>
       </Card>
 
-      <!-- 趋势图 -->
-      <Card class="lg:col-span-2 border-none shadow-sm overflow-hidden bg-card/50 backdrop-blur-sm">
+      <!-- 每周活跃度 -->
+      <Card class="lg:col-span-8 border-none shadow-sm overflow-hidden bg-card/50 backdrop-blur-sm">
         <CardHeader class="pb-2">
-          <CardTitle class="text-sm font-medium flex items-center gap-2">
-            <TrendingUp class="w-4 h-4 text-amber-500" />
-            {{ t('statistics.completionTrend') }}
+          <CardTitle class="text-sm font-semibold flex items-center gap-2">
+            <TrendingUp class="w-4 h-4 text-violet-500" />
+            {{ t('statistics.weeklyActivity') }}
           </CardTitle>
         </CardHeader>
-        <CardContent class="h-[240px]">
-          <VChart :option="trendChartOption" autoresize />
+        <CardContent class="h-[300px]">
+          <VChart :option="weeklyActivityOption" autoresize />
         </CardContent>
       </Card>
     </div>
+
+    <!-- 趋势图 -->
+    <Card class="border-none shadow-sm overflow-hidden bg-card/50 backdrop-blur-sm">
+      <CardHeader class="pb-2">
+        <CardTitle class="text-sm font-semibold flex items-center gap-2">
+          <TrendingUp class="w-4 h-4 text-amber-500" />
+          {{ t('statistics.completionTrend') }}
+        </CardTitle>
+      </CardHeader>
+      <CardContent class="h-[280px]">
+        <VChart :option="trendChartOption" autoresize />
+      </CardContent>
+    </Card>
   </div>
 </template>
 
