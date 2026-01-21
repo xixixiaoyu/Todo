@@ -148,7 +148,7 @@ const {
   sendMessage,
   stopGenerating,
   clearHistory,
-  regenerateLastResponse,
+  regenerateMessage,
   editAndResendMessage,
 } = useChat()
 
@@ -326,7 +326,7 @@ defineOptions({
         <ChatMessageList
           :messages="messages"
           :is-maximized="isMaximized"
-          @regenerate="regenerateLastResponse"
+          @regenerate="regenerateMessage"
           @edit="editAndResendMessage"
           @select-suggestion="handleSelectSuggestion"
         />

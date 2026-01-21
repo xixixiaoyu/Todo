@@ -438,30 +438,54 @@ export function useChat(options: AIRequestOptions = {}) {
   }
 
   /**
-   * 重新生成最后一条 AI 回复
+   * 重新生成指定 AI 回复
    */
-  async function regenerateLastResponse(): Promise<void> {
+  async function regenerateMessage(messageId: string): Promise<void> {
     if (isGenerating.value) return
 
-    // 找到最后一条用户消息
+    const index = chatHistory.value.findIndex((msg) => msg.id === messageId)
+    if (index === -1) return
+
+    // 找到该消息之前的最后一条用户消息
     let lastUserMsgIndex = -1
-    for (let i = chatHistory.value.length - 1; i >= 0; i--) {
+    for (let i = index - 1; i >= 0; i--) {
       if (chatHistory.value[i].role === 'user') {
         lastUserMsgIndex = i
         break
       }
     }
+
     if (lastUserMsgIndex === -1) return
 
-    const userContent = chatHistory.value[lastUserMsgIndex].content
-    const userImages = chatHistory.value[lastUserMsgIndex].images
+    const userMsg = chatHistory.value[lastUserMsgIndex]
+    const userContent = userMsg.content
+    const userImages = userMsg.images
 
-    // 删除最后一条用户消息及其之后的所有消息
-    const newHistory = chatHistory.value.slice(0, lastUserMsgIndex)
+    // 删除该用户消息之后的所有消息
+    const newHistory = chatHistory.value.slice(0, lastUserMsgIndex + 1)
     chatHistory.value = newHistory
 
-    // 重新发送
-    await sendMessage(userContent, userImages)
+    // 重新发送，使用 isRetry = true 避免再次创建用户消息
+    await sendMessage(userContent, userImages, true)
+  }
+
+  /**
+   * 重新生成最后一条 AI 回复
+   */
+  async function regenerateLastResponse(): Promise<void> {
+    if (isGenerating.value || chatHistory.value.length === 0) return
+
+    // 找到最后一条 AI 消息
+    const lastAIMsg = [...chatHistory.value].reverse().find((m) => m.role === 'assistant')
+    if (lastAIMsg) {
+      return regenerateMessage(lastAIMsg.id)
+    }
+
+    // 如果没有 AI 消息，尝试针对最后一条用户消息生成
+    const lastMsg = chatHistory.value[chatHistory.value.length - 1]
+    if (lastMsg.role === 'user') {
+      await sendMessage(lastMsg.content, lastMsg.images, true)
+    }
   }
 
   /**
@@ -572,6 +596,7 @@ export function useChat(options: AIRequestOptions = {}) {
     stopGenerating,
     clearHistory,
     deleteMessage,
+    regenerateMessage,
     regenerateLastResponse,
     editAndResendMessage,
   }

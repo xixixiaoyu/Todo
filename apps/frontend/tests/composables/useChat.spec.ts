@@ -471,4 +471,37 @@ describe('useChat', () => {
       expect(messages.value[0].id).toBe('m2')
     })
   })
+
+  describe('regenerateMessage', () => {
+    it('should regenerate specified AI response and delete subsequent messages', async () => {
+      mockCurrentSession.value = {
+        id: 's1',
+        title: 'T1',
+        messages: [
+          { id: 'm1', role: 'user', content: 'msg 1' },
+          { id: 'm2', role: 'assistant', content: 'res 1' },
+          { id: 'm3', role: 'user', content: 'msg 2' },
+          { id: 'm4', role: 'assistant', content: 'res 2' },
+        ],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+      mockGetAIStreamResponse.mockImplementation(
+        async (_messages: ChatMessage[], onChunk: OnChunk) => {
+          onChunk('New res 1')
+          onChunk('[DONE]')
+        },
+      )
+
+      const { regenerateMessage, messages } = useChat()
+      await regenerateMessage('m2')
+
+      // Should keep m1, and regenerate m2, deleting m3 and m4
+      expect(messages.value).toHaveLength(2)
+      expect(messages.value[0].id).toBe('m1')
+      expect(messages.value[1].content).toBe('New res 1')
+      expect(messages.value.find((m) => m.id === 'm3')).toBeUndefined()
+      expect(messages.value.find((m) => m.id === 'm4')).toBeUndefined()
+    })
+  })
 })

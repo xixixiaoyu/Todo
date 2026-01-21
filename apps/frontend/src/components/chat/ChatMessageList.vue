@@ -14,7 +14,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'regenerate'): void
+  (e: 'regenerate', id: string): void
   (e: 'edit', id: string, content: string): void
   (e: 'select-suggestion', text: string, options?: { requireTodo?: boolean }): void
 }>()
@@ -134,7 +134,7 @@ defineExpose({
                   :key="msg.id"
                   :message="msg"
                   :is-last="index === messages.length - 1"
-                  @regenerate="emit('regenerate')"
+                  @regenerate="(id) => emit('regenerate', id)"
                   @edit="(content) => emit('edit', msg.id, content)"
                 />
               </TransitionGroup>

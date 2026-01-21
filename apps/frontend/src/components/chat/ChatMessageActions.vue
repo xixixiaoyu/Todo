@@ -42,7 +42,6 @@ async function copyContent() {
       <span>{{ isCopied ? t('ai.copied') : t('ai.copy') }}</span>
     </button>
     <button
-      v-if="isLast"
       class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-muted-foreground/80 transition-all hover:bg-primary/10 hover:text-primary active:scale-95"
       @click="emit('regenerate')"
     >

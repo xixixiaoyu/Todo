@@ -20,7 +20,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'regenerate'): void
+  (e: 'regenerate', id: string): void
   (e: 'edit', content: string): void
 }>()
 
@@ -442,7 +442,7 @@ watch(
                 v-if="!isUser && !isStreaming && hasContent"
                 :content="message.content"
                 :is-last="isLast"
-                @regenerate="emit('regenerate')"
+                @regenerate="emit('regenerate', message.id)"
               />
             </template>
           </div>
