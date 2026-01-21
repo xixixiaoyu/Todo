@@ -191,8 +191,8 @@ const handlePresetMouseLeave = () => {
                 v-if="isDiscussionEnabled"
                 side="top"
                 align="start"
-                :side-offset="8"
-                class="mb-2 w-64 p-3"
+                :side-offset="4"
+                class="w-64 p-3"
               >
                 <div
                   class="space-y-4"
@@ -316,8 +316,8 @@ const handlePresetMouseLeave = () => {
               <DropdownMenuContent
                 side="top"
                 align="start"
-                :side-offset="8"
-                class="mb-2 min-w-[160px] p-1"
+                :side-offset="4"
+                class="min-w-[160px] p-1"
               >
                 <div @mouseenter="clearPresetTimer" @mouseleave="handlePresetMouseLeave">
                   <DropdownMenuItem
