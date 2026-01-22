@@ -179,11 +179,43 @@ vi.mock('vue-i18n', async (importOriginal) => {
   }
 })
 
+vi.mock('@/composables/useGsap', () => ({
+  useGsap: () => ({
+    gsap: {
+      from: vi.fn(),
+      to: vi.fn(),
+      set: vi.fn(),
+      timeline: vi.fn(() => ({
+        from: vi.fn().mockReturnThis(),
+        to: vi.fn().mockReturnThis(),
+      })),
+    },
+    ctx: {
+      add: (fn: () => void) => fn(),
+      revert: vi.fn(),
+    },
+  }),
+}))
+
 describe('AISettingsDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockPresets.value = []
     mockActivePresetId.value = null
+    mockConfig.value = {
+      baseUrl: 'https://api.example.com',
+      apiKey: 'test-key',
+      model: 'test-model',
+      systemPrompt: 'test-prompt',
+      temperature: 0.7,
+      thinkingMode: 'disabled',
+      todoAssistant: false,
+      discussionMode: false,
+      discussionModelIds: [],
+      discussionPrimaryModelId: null,
+      memoryModelId: null,
+      enableImageGeneration: false,
+    }
   })
 
   it('should render correct initial tab', async () => {
@@ -336,8 +368,50 @@ describe('AISettingsDialog', () => {
     expect((wrapper.vm as unknown as { activeTab: string }).activeTab).toBe('presets')
   })
 
-  it('should clear activePresetId when saving custom settings', async () => {
+  it('should auto-save config when form changes', async () => {
+    const wrapper = mount(AISettingsDialog, {
+      props: {
+        modelValue: true,
+        initialTab: 'settings',
+      },
+      global: {
+        stubs: {
+          Teleport: true,
+        },
+      },
+    })
+
+    await nextTick()
+
+    // 修改基础设置中的模型
+    const modelInput = wrapper.find('input[name="ai-model"]')
+    await modelInput.setValue('auto-save-model')
+
+    // 等待异步 watcher 触发
+    await nextTick()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(updateConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: 'auto-save-model',
+      }),
+    )
+  })
+
+  it('should clear activePresetId when settings deviate from preset', async () => {
     mockActivePresetId.value = 'test-id'
+    mockPresets.value = [
+      {
+        id: 'test-id',
+        name: 'Test Preset',
+        baseUrl: 'https://api.example.com',
+        apiKey: 'test-key',
+        model: 'test-model',
+        systemPrompt: 'test-prompt',
+        temperature: 0.7,
+        todoAssistant: false,
+      },
+    ]
 
     const wrapper = mount(AISettingsDialog, {
       props: {
@@ -352,8 +426,15 @@ describe('AISettingsDialog', () => {
     })
 
     await nextTick()
-    await wrapper.find('button.bg-primary').trigger('click') // 点击保存
 
+    // 修改模型，触发自动保存并导致预设不匹配
+    const modelInput = wrapper.find('input[name="ai-model"]')
+    await modelInput.setValue('new-model')
+
+    await nextTick()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    // 验证 activePresetId 被清除 (由 useAIConfig 的 watcher 处理)
     expect(mockActivePresetId.value).toBe(null)
   })
 
@@ -425,7 +506,7 @@ describe('AISettingsDialog', () => {
     const modelInput = wrapper.find('input[placeholder="ai.modelPlaceholder"]')
     await modelInput.setValue('new-model')
 
-    // 点击保存预设
+    // 点击保存预设 (AIPresetManager 内部的保存按钮)
     await wrapper.find('button.bg-primary').trigger('click')
     await nextTick()
 

@@ -2,6 +2,7 @@
 import { ref, watch, computed, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { X, RotateCcw } from 'lucide-vue-next'
+import { isEqual } from 'lodash-es'
 import { useAIConfig, type AIConfig, type AIPreset } from '@/composables/useAIConfig'
 import { useEscClose } from '@/composables/useEscClose'
 import {
@@ -98,28 +99,30 @@ watch(
 watch(
   () => config.value,
   (newConfig) => {
-    formData.value = {
+    const newFormData = {
       ...newConfig,
       discussionModelIds: [...newConfig.discussionModelIds] as string[],
       discussionPrimaryModelId: newConfig.discussionPrimaryModelId,
       memoryModelId: newConfig.memoryModelId,
     }
+    // 只有当外部配置真的变了且与当前表单不一致时才同步
+    if (!isEqual(formData.value, newFormData)) {
+      formData.value = newFormData
+    }
   },
-  { immediate: true },
+  { immediate: true, deep: true },
 )
 
-/**
- * 保存配置
- */
-function handleSave() {
-  // 如果在预设管理 Tab 且正在编辑/创建，先保存预设
-  if (activeTab.value === 'presets' && presetManagerRef.value) {
-    presetManagerRef.value.savePreset()
-  }
-
-  updateConfig(formData.value)
-  modelValue.value = false
-}
+// 监听本地表单变化并自动保存
+watch(
+  formData,
+  (newVal) => {
+    if (modelValue.value && !isEqual(newVal, config.value)) {
+      updateConfig(newVal)
+    }
+  },
+  { deep: true },
+)
 
 /**
  * 保存为预设 (显示确认弹窗)
@@ -165,6 +168,10 @@ function handleReset() {
  * 关闭弹窗
  */
 function handleClose() {
+  // 如果在预设管理 Tab 且正在编辑/创建，自动尝试保存预设
+  if (activeTab.value === 'presets' && presetManagerRef.value) {
+    presetManagerRef.value.savePreset()
+  }
   modelValue.value = false
 }
 
@@ -190,7 +197,6 @@ defineExpose({
   saveAsPresetName,
   confirmSaveAsPreset,
   handleReset,
-  saveConfig: handleSave,
   handleClose,
   activePresetId,
   switchPreset,
@@ -305,10 +311,10 @@ defineExpose({
                   {{ t('ai.saveAsPreset') }}
                 </button>
                 <button
-                  class="rounded-xl bg-primary px-8 py-2.5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary-hover hover:shadow-primary/30 active:scale-[0.98]"
-                  @click="handleSave"
+                  class="rounded-xl bg-muted px-8 py-2.5 text-sm font-semibold text-foreground transition-all hover:bg-muted/80 active:scale-[0.98]"
+                  @click="handleClose"
                 >
-                  {{ t('common.save') }}
+                  {{ t('common.close') }}
                 </button>
               </div>
             </div>
