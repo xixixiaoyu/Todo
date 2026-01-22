@@ -217,7 +217,7 @@ export default {
     todoAssistant: '简思助手',
     todoAssistantEnabled: '简思助手已开启',
     todoAssistantDisabled: '简思助手已关闭',
-    placeholder: '询问 AI 助手... (按 Shift + Enter 换行，Enter 发送)',
+    placeholder: '询问 AI 助手... 输入 / 唤起快捷菜单 (按 Shift + Enter 换行，Enter 发送)',
     generating: 'AI 正在回复...',
     managePresets: '管理预设...',
     custom: '自定义',
@@ -378,7 +378,7 @@ export default {
     generatingImage: '正在思考并构思画面...',
     enableImageGeneration: '绘图模式',
     imageGenerationDesc: '绘图模式已开启，请确保当前预设模型支持生图（如 Gemini, DALL-E）',
-    imagePromptPlaceholder: '描述你想要生成的画面...',
+    imagePromptPlaceholder: '描述你想要生成的画面... 输入 / 唤起快捷菜单',
     dragToMove: '可拖拽平移 / 滚轮缩放',
   },
 } as const

@@ -219,7 +219,8 @@ export default {
     todoAssistant: 'Lumina Assistant',
     todoAssistantEnabled: 'Lumina Assistant Enabled',
     todoAssistantDisabled: 'Lumina Assistant Disabled',
-    placeholder: 'Ask AI Assistant... (Shift + Enter for newline, Enter to send)',
+    placeholder:
+      'Ask AI Assistant... Type / for shortcut menu (Shift + Enter for newline, Enter to send)',
     generating: 'AI is replying...',
     managePresets: 'Manage Presets...',
     custom: 'Custom',
@@ -388,7 +389,7 @@ Current memory list:
     enableImageGeneration: 'Drawing Mode',
     imageGenerationDesc:
       'Drawing mode enabled. Ensure the current model supports image generation (e.g., Gemini, DALL-E)',
-    imagePromptPlaceholder: 'Describe the image you want to generate...',
+    imagePromptPlaceholder: 'Describe the image you want to generate... Type / for shortcut menu',
     dragToMove: 'Drag to move / Scroll to zoom',
   },
 } as const
