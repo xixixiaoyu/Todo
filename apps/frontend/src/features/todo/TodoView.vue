@@ -80,12 +80,12 @@ function onFireworksComplete() {
     <div
       v-if="!pomodoroStore.isMiniMode"
       ref="cardRef"
-      class="w-full max-w-4xl h-[92vh] flex flex-col"
+      class="w-full max-w-4xl h-[94vh] flex flex-col"
     >
       <Card
         class="flex-1 flex flex-col border-none shadow-card dark:shadow-[0_8px_30px_rgba(0,0,0,0.3)] overflow-hidden rounded-[24px]"
       >
-        <CardContent class="todo-container p-6 md:p-8 flex flex-col flex-1 min-h-0">
+        <CardContent class="todo-container p-6 md:p-8 md:pt-14 flex flex-col flex-1 min-h-0">
           <!-- Header -->
           <TodoHeader />
 
