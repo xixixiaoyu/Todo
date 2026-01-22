@@ -137,7 +137,10 @@ export const useTodoStore = defineStore(
           // 1. 置顶优先
           if (a.isPinned && !b.isPinned) return -1
           if (!a.isPinned && b.isPinned) return 1
-          // 2. 其次按 order 排序
+          // 2. 未完成优先
+          if (!a.completed && b.completed) return -1
+          if (a.completed && !b.completed) return 1
+          // 3. 其次按 order 排序
           return (a.order ?? 0) - (b.order ?? 0)
         })
     }
