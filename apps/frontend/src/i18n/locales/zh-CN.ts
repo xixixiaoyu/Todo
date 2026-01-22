@@ -231,8 +231,6 @@ export default {
     suggestion1Desc: '将复杂目标转化为可执行的子任务清单',
     suggestion2Title: '智能整理',
     suggestion2Desc: '分析当前待办并自动置顶关键任务',
-    suggestion3Title: '进度回顾',
-    suggestion3Desc: '总结今日成就并规划下一步行动建议',
     scrollToBottom: '返回底部',
     isThinking: '正在思考...',
     thoughtProcess: '思考过程',

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ListTree, Pin, ClipboardList } from 'lucide-vue-next'
+import { ListTree, Pin } from 'lucide-vue-next'
 
 const emit = defineEmits<{
   (e: 'select', text: string, options?: { requireTodo?: boolean }): void
@@ -26,19 +26,11 @@ const suggestions = computed(() => [
     bg: 'bg-amber-500/10',
     requireTodo: true,
   },
-  {
-    icon: ClipboardList,
-    title: t('ai.suggestion3Title'),
-    desc: t('ai.suggestion3Desc'),
-    color: 'text-emerald-500',
-    bg: 'bg-emerald-500/10',
-    requireTodo: true,
-  },
 ])
 </script>
 
 <template>
-  <div class="grid w-full max-w-2xl gap-3 sm:grid-cols-3">
+  <div class="grid w-full max-w-2xl gap-3 sm:grid-cols-2">
     <button
       v-for="item in suggestions"
       :key="item.title"

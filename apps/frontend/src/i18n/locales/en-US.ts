@@ -234,8 +234,6 @@ export default {
     suggestion1Desc: 'Convert complex goals into actionable subtask lists',
     suggestion2Title: 'Smart Organizing',
     suggestion2Desc: 'Analyze tasks and auto-pin key items',
-    suggestion3Title: 'Progress Review',
-    suggestion3Desc: 'Summarize achievements and plan next steps',
     scrollToBottom: 'Back to bottom',
     isThinking: 'Thinking...',
     thoughtProcess: 'Thought Process',
