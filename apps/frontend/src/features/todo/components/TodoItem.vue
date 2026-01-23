@@ -352,7 +352,9 @@ watch(
           </div>
           <!-- eslint-enable vue/no-v-html -->
         </div>
-        <div class="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+        <div
+          class="absolute right-0 top-0 bottom-0 flex items-center gap-0.5 opacity-0 transition-all duration-200 group-hover:opacity-100 bg-gradient-to-l from-card via-card/95 to-transparent pl-12 pr-3 rounded-r-xl"
+        >
           <TooltipProvider :delay-duration="0">
             <Tooltip v-if="!todo.completed && !todo.isProposedDelete">
               <TooltipTrigger as-child>
