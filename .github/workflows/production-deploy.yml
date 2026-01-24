@@ -18,7 +18,7 @@ jobs:
           port: 22
           script: |
             # 进入项目目录（请确保该目录已存在并已 git clone）
-            cd /root/todo
+            cd /home/ubuntu/Todo
 
             # 拉取最新代码
             git pull origin main
