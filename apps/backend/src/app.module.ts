@@ -79,7 +79,7 @@ import { CsrfMiddleware } from './common'
             },
             // 排除健康检查端点的日志
             autoLogging: {
-              ignore: (req) => req.url?.includes('/health') ?? false,
+              ignore: () => false,
             },
           },
         }

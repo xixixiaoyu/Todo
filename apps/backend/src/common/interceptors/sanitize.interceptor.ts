@@ -18,43 +18,46 @@ export class SanitizeInterceptor implements NestInterceptor {
     const request = context.switchToHttp().getRequest()
 
     // 清理请求体
-    if (request.body) {
-      request.body = this.sanitizeObject(request.body)
+    if (request.body && typeof request.body === 'object') {
+      this.sanitizeInPlace(request.body)
     }
 
     // 清理查询参数
-    if (request.query) {
-      request.query = this.sanitizeObject(request.query)
+    if (request.query && typeof request.query === 'object') {
+      this.sanitizeInPlace(request.query)
     }
 
     // 清理路径参数
-    if (request.params) {
-      request.params = this.sanitizeObject(request.params)
+    if (request.params && typeof request.params === 'object') {
+      this.sanitizeInPlace(request.params)
     }
 
     return next.handle()
   }
 
   /**
-   * 递归清理对象中的字符串值
+   * 原地递归清理对象中的字符串值
    */
-  private sanitizeObject(obj: unknown): unknown {
-    if (typeof obj === 'string') {
-      return sanitizeHtml(obj, this.sanitizeOptions)
-    }
-
+  private sanitizeInPlace(obj: Record<string, unknown> | unknown[]): void {
     if (Array.isArray(obj)) {
-      return obj.map((item) => this.sanitizeObject(item))
-    }
-
-    if (obj !== null && typeof obj === 'object') {
-      const sanitized: Record<string, unknown> = {}
-      for (const [key, value] of Object.entries(obj)) {
-        sanitized[key] = this.sanitizeObject(value)
+      for (let i = 0; i < obj.length; i++) {
+        const val = obj[i]
+        if (typeof val === 'string') {
+          ;(obj as string[])[i] = sanitizeHtml(val, this.sanitizeOptions)
+        } else if (val && typeof val === 'object') {
+          this.sanitizeInPlace(val as Record<string, unknown> | unknown[])
+        }
       }
-      return sanitized
+    } else if (obj && typeof obj === 'object') {
+      const record = obj as Record<string, unknown>
+      for (const key of Object.keys(record)) {
+        const val = record[key]
+        if (typeof val === 'string') {
+          record[key] = sanitizeHtml(val, this.sanitizeOptions)
+        } else if (val && typeof val === 'object') {
+          this.sanitizeInPlace(val as Record<string, unknown> | unknown[])
+        }
+      }
     }
-
-    return obj
   }
 }
