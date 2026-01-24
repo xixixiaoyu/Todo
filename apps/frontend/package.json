@@ -6,7 +6,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --host",
+    "dev": "vite",
     "type-check": "vue-tsc -b",
     "build": "vite build",
     "preview": "vite preview",

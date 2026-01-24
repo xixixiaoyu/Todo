@@ -40,8 +40,9 @@ export class CsrfMiddleware implements NestMiddleware {
       return next()
     }
 
-    // 跳过特定路径
-    if (this.skipPaths.some((path) => req.path.startsWith(path))) {
+    // 跳过特定路径 (使用 originalUrl 确保包含全局前缀)
+    const url = req.originalUrl || req.url
+    if (this.skipPaths.some((path) => url.startsWith(path))) {
       return next()
     }
 

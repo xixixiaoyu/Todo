@@ -1,5 +1,12 @@
-import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common'
-import { Response } from 'express'
+import {
+  ExceptionFilter,
+  Catch,
+  ArgumentsHost,
+  HttpException,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common'
+import { Request, Response } from 'express'
 import { I18nContext } from 'nestjs-i18n'
 
 /**
@@ -8,14 +15,26 @@ import { I18nContext } from 'nestjs-i18n'
  */
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
+  private readonly logger = new Logger(AllExceptionsFilter.name)
+
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp()
     const response = ctx.getResponse<Response>()
+    const request = ctx.getRequest<Request>()
     const i18n = I18nContext.current(host)
 
     // 获取 HTTP 状态码
     const status =
       exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR
+
+    // 记录错误日志
+    const url = request.originalUrl || request.url
+    this.logger.error(
+      `${request.method} ${url} - ${status} - ${
+        exception instanceof Error ? exception.message : 'Unknown error'
+      }`,
+      exception instanceof Error ? exception.stack : undefined,
+    )
 
     // 获取错误信息并进行国际化处理
     let message =

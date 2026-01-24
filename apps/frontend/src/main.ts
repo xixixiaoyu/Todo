@@ -44,6 +44,20 @@ use([
 
 const app = createApp(App)
 
+// 全局错误处理
+app.config.errorHandler = (err, instance, info) => {
+  console.error('Global Error:', err)
+  console.error('Vue Info:', info)
+}
+
+window.onerror = (message, source, lineno, colno, error) => {
+  console.error('Window Error:', message, error)
+}
+
+window.onunhandledrejection = (event) => {
+  console.error('Unhandled Promise Rejection:', event.reason)
+}
+
 // 配置 Pinia 与持久化插件
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)
