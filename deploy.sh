@@ -17,13 +17,13 @@ fi
 
 # 2. 拉取/构建镜像并启动
 echo "📦 正在构建并启动容器..."
-docker compose up -d --build
+sudo docker compose up -d --build
 
 # 3. 执行数据库迁移
 echo "🗄️ 正在同步数据库 Schema..."
 # 等待数据库就绪
 sleep 5
-docker compose exec backend npx prisma db push
+sudo docker compose exec backend npx prisma db push
 
 echo "✅ 部署完成！"
 echo "🌐 前端访问地址: http://服务器IP"
