@@ -1,10 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import httpClient, { initCsrfToken } from '@/api'
+import axios from 'axios'
+import { httpClient, initCsrfToken } from '@/api'
 
 // Mock axios
-vi.mock('axios', () => ({
-  default: {
+vi.mock('axios', () => {
+  const mockAxios = {
     create: vi.fn(() => ({
+      defaults: { baseURL: '/api' },
       get: vi.fn(),
       post: vi.fn(),
       patch: vi.fn(),
@@ -18,8 +20,13 @@ vi.mock('axios', () => ({
         },
       },
     })),
-  },
-}))
+    get: vi.fn(),
+  }
+  return {
+    default: mockAxios,
+    ...mockAxios,
+  }
+})
 
 // Mock localStorage
 const localStorageMock = {
@@ -79,19 +86,18 @@ describe('initCsrfToken', () => {
   })
 
   it('should initialize CSRF token on first call', async () => {
-    const mockGet = vi.fn().mockResolvedValue({ data: {} })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(httpClient as any).get = mockGet
+    const mockGet = vi.mocked(axios.get).mockResolvedValue({ data: {} })
 
     await initCsrfToken()
 
-    expect(mockGet).toHaveBeenCalledWith('/health', { timeout: 5000 })
+    expect(mockGet).toHaveBeenCalledWith('/api/health/liveness', {
+      timeout: 5000,
+      withCredentials: true,
+    })
   })
 
   it('should handle initialization errors gracefully', async () => {
-    const mockGet = vi.fn().mockRejectedValue(new Error('Network error'))
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(httpClient as any).get = mockGet
+    vi.mocked(axios.get).mockRejectedValue(new Error('Network error'))
 
     await expect(initCsrfToken()).resolves.not.toThrow()
   })

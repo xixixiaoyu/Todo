@@ -11,6 +11,8 @@ describe('useTodoStore - Actions', () => {
       title: 'First todo',
       completed: false,
       createdAt: new Date(),
+      updatedAt: new Date(),
+      isPinned: false,
       order: 0,
     },
     {
@@ -18,6 +20,8 @@ describe('useTodoStore - Actions', () => {
       title: 'Second todo',
       completed: true,
       createdAt: new Date(),
+      updatedAt: new Date(),
+      isPinned: false,
       order: 1,
     },
   ]
@@ -49,7 +53,15 @@ describe('useTodoStore - Actions', () => {
   describe('addTodo', () => {
     it('should add a new todo with order smaller than existing minimum', async () => {
       store.todos = [
-        { id: '1', title: 'Existing', completed: false, createdAt: new Date(), order: 5 },
+        {
+          id: '1',
+          title: 'Existing',
+          completed: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          order: 5,
+        },
       ]
 
       await store.addTodo('New Task')
@@ -100,7 +112,15 @@ describe('useTodoStore - Actions', () => {
 
     it('should not add subtask if parent is completed', async () => {
       store.todos = [
-        { id: 'parent-1', title: 'Parent Task', completed: true, createdAt: new Date(), order: 0 },
+        {
+          id: 'parent-1',
+          title: 'Parent Task',
+          completed: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          order: 0,
+        },
       ]
 
       const result = await store.addTodo('Subtask', 'parent-1')
@@ -136,12 +156,22 @@ describe('useTodoStore - Actions', () => {
 
     it('should toggle parent and children correctly', async () => {
       store.todos = [
-        { id: 'parent', title: 'Parent', completed: false, createdAt: new Date(), order: 0 },
+        {
+          id: 'parent',
+          title: 'Parent',
+          completed: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          order: 0,
+        },
         {
           id: 'child1',
           title: 'Child 1',
           completed: false,
           createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
           parentId: 'parent',
           order: 0,
         },
@@ -150,6 +180,8 @@ describe('useTodoStore - Actions', () => {
           title: 'Child 2',
           completed: false,
           createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
           parentId: 'parent',
           order: 1,
         },
@@ -174,12 +206,22 @@ describe('useTodoStore - Actions', () => {
 
     it('should toggle status recursively for 3 levels', async () => {
       store.todos = [
-        { id: 'root', title: 'Root', completed: false, createdAt: new Date(), order: 0 },
+        {
+          id: 'root',
+          title: 'Root',
+          completed: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          order: 0,
+        },
         {
           id: 'child',
           title: 'Child',
           completed: false,
           createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
           parentId: 'root',
           order: 0,
         },
@@ -188,6 +230,8 @@ describe('useTodoStore - Actions', () => {
           title: 'Grandchild',
           completed: false,
           createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
           parentId: 'child',
           order: 0,
         },
@@ -230,35 +274,39 @@ describe('useTodoStore - Actions', () => {
           title: 'Parent',
           completed: false,
           createdAt: new Date(),
-          order: 0,
           updatedAt: new Date(),
+          isPinned: false,
+          order: 0,
         },
         {
           id: 'child1',
           title: 'Child 1',
           completed: false,
           createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
           parentId: 'parent',
           order: 0,
-          updatedAt: new Date(),
         },
         {
           id: 'child2',
           title: 'Child 2',
           completed: false,
           createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
           parentId: 'parent',
           order: 1,
-          updatedAt: new Date(),
         },
         {
           id: 'grandchild',
           title: 'Grandchild',
           completed: false,
           createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
           parentId: 'child1',
           order: 0,
-          updatedAt: new Date(),
         },
       ]
 
@@ -340,7 +388,17 @@ describe('useTodoStore - Actions', () => {
 
   describe('togglePin', () => {
     it('should toggle pin state', async () => {
-      store.todos = [{ id: '1', title: 'T1', completed: false, createdAt: new Date(), order: 0 }]
+      store.todos = [
+        {
+          id: '1',
+          title: 'T1',
+          completed: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          order: 0,
+        },
+      ]
       expect(store.todos[0].isPinned).toBeFalsy()
 
       await store.togglePin('1')
@@ -359,6 +417,8 @@ describe('useTodoStore - Actions', () => {
           title: 'Task 1',
           completed: false,
           createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
           order: 0,
           parentId: null,
         },
@@ -367,6 +427,8 @@ describe('useTodoStore - Actions', () => {
           title: 'Task 2',
           completed: false,
           createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
           order: 1,
           parentId: 'other',
         },
@@ -390,6 +452,8 @@ describe('useTodoStore - Actions', () => {
           title: 'Task',
           completed: false,
           createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
           order: 0,
           parentId: 'p1',
         },
@@ -398,6 +462,8 @@ describe('useTodoStore - Actions', () => {
           title: 'Task',
           completed: false,
           createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
           order: 0,
           parentId: 'p2',
         },
@@ -417,6 +483,8 @@ describe('useTodoStore - Actions', () => {
           title: 'Task',
           completed: false,
           createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
           order: 0,
           parentId: 'p1',
         },
@@ -425,6 +493,8 @@ describe('useTodoStore - Actions', () => {
           title: 'Other',
           completed: false,
           createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
           order: 1,
           parentId: 'p1',
         },

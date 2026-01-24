@@ -35,6 +35,8 @@ describe('TodoList', () => {
       title: 'Todo 1',
       completed: false,
       createdAt: new Date(),
+      updatedAt: new Date(),
+      isPinned: false,
       order: 0,
     },
     {
@@ -42,6 +44,8 @@ describe('TodoList', () => {
       title: 'Todo 2',
       completed: true,
       createdAt: new Date(),
+      updatedAt: new Date(),
+      isPinned: false,
       order: 1,
     },
   ]

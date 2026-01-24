@@ -32,6 +32,7 @@ describe('TodoItem', () => {
     completed: false,
     createdAt: new Date(),
     updatedAt: new Date(),
+    isPinned: false,
     order: 0,
   }
 
@@ -117,6 +118,7 @@ describe('TodoItem', () => {
         completed: false,
         createdAt: new Date(),
         updatedAt: new Date(),
+        isPinned: false,
         order: 0,
       },
       {
@@ -125,6 +127,7 @@ describe('TodoItem', () => {
         completed: false,
         createdAt: new Date(),
         updatedAt: new Date(),
+        isPinned: false,
         order: 1,
         parentId: 'parent',
       },
@@ -376,6 +379,7 @@ describe('TodoItem', () => {
         completed: false,
         createdAt: new Date(),
         updatedAt: new Date(),
+        isPinned: false,
         order: 0,
         parentId: 'parent-1',
       }

@@ -4,17 +4,10 @@ import { getAIStaticResponse } from '@/services/ai'
 import { todoApi } from '../api'
 import type { Todo as SharedTodo } from '@my-app/shared'
 
-export interface Todo {
-  id: string
-  title: string
-  completed: boolean
-  createdAt: Date
-  updatedAt: Date
+export interface Todo extends SharedTodo {
   completedAt?: Date
   deletedAt?: Date
   parentId?: string | null
-  order: number
-  isPinned?: boolean
   expanded?: boolean
   isProposed?: boolean
   isProposedDelete?: boolean
@@ -84,6 +77,7 @@ export const useTodoStore = defineStore(
             completed: false,
             createdAt: new Date(),
             updatedAt: new Date(),
+            isPinned: false,
             parentId: change.data.parentId,
             order: result.length,
             isProposed: true,
@@ -258,6 +252,7 @@ export const useTodoStore = defineStore(
           completed: false,
           createdAt: new Date(),
           updatedAt: new Date(),
+          isPinned: false,
           parentId,
           order: minOrder - 1,
           expanded: true,

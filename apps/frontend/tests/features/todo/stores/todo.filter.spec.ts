@@ -11,6 +11,8 @@ describe('useTodoStore - Filtering', () => {
       title: 'First todo',
       completed: false,
       createdAt: new Date(),
+      updatedAt: new Date(),
+      isPinned: false,
       order: 0,
     },
     {
@@ -18,6 +20,8 @@ describe('useTodoStore - Filtering', () => {
       title: 'Second todo',
       completed: true,
       createdAt: new Date(),
+      updatedAt: new Date(),
+      isPinned: false,
       order: 1,
     },
   ]
@@ -74,6 +78,8 @@ describe('useTodoStore - Filtering', () => {
           title: 'Parent target',
           completed: false,
           createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
           order: 0,
         },
         {
@@ -82,6 +88,8 @@ describe('useTodoStore - Filtering', () => {
           parentId: 'p1',
           completed: false,
           createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
           order: 0,
         },
         {
@@ -90,6 +98,8 @@ describe('useTodoStore - Filtering', () => {
           parentId: 'p1',
           completed: false,
           createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
           order: 1,
         },
       ]
@@ -106,8 +116,24 @@ describe('useTodoStore - Filtering', () => {
 
     it('should sort todos by order ascending', () => {
       store.todos = [
-        { id: '1', title: 'Task 1', completed: false, createdAt: new Date(), order: 1 },
-        { id: '2', title: 'Task 2', completed: false, createdAt: new Date(), order: 0 },
+        {
+          id: '1',
+          title: 'Task 1',
+          completed: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          order: 1,
+        },
+        {
+          id: '2',
+          title: 'Task 2',
+          completed: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          order: 0,
+        },
       ]
       store.filter = 'pending'
 
@@ -117,12 +143,22 @@ describe('useTodoStore - Filtering', () => {
 
     it('should get correct todo path', () => {
       store.todos = [
-        { id: '1', title: 'Parent', completed: false, createdAt: new Date(), order: 0 },
+        {
+          id: '1',
+          title: 'Parent',
+          completed: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          order: 0,
+        },
         {
           id: '2',
           title: 'Child',
           completed: false,
           createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
           order: 0,
           parentId: '1',
         },
@@ -131,6 +167,8 @@ describe('useTodoStore - Filtering', () => {
           title: 'Grandchild',
           completed: false,
           createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
           order: 0,
           parentId: '2',
         },
@@ -144,13 +182,30 @@ describe('useTodoStore - Filtering', () => {
 
     it('should sort pinned items to the top', () => {
       store.todos = [
-        { id: '1', title: 'T1', completed: false, createdAt: new Date(), order: 0 },
-        { id: '2', title: 'T2', completed: false, createdAt: new Date(), order: 1 },
+        {
+          id: '1',
+          title: 'T1',
+          completed: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          order: 0,
+        },
+        {
+          id: '2',
+          title: 'T2',
+          completed: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          order: 1,
+        },
         {
           id: '3',
           title: 'T3',
           completed: false,
           createdAt: new Date(),
+          updatedAt: new Date(),
           order: 2,
           isPinned: true,
         },

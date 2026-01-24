@@ -65,6 +65,8 @@ describe('AI Utils - injectSystemPrompts', () => {
         completed: false,
         order: 1,
         createdAt: new Date(),
+        updatedAt: new Date(),
+        isPinned: false,
       },
       {
         id: '2',
@@ -73,6 +75,7 @@ describe('AI Utils - injectSystemPrompts', () => {
         isPinned: true,
         order: 0,
         createdAt: new Date(),
+        updatedAt: new Date(),
       },
       {
         id: '3',
@@ -81,6 +84,8 @@ describe('AI Utils - injectSystemPrompts', () => {
         parentId: '1',
         order: 0,
         createdAt: new Date(),
+        updatedAt: new Date(),
+        isPinned: false,
       },
       {
         id: '4',
@@ -88,6 +93,8 @@ describe('AI Utils - injectSystemPrompts', () => {
         completed: true,
         order: 2,
         createdAt: new Date(),
+        updatedAt: new Date(),
+        isPinned: false,
       },
     ]
 

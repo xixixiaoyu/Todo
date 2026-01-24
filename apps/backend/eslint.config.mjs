@@ -24,7 +24,7 @@ export default [
     },
   },
   {
-    ignores: ['dist', 'node_modules', 'prisma/generated', 'coverage', '*.log'],
+    ignores: ['dist', 'node_modules', 'src/generated', 'prisma/generated', 'coverage', '*.log'],
   },
   prettier, // Prettier 必须放在最后
 ]

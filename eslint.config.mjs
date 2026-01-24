@@ -1,6 +1,7 @@
 import js from '@eslint/js'
 import ts from 'typescript-eslint'
 import prettier from 'eslint-plugin-prettier/recommended'
+import globals from 'globals'
 
 /**
  * 基础规则配置（不包含 Prettier）
@@ -8,6 +9,14 @@ import prettier from 'eslint-plugin-prettier/recommended'
 export const baseConfig = [
   js.configs.recommended,
   ...ts.configs.recommended,
+  {
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.es2021,
+      },
+    },
+  },
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.mts', '**/*.cts', '**/*.vue'],
     languageOptions: {
