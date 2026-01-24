@@ -55,11 +55,15 @@ pnpm --filter @my-app/shared build    # 构建共享包
 pnpm test                             # 运行测试
 pnpm wails:dev                        # 启动 Wails 开发模式
 pnpm wails:build                      # 打包 Wails 应用
-pnpm docker:dev                        # 启动全栈开发环境 (Docker)
-pnpm docker:dev:logs                   # 查看全栈环境日志
-pnpm docker:dev:down                   # 停止全栈环境
-docker compose up postgres redis -d    # 启动数据库服务
-docker compose up -d                  # 启动完整服务栈
+pnpm docker:dev                              # 启动开发环境 (后台运行)
+pnpm docker:dev:logs                         # 查看实时日志 (F-follow)
+pnpm docker:dev:ps                           # 查看容器运行状态
+pnpm docker:dev:restart                      # 重启前后端服务 (更新依赖后常用)
+pnpm docker:dev:down                         # 停止并移除容器
+pnpm docker:dev:clean                        # 清理容器、镜像及卷 (重置环境)
+docker compose up postgres redis -d          # 仅启动数据库与缓存
+docker compose up -d                         # 启动生产模式完整栈
+pnpm docker:build                            # 手动构建生产镜像
 ```
 
 ## 代码规范
@@ -126,15 +130,22 @@ interface ApiResponse<T> { success: boolean; data: T; message?: string; timestam
 - **适配路径**: UI 与业务逻辑 90% 复用。进军移动端时，仅需使用 Capacitor 替换 Wails 原生层实现。
 - **Capacitor**: `pnpm cap:sync` / `cap:open:ios` / `cap:run:android`
 - **Wails**: `pnpm wails:dev` / `pnpm wails:build`
-- **Docker (全栈开发)**: `pnpm docker:dev` 使用 `docker-compose.dev.yml` 启动包含数据库、缓存、前后端的一体化环境，支持热更新。
-- **Docker (生产部署)**: `docker compose up -d`（含健康检查、资源限制、安全配置）
+- **Docker 开发流**:
+  - **环境启动**: 先执行 `pnpm install` 及 `pnpm --filter @my-app/shared build`，再运行 `pnpm docker:dev`。
+  - **热更新**: 挂载宿主机目录到容器，`apps/` 代码修改将触发 `nest start --watch` 或 `vite` 的热重载。
+  - **依赖同步**: 若 `package.json` 变动，需执行 `pnpm docker:dev:restart` 重新触发容器内依赖检查。
+  - **数据库推送**: 容器启动后，首次运行需执行 `pnpm db:push` 以同步 Schema 到 PostgreSQL。
+- **Docker 生产部署**:
+  - **多阶段构建**: 使用 `Dockerfile` 进行生产级构建，最小化镜像体积。
+  - **一键部署**: `docker compose up -d`（含健康检查、资源限制、安全配置）。
 
 ## 注意事项
 
 - **版本锁定**: 所有依赖必须使用 **精确版本** (移除 `^` 和 `~`)，以确保环境一致性。Workspace 内部引用保留 `workspace:*`。
 - 共享包修改后需 `pnpm --filter @my-app/shared build`
 - 前端 `zod` 必须显式声明
-- 开发前启动 `docker compose up postgres redis -d`，首次运行 `pnpm db:push`
+- **环境重置**: 若遇到容器状态异常或数据库数据冲突，请运行 `pnpm docker:dev:clean`。
+- **数据库同步**: 开发前若不使用全栈 Docker 环境，需手动启动 `docker compose up postgres redis -d`，并执行 `pnpm db:push`。
 - **Docker 代理**: 前端容器通过 `VITE_PROXY_TARGET` 环境变量动态配置 Vite 代理目标（通常指向 `http://backend:3000`）。
 - **API 前缀**: 后端所有接口均带有 `/api` 前缀（包括 Swagger 和健康检查）。
 - **认证**：accessToken + refreshToken，非 GET 请求携带 CSRF Token
