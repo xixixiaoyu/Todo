@@ -285,11 +285,12 @@ watch(
               </div>
             </TooltipTrigger>
             <TooltipContent
+              v-if="store.error"
               side="top"
               align="start"
               class="bg-destructive text-destructive-foreground border-none"
             >
-              <p>{{ store.error?.includes('.') ? t(store.error) : store.error || '' }}</p>
+              <p>{{ store.error.includes('.') ? t(store.error) : store.error }}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -492,11 +493,12 @@ watch(
             </div>
           </TooltipTrigger>
           <TooltipContent
+            v-if="store.error"
             side="top"
             align="start"
             class="bg-destructive text-destructive-foreground border-none"
           >
-            <p>{{ store.error?.includes('.') ? t(store.error) : store.error || '' }}</p>
+            <p>{{ store.error.includes('.') ? t(store.error) : store.error }}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

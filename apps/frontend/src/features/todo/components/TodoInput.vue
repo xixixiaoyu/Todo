@@ -128,11 +128,12 @@ onMounted(() => {
               </div>
             </TooltipTrigger>
             <TooltipContent
+              v-if="errorMessage"
               side="top"
               align="start"
               class="bg-destructive text-destructive-foreground border-none"
             >
-              <p>{{ errorMessage?.includes('.') ? t(errorMessage) : errorMessage || '' }}</p>
+              <p>{{ errorMessage.includes('.') ? t(errorMessage) : errorMessage }}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
