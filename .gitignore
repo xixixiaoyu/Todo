@@ -40,6 +40,8 @@ coverage
 # Prisma
 prisma/*.db
 prisma/*.db-journal
+*.db
+*.db-journal
 
 # Temp files
 *.tmp
