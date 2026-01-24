@@ -5,9 +5,14 @@ FROM node:20-alpine AS base
 
 # npm 镜像源配置 (淘宝镜像)
 ENV COREPACK_NPM_REGISTRY=https://registry.npmmirror.com
+ENV NODEJS_ORG_MIRROR=https://npmmirror.com/mirrors/node
+RUN npm config set registry https://registry.npmmirror.com
 
 # 启用 corepack 并安装 pnpm
 RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+
+# 安装构建依赖 (better-sqlite3 等原生模块需要)
+RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
 
@@ -41,13 +46,7 @@ RUN pnpm --filter @my-app/backend build
 # ============================================
 # Stage 3: Production image
 # ============================================
-FROM node:20-alpine AS production
-
-# npm 镜像源配置 (淘宝镜像)
-ENV COREPACK_NPM_REGISTRY=https://registry.npmmirror.com
-
-# 启用 pnpm
-RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+FROM base AS production
 
 # 创建非 root 用户以增强安全性
 RUN addgroup --system --gid 1001 nodejs && \
@@ -60,16 +59,18 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY apps/backend/package.json ./apps/backend/
 COPY packages/shared/package.json ./packages/shared/
 
-# 复制 Prisma schema
+# 复制 Prisma schema 和配置文件
 COPY apps/backend/prisma ./apps/backend/prisma
+COPY apps/backend/prisma.config.ts ./apps/backend/
 
 # 安装生产依赖并生成 Prisma Client
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts && \
-    pnpm --filter @my-app/backend exec prisma generate && \
+    npx prisma generate --schema ./apps/backend/prisma/schema && \
     rm -rf /root/.cache /tmp/*
 
 # 从构建阶段复制编译产物
 COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
+COPY --from=builder /app/apps/backend/src/i18n ./apps/backend/dist/src/i18n
 COPY --from=builder /app/packages/shared ./packages/shared
 
 # 更改文件所有权
@@ -91,4 +92,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
 
 # 启动应用
-CMD ["node", "dist/main"]
+CMD ["node", "dist/src/main.js"]

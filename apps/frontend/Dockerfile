@@ -5,6 +5,8 @@ FROM node:20-alpine AS base
 
 # npm 镜像源配置 (淘宝镜像)
 ENV COREPACK_NPM_REGISTRY=https://registry.npmmirror.com
+ENV NODEJS_ORG_MIRROR=https://npmmirror.com/mirrors/node
+RUN npm config set registry https://registry.npmmirror.com
 
 # 启用 corepack 并安装 pnpm
 RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
@@ -36,9 +38,9 @@ RUN pnpm --filter @my-app/shared build
 RUN pnpm --filter @my-app/frontend build
 
 # ============================================
-# Stage 3: Production image with Nginx (Brotli supported)
+# Stage 3: Production image with Nginx
 # ============================================
-FROM fholzer/nginx-brotli:alpine AS production
+FROM nginx:alpine AS production
 
 # 移除默认 nginx 配置和 IPv6 自动配置脚本（解决只读文件系统报错）
 RUN rm /etc/nginx/conf.d/default.conf && \
@@ -62,9 +64,9 @@ RUN addgroup -g 1001 -S frontend && \
     # 创建并设置日志目录权限
     mkdir -p /var/log/nginx && \
     chown -R frontend:frontend /var/log/nginx && \
-    # 设置 PID 文件权限
-    touch /var/run/nginx.pid && \
-    chown frontend:frontend /var/run/nginx.pid && \
+    # 确保 /tmp 目录下的临时文件夹可写
+    mkdir -p /tmp/client_temp /tmp/proxy_temp /tmp/fastcgi_temp /tmp/uwsgi_temp /tmp/scgi_temp && \
+    chown -R frontend:frontend /tmp && \
     # 清理缓存减小镜像大小
     rm -rf /var/cache/apk/*
 

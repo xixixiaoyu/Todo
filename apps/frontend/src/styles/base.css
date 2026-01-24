@@ -1,12 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap');
-
-@font-face {
-  font-family: 'LXGW WenKai';
-  src: url('../../public/LXGWWenKai-Medium.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
+/* 使用 jsDelivr 提供的镜像地址，国内访问更稳定且支持分块加载 */
+@import url('https://fastly.jsdelivr.net/npm/lxgw-wenkai-screen-webfont/style.css');
 
 @tailwind base;
 @tailwind components;
