@@ -10,10 +10,13 @@ describe('TodosService', () => {
     todo: {
       upsert: vi.fn(),
       findMany: vi.fn(),
+      findUnique: vi.fn(),
     },
+    $transaction: vi.fn((cb) => cb(mockPrisma)),
   }
 
   beforeEach(async () => {
+    vi.clearAllMocks()
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TodosService,
@@ -49,22 +52,48 @@ describe('TodosService', () => {
         lastSyncAt: new Date(0).toISOString(),
       }
 
+      mockPrisma.todo.findUnique.mockResolvedValue(null)
       mockPrisma.todo.upsert.mockResolvedValue({})
       mockPrisma.todo.findMany.mockResolvedValue([
         {
           id: 'server-uuid',
           title: 'Server Todo',
           updatedAt: new Date(),
+          deletedAt: null,
         },
       ])
 
       const result = await service.sync(userId, syncDto)
 
+      expect(mockPrisma.$transaction).toHaveBeenCalled()
       expect(mockPrisma.todo.upsert).toHaveBeenCalled()
       expect(mockPrisma.todo.findMany).toHaveBeenCalled()
       expect(result.synced).toHaveLength(1)
       expect(result.synced[0].id).toBe('server-uuid')
+      expect(result.deletedIds).toHaveLength(0)
       expect(result.serverTime).toBeDefined()
+    })
+
+    it('should return deletedIds for logically deleted items on server', async () => {
+      const userId = 1
+      const syncDto: SyncMergeDto = {
+        todos: [],
+        lastSyncAt: new Date(0).toISOString(),
+      }
+
+      mockPrisma.todo.findMany.mockResolvedValue([
+        {
+          id: 'deleted-uuid',
+          title: 'Deleted Todo',
+          updatedAt: new Date(),
+          deletedAt: new Date(),
+        },
+      ])
+
+      const result = await service.sync(userId, syncDto)
+
+      expect(result.synced).toHaveLength(0)
+      expect(result.deletedIds).toContain('deleted-uuid')
     })
   })
 

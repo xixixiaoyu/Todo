@@ -207,10 +207,15 @@ export const useTodoStore = defineStore(
       orderedIds.forEach((id, index) => {
         const todo = todos.value.find((t) => t.id === id)
         if (todo) {
-          todo.order = index
-          // 如果提供了 parentId（包括 null），则更新它
-          if (parentId !== undefined) {
-            todo.parentId = parentId
+          const hasChanged =
+            todo.order !== index || (parentId !== undefined && todo.parentId !== parentId)
+          if (hasChanged) {
+            todo.order = index
+            if (parentId !== undefined) {
+              todo.parentId = parentId
+            }
+            todo.updatedAt = new Date()
+            todo.syncStatus = 'pending'
           }
         }
       })
@@ -281,6 +286,8 @@ export const useTodoStore = defineStore(
       } else {
         delete todo.completedAt
       }
+      todo.updatedAt = new Date()
+      todo.syncStatus = 'pending'
 
       // 递归切换所有子任务状态
       const toggleChildren = (parentId: string, completed: boolean) => {
@@ -292,6 +299,8 @@ export const useTodoStore = defineStore(
           } else {
             delete child.completedAt
           }
+          child.updatedAt = new Date()
+          child.syncStatus = 'pending'
           toggleChildren(child.id, completed)
         })
       }
@@ -311,6 +320,8 @@ export const useTodoStore = defineStore(
       const todo = todos.value.find((t) => t.id === id)
       if (todo) {
         todo.isPinned = !todo.isPinned
+        todo.updatedAt = new Date()
+        todo.syncStatus = 'pending'
       }
     }
 
@@ -361,6 +372,8 @@ export const useTodoStore = defineStore(
         } else {
           delete parent.completedAt
         }
+        parent.updatedAt = new Date()
+        parent.syncStatus = 'pending'
         // 继续向上更新祖先任务
         if (parent.parentId) {
           updateParentStatus(parent.parentId)
@@ -410,6 +423,8 @@ export const useTodoStore = defineStore(
       }
 
       todo.title = trimmedTitle
+      todo.updatedAt = new Date()
+      todo.syncStatus = 'pending'
       return true
     }
 
@@ -532,7 +547,7 @@ export const useTodoStore = defineStore(
         })
 
         // 更新本地状态
-        const { synced, serverTime } = response.data
+        const { synced, deletedIds, serverTime } = response.data
 
         // 1. 标记刚才上传成功的为 synced
         pendingTodos.forEach((t) => (t.syncStatus = 'synced'))
@@ -561,8 +576,14 @@ export const useTodoStore = defineStore(
           }
         })
 
-        // 3. 处理本地已删除但服务器还存在的 (根据 deletedAt)
-        // 这部分逻辑可以在 serverTodo.deletedAt 中处理
+        // 3. 处理服务器告知已删除的 ID (物理删除)
+        if (deletedIds && deletedIds.length > 0) {
+          const deletedSet = new Set(deletedIds)
+          todos.value = todos.value.filter((t) => !deletedSet.has(t.id))
+        }
+
+        // 4. 清理本地已成功同步的逻辑删除项，保持内存整洁
+        todos.value = todos.value.filter((t) => !(t.deletedAt && t.syncStatus === 'synced'))
 
         lastSyncAt.value = serverTime
         localStorage.setItem('todo_last_sync_at', serverTime)

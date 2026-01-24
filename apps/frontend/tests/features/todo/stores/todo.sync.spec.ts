@@ -93,4 +93,66 @@ describe('Todo Store Sync', () => {
     // Local todos should be marked as synced after successful sync
     expect(store.todos.every((t) => t.syncStatus === 'synced')).toBe(true)
   })
+
+  it('should handle deletedIds from server', async () => {
+    const store = useTodoStore()
+
+    // Add a todo that exists locally
+    store.todos = [
+      {
+        id: 'to-be-deleted',
+        title: 'Existing Todo',
+        completed: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        syncStatus: 'synced',
+        order: 0,
+        isPinned: false,
+      },
+    ]
+
+    const mockResponse = {
+      data: {
+        synced: [],
+        deletedIds: ['to-be-deleted'],
+        serverTime: new Date().toISOString(),
+      } as SyncResponse,
+    }
+    vi.mocked(todoApi.sync).mockResolvedValue(
+      mockResponse as unknown as Awaited<ReturnType<typeof todoApi.sync>>,
+    )
+
+    await store.sync()
+
+    // Should be removed from local store
+    expect(store.todos.find((t) => t.id === 'to-be-deleted')).toBeUndefined()
+  })
+
+  it('should purge logically deleted items after successful sync', async () => {
+    const store = useTodoStore()
+
+    // Add a todo and then delete it locally
+    const id = await store.addTodo('Delete Me')
+    await store.deleteTodo(id!)
+
+    const todo = store.todos.find((t) => t.id === id)
+    expect(todo?.deletedAt).toBeDefined()
+    expect(todo?.syncStatus).toBe('pending')
+
+    const mockResponse = {
+      data: {
+        synced: [],
+        deletedIds: [],
+        serverTime: new Date().toISOString(),
+      } as SyncResponse,
+    }
+    vi.mocked(todoApi.sync).mockResolvedValue(
+      mockResponse as unknown as Awaited<ReturnType<typeof todoApi.sync>>,
+    )
+
+    await store.sync()
+
+    // Logically deleted and synced items should be purged from memory
+    expect(store.todos.find((t) => t.id === id)).toBeUndefined()
+  })
 })
