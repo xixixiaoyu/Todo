@@ -55,6 +55,9 @@ pnpm --filter @my-app/shared build    # 构建共享包
 pnpm test                             # 运行测试
 pnpm wails:dev                        # 启动 Wails 开发模式
 pnpm wails:build                      # 打包 Wails 应用
+pnpm docker:dev                        # 启动全栈开发环境 (Docker)
+pnpm docker:dev:logs                   # 查看全栈环境日志
+pnpm docker:dev:down                   # 停止全栈环境
 docker compose up postgres redis -d    # 启动数据库服务
 docker compose up -d                  # 启动完整服务栈
 ```
@@ -114,6 +117,7 @@ interface ApiResponse<T> { success: boolean; data: T; message?: string; timestam
 - **WebSocket**: `EventsGateway`，`broadcastToRoom()` / `broadcastToAll()`
 - **任务队列**: BullMQ + Redis，`InjectQueue('scheduled-tasks')`
 - **Swagger**: `http://localhost:3000/api/docs`
+- **Health Check**: `http://localhost:3000/api/health/liveness`
 - **邮件**: `MailService.sendVerificationCode()` / `sendPasswordReset()`
 - **文件上传**: `StorageService.upload()` / `uploadMany()` / `delete()`，S3/OSS/MinIO
 
@@ -122,7 +126,8 @@ interface ApiResponse<T> { success: boolean; data: T; message?: string; timestam
 - **适配路径**: UI 与业务逻辑 90% 复用。进军移动端时，仅需使用 Capacitor 替换 Wails 原生层实现。
 - **Capacitor**: `pnpm cap:sync` / `cap:open:ios` / `cap:run:android`
 - **Wails**: `pnpm wails:dev` / `pnpm wails:build`
-- **Docker**: `docker compose up -d`（含健康检查、资源限制、安全配置）
+- **Docker (全栈开发)**: `pnpm docker:dev` 使用 `docker-compose.dev.yml` 启动包含数据库、缓存、前后端的一体化环境，支持热更新。
+- **Docker (生产部署)**: `docker compose up -d`（含健康检查、资源限制、安全配置）
 
 ## 注意事项
 
@@ -130,7 +135,9 @@ interface ApiResponse<T> { success: boolean; data: T; message?: string; timestam
 - 共享包修改后需 `pnpm --filter @my-app/shared build`
 - 前端 `zod` 必须显式声明
 - 开发前启动 `docker compose up postgres redis -d`，首次运行 `pnpm db:push`
-- 认证：accessToken + refreshToken，非 GET 请求携带 CSRF Token
+- **Docker 代理**: 前端容器通过 `VITE_PROXY_TARGET` 环境变量动态配置 Vite 代理目标（通常指向 `http://backend:3000`）。
+- **API 前缀**: 后端所有接口均带有 `/api` 前缀（包括 Swagger 和健康检查）。
+- **认证**：accessToken + refreshToken，非 GET 请求携带 CSRF Token
 - 限流：1s/3次、10s/20次、1min/100次
 - 代码修改后必须运行 `pnpm lint` 和 `pnpm test`
 - 本项目包含 csrf.middleware.ts ，部署时请确保前端域名与后端跨域配置 ( CORS ) 一致。

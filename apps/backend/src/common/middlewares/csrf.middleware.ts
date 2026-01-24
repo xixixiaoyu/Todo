@@ -61,9 +61,12 @@ export class CsrfMiddleware implements NestMiddleware {
 
     if (!existingToken) {
       const token = this.generateToken()
+      const isProduction = process.env.NODE_ENV === 'production'
+      const isSecure = req.secure || req.get('x-forwarded-proto') === 'https'
+
       res.cookie(this.cookieName, token, {
         httpOnly: false, // 允许 JavaScript 读取
-        secure: process.env.NODE_ENV === 'production',
+        secure: isProduction && isSecure, // 仅在生产环境且为 HTTPS 时启用 secure
         sameSite: 'lax', // Wails 跨域请求需要使用 lax
         path: '/',
         maxAge: 24 * 60 * 60 * 1000, // 24 小时
@@ -78,7 +81,7 @@ export class CsrfMiddleware implements NestMiddleware {
     const cookieToken = req.cookies?.[this.cookieName]
     const headerToken = req.headers[this.headerName.toLowerCase()] as string
 
-    if (!cookieToken || !headerToken) {
+    if (!cookieToken || !headerToken || cookieToken.length !== headerToken.length) {
       return false
     }
 

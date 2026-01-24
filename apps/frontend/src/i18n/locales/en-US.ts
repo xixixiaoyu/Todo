@@ -164,6 +164,7 @@ export default {
     cancel: 'Cancel',
     duplicate: 'Todo already exists',
     addError: 'Failed to add todo',
+    syncFailed: 'Failed to sync data, saved locally',
     language: 'Switch Language',
     addSubtask: 'Add Subtask',
     subtaskPlaceholder: 'Enter subtask...',

@@ -90,9 +90,10 @@ export default defineConfig(async (): Promise<UserConfig> => {
     },
     server: {
       port: 5173,
+      host: '0.0.0.0', // 在 Docker 环境下必须监听 0.0.0.0 才能从外部访问
       proxy: {
         '/api': {
-          target: 'http://localhost:3000',
+          target: process.env.VITE_PROXY_TARGET || 'http://localhost:3000',
           changeOrigin: true,
         },
       },

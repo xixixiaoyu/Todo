@@ -148,7 +148,7 @@ services:
         corepack prepare pnpm@9.15.0 --activate &&
         pnpm install &&
         pnpm --filter @my-app/shared build &&
-        npx prisma generate --schema=prisma/schema.prisma &&
+        npx prisma generate &&
         pnpm dev
       "
 
@@ -164,8 +164,10 @@ services:
       - '5173:5173'
     environment:
       NODE_ENV: development
-      # Vite 开发服务器配置 - 使用 Docker 服务名访问后端
-      VITE_API_BASE_URL: http://backend:3000
+      # Vite 代理目标 - 指向后端容器
+      VITE_PROXY_TARGET: http://backend:3000
+      # 不设置 VITE_API_BASE_URL，让其回退到 /api 以支持 Vite 代理
+      VITE_API_BASE_URL: ''
     volumes:
       # 挂载项目目录（代码热更新）
       - .:/app

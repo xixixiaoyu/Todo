@@ -100,9 +100,13 @@ async function bootstrap() {
   logger.log(`📚 Swagger 文档: http://localhost:${process.env.PORT || 3000}/api/docs`, 'Bootstrap')
 
   const port = process.env.PORT || 3000
-  await app.listen(port)
+  // 在 Docker 环境下必须监听 0.0.0.0 才能从外部访问
+  await app.listen(port, '0.0.0.0')
 
-  logger.log(`🚀 服务已启动: http://localhost:${port}`, 'Bootstrap')
+  const baseUrl = `http://localhost:${port}`
+  logger.log(`🚀 服务已启动: ${baseUrl}`, 'Bootstrap')
+  logger.log(`📚 Swagger 文档: ${baseUrl}/api/docs`, 'Bootstrap')
+  logger.log(`🏥 健康检查 (Liveness): ${baseUrl}/api/health/liveness`, 'Bootstrap')
 }
 
 bootstrap().catch((err) => {

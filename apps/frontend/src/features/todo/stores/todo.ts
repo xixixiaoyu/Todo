@@ -219,6 +219,40 @@ export const useTodoStore = defineStore(
           }
         }
       })
+
+      // 尝试自动同步
+      void sync()
+    }
+
+    /**
+     * 生成唯一 ID (兼容非安全环境)
+     */
+    function generateId(): string {
+      const c =
+        typeof window !== 'undefined'
+          ? window.crypto
+          : typeof crypto !== 'undefined'
+            ? crypto
+            : null
+      if (c?.randomUUID) {
+        return c.randomUUID()
+      }
+      if (c?.getRandomValues) {
+        return Array.from(c.getRandomValues(new Uint8Array(16)))
+          .map((b, i) =>
+            (i === 6 ? (b & 0x0f) | 0x40 : i === 8 ? (b & 0x3f) | 0x80 : b)
+              .toString(16)
+              .padStart(2, '0'),
+          )
+          .join('')
+          .replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5')
+      }
+      // 极低概率下的最后兜底
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0
+        const v = c === 'x' ? r : (r & 0x3) | 0x8
+        return v.toString(16)
+      })
     }
 
     /**
@@ -252,7 +286,7 @@ export const useTodoStore = defineStore(
           todos.value.length > 0 ? Math.min(...todos.value.map((t) => t.order ?? 0)) : 0
 
         const newTodo: Todo = {
-          id: id || crypto.randomUUID(),
+          id: id || generateId(),
           title: trimmedTitle,
           completed: false,
           createdAt: new Date(),
@@ -264,8 +298,13 @@ export const useTodoStore = defineStore(
           syncStatus: 'pending',
         }
         todos.value.unshift(newTodo)
+
+        // 尝试自动同步 (不阻塞主流程)
+        void sync()
+
         return newTodo.id
-      } catch {
+      } catch (err) {
+        console.error('Failed to add todo:', err)
         error.value = 'todo.addError'
         return null
       } finally {
@@ -311,6 +350,9 @@ export const useTodoStore = defineStore(
       if (todo.parentId) {
         updateParentStatus(todo.parentId)
       }
+
+      // 尝试自动同步
+      void sync()
     }
 
     /**
@@ -322,6 +364,8 @@ export const useTodoStore = defineStore(
         todo.isPinned = !todo.isPinned
         todo.updatedAt = new Date()
         todo.syncStatus = 'pending'
+        // 尝试自动同步
+        void sync()
       }
     }
 
@@ -405,6 +449,9 @@ export const useTodoStore = defineStore(
       if (parentId) {
         updateParentStatus(parentId)
       }
+
+      // 尝试自动同步
+      void sync()
     }
 
     /**
@@ -425,6 +472,8 @@ export const useTodoStore = defineStore(
       todo.title = trimmedTitle
       todo.updatedAt = new Date()
       todo.syncStatus = 'pending'
+      // 尝试自动同步
+      void sync()
       return true
     }
 

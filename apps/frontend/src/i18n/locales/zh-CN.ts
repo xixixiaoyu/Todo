@@ -162,6 +162,7 @@ export default {
     cancel: '取消',
     duplicate: '该待办事项已存在',
     addError: '添加待办事项失败',
+    syncFailed: '同步数据失败，已保存至本地',
     language: '切换语言',
     addSubtask: '添加子任务',
     subtaskPlaceholder: '输入子任务内容...',
