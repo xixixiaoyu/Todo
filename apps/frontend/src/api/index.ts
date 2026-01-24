@@ -50,17 +50,40 @@ function getCookie(name: string): string | null {
 /**
  * 从 localStorage 获取 token（兼容 pinia 持久化）
  */
-function getToken(): string | null {
-  // 尝试从 localStorage 获取（pinia-plugin-persistedstate 默认存储位置）
+let activeToken: string | null = null
+
+// 初始化时尝试从 localStorage 获取
+try {
+  const authData = localStorage.getItem('auth')
+  if (authData) {
+    const parsed = JSON.parse(authData)
+    activeToken = parsed.token || parsed.state?.token || null
+  }
+} catch {
+  // 忽略错误
+}
+
+export function setToken(token: string | null): void {
+  activeToken = token
+}
+
+export function getToken(): string | null {
+  // 1. 优先从内存获取（解决登录瞬间的竞态问题）
+  if (activeToken) return activeToken
+
+  // 2. 尝试从 localStorage 读取 auth 数据
   const authData = localStorage.getItem('auth')
   if (authData) {
     try {
       const parsed = JSON.parse(authData)
-      return parsed.token || null
+      // 兼容 pinia-plugin-persistedstate 的 state 包装
+      const token = parsed.token || parsed.state?.token
+      if (token) return token
     } catch {
-      return null
+      // 忽略解析错误
     }
   }
+
   return null
 }
 

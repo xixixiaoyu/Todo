@@ -120,12 +120,12 @@ import { CsrfMiddleware } from './common'
           {
             name: 'short',
             ttl: config.get('THROTTLE_SHORT_TTL', 1000), // 1秒
-            limit: config.get('THROTTLE_SHORT_LIMIT', 3), // 每秒最多3次请求
+            limit: config.get('THROTTLE_SHORT_LIMIT', 10), // 每秒最多10次请求 (从3次放宽)
           },
           {
             name: 'medium',
             ttl: config.get('THROTTLE_MEDIUM_TTL', 10000), // 10秒
-            limit: config.get('THROTTLE_MEDIUM_LIMIT', 20), // 每10秒最多20次请求
+            limit: config.get('THROTTLE_MEDIUM_LIMIT', 50), // 每10秒最多50次请求 (从20次放宽)
           },
           {
             name: 'long',

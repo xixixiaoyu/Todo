@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
+import { debounce } from 'lodash-es'
 import { getAIStaticResponse } from '@/services/ai'
 import { todoApi } from '../api'
 import type { Todo as SharedTodo } from '@my-app/shared'
@@ -188,6 +189,11 @@ export const useTodoStore = defineStore(
     }
 
     /**
+     * 防抖同步 (用于频繁操作)
+     */
+    const debouncedSync = debounce(() => void sync(), 1000)
+
+    /**
      * 重新排序
      */
     function reorderTodos(orderedIds: string[], parentId: string | null = null): void {
@@ -220,8 +226,8 @@ export const useTodoStore = defineStore(
         }
       })
 
-      // 尝试自动同步
-      void sync()
+      // 尝试自动同步 (防抖)
+      debouncedSync()
     }
 
     /**
@@ -299,8 +305,8 @@ export const useTodoStore = defineStore(
         }
         todos.value.unshift(newTodo)
 
-        // 尝试自动同步 (不阻塞主流程)
-        void sync()
+        // 尝试自动同步 (防抖)
+        debouncedSync()
 
         return newTodo.id
       } catch (err) {
@@ -351,8 +357,8 @@ export const useTodoStore = defineStore(
         updateParentStatus(todo.parentId)
       }
 
-      // 尝试自动同步
-      void sync()
+      // 尝试自动同步 (防抖)
+      debouncedSync()
     }
 
     /**
@@ -364,8 +370,8 @@ export const useTodoStore = defineStore(
         todo.isPinned = !todo.isPinned
         todo.updatedAt = new Date()
         todo.syncStatus = 'pending'
-        // 尝试自动同步
-        void sync()
+        // 尝试自动同步 (防抖)
+        debouncedSync()
       }
     }
 
@@ -450,8 +456,8 @@ export const useTodoStore = defineStore(
         updateParentStatus(parentId)
       }
 
-      // 尝试自动同步
-      void sync()
+      // 尝试自动同步 (防抖)
+      debouncedSync()
     }
 
     /**
@@ -472,8 +478,8 @@ export const useTodoStore = defineStore(
       todo.title = trimmedTitle
       todo.updatedAt = new Date()
       todo.syncStatus = 'pending'
-      // 尝试自动同步
-      void sync()
+      // 尝试自动同步 (防抖)
+      debouncedSync()
       return true
     }
 

@@ -59,6 +59,7 @@ export default {
     registerLink: 'Sign up',
     forgotPassword: 'Forgot Password?',
     failed: 'Login failed',
+    INVALID_CREDENTIALS: 'Invalid email or password',
     orContinueWith: 'Or continue with',
     emailRequiredForPasskey: 'Please enter your email before using Passkey login',
   },

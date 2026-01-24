@@ -59,6 +59,7 @@ export default {
     registerLink: '立即注册',
     forgotPassword: '忘记密码？',
     failed: '登录失败',
+    INVALID_CREDENTIALS: '邮箱或密码错误',
     orContinueWith: '或通过以下方式继续',
     emailRequiredForPasskey: '使用 Passkey 登录前请先输入邮箱',
   },

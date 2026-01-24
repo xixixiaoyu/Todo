@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { authApi } from '../api'
+import { setToken } from '@/api'
 import type { User, LoginInput, RegisterInput } from '@my-app/shared'
 import { startRegistration, startAuthentication } from '@simplewebauthn/browser'
 
@@ -34,6 +35,19 @@ export const useAuthStore = defineStore(
         refreshToken.value = response.data.refreshToken || null
         user.value = response.data.user
 
+        // 立即同步到拦截器内存，确保后续请求能拿到最新的 Token
+        setToken(token.value)
+
+        // 立即手动触发一次持久化同步，确保跨页面或刷新后能恢复
+        localStorage.setItem(
+          'auth',
+          JSON.stringify({
+            token: token.value,
+            refreshToken: refreshToken.value,
+            user: user.value,
+          }),
+        )
+
         // 登录成功后触发数据合并同步
         const { useTodoStore } = await import('@/features/todo/stores/todo')
         const todoStore = useTodoStore()
@@ -61,6 +75,8 @@ export const useAuthStore = defineStore(
         token.value = response.data.accessToken
         refreshToken.value = response.data.refreshToken || null
         user.value = response.data.user
+
+        setToken(token.value)
 
         // 注册成功后触发数据同步
         const { useTodoStore } = await import('@/features/todo/stores/todo')
@@ -153,7 +169,9 @@ export const useAuthStore = defineStore(
         refreshToken.value = response.data.refreshToken || null
         user.value = response.data.user
 
-        // 登录成功后触发数据合并同步
+        setToken(token.value)
+
+        // 登录成功后触发数据同步
         const { useTodoStore } = await import('@/features/todo/stores/todo')
         const todoStore = useTodoStore()
         await todoStore.mergeOnLogin()
@@ -189,6 +207,8 @@ export const useAuthStore = defineStore(
         token.value = response.data.accessToken
         refreshToken.value = response.data.refreshToken || null
         user.value = response.data.user
+
+        setToken(token.value)
 
         // 登录成功后触发数据合并同步
         const { useTodoStore } = await import('@/features/todo/stores/todo')
@@ -233,6 +253,7 @@ export const useAuthStore = defineStore(
         token.value = response.data.accessToken
         refreshToken.value = response.data.refreshToken
         user.value = response.data.user
+        setToken(token.value)
         return true
       } catch {
         void logout()
@@ -244,17 +265,25 @@ export const useAuthStore = defineStore(
      * 登出
      */
     async function logout(): Promise<void> {
-      if (refreshToken.value) {
-        try {
-          await authApi.logout(refreshToken.value)
-        } catch {
-          // 静默失败
-        }
-      }
+      const currentToken = token.value
+      const currentRefreshToken = refreshToken.value
+
+      // 先清除本地状态，确保 UI 立即响应
       token.value = null
       refreshToken.value = null
       user.value = null
       error.value = null
+      setToken(null)
+
+      // 通知后端注销令牌（仅当本地曾有令牌时）
+      if (currentRefreshToken && currentToken) {
+        try {
+          await authApi.logout(currentRefreshToken)
+        } catch (e) {
+          // 如果是 401，说明令牌本身已失效，无需处理
+          console.warn('Backend logout failed (likely token expired):', e)
+        }
+      }
 
       // 登出时重置同步状态
       const { useTodoStore } = await import('@/features/todo/stores/todo')
