@@ -133,3 +133,4 @@ interface ApiResponse<T> { success: boolean; data: T; message?: string; timestam
 - 认证：accessToken + refreshToken，非 GET 请求携带 CSRF Token
 - 限流：1s/3次、10s/20次、1min/100次
 - 代码修改后必须运行 `pnpm lint` 和 `pnpm test`
+- 本项目包含 csrf.middleware.ts ，部署时请确保前端域名与后端跨域配置 ( CORS ) 一致。
