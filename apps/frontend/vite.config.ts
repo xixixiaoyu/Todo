@@ -96,6 +96,9 @@ export default defineConfig(async (): Promise<UserConfig> => {
           changeOrigin: true,
         },
       },
+      headers: {
+        'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+      },
     },
     build: {
       rollupOptions: {
