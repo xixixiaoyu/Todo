@@ -33,6 +33,14 @@ vi.mock('@simplewebauthn/browser', () => ({
   startAuthentication: vi.fn(),
 }))
 
+// Mock @/features/todo/stores/todo to avoid issues with dynamic imports and side effects
+vi.mock('@/features/todo/stores/todo', () => ({
+  useTodoStore: vi.fn(() => ({
+    mergeOnLogin: vi.fn().mockResolvedValue(undefined),
+    resetSyncStatus: vi.fn(),
+  })),
+}))
+
 import { startRegistration, startAuthentication } from '@simplewebauthn/browser'
 
 describe('useAuthStore', () => {

@@ -121,6 +121,7 @@ const displayTodos = computed(() => {
             <TodoItem
               :key="todo.id"
               :todo="todo"
+              :all-todos="todos"
               :editing-id="editingId"
               :editing-title="editingTitle"
               :search-query="searchQuery"

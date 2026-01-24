@@ -31,6 +31,7 @@ describe('TodoItem', () => {
     title: 'Test todo',
     completed: false,
     createdAt: new Date(),
+    updatedAt: new Date(),
     order: 0,
   }
 
@@ -38,6 +39,7 @@ describe('TodoItem', () => {
     const wrapper = mount(TodoItem, {
       props: {
         todo: mockTodo,
+        allTodos: [mockTodo],
         editingId: null,
         editingTitle: '',
       },
@@ -53,6 +55,7 @@ describe('TodoItem', () => {
     const wrapper = mount(TodoItem, {
       props: {
         todo: mockTodo,
+        allTodos: [mockTodo],
         editingId: null,
         editingTitle: '',
       },
@@ -73,6 +76,7 @@ describe('TodoItem', () => {
     const wrapper = mount(TodoItem, {
       props: {
         todo: completedTodo,
+        allTodos: [completedTodo],
         editingId: null,
         editingTitle: '',
       },
@@ -91,6 +95,7 @@ describe('TodoItem', () => {
     const wrapper = mount(TodoItem, {
       props: {
         todo: mockTodo,
+        allTodos: [mockTodo],
         editingId: '1',
         editingTitle: 'Test todo',
       },
@@ -106,12 +111,20 @@ describe('TodoItem', () => {
   it('should show parent path when searching', () => {
     const store = useTodoStore()
     store.todos = [
-      { id: 'parent', title: 'Parent', completed: false, createdAt: new Date(), order: 0 },
+      {
+        id: 'parent',
+        title: 'Parent',
+        completed: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        order: 0,
+      },
       {
         id: '1',
         title: 'Child',
         completed: false,
         createdAt: new Date(),
+        updatedAt: new Date(),
         order: 1,
         parentId: 'parent',
       },
@@ -120,6 +133,7 @@ describe('TodoItem', () => {
     const wrapper = mount(TodoItem, {
       props: {
         todo: store.todos[1],
+        allTodos: store.todos,
         editingId: null,
         editingTitle: '',
         searchQuery: 'Child',
@@ -139,6 +153,7 @@ describe('TodoItem', () => {
     const wrapper = mount(TodoItem, {
       props: {
         todo: mockTodo,
+        allTodos: [mockTodo],
         editingId: null,
         editingTitle: '',
       },
@@ -158,6 +173,7 @@ describe('TodoItem', () => {
     const wrapper = mount(TodoItem, {
       props: {
         todo: mockTodo,
+        allTodos: [mockTodo],
         editingId: null,
         editingTitle: '',
       },
@@ -177,6 +193,7 @@ describe('TodoItem', () => {
     const wrapper = mount(TodoItem, {
       props: {
         todo: mockTodo,
+        allTodos: [mockTodo],
         editingId: null,
         editingTitle: '',
       },
@@ -207,6 +224,7 @@ describe('TodoItem', () => {
     const wrapper = mount(TodoItem, {
       props: {
         todo: mockTodo,
+        allTodos: [mockTodo],
         editingId: '1',
         editingTitle: 'Updated title',
       },
@@ -225,6 +243,7 @@ describe('TodoItem', () => {
     const wrapper = mount(TodoItem, {
       props: {
         todo: mockTodo,
+        allTodos: [mockTodo],
         editingId: '1',
         editingTitle: 'Updated title',
       },
@@ -243,6 +262,7 @@ describe('TodoItem', () => {
     const wrapper = mount(TodoItem, {
       props: {
         todo: mockTodo,
+        allTodos: [mockTodo],
         editingId: '1',
         editingTitle: 'Test todo',
       },
@@ -262,6 +282,7 @@ describe('TodoItem', () => {
     const wrapper = mount(TodoItem, {
       props: {
         todo: mockTodo,
+        allTodos: [mockTodo],
         editingId: '1',
         editingTitle: 'Test todo',
       },
@@ -281,6 +302,7 @@ describe('TodoItem', () => {
     const wrapper = mount(TodoItem, {
       props: {
         todo: completedTodo,
+        allTodos: [completedTodo],
         editingId: null,
         editingTitle: '',
       },
@@ -296,6 +318,7 @@ describe('TodoItem', () => {
     const wrapper = mount(TodoItem, {
       props: {
         todo: mockTodo,
+        allTodos: [mockTodo],
         editingId: null,
         editingTitle: '',
       },
@@ -311,6 +334,7 @@ describe('TodoItem', () => {
     const wrapper = mount(TodoItem, {
       props: {
         todo: mockTodo,
+        allTodos: [mockTodo],
         editingId: '1',
         editingTitle: 'Test todo',
       },
@@ -330,6 +354,7 @@ describe('TodoItem', () => {
       const wrapper = mount(TodoItem, {
         props: {
           todo: mockTodo,
+          allTodos: [mockTodo],
           editingId: null,
           editingTitle: '',
         },
@@ -345,21 +370,21 @@ describe('TodoItem', () => {
     it('should show expand arrow when there are children', async () => {
       const store = useTodoStore()
       const parentTodo: Todo = { ...mockTodo, id: 'parent-1', expanded: true }
-      store.todos = [
-        parentTodo,
-        {
-          id: 'child-1',
-          title: 'Child',
-          completed: false,
-          createdAt: new Date(),
-          order: 0,
-          parentId: 'parent-1',
-        },
-      ]
+      const childTodo: Todo = {
+        id: 'child-1',
+        title: 'Child',
+        completed: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        order: 0,
+        parentId: 'parent-1',
+      }
+      store.todos = [parentTodo, childTodo]
 
       const wrapper = mount(TodoItem, {
         props: {
           todo: parentTodo,
+          allTodos: store.todos,
           editingId: null,
           editingTitle: '',
         },
@@ -378,6 +403,7 @@ describe('TodoItem', () => {
       const wrapper = mount(TodoItem, {
         props: {
           todo: mockTodo,
+          allTodos: [mockTodo],
           editingId: null,
           editingTitle: '',
           level: 0,
@@ -394,6 +420,7 @@ describe('TodoItem', () => {
       const wrapper = mount(TodoItem, {
         props: {
           todo: mockTodo,
+          allTodos: [mockTodo],
           editingId: null,
           editingTitle: '',
           level: 1,
@@ -407,9 +434,11 @@ describe('TodoItem', () => {
     })
 
     it('should not show add subtask button when todo is completed', () => {
+      const completedTodo = { ...mockTodo, completed: true }
       const wrapper = mount(TodoItem, {
         props: {
-          todo: { ...mockTodo, completed: true },
+          todo: completedTodo,
+          allTodos: [completedTodo],
           editingId: null,
           editingTitle: '',
           level: 0,
@@ -423,9 +452,11 @@ describe('TodoItem', () => {
     })
 
     it('should not show AI breakdown button when todo is completed', () => {
+      const completedTodo = { ...mockTodo, completed: true }
       const wrapper = mount(TodoItem, {
         props: {
-          todo: { ...mockTodo, completed: true },
+          todo: completedTodo,
+          allTodos: [completedTodo],
           editingId: null,
           editingTitle: '',
           level: 0,
@@ -442,6 +473,7 @@ describe('TodoItem', () => {
       const wrapper = mount(TodoItem, {
         props: {
           todo: mockTodo,
+          allTodos: [mockTodo],
           editingId: null,
           editingTitle: '',
           level: 2,

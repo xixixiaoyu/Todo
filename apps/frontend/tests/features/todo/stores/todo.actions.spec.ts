@@ -219,12 +219,20 @@ describe('useTodoStore - Actions', () => {
 
       await store.deleteTodo('1')
 
-      expect(store.todos).toHaveLength(0)
+      expect(store.filteredTodos).toHaveLength(0)
+      expect(store.todos[0].deletedAt).toBeDefined()
     })
 
     it('should delete parent and all children recursively', async () => {
       store.todos = [
-        { id: 'parent', title: 'Parent', completed: false, createdAt: new Date(), order: 0 },
+        {
+          id: 'parent',
+          title: 'Parent',
+          completed: false,
+          createdAt: new Date(),
+          order: 0,
+          updatedAt: new Date(),
+        },
         {
           id: 'child1',
           title: 'Child 1',
@@ -232,6 +240,7 @@ describe('useTodoStore - Actions', () => {
           createdAt: new Date(),
           parentId: 'parent',
           order: 0,
+          updatedAt: new Date(),
         },
         {
           id: 'child2',
@@ -240,6 +249,7 @@ describe('useTodoStore - Actions', () => {
           createdAt: new Date(),
           parentId: 'parent',
           order: 1,
+          updatedAt: new Date(),
         },
         {
           id: 'grandchild',
@@ -248,11 +258,13 @@ describe('useTodoStore - Actions', () => {
           createdAt: new Date(),
           parentId: 'child1',
           order: 0,
+          updatedAt: new Date(),
         },
       ]
 
       await store.deleteTodo('parent')
-      expect(store.todos).toHaveLength(0)
+      expect(store.filteredTodos).toHaveLength(0)
+      expect(store.todos.every((t) => t.deletedAt)).toBe(true)
     })
   })
 

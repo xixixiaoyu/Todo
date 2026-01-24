@@ -15,6 +15,7 @@ import { AuthModule } from './auth/auth.module'
 import { MailModule } from './mail'
 import { EventsModule } from './events'
 import { UploadModule } from './upload'
+import { TodosModule } from './todos/todos.module'
 import { ScheduledTasksModule } from './scheduled-tasks'
 import { CsrfMiddleware } from './common'
 
@@ -151,6 +152,7 @@ import { CsrfMiddleware } from './common'
     MailModule, // 邮件模块
     EventsModule, // WebSocket 模块
     UploadModule, // 文件上传模块
+    TodosModule, // 待办事项模块
     ScheduledTasksModule, // 定时任务模块
   ],
   providers: [

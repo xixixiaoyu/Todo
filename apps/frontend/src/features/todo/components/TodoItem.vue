@@ -36,6 +36,7 @@ const subtaskInputId = useId()
 
 const props = defineProps<{
   todo: Todo
+  allTodos: Todo[]
   editingId: string | null
   editingTitle: string
   searchQuery?: string
@@ -114,8 +115,8 @@ const children = computed(() => {
   // 搜索模式下，不渲染子任务列表（扁平化展示）
   if (props.searchQuery) return []
 
-  return store.todos
-    .filter((t) => t.parentId === props.todo.id)
+  return props.allTodos
+    .filter((t) => t.parentId === props.todo.id && !t.deletedAt)
     .sort((a, b) => {
       // 1. 置顶优先
       if (a.isPinned && !b.isPinned) return -1
@@ -537,6 +538,7 @@ watch(
         <template #item="{ element: child }">
           <TodoItem
             :todo="child"
+            :all-todos="allTodos"
             :level="(level || 0) + 1"
             :editing-id="editingId"
             :editing-title="editingTitle"

@@ -33,6 +33,12 @@ export const useAuthStore = defineStore(
         token.value = response.data.accessToken
         refreshToken.value = response.data.refreshToken || null
         user.value = response.data.user
+
+        // 登录成功后触发数据合并同步
+        const { useTodoStore } = await import('@/features/todo/stores/todo')
+        const todoStore = useTodoStore()
+        await todoStore.mergeOnLogin()
+
         return true
       } catch (e: unknown) {
         const err = e as { response?: { data?: { message?: string } } }
@@ -55,6 +61,12 @@ export const useAuthStore = defineStore(
         token.value = response.data.accessToken
         refreshToken.value = response.data.refreshToken || null
         user.value = response.data.user
+
+        // 注册成功后触发数据同步
+        const { useTodoStore } = await import('@/features/todo/stores/todo')
+        const todoStore = useTodoStore()
+        await todoStore.mergeOnLogin()
+
         return true
       } catch (e: unknown) {
         const err = e as { response?: { data?: { message?: string } } }
@@ -140,6 +152,12 @@ export const useAuthStore = defineStore(
         token.value = response.data.accessToken
         refreshToken.value = response.data.refreshToken || null
         user.value = response.data.user
+
+        // 登录成功后触发数据合并同步
+        const { useTodoStore } = await import('@/features/todo/stores/todo')
+        const todoStore = useTodoStore()
+        await todoStore.mergeOnLogin()
+
         return true
       } catch (e: unknown) {
         console.error('Passkey login error:', e)
@@ -171,6 +189,12 @@ export const useAuthStore = defineStore(
         token.value = response.data.accessToken
         refreshToken.value = response.data.refreshToken || null
         user.value = response.data.user
+
+        // 登录成功后触发数据合并同步
+        const { useTodoStore } = await import('@/features/todo/stores/todo')
+        const todoStore = useTodoStore()
+        await todoStore.mergeOnLogin()
+
         return true
       } catch (e: unknown) {
         console.error('OAuth login error:', e)
@@ -231,6 +255,11 @@ export const useAuthStore = defineStore(
       refreshToken.value = null
       user.value = null
       error.value = null
+
+      // 登出时重置同步状态
+      const { useTodoStore } = await import('@/features/todo/stores/todo')
+      const todoStore = useTodoStore()
+      todoStore.resetSyncStatus()
     }
 
     /**

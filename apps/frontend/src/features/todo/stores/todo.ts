@@ -1,19 +1,24 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { getAIStaticResponse } from '@/services/ai'
+import { todoApi } from '../api'
+import type { Todo as SharedTodo } from '@my-app/shared'
 
 export interface Todo {
   id: string
   title: string
   completed: boolean
   createdAt: Date
+  updatedAt: Date
   completedAt?: Date
+  deletedAt?: Date
   parentId?: string | null
   order: number
   isPinned?: boolean
   expanded?: boolean
   isProposed?: boolean
   isProposedDelete?: boolean
+  syncStatus?: 'synced' | 'pending' | 'error'
 }
 
 export interface ProposedTodoChange {
@@ -78,6 +83,7 @@ export const useTodoStore = defineStore(
             title: change.data.title || '',
             completed: false,
             createdAt: new Date(),
+            updatedAt: new Date(),
             parentId: change.data.parentId,
             order: result.length,
             isProposed: true,
@@ -125,6 +131,9 @@ export const useTodoStore = defineStore(
 
       return items
         .filter((todo) => {
+          // 排除已删除的任务
+          if (todo.deletedAt) return false
+
           const matchesFilter = filter.value === 'pending' ? !todo.completed : todo.completed
           // 如果是建议修改的任务，强制显示在当前视图中（除非被搜索过滤）
           const isProposedAction = todo.isProposed || todo.isProposedDelete
@@ -145,9 +154,13 @@ export const useTodoStore = defineStore(
         })
     }
 
-    const pendingCount = computed(() => todos.value.filter((todo) => !todo.completed).length)
+    const pendingCount = computed(
+      () => todos.value.filter((todo) => !todo.completed && !todo.deletedAt).length,
+    )
 
-    const completedCount = computed(() => todos.value.filter((todo) => todo.completed).length)
+    const completedCount = computed(
+      () => todos.value.filter((todo) => todo.completed && !todo.deletedAt).length,
+    )
 
     /**
      * 检查是否存在重复的未完成待办事项 (同层级)
@@ -163,6 +176,7 @@ export const useTodoStore = defineStore(
           todo.id !== excludeId &&
           (todo.parentId ?? null) === parentId &&
           !todo.completed &&
+          !todo.deletedAt &&
           todo.title.toLowerCase() === trimmedTitle,
       )
     }
@@ -243,9 +257,11 @@ export const useTodoStore = defineStore(
           title: trimmedTitle,
           completed: false,
           createdAt: new Date(),
+          updatedAt: new Date(),
           parentId,
           order: minOrder - 1,
           expanded: true,
+          syncStatus: 'pending',
         }
         todos.value.unshift(newTodo)
         return newTodo.id
@@ -340,7 +356,7 @@ export const useTodoStore = defineStore(
       const parent = todos.value.find((t) => t.id === parentId)
       if (!parent) return
 
-      const siblings = todos.value.filter((t) => t.parentId === parentId)
+      const siblings = todos.value.filter((t) => t.parentId === parentId && !t.deletedAt)
       const allCompleted = siblings.length > 0 && siblings.every((s) => s.completed)
 
       if (parent.completed !== allCompleted) {
@@ -358,7 +374,7 @@ export const useTodoStore = defineStore(
     }
 
     /**
-     * 删除待办事项
+     * 删除待办事项 (逻辑删除)
      */
     async function deleteTodo(id: string): Promise<void> {
       const todo = todos.value.find((t) => t.id === id)
@@ -372,11 +388,10 @@ export const useTodoStore = defineStore(
         await deleteTodo(child.id)
       }
 
-      // 删除自己
-      const currentIndex = todos.value.findIndex((t) => t.id === id)
-      if (currentIndex !== -1) {
-        todos.value.splice(currentIndex, 1)
-      }
+      // 逻辑删除
+      todo.deletedAt = new Date()
+      todo.updatedAt = new Date()
+      todo.syncStatus = 'pending'
 
       // 如果被删除的是子任务，更新父任务状态
       if (parentId) {
@@ -484,6 +499,112 @@ export const useTodoStore = defineStore(
 
     const hasProposedChanges = computed(() => proposedChanges.value.length > 0)
 
+    const lastSyncAt = ref<string | null>(localStorage.getItem('todo_last_sync_at'))
+
+    /**
+     * 将本地 Todo 转换为共享层 Schema 格式，去除 UI 状态字段
+     */
+    function toSharedTodo(todo: Todo): SharedTodo {
+      return {
+        id: todo.id,
+        title: todo.title,
+        completed: todo.completed,
+        order: todo.order,
+        isPinned: !!todo.isPinned,
+        parentId: todo.parentId || null,
+        createdAt: todo.createdAt,
+        updatedAt: todo.updatedAt,
+        completedAt: todo.completedAt || null,
+        deletedAt: todo.deletedAt || null,
+      }
+    }
+
+    /**
+     * 同步数据到云端
+     */
+    async function sync(): Promise<void> {
+      const authStore = (await import('@/features/auth/stores/auth')).useAuthStore()
+      if (!authStore.isAuthenticated) return
+
+      loading.value = true
+      try {
+        // 找出所有待同步的变更 (pending 或 还没 syncStatus 的)
+        const pendingTodos = todos.value.filter((t) => t.syncStatus !== 'synced')
+
+        const response = await todoApi.sync({
+          todos: pendingTodos.map(toSharedTodo),
+          lastSyncAt: lastSyncAt.value || undefined,
+        })
+
+        // 更新本地状态
+        const { synced, serverTime } = response.data
+
+        // 1. 标记刚才上传成功的为 synced
+        pendingTodos.forEach((t) => (t.syncStatus = 'synced'))
+
+        // 2. 合并服务器端的变更
+        synced.forEach((serverTodo: SharedTodo) => {
+          const index = todos.value.findIndex((t) => t.id === serverTodo.id)
+          const todoData: Todo = {
+            id: serverTodo.id,
+            title: serverTodo.title,
+            completed: serverTodo.completed,
+            order: serverTodo.order,
+            isPinned: serverTodo.isPinned,
+            parentId: serverTodo.parentId,
+            createdAt: new Date(serverTodo.createdAt),
+            updatedAt: new Date(serverTodo.updatedAt),
+            completedAt: serverTodo.completedAt ? new Date(serverTodo.completedAt) : undefined,
+            deletedAt: serverTodo.deletedAt ? new Date(serverTodo.deletedAt) : undefined,
+            syncStatus: 'synced' as const,
+          }
+
+          if (index !== -1) {
+            todos.value[index] = { ...todos.value[index], ...todoData }
+          } else {
+            todos.value.push(todoData)
+          }
+        })
+
+        // 3. 处理本地已删除但服务器还存在的 (根据 deletedAt)
+        // 这部分逻辑可以在 serverTodo.deletedAt 中处理
+
+        lastSyncAt.value = serverTime
+        localStorage.setItem('todo_last_sync_at', serverTime)
+      } catch (err) {
+        console.error('Sync failed:', err)
+        error.value = 'todo.syncFailed'
+      } finally {
+        loading.value = false
+      }
+    }
+
+    /**
+     * 登录后合并本地数据
+     */
+    async function mergeOnLogin(): Promise<void> {
+      lastSyncAt.value = null
+      localStorage.removeItem('todo_last_sync_at')
+
+      // 标记所有本地数据为待同步，强制合并
+      todos.value.forEach((t) => {
+        if (!t.syncStatus) t.syncStatus = 'pending'
+      })
+
+      await sync()
+    }
+
+    /**
+     * 登出后重置同步状态
+     */
+    function resetSyncStatus(): void {
+      lastSyncAt.value = null
+      localStorage.removeItem('todo_last_sync_at')
+      todos.value.forEach((t) => {
+        t.syncStatus = undefined
+      })
+    }
+
     function addProposedChanges(changes: ProposedTodoChange[]): void {
       proposedChanges.value = [...proposedChanges.value, ...changes]
     }
@@ -562,6 +683,9 @@ export const useTodoStore = defineStore(
       toggleAllExpansion,
       toggleTodoExpansion,
       getTodoPath,
+      sync,
+      mergeOnLogin,
+      resetSyncStatus,
       addProposedChanges,
       clearProposedChanges,
       applyProposedChanges,
@@ -572,7 +696,7 @@ export const useTodoStore = defineStore(
     persist: {
       key: 'todos',
       storage: localStorage,
-      pick: ['todos', 'filter', 'isDrawerOpen', 'viewMode'],
+      pick: ['todos', 'filter', 'isDrawerOpen', 'viewMode', 'lastSyncAt'],
     },
   },
 )

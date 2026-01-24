@@ -42,6 +42,7 @@ prisma/*.db
 prisma/*.db-journal
 *.db
 *.db-journal
+apps/backend/src/generated/
 
 # Temp files
 *.tmp
