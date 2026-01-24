@@ -6,6 +6,7 @@ import { Logger } from 'nestjs-pino'
 import helmet from 'helmet'
 import cookieParser from 'cookie-parser'
 import compression from 'compression'
+import { Request, Response, NextFunction } from 'express'
 import { AppModule } from './app.module'
 import { AllExceptionsFilter, SanitizeInterceptor, TransformInterceptor } from './common'
 
@@ -36,6 +37,12 @@ async function bootstrap() {
       crossOriginEmbedderPolicy: false, // 允许跨域嵌入
     }),
   )
+
+  // 自定义 Permissions-Policy，修复 browsing-topics 警告
+  app.use((_req: Request, res: Response, next: NextFunction) => {
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+    next()
+  })
 
   // Cookie 解析器（CSRF 保护需要）
   app.use(cookieParser())
