@@ -26,10 +26,14 @@ export async function initCsrfToken(): Promise<void> {
   if (csrfInitialized) return
 
   try {
-    // 发起一个 GET 请求到健康检查端点，后端会设置 CSRF token cookie
-    await httpClient.get('/health', { timeout: 5000 })
+    // 使用原生 axios 发起请求，避免拦截器循环调用
+    await axios.get((httpClient.defaults.baseURL || '') + '/health/liveness', {
+      timeout: 5000,
+      withCredentials: true,
+    })
     csrfInitialized = true
-  } catch {
+  } catch (error) {
+    console.error('Failed to initialize CSRF token:', error)
     // 静默失败，不影响后续请求
     csrfInitialized = true
   }
