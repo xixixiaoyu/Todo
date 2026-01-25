@@ -60,8 +60,9 @@ RUN pnpm --filter @my-app/backend --prod deploy /out
 # ============================================
 FROM node:20-alpine AS production
 
-# 仅安装运行时可能需要的最小库
-RUN apk add --no-cache openssl libgcc libstdc++
+# 仅安装运行时可能需要的最小库及 PM2
+RUN apk add --no-cache openssl libgcc libstdc++ wget && \
+    npm install -g pm2
 
 # 创建非 root 用户以增强安全性
 RUN addgroup --system --gid 1001 nodejs && \
@@ -78,9 +79,10 @@ COPY --from=builder /app/apps/backend/src/i18n ./dist/src/i18n
 COPY --from=builder /app/apps/backend/prisma ./prisma
 
 # 3. 复制生成的 Prisma Client
-# 由于我们在 tsconfig.json 中配置了 path 映射，运行时需要这个目录
-# pnpm deploy 后的目录结构中，我们需要确保 node_modules 能够找到生成的代码
 COPY --from=builder /app/apps/backend/prisma/client ./node_modules/@prisma/client
+
+# 4. 复制 PM2 配置文件
+COPY ecosystem.config.js ./
 
 # 修正权限
 RUN chown -R nestjs:nodejs /app
@@ -93,10 +95,11 @@ EXPOSE 3000
 
 # 设置环境变量
 ENV NODE_ENV=production
+ENV IS_DOCKER=true
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
 
-# 启动应用
-CMD ["node", "dist/src/main.js"]
+# 启动应用 - 使用 pm2-runtime 以适配 Docker 容器环境
+CMD ["pm2-runtime", "start", "ecosystem.config.js", "--env", "production"]

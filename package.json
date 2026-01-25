@@ -42,7 +42,8 @@
     "wails:kill": "./scripts/close-app.sh",
     "wails:install": "./scripts/deploy-app.sh",
     "wails:deploy": "pnpm wails:kill && pnpm wails:build && pnpm wails:install",
-    "tag:refresh": "./scripts/refresh-tag.sh"
+    "tag:refresh": "./scripts/refresh-tag.sh",
+    "pm2:backend": "pnpm --filter @my-app/backend pm2:start"
   },
   "devDependencies": {
     "@eslint/js": "9.39.2",

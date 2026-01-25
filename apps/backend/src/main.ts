@@ -139,6 +139,9 @@ async function bootstrap() {
   logger.log(`📚 Swagger 文档: http://localhost:${process.env.PORT || 3000}/api/docs`, 'Bootstrap')
 
   const port = process.env.PORT || 3000
+  // 启用优雅退出钩子，处理 SIGINT/SIGTERM 等信号
+  app.enableShutdownHooks()
+
   // 在 Docker 环境下必须监听 0.0.0.0 才能从外部访问
   await app.listen(port, '0.0.0.0')
 
