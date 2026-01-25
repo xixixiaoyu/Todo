@@ -21,12 +21,16 @@ async function bootstrap() {
   app.flushLogs()
 
   // 1. 启用 CORS (必须尽早调用，确保错误响应也能包含 CORS 头)
+  const corsOrigin = process.env.CORS_ORIGIN
   app.enableCors({
-    origin: process.env.CORS_ORIGIN?.split(',') || [
-      'http://localhost:5173',
-      'wails://localhost', // macOS Wails
-      'http://wails.localhost', // Windows Wails
-    ],
+    origin:
+      corsOrigin === '*'
+        ? true
+        : corsOrigin?.split(',') || [
+            'http://localhost:5173',
+            'wails://localhost',
+            'http://wails.localhost',
+          ],
     credentials: true, // 允许携带凭证
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: [
