@@ -11,6 +11,11 @@ RUN npm config set registry https://registry.npmmirror.com
 # 启用 corepack 并安装 pnpm
 RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 
+# 设置 pnpm 存储目录和全局配置 (解决 Docker 中的权限和缓存问题)
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN pnpm config set store-dir /pnpm/store
+
 # 安装构建依赖 (better-sqlite3 等原生模块需要)
 RUN apk add --no-cache python3 make g++
 
@@ -52,24 +57,28 @@ FROM base AS production
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nestjs
 
+# 确保 pnpm 存储目录对新用户可用
+RUN mkdir -p /pnpm && chown -R nestjs:nodejs /pnpm
+
 WORKDIR /app
 
-# 确保工作目录归属正确
-RUN chown nestjs:nodejs /app
+# 复制依赖配置文件
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY apps/backend/package.json ./apps/backend/
+COPY packages/shared/package.json ./packages/shared/
+
+# 复制 Prisma schema 和配置文件
+COPY apps/backend/prisma ./apps/backend/prisma
+COPY apps/backend/prisma.config.ts ./apps/backend/
+
+# 确保工作目录归属正确 (递归 chown 解决 pnpm 权限问题)
+RUN chown -R nestjs:nodejs /app
 
 # 切换到非 root 用户
 USER nestjs
 
-# 复制依赖配置文件
-COPY --chown=nestjs:nodejs package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
-COPY --chown=nestjs:nodejs apps/backend/package.json ./apps/backend/
-COPY --chown=nestjs:nodejs packages/shared/package.json ./packages/shared/
-
-# 复制 Prisma schema 和配置文件
-COPY --chown=nestjs:nodejs apps/backend/prisma ./apps/backend/prisma
-COPY --chown=nestjs:nodejs apps/backend/prisma.config.ts ./apps/backend/
-
 # 安装生产依赖并生成 Prisma Client
+# 注意：better-sqlite3 等原生模块已经在 base 阶段编译过，这里 --prod 主要是清理 devDeps
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts && \
     npx prisma generate --schema ./apps/backend/prisma/schema && \
     rm -rf ~/.cache /tmp/*
