@@ -54,30 +54,30 @@ RUN addgroup --system --gid 1001 nodejs && \
 
 WORKDIR /app
 
+# 确保工作目录归属正确
+RUN chown nestjs:nodejs /app
+
+# 切换到非 root 用户
+USER nestjs
+
 # 复制依赖配置文件
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
-COPY apps/backend/package.json ./apps/backend/
-COPY packages/shared/package.json ./packages/shared/
+COPY --chown=nestjs:nodejs package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY --chown=nestjs:nodejs apps/backend/package.json ./apps/backend/
+COPY --chown=nestjs:nodejs packages/shared/package.json ./packages/shared/
 
 # 复制 Prisma schema 和配置文件
-COPY apps/backend/prisma ./apps/backend/prisma
-COPY apps/backend/prisma.config.ts ./apps/backend/
+COPY --chown=nestjs:nodejs apps/backend/prisma ./apps/backend/prisma
+COPY --chown=nestjs:nodejs apps/backend/prisma.config.ts ./apps/backend/
 
 # 安装生产依赖并生成 Prisma Client
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts && \
     npx prisma generate --schema ./apps/backend/prisma/schema && \
-    rm -rf /root/.cache /tmp/*
+    rm -rf ~/.cache /tmp/*
 
 # 从构建阶段复制编译产物
-COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
-COPY --from=builder /app/apps/backend/src/i18n ./apps/backend/dist/src/i18n
-COPY --from=builder /app/packages/shared ./packages/shared
-
-# 更改文件所有权
-RUN chown -R nestjs:nodejs /app
-
-# 切换到非 root 用户
-USER nestjs
+COPY --from=builder --chown=nestjs:nodejs /app/apps/backend/dist ./apps/backend/dist
+COPY --from=builder --chown=nestjs:nodejs /app/apps/backend/src/i18n ./apps/backend/dist/src/i18n
+COPY --from=builder --chown=nestjs:nodejs /app/packages/shared ./packages/shared
 
 WORKDIR /app/apps/backend
 

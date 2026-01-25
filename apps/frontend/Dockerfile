@@ -42,25 +42,25 @@ RUN pnpm --filter @my-app/frontend build
 # ============================================
 FROM nginx:alpine AS production
 
+# 创建非 root 用户
+RUN addgroup -g 1001 -S frontend && \
+    adduser -S -D -H -u 1001 -s /sbin/nologin -G frontend frontend
+
 # 移除默认 nginx 配置和 IPv6 自动配置脚本（解决只读文件系统报错）
 RUN rm /etc/nginx/conf.d/default.conf && \
     rm -f /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
 
 # 复制自定义 nginx 主配置（适配非 root 用户）
-COPY apps/frontend/nginx.main.conf /etc/nginx/nginx.conf
+COPY --chown=frontend:frontend apps/frontend/nginx.main.conf /etc/nginx/nginx.conf
 
 # 复制 server block 配置
-COPY apps/frontend/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --chown=frontend:frontend apps/frontend/nginx.conf /etc/nginx/conf.d/default.conf
 
 # 复制构建产物
-COPY --from=builder /app/apps/frontend/dist /usr/share/nginx/html
+COPY --from=builder --chown=frontend:frontend /app/apps/frontend/dist /usr/share/nginx/html
 
-# 创建非 root 用户并配置权限
-RUN addgroup -g 1001 -S frontend && \
-    adduser -S -D -H -u 1001 -s /sbin/nologin -G frontend frontend && \
-    # 设置文件所有权
-    chown -R frontend:frontend /usr/share/nginx/html && \
-    chown -R frontend:frontend /var/cache/nginx && \
+# 配置权限
+RUN chown -R frontend:frontend /var/cache/nginx && \
     # 创建并设置日志目录权限
     mkdir -p /var/log/nginx && \
     chown -R frontend:frontend /var/log/nginx && \
