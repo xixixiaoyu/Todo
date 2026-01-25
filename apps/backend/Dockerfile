@@ -98,8 +98,8 @@ ENV NODE_ENV=production
 ENV IS_DOCKER=true
 
 # 健康检查
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
+HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=5 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health/liveness || exit 1
 
 # 启动应用 - 使用 pm2-runtime 以适配 Docker 容器环境
 CMD ["pm2-runtime", "start", "ecosystem.config.js", "--env", "production"]
