@@ -2,13 +2,22 @@
 
 基于 **NestJS 11 + Vue 3.5** 的全栈 Todo 应用，采用 **pnpm Monorepo** 架构。
 
+## 核心原则
+
+1. **直击本质**: 优先解释“为什么”而非仅仅是“是什么”。
+2. **代码哲学**:
+   - **JS/TS 规范**: 2 空格缩进、单引号、无分号。
+   - **模块化**: 遵循 SOLID 原则。保持组件与服务单一职责，优先依赖抽象 (Interface/Type) 而非具象。
+   - **现代性**: 优先使用 ES6+ 语法及类型安全 (TS) 的最佳实践，严禁 `any`。
+3. **测试驱动 (TDD Mindset)**: 逻辑新增或修改必须伴随相应的测试用例。
+
 ## 项目结构
 
 ```
-apps/backend/     # NestJS 后端
-apps/frontend/    # Vue 3 前端
-apps/wails/       # Wails (Go) 桌面端
-packages/shared/  # 共享包（Zod Schema、DTO、工具函数）
+apps/backend/     # NestJS 后端 (Business Brain)
+apps/frontend/    # Vue 3 前端 (Web Core)
+apps/wails/       # Wails (Go) 桌面端 (Native Shell)
+packages/shared/  # 共享包 (Zod Schemas, DTOs, Utils)
 ```
 
 ## 架构哲学
@@ -16,7 +25,7 @@ packages/shared/  # 共享包（Zod Schema、DTO、工具函数）
 **Thin Native Shell + Thick Cloud Brain** (轻原生壳 + 重云端大脑)
 
 - **职责分工**:
-  - **UI 层 (Vue 3)**: 界面展示、交互逻辑、Pinia 状态管理。
+  - **UI 层 (Vue 3)**: 界面展示、交互逻辑、Pinia 状态管理。采用 **Feature-based Modularization** (基于功能的模块化)。
   - **原生壳 (Wails/Capacitor)**: 系统托盘、全局快捷键、本地文件、窗口控制。
   - **业务大脑 (NestJS)**: 数据库 (Prisma)、用户认证、多端同步、AI 逻辑。
 - **通信策略**:
@@ -25,10 +34,19 @@ packages/shared/  # 共享包（Zod Schema、DTO、工具函数）
 
 ## 技术栈
 
-**前端**: Vue 3.5+ / Vite 7 / Pinia / Tailwind 3.4+ / GSAP / TanStack Query + Axios / VeeValidate + Zod / Vue I18n
+**前端**: Vue 3.5+ / Vite 7 / Pinia / Tailwind 4 / GSAP / TanStack Query + Axios / VeeValidate + Zod / Vue I18n / Reka UI (Headless)
 **跨端**: Capacitor 8 / Wails 2.11 / PWA
 **后端**: NestJS 11+ / PostgreSQL 16 & SQLite + Prisma 7 / Redis (ioredis 5.8+) + BullMQ / JWT + Passport / nestjs-zod / Socket.IO
 **工具**: pnpm 9.15+ / Turbo 2.7+ / ESLint 9 / Vitest
+
+## 前端架构
+
+- **目录结构**:
+  - `src/features/`: 按业务功能划分（如 `auth`, `todo`）。每个 feature 包含自己的 `api`, `stores`, `components`, `composables`, `views`。
+  - `src/services/`: 抽象公共服务层，如 AI 核心逻辑 (`services/ai/`)、原生能力对接 (`services/native.ts`)。
+  - `src/composables/`: 全局可复用的组合式函数，如 `useGsap` (动画), `useSocket` (即时通讯), `useMarkdown` (渲染)。
+- **状态管理**: 优先使用 Pinia。持久化存储使用 `pinia-plugin-persistedstate`。
+- **UI 组件**: 基于 Tailwind 4 + Reka UI。
 
 ## 视觉设计
 
@@ -88,9 +106,9 @@ import { cn } from '@/lib/utils'                // 工具函数
 
 **架构**: 前后端分离，各自管理语言资源。
 
-**前端** (`apps/frontend/src/i18n/`): Vue I18n + TypeScript (`MessageSchema`)，切换优先级：`localStorage` → 浏览器语言 → `en-US`
+**前端** (`apps/frontend/src/i18n/`): Vue I18n + TypeScript (`MessageSchema`)，切换优先级：`localStorage` → 浏览器语言 → `zh-CN` (Fallback)
 
-**后端** (`apps/backend/src/i18n/`): NestJS I18n + JSON 格式
+**后端** (`apps/backend/src/i18n/`): NestJS I18n + JSON 格式，Fallback 为 `en-US`
 
 **约定**:
 - 枚举值大写蛇形，UI 文本小写驼峰
@@ -150,6 +168,6 @@ interface ApiResponse<T> { success: boolean; data: T; message?: string; timestam
 - **Docker 代理**: 前端容器通过 `VITE_PROXY_TARGET` 环境变量动态配置 Vite 代理目标（通常指向 `http://backend:3000`）。
 - **API 前缀**: 后端所有接口均带有 `/api` 前缀（包括 Swagger 和健康检查）。
 - **认证**：accessToken + refreshToken，非 GET 请求携带 Authorization 头
-- 限流：1s/3次、10s/20次、1min/100次
+- 限流：1s/10次 (Short)、10s/50次 (Medium)、1min/100次 (Long)
 - 代码修改后必须运行 `pnpm lint` 和 `pnpm test`
 - 部署时请确保前端域名与后端跨域配置 ( CORS ) 一致。
