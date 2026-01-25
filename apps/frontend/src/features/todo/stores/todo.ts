@@ -564,7 +564,7 @@ export const useTodoStore = defineStore(
 
     const hasProposedChanges = computed(() => proposedChanges.value.length > 0)
 
-    const lastSyncAt = ref<string | null>(localStorage.getItem('todo_last_sync_at'))
+    const lastSyncAt = ref<string | null>(null)
 
     /**
      * 将本地 Todo 转换为共享层 Schema 格式，去除 UI 状态字段
@@ -641,7 +641,6 @@ export const useTodoStore = defineStore(
         todos.value = todos.value.filter((t) => !(t.deletedAt && t.syncStatus === 'synced'))
 
         lastSyncAt.value = serverTime
-        localStorage.setItem('todo_last_sync_at', serverTime)
       } catch (err) {
         console.error('Sync failed:', err)
         error.value = 'todo.syncFailed'
@@ -655,7 +654,6 @@ export const useTodoStore = defineStore(
      */
     async function mergeOnLogin(): Promise<void> {
       lastSyncAt.value = null
-      localStorage.removeItem('todo_last_sync_at')
 
       // 标记所有本地数据为待同步，强制合并
       todos.value.forEach((t) => {
@@ -670,7 +668,6 @@ export const useTodoStore = defineStore(
      */
     function resetSyncStatus(): void {
       lastSyncAt.value = null
-      localStorage.removeItem('todo_last_sync_at')
       todos.value.forEach((t) => {
         t.syncStatus = undefined
       })

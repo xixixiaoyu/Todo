@@ -52,40 +52,38 @@ function getCookie(name: string): string | null {
  */
 let activeToken: string | null = null
 
-// 初始化时尝试从 localStorage 获取
-try {
-  const authData = localStorage.getItem('auth')
-  if (authData) {
-    const parsed = JSON.parse(authData)
-    activeToken = parsed.token || parsed.state?.token || null
+/**
+ * 尝试从各种可能的地方获取 token
+ */
+export function getToken(): string | null {
+  // 1. 优先从内存获取（解决登录瞬间的竞态问题）
+  if (activeToken) return activeToken
+
+  // 2. 尝试从 localStorage 读取 auth 数据
+  try {
+    const authData = localStorage.getItem('auth')
+    if (authData) {
+      const parsed = JSON.parse(authData)
+      // 兼容 pinia-plugin-persistedstate 的不同存储结构
+      const token = parsed.token || parsed.state?.token || parsed.auth?.token
+      if (token) {
+        activeToken = token // 顺便更新内存缓存
+        return token
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to parse auth token from localStorage:', error)
   }
-} catch {
-  // 忽略错误
+
+  return null
 }
 
 export function setToken(token: string | null): void {
   activeToken = token
 }
 
-export function getToken(): string | null {
-  // 1. 优先从内存获取（解决登录瞬间的竞态问题）
-  if (activeToken) return activeToken
-
-  // 2. 尝试从 localStorage 读取 auth 数据
-  const authData = localStorage.getItem('auth')
-  if (authData) {
-    try {
-      const parsed = JSON.parse(authData)
-      // 兼容 pinia-plugin-persistedstate 的 state 包装
-      const token = parsed.token || parsed.state?.token
-      if (token) return token
-    } catch {
-      // 忽略解析错误
-    }
-  }
-
-  return null
-}
+// 初始化时同步一次
+getToken()
 
 // 请求拦截器
 httpClient.interceptors.request.use(
@@ -95,9 +93,14 @@ httpClient.interceptors.request.use(
       await initCsrfToken()
     }
 
-    // 如果存在 token，添加到请求头
+    // 获取最新的 token
     const token = getToken()
-    if (token) {
+
+    // 如果存在 token，添加到请求头
+    // 排除刷新接口本身，避免用旧的 AccessToken 去请求刷新
+    if (token && !config.url?.includes('/auth/refresh')) {
+      // 只有在没有 Authorization 头时才设置，或者强制覆盖以确保使用的是最新的 token
+      // 在重试逻辑中，我们可能会手动设置 headers.Authorization，所以这里要小心
       config.headers.Authorization = `Bearer ${token}`
     }
 
@@ -159,8 +162,11 @@ httpClient.interceptors.response.use(
 
     // 如果是 401 错误且不是重复请求
     if (response && response.status === 401 && !originalRequest._retry) {
-      // 如果是登录请求失败，直接返回错误
-      if (originalRequest.url === '/auth/login') {
+      // 如果是登录或刷新请求失败，直接返回错误，避免死锁
+      if (
+        originalRequest.url?.includes('/auth/login') ||
+        originalRequest.url?.includes('/auth/refresh')
+      ) {
         return Promise.reject(error)
       }
 
