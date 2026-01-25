@@ -79,8 +79,17 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'OAuth 登录' })
-  async oauthLogin(@CurrentUser() user: User): Promise<AuthResponse> {
-    return this.authService.googleLogin(user)
+  async oauthLogin(
+    @CurrentUser() user: User,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AuthResponse> {
+    const response = await this.authService.googleLogin(user)
+
+    // 成功获取令牌后立即清除 Cookie，防止 CSRF 风险
+    res.clearCookie('accessToken')
+    res.clearCookie('refreshToken')
+
+    return response
   }
 
   /**

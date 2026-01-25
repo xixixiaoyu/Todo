@@ -47,6 +47,34 @@ async function bootstrap() {
   // Cookie 解析器
   app.use(cookieParser())
 
+  // 轻量级 CSRF 防护：要求所有非幂等请求（POST/PUT/DELETE等）必须包含自定义 Header
+  // 这种方法比传统的 CSRF Token 更适合无状态 API，且性能损耗极小
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    const safeMethods = ['GET', 'HEAD', 'OPTIONS']
+    if (safeMethods.includes(req.method)) {
+      return next()
+    }
+
+    // 排除健康检查等内部接口（可选）
+    if (req.originalUrl.includes('/api/health')) {
+      return next()
+    }
+
+    const requestedWith = req.headers['x-requested-with']
+    if (!requestedWith) {
+      logger.warn(
+        { method: req.method, url: req.originalUrl, ip: req.ip },
+        'CSRF 潜在攻击拦截：缺失 X-Requested-With Header',
+      )
+      return res.status(403).json({
+        success: false,
+        message: 'Security check failed: X-Requested-With header is missing',
+        timestamp: new Date().toISOString(),
+      })
+    }
+    next()
+  })
+
   // 响应压缩中间件（提升传输效率）
   app.use(
     compression({
