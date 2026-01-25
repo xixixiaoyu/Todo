@@ -26,7 +26,9 @@ let activeToken: string | null = null
  */
 export function getToken(): string | null {
   // 1. 优先从内存获取（解决登录瞬间的竞态问题）
-  if (activeToken) return activeToken
+  if (activeToken) {
+    return activeToken
+  }
 
   // 2. 尝试从 localStorage 读取 auth 数据
   try {

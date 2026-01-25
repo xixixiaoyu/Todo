@@ -609,28 +609,30 @@ export const useTodoStore = defineStore(
         pendingTodos.forEach((t) => (t.syncStatus = 'synced'))
 
         // 2. 合并服务器端的变更
-        synced.forEach((serverTodo: SharedTodo) => {
-          const index = todos.value.findIndex((t) => t.id === serverTodo.id)
-          const todoData: Todo = {
-            id: serverTodo.id,
-            title: serverTodo.title,
-            completed: serverTodo.completed,
-            order: serverTodo.order,
-            isPinned: serverTodo.isPinned,
-            parentId: serverTodo.parentId,
-            createdAt: new Date(serverTodo.createdAt),
-            updatedAt: new Date(serverTodo.updatedAt),
-            completedAt: serverTodo.completedAt ? new Date(serverTodo.completedAt) : undefined,
-            deletedAt: serverTodo.deletedAt ? new Date(serverTodo.deletedAt) : undefined,
-            syncStatus: 'synced' as const,
-          }
+        if (synced && Array.isArray(synced)) {
+          synced.forEach((serverTodo: SharedTodo) => {
+            const index = todos.value.findIndex((t) => t.id === serverTodo.id)
+            const todoData: Todo = {
+              id: serverTodo.id,
+              title: serverTodo.title,
+              completed: serverTodo.completed,
+              order: serverTodo.order,
+              isPinned: serverTodo.isPinned,
+              parentId: serverTodo.parentId,
+              createdAt: new Date(serverTodo.createdAt),
+              updatedAt: new Date(serverTodo.updatedAt),
+              completedAt: serverTodo.completedAt ? new Date(serverTodo.completedAt) : undefined,
+              deletedAt: serverTodo.deletedAt ? new Date(serverTodo.deletedAt) : undefined,
+              syncStatus: 'synced' as const,
+            }
 
-          if (index !== -1) {
-            todos.value[index] = { ...todos.value[index], ...todoData }
-          } else {
-            todos.value.push(todoData)
-          }
-        })
+            if (index !== -1) {
+              todos.value[index] = { ...todos.value[index], ...todoData }
+            } else {
+              todos.value.push(todoData)
+            }
+          })
+        }
 
         // 3. 处理服务器告知已删除的 ID (物理删除)
         if (deletedIds && deletedIds.length > 0) {

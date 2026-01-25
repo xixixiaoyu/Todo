@@ -242,9 +242,9 @@ export class AuthService {
     private readonly prismaService: PrismaService,
   ) {
     // 访问令牌默认 15 分钟
-    this.accessTokenExpiresIn = this.configService.get<number>('JWT_ACCESS_EXPIRES_IN', 900)
+    this.accessTokenExpiresIn = Number(this.configService.get('JWT_ACCESS_EXPIRES_IN', 900))
     // 刷新令牌默认 7 天
-    this.refreshTokenExpiresIn = this.configService.get<number>('JWT_REFRESH_EXPIRES_IN', 604800)
+    this.refreshTokenExpiresIn = Number(this.configService.get('JWT_REFRESH_EXPIRES_IN', 604800))
   }
 
   /**
