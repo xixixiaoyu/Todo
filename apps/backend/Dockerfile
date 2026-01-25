@@ -78,8 +78,9 @@ COPY --from=builder /app/apps/backend/prisma ./prisma
 
 # 3. 复制生成的 Prisma Client 到生产 node_modules
 # 这是关键：pnpm deploy 的 node_modules 是空的或不含生成的 client
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma/client ./node_modules/@prisma/client
+# 在 pnpm monorepo 中，prisma generate 通常在包自身的 node_modules 中生成
+COPY --from=builder /app/apps/backend/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/apps/backend/node_modules/@prisma/client ./node_modules/@prisma/client
 
 # 修正权限
 RUN chown -R nestjs:nodejs /app
