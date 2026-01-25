@@ -64,6 +64,7 @@ describe('useAuthStore', () => {
     setActivePinia(createPinia())
     store = useAuthStore()
     vi.clearAllMocks()
+    localStorage.clear()
   })
 
   afterEach(() => {
@@ -428,6 +429,30 @@ describe('useAuthStore', () => {
       expect(store.refreshToken).toBeNull()
       expect(store.user).toBeNull()
     })
+
+    it('should refresh token using stored refresh token', async () => {
+      const storedAuth = {
+        token: null,
+        refreshToken: 'refresh-token',
+        user: mockUser,
+      }
+
+      localStorage.setItem('auth', JSON.stringify(storedAuth))
+
+      vi.mocked(authApi.refreshToken).mockResolvedValue({
+        success: true,
+        data: mockAuthResponse,
+        timestamp: new Date().toISOString(),
+      })
+
+      const result = await store.refreshAccessToken()
+
+      expect(result).toBe(true)
+      expect(authApi.refreshToken).toHaveBeenCalledWith('refresh-token')
+      expect(store.token).toBe('access-token')
+      expect(store.refreshToken).toBe('refresh-token')
+      expect(store.user).toEqual(mockUser)
+    })
   })
 
   describe('logout', () => {
@@ -496,6 +521,13 @@ describe('useAuthStore', () => {
     })
 
     it('should return false when token is null', () => {
+      store.token = null
+
+      expect(store.isAuthenticated).toBe(false)
+    })
+
+    it('should return false when user exists but token is null', () => {
+      store.user = mockUser
       store.token = null
 
       expect(store.isAuthenticated).toBe(false)

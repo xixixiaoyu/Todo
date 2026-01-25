@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import axios from 'axios'
 import { httpClient, initCsrfToken } from '@/api'
+import { useAuthStore } from '@/features/auth/stores/auth'
 
 // Mock axios
 vi.mock('axios', () => {
@@ -27,6 +28,10 @@ vi.mock('axios', () => {
     ...mockAxios,
   }
 })
+
+vi.mock('@/features/auth/stores/auth', () => ({
+  useAuthStore: vi.fn(),
+}))
 
 // Mock localStorage
 const localStorageMock = {
@@ -100,6 +105,61 @@ describe('initCsrfToken', () => {
     vi.mocked(axios.get).mockRejectedValue(new Error('Network error'))
 
     await expect(initCsrfToken()).resolves.not.toThrow()
+  })
+})
+
+describe('response interceptor', () => {
+  type ResponseErrorHandler = (error: {
+    config: { _retry?: boolean; url?: string; headers?: Record<string, string> }
+    response?: { status: number }
+  }) => Promise<unknown>
+
+  it('should logout when refresh succeeds without token', async () => {
+    const authStore = {
+      refreshAccessToken: vi.fn().mockResolvedValue(true),
+      token: null,
+      logout: vi.fn().mockResolvedValue(undefined),
+    }
+
+    vi.mocked(useAuthStore).mockReturnValue(authStore as unknown as ReturnType<typeof useAuthStore>)
+
+    vi.resetModules()
+    const { httpClient: freshHttpClient } = await import('@/api')
+
+    const responseUse = vi.mocked(freshHttpClient.interceptors.response.use)
+    const errorHandler = responseUse.mock.calls[0]?.[1] as ResponseErrorHandler
+
+    const error = {
+      config: { url: '/todos/sync', headers: {} },
+      response: { status: 401 },
+    }
+
+    await expect(errorHandler(error)).rejects.toThrow('Refresh token invalid')
+    expect(authStore.logout).toHaveBeenCalled()
+  })
+
+  it('should logout when refreshAccessToken throws error', async () => {
+    const refreshError = new Error('Network error during refresh')
+    const authStore = {
+      refreshAccessToken: vi.fn().mockRejectedValue(refreshError),
+      logout: vi.fn().mockResolvedValue(undefined),
+    }
+
+    vi.mocked(useAuthStore).mockReturnValue(authStore as unknown as ReturnType<typeof useAuthStore>)
+
+    vi.resetModules()
+    const { httpClient: freshHttpClient } = await import('@/api')
+
+    const responseUse = vi.mocked(freshHttpClient.interceptors.response.use)
+    const errorHandler = responseUse.mock.calls[0]?.[1] as ResponseErrorHandler
+
+    const error = {
+      config: { url: '/todos/sync', headers: {} },
+      response: { status: 401 },
+    }
+
+    await expect(errorHandler(error)).rejects.toThrow('Network error during refresh')
+    expect(authStore.logout).toHaveBeenCalled()
   })
 })
 

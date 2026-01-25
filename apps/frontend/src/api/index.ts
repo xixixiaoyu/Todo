@@ -197,6 +197,12 @@ httpClient.interceptors.response.use(
           originalRequest.headers.Authorization = `Bearer ${authStore.token}`
           return httpClient(originalRequest)
         }
+
+        const refreshError = new Error('Refresh token invalid')
+        onRefreshError(refreshError)
+        isRefreshing = false
+        await authStore.logout()
+        return Promise.reject(refreshError)
       } catch (refreshError) {
         onRefreshError(refreshError as Error)
         isRefreshing = false

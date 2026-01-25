@@ -20,7 +20,40 @@ export const useAuthStore = defineStore(
     const error = ref<string | null>(null)
 
     // 计算属性
-    const isAuthenticated = computed(() => !!token.value || !!user.value)
+    const isAuthenticated = computed(() => !!token.value)
+
+    function hydrateFromStorage(): void {
+      if (token.value && refreshToken.value && user.value) return
+
+      try {
+        const authData = localStorage.getItem('auth')
+        if (!authData) return
+
+        const parsed = JSON.parse(authData)
+        const storedToken = parsed.token || parsed.state?.token || parsed.auth?.token
+        const storedRefreshToken =
+          parsed.refreshToken || parsed.state?.refreshToken || parsed.auth?.refreshToken
+        const storedUser = parsed.user || parsed.state?.user || parsed.auth?.user
+
+        if (!token.value && storedToken) {
+          token.value = storedToken
+        }
+
+        if (!refreshToken.value && storedRefreshToken) {
+          refreshToken.value = storedRefreshToken
+        }
+
+        if (!user.value && storedUser) {
+          user.value = storedUser
+        }
+
+        if (token.value) {
+          setToken(token.value)
+        }
+      } catch {
+        return
+      }
+    }
 
     /**
      * 登录
@@ -245,8 +278,10 @@ export const useAuthStore = defineStore(
      */
     async function refreshAccessToken(): Promise<boolean> {
       if (!refreshToken.value) {
-        return false
+        hydrateFromStorage()
       }
+
+      if (!refreshToken.value) return false
 
       try {
         const response = await authApi.refreshToken(refreshToken.value)
@@ -308,6 +343,7 @@ export const useAuthStore = defineStore(
       // 计算属性
       isAuthenticated,
       // 方法
+      hydrateFromStorage,
       login,
       register,
       forgotPassword,

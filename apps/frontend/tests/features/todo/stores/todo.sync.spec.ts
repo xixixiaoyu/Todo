@@ -16,6 +16,7 @@ vi.mock('@/features/todo/api', () => ({
 vi.mock('@/features/auth/stores/auth', () => ({
   useAuthStore: vi.fn(() => ({
     isAuthenticated: true,
+    hydrateFromStorage: vi.fn(),
   })),
 }))
 
@@ -64,8 +65,7 @@ describe('Todo Store Sync', () => {
     // Check if server todo was added
     expect(store.todos.some((t) => t.id === 'server-id')).toBe(true)
 
-    // Check if lastSyncAt was saved
-    expect(localStorage.getItem('todo_last_sync_at')).toBe(mockResponse.data.serverTime)
+    expect(store.lastSyncAt).toBe(mockResponse.data.serverTime)
   })
 
   it('should merge data on login', async () => {

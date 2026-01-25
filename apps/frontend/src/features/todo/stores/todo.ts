@@ -589,6 +589,7 @@ export const useTodoStore = defineStore(
      */
     async function sync(): Promise<void> {
       const authStore = (await import('@/features/auth/stores/auth')).useAuthStore()
+      authStore.hydrateFromStorage()
       if (!authStore.isAuthenticated) return
 
       loading.value = true
@@ -725,6 +726,7 @@ export const useTodoStore = defineStore(
       isSilencingToast,
       isAllExpanded,
       proposedChanges,
+      lastSyncAt,
       // 计算属性
       filteredTodos,
       pendingCount,
