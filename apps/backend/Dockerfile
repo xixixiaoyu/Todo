@@ -37,7 +37,8 @@ COPY apps/backend ./apps/backend
 # 1. 构建共享包
 RUN pnpm --filter @my-app/shared build
 # 2. 生成 Prisma Client
-RUN pnpm --filter @my-app/backend prisma:generate
+# 显式指定生成的路径，避免 pnpm hoist 导致的路径混乱
+RUN pnpm --filter @my-app/backend prisma generate --schema=apps/backend/prisma/schema/base.prisma
 # 3. 构建后端应用
 RUN pnpm --filter @my-app/backend build
 
@@ -77,10 +78,9 @@ COPY --from=builder /app/apps/backend/src/i18n ./dist/src/i18n
 COPY --from=builder /app/apps/backend/prisma ./prisma
 
 # 3. 复制生成的 Prisma Client 到生产 node_modules
-# 这是关键：pnpm deploy 的 node_modules 是空的或不含生成的 client
-# 我们在 Prisma Schema 中指定了 output = "../client"，所以它生成在 prisma/client
-COPY --from=builder /app/apps/backend/prisma/client ./node_modules/.prisma/client
-# 同时也需要复制 @prisma/client 的 runtime 等文件，确保导入正常
+# 在 pnpm monorepo 中，由于使用了 shamefully-hoist=true，
+# prisma generate 生成的客户端会位于根目录的 node_modules/.prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma/client ./node_modules/@prisma/client
 
 # 修正权限
