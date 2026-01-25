@@ -20,6 +20,24 @@ async function bootstrap() {
   app.useLogger(logger)
   app.flushLogs()
 
+  // 1. 启用 CORS (必须尽早调用，确保错误响应也能包含 CORS 头)
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN?.split(',') || [
+      'http://localhost:5173',
+      'wails://localhost', // macOS Wails
+      'http://wails.localhost', // Windows Wails
+    ],
+    credentials: true, // 允许携带凭证
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'X-Lang',
+      'Accept-Language',
+    ],
+  })
+
   // 设置全局路由前缀
   app.setGlobalPrefix('api')
 
@@ -34,7 +52,8 @@ async function bootstrap() {
           imgSrc: ["'self'", 'data:', 'https:'],
         },
       },
-      crossOriginEmbedderPolicy: false, // 允许跨域嵌入
+      crossOriginEmbedderPolicy: false,
+      crossOriginResourcePolicy: { policy: 'cross-origin' }, // 允许跨域资源共享
     }),
   )
 
@@ -89,18 +108,6 @@ async function bootstrap() {
       },
     }),
   )
-
-  // 启用 CORS
-  app.enableCors({
-    origin: process.env.CORS_ORIGIN?.split(',') || [
-      'http://localhost:5173',
-      'wails://localhost', // macOS Wails
-      'http://wails.localhost', // Windows Wails
-    ],
-    credentials: true, // 允许携带凭证
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-lang'],
-  })
 
   // 全局 Zod 验证管道（替代 class-validator）
   app.useGlobalPipes(new ZodValidationPipe())
