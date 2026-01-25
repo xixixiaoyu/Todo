@@ -12,6 +12,7 @@ model Todo {
     completedAt DateTime?
     deletedAt   DateTime?
 
-    @@index([userId])
+    @@index([userId, updatedAt])
+    @@index([deletedAt])
     @@map("todos")
 }
