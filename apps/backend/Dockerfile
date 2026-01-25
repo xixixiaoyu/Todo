@@ -37,12 +37,8 @@ COPY apps/backend ./apps/backend
 # 1. 构建共享包
 RUN pnpm --filter @my-app/shared build
 # 2. 生成 Prisma Client
-RUN pnpm --filter @my-app/backend prisma:generate && \
-    mkdir -p /app/prisma-gen && \
-    # pnpm 模式下，生成的 client 可能在根目录或子包目录下
-    # 我们通过 find 找到它们并统一复制到 prisma-gen 目录，同时解构符号链接 (-L)
-    (cp -L -r node_modules/.prisma /app/prisma-gen/ || cp -L -r apps/backend/node_modules/.prisma /app/prisma-gen/) && \
-    (cp -L -r node_modules/@prisma/client /app/prisma-gen/ || cp -L -r apps/backend/node_modules/@prisma/client /app/prisma-gen/)
+# 显式指定生成的路径，我们在 Prisma Schema 中设置了 output = "../client"
+RUN pnpm --filter @my-app/backend prisma:generate
 
 # 3. 构建后端应用
 RUN pnpm --filter @my-app/backend build
@@ -77,15 +73,14 @@ WORKDIR /app
 COPY --from=pruner /out ./
 
 # 2. 从 builder 复制编译产物到对应位置
-# pnpm deploy 后的根目录就是 apps/backend 的内容
 COPY --from=builder /app/apps/backend/dist ./dist
 COPY --from=builder /app/apps/backend/src/i18n ./dist/src/i18n
 COPY --from=builder /app/apps/backend/prisma ./prisma
 
-# 3. 从 builder 复制生成的 Prisma Client (已解构符号链接)
-# 这是关键：pnpm deploy 的 node_modules 是空的或不含生成的 client
-COPY --from=builder /app/prisma-gen/.prisma ./node_modules/.prisma
-COPY --from=builder /app/prisma-gen/@prisma/client ./node_modules/@prisma/client
+# 3. 复制生成的 Prisma Client
+# 由于我们在 tsconfig.json 中配置了 path 映射，运行时需要这个目录
+# pnpm deploy 后的目录结构中，我们需要确保 node_modules 能够找到生成的代码
+COPY --from=builder /app/apps/backend/prisma/client ./node_modules/@prisma/client
 
 # 修正权限
 RUN chown -R nestjs:nodejs /app
