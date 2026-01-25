@@ -1,5 +1,5 @@
 # ============================================
-# Stage 1: Build dependencies (monorepo base)
+# Stage 1: Base (Node + pnpm setup)
 # ============================================
 FROM node:20-alpine AS base
 
@@ -11,89 +11,86 @@ RUN npm config set registry https://registry.npmmirror.com
 # 启用 corepack 并安装 pnpm
 RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 
-# 设置 pnpm 存储目录和全局配置 (解决 Docker 中的权限和缓存问题)
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-RUN pnpm config set store-dir /pnpm/store
-
-# 安装构建依赖 (better-sqlite3 等原生模块需要)
-RUN apk add --no-cache python3 make g++
-
 WORKDIR /app
 
-# 先复制依赖配置文件，利用 Docker 层缓存
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json .npmrc ./
-COPY apps/backend/package.json ./apps/backend/
-COPY packages/shared/package.json ./packages/shared/
-
-# 安装依赖
-RUN pnpm install --frozen-lockfile
-
 # ============================================
-# Stage 2: Build application
+# Stage 2: Builder (Compile & Generate)
 # ============================================
 FROM base AS builder
 
-WORKDIR /app
-
-# 复制源代码
-COPY packages/shared ./packages/shared
-COPY apps/backend ./apps/backend
-COPY tsconfig.base.json ./
-
-# 生成 Prisma Client
-RUN pnpm --filter @my-app/backend prisma:generate
-
-# 构建共享包和后端应用
-RUN pnpm --filter @my-app/shared build
-RUN pnpm --filter @my-app/backend build
-
-# ============================================
-# Stage 3: Production image
-# ============================================
-FROM base AS production
-
-# 创建非 root 用户以增强安全性
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nestjs
-
-# 确保 pnpm 存储目录对新用户可用
-RUN mkdir -p /pnpm && chown -R nestjs:nodejs /pnpm
-
-WORKDIR /app
+# 安装构建依赖 (better-sqlite3 等原生模块编译需要)
+RUN apk add --no-cache python3 make g++ openssl
 
 # 复制依赖配置文件
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY apps/backend/package.json ./apps/backend/
 COPY packages/shared/package.json ./packages/shared/
 
-# 复制 Prisma schema 和配置文件
-COPY apps/backend/prisma ./apps/backend/prisma
-COPY apps/backend/prisma.config.ts ./apps/backend/
+# 安装所有依赖 (包括 devDependencies)
+RUN pnpm install --frozen-lockfile
 
-# 确保工作目录归属正确 (递归 chown 解决 pnpm 权限问题)
+# 复制源代码及基础配置
+COPY tsconfig.base.json ./
+COPY packages/shared ./packages/shared
+COPY apps/backend ./apps/backend
+
+# 1. 构建共享包
+RUN pnpm --filter @my-app/shared build
+# 2. 生成 Prisma Client
+RUN pnpm --filter @my-app/backend prisma:generate
+# 3. 构建后端应用
+RUN pnpm --filter @my-app/backend build
+
+# ============================================
+# Stage 3: Pruner (Extract production dependencies)
+# ============================================
+FROM base AS pruner
+
+COPY --from=builder /app /app
+
+# 使用 pnpm deploy 提取生产环境所需的最小依赖集
+# 这会自动处理 workspace:* 依赖，将其转换为独立目录结构
+# 注意：这会执行 pnpm install --prod
+RUN pnpm --filter @my-app/backend --prod deploy /out
+
+# ============================================
+# Stage 4: Production (Final lean image)
+# ============================================
+FROM node:20-alpine AS production
+
+# 仅安装运行时可能需要的最小库
+RUN apk add --no-cache openssl libgcc libstdc++
+
+# 创建非 root 用户以增强安全性
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nestjs
+
+WORKDIR /app
+
+# 1. 复制 pruner 阶段生成的隔离部署目录 (包含 package.json 和生产 node_modules)
+COPY --from=pruner /out ./
+
+# 2. 从 builder 复制编译产物到对应位置
+# pnpm deploy 后的根目录就是 apps/backend 的内容
+COPY --from=builder /app/apps/backend/dist ./dist
+COPY --from=builder /app/apps/backend/src/i18n ./dist/src/i18n
+COPY --from=builder /app/apps/backend/prisma ./prisma
+
+# 3. 复制生成的 Prisma Client 到生产 node_modules
+# 这是关键：pnpm deploy 的 node_modules 是空的或不含生成的 client
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma/client ./node_modules/@prisma/client
+
+# 修正权限
 RUN chown -R nestjs:nodejs /app
 
 # 切换到非 root 用户
 USER nestjs
 
-# 安装生产依赖并生成 Prisma Client
-# 注意：better-sqlite3 等原生模块已经在 base 阶段编译过，这里 --prod 主要是清理 devDeps
-RUN pnpm install --frozen-lockfile --prod --ignore-scripts && \
-    npx prisma generate --schema ./apps/backend/prisma/schema && \
-    rm -rf ~/.cache /tmp/*
-
-# 从构建阶段复制编译产物
-COPY --from=builder --chown=nestjs:nodejs /app/apps/backend/dist ./apps/backend/dist
-COPY --from=builder --chown=nestjs:nodejs /app/apps/backend/src/i18n ./apps/backend/dist/src/i18n
-COPY --from=builder --chown=nestjs:nodejs /app/packages/shared ./packages/shared
-
-WORKDIR /app/apps/backend
-
 # 暴露端口
 EXPOSE 3000
 
-# 设置生产环境变量
+# 设置环境变量
 ENV NODE_ENV=production
 
 # 健康检查
