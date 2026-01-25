@@ -17,7 +17,6 @@ import { EventsModule } from './events'
 import { UploadModule } from './upload'
 import { TodosModule } from './todos/todos.module'
 import { ScheduledTasksModule } from './scheduled-tasks'
-import { CsrfMiddleware } from './common'
 
 /**
  * 应用程序根模块
@@ -164,8 +163,7 @@ import { CsrfMiddleware } from './common'
   ],
 })
 export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    // 应用 CSRF 保护中间件到所有路由
-    consumer.apply(CsrfMiddleware).forRoutes('*')
+  configure(_consumer: MiddlewareConsumer) {
+    //
   }
 }

@@ -6,4 +6,3 @@ export * from './interceptors/transform.interceptor'
 export * from './interceptors/sanitize.interceptor'
 
 // 中间件
-export * from './middlewares/csrf.middleware'

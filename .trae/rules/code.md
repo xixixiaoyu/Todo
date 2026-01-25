@@ -148,7 +148,7 @@ interface ApiResponse<T> { success: boolean; data: T; message?: string; timestam
 - **数据库同步**: 开发前若不使用全栈 Docker 环境，需手动启动 `docker compose up postgres redis -d`，并执行 `pnpm db:push`。
 - **Docker 代理**: 前端容器通过 `VITE_PROXY_TARGET` 环境变量动态配置 Vite 代理目标（通常指向 `http://backend:3000`）。
 - **API 前缀**: 后端所有接口均带有 `/api` 前缀（包括 Swagger 和健康检查）。
-- **认证**：accessToken + refreshToken，非 GET 请求携带 CSRF Token
+- **认证**：accessToken + refreshToken，非 GET 请求携带 Authorization 头
 - 限流：1s/3次、10s/20次、1min/100次
 - 代码修改后必须运行 `pnpm lint` 和 `pnpm test`
-- 本项目包含 csrf.middleware.ts ，部署时请确保前端域名与后端跨域配置 ( CORS ) 一致。
+- 部署时请确保前端域名与后端跨域配置 ( CORS ) 一致。

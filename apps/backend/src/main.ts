@@ -44,7 +44,7 @@ async function bootstrap() {
     next()
   })
 
-  // Cookie 解析器（CSRF 保护需要）
+  // Cookie 解析器
   app.use(cookieParser())
 
   // 响应压缩中间件（提升传输效率）
@@ -71,7 +71,7 @@ async function bootstrap() {
     ],
     credentials: true, // 允许携带凭证
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-XSRF-TOKEN', 'X-Requested-With', 'x-lang'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-lang'],
   })
 
   // 全局 Zod 验证管道（替代 class-validator）

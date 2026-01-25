@@ -24,7 +24,7 @@ Lumina 并非传统的全栈应用，它采用了“轻原生壳 + 重云端大�
 - **Runtime**: Node.js 20+ (NestJS 11)
 - **Persistence**: PostgreSQL 16 + Prisma 7 ORM
 - **Cache & Queue**: Redis 7 + BullMQ (可靠任务调度)
-- **Security**: JWT (Double Token) + Passport + CSRF + Rate Limiting
+- **Security**: JWT (Double Token) + Passport + Rate Limiting
 - **Observability**: NestJS Terminus (Health Checks) + nestjs-pino
 
 ### 🎨 前端 (The Interface)

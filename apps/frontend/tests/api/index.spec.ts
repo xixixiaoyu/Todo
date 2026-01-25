@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import axios from 'axios'
-import { httpClient, initCsrfToken } from '@/api'
+import { httpClient } from '@/api'
 import { useAuthStore } from '@/features/auth/stores/auth'
 
 // Mock axios
@@ -83,31 +82,6 @@ describe('httpClient', () => {
   })
 })
 
-describe('initCsrfToken', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    // Reset the csrfInitialized flag by re-importing the module
-    vi.resetModules()
-  })
-
-  it('should initialize CSRF token on first call', async () => {
-    const mockGet = vi.mocked(axios.get).mockResolvedValue({ data: {} })
-
-    await initCsrfToken()
-
-    expect(mockGet).toHaveBeenCalledWith('/api/health/liveness', {
-      timeout: 5000,
-      withCredentials: true,
-    })
-  })
-
-  it('should handle initialization errors gracefully', async () => {
-    vi.mocked(axios.get).mockRejectedValue(new Error('Network error'))
-
-    await expect(initCsrfToken()).resolves.not.toThrow()
-  })
-})
-
 describe('response interceptor', () => {
   type ResponseErrorHandler = (error: {
     config: { _retry?: boolean; url?: string; headers?: Record<string, string> }
@@ -160,44 +134,6 @@ describe('response interceptor', () => {
 
     await expect(errorHandler(error)).rejects.toThrow('Network error during refresh')
     expect(authStore.logout).toHaveBeenCalled()
-  })
-})
-
-describe('getCookie', () => {
-  beforeEach(() => {
-    document.cookie = ''
-  })
-
-  it('should get cookie value when exists', () => {
-    document.cookie = 'XSRF-TOKEN=test-token; other=value'
-
-    // Access the internal function through the module
-    const getCookie = (name: string): string | null => {
-      const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`))
-      return match ? decodeURIComponent(match[2]) : null
-    }
-
-    expect(getCookie('XSRF-TOKEN')).toBe('test-token')
-  })
-
-  it('should return null when cookie does not exist', () => {
-    document.cookie = 'other=value'
-
-    const getCookie = (name: string): string | null => {
-      const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`))
-      return match ? decodeURIComponent(match[2]) : null
-    }
-
-    expect(getCookie('XSRF-TOKEN')).toBeNull()
-  })
-
-  it('should handle empty cookie string', () => {
-    const getCookie = (name: string): string | null => {
-      const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`))
-      return match ? decodeURIComponent(match[2]) : null
-    }
-
-    expect(getCookie('XSRF-TOKEN')).toBeNull()
   })
 })
 

@@ -90,7 +90,6 @@ services:
       # 日志 & CORS
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
-      CSRF_ENABLED: ${CSRF_ENABLED:-true} # 开发阶段若需禁用可改为 false
       # JWT
       JWT_SECRET: ${JWT_SECRET:-dev-secret-key-change-in-production}
       JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-900}
