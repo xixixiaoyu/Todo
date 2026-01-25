@@ -5,6 +5,7 @@ import { useAuthStore } from '@/features/auth/stores/auth'
 let socketInstance: Socket | null = null
 const isConnected = ref(false)
 const socketId = ref<string | null>(null)
+let isInitialized = false
 
 export interface UseSocketReturn {
   socket: Socket | null
@@ -12,6 +13,7 @@ export interface UseSocketReturn {
   isConnected: Ref<boolean>
   connect: () => Socket
   disconnect: () => void
+  waitForConnection: (timeout?: number) => Promise<string | null>
 }
 
 /**
@@ -23,7 +25,6 @@ export function useSocket(): UseSocketReturn {
   const initSocket = () => {
     if (socketInstance) return socketInstance
 
-    // 始终通过当前域名访问，让 Vite Proxy 处理
     const socketURL = window.location.origin
 
     socketInstance = io(`${socketURL}/events`, {
@@ -40,7 +41,6 @@ export function useSocket(): UseSocketReturn {
       socketId.value = socketInstance?.id || null
       console.log('[Socket] Connected:', socketInstance?.id)
 
-      // 连接成功后加入用户房间
       if (authStore.user?.id) {
         socketInstance?.emit('join', { room: `user:${authStore.user.id}` })
       }
@@ -62,7 +62,6 @@ export function useSocket(): UseSocketReturn {
   const connect = () => {
     const s = initSocket()
     if (!s.connected) {
-      // 每次连接前确保 token 是最新的
       s.auth = { token: authStore.token }
       s.connect()
     }
@@ -73,22 +72,61 @@ export function useSocket(): UseSocketReturn {
     if (socketInstance) {
       socketInstance.disconnect()
       socketInstance = null
+      isConnected.value = false
+      socketId.value = null
     }
   }
 
-  // 如果在组件中使用，且已经认证，则连接
-  if (authStore.isAuthenticated) {
-    connect()
+  const waitForConnection = (timeout = 5000): Promise<string | null> => {
+    if (isConnected.value && socketId.value) return Promise.resolve(socketId.value)
+
+    return new Promise((resolve) => {
+      const s = connect()
+
+      const timer = setTimeout(() => {
+        cleanup()
+        resolve(socketId.value)
+      }, timeout)
+
+      const onConnect = () => {
+        cleanup()
+        resolve(socketId.value)
+      }
+
+      const onError = () => {
+        cleanup()
+        resolve(null)
+      }
+
+      const cleanup = () => {
+        clearTimeout(timer)
+        s.off('connect', onConnect)
+        s.off('connect_error', onError)
+      }
+
+      s.once('connect', onConnect)
+      s.once('connect_error', onError)
+    })
   }
 
-  // 监听登录状态变化
-  authStore.$subscribe((_mutation, state) => {
-    if (state.token) {
+  // 只初始化一次全局监听器
+  if (!isInitialized) {
+    // 监听登录状态变化
+    authStore.$subscribe((_mutation, state) => {
+      if (state.token) {
+        connect()
+      } else {
+        disconnect()
+      }
+    })
+
+    // 如果已经认证，则立即尝试连接
+    if (authStore.isAuthenticated) {
       connect()
-    } else {
-      disconnect()
     }
-  })
+
+    isInitialized = true
+  }
 
   return {
     socket: socketInstance,
@@ -96,5 +134,6 @@ export function useSocket(): UseSocketReturn {
     isConnected,
     connect,
     disconnect,
+    waitForConnection,
   }
 }

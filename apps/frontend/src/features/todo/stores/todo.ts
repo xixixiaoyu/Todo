@@ -180,12 +180,20 @@ export const useTodoStore = defineStore(
      * 获取所有待办事项
      */
     async function fetchTodos(): Promise<void> {
-      // 纯本地存储，初始化 order
+      // 1. 初始化本地 order
       todos.value.forEach((todo, index) => {
         if (todo.order === undefined) {
           todo.order = index
         }
       })
+
+      // 2. 如果已登录，主动进行一次同步以获取最新数据
+      const { useAuthStore } = await import('@/features/auth/stores/auth')
+      const authStore = useAuthStore()
+      if (authStore.isAuthenticated) {
+        console.log('[Todo] Initializing sync...')
+        await sync()
+      }
     }
 
     /**
@@ -598,12 +606,12 @@ export const useTodoStore = defineStore(
       try {
         // 获取当前 Socket ID 用于排除通知
         const { useSocket } = await import('@/composables/useSocket')
-        const { socketId, connect: connectSocket } = useSocket()
+        const { waitForConnection } = useSocket()
 
-        // 确保同步前 Socket 是连通的
-        connectSocket()
+        // 确保同步前 Socket 是连通的，并获取最新的 Socket ID
+        const currentSocketId = await waitForConnection()
 
-        console.log('[Sync] Socket ID:', socketId.value)
+        console.log('[Sync] Socket ID:', currentSocketId)
 
         // 找出所有待同步的变更 (pending 或 还没 syncStatus 的)
         const pendingTodos = todos.value.filter((t) => t.syncStatus !== 'synced')
@@ -613,11 +621,16 @@ export const useTodoStore = defineStore(
             todos: pendingTodos.map(toSharedTodo),
             lastSyncAt: lastSyncAt.value || undefined,
           },
-          socketId.value,
+          currentSocketId,
         )
 
         // 更新本地状态
         const { synced, deletedIds, serverTime } = response.data
+        console.log('[Sync] Response:', {
+          syncedCount: synced?.length,
+          deletedCount: deletedIds?.length,
+          serverTime,
+        })
 
         // 1. 标记刚才上传成功的为 synced
         pendingTodos.forEach((t) => (t.syncStatus = 'synced'))
@@ -625,6 +638,7 @@ export const useTodoStore = defineStore(
         // 2. 合并服务器端的变更
         if (synced && Array.isArray(synced)) {
           synced.forEach((serverTodo: SharedTodo) => {
+            console.log('[Sync] Processing server todo:', serverTodo.title, serverTodo.id)
             const index = todos.value.findIndex((t) => t.id === serverTodo.id)
             const todoData: Todo = {
               id: serverTodo.id,
@@ -641,11 +655,15 @@ export const useTodoStore = defineStore(
             }
 
             if (index !== -1) {
+              // 深度合并，保留本地 UI 状态（如展开状态）
               todos.value[index] = { ...todos.value[index], ...todoData }
             } else {
               todos.value.push(todoData)
             }
           })
+
+          // 强制触发一次排序和过滤
+          todos.value = [...todos.value]
         }
 
         // 3. 处理服务器告知已删除的 ID (物理删除)

@@ -73,7 +73,7 @@ export class TodosService {
       where: {
         userId,
         updatedAt: {
-          gt: since,
+          gte: since, // 改为 gte，配合前端过滤，确保不漏掉同一毫秒的更新
         },
       },
     })
