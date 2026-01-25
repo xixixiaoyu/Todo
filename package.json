@@ -36,6 +36,7 @@
     "docker:dev:logs": "docker compose -f docker-compose.dev.yml logs -f",
     "docker:dev:ps": "docker compose -f docker-compose.dev.yml ps",
     "docker:dev:clean": "docker compose -f docker-compose.dev.yml down -v --rmi local",
+    "docker:prune": "docker system prune -f --volumes",
     "wails:dev": "cd apps/wails && wails dev",
     "wails:build": "cd apps/wails && wails build -trimpath -clean -ldflags \"-s -w\"",
     "wails:kill": "./scripts/close-app.sh",

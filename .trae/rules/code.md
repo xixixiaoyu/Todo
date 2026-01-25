@@ -61,6 +61,7 @@ pnpm docker:dev:ps                           # 查看容器运行状态
 pnpm docker:dev:restart                      # 重启前后端服务 (更新依赖后常用)
 pnpm docker:dev:down                         # 停止并移除容器
 pnpm docker:dev:clean                        # 清理容器、镜像及卷 (重置环境)
+pnpm docker:prune                            # 清理系统中无用的 Docker 镜像与 volume
 docker compose up postgres redis -d          # 仅启动数据库与缓存
 docker compose up -d                         # 启动生产模式完整栈
 pnpm docker:build                            # 手动构建生产镜像
