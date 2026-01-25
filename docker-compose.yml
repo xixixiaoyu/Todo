@@ -25,6 +25,14 @@ services:
     container_name: lumina-postgres
     restart: unless-stopped
     logging: *default-logging
+    command: >
+      postgres
+      -c shared_buffers=256MB
+      -c effective_cache_size=768MB
+      -c work_mem=16MB
+      -c maintenance_work_mem=64MB
+      -c random_page_cost=1.1
+      -c max_connections=200
     ports:
       - '127.0.0.1:5432:5432'
     environment:
@@ -36,11 +44,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.50'
-          memory: 512M
+          cpus: '1.0'
+          memory: 1G
         reservations:
           cpus: '0.25'
-          memory: 256M
+          memory: 512M
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-postgres}']
       interval: 10s
@@ -64,10 +72,10 @@ services:
       resources:
         limits:
           cpus: '0.50'
-          memory: 256M
+          memory: 512M
         reservations:
           cpus: '0.25'
-          memory: 128M
+          memory: 256M
     healthcheck:
       test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD:-lumina_redis_pwd}', 'ping']
       interval: 10s
@@ -117,6 +125,38 @@ services:
       S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
       S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
       S3_ENDPOINT: ${S3_ENDPOINT}
+      # Extra Sync from .env.example
+      JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-900}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-604800}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      THROTTLE_SHORT_TTL: ${THROTTLE_SHORT_TTL:-1000}
+      THROTTLE_SHORT_LIMIT: ${THROTTLE_SHORT_LIMIT:-3}
+      THROTTLE_MEDIUM_TTL: ${THROTTLE_MEDIUM_TTL:-10000}
+      THROTTLE_MEDIUM_LIMIT: ${THROTTLE_MEDIUM_LIMIT:-20}
+      THROTTLE_LONG_TTL: ${THROTTLE_LONG_TTL:-60000}
+      THROTTLE_LONG_LIMIT: ${THROTTLE_LONG_LIMIT:-100}
+    deploy:
+      resources:
+        limits:
+          cpus: '3.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'wget',
+          '--no-verbose',
+          '--tries=1',
+          '--spider',
+          'http://localhost:3000/api/health/liveness',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
     networks:
       - lumina-network
 
@@ -139,10 +179,10 @@ services:
       resources:
         limits:
           cpus: '0.50'
-          memory: 256M
-        reservations:
-          cpus: '0.25'
           memory: 128M
+        reservations:
+          cpus: '0.10'
+          memory: 64M
     depends_on:
       backend:
         condition: service_healthy
