@@ -20,6 +20,14 @@ vi.mock('@/features/auth/stores/auth', () => ({
   })),
 }))
 
+// Mock useSocket
+vi.mock('@/composables/useSocket', () => ({
+  useSocket: () => ({
+    socketId: { value: 'mock-socket-id' },
+    connect: vi.fn(),
+  }),
+}))
+
 describe('Todo Store Sync', () => {
   beforeEach(() => {
     setActivePinia(createPinia())

@@ -1,16 +1,21 @@
-import { Injectable, Inject } from '@nestjs/common'
+import { Injectable, Inject, forwardRef } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import { SyncMergeDto } from './todos.dto'
 import type { SyncItem } from '@my-app/shared'
+import { EventsGateway } from '../events/events.gateway'
 
 @Injectable()
 export class TodosService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => EventsGateway))
+    private readonly eventsGateway: EventsGateway,
+  ) {}
 
   /**
    * 增量同步与合并逻辑
    */
-  async sync(userId: number, syncDto: SyncMergeDto) {
+  async sync(userId: number, syncDto: SyncMergeDto, excludeSocketId?: string) {
     const { todos, lastSyncAt } = syncDto
     const serverTime = new Date()
     const since = lastSyncAt ? new Date(lastSyncAt) : new Date(0)
@@ -79,6 +84,11 @@ export class TodosService {
     // 分离常规更新和逻辑删除
     const synced = updatesToPull.filter((t) => !t.deletedAt)
     const deletedIds = updatesToPull.filter((t) => t.deletedAt).map((t) => t.id)
+
+    // 4. 通知其他在线设备进行同步
+    if (successfullyUpdatedIds.size > 0) {
+      this.eventsGateway.broadcastSyncNotify(userId, excludeSocketId)
+    }
 
     return {
       synced,

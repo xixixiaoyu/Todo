@@ -96,6 +96,11 @@ export default defineConfig(async (): Promise<UserConfig> => {
           target: process.env.VITE_PROXY_TARGET || 'http://localhost:3000',
           changeOrigin: true,
         },
+        '/socket.io': {
+          target: process.env.VITE_PROXY_TARGET || 'http://localhost:3000',
+          ws: true,
+          changeOrigin: true,
+        },
       },
       headers: {
         'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',

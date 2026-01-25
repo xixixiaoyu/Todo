@@ -1,7 +1,8 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq'
-import { Logger } from '@nestjs/common'
+import { Logger, Inject } from '@nestjs/common'
 import { Job } from 'bullmq'
 import { SCHEDULED_TASKS_QUEUE } from './constants'
+import { PrismaService } from '../prisma/prisma.service'
 
 interface ScheduledJobData {
   type: string
@@ -15,6 +16,13 @@ interface ScheduledJobData {
 @Processor(SCHEDULED_TASKS_QUEUE)
 export class ScheduledTasksProcessor extends WorkerHost {
   private readonly logger = new Logger(ScheduledTasksProcessor.name)
+
+  constructor(
+    @Inject(PrismaService)
+    private readonly prisma: PrismaService,
+  ) {
+    super()
+  }
 
   async process(job: Job<ScheduledJobData>): Promise<void> {
     const { type } = job.data
@@ -48,7 +56,28 @@ export class ScheduledTasksProcessor extends WorkerHost {
    */
   private async handleCleanupExpired(job: Job): Promise<void> {
     this.logger.log(`[${job.id}] 执行过期数据清理...`)
-    // 在这里添加清理逻辑
+
+    // 1. 物理删除已逻辑删除超过 30 天的待办事项
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+    try {
+      const deleteResult = await this.prisma.todo.deleteMany({
+        where: {
+          deletedAt: {
+            lt: thirtyDaysAgo,
+          },
+        },
+      })
+      if (deleteResult.count > 0) {
+        this.logger.log(`清理了 ${deleteResult.count} 条 30 天前的逻辑删除记录`)
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      this.logger.error(`清理逻辑删除记录失败: ${message}`)
+    }
+
+    // 可以在这里继续添加其他清理逻辑
     // 例如：删除过期的 session、清理临时文件等
   }
 

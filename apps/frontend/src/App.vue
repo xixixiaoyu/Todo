@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
+import { useTodoStore } from '@/features/todo/stores/todo'
 import ToastProvider from '@/components/ui/ToastProvider.vue'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { nativeService } from '@/services/native'
@@ -9,10 +10,15 @@ import { useTheme } from '@/composables/useTheme'
 // 初始化主题
 useTheme()
 
+const todoStore = useTodoStore()
+
 onMounted(() => {
   if (nativeService.platform === 'wails') {
     document.body.classList.add('is-wails')
   }
+
+  // 初始化全局 WebSocket 监听
+  todoStore.initSocketListener()
 })
 
 const handleDblClick = () => {

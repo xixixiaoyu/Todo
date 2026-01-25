@@ -588,19 +588,33 @@ export const useTodoStore = defineStore(
      * 同步数据到云端
      */
     async function sync(): Promise<void> {
+      if (loading.value) return
+
       const authStore = (await import('@/features/auth/stores/auth')).useAuthStore()
       authStore.hydrateFromStorage()
       if (!authStore.isAuthenticated) return
 
       loading.value = true
       try {
+        // 获取当前 Socket ID 用于排除通知
+        const { useSocket } = await import('@/composables/useSocket')
+        const { socketId, connect: connectSocket } = useSocket()
+
+        // 确保同步前 Socket 是连通的
+        connectSocket()
+
+        console.log('[Sync] Socket ID:', socketId.value)
+
         // 找出所有待同步的变更 (pending 或 还没 syncStatus 的)
         const pendingTodos = todos.value.filter((t) => t.syncStatus !== 'synced')
 
-        const response = await todoApi.sync({
-          todos: pendingTodos.map(toSharedTodo),
-          lastSyncAt: lastSyncAt.value || undefined,
-        })
+        const response = await todoApi.sync(
+          {
+            todos: pendingTodos.map(toSharedTodo),
+            lastSyncAt: lastSyncAt.value || undefined,
+          },
+          socketId.value,
+        )
 
         // 更新本地状态
         const { synced, deletedIds, serverTime } = response.data
@@ -716,6 +730,38 @@ export const useTodoStore = defineStore(
       clearProposedChanges()
     }
 
+    let isSocketInitialized = false
+
+    /**
+     * 初始化 WebSocket 监听
+     */
+    function initSocketListener(): void {
+      if (isSocketInitialized) return
+
+      void import('@/composables/useSocket').then(({ useSocket }) => {
+        const { connect } = useSocket()
+        const socket = connect()
+
+        if (!socket) return
+
+        // 监听来自服务器的同步通知
+        socket.on('todos:sync', () => {
+          console.log('[Socket] Received sync notification, debouncing...')
+          debouncedSync()
+        })
+
+        socket.on('connect', () => {
+          console.log('[Socket] Connected in TodoStore')
+        })
+
+        socket.on('disconnect', () => {
+          console.log('[Socket] Disconnected in TodoStore')
+        })
+
+        isSocketInitialized = true
+      })
+    }
+
     return {
       // 状态
       todos,
@@ -762,13 +808,14 @@ export const useTodoStore = defineStore(
       clearProposedChanges,
       applyProposedChanges,
       discardProposedChanges,
+      initSocketListener,
     }
   },
   {
     persist: {
       key: 'todos',
       storage: localStorage,
-      pick: ['todos', 'filter', 'isDrawerOpen', 'viewMode', 'lastSyncAt'],
+      pick: ['todos', 'filter', 'viewMode', 'lastSyncAt'],
     },
   },
 )

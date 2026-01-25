@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Get } from '@nestjs/common'
+import { Controller, Post, Body, UseGuards, Get, Headers } from '@nestjs/common'
 import { TodosService } from './todos.service'
 import { SyncMergeDto } from './todos.dto'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
@@ -15,8 +15,12 @@ export class TodosController {
 
   @Post('sync')
   @ApiOperation({ summary: '同步并合并待办事项 (离线优先)' })
-  async sync(@CurrentUser() user: User, @Body() syncDto: SyncMergeDto) {
-    return this.todosService.sync(user.id, syncDto)
+  async sync(
+    @CurrentUser() user: User,
+    @Body() syncDto: SyncMergeDto,
+    @Headers('X-Socket-ID') socketId?: string,
+  ) {
+    return this.todosService.sync(user.id, syncDto, socketId)
   }
 
   @Get()

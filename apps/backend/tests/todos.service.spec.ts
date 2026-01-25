@@ -4,6 +4,8 @@ import { TodosService } from '@/todos/todos.service'
 import { PrismaService } from '@/prisma/prisma.service'
 import { SyncMergeDto } from '@/todos/todos.dto'
 
+import { EventsGateway } from '@/events/events.gateway'
+
 describe('TodosService', () => {
   let service: TodosService
   const mockPrisma = {
@@ -14,6 +16,9 @@ describe('TodosService', () => {
     },
     $transaction: vi.fn((cb) => cb(mockPrisma)),
   }
+  const mockEventsGateway = {
+    broadcastSyncNotify: vi.fn(),
+  }
 
   beforeEach(async () => {
     vi.clearAllMocks()
@@ -23,6 +28,10 @@ describe('TodosService', () => {
         {
           provide: PrismaService,
           useValue: mockPrisma,
+        },
+        {
+          provide: EventsGateway,
+          useValue: mockEventsGateway,
         },
       ],
     }).compile()

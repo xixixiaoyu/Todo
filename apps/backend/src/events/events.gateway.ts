@@ -8,8 +8,10 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets'
-import { Logger } from '@nestjs/common'
+import { Logger, Inject, forwardRef, OnModuleDestroy } from '@nestjs/common'
 import { Server, Socket } from 'socket.io'
+import { JwtService } from '@nestjs/jwt'
+import { TodosService } from '../todos/todos.service'
 
 /**
  * WebSocket 事件网关
@@ -17,23 +19,71 @@ import { Server, Socket } from 'socket.io'
  */
 @WebSocketGateway({
   cors: {
-    origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:5173'],
+    origin: (origin: string, callback: (err: Error | null, allow?: boolean) => void) => {
+      const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || ['http://localhost:5173']
+      if (!origin || allowedOrigins.includes(origin) || origin === 'null') {
+        callback(null, true)
+      } else {
+        callback(new Error('Not allowed by CORS'))
+      }
+    },
     credentials: true,
   },
   namespace: '/events',
+  transports: ['websocket', 'polling'],
 })
-export class EventsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+export class EventsGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect, OnModuleDestroy
+{
   @WebSocketServer()
   server!: Server
 
   private readonly logger = new Logger(EventsGateway.name)
+  private readonly broadcastTimers = new Map<number, NodeJS.Timeout>()
+
+  constructor(
+    @Inject(forwardRef(() => TodosService))
+    private readonly todosService: TodosService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   afterInit() {
     this.logger.log('WebSocket 网关已初始化')
   }
 
-  handleConnection(client: Socket) {
-    this.logger.log(`客户端连接: ${client.id}`)
+  onModuleDestroy() {
+    // 清理所有定时器
+    for (const timer of this.broadcastTimers.values()) {
+      clearTimeout(timer)
+    }
+    this.broadcastTimers.clear()
+  }
+
+  async handleConnection(client: Socket) {
+    try {
+      // 验证 Token
+      const token =
+        client.handshake.auth?.token || client.handshake.headers?.authorization?.split(' ')[1]
+
+      if (!token) {
+        this.logger.warn(`客户端连接被拒绝: 无 Token [${client.id}]`)
+        client.disconnect()
+        return
+      }
+
+      const payload = await this.jwtService.verifyAsync(token)
+      client.data.user = payload
+
+      this.logger.log(`客户端已连接并认证: ${client.id} (User: ${payload.sub})`)
+
+      // 自动加入用户房间
+      const userId = payload.sub
+      await client.join(`user:${userId}`)
+      this.logger.debug(`客户端 ${client.id} 已自动加入房间 user:${userId}`)
+    } catch {
+      this.logger.warn(`客户端连接认证失败: ${client.id}`)
+      client.disconnect()
+    }
   }
 
   handleDisconnect(client: Socket) {
@@ -67,6 +117,33 @@ export class EventsGateway implements OnGatewayInit, OnGatewayConnection, OnGate
     }
 
     return { success: true }
+  }
+
+  /**
+   * 广播同步通知给特定用户的所有在线设备
+   */
+  broadcastSyncNotify(userId: number, excludeClientId?: string) {
+    // 后端防抖：500ms 内只发送一次广播给该用户
+    const existingTimer = this.broadcastTimers.get(userId)
+    if (existingTimer) {
+      clearTimeout(existingTimer)
+    }
+
+    const timer = setTimeout(() => {
+      const room = `user:${userId}`
+      if (excludeClientId) {
+        this.server.to(room).except(excludeClientId).emit('todos:sync', {
+          timestamp: new Date().toISOString(),
+        })
+      } else {
+        this.server.to(room).emit('todos:sync', {
+          timestamp: new Date().toISOString(),
+        })
+      }
+      this.broadcastTimers.delete(userId)
+    }, 500)
+
+    this.broadcastTimers.set(userId, timer)
   }
 
   /**
