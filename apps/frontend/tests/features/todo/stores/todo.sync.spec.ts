@@ -24,7 +24,13 @@ vi.mock('@/features/auth/stores/auth', () => ({
 vi.mock('@/composables/useSocket', () => ({
   useSocket: () => ({
     socketId: { value: 'mock-socket-id' },
-    connect: vi.fn(),
+    connect: vi.fn(() => ({
+      on: vi.fn(),
+      off: vi.fn(),
+      once: vi.fn(),
+      emit: vi.fn(),
+    })),
+    waitForConnection: vi.fn().mockResolvedValue('mock-socket-id'),
   }),
 }))
 

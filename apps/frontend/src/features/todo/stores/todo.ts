@@ -191,7 +191,6 @@ export const useTodoStore = defineStore(
       const { useAuthStore } = await import('@/features/auth/stores/auth')
       const authStore = useAuthStore()
       if (authStore.isAuthenticated) {
-        console.log('[Todo] Initializing sync...')
         await sync()
       }
     }
@@ -611,8 +610,6 @@ export const useTodoStore = defineStore(
         // 确保同步前 Socket 是连通的，并获取最新的 Socket ID
         const currentSocketId = await waitForConnection()
 
-        console.log('[Sync] Socket ID:', currentSocketId)
-
         // 找出所有待同步的变更 (pending 或 还没 syncStatus 的)
         const pendingTodos = todos.value.filter((t) => t.syncStatus !== 'synced')
 
@@ -626,11 +623,6 @@ export const useTodoStore = defineStore(
 
         // 更新本地状态
         const { synced, deletedIds, serverTime } = response.data
-        console.log('[Sync] Response:', {
-          syncedCount: synced?.length,
-          deletedCount: deletedIds?.length,
-          serverTime,
-        })
 
         // 1. 标记刚才上传成功的为 synced
         pendingTodos.forEach((t) => (t.syncStatus = 'synced'))
@@ -638,7 +630,6 @@ export const useTodoStore = defineStore(
         // 2. 合并服务器端的变更
         if (synced && Array.isArray(synced)) {
           synced.forEach((serverTodo: SharedTodo) => {
-            console.log('[Sync] Processing server todo:', serverTodo.title, serverTodo.id)
             const index = todos.value.findIndex((t) => t.id === serverTodo.id)
             const todoData: Todo = {
               id: serverTodo.id,
@@ -764,17 +755,12 @@ export const useTodoStore = defineStore(
 
         // 监听来自服务器的同步通知
         socket.on('todos:sync', () => {
-          console.log('[Socket] Received sync notification, debouncing...')
           debouncedSync()
         })
 
-        socket.on('connect', () => {
-          console.log('[Socket] Connected in TodoStore')
-        })
+        socket.on('connect', () => {})
 
-        socket.on('disconnect', () => {
-          console.log('[Socket] Disconnected in TodoStore')
-        })
+        socket.on('disconnect', () => {})
 
         isSocketInitialized = true
       })

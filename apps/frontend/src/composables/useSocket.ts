@@ -39,7 +39,6 @@ export function useSocket(): UseSocketReturn {
     socketInstance.on('connect', () => {
       isConnected.value = true
       socketId.value = socketInstance?.id || null
-      console.log('[Socket] Connected:', socketInstance?.id)
 
       if (authStore.user?.id) {
         socketInstance?.emit('join', { room: `user:${authStore.user.id}` })
@@ -49,7 +48,6 @@ export function useSocket(): UseSocketReturn {
     socketInstance.on('disconnect', () => {
       isConnected.value = false
       socketId.value = null
-      console.log('[Socket] Disconnected')
     })
 
     socketInstance.on('connect_error', (error: Error) => {
