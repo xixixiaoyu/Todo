@@ -37,8 +37,8 @@ COPY apps/backend ./apps/backend
 # 1. 构建共享包
 RUN pnpm --filter @my-app/shared build
 # 2. 生成 Prisma Client
-# 显式指定生成的路径，避免 pnpm hoist 导致的路径混乱
-RUN pnpm --filter @my-app/backend prisma generate --schema=apps/backend/prisma/schema/base.prisma
+# 使用 package.json 中定义的脚本，它会自动读取 prisma.config.ts 并合并 schema 目录下的所有文件
+RUN pnpm --filter @my-app/backend prisma:generate
 # 3. 构建后端应用
 RUN pnpm --filter @my-app/backend build
 
