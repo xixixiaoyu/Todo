@@ -23,7 +23,7 @@ sudo docker compose up -d --build
 echo "🗄️ 正在同步数据库 Schema..."
 # 等待数据库就绪
 sleep 5
-sudo docker compose exec backend npx --yes prisma@7.2.0 db push
+sudo docker compose exec backend npx --yes prisma@7.2.0 db push --schema=prisma/schema
 
 echo "✅ 部署完成！"
 echo "🌐 前端访问地址: http://服务器IP"
