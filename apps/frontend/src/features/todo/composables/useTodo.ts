@@ -141,6 +141,7 @@ export function useTodo() {
       activeElement?.getAttribute('data-ai-input') === 'true'
 
     if (isAiInput) return
+    if (!e.key) return
 
     const isE = e.key.toLowerCase() === 'e'
     const isMac = /Mac|iPod|iPhone|iPad/.test(navigator.userAgent)

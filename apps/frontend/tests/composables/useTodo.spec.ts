@@ -216,6 +216,18 @@ describe('useTodo', () => {
     })
   })
 
+  describe('handleGlobalKeydown', () => {
+    it('should not throw error when e.key is undefined', () => {
+      withSetup(useTodo)
+      const event = new KeyboardEvent('keydown')
+      Object.defineProperty(event, 'key', { value: undefined })
+
+      expect(() => {
+        window.dispatchEvent(event)
+      }).not.toThrow()
+    })
+  })
+
   describe('editing functionality', () => {
     it('should start editing with correct values', () => {
       const { startEditing, editingId, editingTitle } = withSetup(useTodo)
