@@ -82,9 +82,6 @@ COPY --from=builder /app/apps/backend/prisma ./prisma
 # pnpm deploy 后的目录结构中，我们需要确保 node_modules 能够找到生成的代码
 COPY --from=builder /app/apps/backend/prisma/client ./node_modules/@prisma/client
 
-# 4. 清理生产环境不需要的配置文件，避免 Prisma 运行时尝试加载它们导致报错
-RUN rm -f prisma.config.ts
-
 # 修正权限
 RUN chown -R nestjs:nodejs /app
 
