@@ -10,6 +10,12 @@
 # 查看日志：
 #   docker compose logs -f
 
+x-logging: &default-logging
+  driver: 'json-file'
+  options:
+    max-size: '10m'
+    max-file: '3'
+
 services:
   # ============================================
   # PostgreSQL Database
@@ -18,6 +24,7 @@ services:
     image: postgres:16-alpine
     container_name: lumina-postgres
     restart: unless-stopped
+    logging: *default-logging
     ports:
       - '127.0.0.1:5432:5432'
     environment:
@@ -41,6 +48,7 @@ services:
     image: redis:7-alpine
     container_name: lumina-redis
     restart: unless-stopped
+    logging: *default-logging
     command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru --requirepass ${REDIS_PASSWORD:-lumina_redis_pwd}
     volumes:
       - lumina_redis_data:/data
@@ -61,6 +69,7 @@ services:
       dockerfile: apps/backend/Dockerfile
     container_name: lumina-backend
     restart: unless-stopped
+    logging: *default-logging
     depends_on:
       postgres:
         condition: service_healthy
@@ -104,6 +113,7 @@ services:
       dockerfile: apps/frontend/Dockerfile
     container_name: lumina-frontend
     restart: unless-stopped
+    logging: *default-logging
     ports:
       - '80:80'
     healthcheck:

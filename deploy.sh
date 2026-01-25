@@ -19,7 +19,12 @@ fi
 echo "📦 正在构建并启动容器..."
 sudo docker compose up -d --build
 
-# 3. 执行数据库迁移
+# 3. 清理过期镜像
+# 仅清理构建过程中产生的临时镜像和未使用的旧镜像，防止磁盘空间泄露
+echo "🧹 正在清理过期镜像..."
+sudo docker image prune -f
+
+# 4. 执行数据库迁移
 echo "🗄️ 正在同步数据库 Schema..."
 # 等待数据库就绪
 sleep 5
