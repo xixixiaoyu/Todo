@@ -21,17 +21,24 @@ export class CsrfMiddleware implements NestMiddleware {
   private readonly skipPaths = [
     '/api/health',
     '/api/docs',
-    '/api/auth/login', // 登录接口通过速率限制保护
-    '/api/auth/register', // 注册接口通过速率限制保护
+    '/api/auth/login',
+    '/api/auth/register',
     '/api/auth/refresh',
-    '/api/auth/forgot-password', // 忘记密码接口
-    '/api/auth/reset-password', // 重置密码接口
+    '/api/auth/forgot-password',
+    '/api/auth/reset-password',
+    '/api/auth/google', // Google OAuth 不需要 CSRF 校验
+    '/api/auth/google/callback',
   ]
 
   // 安全方法（不需要 CSRF 验证）
   private readonly safeMethods = ['GET', 'HEAD', 'OPTIONS']
 
   use(req: Request, res: Response, next: NextFunction) {
+    // 如果环境变量显式关闭了 CSRF，则直接跳过
+    if (process.env.CSRF_ENABLED === 'false') {
+      return next()
+    }
+
     // 确保每个响应都设置 CSRF token cookie
     this.ensureCsrfToken(req, res)
 

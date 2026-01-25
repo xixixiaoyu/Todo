@@ -168,7 +168,9 @@ const handleRegisterPasskey = async () => {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+          <!-- 暂时隐藏 Passkey 菜单项 -->
           <DropdownMenuItem
+            v-if="false"
             class="rounded-lg cursor-pointer focus:bg-accent"
             :disabled="authStore.loading"
             @click="handleRegisterPasskey"

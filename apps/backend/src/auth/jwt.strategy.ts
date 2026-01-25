@@ -47,7 +47,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('无效的令牌类型')
     }
 
-    const user = await this.authService.getUserById(payload.sub)
+    // 确保 sub (userId) 是数字类型，防止 Prisma 查询报错
+    const userId = typeof payload.sub === 'string' ? parseInt(payload.sub, 10) : payload.sub
+    const user = await this.authService.getUserById(userId)
 
     if (!user) {
       throw new UnauthorizedException('用户不存在')
