@@ -7,7 +7,17 @@ set -e
 
 echo "🚀 开始部署 Lumina (简思) 项目..."
 
-# 1. 检查环境变量文件
+# 1. 检查磁盘空间 (前置保护)
+DISK_USAGE=$(df / | tail -1 | awk '{print $5}' | sed 's/%//')
+if [ "$DISK_USAGE" -gt 90 ]; then
+    echo "⚠️ 警告：系统磁盘占用已达 ${DISK_USAGE}%，正在执行紧急清理..."
+    sudo docker system prune -f
+    # 再次检查清理后的空间
+    DISK_USAGE_AFTER=$(df / | tail -1 | awk '{print $5}' | sed 's/%//')
+    echo "✨ 清理完成，当前磁盘占用：${DISK_USAGE_AFTER}%"
+fi
+
+# 2. 检查环境变量文件
 if [ ! -f .env ]; then
     echo "⚠️ 未发现 .env 文件，正在从 .env.example 复制..."
     cp .env.example .env
