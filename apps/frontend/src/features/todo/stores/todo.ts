@@ -3,7 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { debounce } from 'lodash-es'
 import { getAIStaticResponse } from '@/services/ai'
 import { todoApi } from '../api'
-import type { Todo as SharedTodo } from '@my-app/shared'
+import type { Todo as SharedTodo } from '@lumina/shared'
 
 export interface Todo extends SharedTodo {
   completedAt?: Date

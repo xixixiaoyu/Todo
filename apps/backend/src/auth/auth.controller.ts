@@ -16,7 +16,7 @@ import {
   ResetPasswordDto,
   LogoutDto,
 } from './auth.dto'
-import type { User, AuthResponse } from '@my-app/shared'
+import type { User, AuthResponse } from '@lumina/shared'
 
 /**
  * 认证控制器

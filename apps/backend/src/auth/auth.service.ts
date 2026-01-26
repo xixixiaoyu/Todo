@@ -26,8 +26,8 @@ import { RedisService, CachePrefix } from '../redis/redis.service'
 import { PrismaService } from '../prisma/prisma.service'
 import * as bcrypt from 'bcryptjs'
 import * as crypto from 'crypto'
-import type { LoginInput, RegisterInput, User, AuthResponse } from '@my-app/shared'
-import { formatUser } from '@my-app/shared'
+import type { LoginInput, RegisterInput, User, AuthResponse } from '@lumina/shared'
+import { formatUser } from '@lumina/shared'
 
 interface JwtPayload {
   sub: number

@@ -37,7 +37,7 @@ Lumina 并非传统的全栈应用，它采用了“轻原生壳 + 重云端大�
 ### 📦 跨端与共享 (The Link)
 - **Desktop**: Wails 2.11 (Go + WebKit)
 - **Mobile**: Capacitor 8 (iOS/Android)
-- **Shared logic**: `@my-app/shared` (Zod-based SSOT types)
+- **Shared logic**: `@lumina/shared` (Zod-based SSOT types)
 
 ---
 

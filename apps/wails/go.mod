@@ -1,4 +1,4 @@
-module my-app-wails
+module lumina-wails
 
 go 1.24.3
 

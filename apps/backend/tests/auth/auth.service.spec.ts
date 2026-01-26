@@ -8,7 +8,7 @@ import { MailService } from '../../src/mail/mail.service'
 import { RedisService } from '../../src/redis/redis.service'
 import { PrismaService } from '../../src/prisma/prisma.service'
 import * as bcrypt from 'bcryptjs'
-import type { User } from '@my-app/shared'
+import type { User } from '@lumina/shared'
 import * as simplewebauthn from '@simplewebauthn/server'
 import type { PublicKeyCredentialCreationOptionsJSON } from '@simplewebauthn/server'
 

@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { authApi } from '../api'
 import { setToken } from '@/api'
-import type { User, LoginInput, RegisterInput } from '@my-app/shared'
+import type { User, LoginInput, RegisterInput } from '@lumina/shared'
 import { startRegistration, startAuthentication } from '@simplewebauthn/browser'
 
 /**

@@ -6,7 +6,7 @@ import {
   RefreshTokenSchema,
   ForgotPasswordSchema,
   ResetPasswordSchema,
-} from '@my-app/shared'
+} from '@lumina/shared'
 
 /**
  * 登录请求 DTO

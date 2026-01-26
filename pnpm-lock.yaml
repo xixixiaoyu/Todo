@@ -68,7 +68,7 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: 3.958.0
         version: 3.958.0
-      '@my-app/shared':
+      '@lumina/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       '@nestjs-modules/mailer':
@@ -306,7 +306,7 @@ importers:
       '@iktakahiro/markdown-it-katex':
         specifier: 4.0.1
         version: 4.0.1
-      '@my-app/shared':
+      '@lumina/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       '@simplewebauthn/browser':

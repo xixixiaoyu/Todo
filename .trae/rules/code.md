@@ -66,10 +66,10 @@ packages/shared/  # 共享包 (Zod Schemas, DTOs, Utils)
 
 ```bash
 pnpm dev                              # 同时启动前后端
-pnpm --filter @my-app/backend db:switch <sqlite|postgres> # 切换数据库类型
+pnpm --filter @lumina/backend db:switch <sqlite|postgres> # 切换数据库类型
 pnpm db:push                          # 推送 Schema 到数据库
 pnpm lint && pnpm format              # 代码检查与格式化
-pnpm --filter @my-app/shared build    # 构建共享包
+pnpm --filter @lumina/shared build    # 构建共享包
 pnpm test                             # 运行测试
 pnpm wails:dev                        # 启动 Wails 开发模式
 pnpm wails:build                      # 打包 Wails 应用
@@ -89,7 +89,7 @@ pnpm docker:build                            # 手动构建生产镜像
 
 **模块导入**:
 ```typescript
-import { xxx } from '@my-app/shared'           // 共享包
+import { xxx } from '@lumina/shared'           // 共享包
 import { Button } from '@/components/ui/button' // UI 组件
 import { cn } from '@/lib/utils'                // 工具函数
 ```
@@ -150,7 +150,7 @@ interface ApiResponse<T> { success: boolean; data: T; message?: string; timestam
 - **Capacitor**: `pnpm cap:sync` / `cap:open:ios` / `cap:run:android`
 - **Wails**: `pnpm wails:dev` / `pnpm wails:build`
 - **Docker 开发流**:
-  - **环境启动**: 先执行 `pnpm install` 及 `pnpm --filter @my-app/shared build`，再运行 `pnpm docker:dev`。
+  - **环境启动**: 先执行 `pnpm install` 及 `pnpm --filter @lumina/shared build`，再运行 `pnpm docker:dev`。
   - **热更新**: 挂载宿主机目录到容器，`apps/` 代码修改将触发 `nest start --watch` 或 `vite` 的热重载。
   - **依赖同步**: 若 `package.json` 变动，需执行 `pnpm docker:dev:restart` 重新触发容器内依赖检查。
   - **数据库推送**: 容器启动后，首次运行需执行 `pnpm db:push` 以同步 Schema 到 PostgreSQL。
@@ -161,7 +161,7 @@ interface ApiResponse<T> { success: boolean; data: T; message?: string; timestam
 ## 注意事项
 
 - **版本锁定**: 所有依赖必须使用 **精确版本** (移除 `^` 和 `~`)，以确保环境一致性。Workspace 内部引用保留 `workspace:*`。
-- 共享包修改后需 `pnpm --filter @my-app/shared build`
+- 共享包修改后需 `pnpm --filter @lumina/shared build`
 - 前端 `zod` 必须显式声明
 - **环境重置**: 若遇到容器状态异常或数据库数据冲突，请运行 `pnpm docker:dev:clean`。
 - **数据库同步**: 开发前若不使用全栈 Docker 环境，需手动启动 `docker compose up postgres redis -d`，并执行 `pnpm db:push`。

@@ -35,13 +35,13 @@ COPY packages/shared ./packages/shared
 COPY apps/backend ./apps/backend
 
 # 1. 构建共享包
-RUN pnpm --filter @my-app/shared build
+RUN pnpm --filter @lumina/shared build
 # 2. 生成 Prisma Client
 # 显式指定生成的路径，我们在 Prisma Schema 中设置了 output = "../client"
-RUN pnpm --filter @my-app/backend prisma:generate
+RUN pnpm --filter @lumina/backend prisma:generate
 
 # 3. 构建后端应用
-RUN pnpm --filter @my-app/backend build
+RUN pnpm --filter @lumina/backend build
 
 # ============================================
 # Stage 3: Pruner (Extract production dependencies)
@@ -53,7 +53,7 @@ COPY --from=builder /app /app
 # 使用 pnpm deploy 提取生产环境所需的最小依赖集
 # 这会自动处理 workspace:* 依赖，将其转换为独立目录结构
 # 注意：这会执行 pnpm install --prod
-RUN pnpm --filter @my-app/backend --prod deploy /out
+RUN pnpm --filter @lumina/backend --prod deploy /out
 
 # ============================================
 # Stage 4: Production (Final lean image)

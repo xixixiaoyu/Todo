@@ -9,8 +9,8 @@
   "frontend:dev:serverUrl": "http://localhost:5173",
   "wailsjs:dir": "../frontend/src/wailsjs",
   "author": {
-    "name": "Todo Team",
-    "email": "contact@todo.app"
+    "name": "Lumina Team",
+    "email": "contact@lumina.app"
   },
   "info": {
     "productName": "简思",

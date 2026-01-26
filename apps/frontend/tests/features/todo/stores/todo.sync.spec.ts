@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useTodoStore } from '@/features/todo/stores/todo'
 import { todoApi } from '@/features/todo/api'
-import type { SyncResponse } from '@my-app/shared'
+import type { SyncResponse } from '@lumina/shared'
 
 // Mock todoApi
 vi.mock('@/features/todo/api', () => ({

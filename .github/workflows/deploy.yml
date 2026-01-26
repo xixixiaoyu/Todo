@@ -40,7 +40,7 @@ jobs:
             ${{ runner.os }}-turbo-
 
       - name: 构建前端项目
-        run: pnpm --filter @my-app/frontend build
+        run: pnpm --filter @lumina/frontend build
         env:
           NODE_ENV: production
 

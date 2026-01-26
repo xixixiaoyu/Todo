@@ -1,5 +1,5 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common'
-import type { User } from '@my-app/shared'
+import type { User } from '@lumina/shared'
 
 /**
  * 当前用户装饰器
