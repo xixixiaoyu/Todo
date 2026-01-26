@@ -744,26 +744,25 @@ export const useTodoStore = defineStore(
     /**
      * 初始化 WebSocket 监听
      */
-    function initSocketListener(): void {
+    async function initSocketListener(): Promise<void> {
       if (isSocketInitialized) return
 
-      void import('@/composables/useSocket').then(({ useSocket }) => {
-        const { connect } = useSocket()
-        const socket = connect()
+      const authStore = (await import('@/features/auth/stores/auth')).useAuthStore()
+      authStore.hydrateFromStorage()
+      if (!authStore.isAuthenticated) return
 
-        if (!socket) return
+      const { useSocket } = await import('@/composables/useSocket')
+      const { connect } = useSocket()
+      const socket = connect()
 
-        // 监听来自服务器的同步通知
-        socket.on('todos:sync', () => {
-          debouncedSync()
-        })
+      if (!socket) return
 
-        socket.on('connect', () => {})
-
-        socket.on('disconnect', () => {})
-
-        isSocketInitialized = true
+      // 监听来自服务器的同步通知
+      socket.on('todos:sync', () => {
+        debouncedSync()
       })
+
+      isSocketInitialized = true
     }
 
     return {
