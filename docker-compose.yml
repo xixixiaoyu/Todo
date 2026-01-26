@@ -166,8 +166,7 @@ services:
     container_name: lumina-frontend
     restart: unless-stopped
     logging: *default-logging
-    ports:
-      - '80:80'
+    # 移除直接暴露 80 端口，由 NPM 转发
     healthcheck:
       test:
         ['CMD-SHELL', 'wget --no-verbose --tries=1 --spider http://127.0.0.1:80/health || exit 1']
@@ -189,6 +188,26 @@ services:
     networks:
       - lumina-network
 
+  # ============================================
+  # Nginx Proxy Manager (HTTPS & Reverse Proxy)
+  # ============================================
+  npm:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: lumina-npm
+    restart: unless-stopped
+    ports:
+      - '80:80' # HTTP
+      - '443:443' # HTTPS
+      - '81:81' # 管理后台
+    volumes:
+      - lumina_npm_data:/data
+      - lumina_npm_letsencrypt:/etc/letsencrypt
+    logging: *default-logging
+    depends_on:
+      - frontend
+    networks:
+      - lumina-network
+
 networks:
   lumina-network:
     driver: bridge
@@ -196,3 +215,5 @@ networks:
 volumes:
   lumina_postgres_data:
   lumina_redis_data:
+  lumina_npm_data:
+  lumina_npm_letsencrypt:
