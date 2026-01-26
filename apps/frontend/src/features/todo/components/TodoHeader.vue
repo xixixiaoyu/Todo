@@ -5,7 +5,6 @@ import {
   Languages,
   Network,
   List,
-  User,
   LogOut,
   LogIn,
   Fingerprint,
@@ -142,20 +141,46 @@ const handleRegisterPasskey = async () => {
 
       <ThemeToggle />
 
+      <Tooltip>
+        <TooltipTrigger as-child>
+          <Button
+            variant="outline"
+            size="icon"
+            class="h-10 w-10 rounded-xl bg-card border-border hover:bg-accent"
+            @click="toggleLanguage"
+          >
+            <Languages :size="18" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{{ t('common.toggleLanguage') }}</TooltipContent>
+      </Tooltip>
+
+      <div class="mx-1 h-6 w-px bg-border/40"></div>
+
       <!-- Auth Section -->
       <DropdownMenu v-if="authStore.isAuthenticated">
         <DropdownMenuTrigger as-child>
           <Button
             variant="outline"
             size="icon"
-            class="h-10 w-10 rounded-xl bg-card border-border hover:bg-accent transition-all overflow-hidden"
+            class="relative h-10 w-10 rounded-xl bg-card border-border hover:bg-accent transition-all overflow-hidden group/user"
+            :title="authStore.user?.name || t('common.user')"
           >
             <div
               v-if="authStore.user?.avatar"
-              class="w-full h-full bg-cover bg-center"
+              class="w-full h-full bg-cover bg-center transition-transform duration-300 group-hover/user:scale-110"
               :style="{ backgroundImage: `url(${authStore.user.avatar})` }"
             ></div>
-            <User v-else :size="18" />
+            <div
+              v-else
+              class="flex h-full w-full items-center justify-center bg-amber-500 text-white font-bold text-sm transition-colors group-hover/user:bg-amber-600"
+            >
+              {{ authStore.user?.name?.charAt(0).toUpperCase() || 'U' }}
+            </div>
+            <!-- 登录状态小圆点 -->
+            <span
+              class="absolute bottom-0.5 right-0.5 h-2.5 w-2.5 rounded-full border-2 border-card bg-emerald-500"
+            ></span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" class="w-56 rounded-xl p-2">
@@ -195,27 +220,13 @@ const handleRegisterPasskey = async () => {
           <Button
             variant="outline"
             size="icon"
-            class="h-10 w-10 rounded-xl bg-card border-border hover:bg-accent transition-all"
+            class="h-10 w-10 rounded-xl bg-primary/5 border-primary/20 text-primary hover:bg-primary/10 hover:border-primary/30 transition-all shadow-sm"
             @click="void router.push('/login')"
           >
             <LogIn :size="18" />
           </Button>
         </TooltipTrigger>
         <TooltipContent>{{ t('login.title') }}</TooltipContent>
-      </Tooltip>
-
-      <Tooltip>
-        <TooltipTrigger as-child>
-          <Button
-            variant="outline"
-            size="icon"
-            class="h-10 w-10 rounded-xl bg-card border-border hover:bg-accent"
-            @click="toggleLanguage"
-          >
-            <Languages :size="18" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>{{ t('common.toggleLanguage') }}</TooltipContent>
       </Tooltip>
     </div>
   </header>
