@@ -79,6 +79,27 @@ const handleRegisterPasskey = async () => {
       </h1>
     </div>
     <div class="flex items-center gap-2">
+      <!-- AI Assistant - Highlight Feature -->
+      <Tooltip>
+        <TooltipTrigger as-child>
+          <Button
+            variant="ghost"
+            size="sm"
+            class="h-9 px-3 rounded-xl bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 transition-all duration-300 gap-2 font-bold border border-amber-500/20 group/ai"
+            @click="todoStore.setDrawerOpen(true)"
+          >
+            <Clover
+              :size="16"
+              class="transition-transform group-hover/ai:rotate-12 group-hover/ai:scale-110"
+            />
+            <span class="text-xs tracking-wide uppercase">{{ t('ai.assistant') }}</span>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{{ t('ai.assistant') }} (Cmd+E / Alt+E)</TooltipContent>
+      </Tooltip>
+
+      <div class="mx-1 h-6 w-px bg-border/40"></div>
+
       <!-- View Mode Toggle Group -->
       <div class="flex items-center gap-1.5 p-1 bg-muted/50 rounded-2xl border border-border/50">
         <Tooltip>
