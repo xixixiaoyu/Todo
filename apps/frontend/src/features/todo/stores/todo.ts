@@ -38,6 +38,7 @@ export const useTodoStore = defineStore(
     const loading = ref(false)
     const error = ref<string | null>(null)
     const isDrawerOpen = ref(false)
+    const isMaximized = ref(false)
     const isSilencingToast = ref(false)
     const proposedChanges = ref<ProposedTodoChange[]>([])
     const isAllExpanded = computed(() => {
@@ -498,6 +499,13 @@ export const useTodoStore = defineStore(
     }
 
     /**
+     * 设置最大化状态
+     */
+    function setMaximized(maximized: boolean): void {
+      isMaximized.value = maximized
+    }
+
+    /**
      * 切换侧边栏状态
      */
     function toggleDrawer(): void {
@@ -774,6 +782,7 @@ export const useTodoStore = defineStore(
       loading,
       error,
       isDrawerOpen,
+      isMaximized,
       isSilencingToast,
       isAllExpanded,
       proposedChanges,
@@ -795,6 +804,7 @@ export const useTodoStore = defineStore(
       updateTodo,
       reorderTodos,
       setDrawerOpen,
+      setMaximized,
       toggleDrawer,
       setFilter,
       setSearchQuery,
@@ -818,7 +828,7 @@ export const useTodoStore = defineStore(
     persist: {
       key: 'todos',
       storage: localStorage,
-      pick: ['todos', 'filter', 'viewMode', 'lastSyncAt'],
+      pick: ['todos', 'filter', 'viewMode', 'lastSyncAt', 'isDrawerOpen', 'isMaximized'],
     },
   },
 )

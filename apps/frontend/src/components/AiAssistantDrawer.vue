@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, nextTick, computed, watch } from 'vue'
+import { ref, nextTick, computed } from 'vue'
 import ResizableDrawer from '@/components/ResizableDrawer.vue'
 import ChatMessageList from '@/components/chat/ChatMessageList.vue'
 import AISettingsDialog from '@/components/chat/AISettingsDialog.vue'
@@ -10,6 +10,7 @@ import AiAssistantInput from '@/components/ai/AiAssistantInput.vue'
 import { useChat } from '@/composables/useChat'
 import { useAIConfig, aiThinkingMode, saveAIThinkingMode } from '@/composables/useAIConfig'
 import { useChatHistory } from '@/composables/useChatHistory'
+import { useTodoStore } from '@/features/todo/stores/todo'
 import { useI18n } from 'vue-i18n'
 import { useEscClose } from '@/composables/useEscClose'
 
@@ -152,12 +153,12 @@ const {
   editAndResendMessage,
 } = useChat()
 
-const isMaximized = ref(localStorage.getItem('ai-assistant-maximized') === 'true')
-const chatInput = ref('')
-
-watch(isMaximized, (val) => {
-  localStorage.setItem('ai-assistant-maximized', String(val))
+const todoStore = useTodoStore()
+const isMaximized = computed({
+  get: () => todoStore.isMaximized,
+  set: (val) => todoStore.setMaximized(val),
 })
+const chatInput = ref('')
 
 // 设置弹窗状态
 const showSettings = ref(false)
