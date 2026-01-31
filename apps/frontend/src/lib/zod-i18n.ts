@@ -11,19 +11,20 @@ export const zodErrorMap: ZodErrorMap = (issue, ctx) => {
   const { t } = i18n.global
 
   // 1. 优先处理显式提供的 i18n 键名 (来自 shared schema)
-  // 如果显式提供了 message 且它是 i18n 键名，则使用该键名进行翻译
-  // 我们需要确保 params 中包含 min/max 等参数
   if (issue.message && issue.message.includes('.') && !issue.message.includes(' ')) {
-    const p: Record<string, unknown> = { ...issue }
-    // 统一参数名，兼容不同版本的 translation keys
-    if ('minimum' in issue) {
-      p.min = issue.minimum
-      p.minimum = issue.minimum
+    const anyIssue = issue as unknown as Record<string, unknown>
+    const minimum = anyIssue.minimum ?? anyIssue.min
+    const maximum = anyIssue.maximum ?? anyIssue.max
+
+    const p: Record<string, unknown> = {
+      ...anyIssue,
+      min: minimum,
+      minimum,
+      max: maximum,
+      maximum,
+      property: anyIssue.property ?? '',
     }
-    if ('maximum' in issue) {
-      p.max = issue.maximum
-      p.maximum = issue.maximum
-    }
+
     return { message: t(issue.message, p) }
   }
 
@@ -40,12 +41,14 @@ export const zodErrorMap: ZodErrorMap = (issue, ctx) => {
         }),
       }
     case zLocal.ZodIssueCode.too_small: {
+      const min = issue.minimum
       const minKey = issue.type === 'string' ? 'validation.MIN_LENGTH' : 'validation.MIN_VALUE'
-      return { message: t(minKey, { min: issue.minimum, minimum: issue.minimum }) }
+      return { message: t(minKey, { min, minimum: min }) }
     }
     case zLocal.ZodIssueCode.too_big: {
+      const max = issue.maximum
       const maxKey = issue.type === 'string' ? 'validation.MAX_LENGTH' : 'validation.MAX_VALUE'
-      return { message: t(maxKey, { max: issue.maximum, maximum: issue.maximum }) }
+      return { message: t(maxKey, { max, maximum: max }) }
     }
     case zLocal.ZodIssueCode.invalid_string:
       if (issue.validation === 'email') {
@@ -56,6 +59,10 @@ export const zodErrorMap: ZodErrorMap = (issue, ctx) => {
       }
       return { message: t('validation.INVALID_FORMAT') }
     case zLocal.ZodIssueCode.custom:
+      // 如果自定义消息是一个键，尝试翻译
+      if (issue.message && issue.message.includes('.') && !issue.message.includes(' ')) {
+        return { message: t(issue.message) }
+      }
       return { message: issue.message || ctx.defaultError }
   }
 

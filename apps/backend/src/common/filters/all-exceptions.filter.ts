@@ -51,9 +51,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
       if (firstIssue) {
         // 如果错误消息是一个 i18n 键名，则进行翻译
         const key = firstIssue.message
-        message = i18n
-          ? i18n.t(key, { args: { property: firstIssue.path.join('.'), ...firstIssue } })
-          : key
+        const anyIssue = firstIssue as Record<string, unknown>
+        const args = {
+          property: firstIssue.path.join('.'),
+          ...firstIssue,
+          min: anyIssue.minimum ?? anyIssue.min,
+          max: anyIssue.maximum ?? anyIssue.max,
+        }
+        message = i18n ? i18n.t(key, { args }) : key
       }
     } else if (i18n && typeof message === 'string' && message.includes('.')) {
       // 尝试翻译普通错误消息（如果看起来像一个键名）
