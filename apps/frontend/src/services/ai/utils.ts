@@ -137,9 +137,19 @@ ${todoList || t('common.none') || 'None'}
 
   result.push(
     ...messages.map((msg) => {
+      let messageContent = msg.content
+
+      // 如果有文档，将文档内容注入到消息正文中
+      if (msg.documents && msg.documents.length > 0) {
+        const docsContext = msg.documents
+          .map((doc) => `[Document: ${doc.name}]\n${doc.content}\n[End of Document: ${doc.name}]`)
+          .join('\n\n')
+        messageContent = `${docsContext}\n\n---\n\n${messageContent}`
+      }
+
       // 如果有图片，使用多模态格式
       if (msg.images && msg.images.length > 0) {
-        const content: MultiModalContent[] = [{ type: 'text', text: msg.content }]
+        const content: MultiModalContent[] = [{ type: 'text', text: messageContent }]
         msg.images.forEach((url) => {
           content.push({
             type: 'image_url',
@@ -151,9 +161,10 @@ ${todoList || t('common.none') || 'None'}
           content,
         }
       }
+
       return {
         role: msg.role,
-        content: msg.content,
+        content: messageContent,
       }
     }),
   )

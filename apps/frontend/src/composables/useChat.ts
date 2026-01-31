@@ -224,8 +224,19 @@ export function useChat(options: AIRequestOptions = {}) {
   /**
    * 发送消息
    */
-  async function sendMessage(content: string, images?: string[], isRetry = false): Promise<void> {
-    if ((!content.trim() && (!images || images.length === 0)) || isGenerating.value) return
+  async function sendMessage(
+    content: string,
+    images?: string[],
+    documents?: { name: string; content: string }[],
+    isRetry = false,
+  ): Promise<void> {
+    if (
+      (!content.trim() &&
+        (!images || images.length === 0) &&
+        (!documents || documents.length === 0)) ||
+      isGenerating.value
+    )
+      return
 
     const aiConfig = getAIConfig()
 
@@ -250,6 +261,7 @@ export function useChat(options: AIRequestOptions = {}) {
         role: 'user',
         content: content.trim(),
         images: images,
+        documents: documents,
         createdAt: new Date(),
       }
       // 使用 setter 触发更新逻辑（包括标题生成）
@@ -460,13 +472,14 @@ export function useChat(options: AIRequestOptions = {}) {
     const userMsg = chatHistory.value[lastUserMsgIndex]
     const userContent = userMsg.content
     const userImages = userMsg.images
+    const userDocuments = userMsg.documents
 
     // 删除该用户消息之后的所有消息
     const newHistory = chatHistory.value.slice(0, lastUserMsgIndex + 1)
     chatHistory.value = newHistory
 
     // 重新发送，使用 isRetry = true 避免再次创建用户消息
-    await sendMessage(userContent, userImages, true)
+    await sendMessage(userContent, userImages, userDocuments, true)
   }
 
   /**
@@ -484,7 +497,7 @@ export function useChat(options: AIRequestOptions = {}) {
     // 如果没有 AI 消息，尝试针对最后一条用户消息生成
     const lastMsg = chatHistory.value[chatHistory.value.length - 1]
     if (lastMsg.role === 'user') {
-      await sendMessage(lastMsg.content, lastMsg.images, true)
+      await sendMessage(lastMsg.content, lastMsg.images, lastMsg.documents, true)
     }
   }
 
@@ -495,21 +508,30 @@ export function useChat(options: AIRequestOptions = {}) {
     messageId: string,
     newContent: string,
     newImages?: string[],
+    newDocuments?: { name: string; content: string }[],
   ): Promise<void> {
-    if (isGenerating.value || (!newContent.trim() && (!newImages || newImages.length === 0))) return
+    if (
+      isGenerating.value ||
+      (!newContent.trim() &&
+        (!newImages || newImages.length === 0) &&
+        (!newDocuments || newDocuments.length === 0))
+    )
+      return
 
     const index = chatHistory.value.findIndex((msg) => msg.id === messageId)
     if (index === -1) return
 
-    // 如果没有传入新图片，则尝试保留原有的图片
+    // 如果没有传入新资源，则尝试保留原有的资源
     const imagesToUse = newImages !== undefined ? newImages : chatHistory.value[index].images
+    const documentsToUse =
+      newDocuments !== undefined ? newDocuments : chatHistory.value[index].documents
 
     // 更新消息内容并删除后续所有消息
     const newHistory = [...chatHistory.value.slice(0, index)]
     chatHistory.value = newHistory
 
     // 重新发送新内容
-    await sendMessage(newContent, imagesToUse)
+    await sendMessage(newContent, imagesToUse, documentsToUse)
   }
 
   // 合并的消息列表（包含流式响应）

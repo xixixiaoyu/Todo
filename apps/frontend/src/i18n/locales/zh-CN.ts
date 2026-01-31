@@ -382,5 +382,8 @@ export default {
     imageGenerationDesc: '绘图模式已开启，请确保当前预设模型支持生图（如 Gemini, DALL-E）',
     imagePromptPlaceholder: '描述你想要生成的画面... 输入 / 唤起快捷菜单',
     dragToMove: '可拖拽平移 / 滚轮缩放',
+    uploadFile: '上传文件 (图片或文档)',
+    parsing: '正在解析...',
+    parseError: '文件解析失败',
   },
 } as const

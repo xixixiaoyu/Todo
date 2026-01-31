@@ -38,7 +38,7 @@ export class ResetPasswordDto extends createZodDto(ResetPasswordSchema) {}
  * 登出请求 DTO
  */
 const LogoutSchema = z.object({
-  refreshToken: z.string({ required_error: '刷新令牌不能为空' }).min(1, '刷新令牌不能为空'),
+  refreshToken: z.string().min(1, '刷新令牌不能为空'),
 })
 
 export class LogoutDto extends createZodDto(LogoutSchema) {}

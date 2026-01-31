@@ -20,6 +20,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant' | 'system'
   content: string
   images?: string[] // 图片 URL 或 base64
+  documents?: { name: string; content: string }[] // 解析后的文档内容
   thinkingContent?: string
   reasoning_details?: string
   discussionSteps?: DiscussionStep[]

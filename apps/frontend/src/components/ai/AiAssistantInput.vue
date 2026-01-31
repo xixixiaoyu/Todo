@@ -12,7 +12,10 @@ import {
   Clover,
   Users,
   Lightbulb,
+  FileText,
+  Loader2,
 } from 'lucide-vue-next'
+import type { ParsedFile } from '@/composables/useFileParsing'
 
 const props = defineProps<{
   modelValue: string
@@ -22,6 +25,7 @@ const props = defineProps<{
   isDiscussionEnabled: boolean
   isThinkingEnabled: boolean
   selectedImages: string[]
+  parsedFiles: ParsedFile[]
   isGenerating: boolean
   error: string | null
   lastActiveSession: ChatSession | null
@@ -33,9 +37,10 @@ const emit = defineEmits<{
   (e: 'stop'): void
   (e: 'navigatePrevious'): void
   (e: 'removeImage', index: number): void
-  (e: 'triggerImageUpload'): void
+  (e: 'removeFile', id: string): void
+  (e: 'triggerFileUpload'): void
+  (e: 'handleFileUpload', event: Event): void
   (e: 'paste', event: ClipboardEvent): void
-  (e: 'handleImageUpload', event: Event): void
   (e: 'toggleTodo'): void
   (e: 'toggleDiscussion'): void
   (e: 'toggleImageGen'): void
@@ -190,17 +195,50 @@ defineExpose({
     class="input-container-refined relative flex flex-col rounded-2xl border border-border bg-card p-1.5 shadow-sm"
     :class="{ 'opacity-60 grayscale-[0.2]': isInputDisabled }"
   >
-    <!-- 图片预览区域 -->
-    <div v-if="selectedImages.length > 0" class="flex flex-wrap gap-2 px-2 pt-2">
+    <!-- 附件预览区域 (图片 + 文档) -->
+    <div
+      v-if="selectedImages.length > 0 || parsedFiles.length > 0"
+      class="flex flex-wrap gap-2 px-2 pt-2"
+    >
+      <!-- 图片预览 -->
       <div
         v-for="(img, index) in selectedImages"
-        :key="index"
+        :key="`img-${index}`"
         class="group relative h-16 w-16 overflow-hidden rounded-lg border border-border bg-muted"
       >
         <img :src="img" class="h-full w-full object-cover" />
         <button
           class="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100"
           @click="emit('removeImage', index)"
+        >
+          <X :size="12" />
+        </button>
+      </div>
+
+      <!-- 文档预览 -->
+      <div
+        v-for="file in parsedFiles"
+        :key="file.id"
+        class="group relative flex h-16 w-32 items-center gap-2 rounded-lg border border-border bg-muted/50 px-2 py-1.5 transition-colors hover:bg-muted"
+      >
+        <div
+          class="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-primary/10 text-primary"
+        >
+          <Loader2 v-if="file.status === 'parsing'" :size="14" class="animate-spin" />
+          <AlertCircle v-else-if="file.status === 'error'" :size="14" class="text-red-500" />
+          <FileText v-else :size="14" />
+        </div>
+        <div class="min-w-0 flex-1">
+          <p class="truncate text-[11px] font-medium leading-none">{{ file.name }}</p>
+          <p class="mt-1 text-[9px] text-muted-foreground">
+            {{
+              file.status === 'parsing' ? t('ai.parsing') : (file.size / 1024).toFixed(1) + ' KB'
+            }}
+          </p>
+        </div>
+        <button
+          class="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100"
+          @click="emit('removeFile', file.id)"
         >
           <X :size="12" />
         </button>
@@ -300,25 +338,25 @@ defineExpose({
 
     <div class="flex items-center justify-between px-1.5 pb-1.5">
       <div class="flex items-center gap-1.5">
-        <!-- 图片上传按钮 -->
+        <!-- 附件上传按钮 -->
         <button
           class="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-          :title="t('ai.uploadImage')"
-          :disabled="isInputDisabled || selectedImages.length >= 4"
-          @click="emit('triggerImageUpload')"
+          :title="t('ai.uploadFile')"
+          :disabled="isInputDisabled || selectedImages.length + parsedFiles.length >= 10"
+          @click="emit('triggerFileUpload')"
         >
           <ImageIcon :size="16" />
         </button>
-        <label :for="fileInputId" class="sr-only">{{ t('ai.uploadImage') }}</label>
+        <label :for="fileInputId" class="sr-only">{{ t('ai.uploadFile') }}</label>
         <input
           :id="fileInputId"
           ref="fileInputRef"
           name="ai-file-upload"
           type="file"
-          accept="image/*"
+          accept="image/*,.pdf,.docx,.xlsx,.xls,.txt,.md,.json,.csv,.ts,.js,.py"
           multiple
           class="hidden"
-          @change="(e) => emit('handleImageUpload', e)"
+          @change="(e) => emit('handleFileUpload', e)"
         />
 
         <!-- 停止生成按钮 -->
@@ -345,11 +383,19 @@ defineExpose({
       <button
         class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-primary-foreground transition-all shadow-sm"
         :class="[
-          isInputDisabled || (!modelValue.trim() && selectedImages.length === 0)
+          isInputDisabled ||
+          (!modelValue.trim() &&
+            selectedImages.length === 0 &&
+            parsedFiles.filter((f) => f.status === 'completed').length === 0)
             ? 'cursor-not-allowed bg-primary/20 scale-95'
             : 'animate-button-pop bg-primary hover:bg-primary-hover hover:scale-105 active:scale-95 shadow-primary/20',
         ]"
-        :disabled="isInputDisabled || (!modelValue.trim() && selectedImages.length === 0)"
+        :disabled="
+          isInputDisabled ||
+          (!modelValue.trim() &&
+            selectedImages.length === 0 &&
+            parsedFiles.filter((f) => f.status === 'completed').length === 0)
+        "
         @click="emit('send')"
       >
         <Send :size="18" />

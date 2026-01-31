@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { MulterModule } from '@nestjs/platform-express'
 import { ConfigService } from '@nestjs/config'
 import { StorageService } from './storage.service'
+import { FileParsingService } from './file-parsing.service'
 import { UploadController } from './upload.controller'
 import { memoryStorage } from 'multer'
 
@@ -31,9 +32,18 @@ import { memoryStorage } from 'multer'
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             'application/vnd.ms-excel',
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'text/plain',
+            'text/markdown',
+            'application/json',
+            'text/csv',
           ]
 
-          if (allowedMimes.includes(file.mimetype)) {
+          // 宽松过滤：允许文本和代码类文件
+          if (
+            allowedMimes.includes(file.mimetype) ||
+            file.mimetype.startsWith('text/') ||
+            file.originalname.match(/\.(ts|js|py|go|java|c|cpp|h|hpp|rs|json|md|txt)$/i)
+          ) {
             callback(null, true)
           } else {
             callback(new Error(`不支持的文件类型: ${file.mimetype}`), false)
@@ -43,7 +53,7 @@ import { memoryStorage } from 'multer'
     }),
   ],
   controllers: [UploadController],
-  providers: [StorageService],
-  exports: [StorageService],
+  providers: [StorageService, FileParsingService],
+  exports: [StorageService, FileParsingService],
 })
 export class UploadModule {}

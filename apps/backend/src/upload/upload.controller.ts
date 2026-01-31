@@ -13,6 +13,7 @@ import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express'
 import { ApiTags, ApiOperation, ApiConsumes, ApiBody, ApiBearerAuth } from '@nestjs/swagger'
 import { JwtAuthGuard } from '../auth'
 import { StorageService, UploadResult } from './storage.service'
+import { FileParsingService } from './file-parsing.service'
 
 /**
  * 文件上传控制器
@@ -22,7 +23,10 @@ import { StorageService, UploadResult } from './storage.service'
 @UseGuards(JwtAuthGuard)
 @Controller('upload')
 export class UploadController {
-  constructor(private readonly storageService: StorageService) {}
+  constructor(
+    private readonly storageService: StorageService,
+    private readonly fileParsingService: FileParsingService,
+  ) {}
 
   /**
    * 上传单个文件
@@ -44,6 +48,30 @@ export class UploadController {
       throw new BadRequestException('upload.FILE_REQUIRED')
     }
     return this.storageService.upload(file)
+  }
+
+  /**
+   * 解析文件内容
+   * 上传文件并直接返回提取出的文本，不保存到存储服务
+   */
+  @Post('parse')
+  @ApiOperation({ summary: '解析文件内容' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  @UseInterceptors(FileInterceptor('file'))
+  async parseFile(@UploadedFile() file: Express.Multer.File): Promise<{ content: string }> {
+    if (!file) {
+      throw new BadRequestException('upload.FILE_REQUIRED')
+    }
+    const content = await this.fileParsingService.parseFile(file)
+    return { content }
   }
 
   /**

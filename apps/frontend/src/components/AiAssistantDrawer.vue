@@ -9,6 +9,7 @@ import AiAssistantToolbar from '@/components/ai/AiAssistantToolbar.vue'
 import AiAssistantInput from '@/components/ai/AiAssistantInput.vue'
 import { useChat } from '@/composables/useChat'
 import { useAIConfig, aiThinkingMode, saveAIThinkingMode } from '@/composables/useAIConfig'
+import { useFileParsing } from '@/composables/useFileParsing'
 import { useChatHistory } from '@/composables/useChatHistory'
 import { useTodoStore } from '@/features/todo/stores/todo'
 import { useI18n } from 'vue-i18n'
@@ -20,36 +21,54 @@ const modelValue = defineModel<boolean>({ required: true })
 // AI 配置与预设
 const { presets, activePreset, switchPreset, config, updateConfig } = useAIConfig()
 
-// 图片上传状态
+// 附件上传状态
 const selectedImages = ref<string[]>([])
+const { parsedFiles, parseFile, removeFile, clearFiles } = useFileParsing()
 const assistantInputRef = ref<InstanceType<typeof AiAssistantInput>>()
 
-const triggerImageUpload = () => {
+const triggerFileUpload = () => {
   assistantInputRef.value?.$el.querySelector('input[type="file"]')?.click()
 }
 
 const processFiles = (files: FileList | File[]) => {
-  const MAX_IMAGES = 4
-  const remaining = MAX_IMAGES - selectedImages.value.length
+  const MAX_TOTAL = 10
+  const currentTotal = selectedImages.value.length + parsedFiles.value.length
+  const remaining = MAX_TOTAL - currentTotal
   if (remaining <= 0) return
 
   const filesToProcess = Array.from(files).slice(0, remaining)
 
   filesToProcess.forEach((file) => {
-    if (!file.type.startsWith('image/')) return
+    // 允许的文件类型
+    const isImage = file.type.startsWith('image/')
+    const isAllowedDoc =
+      file.type === 'application/pdf' ||
+      file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+      file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+      file.type === 'application/vnd.ms-excel' ||
+      file.type === 'text/plain' ||
+      file.type === 'text/markdown' ||
+      file.type === 'application/json' ||
+      file.type === 'text/csv' ||
+      file.name.match(/\.(ts|js|py|go|java|c|cpp|h|hpp|rs)$/i)
 
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const result = e.target?.result as string
-      if (result) {
-        selectedImages.value.push(result)
+    if (isImage) {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const result = e.target?.result as string
+        if (result) {
+          selectedImages.value.push(result)
+        }
       }
+      reader.readAsDataURL(file)
+    } else if (isAllowedDoc) {
+      // 处理文档
+      void parseFile(file)
     }
-    reader.readAsDataURL(file)
   })
 }
 
-const handleImageUpload = (event: Event) => {
+const handleFileUpload = (event: Event) => {
   const target = event.target as HTMLInputElement
   const files = target.files
   if (!files) return
@@ -67,14 +86,22 @@ const handlePaste = (event: ClipboardEvent) => {
   if (!items) return
 
   const files: File[] = []
+  let hasFiles = false
+
   for (const item of Array.from(items)) {
-    if (item.type.indexOf('image') !== -1) {
+    // 如果是文件类型（包括图片和文档）
+    if (item.kind === 'file') {
       const file = item.getAsFile()
-      if (file) files.push(file)
+      if (file) {
+        files.push(file)
+        hasFiles = true
+      }
     }
   }
 
-  if (files.length > 0) {
+  if (hasFiles) {
+    // 如果包含文件，阻止默认行为，防止文件名被插入到输入框
+    event.preventDefault()
     processFiles(files)
   }
 }
@@ -238,15 +265,23 @@ const isInputDisabled = computed(() => isGenerating.value && !error.value)
 const handleSend = async () => {
   const content = chatInput.value.trim()
   const images = [...selectedImages.value]
-  if ((!content && images.length === 0) || isInputDisabled.value) return
+  const documents = parsedFiles.value
+    .filter((f) => f.status === 'completed')
+    .map((f) => ({
+      name: f.name,
+      content: f.content,
+    }))
+
+  if ((!content && images.length === 0 && documents.length === 0) || isInputDisabled.value) return
 
   chatInput.value = ''
   selectedImages.value = []
+  clearFiles()
 
   // 发送后自动调整高度
   void nextTick(() => assistantInputRef.value?.adjustHeight())
 
-  await sendMessage(content, images)
+  await sendMessage(content, images, documents)
 }
 
 const handleNewChat = () => {
@@ -380,6 +415,7 @@ defineOptions({
             :is-discussion-enabled="isDiscussionEnabled"
             :is-thinking-enabled="isThinkingEnabled"
             :selected-images="selectedImages"
+            :parsed-files="parsedFiles"
             :is-generating="isGenerating"
             :error="error"
             :last-active-session="lastActiveSession"
@@ -387,8 +423,9 @@ defineOptions({
             @stop="stopGenerating"
             @navigate-previous="navigateToPrevious"
             @remove-image="removeImage"
-            @trigger-image-upload="triggerImageUpload"
-            @handle-image-upload="handleImageUpload"
+            @remove-file="removeFile"
+            @trigger-file-upload="triggerFileUpload"
+            @handle-file-upload="handleFileUpload"
             @paste="handlePaste"
             @toggle-todo="toggleTodoAssistant"
             @toggle-discussion="toggleDiscussionMode"
