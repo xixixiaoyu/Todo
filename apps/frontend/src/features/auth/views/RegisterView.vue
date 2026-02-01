@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useRouter } from 'vue-router'
@@ -16,6 +17,10 @@ import { Separator } from '@/components/ui/separator'
 const router = useRouter()
 const authStore = useAuthStore()
 const { t } = useI18n()
+
+onMounted(() => {
+  authStore.clearError()
+})
 const RegisterWithConfirmSchema = RegisterSchema.extend({
   confirmPassword: z.string().min(1, 'validation.REQUIRED'),
 }).refine((data) => data.password === data.confirmPassword, {

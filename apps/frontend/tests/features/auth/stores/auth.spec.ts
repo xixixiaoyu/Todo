@@ -504,12 +504,14 @@ describe('useAuthStore', () => {
   })
 
   describe('clearError', () => {
-    it('should clear error', () => {
+    it('should clear error and field errors', () => {
       store.error = 'Some error'
+      store.fieldErrors = { password: 'validation.MIN_LENGTH' }
 
       store.clearError()
 
       expect(store.error).toBeNull()
+      expect(store.fieldErrors).toEqual({})
     })
   })
 

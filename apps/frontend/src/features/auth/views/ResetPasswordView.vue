@@ -39,6 +39,7 @@ const [password] = defineField('password')
 const [confirmPassword] = defineField('confirmPassword')
 
 onMounted(() => {
+  authStore.clearError()
   token.value = route.query.token as string | null
   if (!token.value) {
     invalidToken.value = true

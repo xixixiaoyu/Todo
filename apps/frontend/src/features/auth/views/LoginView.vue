@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useRouter } from 'vue-router'
@@ -15,6 +16,10 @@ import { Separator } from '@/components/ui/separator'
 const router = useRouter()
 const authStore = useAuthStore()
 const { t } = useI18n()
+
+onMounted(() => {
+  authStore.clearError()
+})
 
 const { handleSubmit, errors, defineField, setErrors } = useForm({
   validationSchema: toTypedSchema(LoginSchema),

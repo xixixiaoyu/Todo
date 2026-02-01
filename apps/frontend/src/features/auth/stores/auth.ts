@@ -348,6 +348,7 @@ export const useAuthStore = defineStore(
      */
     function clearError(): void {
       error.value = null
+      fieldErrors.value = {}
     }
 
     return {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useI18n } from 'vue-i18n'
@@ -13,6 +13,10 @@ import { PrimaryButton } from '@/components/ui/button'
 const authStore = useAuthStore()
 const { t } = useI18n()
 const success = ref(false)
+
+onMounted(() => {
+  authStore.clearError()
+})
 
 const { handleSubmit, errors, defineField } = useForm({
   validationSchema: toTypedSchema(ForgotPasswordSchema),
