@@ -54,6 +54,7 @@ describe('TodosService', () => {
             completed: false,
             order: 0,
             isPinned: false,
+            version: 0,
             createdAt: new Date(),
             updatedAt: new Date(),
           },
