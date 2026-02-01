@@ -353,13 +353,14 @@ export default {
     memoryContextLabel: '[Background Context: About User]',
     memoryContextInstruction:
       'The following is background knowledge about the user. Use this info to tailor your response, but you MUST follow these principles to ensure a natural conversation:\n1. **Naturalness First**: If background info is from a vastly different domain than the current topic (e.g., tech vs. emotion), DO NOT force unrelated terms or preferences into the response.\n2. **Avoid Forced Metaphors**: Strictly avoid forcing analogies between unrelated domains (e.g., using programming concepts to explain emotions) unless explicitly requested.\n3. **Subtle Integration**: Use the info as the "undertone" of your understanding. Reflect personalization through tone and focus of suggestions, rather than direct repetition or forced association.\n4. **No Source Mentioning**: Strictly avoid words like "memory", "record", or "you previously said".',
-    memoryExtractionPrompt: `You are a keen memory extraction expert, skilled at distilling a "core profile" with long-term value for future interactions from conversations.
+    memoryExtractionPrompt: `You are an extremely rigorous memory extraction expert, responsible for distilling a deep user profile with "long-term reference value" from conversations.
 Extraction Principles:
-1. **User-Centric**: Extract information ONLY about the "User's" facts, preferences, tech stacks, or habits. **Strictly forbid** extracting the AI's own responses or suggestions.
-2. **Context Awareness**: Use the Assistant's responses in the conversation to understand what "it", "this", or "that" refers to, but the output must focus on the user.
-3. **Long-term Value**: Extract only info reflecting user background, habits, or key facts. Ignore transient info like mood swings or weather.
-4. **Atomization**: Each piece should be an independent, complete semantic unit, no more than 20 words.
-5. **De-duplication**: Do not extract info already present in the "Current Memory List".
+1. **Substantive Info**: Extract ONLY explicit facts about the user, core tech stacks, specific aesthetic preferences, or established habits. **Strictly forbid** extracting transient actions like "user asked about X" or "user is interested in Y."
+2. **High Confidence**: Only extract when the user expresses something explicitly (e.g., "I usually use...", "I'm used to...", "My project is..."). Strictly forbid back-inferring user preferences based on Assistant's suggestions or speculation.
+3. **Long-term Value**: Ignore all time-sensitive information (e.g., current errors, present mood, specific discussion details of a problem). Only keep info that remains helpful for understanding the user three months from now.
+4. **Reject Triviality**: Strictly forbid extracting generic nonsense (e.g., "User likes coding", "User wants to improve efficiency"). Memories must be specific and distinctive.
+5. **Atomicity & Independence**: Each item must be a complete semantic unit, no more than 20 words, and understandable without current conversation context.
+6. **No Redundancy**: Strictly forbid extraction if new info is semantically repetitive or highly similar to entries in the "Current Memory List."
 
 Output Specification:
 - Return in JSON array format (e.g., ["Prefers TS development", "Learning Go"]).
@@ -371,12 +372,12 @@ Current Memory List:
 
 Conversation to extract:
 {conversation}`,
-    memoryCompressionPrompt: `You are a memory management expert, responsible for maintaining a pure and efficient user profile. Please perform deep compression and conflict resolution on the following memory fragments.
+    memoryCompressionPrompt: `You are a memory management expert, responsible for maintaining the purity and efficiency of user profiles. Please perform deep compression and conflict resolution on the following memory snippets.
 Rules:
-1. **Semantic Merging**: Merge similar or related fragments (e.g., "Likes TS" and "Tends to use TypeScript") into a single more accurate statement.
-2. **Conflict Resolution**: If contradictions exist (e.g., "Likes React" followed by "Loves Vue"), take the latest fact as truth and remove obsolete info.
-3. **Importance Ranking**: Remove outdated, trivial, or no longer relevant information.
-4. **Format Consistency**: Keep each piece concise and powerful, no more than 20 words.
+1. **Semantic Merging**: Merge similar or related snippets (e.g., "likes TS" and "prefers TypeScript") into a single, more accurate statement.
+2. **Conflict Resolution**: If contradictions exist (e.g., said "likes React" then later "prefers Vue"), the latest fact prevails; delete obsolete info.
+3. **Importance Ranking**: Remove outdated, trivial, or no longer useful information.
+4. **Consistency**: Keep each item concise and powerful, no more than 20 words.
 
 Output Specification:
 - Return strictly in JSON array format.

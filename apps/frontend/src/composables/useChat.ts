@@ -74,25 +74,29 @@ export function useChat(options: AIRequestOptions = {}) {
     const lastUserMsg = [...history].reverse().find((m) => m.role === 'user')
     if (!lastUserMsg) return false
 
-    // 如果消息太短（如 "好的", "OK", "谢谢"），通常不包含可提取记忆
-    if (lastUserMsg.content.trim().length < 5) return false
+    // 提高字数阈值，短句通常不包含实质性背景
+    if (lastUserMsg.content.trim().length < 8) return false
 
     const keywords = [
-      '我喜欢',
-      '我不喜欢',
-      '习惯',
-      '偏好',
+      '我常用',
+      '我习惯',
       '我的技术栈',
-      '常用',
+      '偏好',
+      '倾向于',
+      '一直都',
       '记住',
       '记得',
       '以后都',
       '总是',
-      'i like',
+      '我的项目',
+      '我在做',
+      'i usually',
       'i prefer',
       'my stack',
       'remember',
       'always',
+      'my project',
+      'i am working on',
     ]
     const content = lastUserMsg.content.toLowerCase()
     return keywords.some((k) => content.includes(k))
@@ -104,14 +108,12 @@ export function useChat(options: AIRequestOptions = {}) {
   async function extractAndStoreMemories(history: ChatMessage[]) {
     if (!isMemoryEnabled.value) return
 
-    // 策略：
+    // 策略优化：
     // 1. 语义触发：如果用户提到了明显的偏好关键词，立即提取
-    // 2. 周期触发：对话初期（前 10 条消息）每轮提取，之后每 2 轮提取一次
+    // 2. 周期触发：平衡严格性与召回率，改为每 3 轮提取一次
     const hasKeywords = hasMemoryKeywords(history)
     messageCounterSinceLastExtraction.value++
-    const totalMessages = history.length
-    const shouldExtract =
-      hasKeywords || totalMessages <= 10 || messageCounterSinceLastExtraction.value >= 2
+    const shouldExtract = hasKeywords || messageCounterSinceLastExtraction.value >= 3
 
     if (!shouldExtract) return
 

@@ -262,33 +262,14 @@ describe('useChat', () => {
 
       const { sendMessage } = useChat()
 
-      // 1. 第一轮：应提取（前 10 条消息强制提取）
-      await sendMessage('msg 1')
+      // 1-2 轮：不应提取（新逻辑：每 3 轮提取一次，且无关键词）
+      await sendMessage('normal msg 1')
+      await sendMessage('normal msg 2')
+      expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(0)
+
+      // 3. 第三轮：应提取
+      await sendMessage('normal msg 3')
       expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(1)
-
-      // 2. 第二轮：应提取（前 10 条消息强制提取）
-      await sendMessage('msg 2')
-      expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(2)
-
-      // 3. 第三轮：应提取（前 10 条消息强制提取）
-      await sendMessage('msg 3')
-      expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(3)
-
-      // 4. 第四轮：应提取（前 10 条消息强制提取）
-      await sendMessage('msg 4')
-      expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(4)
-
-      // 5. 第五轮：应提取（前 10 条消息强制提取）
-      await sendMessage('msg 5')
-      expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(5)
-
-      // 6. 第六轮：不应提取（total > 10，计数器为 1）
-      await sendMessage('msg 6')
-      expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(5)
-
-      // 7. 第七轮：应提取（计数器达到 2）
-      await sendMessage('msg 7')
-      expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(6)
     })
 
     it('should extract memories immediately when semantic keywords are detected', async () => {
@@ -303,23 +284,25 @@ describe('useChat', () => {
           onChunk('[DONE]')
         },
       )
-      mockGetAIStaticResponse.mockResolvedValue({ content: '["Memory Keyword"]' })
+      mockGetAIStaticResponse.mockResolvedValue({ content: '["Memory A"]' })
 
       const { sendMessage } = useChat()
 
-      // 模拟一个已经提取过的情景，计数器被重置为 0
-      // 发送一个不带关键词的消息，totalMessages 假设已经很多了（比如 20）
-      // 这里通过连续发送来模拟
-      for (let i = 0; i < 11; i++) {
-        await sendMessage(`msg ${i}`)
-      }
-      const baseCalls = mockGetAIStaticResponse.mock.calls.length
+      // 1. 普通消息：不触发（第 1 轮）
+      await sendMessage('hello world')
+      expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(0)
 
-      // 发送带关键词的消息
-      await sendMessage('我喜欢用 TypeScript 开发项目')
+      // 2. 包含关键词且长度足够：立即触发
+      await sendMessage('我的技术栈是 Vue 和 TS')
+      expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(1)
 
-      // 应该立即触发提取，即使距离上次提取只有 1 条消息
-      expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(baseCalls + 1)
+      // 3. 再次普通消息：不触发
+      await sendMessage('tell me a joke')
+      expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(1)
+
+      // 4. 包含关键词：再次立即触发
+      await sendMessage('我习惯使用 VS Code 开发')
+      expect(mockGetAIStaticResponse).toHaveBeenCalledTimes(2)
     })
 
     it('should retry on failure and eventually succeed', async () => {
