@@ -166,7 +166,9 @@ onMounted(() => {
   // 监听容器大小变化，确保在窗口缩放或抽屉展开时高度依然正确
   if (textareaRef.value) {
     resizeObserver = new ResizeObserver(() => {
-      adjustTextareaHeight()
+      requestAnimationFrame(() => {
+        adjustTextareaHeight()
+      })
     })
     resizeObserver.observe(textareaRef.value)
   }

@@ -46,11 +46,26 @@ const app = createApp(App)
 
 // 全局错误处理
 app.config.errorHandler = (err, instance, info) => {
+  // 忽略 ResizeObserver 相关的良性错误
+  const message = err instanceof Error ? err.message : String(err)
+  if (
+    message === 'ResizeObserver loop limit exceeded' ||
+    message === 'ResizeObserver loop completed with undelivered notifications'
+  ) {
+    return
+  }
   console.error('Global Error:', err)
   console.error('Vue Info:', info)
 }
 
 window.onerror = (message, source, lineno, colno, error) => {
+  // 忽略 ResizeObserver 相关的良性错误
+  if (
+    message === 'ResizeObserver loop limit exceeded' ||
+    message === 'ResizeObserver loop completed with undelivered notifications'
+  ) {
+    return
+  }
   console.error('Window Error:', message, error)
 }
 

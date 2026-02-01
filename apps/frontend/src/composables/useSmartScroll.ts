@@ -387,7 +387,11 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
 
     // ResizeObserver 监听容器尺寸变化
     if (watchResize && typeof ResizeObserver !== 'undefined') {
-      resizeObserver = new ResizeObserver(handleResize)
+      resizeObserver = new ResizeObserver(() => {
+        requestAnimationFrame(() => {
+          handleResize()
+        })
+      })
       resizeObserver.observe(el)
     }
 
