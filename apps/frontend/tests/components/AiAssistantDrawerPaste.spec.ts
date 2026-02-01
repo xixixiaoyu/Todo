@@ -1,6 +1,7 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { ref, nextTick } from 'vue'
+import { createPinia, setActivePinia } from 'pinia'
 import AiAssistantDrawer from '@/components/AiAssistantDrawer.vue'
 
 // Mock Lucide icons
@@ -101,10 +102,43 @@ vi.mock('@/composables/useAIConfig', () => ({
   saveAIThinkingMode: vi.fn(),
 }))
 
+vi.mock('@/composables/useFileParsing', () => ({
+  useFileParsing: () => ({
+    parsedFiles: ref([]),
+    parseFile: vi.fn(),
+    removeFile: vi.fn(),
+    clearFiles: vi.fn(),
+  }),
+}))
+
+vi.mock('@/features/todo/stores/todo', () => ({
+  useTodoStore: () => ({
+    isMaximized: false,
+    setMaximized: vi.fn(),
+  }),
+}))
+
 vi.mock('vue-i18n', () => ({
   useI18n: () => ({
     t: (key: string) => key,
   }),
+  createI18n: () => ({
+    global: {
+      t: (key: string) => key,
+    },
+    install: () => {},
+  }),
+}))
+
+// Mock components to simplify rendering
+vi.mock('@/components/ai/AiAssistantHeader.vue', () => ({
+  default: { template: '<div>AiAssistantHeader</div>' },
+}))
+
+vi.mock('@/components/ai/AiAssistantToolbar.vue', () => ({
+  default: {
+    template: '<div>AiAssistantToolbar<slot name="input" /></div>',
+  },
 }))
 
 // Mock FileReader
@@ -125,6 +159,10 @@ class MockFileReader {
 vi.stubGlobal('FileReader', MockFileReader)
 
 describe('AiAssistantDrawer Clipboard Paste', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
   it('should add image when pasting from clipboard', async () => {
     const wrapper = mount(AiAssistantDrawer, {
       props: { modelValue: true },
@@ -137,6 +175,7 @@ describe('AiAssistantDrawer Clipboard Paste', () => {
     const mockClipboardData = {
       items: [
         {
+          kind: 'file',
           type: 'image/png',
           getAsFile: () => mockFile,
         },
@@ -149,7 +188,7 @@ describe('AiAssistantDrawer Clipboard Paste', () => {
     })
 
     // Wait for FileReader and nextTick
-    await new Promise((resolve) => setTimeout(resolve, 10))
+    await new Promise((resolve) => setTimeout(resolve, 50))
     await nextTick()
 
     // Check if image preview is rendered
@@ -158,7 +197,7 @@ describe('AiAssistantDrawer Clipboard Paste', () => {
     expect(images[0].attributes('src')).toBe('data:image/png;base64,mock-data')
   })
 
-  it('should not add more than 4 images', async () => {
+  it('should not add more than 10 images', async () => {
     const wrapper = mount(AiAssistantDrawer, {
       props: { modelValue: true },
     })
@@ -166,7 +205,8 @@ describe('AiAssistantDrawer Clipboard Paste', () => {
     const textarea = wrapper.find('textarea')
     const mockFile = new File([''], 'test.png', { type: 'image/png' })
     const mockClipboardData = {
-      items: Array(6).fill({
+      items: Array(12).fill({
+        kind: 'file',
         type: 'image/png',
         getAsFile: () => mockFile,
       }),
@@ -176,10 +216,10 @@ describe('AiAssistantDrawer Clipboard Paste', () => {
       clipboardData: mockClipboardData,
     })
 
-    await new Promise((resolve) => setTimeout(resolve, 10))
+    await new Promise((resolve) => setTimeout(resolve, 50))
     await nextTick()
 
     const images = wrapper.findAll('img')
-    expect(images.length).toBe(4)
+    expect(images.length).toBe(10)
   })
 })

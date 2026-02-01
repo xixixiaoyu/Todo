@@ -84,6 +84,7 @@ export const useTodoStore = defineStore(
             order: result.length,
             isProposed: true,
             expanded: true,
+            version: 0,
           })
         } else if (change.type === 'update') {
           const todo = result.find((t) => t.id === change.data.id)
@@ -309,6 +310,7 @@ export const useTodoStore = defineStore(
           parentId,
           order: minOrder - 1,
           expanded: true,
+          version: 0,
           syncStatus: 'pending',
         }
         todos.value.unshift(newTodo)
@@ -592,6 +594,7 @@ export const useTodoStore = defineStore(
         order: todo.order,
         isPinned: !!todo.isPinned,
         parentId: todo.parentId || null,
+        version: todo.version || 0,
         createdAt: todo.createdAt,
         updatedAt: todo.updatedAt,
         completedAt: todo.completedAt || null,
@@ -600,10 +603,10 @@ export const useTodoStore = defineStore(
     }
 
     /**
-     * 同步数据到云端
+     * 同步数据到云端 (带重试机制)
      */
-    async function sync(): Promise<void> {
-      if (loading.value) return
+    async function sync(retryCount = 0): Promise<void> {
+      if (loading.value && retryCount === 0) return
 
       const authStore = (await import('@/features/auth/stores/auth')).useAuthStore()
       authStore.hydrateFromStorage()
@@ -621,6 +624,12 @@ export const useTodoStore = defineStore(
         // 找出所有待同步的变更 (pending 或 还没 syncStatus 的)
         const pendingTodos = todos.value.filter((t) => t.syncStatus !== 'synced')
 
+        // 记录同步开始时的快照，用于解决竞态条件
+        // 如果在请求期间用户又修改了某个 Todo，我们不应将其标记为已同步
+        const syncSnapshots = new Map(
+          pendingTodos.map((t) => [t.id, new Date(t.updatedAt).getTime()]),
+        )
+
         const response = await todoApi.sync(
           {
             todos: pendingTodos.map(toSharedTodo),
@@ -632,8 +641,13 @@ export const useTodoStore = defineStore(
         // 更新本地状态
         const { synced, deletedIds, serverTime } = response.data
 
-        // 1. 标记刚才上传成功的为 synced
-        pendingTodos.forEach((t) => (t.syncStatus = 'synced'))
+        // 1. 标记刚才上传成功的为 synced (仅当期间未被再次修改时)
+        pendingTodos.forEach((t) => {
+          const snapshotTime = syncSnapshots.get(t.id)
+          if (snapshotTime === new Date(t.updatedAt).getTime()) {
+            t.syncStatus = 'synced'
+          }
+        })
 
         // 2. 合并服务器端的变更
         if (synced && Array.isArray(synced)) {
@@ -646,6 +660,7 @@ export const useTodoStore = defineStore(
               order: serverTodo.order,
               isPinned: serverTodo.isPinned,
               parentId: serverTodo.parentId,
+              version: serverTodo.version,
               createdAt: new Date(serverTodo.createdAt),
               updatedAt: new Date(serverTodo.updatedAt),
               completedAt: serverTodo.completedAt ? new Date(serverTodo.completedAt) : undefined,
@@ -675,9 +690,17 @@ export const useTodoStore = defineStore(
         todos.value = todos.value.filter((t) => !(t.deletedAt && t.syncStatus === 'synced'))
 
         lastSyncAt.value = serverTime
+        error.value = null // 清除之前的错误
       } catch (err) {
-        console.error('Sync failed:', err)
-        error.value = 'todo.syncFailed'
+        console.error(`Sync failed (attempt ${retryCount + 1}):`, err)
+
+        // 指数退避重试 (最大重试 3 次)
+        if (retryCount < 3) {
+          const delay = Math.pow(2, retryCount) * 1000
+          setTimeout(() => void sync(retryCount + 1), delay)
+        } else {
+          error.value = 'todo.syncFailed'
+        }
       } finally {
         loading.value = false
       }

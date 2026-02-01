@@ -58,11 +58,13 @@ describe('Todo Store Sync', () => {
             completed: false,
             order: 0,
             isPinned: false,
+            version: 0,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           },
         ],
         deletedIds: [],
+        version: 0,
         serverTime: new Date().toISOString(),
       } as SyncResponse,
     }
@@ -122,6 +124,7 @@ describe('Todo Store Sync', () => {
         syncStatus: 'synced',
         order: 0,
         isPinned: false,
+        version: 0,
       },
     ]
 

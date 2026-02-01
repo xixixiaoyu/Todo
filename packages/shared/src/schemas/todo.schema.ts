@@ -10,6 +10,7 @@ export const TodoSchema = z.object({
   order: z.number().int().default(0),
   isPinned: z.boolean().default(false),
   parentId: z.string().uuid().nullable().optional(),
+  version: z.number().int().default(0),
   createdAt: z.date().or(z.string()),
   updatedAt: z.date().or(z.string()),
   completedAt: z.date().or(z.string()).nullable().optional(),

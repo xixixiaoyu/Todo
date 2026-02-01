@@ -77,8 +77,11 @@ describe('TodosService', () => {
       expect(mockPrisma.$transaction).toHaveBeenCalled()
       expect(mockPrisma.todo.upsert).toHaveBeenCalled()
       expect(mockPrisma.todo.findMany).toHaveBeenCalled()
-      expect(result.synced).toHaveLength(1)
-      expect(result.synced[0].id).toBe('server-uuid')
+      // result.synced should contain both upserted item and server changes
+      expect(result.synced).toHaveLength(2)
+      expect(result.synced).toEqual(
+        expect.arrayContaining([expect.objectContaining({ id: 'server-uuid' })]),
+      )
       expect(result.deletedIds).toHaveLength(0)
       expect(result.serverTime).toBeDefined()
     })

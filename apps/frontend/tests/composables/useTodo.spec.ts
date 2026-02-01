@@ -29,11 +29,21 @@ function withSetup<T>(hook: () => T) {
 }
 
 // Mock vue-i18n
-vi.mock('vue-i18n', () => ({
-  useI18n: vi.fn(() => ({
-    t: vi.fn((key: string) => key),
-  })),
-}))
+vi.mock('vue-i18n', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('vue-i18n')>()
+  return {
+    ...actual,
+    useI18n: () => ({
+      t: (key: string) => key,
+    }),
+    createI18n: () => ({
+      global: {
+        t: (key: string) => key,
+      },
+      install: () => {},
+    }),
+  }
+})
 
 // Mock todoStore
 vi.mock('@/features/todo/stores/todo', () => ({

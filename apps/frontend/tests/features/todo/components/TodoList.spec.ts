@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createI18n } from 'vue-i18n'
+import { createPinia, setActivePinia } from 'pinia'
 import TodoList from '@/features/todo/components/TodoList.vue'
 import TodoItem from '@/features/todo/components/TodoItem.vue'
 import type { Todo } from '@/features/todo/stores/todo'
@@ -29,6 +30,10 @@ const i18n = createI18n({
 })
 
 describe('TodoList', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
   const mockTodos: Todo[] = [
     {
       id: '1',

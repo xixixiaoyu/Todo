@@ -414,7 +414,7 @@ export function useChat(options: AIRequestOptions = {}) {
         console.warn(`Retrying ${retryCount.value}/${MAX_RETRIES}...`)
         // 重试时不删除消息，而是直接再次调用
         isGenerating.value = false
-        await sendMessage(content, images, true)
+        await sendMessage(content, images, documents, true)
       } else {
         isGenerating.value = false
         currentAIResponse.value = ''

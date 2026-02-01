@@ -3,6 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { ref, computed } from 'vue'
+import { createPinia, setActivePinia } from 'pinia'
 import i18n from '@/i18n'
 import { useChat } from '@/composables/useChat'
 import type { ChatSession } from '@/composables/useChatHistory'
@@ -98,6 +99,7 @@ describe('useChat', () => {
   type OnReasoningDetails = (details: string) => void
 
   beforeEach(() => {
+    setActivePinia(createPinia())
     vi.clearAllMocks()
     vi.useFakeTimers()
 

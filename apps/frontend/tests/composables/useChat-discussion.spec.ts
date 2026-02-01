@@ -3,6 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref, computed } from 'vue'
+import { createPinia, setActivePinia } from 'pinia'
 import { useChat } from '@/composables/useChat'
 import type { ChatSession } from '@/composables/useChatHistory'
 import { getMultiModelDiscussionStream } from '@/services/aiService'
@@ -51,6 +52,7 @@ describe('useChat - Discussion Mode', () => {
   type OnSteps = (steps: DiscussionStep[]) => void
 
   beforeEach(() => {
+    setActivePinia(createPinia())
     vi.clearAllMocks()
     const session = {
       id: 's1',

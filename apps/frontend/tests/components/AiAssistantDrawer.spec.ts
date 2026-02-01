@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { ref, nextTick } from 'vue'
+import { createPinia, setActivePinia } from 'pinia'
 import AiAssistantDrawer from '@/components/AiAssistantDrawer.vue'
 
 // Mock Lucide icons
@@ -126,10 +127,17 @@ vi.mock('vue-i18n', () => ({
   useI18n: () => ({
     t: (key: string) => key,
   }),
+  createI18n: () => ({
+    global: {
+      t: (key: string) => key,
+    },
+    install: () => {},
+  }),
 }))
 
 describe('AiAssistantDrawer Navigation and Button States', () => {
   beforeEach(() => {
+    setActivePinia(createPinia())
     mockSessions.value = []
     mockCurrentSessionId.value = null
     mockMessages.value = []

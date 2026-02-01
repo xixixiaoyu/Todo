@@ -2,7 +2,8 @@ import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ThemeToggle from '@/features/todo/components/ThemeToggle.vue'
 import { useTheme } from '@/composables/useTheme'
-import { ref } from 'vue'
+import { TooltipProvider } from '@/components/ui/tooltip'
+import { ref, h } from 'vue'
 
 // Mock useTheme
 vi.mock('@/composables/useTheme', () => ({
@@ -29,7 +30,14 @@ describe('ThemeToggle', () => {
       setTheme,
     })
 
-    const wrapper = mount(ThemeToggle)
+    const wrapper = mount({
+      setup() {
+        return () =>
+          h(TooltipProvider, null, {
+            default: () => h(ThemeToggle),
+          })
+      },
+    })
 
     // Initial state: light
     await wrapper.find('button').trigger('click')

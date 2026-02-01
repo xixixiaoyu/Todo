@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createI18n } from 'vue-i18n'
+import { createPinia, setActivePinia } from 'pinia'
 import TodoItem from '@/features/todo/components/TodoItem.vue'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useTodoStore, type Todo } from '@/features/todo/stores/todo'
@@ -26,6 +27,10 @@ const i18n = createI18n({
 })
 
 describe('TodoItem', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
   const mockTodo: Todo = {
     id: '1',
     title: 'Test todo',
@@ -34,6 +39,7 @@ describe('TodoItem', () => {
     updatedAt: new Date(),
     isPinned: false,
     order: 0,
+    version: 0,
   }
 
   it('should render todo title', () => {
@@ -120,6 +126,8 @@ describe('TodoItem', () => {
         updatedAt: new Date(),
         isPinned: false,
         order: 0,
+        expanded: false,
+        version: 0,
       },
       {
         id: '1',
@@ -130,6 +138,8 @@ describe('TodoItem', () => {
         isPinned: false,
         order: 1,
         parentId: 'parent',
+        expanded: false,
+        version: 0,
       },
     ]
 
@@ -372,7 +382,7 @@ describe('TodoItem', () => {
 
     it('should show expand arrow when there are children', async () => {
       const store = useTodoStore()
-      const parentTodo: Todo = { ...mockTodo, id: 'parent-1', expanded: true }
+      const parentTodo: Todo = { ...mockTodo, id: 'parent-1', expanded: true, version: 0 }
       const childTodo: Todo = {
         id: 'child-1',
         title: 'Child',
@@ -382,6 +392,7 @@ describe('TodoItem', () => {
         isPinned: false,
         order: 0,
         parentId: 'parent-1',
+        version: 0,
       }
       store.todos = [parentTodo, childTodo]
 
