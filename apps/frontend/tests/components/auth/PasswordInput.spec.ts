@@ -5,7 +5,7 @@ import PasswordInput from '@/components/auth/PasswordInput.vue'
 // Mock vue-i18n
 vi.mock('vue-i18n', () => ({
   useI18n: () => ({
-    t: (key: string) => {
+    t: (key: string, params?: Record<string, unknown>) => {
       const translations: Record<string, string> = {
         'password.show': '显示密码',
         'password.hide': '隐藏密码',
@@ -13,8 +13,16 @@ vi.mock('vue-i18n', () => ({
         'password.strength.weak': '弱',
         'password.strength.medium': '中',
         'password.strength.strong': '强',
+        'validation.MIN_LENGTH': '{property} 至少需要 {min} 个字符',
+        'common.fields.password': '密码',
       }
-      return translations[key] || key
+      let text = translations[key] || key
+      if (params) {
+        Object.entries(params).forEach(([k, v]) => {
+          text = text.replace(`{${k}}`, String(v))
+        })
+      }
+      return text
     },
   }),
 }))
@@ -104,6 +112,19 @@ describe('PasswordInput', () => {
 
     const input = wrapper.find('input')
     expect(input.classes()).toContain('border-error')
+  })
+
+  it('should translate validation key with params when name is provided', () => {
+    const wrapper = mount(PasswordInput, {
+      props: {
+        modelValue: '',
+        label: 'Password',
+        name: 'password',
+        error: 'validation.MIN_LENGTH',
+      },
+    })
+
+    expect(wrapper.text()).toContain('密码 至少需要 6 个字符')
   })
 
   it('should be disabled when disabled prop is true', () => {

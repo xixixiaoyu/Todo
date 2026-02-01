@@ -5,7 +5,19 @@ import FormInput from '@/components/auth/FormInput.vue'
 // Mock vue-i18n
 vi.mock('vue-i18n', () => ({
   useI18n: () => ({
-    t: (key: string) => key,
+    t: (key: string, params?: Record<string, unknown>) => {
+      const translations: Record<string, string> = {
+        'validation.MIN_LENGTH': '{property} 至少需要 {min} 个字符',
+        'common.fields.name': '姓名',
+      }
+      let text = translations[key] || key
+      if (params) {
+        Object.entries(params).forEach(([k, v]) => {
+          text = text.replace(`{${k}}`, String(v))
+        })
+      }
+      return text
+    },
   }),
 }))
 
@@ -109,6 +121,19 @@ describe('FormInput', () => {
     })
 
     expect(wrapper.text()).toContain('Invalid email format')
+  })
+
+  it('should translate validation key with params when name is provided', () => {
+    const wrapper = mount(FormInput, {
+      props: {
+        modelValue: '',
+        label: 'Name',
+        name: 'name',
+        error: 'validation.MIN_LENGTH',
+      },
+    })
+
+    expect(wrapper.text()).toContain('姓名 至少需要 2 个字符')
   })
 
   it('should apply error styles when error prop is provided', () => {

@@ -27,6 +27,18 @@ const inputValue = computed({
   set: (value) => emit('update:modelValue', value),
 })
 
+const fieldConstraints: Record<string, { min?: number; max?: number }> = {
+  password: { min: 6, max: 100 },
+  confirmPassword: { min: 1 },
+}
+
+const getProperty = () => {
+  if (!props.name) return ''
+  const key = `common.fields.${props.name}`
+  const translated = t(key)
+  return translated !== key ? translated : props.name
+}
+
 const displayError = computed(() => {
   if (!props.error) return ''
 
@@ -38,7 +50,15 @@ const displayError = computed(() => {
     !props.error.includes('{') &&
     !props.error.includes('}')
   ) {
-    const translated = t(props.error)
+    const fieldName = props.name || ''
+    const constraints = fieldName ? fieldConstraints[fieldName] : undefined
+    const translated = t(props.error, {
+      property: getProperty(),
+      min: constraints?.min,
+      max: constraints?.max,
+      minimum: constraints?.min,
+      maximum: constraints?.max,
+    })
     if (translated !== props.error) {
       return translated
     }
