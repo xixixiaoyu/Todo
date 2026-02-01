@@ -185,6 +185,9 @@ vi.mock('@/composables/useGsap', () => ({
       from: vi.fn(),
       to: vi.fn(),
       set: vi.fn(),
+      utils: {
+        toArray: vi.fn(() => []),
+      },
       timeline: vi.fn(() => ({
         from: vi.fn().mockReturnThis(),
         to: vi.fn().mockReturnThis(),
