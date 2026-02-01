@@ -395,6 +395,7 @@ export default {
     dragToMove: '可拖拽平移 / 滚轮缩放',
     uploadFile: '上传文件 (图片或文档)',
     parsing: '正在解析...',
+    loginRequiredForParsing: '此文件类型需要登录后才能解析',
     parseError: '文件解析失败',
   },
 } as const

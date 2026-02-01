@@ -227,6 +227,9 @@ export default {
     placeholder:
       'Ask AI Assistant... Type / for shortcut menu (Shift + Enter for newline, Enter to send)',
     generating: 'AI is replying...',
+    parsing: 'Parsing...',
+    loginRequiredForParsing: 'Login required to parse this file type',
+    parseError: 'File parsing failed',
     managePresets: 'Manage Presets...',
     custom: 'Custom',
     thinkingMode: 'AI Thinking Mode',

@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { parseFileApi } from '@/api/upload'
+import { useAuthStore } from '@/features/auth/stores/auth'
 import { useToast } from './useToast'
 import i18n from '@/i18n'
 
@@ -21,6 +22,7 @@ export interface ParsedFile {
 export function useFileParsing() {
   const { t } = i18n.global
   const { error: toastError } = useToast()
+  const authStore = useAuthStore()
   const parsedFiles = ref<ParsedFile[]>([])
   const isParsing = ref(false)
 
@@ -63,7 +65,10 @@ export function useFileParsing() {
         // 方案 A: 前端直接读取
         content = await readFileAsText(file)
       } else {
-        // 方案 B: 后端解析
+        // 方案 B: 后端解析 (需验证登录状态)
+        if (!authStore.isAuthenticated) {
+          throw new Error(t('ai.loginRequiredForParsing'))
+        }
         const response = await parseFileApi(file)
         content = response.data.content
       }
