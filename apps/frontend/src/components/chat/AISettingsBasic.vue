@@ -39,22 +39,28 @@ const showApiKey = ref(false)
 
 onMounted(() => {
   ctx.add(() => {
-    // 整体淡入
-    gsap.from('.settings-section', {
-      y: 20,
-      opacity: 0,
-      duration: 0.4,
-      stagger: 0.1,
-      ease: 'power2.out',
-    })
+    // 整体淡入 (仅当元素存在时)
+    const sections = gsap.utils.toArray('.settings-section')
+    if (sections.length > 0) {
+      gsap.from(sections, {
+        y: 20,
+        opacity: 0,
+        duration: 0.4,
+        stagger: 0.1,
+        ease: 'power2.out',
+      })
+    }
 
-    // 讨论模式开关的特殊动画
-    gsap.from('.discussion-card', {
-      scale: 0.98,
-      opacity: 0,
-      duration: 0.5,
-      ease: 'back.out(1.7)',
-    })
+    // 讨论模式开关的特殊动画 (仅当元素存在时)
+    const card = document.querySelector('.discussion-card')
+    if (card) {
+      gsap.from(card, {
+        scale: 0.98,
+        opacity: 0,
+        duration: 0.5,
+        ease: 'back.out(1.7)',
+      })
+    }
   })
 })
 
