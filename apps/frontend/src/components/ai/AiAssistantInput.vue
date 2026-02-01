@@ -133,8 +133,12 @@ const adjustTextareaHeight = () => {
   const textarea = textareaRef.value
   if (!textarea) return
 
+  // 使用更稳健的方式重置高度以获取准确的 scrollHeight
+  // 先设为 auto 以允许它收缩到内容大小
   textarea.style.height = 'auto'
   const scrollHeight = textarea.scrollHeight
+
+  // 确保高度在最小和最大值之间
   const newHeight = Math.min(Math.max(scrollHeight, MIN_HEIGHT), MAX_HEIGHT)
   textarea.style.height = `${newHeight}px`
 
@@ -151,13 +155,31 @@ const handleClickOutside = (event: MouseEvent) => {
   }
 }
 
+let resizeObserver: ResizeObserver | null = null
+
 onMounted(() => {
-  adjustTextareaHeight()
+  // 确保在 layout 稳定后进行初次高度调整
+  void nextTick(() => {
+    adjustTextareaHeight()
+  })
+
+  // 监听容器大小变化，确保在窗口缩放或抽屉展开时高度依然正确
+  if (textareaRef.value) {
+    resizeObserver = new ResizeObserver(() => {
+      adjustTextareaHeight()
+    })
+    resizeObserver.observe(textareaRef.value)
+  }
+
   window.addEventListener('click', handleClickOutside)
 })
 
 onUnmounted(() => {
   window.removeEventListener('click', handleClickOutside)
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
 })
 
 watch(
