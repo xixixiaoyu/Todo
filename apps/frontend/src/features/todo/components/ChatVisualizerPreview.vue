@@ -277,7 +277,7 @@ const chartOptions = computed(() => ({
         verticalAlign: 'middle',
         align: 'right',
         fontSize: 11,
-        fontFamily: 'LXGW WenKai, sans-serif',
+        fontFamily: "'LXGW WenKai Screen', 'LXGW WenKai', sans-serif",
         color: isDark.value ? '#f8fafc' : '#1e293b',
         rich: {
           proposed: { color: '#10b981', fontWeight: 'bold', padding: [2, 4] },

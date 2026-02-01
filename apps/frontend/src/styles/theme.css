@@ -1,6 +1,6 @@
 @layer base {
   :root {
-    --font-sans: 'LXGW WenKai', system-ui, -apple-system, sans-serif;
+    --font-sans: 'LXGW WenKai Screen', 'LXGW WenKai', system-ui, -apple-system, sans-serif;
 
     /* 基础颜色 */
     --background: 40 25% 97%;

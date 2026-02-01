@@ -188,7 +188,7 @@ const chartOptions = computed(() => ({
         fontSize: 14,
         distance: 10,
         color: isDark.value ? '#f8fafc' : '#1e293b',
-        fontFamily: 'LXGW WenKai, sans-serif',
+        fontFamily: "'LXGW WenKai Screen', 'LXGW WenKai', sans-serif",
         rich: {
           proposed: {
             color: '#10b981',

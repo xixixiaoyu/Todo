@@ -51,7 +51,7 @@ export async function initializeMermaid(theme: 'default' | 'dark' = 'default') {
   const mermaidInstance = await loadMermaid()
   if (mermaidInitialized && currentMermaidTheme === theme) return mermaidInstance
 
-  const fontStack = '"LXGW WenKai", system-ui, -apple-system, sans-serif'
+  const fontStack = '"LXGW WenKai Screen", "LXGW WenKai", system-ui, -apple-system, sans-serif'
   const isDark = theme === 'dark'
 
   mermaidInstance.initialize({
