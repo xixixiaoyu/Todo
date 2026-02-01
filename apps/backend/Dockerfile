@@ -37,7 +37,6 @@ COPY apps/backend ./apps/backend
 # 1. 构建共享包
 RUN pnpm --filter @my-app/shared build
 # 2. 生成 Prisma Client
-# 显式指定生成的路径，我们在 Prisma Schema 中设置了 output = "../client"
 RUN pnpm --filter @my-app/backend prisma:generate
 
 # 3. 构建后端应用
@@ -78,10 +77,7 @@ COPY --from=builder /app/apps/backend/dist ./dist
 COPY --from=builder /app/apps/backend/src/i18n ./dist/src/i18n
 COPY --from=builder /app/apps/backend/prisma ./prisma
 
-# 3. 复制生成的 Prisma Client
-COPY --from=builder /app/apps/backend/prisma/client ./node_modules/@prisma/client
-
-# 4. 复制 PM2 配置文件
+# 3. 复制 PM2 配置文件
 COPY ecosystem.config.js ./
 
 # 修正权限

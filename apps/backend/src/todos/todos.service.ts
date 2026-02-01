@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service'
 import { SyncMergeDto } from './todos.dto'
 import type { SyncItem } from '@my-app/shared'
 import { EventsGateway } from '../events/events.gateway'
-import { Todo } from '../../prisma/client'
+import { Todo } from '@prisma/client'
 
 @Injectable()
 export class TodosService {
