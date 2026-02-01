@@ -18,9 +18,26 @@ export const useAuthStore = defineStore(
     const user = ref<User | null>(null)
     const loading = ref(false)
     const error = ref<string | null>(null)
+    const fieldErrors = ref<Record<string, string>>({})
 
     // 计算属性
     const isAuthenticated = computed(() => !!token.value)
+
+    /**
+     * 处理 API 错误
+     */
+    function handleApiError(e: unknown, defaultMessage: string): void {
+      const err = e as {
+        response?: {
+          data?: {
+            message?: string
+            errors?: Record<string, string>
+          }
+        }
+      }
+      error.value = err.response?.data?.message || defaultMessage
+      fieldErrors.value = err.response?.data?.errors || {}
+    }
 
     function hydrateFromStorage(): void {
       if (token.value && refreshToken.value && user.value) return
@@ -61,6 +78,7 @@ export const useAuthStore = defineStore(
     async function login(credentials: LoginInput): Promise<boolean> {
       loading.value = true
       error.value = null
+      fieldErrors.value = {}
 
       try {
         const response = await authApi.login(credentials)
@@ -88,8 +106,7 @@ export const useAuthStore = defineStore(
 
         return true
       } catch (e: unknown) {
-        const err = e as { response?: { data?: { message?: string } } }
-        error.value = err.response?.data?.message || 'login.failed'
+        handleApiError(e, 'login.failed')
         return false
       } finally {
         loading.value = false
@@ -102,6 +119,7 @@ export const useAuthStore = defineStore(
     async function register(userData: RegisterInput): Promise<boolean> {
       loading.value = true
       error.value = null
+      fieldErrors.value = {}
 
       try {
         const response = await authApi.register(userData)
@@ -118,8 +136,7 @@ export const useAuthStore = defineStore(
 
         return true
       } catch (e: unknown) {
-        const err = e as { response?: { data?: { message?: string } } }
-        error.value = err.response?.data?.message || 'register.failed'
+        handleApiError(e, 'register.failed')
         return false
       } finally {
         loading.value = false
@@ -132,13 +149,13 @@ export const useAuthStore = defineStore(
     async function forgotPassword(email: string): Promise<boolean> {
       loading.value = true
       error.value = null
+      fieldErrors.value = {}
 
       try {
         await authApi.forgotPassword(email)
         return true
       } catch (e: unknown) {
-        const err = e as { response?: { data?: { message?: string } } }
-        error.value = err.response?.data?.message || 'forgotPassword.failed'
+        handleApiError(e, 'forgotPassword.failed')
         return false
       } finally {
         loading.value = false
@@ -151,13 +168,13 @@ export const useAuthStore = defineStore(
     async function resetPassword(tokenValue: string, password: string): Promise<boolean> {
       loading.value = true
       error.value = null
+      fieldErrors.value = {}
 
       try {
         await authApi.resetPassword(tokenValue, password)
         return true
       } catch (e: unknown) {
-        const err = e as { response?: { data?: { message?: string } } }
-        error.value = err.response?.data?.message || 'resetPassword.failed'
+        handleApiError(e, 'resetPassword.failed')
         return false
       } finally {
         loading.value = false
@@ -170,6 +187,7 @@ export const useAuthStore = defineStore(
     async function registerPasskey(name?: string): Promise<boolean> {
       loading.value = true
       error.value = null
+      fieldErrors.value = {}
 
       try {
         const options = await authApi.getPasskeyRegistrationOptions()
@@ -178,8 +196,7 @@ export const useAuthStore = defineStore(
         return true
       } catch (e: unknown) {
         console.error('Passkey registration error:', e)
-        const err = e as { response?: { data?: { message?: string } } }
-        error.value = err.response?.data?.message || 'passkey.registrationFailed'
+        handleApiError(e, 'passkey.registrationFailed')
         return false
       } finally {
         loading.value = false
@@ -192,6 +209,7 @@ export const useAuthStore = defineStore(
     async function loginWithPasskey(email: string): Promise<boolean> {
       loading.value = true
       error.value = null
+      fieldErrors.value = {}
 
       try {
         const options = await authApi.getPasskeyLoginOptions(email)
@@ -212,8 +230,7 @@ export const useAuthStore = defineStore(
         return true
       } catch (e: unknown) {
         console.error('Passkey login error:', e)
-        const err = e as { response?: { data?: { message?: string } } }
-        error.value = err.response?.data?.message || 'passkey.loginFailed'
+        handleApiError(e, 'passkey.loginFailed')
         return false
       } finally {
         loading.value = false
@@ -234,6 +251,7 @@ export const useAuthStore = defineStore(
     async function handleOAuthLogin(): Promise<boolean> {
       loading.value = true
       error.value = null
+      fieldErrors.value = {}
 
       try {
         const response = await authApi.oauthLogin()
@@ -251,8 +269,7 @@ export const useAuthStore = defineStore(
         return true
       } catch (e: unknown) {
         console.error('OAuth login error:', e)
-        const err = e as { response?: { data?: { message?: string } } }
-        error.value = err.response?.data?.message || 'auth.oauthFailed'
+        handleApiError(e, 'auth.oauthFailed')
         return false
       } finally {
         loading.value = false
@@ -340,6 +357,7 @@ export const useAuthStore = defineStore(
       user,
       loading,
       error,
+      fieldErrors,
       // 计算属性
       isAuthenticated,
       // 方法

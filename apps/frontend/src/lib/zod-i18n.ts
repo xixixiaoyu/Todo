@@ -8,11 +8,19 @@ type ZodErrorMap = zLocal.ZodErrorMap
  * 自定义 Zod 错误映射，支持国际化
  */
 export const zodErrorMap: ZodErrorMap = (issue, ctx) => {
-  const { t } = i18n.global
+  const { t } = i18n.global as any // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  // 获取属性翻译
+  const getProperty = (path: (string | number)[]) => {
+    const key = path.join('.')
+    if (!key) return ''
+    const translated = t(`common.fields.${key}`)
+    return translated !== `common.fields.${key}` ? translated : key
+  }
 
   // 1. 优先处理显式提供的 i18n 键名 (来自 shared schema)
   if (issue.message && issue.message.includes('.') && !issue.message.includes(' ')) {
-    const anyIssue = issue as unknown as Record<string, unknown>
+    const anyIssue = issue as any // eslint-disable-line @typescript-eslint/no-explicit-any
     const minimum = anyIssue.minimum ?? anyIssue.min
     const maximum = anyIssue.maximum ?? anyIssue.max
 
@@ -22,7 +30,7 @@ export const zodErrorMap: ZodErrorMap = (issue, ctx) => {
       minimum,
       max: maximum,
       maximum,
-      property: anyIssue.property ?? '',
+      property: getProperty(issue.path),
     }
 
     return { message: t(issue.message, p) }
@@ -32,23 +40,24 @@ export const zodErrorMap: ZodErrorMap = (issue, ctx) => {
   switch (issue.code) {
     case zLocal.ZodIssueCode.invalid_type:
       if (issue.received === 'undefined' || issue.received === 'null') {
-        return { message: t('validation.REQUIRED') }
+        return { message: t('validation.REQUIRED', { property: getProperty(issue.path) }) }
       }
       return {
         message: t('validation.INVALID_TYPE', {
+          property: getProperty(issue.path),
           expected: issue.expected,
           received: issue.received,
         }),
       }
     case zLocal.ZodIssueCode.too_small: {
-      const min = issue.minimum
+      const min = (issue as any).minimum // eslint-disable-line @typescript-eslint/no-explicit-any
       const minKey = issue.type === 'string' ? 'validation.MIN_LENGTH' : 'validation.MIN_VALUE'
-      return { message: t(minKey, { min, minimum: min }) }
+      return { message: t(minKey, { property: getProperty(issue.path), min, minimum: min }) }
     }
     case zLocal.ZodIssueCode.too_big: {
-      const max = issue.maximum
+      const max = (issue as any).maximum // eslint-disable-line @typescript-eslint/no-explicit-any
       const maxKey = issue.type === 'string' ? 'validation.MAX_LENGTH' : 'validation.MAX_VALUE'
-      return { message: t(maxKey, { max, maximum: max }) }
+      return { message: t(maxKey, { property: getProperty(issue.path), max, maximum: max }) }
     }
     case zLocal.ZodIssueCode.invalid_string:
       if (issue.validation === 'email') {

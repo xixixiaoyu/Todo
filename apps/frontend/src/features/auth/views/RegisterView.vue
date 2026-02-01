@@ -23,7 +23,7 @@ const RegisterWithConfirmSchema = RegisterSchema.extend({
   path: ['confirmPassword'],
 })
 
-const { handleSubmit, errors, defineField } = useForm({
+const { handleSubmit, errors, defineField, setErrors } = useForm({
   validationSchema: toTypedSchema(RegisterWithConfirmSchema),
 })
 
@@ -37,6 +37,8 @@ const onSubmit = handleSubmit(async (values) => {
   const success = await authStore.register({ email, name, password })
   if (success) {
     await router.push('/')
+  } else if (authStore.fieldErrors) {
+    setErrors(authStore.fieldErrors)
   }
 })
 </script>

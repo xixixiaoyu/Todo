@@ -16,7 +16,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 const { t } = useI18n()
 
-const { handleSubmit, errors, defineField } = useForm({
+const { handleSubmit, errors, defineField, setErrors } = useForm({
   validationSchema: toTypedSchema(LoginSchema),
 })
 
@@ -27,6 +27,8 @@ const onSubmit = handleSubmit(async (values) => {
   const success = await authStore.login(values)
   if (success) {
     await router.push('/')
+  } else if (authStore.fieldErrors) {
+    setErrors(authStore.fieldErrors)
   }
 })
 

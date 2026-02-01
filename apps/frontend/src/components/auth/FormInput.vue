@@ -30,13 +30,14 @@ const displayError = computed(() => {
   if (!props.error) return ''
 
   // 如果是纯键名且未被翻译（不含空格，含点号，且不含大括号），尝试翻译一次
-  // 注意：如果 Zod 已经处理了翻译，这里不应再次触发
+  // 注意：如果是来自后端的错误键，可能需要在这里翻译
   if (
     props.error.includes('.') &&
     !props.error.includes(' ') &&
     !props.error.includes('{') &&
     !props.error.includes('}')
   ) {
+    // 尝试带参数翻译，但通常后端应该已经翻译好了
     const translated = t(props.error)
     if (translated !== props.error) {
       return translated
@@ -48,17 +49,18 @@ const displayError = computed(() => {
 </script>
 
 <template>
-  <div class="group space-y-2">
+  <div class="group space-y-1.5">
     <label
+      v-if="label"
       :for="inputId"
-      class="block text-sm font-semibold text-foreground/80 transition-colors group-focus-within:text-primary"
+      class="block text-[13px] font-bold text-foreground/70 transition-colors group-focus-within:text-primary px-1"
     >
       {{ label }}
     </label>
     <div class="relative">
       <div
         v-if="$slots.icon"
-        class="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/60 transition-colors group-focus-within:text-primary"
+        class="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/40 transition-colors group-focus-within:text-primary"
       >
         <slot name="icon" />
       </div>
@@ -70,39 +72,41 @@ const displayError = computed(() => {
         :placeholder="placeholder"
         :disabled="disabled"
         :class="[
-          'w-full px-4 py-3.5 rounded-2xl border bg-card/50 transition-all duration-300',
-          'placeholder:text-muted-foreground/40',
-          'focus:outline-none focus:ring-4 focus:ring-primary/10 focus:bg-card',
+          'w-full px-4 py-3.5 rounded-xl border bg-card/40 backdrop-blur-sm transition-all duration-300',
+          'placeholder:text-muted-foreground/30 text-sm font-medium',
+          'focus:outline-none focus:ring-4 focus:ring-primary/5 focus:bg-card/80',
           'disabled:opacity-50 disabled:cursor-not-allowed',
-          $slots.icon ? 'pl-12' : 'px-5',
+          $slots.icon ? 'pl-11' : 'px-4',
           error
-            ? 'border-error focus:ring-error/10'
-            : 'border-border hover:border-primary/40 focus:border-primary',
+            ? 'border-error/50 focus:ring-error/5 focus:border-error'
+            : 'border-border/60 hover:border-primary/30 focus:border-primary',
         ]"
       />
     </div>
-    <Transition
-      enter-active-class="transition duration-200 ease-out"
-      enter-from-class="transform -translate-y-2 opacity-0"
-      enter-to-class="transform translate-y-0 opacity-100"
-      leave-active-class="transition duration-150 ease-in"
-      leave-from-class="transform translate-y-0 opacity-100"
-      leave-to-class="transform -translate-y-2 opacity-0"
-    >
-      <p v-if="displayError" class="text-xs font-medium text-error flex items-center gap-1 px-1">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          class="w-3.5 h-3.5"
-        >
-          <circle cx="12" cy="12" r="10" />
-          <line x1="12" y1="8" x2="12" y2="12" />
-          <line x1="12" y1="16" x2="12.01" y2="16" />
-        </svg>
-        {{ displayError }}
-      </p>
-    </Transition>
+    <div class="min-h-[20px] px-1">
+      <Transition
+        enter-active-class="transition duration-300 ease-out"
+        enter-from-class="transform -translate-y-1 opacity-0 scale-95"
+        enter-to-class="transform translate-y-0 opacity-100 scale-100"
+        leave-active-class="transition duration-200 ease-in"
+        leave-from-class="transform translate-y-0 opacity-100 scale-100"
+        leave-to-class="transform -translate-y-1 opacity-0 scale-95"
+      >
+        <p v-if="displayError" class="text-[11px] font-bold text-error flex items-center gap-1.5">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            class="w-3 h-3 flex-shrink-0"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          {{ displayError }}
+        </p>
+      </Transition>
+    </div>
   </div>
 </template>
