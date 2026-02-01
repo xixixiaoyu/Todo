@@ -63,6 +63,9 @@ export default {
     orContinueWith: 'Or continue with',
     emailRequiredForPasskey: 'Please enter your email before using Passkey login',
   },
+  auth: {
+    INVALID_CREDENTIALS: 'Invalid email or password',
+  },
   passkey: {
     registrationFailed: 'Passkey registration failed',
     registrationSuccess: 'Passkey registration successful',

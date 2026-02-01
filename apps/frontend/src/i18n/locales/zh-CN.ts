@@ -63,6 +63,9 @@ export default {
     orContinueWith: '或通过以下方式继续',
     emailRequiredForPasskey: '使用 Passkey 登录前请先输入邮箱',
   },
+  auth: {
+    INVALID_CREDENTIALS: '邮箱或密码错误',
+  },
   passkey: {
     registrationFailed: 'Passkey 注册失败',
     registrationSuccess: 'Passkey 注册成功',
