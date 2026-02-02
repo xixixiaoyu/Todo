@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/wailsapp/wails/v2"
@@ -32,6 +33,12 @@ func main() {
 
 	// Create application with options
 	appMenu := menu.NewMenu()
+
+	// macOS standard Application menu
+	if runtime.GOOS == "darwin" {
+		appMenu.Append(menu.AppMenu())
+	}
+
 	fileMenu := appMenu.AddSubmenu("File")
 	fileMenu.AddText("Toggle Window", keys.CmdOrCtrl("k"), func(_ *menu.CallbackData) {
 		app.ToggleWindow()
@@ -40,6 +47,9 @@ func main() {
 	fileMenu.AddText("Quit", keys.CmdOrCtrl("q"), func(_ *menu.CallbackData) {
 		app.Quit()
 	})
+
+	// Add standard Edit menu for Copy/Paste support on macOS
+	appMenu.Append(menu.EditMenu())
 
 	err = wails.Run(&options.App{
 		Title:             "简思 (Lumina)",
