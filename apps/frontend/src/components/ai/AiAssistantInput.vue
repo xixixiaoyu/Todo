@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, nextTick, computed, onUnmounted, useId } from 'vue'
+import { ref, nextTick, watch, computed, useId, onMounted, onUnmounted } from 'vue'
+import { useWindowSize } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import type { ChatSession } from '@/composables/useChatHistory'
 import {
@@ -93,6 +94,9 @@ const handleSlashCommand = (index: number) => {
   showSlashCommands.value = false
   void nextTick(() => textareaRef.value?.focus())
 }
+
+const { width: windowWidth } = useWindowSize()
+const isMobile = computed(() => windowWidth.value < 640)
 
 const handleKeydown = (event: KeyboardEvent) => {
   if (showSlashCommands.value) {
@@ -216,19 +220,25 @@ defineExpose({
 
 <template>
   <div
-    class="input-container-refined relative flex flex-col rounded-2xl border border-border bg-card p-1.5 shadow-sm"
-    :class="{ 'opacity-60 grayscale-[0.2]': isInputDisabled }"
+    :class="[
+      'input-container-refined relative flex flex-col rounded-2xl border border-border bg-card shadow-sm transition-all duration-300',
+      isMobile ? 'p-1 gap-0' : 'p-1.5 gap-0.5',
+      isInputDisabled ? 'opacity-60 grayscale-[0.2]' : '',
+    ]"
   >
     <!-- 附件预览区域 (图片 + 文档) -->
     <div
       v-if="selectedImages.length > 0 || parsedFiles.length > 0"
-      class="flex flex-wrap gap-2 px-2 pt-2"
+      :class="['flex flex-wrap gap-2 px-2 pt-2', isMobile ? 'max-h-32 overflow-y-auto' : '']"
     >
       <!-- 图片预览 -->
       <div
         v-for="(img, index) in selectedImages"
         :key="`img-${index}`"
-        class="group relative h-16 w-16 overflow-hidden rounded-lg border border-border bg-muted"
+        :class="[
+          'group relative overflow-hidden rounded-lg border border-border bg-muted',
+          isMobile ? 'h-14 w-14' : 'h-16 w-16',
+        ]"
       >
         <img :src="img" class="h-full w-full object-cover" />
         <button
@@ -243,7 +253,10 @@ defineExpose({
       <div
         v-for="file in parsedFiles"
         :key="file.id"
-        class="group relative flex h-16 w-32 items-center gap-2 rounded-lg border border-border bg-muted/50 px-2 py-1.5 transition-colors hover:bg-muted"
+        :class="[
+          'group relative flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-2 py-1.5 transition-colors hover:bg-muted',
+          isMobile ? 'h-14 w-28' : 'h-16 w-32',
+        ]"
       >
         <div
           class="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-primary/10 text-primary"
@@ -280,7 +293,7 @@ defineExpose({
     >
       <div
         v-if="isImageGenerationEnabled"
-        class="mb-2 flex items-center gap-1.5 px-1 text-[11px] text-amber-500/80 dark:text-amber-400/70"
+        class="mb-1 flex items-center gap-1.5 px-2 text-[11px] text-amber-500/80 dark:text-amber-400/70"
       >
         <AlertCircle :size="12" />
         <span>{{ t('ai.imageGenerationDesc') }}</span>
@@ -352,7 +365,10 @@ defineExpose({
             ? t('ai.imagePromptPlaceholder')
             : t('ai.placeholder')
       "
-      class="w-full resize-none bg-transparent px-3 pt-2.5 pb-1 text-[15px] text-foreground outline-none placeholder:text-muted-foreground/30 leading-relaxed transition-colors"
+      :class="[
+        'w-full resize-none bg-transparent text-foreground outline-none placeholder:text-muted-foreground/30 leading-relaxed transition-colors',
+        isMobile ? 'px-2.5 pt-2 pb-0.5 text-[14px]' : 'px-3 pt-2.5 pb-1 text-[15px]',
+      ]"
       :disabled="isInputDisabled"
       @input="(e) => emit('update:modelValue', (e.target as HTMLTextAreaElement).value)"
       @keydown.exact="handleKeydown"
@@ -360,16 +376,19 @@ defineExpose({
       @paste="(e) => emit('paste', e)"
     />
 
-    <div class="flex items-center justify-between px-1.5 pb-1.5">
+    <div :class="['flex items-center justify-between px-1.5 pb-1.5', isMobile ? 'gap-2' : '']">
       <div class="flex items-center gap-1.5">
         <!-- 附件上传按钮 -->
         <button
-          class="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+          :class="[
+            'flex items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-95 disabled:cursor-not-allowed disabled:opacity-50',
+            isMobile ? 'h-8 w-8' : 'h-7 w-7',
+          ]"
           :title="t('ai.uploadFile')"
           :disabled="isInputDisabled || selectedImages.length + parsedFiles.length >= 10"
           @click="emit('triggerFileUpload')"
         >
-          <ImageIcon :size="16" />
+          <ImageIcon :size="isMobile ? 18 : 16" />
         </button>
         <label :for="fileInputId" class="sr-only">{{ t('ai.uploadFile') }}</label>
         <input
@@ -386,7 +405,10 @@ defineExpose({
         <!-- 停止生成按钮 -->
         <button
           v-if="isGenerating && !error"
-          class="animate-stop-pulse flex items-center gap-1.5 rounded-lg bg-red-500 px-3 py-1.5 text-[12px] font-bold text-white transition-all hover:bg-red-600 active:scale-95"
+          :class="[
+            'animate-stop-pulse flex items-center gap-1.5 rounded-lg bg-red-500 font-bold text-white transition-all hover:bg-red-600 active:scale-95',
+            isMobile ? 'h-8 px-2.5 text-[11px]' : 'px-3 py-1.5 text-[12px]',
+          ]"
           @click="emit('stop')"
         >
           <Square :size="12" class="fill-current" />
@@ -395,18 +417,22 @@ defineExpose({
 
         <!-- 导航按钮 -->
         <button
-          class="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+          :class="[
+            'flex items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-95 disabled:cursor-not-allowed disabled:opacity-50',
+            isMobile ? 'h-8 w-8' : 'h-7 w-7',
+          ]"
           :title="t('ai.previousSession')"
           :disabled="isGenerating || !lastActiveSession"
           @click="emit('navigatePrevious')"
         >
-          <ChevronLeft :size="16" />
+          <ChevronLeft :size="isMobile ? 18 : 16" />
         </button>
       </div>
 
       <button
-        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-primary-foreground transition-all shadow-sm"
         :class="[
+          'flex shrink-0 items-center justify-center rounded-xl text-primary-foreground transition-all shadow-sm',
+          isMobile ? 'h-8 w-8' : 'h-9 w-9',
           isInputDisabled ||
           (!modelValue.trim() &&
             selectedImages.length === 0 &&
@@ -422,7 +448,7 @@ defineExpose({
         "
         @click="emit('send')"
       >
-        <Send :size="18" />
+        <Send :size="isMobile ? 16 : 18" />
       </button>
     </div>
   </div>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, nextTick, computed } from 'vue'
+import { useWindowSize } from '@vueuse/core'
 import ResizableDrawer from '@/components/ResizableDrawer.vue'
 import ChatMessageList from '@/components/chat/ChatMessageList.vue'
 import AISettingsDialog from '@/components/chat/AISettingsDialog.vue'
@@ -197,9 +198,12 @@ const historyWidth = ref(320)
 const isResizingHistory = ref(false)
 const startHistoryX = ref(0)
 const startHistoryWidth = ref(0)
+const { width: windowWidth } = useWindowSize()
+
+const isMobile = computed(() => windowWidth.value < 640)
 
 const onHistoryResize = (e: MouseEvent) => {
-  if (!isResizingHistory.value) return
+  if (!isResizingHistory.value || isMobile.value) return
   const deltaX = e.clientX - startHistoryX.value
   const newWidth = startHistoryWidth.value + deltaX
   // 限制最小宽度 240px，最大宽度不超过 AI 助手抽屉的 80%
@@ -463,7 +467,7 @@ defineOptions({
         <div
           v-if="showHistory"
           class="absolute inset-y-0 left-0 z-20 flex flex-col border-r border-border bg-card shadow-xl"
-          :style="{ width: `${historyWidth}px` }"
+          :style="{ width: isMobile ? '100%' : `${historyWidth}px` }"
         >
           <ChatHistoryPanel
             @select="handleSelectSession"
@@ -473,6 +477,7 @@ defineOptions({
 
           <!-- 拖拽手柄 -->
           <div
+            v-if="!isMobile"
             class="absolute -right-1.5 top-0 z-30 flex h-full w-3 cursor-ew-resize items-center justify-center transition-colors hover:bg-primary/10"
             :class="{ 'bg-primary/20': isResizingHistory }"
             @mousedown="startHistoryResize"

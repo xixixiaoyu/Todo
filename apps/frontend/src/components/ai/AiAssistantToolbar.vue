@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useWindowSize } from '@vueuse/core'
 import type { AIPreset, AIConfig } from '@/composables/useAIConfig'
 import {
   Plus,
@@ -54,6 +56,9 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
+const { width: windowWidth } = useWindowSize()
+const isMobile = computed(() => windowWidth.value < 640)
+
 // 讨论模型快速选择弹窗状态
 let discussionHoverTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -104,19 +109,30 @@ const handlePresetMouseLeave = () => {
 </script>
 
 <template>
-  <div class="toolbar-container shrink-0 border-t border-border/10 bg-background p-4">
-    <div :class="[isMaximized ? 'mx-auto max-w-4xl w-full' : '', 'space-y-3']">
+  <div
+    :class="[
+      'toolbar-container shrink-0 border-t border-border/10 bg-background transition-all duration-300',
+      isMobile ? 'p-2' : 'p-4',
+    ]"
+  >
+    <div
+      :class="[isMaximized ? 'mx-auto max-w-4xl w-full' : '', 'flex flex-col']"
+      :style="{ gap: isMobile ? '4px' : '12px' }"
+    >
       <!-- 快捷操作按钮 -->
-      <div class="flex items-center gap-2 text-sm">
+      <div :class="['flex items-center text-sm', isMobile ? 'gap-1' : 'gap-2']">
         <div class="no-scrollbar flex flex-1 items-center gap-2 overflow-x-auto py-1">
           <button
-            class="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-[13px] text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-30"
+            :class="[
+              'flex shrink-0 items-center rounded-full border border-border bg-card text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-30',
+              isMobile ? 'h-8 px-2.5 gap-1' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
+            ]"
             :disabled="!hasHistory || isGenerating"
             :title="t('ai.newChat')"
             @click="emit('newChat')"
           >
-            <Plus :size="14" />
-            <span class="toolbar-text">{{ t('ai.newChat') }}</span>
+            <Plus :size="isMobile ? 14 : 14" />
+            <span v-if="!isMobile" class="toolbar-text">{{ t('ai.newChat') }}</span>
           </button>
 
           <!-- 历史记录按钮 -->
@@ -148,19 +164,22 @@ const handlePresetMouseLeave = () => {
 
           <!-- Todo 助手 -->
           <button
-            class="flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] transition-all active:scale-95 shadow-sm"
-            :class="
+            :class="[
+              'flex shrink-0 items-center transition-all active:scale-95 shadow-sm rounded-full border',
+              isMobile ? 'h-8 w-8 justify-center' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
               isTodoAssistantEnabled
                 ? 'border-primary/30 bg-primary/10 text-primary shadow-primary/5'
-                : 'border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-            "
+                : 'border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+            ]"
             :title="
               isTodoAssistantEnabled ? t('ai.todoAssistantEnabled') : t('ai.todoAssistantDisabled')
             "
             @click="emit('toggleTodo')"
           >
             <Clover :size="14" :class="{ 'animate-spin-slow': isTodoAssistantEnabled }" />
-            <span class="toolbar-text font-medium">{{ t('ai.todoAssistant') }}</span>
+            <span v-if="!isMobile" class="toolbar-text font-medium">{{
+              t('ai.todoAssistant')
+            }}</span>
           </button>
 
           <!-- 多模型协同讨论 -->
@@ -172,18 +191,21 @@ const handlePresetMouseLeave = () => {
             <DropdownMenu v-model:open="showDiscussionPopover" :modal="false">
               <DropdownMenuTrigger as-child>
                 <button
-                  class="flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] transition-all active:scale-95 shadow-sm"
-                  :class="
+                  :class="[
+                    'flex items-center transition-all active:scale-95 shadow-sm rounded-full border',
+                    isMobile ? 'h-8 w-8 justify-center' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
                     isDiscussionEnabled
                       ? 'border-primary/30 bg-primary/10 text-primary shadow-primary/5'
-                      : 'border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                  "
+                      : 'border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                  ]"
                   :title="isDiscussionEnabled ? t('ai.discussionMode') : t('ai.discussionMode')"
                   @click="emit('toggleDiscussion')"
                   @mouseenter="clearDiscussionTimer"
                 >
                   <Users :size="14" :class="{ 'animate-pulse-slow': isDiscussionEnabled }" />
-                  <span class="toolbar-text font-medium">{{ t('ai.discussionMode') }}</span>
+                  <span v-if="!isMobile" class="toolbar-text font-medium">{{
+                    t('ai.discussionMode')
+                  }}</span>
                 </button>
               </DropdownMenuTrigger>
 
@@ -275,17 +297,20 @@ const handlePresetMouseLeave = () => {
 
           <!-- 生图功能开关 -->
           <button
-            class="flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] transition-all active:scale-95 shadow-sm"
-            :class="
+            :class="[
+              'flex shrink-0 items-center transition-all active:scale-95 shadow-sm rounded-full border',
+              isMobile ? 'h-8 w-8 justify-center' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
               isImageGenerationEnabled
                 ? 'border-primary/30 bg-primary/10 text-primary shadow-primary/5'
-                : 'border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-            "
+                : 'border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+            ]"
             :title="t('ai.enableImageGeneration')"
             @click="emit('toggleImageGen')"
           >
             <ImageIcon :size="14" :class="{ 'animate-pulse-slow': isImageGenerationEnabled }" />
-            <span class="toolbar-text font-medium">{{ t('ai.enableImageGeneration') }}</span>
+            <span v-if="!isMobile" class="toolbar-text font-medium">{{
+              t('ai.enableImageGeneration')
+            }}</span>
           </button>
 
           <div class="h-4 w-px shrink-0 bg-border/30 mx-0.5" />
@@ -299,12 +324,17 @@ const handlePresetMouseLeave = () => {
             <DropdownMenu v-model:open="showPresetDropdown" :modal="false">
               <DropdownMenuTrigger as-child>
                 <button
-                  class="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-[13px] text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground active:scale-95 shadow-sm"
+                  :class="[
+                    'flex items-center border border-border bg-card text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground active:scale-95 shadow-sm rounded-full',
+                    isMobile ? 'h-8 px-2.5 gap-1' : 'px-3 py-1.5 gap-1.5 text-[13px]',
+                  ]"
                   :title="t('ai.managePresets')"
                   @mouseenter="clearPresetTimer"
                 >
-                  <Sparkles :size="14" class="toolbar-icon-only hidden" />
-                  <span class="toolbar-text font-medium">{{ currentPresetName }}</span>
+                  <Sparkles :size="14" class="toolbar-icon-only" :class="{ hidden: !isMobile }" />
+                  <span v-if="!isMobile" class="toolbar-text font-medium">{{
+                    currentPresetName
+                  }}</span>
                   <ChevronDown
                     :size="14"
                     class="transition-transform duration-300"
@@ -359,7 +389,10 @@ const handlePresetMouseLeave = () => {
         <!-- 设置 -->
         <div class="flex shrink-0 items-center gap-2">
           <button
-            class="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground hover:scale-110 active:scale-95 shadow-sm"
+            :class="[
+              'flex items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground hover:scale-110 active:scale-95 shadow-sm',
+              isMobile ? 'h-8 w-8' : 'h-8 w-8',
+            ]"
             :title="t('ai.settings')"
             @click="emit('openSettings')"
           >

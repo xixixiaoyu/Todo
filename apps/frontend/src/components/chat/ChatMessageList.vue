@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ArrowDown, Sparkles } from 'lucide-vue-next'
+import { useWindowSize } from '@vueuse/core'
 import ChatMessage from './ChatMessage.vue'
 import ChatSuggestions from './ChatSuggestions.vue'
 import type { ChatMessage as ChatMessageType } from '@/composables/useChat'
@@ -26,6 +27,8 @@ const { currentSessionId } = useChatHistory()
 const isSwitchingSession = ref(false)
 
 const containerRef = ref<HTMLElement | null>(null)
+const { width: windowWidth } = useWindowSize()
+const isMobile = computed(() => windowWidth.value < 640)
 
 // 使用智能滚动 Composable
 const {
@@ -98,26 +101,37 @@ defineExpose({
 
 <template>
   <div class="relative flex-1 overflow-hidden">
-    <div ref="containerRef" class="h-full overflow-y-auto px-4">
+    <div ref="containerRef" :class="['h-full overflow-y-auto', isMobile ? 'px-3' : 'px-4']">
       <div :class="['flex min-h-full w-full flex-col', isMaximized ? 'mx-auto max-w-4xl' : '']">
         <!-- 空状态 -->
         <div
           v-if="messages.length === 0"
-          class="flex flex-1 flex-col items-center justify-center p-4 pb-20 text-center"
+          :class="[
+            'flex flex-1 flex-col items-center justify-center p-4 text-center',
+            isMobile ? 'pb-10' : 'pb-20',
+          ]"
         >
-          <div class="relative mb-8">
+          <div :class="['relative', isMobile ? 'mb-4' : 'mb-8']">
             <div class="absolute -inset-4 animate-pulse rounded-full bg-primary/5 blur-2xl"></div>
             <div
-              class="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 shadow-inner"
+              :class="[
+                'relative flex items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 shadow-inner',
+                isMobile ? 'h-16 w-16' : 'h-20 w-20',
+              ]"
             >
-              <Sparkles class="h-10 w-10 text-primary" />
+              <Sparkles :class="[isMobile ? 'h-8 w-8' : 'h-10 w-10', 'text-primary']" />
             </div>
           </div>
 
-          <h2 class="mb-3 text-2xl font-bold tracking-tight text-foreground">
+          <h2
+            :class="[
+              'font-bold tracking-tight text-foreground',
+              isMobile ? 'mb-2 text-xl' : 'mb-3 text-2xl',
+            ]"
+          >
             {{ t('ai.welcomeTitle') }}
           </h2>
-          <p class="mb-10 max-w-md text-muted-foreground">
+          <p :class="['max-w-md text-muted-foreground', isMobile ? 'mb-6 text-sm' : 'mb-10']">
             {{ t('ai.welcomeSubtitle') }}
           </p>
 
@@ -125,10 +139,14 @@ defineExpose({
         </div>
 
         <!-- 消息列表 -->
-        <div v-else class="py-4">
+        <div v-else :class="[isMobile ? 'py-2' : 'py-4']">
           <Transition name="session-fade" mode="out-in">
             <div :key="currentSessionId || 'empty'">
-              <TransitionGroup name="message-list" tag="div" class="space-y-4">
+              <TransitionGroup
+                name="message-list"
+                tag="div"
+                :class="[isMobile ? 'space-y-3' : 'space-y-4']"
+              >
                 <ChatMessage
                   v-for="(msg, index) in messages"
                   :key="msg.id"
@@ -149,13 +167,14 @@ defineExpose({
       <button
         v-if="isUserScrolledUp && isScrollable"
         :class="[
-          'absolute bottom-6 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card/80 text-primary shadow-lg backdrop-blur-sm transition-all hover:bg-card hover:shadow-xl active:scale-95 z-20',
-          isMaximized ? 'left-1/2 -translate-x-1/2' : 'right-8',
+          'absolute flex items-center justify-center rounded-full border border-border bg-card/80 text-primary shadow-lg backdrop-blur-sm transition-all hover:bg-card hover:shadow-xl active:scale-95 z-20',
+          isMobile ? 'bottom-4 h-9 w-9' : 'bottom-6 h-10 w-10',
+          isMaximized ? 'left-1/2 -translate-x-1/2' : isMobile ? 'right-4' : 'right-8',
         ]"
         :title="t('ai.scrollToBottom')"
         @click="enableAutoScroll"
       >
-        <ArrowDown :size="20" />
+        <ArrowDown :size="isMobile ? 18 : 20" />
         <span
           v-if="isSticking === false && messages[messages.length - 1]?.isStreaming"
           class="absolute -right-1 -top-1 flex h-3 w-3"

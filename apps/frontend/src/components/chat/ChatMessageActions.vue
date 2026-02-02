@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Copy, Check, RefreshCw } from 'lucide-vue-next'
 
@@ -13,6 +13,21 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const isCopied = ref(false)
+
+const windowWidth = ref(window.innerWidth)
+const isMobile = computed(() => windowWidth.value < 640)
+
+const handleResize = () => {
+  windowWidth.value = window.innerWidth
+}
+
+onMounted(() => {
+  window.addEventListener('resize', handleResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+})
 
 async function copyContent() {
   try {
@@ -29,10 +44,14 @@ async function copyContent() {
 
 <template>
   <div
-    class="mt-2 flex items-center gap-1.5 border-t border-ai-message-border pt-2 transition-opacity duration-300"
+    class="mt-2 flex items-center border-t border-ai-message-border pt-2 transition-opacity duration-300"
+    :class="[isMobile ? 'justify-between gap-1' : 'gap-1.5']"
   >
     <button
-      class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-muted-foreground/80 transition-all hover:bg-primary/10 hover:text-primary active:scale-95"
+      :class="[
+        'flex items-center gap-1.5 rounded-lg font-medium text-muted-foreground/80 transition-all hover:bg-primary/10 hover:text-primary active:scale-95',
+        isMobile ? 'flex-1 justify-center py-2 text-[13px]' : 'px-2.5 py-1.5 text-[12px]',
+      ]"
       :title="isCopied ? t('ai.copied') : t('ai.copy')"
       @click="copyContent"
     >
@@ -41,7 +60,10 @@ async function copyContent() {
       <span>{{ isCopied ? t('ai.copied') : t('ai.copy') }}</span>
     </button>
     <button
-      class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-muted-foreground/80 transition-all hover:bg-primary/10 hover:text-primary active:scale-95"
+      :class="[
+        'flex items-center gap-1.5 rounded-lg font-medium text-muted-foreground/80 transition-all hover:bg-primary/10 hover:text-primary active:scale-95',
+        isMobile ? 'flex-1 justify-center py-2 text-[13px]' : 'px-2.5 py-1.5 text-[12px]',
+      ]"
       @click="emit('regenerate')"
     >
       <RefreshCw :size="14" />

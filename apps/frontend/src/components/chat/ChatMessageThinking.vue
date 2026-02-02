@@ -2,6 +2,7 @@
 import { ref, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ChevronUp } from 'lucide-vue-next'
+import { useWindowSize } from '@vueuse/core'
 import type { ChatMessage } from '@/composables/useChat'
 import { useMarkdown } from '@/composables/useMarkdown'
 
@@ -13,6 +14,9 @@ const props = defineProps<{
 
 const { t } = useI18n()
 const { renderMarkdown } = useMarkdown()
+
+const { width: windowWidth } = useWindowSize()
+const isMobile = computed(() => windowWidth.value < 640)
 
 const isExpanded = ref(props.isStreaming && !props.hasContent)
 const contentHeight = ref(0)
@@ -146,12 +150,13 @@ watch([() => props.message.thinkingContent, () => props.message.reasoning_detail
           </svg>
         </div>
         <span
-          class="font-medium tracking-wide text-[12.5px] transition-all duration-300"
-          :class="
+          class="font-medium tracking-wide transition-all duration-300"
+          :class="[
             isStreaming && !hasContent
               ? 'shimmer-text'
-              : 'text-muted-foreground/60 group-hover/thinking:text-primary/70'
-          "
+              : 'text-muted-foreground/60 group-hover/thinking:text-primary/70',
+            isMobile ? 'text-[13px]' : 'text-[12.5px]',
+          ]"
         >
           {{ thinkingStatus }}
         </span>
@@ -178,13 +183,15 @@ watch([() => props.message.thinkingContent, () => props.message.reasoning_detail
           <!-- eslint-disable vue/no-v-html -->
           <div
             v-if="renderedThinkingHtml"
-            class="markdown-content thinking-markdown break-words text-muted-foreground/70 text-[13.5px] leading-relaxed"
+            class="markdown-content thinking-markdown break-words text-muted-foreground/70 leading-relaxed"
+            :class="[isMobile ? 'text-[14px]' : 'text-[13.5px]']"
             v-html="renderedThinkingHtml"
           />
           <!-- eslint-enable vue/no-v-html -->
           <div
             v-else
-            class="selectable select-text break-words whitespace-pre-wrap text-muted-foreground/70 text-[13.5px] leading-relaxed"
+            class="selectable select-text break-words whitespace-pre-wrap text-muted-foreground/70 leading-relaxed"
+            :class="[isMobile ? 'text-[14px]' : 'text-[13.5px]']"
           >
             {{ message.thinkingContent }}
           </div>

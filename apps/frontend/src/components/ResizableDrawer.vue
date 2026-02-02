@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, type CSSProperties, toRef } from 'vue'
+import { ref, computed, watch, onMounted, type CSSProperties, toRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useEscClose } from '@/composables/useEscClose'
+import { useWindowSize } from '@vueuse/core'
 
 interface Props {
   modelValue: boolean
@@ -36,7 +37,7 @@ const isResizing = ref(false)
 const startX = ref(0)
 const startWidth = ref(0)
 const isHovering = ref(false)
-const windowWidth = ref(window.innerWidth)
+const { width: windowWidth } = useWindowSize()
 
 // 移动端检测
 const isMobile = computed(() => windowWidth.value < 640)
@@ -50,21 +51,15 @@ function clampWidth(width: number) {
   return Math.max(props.minWidth, Math.min(resolvedMaxWidth.value, width))
 }
 
-function handleWindowResize() {
-  windowWidth.value = window.innerWidth
+watch(windowWidth, () => {
   drawerWidth.value = clampWidth(drawerWidth.value)
-}
+})
 
 onMounted(() => {
-  window.addEventListener('resize', handleWindowResize)
   const savedWidth = localStorage.getItem(props.storageKey)
   if (savedWidth) {
     drawerWidth.value = clampWidth(Number(savedWidth))
   }
-})
-
-onUnmounted(() => {
-  window.removeEventListener('resize', handleWindowResize)
 })
 
 watch(drawerWidth, (newWidth) => {
@@ -117,10 +112,6 @@ watch(
     document.body.style.overflow = newValue ? 'hidden' : ''
   },
 )
-
-onUnmounted(() => {
-  window.removeEventListener('resize', handleWindowResize)
-})
 </script>
 
 <template>

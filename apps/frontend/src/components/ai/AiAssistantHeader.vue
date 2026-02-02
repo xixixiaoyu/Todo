@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useWindowSize } from '@vueuse/core'
 import { Clover, Maximize2, Minimize2, X } from 'lucide-vue-next'
 import { nativeService } from '@/services/native'
 
@@ -14,9 +15,11 @@ defineEmits<{
 }>()
 
 const { t } = useI18n()
+const { width: windowWidth } = useWindowSize()
 const isWails = computed(() => nativeService.platform === 'wails')
 const isDesktop = computed(() => isWails.value)
 const isMac = computed(() => isWails.value && navigator.platform.toLowerCase().includes('mac'))
+const isMobile = computed(() => !isDesktop.value && windowWidth.value < 640)
 </script>
 
 <template>
@@ -42,6 +45,7 @@ const isMac = computed(() => isWails.value && navigator.platform.toLowerCase().i
     <div class="flex items-center gap-1.5">
       <!-- 最大化/最小化 -->
       <button
+        v-if="!isMobile"
         class="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-95"
         @click="$emit('toggleMaximize')"
       >

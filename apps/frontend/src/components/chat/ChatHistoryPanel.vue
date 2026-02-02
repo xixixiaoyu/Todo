@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, useId } from 'vue'
+import { useWindowSize } from '@vueuse/core'
 import {
   Trash2,
   Edit3,
@@ -40,6 +41,10 @@ const { sessions, currentSessionId, renameSession, deleteSession, clearAllSessio
 
 const searchInputId = useId()
 const editTitleInputId = useId()
+
+// 移动端适配
+const { width: windowWidth } = useWindowSize()
+const isMobile = computed(() => windowWidth.value < 640)
 
 // 搜索
 const searchQuery = ref('')
@@ -296,7 +301,13 @@ function handleClearConfirm(): void {
             <!-- 正常显示 -->
             <template v-else>
               <div class="relative">
-                <div class="min-w-0 pr-2 transition-all group-hover:pr-24">
+                <div
+                  class="min-w-0 transition-all"
+                  :class="[
+                    isMobile ? 'pr-0' : 'pr-2 group-hover:pr-24',
+                    isMobile && session.id === currentSessionId ? 'mb-8' : '',
+                  ]"
+                >
                   <div class="flex items-center gap-1.5">
                     <p
                       class="truncate text-sm font-medium transition-colors"
@@ -313,16 +324,23 @@ function handleClearConfirm(): void {
                 </div>
                 <!-- 操作按钮 -->
                 <div
-                  class="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 transition-all group-hover:opacity-100 bg-gradient-to-l from-accent/90 via-accent/80 to-transparent pl-8 py-1 rounded-r-xl"
+                  class="absolute transition-all"
+                  :class="[
+                    isMobile
+                      ? 'left-0 bottom-0 top-auto right-auto flex opacity-100 bg-transparent py-0 mt-2'
+                      : 'right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 bg-gradient-to-l from-accent/90 via-accent/80 to-transparent pl-8 py-1 rounded-r-xl',
+                    isMobile && session.id !== currentSessionId ? 'hidden' : '',
+                  ]"
                   @click.stop
                 >
                   <button
                     class="rounded-md p-1 transition-colors hover:bg-background/80"
-                    :class="
+                    :class="[
                       session.isPinned
                         ? 'text-primary'
-                        : 'text-muted-foreground hover:text-foreground'
-                    "
+                        : 'text-muted-foreground hover:text-foreground',
+                      isMobile ? 'scale-110 px-2' : '',
+                    ]"
                     :title="session.isPinned ? t('ai.unpin') : t('ai.pin')"
                     @click="togglePin(session.id)"
                   >
@@ -330,6 +348,7 @@ function handleClearConfirm(): void {
                   </button>
                   <button
                     class="rounded-md p-1 text-muted-foreground transition-colors hover:bg-background/80 hover:text-foreground"
+                    :class="isMobile ? 'scale-110 px-2' : ''"
                     :title="t('ai.editTitle')"
                     @click="startEdit(session)"
                   >
@@ -337,6 +356,7 @@ function handleClearConfirm(): void {
                   </button>
                   <button
                     class="rounded-md p-1 text-muted-foreground transition-colors hover:bg-background/80 hover:text-foreground"
+                    :class="isMobile ? 'scale-110 px-2' : ''"
                     :title="t('ai.exportMarkdown')"
                     @click="handleExport(session, $event)"
                   >
@@ -344,6 +364,7 @@ function handleClearConfirm(): void {
                   </button>
                   <button
                     class="rounded-md p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    :class="isMobile ? 'scale-110 px-2' : ''"
                     :title="t('ai.delete')"
                     @click="handleDelete(session.id, $event)"
                   >
@@ -403,7 +424,13 @@ function handleClearConfirm(): void {
             <!-- 正常显示 -->
             <template v-else>
               <div class="relative">
-                <div class="min-w-0 pr-2 transition-all group-hover:pr-24">
+                <div
+                  class="min-w-0 transition-all"
+                  :class="[
+                    isMobile ? 'pr-0' : 'pr-2 group-hover:pr-24',
+                    isMobile && session.id === currentSessionId ? 'mb-8' : '',
+                  ]"
+                >
                   <div class="flex items-center gap-1.5">
                     <p
                       class="truncate text-sm font-medium transition-colors"
@@ -420,16 +447,23 @@ function handleClearConfirm(): void {
                 </div>
                 <!-- 操作按钮 -->
                 <div
-                  class="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 transition-all group-hover:opacity-100 bg-gradient-to-l from-accent/90 via-accent/80 to-transparent pl-8 py-1 rounded-r-xl"
+                  class="absolute transition-all"
+                  :class="[
+                    isMobile
+                      ? 'left-0 bottom-0 top-auto right-auto flex opacity-100 bg-transparent py-0 mt-2'
+                      : 'right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 bg-gradient-to-l from-accent/90 via-accent/80 to-transparent pl-8 py-1 rounded-r-xl',
+                    isMobile && session.id !== currentSessionId ? 'hidden' : '',
+                  ]"
                   @click.stop
                 >
                   <button
                     class="rounded-md p-1 transition-colors hover:bg-background/80"
-                    :class="
+                    :class="[
                       session.isPinned
                         ? 'text-primary'
-                        : 'text-muted-foreground hover:text-foreground'
-                    "
+                        : 'text-muted-foreground hover:text-foreground',
+                      isMobile ? 'scale-110 px-2' : '',
+                    ]"
                     :title="session.isPinned ? t('ai.unpin') : t('ai.pin')"
                     @click="togglePin(session.id)"
                   >
@@ -437,6 +471,7 @@ function handleClearConfirm(): void {
                   </button>
                   <button
                     class="rounded-md p-1 text-muted-foreground transition-colors hover:bg-background/80 hover:text-foreground"
+                    :class="isMobile ? 'scale-110 px-2' : ''"
                     :title="t('ai.editTitle')"
                     @click="startEdit(session)"
                   >
@@ -444,6 +479,7 @@ function handleClearConfirm(): void {
                   </button>
                   <button
                     class="rounded-md p-1 text-muted-foreground transition-colors hover:bg-background/80 hover:text-foreground"
+                    :class="isMobile ? 'scale-110 px-2' : ''"
                     :title="t('ai.exportMarkdown')"
                     @click="handleExport(session, $event)"
                   >
@@ -451,6 +487,7 @@ function handleClearConfirm(): void {
                   </button>
                   <button
                     class="rounded-md p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    :class="isMobile ? 'scale-110 px-2' : ''"
                     :title="t('ai.delete')"
                     @click="handleDelete(session.id, $event)"
                   >

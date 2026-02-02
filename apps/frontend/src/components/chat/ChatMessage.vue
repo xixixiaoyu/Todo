@@ -2,6 +2,7 @@
 import { computed, ref, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Pencil } from 'lucide-vue-next'
+import { useWindowSize } from '@vueuse/core'
 import type { ChatMessage } from '@/composables/useChat'
 import { useMarkdown } from '@/composables/useMarkdown'
 import ImageLoadingState from './ImageLoadingState.vue'
@@ -26,6 +27,9 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const { renderMarkdown, getMermaidSvgMap } = useMarkdown()
+
+const { width: windowWidth } = useWindowSize()
+const isMobile = computed(() => windowWidth.value < 640)
 
 // 图片预览
 const previewImageUrl = ref<string | null>(null)
@@ -271,9 +275,12 @@ watch(
 </script>
 
 <template>
-  <div ref="messageRef" class="flex py-4" :class="isUser ? 'justify-end' : 'justify-start'">
+  <div
+    ref="messageRef"
+    :class="['flex', isMobile ? 'py-2' : 'py-4', isUser ? 'justify-end' : 'justify-start']"
+  >
     <!-- 消息内容 -->
-    <div class="max-w-[85%] space-y-2">
+    <div :class="[isMobile ? 'max-w-[92%]' : 'max-w-[85%]', 'space-y-2']">
       <!-- 多模型讨论过程 -->
       <ChatMessageDiscussion v-if="hasDiscussion" :steps="message.discussionSteps" />
 
@@ -359,7 +366,10 @@ watch(
                 <div
                   v-for="(img, index) in message.images"
                   :key="index"
-                  class="group relative h-20 w-20 overflow-hidden rounded-lg border border-white/20 bg-black/5 shadow-sm transition-all hover:scale-105 cursor-zoom-in"
+                  :class="[
+                    'group relative overflow-hidden rounded-lg border border-white/20 bg-black/5 shadow-sm transition-all hover:scale-105 cursor-zoom-in',
+                    isMobile ? 'h-16 w-16' : 'h-20 w-20',
+                  ]"
                   @click="openImage(img)"
                 >
                   <img :src="img" class="h-full w-full object-cover" />
@@ -395,13 +405,23 @@ watch(
 
               <!-- 用户消息：展示模式 -->
               <div v-else-if="isUser" class="group/user relative selectable select-text">
-                <div class="break-words whitespace-pre-wrap text-[15px] leading-relaxed">
+                <div
+                  :class="[
+                    'break-words whitespace-pre-wrap leading-relaxed',
+                    isMobile ? 'text-[14px]' : 'text-[15px]',
+                  ]"
+                >
                   {{ message.content }}
                 </div>
                 <!-- 编辑按钮 -->
                 <button
                   v-if="!isEditing"
-                  class="absolute -left-12 top-0 flex h-7 w-7 items-center justify-center rounded-md bg-card/80 text-muted-foreground opacity-0 shadow-sm transition-all hover:bg-card hover:text-primary group-hover/user:opacity-100"
+                  :class="[
+                    'flex h-7 w-7 items-center justify-center rounded-md bg-card/80 text-muted-foreground shadow-sm transition-all hover:bg-card hover:text-primary',
+                    isMobile
+                      ? 'mt-1 opacity-60 ml-auto'
+                      : 'absolute -left-12 top-0 opacity-0 group-hover/user:opacity-100',
+                  ]"
                   :title="t('ai.edit')"
                   @click="startEdit"
                 >
@@ -423,7 +443,10 @@ watch(
                 <!-- AI 消息：兜底显示（渲染完成前或渲染失败时） -->
                 <div
                   v-else-if="hasContent"
-                  class="relative selectable select-text break-words text-[15px] leading-relaxed"
+                  :class="[
+                    'relative selectable select-text break-words leading-relaxed',
+                    isMobile ? 'text-[14px]' : 'text-[15px]',
+                  ]"
                 >
                   {{ message.content }}
                 </div>
