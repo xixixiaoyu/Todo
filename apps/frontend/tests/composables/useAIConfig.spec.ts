@@ -244,4 +244,127 @@ describe('useAIConfig - Core', () => {
       expect(activePresetId.value).toBe(originalValue)
     })
   })
+
+  describe('Import/Export', () => {
+    it('should export all presets as JSON string', () => {
+      const { addPreset, exportPresets } = useAIConfig()
+      const preset1 = {
+        name: 'Preset 1',
+        baseUrl: 'https://api1.com',
+        apiKey: 'key1',
+        model: 'model1',
+        systemPrompt: 'prompt1',
+        temperature: 0.5,
+        todoAssistant: false,
+      }
+      const preset2 = {
+        name: 'Preset 2',
+        baseUrl: 'https://api2.com',
+        apiKey: 'key2',
+        model: 'model2',
+        systemPrompt: 'prompt2',
+        temperature: 0.8,
+        todoAssistant: true,
+      }
+
+      addPreset(preset1)
+      addPreset(preset2)
+
+      const exported = exportPresets()
+      const parsed = JSON.parse(exported)
+
+      expect(parsed).toHaveLength(2)
+      expect(parsed[0]).toMatchObject(preset1)
+      expect(parsed[1]).toMatchObject(preset2)
+      expect(parsed[0]).toHaveProperty('id')
+      expect(parsed[1]).toHaveProperty('id')
+    })
+
+    it('should import presets in merge mode', () => {
+      const { presets, addPreset, importPresets } = useAIConfig()
+      const existingPreset = {
+        name: 'Existing',
+        baseUrl: 'https://existing.com',
+        apiKey: 'key',
+        model: 'model',
+        systemPrompt: 'prompt',
+        temperature: 0.5,
+        todoAssistant: false,
+      }
+      addPreset(existingPreset)
+
+      const importData = [
+        {
+          name: 'Imported',
+          baseUrl: 'https://imported.com',
+          apiKey: 'newkey',
+          model: 'newmodel',
+          systemPrompt: 'newprompt',
+          temperature: 0.7,
+          todoAssistant: true,
+        },
+      ]
+
+      importPresets(JSON.stringify(importData))
+
+      expect(presets.value).toHaveLength(2)
+      expect(presets.value[0].name).toBe('Existing')
+      expect(presets.value[1].name).toBe('Imported')
+      expect(presets.value[1]).toHaveProperty('id')
+      expect(presets.value[1].id).not.toBe(presets.value[0].id)
+    })
+
+    it('should import presets in replace mode', () => {
+      const { presets, addPreset, importPresets } = useAIConfig()
+      addPreset({
+        name: 'Existing',
+        baseUrl: 'https://existing.com',
+        apiKey: 'key',
+        model: 'model',
+        systemPrompt: 'prompt',
+        temperature: 0.5,
+        todoAssistant: false,
+      })
+
+      const importData = [
+        {
+          name: 'Imported',
+          baseUrl: 'https://imported.com',
+          apiKey: 'newkey',
+          model: 'newmodel',
+          systemPrompt: 'newprompt',
+          temperature: 0.7,
+          todoAssistant: true,
+        },
+      ]
+
+      importPresets(JSON.stringify(importData), 'replace')
+
+      expect(presets.value).toHaveLength(1)
+      expect(presets.value[0].name).toBe('Imported')
+    })
+
+    it('should throw error for invalid JSON', () => {
+      const { importPresets } = useAIConfig()
+      expect(() => importPresets('invalid-json')).toThrow()
+    })
+
+    it('should throw error for invalid data structure', () => {
+      const { importPresets } = useAIConfig()
+      expect(() => importPresets(JSON.stringify({ not: 'an array' }))).toThrow()
+    })
+
+    it('should filter out invalid preset items during import', () => {
+      const { presets, importPresets } = useAIConfig()
+      const importData = [
+        { name: 'Valid', baseUrl: 'https://v.com', model: 'm' },
+        { name: 'Invalid' }, // missing baseUrl and model
+      ]
+
+      importPresets(JSON.stringify(importData))
+
+      expect(presets.value).toHaveLength(1)
+      expect(presets.value[0].name).toBe('Valid')
+    })
+  })
 })

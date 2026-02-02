@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Plus, Eye, EyeOff, Edit3, Copy, Trash2 } from 'lucide-vue-next'
+import { Plus, Eye, EyeOff, Edit3, Copy, Trash2, Download, Upload } from 'lucide-vue-next'
 import { useAIConfig, type AIPreset } from '@/composables/useAIConfig'
+import { useToast } from '@/composables/useToast'
 
 const { t } = useI18n()
+const toast = useToast()
 
 const nameId = useId()
 const baseUrlId = useId()
@@ -22,12 +24,15 @@ const {
   getPresetDefaults,
   activePresetId,
   switchPreset,
+  exportPresets,
+  importPresets,
 } = useAIConfig()
 
 // 编辑预设状态
 const editingPreset = ref<AIPreset | null>(null)
 const isCreatingPreset = ref(false)
 const showPresetApiKey = ref(false)
+const fileInputRef = ref<HTMLInputElement | null>(null)
 const presetForm = ref<Omit<AIPreset, 'id'>>({
   name: '',
   baseUrl: '',
@@ -111,6 +116,60 @@ function handleDuplicatePreset(presetId: string) {
   duplicatePreset(presetId)
 }
 
+/**
+ * 导出预设
+ */
+function handleExport() {
+  if (presets.value.length === 0) return
+
+  const data = exportPresets()
+  const blob = new Blob([data], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `lumina-ai-presets-${new Date().toISOString().split('T')[0]}.json`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+
+  toast.success(t('ai.exportSuccess'))
+}
+
+/**
+ * 触发导入文件选择
+ */
+function triggerImport() {
+  fileInputRef.value?.click()
+}
+
+/**
+ * 处理文件导入
+ */
+async function handleFileChange(event: Event) {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+
+  try {
+    const text = await file.text()
+    const countBefore = presets.value.length
+    importPresets(text)
+    const countAfter = presets.value.length
+    const importedCount = countAfter - countBefore
+
+    if (importedCount > 0) {
+      toast.success(t('ai.importSuccess', { count: importedCount }))
+    }
+  } catch (error) {
+    console.error('Import presets error:', error)
+    toast.error(t('ai.importError'))
+  } finally {
+    // 清空 input，以便下次选择同一文件也能触发 change
+    target.value = ''
+  }
+}
+
 defineExpose({
   startCreatePreset,
   startEditPreset,
@@ -122,6 +181,15 @@ defineExpose({
 
 <template>
   <div class="px-6 py-5">
+    <!-- 隐藏的导入文件 input -->
+    <input
+      ref="fileInputRef"
+      type="file"
+      accept=".json"
+      class="hidden"
+      @change="handleFileChange"
+    />
+
     <!-- 编辑/创建预设表单 -->
     <div v-if="isCreatingPreset || editingPreset" class="space-y-4">
       <div class="flex items-center justify-between">
@@ -244,14 +312,36 @@ defineExpose({
 
     <!-- 预设列表 -->
     <div v-else class="space-y-4">
-      <!-- 添加按钮 -->
-      <button
-        class="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-primary/40 py-3 text-sm font-medium text-primary transition-all hover:border-primary hover:bg-primary/5 active:scale-[0.98]"
-        @click="startCreatePreset"
-      >
-        <Plus :size="16" />
-        <span>{{ t('ai.createNewPreset') }}</span>
-      </button>
+      <!-- 操作按钮栏 -->
+      <div class="flex items-center gap-2">
+        <!-- 添加按钮 -->
+        <button
+          class="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-dashed border-primary/40 py-3 text-sm font-medium text-primary transition-all hover:border-primary hover:bg-primary/5 active:scale-[0.98]"
+          @click="startCreatePreset"
+        >
+          <Plus :size="16" />
+          <span>{{ t('ai.createNewPreset') }}</span>
+        </button>
+
+        <!-- 导入按钮 -->
+        <button
+          class="flex h-[46px] w-[46px] items-center justify-center rounded-xl border border-border bg-card/40 text-muted-foreground transition-all hover:border-primary/50 hover:bg-card/60 hover:text-primary active:scale-95"
+          :title="t('ai.importPresets')"
+          @click="triggerImport"
+        >
+          <Download :size="18" />
+        </button>
+
+        <!-- 导出按钮 -->
+        <button
+          class="flex h-[46px] w-[46px] items-center justify-center rounded-xl border border-border bg-card/40 text-muted-foreground transition-all hover:border-primary/50 hover:bg-card/60 hover:text-primary active:scale-95"
+          :class="{ 'pointer-events-none opacity-40': presets.length === 0 }"
+          :title="t('ai.exportPresets')"
+          @click="handleExport"
+        >
+          <Upload :size="18" />
+        </button>
+      </div>
 
       <!-- 预设列表 -->
       <div v-if="presets.length" class="grid grid-cols-1 gap-2.5">

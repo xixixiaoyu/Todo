@@ -351,6 +351,58 @@ export function useAIConfig() {
     }
   }
 
+  /**
+   * 导出所有预设为 JSON 字符串
+   */
+  function exportPresets(): string {
+    return JSON.stringify(presets.value, null, 2)
+  }
+
+  /**
+   * 导入预设
+   * @param jsonStr JSON 字符串
+   * @param mode 导入模式：'merge' 合并（默认），'replace' 替换
+   */
+  function importPresets(jsonStr: string, mode: 'merge' | 'replace' = 'merge'): void {
+    try {
+      const imported = JSON.parse(jsonStr) as unknown
+      if (!Array.isArray(imported)) {
+        throw new Error('Invalid presets format: expected an array')
+      }
+
+      // 基础验证：每个项都应该有必要的字段
+      const validPresets = (imported as unknown[]).filter((p): p is AIPreset => {
+        if (typeof p !== 'object' || p === null) return false
+        const item = p as Record<string, unknown>
+        return (
+          typeof item.name === 'string' &&
+          typeof item.baseUrl === 'string' &&
+          typeof item.model === 'string'
+        )
+      })
+
+      if (validPresets.length === 0 && (imported as unknown[]).length > 0) {
+        throw new Error('No valid presets found in the imported data')
+      }
+
+      // 为导入的预设生成新 ID，避免冲突
+      const processedPresets = validPresets.map((p) => ({
+        ...p,
+        id: generateId(), // 总是生成新 ID 确保唯一性
+      }))
+
+      if (mode === 'replace') {
+        presets.value = processedPresets
+        activePresetId.value = null
+      } else {
+        presets.value = [...presets.value, ...processedPresets]
+      }
+    } catch (error) {
+      console.error('导入预设失败:', error)
+      throw error
+    }
+  }
+
   return {
     config: readonly(config),
     updateConfig,
@@ -367,6 +419,8 @@ export function useAIConfig() {
     deletePreset,
     duplicatePreset,
     getPresetDefaults,
+    exportPresets,
+    importPresets,
   }
 }
 
