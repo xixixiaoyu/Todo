@@ -245,6 +245,9 @@ function toggleSecondaryModel(presetId: string) {
               v-model="formData.baseUrl"
               name="ai-base-url"
               type="text"
+              autocapitalize="off"
+              autocorrect="off"
+              spellcheck="false"
               :placeholder="t('ai.baseUrlPlaceholder')"
               class="w-full rounded-2xl border border-border/80 bg-muted/40 px-4 py-3 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground/40 hover:bg-muted/60 focus:border-primary/50 focus:bg-background focus:ring-4 focus:ring-primary/5 dark:border-border dark:bg-muted/20 dark:hover:bg-muted/30"
             />
@@ -280,6 +283,9 @@ function toggleSecondaryModel(presetId: string) {
               v-model="formData.apiKey"
               name="ai-api-key"
               :type="showApiKey ? 'text' : 'password'"
+              autocapitalize="off"
+              autocorrect="off"
+              spellcheck="false"
               :placeholder="t('ai.apiKeyPlaceholder')"
               class="w-full rounded-2xl border border-border/80 bg-muted/40 px-4 py-3 pr-10 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground/40 hover:bg-muted/60 focus:border-primary/50 focus:bg-background focus:ring-4 focus:ring-primary/5 dark:border-border dark:bg-muted/20 dark:hover:bg-muted/30"
             />
@@ -311,6 +317,9 @@ function toggleSecondaryModel(presetId: string) {
             v-model="formData.model"
             name="ai-model"
             type="text"
+            autocapitalize="off"
+            autocorrect="off"
+            spellcheck="false"
             :placeholder="t('ai.modelPlaceholder')"
             class="w-full rounded-2xl border border-border/80 bg-muted/40 px-4 py-3 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground/40 hover:bg-muted/60 focus:border-primary/50 focus:bg-background focus:ring-4 focus:ring-primary/5 dark:border-border dark:bg-muted/20 dark:hover:bg-muted/30"
           />
@@ -396,6 +405,9 @@ function toggleSecondaryModel(presetId: string) {
             v-model="formData.systemPrompt"
             name="ai-system-prompt"
             rows="5"
+            autocapitalize="off"
+            autocorrect="off"
+            spellcheck="false"
             :placeholder="t('ai.systemPromptPlaceholder')"
             class="w-full resize-none rounded-2xl border border-border/80 bg-muted/40 px-4 py-3.5 text-sm leading-relaxed text-foreground outline-none transition-all placeholder:text-muted-foreground/40 hover:bg-muted/60 focus:border-primary/50 focus:bg-background focus:ring-4 focus:ring-primary/5 dark:border-border dark:bg-muted/20 dark:hover:bg-muted/30"
           />

@@ -358,6 +358,9 @@ defineExpose({
       name="ai-input"
       :value="modelValue"
       rows="1"
+      autocapitalize="off"
+      autocorrect="off"
+      spellcheck="false"
       :placeholder="
         isInputDisabled
           ? t('ai.generating')

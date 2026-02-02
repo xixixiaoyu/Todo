@@ -214,6 +214,9 @@ defineExpose({
             v-model="presetForm.name"
             name="preset-name"
             type="text"
+            autocapitalize="off"
+            autocorrect="off"
+            spellcheck="false"
             :placeholder="t('ai.presetNamePlaceholder')"
             class="w-full rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
@@ -227,6 +230,9 @@ defineExpose({
             v-model="presetForm.baseUrl"
             name="preset-base-url"
             type="text"
+            autocapitalize="off"
+            autocorrect="off"
+            spellcheck="false"
             :placeholder="t('ai.baseUrlPlaceholder')"
             class="w-full rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
@@ -241,6 +247,9 @@ defineExpose({
               v-model="presetForm.apiKey"
               name="preset-api-key"
               :type="showPresetApiKey ? 'text' : 'password'"
+              autocapitalize="off"
+              autocorrect="off"
+              spellcheck="false"
               :placeholder="t('ai.apiKeyPlaceholder')"
               class="w-full rounded-lg border border-border bg-muted/30 px-3 py-2 pr-9 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
@@ -263,6 +272,9 @@ defineExpose({
             v-model="presetForm.model"
             name="preset-model"
             type="text"
+            autocapitalize="off"
+            autocorrect="off"
+            spellcheck="false"
             :placeholder="t('ai.modelPlaceholder')"
             class="w-full rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
@@ -276,6 +288,9 @@ defineExpose({
             v-model="presetForm.systemPrompt"
             name="preset-system-prompt"
             rows="3"
+            autocapitalize="off"
+            autocorrect="off"
+            spellcheck="false"
             :placeholder="t('ai.systemPromptPlaceholder')"
             class="w-full resize-none rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
