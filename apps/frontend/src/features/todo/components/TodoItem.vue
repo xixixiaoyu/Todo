@@ -15,6 +15,7 @@ import {
   Target,
   Wand2,
   Loader2,
+  MoreHorizontal,
 } from 'lucide-vue-next'
 import { ref, computed, watch, nextTick, useId } from 'vue'
 import draggable from 'vuedraggable'
@@ -22,15 +23,23 @@ import { onClickOutside } from '@vueuse/core'
 import { Haptics, ImpactStyle } from '@capacitor/haptics'
 import { useTodoStore, type Todo } from '../stores/todo'
 import { usePomodoroStore } from '../stores/pomodoro'
+import { useIsMobile } from '@/composables/useWindowSize'
 import { highlightMatch } from '@/lib/utils'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 const { t } = useI18n()
 const store = useTodoStore()
 const pomodoroStore = usePomodoroStore()
+const { isMobile } = useIsMobile()
 const editInputId = useId()
 const subtaskInputId = useId()
 
@@ -55,6 +64,13 @@ const emit = defineEmits<{
 }>()
 
 const isBreakingDown = ref(false)
+const isMobileActionsVisible = ref(false)
+
+function toggleMobileActions() {
+  if (isMobile.value) {
+    isMobileActionsVisible.value = !isMobileActionsVisible.value
+  }
+}
 
 async function handleBreakdown() {
   isBreakingDown.value = true
@@ -316,7 +332,7 @@ watch(
 
       <!-- 显示模式 -->
       <template v-else>
-        <div class="flex-1 flex flex-col min-w-0">
+        <div class="flex-1 flex flex-col min-w-0" @click="toggleMobileActions">
           <!-- 父任务上下文 (仅在搜索时显示) -->
           <div
             v-if="parentPath.length > 0"
@@ -355,112 +371,100 @@ watch(
           <!-- eslint-enable vue/no-v-html -->
         </div>
         <div
-          class="absolute right-0 top-0 bottom-0 flex items-center gap-0.5 opacity-0 transition-all duration-200 group-hover:opacity-100 bg-gradient-to-l from-card via-card/95 to-transparent pl-12 pr-3 rounded-r-xl"
+          class="absolute right-0 top-0 bottom-0 flex items-center gap-0.5 opacity-0 md:group-hover:opacity-100 bg-gradient-to-l from-card via-card/95 to-transparent pl-8 md:pl-12 pr-2 md:pr-3 rounded-r-xl transition-all duration-200"
+          :class="{ 'opacity-100': isMobileActionsVisible }"
         >
           <TooltipProvider :delay-duration="0">
-            <Tooltip v-if="!todo.completed && !todo.isProposedDelete">
-              <TooltipTrigger as-child>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                  :disabled="isBreakingDown"
-                  @click="handleBreakdown"
-                >
-                  <component
-                    :is="isBreakingDown ? Loader2 : Wand2"
-                    class="h-4 w-4"
-                    :class="{ 'animate-spin': isBreakingDown }"
-                  />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{{ t('todo.breakdown') }}</p>
-              </TooltipContent>
-            </Tooltip>
+            <!-- AI Breakdown -->
+            <Button
+              v-if="!todo.completed && !todo.isProposedDelete"
+              variant="ghost"
+              size="icon"
+              class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+              :disabled="isBreakingDown"
+              @click.stop="handleBreakdown"
+            >
+              <component
+                :is="isBreakingDown ? Loader2 : Wand2"
+                class="h-3.5 w-3.5 md:h-4 md:w-4"
+                :class="[
+                  { 'animate-spin': isBreakingDown },
+                  isBreakingDown ? 'lucide-loader2' : 'lucide-wand2',
+                ]"
+              />
+            </Button>
 
-            <Tooltip v-if="!todo.completed">
-              <TooltipTrigger as-child>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                  :class="{ 'text-primary bg-primary/5': pomodoroStore.activeTodoId === todo.id }"
-                  @click="pomodoroStore.startFocus(todo.id)"
-                >
-                  <Target class="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{{ t('todo.focus') }}</p>
-              </TooltipContent>
-            </Tooltip>
+            <!-- Focus -->
+            <Button
+              v-if="!todo.completed"
+              variant="ghost"
+              size="icon"
+              class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+              :class="{ 'text-primary bg-primary/5': pomodoroStore.activeTodoId === todo.id }"
+              @click.stop="pomodoroStore.startFocus(todo.id)"
+            >
+              <Target class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-target" />
+            </Button>
 
-            <Tooltip>
-              <TooltipTrigger as-child>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                  :class="{ 'text-primary bg-primary/5': todo.isPinned }"
-                  @click="store.togglePin(todo.id)"
-                >
-                  <PinOff v-if="todo.isPinned" class="h-4 w-4" />
-                  <Pin v-else class="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{{ todo.isPinned ? t('todo.unpin') : t('todo.pin') }}</p>
-              </TooltipContent>
-            </Tooltip>
+            <!-- Pin -->
+            <Button
+              variant="ghost"
+              size="icon"
+              class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+              :class="{ 'text-primary bg-primary/5': todo.isPinned }"
+              @click.stop="store.togglePin(todo.id)"
+            >
+              <PinOff v-if="todo.isPinned" class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-pin-off" />
+              <Pin v-else class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-pin" />
+            </Button>
 
-            <Tooltip v-if="(level || 0) < 2 && !todo.completed">
-              <TooltipTrigger as-child>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                  @click="startAddChild"
-                >
-                  <Plus class="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{{ t('todo.addSubtask') }}</p>
-              </TooltipContent>
-            </Tooltip>
+            <!-- Edit -->
+            <Button
+              v-if="!todo.completed"
+              variant="ghost"
+              size="icon"
+              class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+              @click.stop="emit('startEdit', todo.id, todo.title)"
+            >
+              <Pencil class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-pencil" />
+            </Button>
 
-            <Tooltip v-if="!todo.completed">
-              <TooltipTrigger as-child>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                  @click="emit('startEdit', todo.id, todo.title)"
-                >
-                  <Pencil class="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{{ t('todo.edit') }}</p>
-              </TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger as-child>
+            <!-- More Actions (Mobile Only) -->
+            <DropdownMenu>
+              <DropdownMenuTrigger as-child>
                 <Button
                   variant="ghost"
                   size="icon"
                   class="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  @click.stop
+                >
+                  <MoreHorizontal class="h-3.5 w-3.5 lucide-more-horizontal" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" class="w-40 rounded-xl">
+                <DropdownMenuItem v-if="(level || 0) < 2 && !todo.completed" @click="startAddChild">
+                  <Plus class="mr-2 h-4 w-4 lucide-plus" />
+                  <span>{{ t('todo.addSubtask') }}</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  class="text-destructive focus:text-destructive"
                   @click="handleDelete"
                 >
-                  <Trash2 class="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{{ t('common.delete') }}</p>
-              </TooltipContent>
-            </Tooltip>
+                  <Trash2 class="mr-2 h-4 w-4 lucide-trash2" />
+                  <span>{{ t('common.delete') }}</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <!-- Delete (Desktop Only) -->
+            <Button
+              variant="ghost"
+              size="icon"
+              class="hidden md:flex h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+              @click.stop="handleDelete"
+            >
+              <Trash2 class="h-4 w-4 lucide-trash2" />
+            </Button>
           </TooltipProvider>
         </div>
       </template>

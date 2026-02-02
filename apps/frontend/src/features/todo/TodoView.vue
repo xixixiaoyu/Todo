@@ -74,18 +74,18 @@ function onFireworksComplete() {
 
 <template>
   <div
-    class="flex-1 bg-background p-4 md:p-8 flex items-end justify-center overflow-hidden"
+    class="flex-1 bg-background p-0 md:p-8 flex items-center md:items-end justify-center overflow-hidden"
     :class="{ 'p-0 items-center': pomodoroStore.isMiniMode }"
   >
     <div
       v-if="!pomodoroStore.isMiniMode"
       ref="cardRef"
-      class="w-full max-w-4xl h-[94vh] flex flex-col"
+      class="w-full max-w-4xl h-full md:h-[94vh] flex flex-col"
     >
       <Card
-        class="flex-1 flex flex-col border-none shadow-card dark:shadow-[0_8px_30px_rgba(0,0,0,0.3)] overflow-hidden rounded-[24px]"
+        class="flex-1 flex flex-col border-none shadow-none md:shadow-card dark:md:shadow-[0_8px_30px_rgba(0,0,0,0.3)] overflow-hidden rounded-none md:rounded-[24px]"
       >
-        <CardContent class="todo-container p-6 md:p-8 md:pt-14 flex flex-col flex-1 min-h-0">
+        <CardContent class="todo-container p-4 pt-6 md:p-8 md:pt-10 flex flex-col flex-1 min-h-0">
           <!-- Header -->
           <TodoHeader />
 

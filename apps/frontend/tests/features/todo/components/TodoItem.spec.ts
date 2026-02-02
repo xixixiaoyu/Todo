@@ -1,4 +1,24 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+
+// Mock lucide-vue-next components
+vi.mock('lucide-vue-next', () => ({
+  ChevronDown: { template: '<span class="lucide-chevron-down">ChevronDown</span>' },
+  ChevronRight: { template: '<span class="lucide-chevron-right">ChevronRight</span>' },
+  Plus: { template: '<span class="lucide-plus">Plus</span>' },
+  Trash2: { template: '<span class="lucide-trash2">Trash2</span>' },
+  Wand2: { template: '<span class="lucide-wand2">Wand2</span>' },
+  Loader2: { template: '<span class="lucide-loader2">Loader2</span>' },
+  Sparkles: { template: '<span class="lucide-sparkles">Sparkles</span>' },
+  MoreHorizontal: { template: '<span class="lucide-more-horizontal">MoreHorizontal</span>' },
+  Target: { template: '<span class="lucide-target">Target</span>' },
+  Pin: { template: '<span class="lucide-pin">Pin</span>' },
+  PinOff: { template: '<span class="lucide-pin-off">PinOff</span>' },
+  Pencil: { template: '<span class="lucide-pencil">Pencil</span>' },
+  GripVertical: { template: '<span class="lucide-grip-vertical">GripVertical</span>' },
+  Check: { template: '<span class="lucide-check">Check</span>' },
+  X: { template: '<span class="lucide-x">X</span>' },
+}))
+
 import { mount } from '@vue/test-utils'
 import { createI18n } from 'vue-i18n'
 import { createPinia, setActivePinia } from 'pinia'
@@ -425,10 +445,21 @@ describe('TodoItem', () => {
         },
         global: {
           plugins: [i18n],
+          stubs: {
+            TooltipProvider: { template: '<div><slot /></div>' },
+            Tooltip: { template: '<div><slot /></div>' },
+            TooltipTrigger: { template: '<div><slot /></div>' },
+            TooltipContent: { template: '<div><slot /></div>' },
+            DropdownMenu: { template: '<div><slot /></div>' },
+            DropdownMenuTrigger: { template: '<div><slot /></div>' },
+            DropdownMenuContent: { template: '<div><slot /></div>' },
+            DropdownMenuItem: { template: '<button><slot /></button>' },
+          },
         },
       })
 
-      expect(wrapper.find('.lucide-plus').element.closest('button')).toBeTruthy()
+      expect(wrapper.find('.lucide-more-horizontal').exists()).toBe(true)
+      expect(wrapper.find('.lucide-plus').exists()).toBe(true)
     })
 
     it('should show add subtask button at level 1', () => {
@@ -442,10 +473,21 @@ describe('TodoItem', () => {
         },
         global: {
           plugins: [i18n],
+          stubs: {
+            TooltipProvider: { template: '<div><slot /></div>' },
+            Tooltip: { template: '<div><slot /></div>' },
+            TooltipTrigger: { template: '<div><slot /></div>' },
+            TooltipContent: { template: '<div><slot /></div>' },
+            DropdownMenu: { template: '<div><slot /></div>' },
+            DropdownMenuTrigger: { template: '<div><slot /></div>' },
+            DropdownMenuContent: { template: '<div><slot /></div>' },
+            DropdownMenuItem: { template: '<button><slot /></button>' },
+          },
         },
       })
 
-      expect(wrapper.find('.lucide-plus').element.closest('button')).toBeTruthy()
+      expect(wrapper.find('.lucide-more-horizontal').exists()).toBe(true)
+      expect(wrapper.find('.lucide-plus').exists()).toBe(true)
     })
 
     it('should not show add subtask button when todo is completed', () => {

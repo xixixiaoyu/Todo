@@ -79,7 +79,10 @@ const displayTodos = computed(() => {
   <div class="flex-1 flex flex-col min-h-0">
     <ScrollArea class="flex-1 min-h-0 w-full -mx-4 px-4">
       <!-- Empty State -->
-      <div v-if="todos.length === 0" class="flex flex-col items-center justify-center py-24">
+      <div
+        v-if="todos.length === 0"
+        class="flex flex-col items-center justify-center py-12 md:py-24"
+      >
         <div
           class="mb-8 flex items-center justify-center w-24 h-24 rounded-full bg-primary/5 border border-primary/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative group"
         >

@@ -9,6 +9,7 @@ import {
   LogIn,
   Fingerprint,
   BarChart3,
+  MoreHorizontal,
 } from 'lucide-vue-next'
 import ThemeToggle from './ThemeToggle.vue'
 import { Button } from '@/components/ui/button'
@@ -62,46 +63,43 @@ const handleRegisterPasskey = async () => {
 
 <template>
   <header
-    class="mb-8 flex items-center justify-between transition-all duration-300 select-none"
+    class="mb-4 md:mb-6 flex items-center justify-between transition-all duration-300 select-none"
     style="--wails-draggable: drag"
     @dblclick="handleDblClick"
   >
-    <div class="flex items-center gap-3 group">
+    <div class="flex items-center gap-2 md:gap-3 group">
       <div
-        class="p-2 rounded-xl bg-amber-500/10 text-amber-600 transition-transform group-hover:rotate-12"
+        class="p-1.5 md:p-2 rounded-xl bg-amber-500/10 text-amber-600 transition-transform group-hover:rotate-12"
       >
-        <Clover :size="24" />
+        <Clover :size="20" class="md:w-6 md:h-6" />
       </div>
       <h1
-        class="cursor-default text-amber-600 text-2xl font-extrabold tracking-tight transition-transform hover:scale-105 md:text-3xl"
+        class="hidden sm:block cursor-default text-amber-600 text-xl md:text-2xl font-extrabold tracking-tight transition-transform hover:scale-105"
       >
         {{ t('common.appName') }}
       </h1>
     </div>
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-1.5 md:gap-2">
       <!-- AI Assistant - Highlight Feature -->
-      <Tooltip>
-        <TooltipTrigger as-child>
-          <Button
-            variant="ghost"
-            size="sm"
-            class="h-9 px-3 rounded-xl bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 transition-all duration-300 gap-2 font-bold border border-amber-500/20 group/ai"
-            @click="todoStore.setDrawerOpen(true)"
-          >
-            <Clover
-              :size="16"
-              class="transition-transform group-hover/ai:rotate-12 group-hover/ai:scale-110"
-            />
-            <span class="text-xs tracking-wide uppercase">{{ t('ai.assistant') }}</span>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>{{ t('ai.assistant') }} (Cmd+E / Alt+E)</TooltipContent>
-      </Tooltip>
+      <Button
+        variant="ghost"
+        size="sm"
+        class="h-9 px-2 md:px-3 rounded-xl bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 transition-all duration-300 gap-1.5 md:gap-2 font-bold border border-amber-500/20 group/ai"
+        @click="todoStore.setDrawerOpen(true)"
+      >
+        <Clover
+          :size="14"
+          class="md:w-4 md:h-4 transition-transform group-hover/ai:rotate-12 group-hover/ai:scale-110"
+        />
+        <span class="text-[10px] md:text-xs tracking-wide uppercase">{{ t('ai.assistant') }}</span>
+      </Button>
 
-      <div class="mx-1 h-6 w-px bg-border/40"></div>
+      <div class="hidden md:block mx-1 h-6 w-px bg-border/40"></div>
 
-      <!-- View Mode Toggle Group -->
-      <div class="flex items-center gap-1.5 p-1 bg-muted/50 rounded-2xl border border-border/50">
+      <!-- View Mode Toggle Group - Compact on mobile -->
+      <div
+        class="hidden md:flex items-center gap-1.5 p-1 bg-muted/50 rounded-2xl border border-border/50"
+      >
         <Tooltip>
           <TooltipTrigger as-child>
             <Button
@@ -160,23 +158,68 @@ const handleRegisterPasskey = async () => {
         </Tooltip>
       </div>
 
-      <ThemeToggle />
-
-      <Tooltip>
-        <TooltipTrigger as-child>
+      <!-- More Actions Dropdown for Mobile -->
+      <DropdownMenu>
+        <DropdownMenuTrigger as-child>
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon"
-            class="h-10 w-10 rounded-xl bg-card border-border hover:bg-accent"
-            @click="toggleLanguage"
+            class="md:hidden h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
           >
-            <Languages :size="18" />
+            <MoreHorizontal :size="20" />
           </Button>
-        </TooltipTrigger>
-        <TooltipContent>{{ t('common.toggleLanguage') }}</TooltipContent>
-      </Tooltip>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" class="w-48 rounded-xl p-2">
+          <DropdownMenuLabel class="text-xs text-muted-foreground font-normal">
+            {{ t('common.settings') }}
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem class="rounded-lg cursor-pointer" @click="todoStore.viewMode = 'list'">
+            <List class="mr-2 h-4 w-4" />
+            <span>{{ t('todo.listMode') }}</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            class="rounded-lg cursor-pointer"
+            @click="todoStore.viewMode = 'visual'"
+          >
+            <Network class="mr-2 h-4 w-4" />
+            <span>{{ t('todo.visualMode') }}</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem class="rounded-lg cursor-pointer" @click="todoStore.viewMode = 'stats'">
+            <BarChart3 class="mr-2 h-4 w-4" />
+            <span>{{ t('todo.statsMode') }}</span>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <div class="flex items-center justify-between px-2 py-1.5">
+            <span class="text-sm">{{ t('common.theme') }}</span>
+            <ThemeToggle />
+          </div>
+          <DropdownMenuItem class="rounded-lg cursor-pointer" @click="toggleLanguage">
+            <Languages class="mr-2 h-4 w-4" />
+            <span>{{ locale === 'zh-CN' ? 'English' : '中文' }}</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-      <div class="mx-1 h-6 w-px bg-border/40"></div>
+      <div class="hidden md:flex items-center gap-2">
+        <ThemeToggle />
+
+        <Tooltip>
+          <TooltipTrigger as-child>
+            <Button
+              variant="outline"
+              size="icon"
+              class="h-10 w-10 rounded-xl bg-card border-border hover:bg-accent"
+              @click="toggleLanguage"
+            >
+              <Languages :size="18" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{{ t('common.toggleLanguage') }}</TooltipContent>
+        </Tooltip>
+      </div>
+
+      <div class="mx-0.5 md:mx-1 h-6 w-px bg-border/40"></div>
 
       <!-- Auth Section -->
       <DropdownMenu v-if="authStore.isAuthenticated">

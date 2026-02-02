@@ -139,11 +139,11 @@ onMounted(() => {
         </TooltipProvider>
       </div>
       <Button
-        class="h-12 px-6 rounded-xl text-base font-semibold shadow-[0_8px_20px_-4px_rgba(var(--primary),0.3)] transition-all active:scale-95 hover:shadow-[0_12px_25px_-4px_rgba(var(--primary),0.4)]"
+        class="h-12 px-4 md:px-6 rounded-xl text-base font-semibold shadow-[0_8px_20px_-4px_rgba(var(--primary),0.3)] transition-all active:scale-95 hover:shadow-[0_12px_25px_-4px_rgba(var(--primary),0.4)]"
         @click="emit('add')"
       >
-        <Plus class="mr-1.5 h-5 w-5" />
-        {{ t('todo.add') }}
+        <Plus class="h-5 w-5" :class="{ 'mr-1.5': !isMobile }" />
+        <span v-if="!isMobile">{{ t('todo.add') }}</span>
       </Button>
     </div>
   </div>

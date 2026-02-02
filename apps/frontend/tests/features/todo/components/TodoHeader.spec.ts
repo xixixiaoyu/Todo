@@ -25,6 +25,7 @@ vi.mock('lucide-vue-next', () => ({
   Sun: { template: '<span>Sun</span>' },
   Moon: { template: '<span>Moon</span>' },
   BarChart3: { template: '<span>BarChart3</span>' },
+  MoreHorizontal: { template: '<span>MoreHorizontal</span>' },
 }))
 
 // Mock vue-i18n
