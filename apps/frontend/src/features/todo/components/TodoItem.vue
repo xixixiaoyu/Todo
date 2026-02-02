@@ -15,7 +15,6 @@ import {
   Target,
   Wand2,
   Loader2,
-  MoreHorizontal,
 } from 'lucide-vue-next'
 import { ref, computed, watch, nextTick, useId } from 'vue'
 import draggable from 'vuedraggable'
@@ -29,12 +28,6 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 
 const { t } = useI18n()
 const store = useTodoStore()
@@ -429,41 +422,25 @@ watch(
               <Pencil class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-pencil" />
             </Button>
 
-            <!-- More Actions (Mobile Only) -->
-            <DropdownMenu>
-              <DropdownMenuTrigger as-child>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                  @click.stop
-                >
-                  <MoreHorizontal class="h-3.5 w-3.5 lucide-more-horizontal" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" class="w-40 rounded-xl">
-                <DropdownMenuItem v-if="(level || 0) < 2 && !todo.completed" @click="startAddChild">
-                  <Plus class="mr-2 h-4 w-4 lucide-plus" />
-                  <span>{{ t('todo.addSubtask') }}</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  class="text-destructive focus:text-destructive"
-                  @click="handleDelete"
-                >
-                  <Trash2 class="mr-2 h-4 w-4 lucide-trash2" />
-                  <span>{{ t('common.delete') }}</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <!-- Add Subtask -->
+            <Button
+              v-if="(level || 0) < 2 && !todo.completed"
+              variant="ghost"
+              size="icon"
+              class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+              @click.stop="startAddChild"
+            >
+              <Plus class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-plus" />
+            </Button>
 
-            <!-- Delete (Desktop Only) -->
+            <!-- Delete -->
             <Button
               variant="ghost"
               size="icon"
-              class="hidden md:flex h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+              class="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
               @click.stop="handleDelete"
             >
-              <Trash2 class="h-4 w-4 lucide-trash2" />
+              <Trash2 class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-trash2" />
             </Button>
           </TooltipProvider>
         </div>

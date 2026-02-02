@@ -9,7 +9,6 @@ vi.mock('lucide-vue-next', () => ({
   Wand2: { template: '<span class="lucide-wand2">Wand2</span>' },
   Loader2: { template: '<span class="lucide-loader2">Loader2</span>' },
   Sparkles: { template: '<span class="lucide-sparkles">Sparkles</span>' },
-  MoreHorizontal: { template: '<span class="lucide-more-horizontal">MoreHorizontal</span>' },
   Target: { template: '<span class="lucide-target">Target</span>' },
   Pin: { template: '<span class="lucide-pin">Pin</span>' },
   PinOff: { template: '<span class="lucide-pin-off">PinOff</span>' },
@@ -450,15 +449,10 @@ describe('TodoItem', () => {
             Tooltip: { template: '<div><slot /></div>' },
             TooltipTrigger: { template: '<div><slot /></div>' },
             TooltipContent: { template: '<div><slot /></div>' },
-            DropdownMenu: { template: '<div><slot /></div>' },
-            DropdownMenuTrigger: { template: '<div><slot /></div>' },
-            DropdownMenuContent: { template: '<div><slot /></div>' },
-            DropdownMenuItem: { template: '<button><slot /></button>' },
           },
         },
       })
 
-      expect(wrapper.find('.lucide-more-horizontal').exists()).toBe(true)
       expect(wrapper.find('.lucide-plus').exists()).toBe(true)
     })
 
@@ -478,15 +472,10 @@ describe('TodoItem', () => {
             Tooltip: { template: '<div><slot /></div>' },
             TooltipTrigger: { template: '<div><slot /></div>' },
             TooltipContent: { template: '<div><slot /></div>' },
-            DropdownMenu: { template: '<div><slot /></div>' },
-            DropdownMenuTrigger: { template: '<div><slot /></div>' },
-            DropdownMenuContent: { template: '<div><slot /></div>' },
-            DropdownMenuItem: { template: '<button><slot /></button>' },
           },
         },
       })
 
-      expect(wrapper.find('.lucide-more-horizontal').exists()).toBe(true)
       expect(wrapper.find('.lucide-plus').exists()).toBe(true)
     })
 
