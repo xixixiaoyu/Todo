@@ -1,7 +1,19 @@
 <script setup lang="ts">
 import { ref, nextTick, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Brain, Info, Plus, Loader2, Sparkles, Trash, Check, X, Edit3 } from 'lucide-vue-next'
+import {
+  Brain,
+  Info,
+  Plus,
+  Loader2,
+  Sparkles,
+  Trash,
+  Check,
+  X,
+  Edit3,
+  Download,
+  Upload,
+} from 'lucide-vue-next'
 import { useMemory } from '@/composables/useMemory'
 import { useToast } from '@/composables/useToast'
 import { type AIConfig, type AIPreset } from '@/composables/useAIConfig'
@@ -41,6 +53,8 @@ const {
   updateMemory,
   autoCompressThreshold,
   updateAutoCompressThreshold,
+  exportMemories,
+  importMemories,
 } = useMemory()
 
 // 记忆管理相关状态
@@ -51,6 +65,64 @@ const editingMemoryContent = ref('')
 const showClearConfirm = ref(false)
 const addMemoryInputRef = ref<HTMLInputElement | null>(null)
 const editMemoryInputRef = ref<HTMLInputElement | null>(null)
+const fileInputRef = ref<HTMLInputElement | null>(null)
+
+const toast = useToast()
+
+/**
+ * 导出记忆
+ */
+function handleExport() {
+  if (memories.value.length === 0) return
+
+  const data = exportMemories()
+  const blob = new Blob([data], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `lumina-ai-memory-${new Date().toISOString().split('T')[0]}.json`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+
+  toast.success(t('ai.memoryExportSuccess'))
+}
+
+/**
+ * 触发导入文件选择
+ */
+function triggerImport() {
+  fileInputRef.value?.click()
+}
+
+/**
+ * 处理文件导入
+ */
+async function handleFileChange(event: Event) {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+
+  try {
+    const text = await file.text()
+    const countBefore = memories.value.length
+    importMemories(text)
+    const countAfter = memories.value.length
+    const importedCount = countAfter - countBefore
+
+    if (importedCount > 0) {
+      toast.success(t('ai.memoryImportSuccess', { count: importedCount }))
+    } else {
+      toast.success(t('ai.memoryImportSuccess', { count: 0 }))
+    }
+  } catch (error) {
+    console.error('Import memory error:', error)
+    toast.error(t('ai.memoryImportError'))
+  } finally {
+    target.value = ''
+  }
+}
 
 /**
  * 开始新增记忆
@@ -142,6 +214,15 @@ function handleClearConfirm() {
 
 <template>
   <div class="space-y-5 px-6 py-5">
+    <!-- 隐藏的导入文件 input -->
+    <input
+      ref="fileInputRef"
+      type="file"
+      accept=".json"
+      class="hidden"
+      @change="handleFileChange"
+    />
+
     <!-- 记忆开关 -->
     <div class="space-y-4 rounded-xl border border-border bg-muted/30 p-4">
       <div class="flex items-center justify-between">
@@ -258,6 +339,23 @@ function handleClearConfirm() {
           </span>
         </h3>
         <div class="flex items-center gap-3">
+          <button
+            v-if="!isAddingMemory"
+            class="flex items-center gap-1 text-xs text-primary transition-colors hover:text-primary/80"
+            :title="t('ai.memoryImport')"
+            @click="triggerImport"
+          >
+            <Download :size="12" />
+          </button>
+          <button
+            v-if="!isAddingMemory"
+            class="flex items-center gap-1 text-xs text-primary transition-colors hover:text-primary/80"
+            :class="{ 'pointer-events-none opacity-40': memories.length === 0 }"
+            :title="t('ai.memoryExport')"
+            @click="handleExport"
+          >
+            <Upload :size="12" />
+          </button>
           <button
             v-if="!isAddingMemory"
             class="flex items-center gap-1 text-xs text-primary transition-colors hover:text-primary/80"

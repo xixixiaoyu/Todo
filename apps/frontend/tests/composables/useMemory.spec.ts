@@ -109,4 +109,67 @@ describe('useMemory', () => {
     expect(mockGetAIStaticResponse).toHaveBeenCalled()
     expect(memories.value).toEqual(['Compressed 1', 'Compressed 2'])
   })
+
+  describe('Import/Export', () => {
+    it('should export all memories as JSON string', () => {
+      const { addMemories, exportMemories } = useMemory()
+      addMemories(['Memory 1', 'Memory 2'])
+
+      const exported = exportMemories()
+      const parsed = JSON.parse(exported)
+
+      expect(parsed).toEqual(['Memory 1', 'Memory 2'])
+    })
+
+    it('should import memories in merge mode', () => {
+      const { memories, addMemories, importMemories } = useMemory()
+      addMemories(['Existing Memory'])
+
+      const importData = JSON.stringify(['New Memory', 'Existing Memory'])
+      importMemories(importData, 'merge')
+
+      expect(memories.value).toHaveLength(2)
+      expect(memories.value).toContain('Existing Memory')
+      expect(memories.value).toContain('New Memory')
+    })
+
+    it('should import memories in replace mode', () => {
+      const { memories, addMemories, importMemories } = useMemory()
+      addMemories(['Old Memory'])
+
+      const importData = JSON.stringify(['New Memory'])
+      importMemories(importData, 'replace')
+
+      expect(memories.value).toEqual(['New Memory'])
+    })
+
+    it('should throw error for invalid JSON format during import', () => {
+      const { importMemories } = useMemory()
+      expect(() => importMemories('invalid-json')).toThrow()
+    })
+
+    it('should throw error if imported data is not an array', () => {
+      const { importMemories } = useMemory()
+      const invalidData = JSON.stringify({ key: 'value' })
+      expect(() => importMemories(invalidData)).toThrow('Invalid memories format')
+    })
+
+    it('should filter out non-string items and empty strings during import', () => {
+      const { memories, importMemories } = useMemory()
+      const mixedData = JSON.stringify(['Valid', 123, null, '', '  ', { text: 'invalid' }])
+      importMemories(mixedData, 'replace')
+
+      expect(memories.value).toEqual(['Valid'])
+    })
+
+    it('should respect MAX_MEMORIES during import', () => {
+      const { memories, importMemories } = useMemory()
+      const largeData = JSON.stringify(Array.from({ length: 150 }, (_, i) => `Memory ${i}`))
+      importMemories(largeData, 'replace')
+
+      expect(memories.value).toHaveLength(100)
+      expect(memories.value[0]).toBe('Memory 50')
+      expect(memories.value[99]).toBe('Memory 149')
+    })
+  })
 })

@@ -210,6 +210,50 @@ export function useMemory() {
     localStorage.setItem(MEMORY_THRESHOLD_KEY, String(value))
   }
 
+  /**
+   * 导出记忆
+   */
+  const exportMemories = (): string => {
+    return JSON.stringify(memories.value, null, 2)
+  }
+
+  /**
+   * 导入记忆
+   */
+  const importMemories = (jsonStr: string, mode: 'merge' | 'replace' = 'merge') => {
+    try {
+      const imported = JSON.parse(jsonStr)
+      if (!Array.isArray(imported)) {
+        throw new Error('Invalid memories format: expected an array')
+      }
+
+      // 验证每一项是否为字符串
+      const validMemories = imported.filter((m) => typeof m === 'string' && m.trim() !== '')
+
+      if (validMemories.length === 0 && imported.length > 0) {
+        throw new Error('No valid memories found in the imported data')
+      }
+
+      if (mode === 'replace') {
+        memories.value = validMemories.slice(-MAX_MEMORIES)
+      } else {
+        // 合并并去重
+        const currentMemories = [...memories.value]
+        validMemories.forEach((m) => {
+          if (!findSimilarMemory(m, currentMemories)) {
+            currentMemories.push(m)
+          }
+        })
+        memories.value = currentMemories.slice(-MAX_MEMORIES)
+      }
+
+      localStorage.setItem(MEMORY_STORAGE_KEY, JSON.stringify(memories.value))
+    } catch (error) {
+      console.error('[Memory] Import failed:', error)
+      throw error
+    }
+  }
+
   return {
     memories,
     isMemoryEnabled,
@@ -225,6 +269,8 @@ export function useMemory() {
     compressMemories,
     updateAutoCompressThreshold,
     getMemoryModelOptions,
+    exportMemories,
+    importMemories,
   }
 }
 
