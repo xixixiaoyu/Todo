@@ -306,14 +306,16 @@ const focusDurationOption = computed(() => {
         class="border-none shadow-sm bg-gradient-to-br from-primary/10 to-primary/5 hover:from-primary/15 hover:to-primary/10 transition-colors"
       >
         <CardContent class="p-4 flex items-center space-x-4">
-          <div class="p-3 bg-primary/10 rounded-2xl shadow-inner">
+          <div
+            class="w-12 h-12 flex items-center justify-center bg-primary/10 rounded-full shadow-inner"
+          >
             <ListTodo class="w-6 h-6 text-primary" />
           </div>
           <div>
             <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               {{ t('statistics.totalTasks') }}
             </p>
-            <h3 class="text-2xl font-black mt-0.5">{{ totalTasks }}</h3>
+            <h3 class="text-2xl font-black mt-0.5 leading-none">{{ totalTasks }}</h3>
           </div>
         </CardContent>
       </Card>
@@ -323,14 +325,16 @@ const focusDurationOption = computed(() => {
         class="border-none shadow-sm bg-gradient-to-br from-green-500/10 to-green-500/5 hover:from-green-500/15 hover:to-green-500/10 transition-colors"
       >
         <CardContent class="p-4 flex items-center space-x-4">
-          <div class="p-3 bg-green-500/10 rounded-2xl shadow-inner">
+          <div
+            class="w-12 h-12 flex items-center justify-center bg-green-500/10 rounded-full shadow-inner"
+          >
             <CheckCircle2 class="w-6 h-6 text-green-500" />
           </div>
           <div>
             <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               {{ t('statistics.completedTasks') }}
             </p>
-            <h3 class="text-2xl font-black mt-0.5">{{ completedTasks }}</h3>
+            <h3 class="text-2xl font-black mt-0.5 leading-none">{{ completedTasks }}</h3>
           </div>
         </CardContent>
       </Card>
@@ -340,14 +344,16 @@ const focusDurationOption = computed(() => {
         class="border-none shadow-sm bg-gradient-to-br from-blue-500/10 to-blue-500/5 hover:from-blue-500/15 hover:to-blue-500/10 transition-colors"
       >
         <CardContent class="p-4 flex items-center space-x-4">
-          <div class="p-3 bg-blue-500/10 rounded-2xl shadow-inner">
+          <div
+            class="w-12 h-12 flex items-center justify-center bg-blue-500/10 rounded-full shadow-inner"
+          >
             <Circle class="w-6 h-6 text-blue-500" />
           </div>
           <div>
             <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               {{ t('statistics.pendingTasks') }}
             </p>
-            <h3 class="text-2xl font-black mt-0.5">{{ pendingTasks }}</h3>
+            <h3 class="text-2xl font-black mt-0.5 leading-none">{{ pendingTasks }}</h3>
           </div>
         </CardContent>
       </Card>
@@ -357,14 +363,18 @@ const focusDurationOption = computed(() => {
         class="border-none shadow-sm bg-gradient-to-br from-amber-500/10 to-amber-500/5 hover:from-amber-500/15 hover:to-amber-500/10 transition-colors"
       >
         <CardContent class="p-4 flex items-center space-x-4">
-          <div class="p-3 bg-amber-500/10 rounded-2xl shadow-inner">
+          <div
+            class="w-12 h-12 flex items-center justify-center bg-amber-500/10 rounded-full shadow-inner"
+          >
             <Timer class="w-6 h-6 text-amber-500" />
           </div>
           <div>
             <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               {{ t('statistics.pomodoroSessions') }}
             </p>
-            <h3 class="text-2xl font-black mt-0.5">{{ pomodoroStore.completedSessions }}</h3>
+            <h3 class="text-2xl font-black mt-0.5 leading-none">
+              {{ pomodoroStore.completedSessions }}
+            </h3>
           </div>
         </CardContent>
       </Card>
@@ -384,7 +394,7 @@ const focusDurationOption = computed(() => {
         <CardContent class="h-[300px] relative">
           <VChart :option="completionChartOption" autoresize />
           <div
-            class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pt-8"
+            class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
           >
             <span
               class="text-4xl font-black text-primary group-hover:scale-110 transition-transform duration-500"
