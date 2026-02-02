@@ -168,8 +168,12 @@ function handleReset() {
  * 关闭弹窗
  */
 function handleClose() {
-  // 如果在预设管理 Tab 且正在编辑/创建，自动尝试保存预设
-  if (activeTab.value === 'presets' && presetManagerRef.value) {
+  // 如果在预设管理 Tab 且正在编辑，自动尝试保存预设 (创建模式除外，因为创建通常需要显式保存)
+  if (
+    activeTab.value === 'presets' &&
+    presetManagerRef.value &&
+    presetManagerRef.value.editingPreset
+  ) {
     presetManagerRef.value.savePreset()
   }
   modelValue.value = false

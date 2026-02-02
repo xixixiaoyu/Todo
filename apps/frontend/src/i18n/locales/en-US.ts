@@ -273,6 +273,7 @@ export default {
     save: 'Save',
     saveAsPreset: 'Save as Preset',
     presetAlreadyExists: 'Current configuration already exists in presets',
+    presetNameDuplicate: 'Preset name already exists, please use another name',
     saveAsPresetTitle: 'Save as Preset',
     saveAsPresetDescription: 'Enter a name to save current settings as a new preset.',
     saveAsPresetPlaceholder: 'Enter preset name...',

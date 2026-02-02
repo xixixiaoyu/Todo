@@ -79,7 +79,24 @@ function startEditPreset(preset: AIPreset) {
  * 保存预设
  */
 function savePreset() {
-  if (!presetForm.value.name.trim()) return
+  const name = presetForm.value.name.trim()
+  if (!name) return
+
+  // 检查名称是否重复
+  const isDuplicate = presets.value.some((p) => {
+    if (isCreatingPreset.value) {
+      return p.name === name
+    }
+    if (editingPreset.value) {
+      return p.name === name && p.id !== editingPreset.value.id
+    }
+    return false
+  })
+
+  if (isDuplicate) {
+    toast.error(t('ai.presetNameDuplicate'))
+    return
+  }
 
   if (isCreatingPreset.value) {
     addPreset(presetForm.value)
@@ -171,6 +188,8 @@ async function handleFileChange(event: Event) {
 }
 
 defineExpose({
+  isCreatingPreset,
+  editingPreset,
   startCreatePreset,
   startEditPreset,
   savePreset,

@@ -273,6 +273,7 @@ export default {
     save: '保存',
     saveAsPreset: '保存为预设',
     presetAlreadyExists: '当前配置已存在于预设中',
+    presetNameDuplicate: '预设名称已存在，请使用其他名称',
     saveAsPresetTitle: '保存为预设',
     saveAsPresetDescription: '请输入预设名称，将当前配置保存为新预设。',
     saveAsPresetPlaceholder: '请输入预设名称...',
