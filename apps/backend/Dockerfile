@@ -80,7 +80,11 @@ COPY --from=builder /app/apps/backend/dist ./dist
 COPY --from=builder /app/apps/backend/src/i18n ./dist/src/i18n
 COPY --from=builder /app/apps/backend/prisma ./prisma
 
-# 3. 复制 PM2 配置文件
+# 3. 重新生成 Prisma Client 以确保在生产环境 node_modules 中可用
+# pnpm deploy 不会自动执行 generate，因此我们需要手动执行
+RUN npx prisma generate
+
+# 4. 复制 PM2 配置文件
 COPY ecosystem.config.js ./
 
 # 修正权限
@@ -96,8 +100,8 @@ EXPOSE 3000
 ENV NODE_ENV=production
 ENV IS_DOCKER=true
 
-# 健康检查
-HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=5 \
+# 健康检查 - 增加启动缓冲时间以应对初始化压力
+HEALTHCHECK --interval=15s --timeout=5s --start-period=60s --retries=5 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health/liveness || exit 1
 
 # 启动应用 - 使用 pm2-runtime 以适配 Docker 容器环境

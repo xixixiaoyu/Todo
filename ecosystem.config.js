@@ -10,7 +10,7 @@ module.exports = {
       // 在 Docker 中，目录是扁平的，cwd 为当前目录 (/app)
       // 在本地开发中，cwd 指向 apps/backend
       cwd: isDocker ? './' : path.join(__dirname, 'apps/backend'),
-      instances: isDocker ? 3 : 'max',
+      instances: isDocker ? 2 : 'max',
       exec_mode: 'cluster',
       autorestart: true,
       watch: false,
