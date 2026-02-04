@@ -47,6 +47,9 @@ RUN pnpm --filter @my-app/backend build
 # ============================================
 FROM base AS pruner
 
+# 安装构建依赖 (pnpm deploy 可能会重新触发原生模块的安装脚本)
+RUN apk add --no-cache python3 make g++ openssl
+
 COPY --from=builder /app /app
 
 # 使用 pnpm deploy 提取生产环境所需的最小依赖集
