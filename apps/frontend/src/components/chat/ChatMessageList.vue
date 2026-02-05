@@ -139,7 +139,7 @@ defineExpose({
         </div>
 
         <!-- 消息列表 -->
-        <div v-else :class="[isMobile ? 'py-2' : 'py-4']">
+        <div v-else :class="[isMobile ? 'py-2' : 'pt-6 pb-4']">
           <Transition name="session-fade" mode="out-in">
             <div :key="currentSessionId || 'empty'">
               <TransitionGroup

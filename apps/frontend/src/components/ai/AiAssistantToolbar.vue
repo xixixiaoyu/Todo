@@ -111,20 +111,20 @@ const handlePresetMouseLeave = () => {
 <template>
   <div
     :class="[
-      'toolbar-container shrink-0 border-t border-border/10 bg-transparent backdrop-blur-2xl transition-all duration-300',
-      isMobile ? 'p-2' : 'px-6 py-3',
+      'toolbar-container shrink-0 bg-background/5 backdrop-blur-3xl transition-all duration-300',
+      isMobile ? 'p-2.5' : 'px-6 py-4',
     ]"
   >
     <div
       :class="[isMaximized ? 'mx-auto max-w-4xl w-full' : '', 'flex flex-col']"
-      :style="{ gap: isMobile ? '6px' : '10px' }"
+      :style="{ gap: isMobile ? '8px' : '10px' }"
     >
       <!-- 快捷操作按钮 -->
       <div :class="['flex items-center text-sm', isMobile ? 'gap-1' : 'gap-2']">
         <div class="no-scrollbar flex flex-1 items-center gap-2 overflow-x-auto py-1">
           <button
             :class="[
-              'flex shrink-0 items-center rounded-full border border-border/50 bg-background/40 text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 backdrop-blur-sm',
+              'flex shrink-0 items-center rounded-full border border-border/10 bg-background/20 text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 backdrop-blur-sm',
               isMobile ? 'h-8 px-2.5 gap-1' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
             ]"
             :disabled="!hasHistory || isGenerating"
@@ -137,7 +137,7 @@ const handlePresetMouseLeave = () => {
 
           <!-- 历史记录按钮 -->
           <button
-            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border/50 bg-background/40 text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground active:scale-95 shadow-sm backdrop-blur-sm"
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border/10 bg-background/20 text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground active:scale-95 shadow-sm backdrop-blur-sm"
             :title="t('ai.history')"
             :class="{ 'cursor-not-allowed opacity-50': isGenerating }"
             :disabled="isGenerating"
@@ -146,15 +146,15 @@ const handlePresetMouseLeave = () => {
             <History :size="16" />
           </button>
 
-          <div class="h-4 w-px shrink-0 bg-border/30 mx-1" />
+          <div class="h-4 w-px shrink-0 bg-border/20 mx-1" />
 
           <!-- AI 思考模式开关 -->
           <button
             class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all active:scale-95 shadow-sm"
             :class="
               isThinkingEnabled
-                ? 'border-primary/30 bg-primary/10 text-primary shadow-primary/5'
-                : 'border-border/50 bg-background/40 text-muted-foreground hover:bg-accent hover:text-accent-foreground backdrop-blur-sm'
+                ? 'border-primary/20 bg-primary/10 text-primary shadow-primary/5'
+                : 'border-border/10 bg-background/20 text-muted-foreground hover:bg-accent hover:text-accent-foreground backdrop-blur-sm'
             "
             :title="isThinkingEnabled ? t('ai.thinkingEnabled') : t('ai.thinkingDisabled')"
             @click="emit('toggleThinking')"
@@ -168,8 +168,8 @@ const handlePresetMouseLeave = () => {
               'flex shrink-0 items-center transition-all active:scale-95 shadow-sm rounded-full border',
               isMobile ? 'h-8 w-8 justify-center' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
               isTodoAssistantEnabled
-                ? 'border-primary/30 bg-primary/10 text-primary shadow-primary/5'
-                : 'border-border/50 bg-background/40 text-muted-foreground hover:bg-accent hover:text-accent-foreground backdrop-blur-sm',
+                ? 'border-primary/20 bg-primary/10 text-primary shadow-primary/5'
+                : 'border-border/10 bg-background/20 text-muted-foreground hover:bg-accent hover:text-accent-foreground backdrop-blur-sm',
             ]"
             :title="
               isTodoAssistantEnabled ? t('ai.todoAssistantEnabled') : t('ai.todoAssistantDisabled')
@@ -195,8 +195,8 @@ const handlePresetMouseLeave = () => {
                     'flex items-center transition-all active:scale-95 shadow-sm rounded-full border',
                     isMobile ? 'h-8 w-8 justify-center' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
                     isDiscussionEnabled
-                      ? 'border-primary/30 bg-primary/10 text-primary shadow-primary/5'
-                      : 'border-border/50 bg-background/40 text-muted-foreground hover:bg-accent hover:text-accent-foreground backdrop-blur-sm',
+                      ? 'border-primary/20 bg-primary/10 text-primary shadow-primary/5'
+                      : 'border-border/10 bg-background/20 text-muted-foreground hover:bg-accent hover:text-accent-foreground backdrop-blur-sm',
                   ]"
                   :title="isDiscussionEnabled ? t('ai.discussionMode') : t('ai.discussionMode')"
                   @click="emit('toggleDiscussion')"
@@ -301,8 +301,8 @@ const handlePresetMouseLeave = () => {
               'flex shrink-0 items-center transition-all active:scale-95 shadow-sm rounded-full border',
               isMobile ? 'h-8 w-8 justify-center' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
               isImageGenerationEnabled
-                ? 'border-primary/30 bg-primary/10 text-primary shadow-primary/5'
-                : 'border-border/50 bg-background/40 text-muted-foreground hover:bg-accent hover:text-accent-foreground backdrop-blur-sm',
+                ? 'border-primary/20 bg-primary/10 text-primary shadow-primary/5'
+                : 'border-border/10 bg-background/20 text-muted-foreground hover:bg-accent hover:text-accent-foreground backdrop-blur-sm',
             ]"
             :title="t('ai.enableImageGeneration')"
             @click="emit('toggleImageGen')"
@@ -313,7 +313,7 @@ const handlePresetMouseLeave = () => {
             }}</span>
           </button>
 
-          <div class="h-4 w-px shrink-0 bg-border/30 mx-0.5" />
+          <div class="h-4 w-px shrink-0 bg-border/20 mx-0.5" />
 
           <!-- 预设下拉框 -->
           <div
@@ -325,7 +325,7 @@ const handlePresetMouseLeave = () => {
               <DropdownMenuTrigger as-child>
                 <button
                   :class="[
-                    'flex items-center border border-border/50 bg-background/40 text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground active:scale-95 shadow-sm rounded-full backdrop-blur-sm',
+                    'flex items-center border border-border/10 bg-background/20 text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground active:scale-95 shadow-sm rounded-full backdrop-blur-sm',
                     isMobile ? 'h-8 px-2.5 gap-1' : 'px-3 py-1.5 gap-1.5 text-[13px]',
                   ]"
                   :title="t('ai.managePresets')"
@@ -390,7 +390,7 @@ const handlePresetMouseLeave = () => {
         <div class="flex shrink-0 items-center gap-2">
           <button
             :class="[
-              'flex items-center justify-center rounded-full border border-border/50 bg-background/40 text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground hover:scale-110 active:scale-95 shadow-sm backdrop-blur-sm',
+              'flex items-center justify-center rounded-full border border-border/10 bg-background/20 text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground hover:scale-110 active:scale-95 shadow-sm backdrop-blur-sm',
               isMobile ? 'h-8 w-8' : 'h-8 w-8',
             ]"
             :title="t('ai.settings')"

@@ -354,7 +354,7 @@ defineOptions({
     :is-fullscreen="isMaximized"
     v-bind="$attrs"
   >
-    <div class="relative flex h-full flex-col bg-background/40">
+    <div class="relative flex h-full flex-col bg-background/20 backdrop-blur-sm">
       <AiAssistantHeader
         :is-maximized="isMaximized"
         @toggle-maximize="isMaximized = !isMaximized"

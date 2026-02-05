@@ -221,8 +221,8 @@ defineExpose({
 <template>
   <div
     :class="[
-      'input-container-refined relative flex flex-col rounded-[1.25rem] border border-border/20 bg-background/40 shadow-xl shadow-black/5 backdrop-blur-xl transition-all duration-300 focus-within:border-primary/30 focus-within:shadow-primary/5',
-      isMobile ? 'p-1 gap-0' : 'p-1.5 gap-0',
+      'input-container-refined relative flex flex-col rounded-[1.5rem] border border-border/10 bg-background/60 shadow-[0_8px_32px_rgba(0,0,0,0.04)] backdrop-blur-2xl transition-all duration-300 focus-within:border-primary/30 focus-within:shadow-[0_8px_32px_rgba(var(--primary),0.05)]',
+      isMobile ? 'p-1.5 gap-0' : 'p-1.5 gap-0',
       isInputDisabled ? 'opacity-60 grayscale-[0.2]' : '',
     ]"
   >
@@ -370,7 +370,7 @@ defineExpose({
       "
       :class="[
         'w-full resize-none bg-transparent text-foreground outline-none placeholder:text-muted-foreground/40 leading-relaxed transition-colors',
-        isMobile ? 'px-3 pt-2 pb-0.5 text-[14px]' : 'px-4 pt-3 pb-1 text-[15px]',
+        isMobile ? 'px-3 pt-2 pb-0.5 text-[14px]' : 'px-4 pt-2.5 pb-1 text-[15px]',
       ]"
       :disabled="isInputDisabled"
       @input="(e) => emit('update:modelValue', (e.target as HTMLTextAreaElement).value)"
