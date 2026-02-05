@@ -354,7 +354,7 @@ defineOptions({
     :is-fullscreen="isMaximized"
     v-bind="$attrs"
   >
-    <div class="relative flex h-full flex-col bg-background">
+    <div class="relative flex h-full flex-col bg-background/40">
       <AiAssistantHeader
         :is-maximized="isMaximized"
         @toggle-maximize="isMaximized = !isMaximized"
@@ -469,7 +469,7 @@ defineOptions({
       >
         <div
           v-if="showHistory"
-          class="absolute inset-y-0 left-0 z-20 flex flex-col border-r border-border bg-card shadow-xl"
+          class="absolute inset-y-0 left-0 z-20 flex flex-col border-r border-border/40 bg-card/60 backdrop-blur-xl shadow-xl"
           :style="{ width: isMobile ? '100%' : `${historyWidth}px` }"
         >
           <ChatHistoryPanel

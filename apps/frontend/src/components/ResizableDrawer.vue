@@ -178,12 +178,16 @@ watch(
   height: 100%;
   z-index: 50;
   display: flex;
-  background: hsl(var(--background));
-  border-right: 1px solid hsl(var(--border) / 0.6);
-  box-shadow: 10px 0 30px -15px rgba(0, 0, 0, 0.08);
+  background: hsl(var(--background) / 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid hsl(var(--border) / 0.4);
+  box-shadow: 10px 0 30px -15px rgba(0, 0, 0, 0.05);
 }
 
 :root.dark .drawer {
+  background: hsl(var(--background) / 0.8);
+  border-right: 1px solid hsl(var(--border) / 0.2);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
