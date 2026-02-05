@@ -169,7 +169,8 @@ describe('Todo Store Sync', () => {
 
     await store.sync()
 
-    // Logically deleted and synced items should be purged from memory
-    expect(store.todos.find((t) => t.id === id)).toBeUndefined()
+    // Logically deleted and synced items should remain in memory for Trash view
+    expect(store.todos.find((t) => t.id === id)).toBeDefined()
+    expect(store.todos.find((t) => t.id === id)?.deletedAt).toBeDefined()
   })
 })

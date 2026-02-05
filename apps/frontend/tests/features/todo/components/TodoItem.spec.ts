@@ -253,6 +253,9 @@ describe('TodoItem', () => {
   })
 
   it('should emit saveEdit event when save button clicked in edit mode', async () => {
+    const store = useTodoStore()
+    vi.spyOn(store, 'updateTodo').mockResolvedValue(true)
+
     const wrapper = mount(TodoItem, {
       props: {
         todo: mockTodo,
@@ -363,6 +366,10 @@ describe('TodoItem', () => {
   })
 
   it('should emit saveEdit event when input blurred', async () => {
+    const store = useTodoStore()
+    // Mock updateTodo to return true immediately
+    vi.spyOn(store, 'updateTodo').mockResolvedValue(true)
+
     const wrapper = mount(TodoItem, {
       props: {
         todo: mockTodo,

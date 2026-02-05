@@ -49,7 +49,7 @@ describe('TodoFilter', () => {
     })
 
     const triggers = wrapper.findAllComponents(TabsTrigger)
-    expect(triggers).toHaveLength(2)
+    expect(triggers).toHaveLength(3)
 
     const buttons = wrapper.findAll('button')
     // 2 (TabsTrigger as buttons) + 2 desktop tools (Search, Expand) = 4 buttons
