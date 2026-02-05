@@ -6,6 +6,8 @@ import { useIsMobile } from '@/composables/useWindowSize'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
+
 const { t } = useI18n()
 const { isMobile } = useIsMobile()
 const inputId = useId()
@@ -66,14 +68,20 @@ onMounted(() => {
       @update:model-value="emit('update:modelValue', $event as string)"
       @keydown="handleKeyDown"
     />
-    <Button
-      v-if="modelValue"
-      variant="ghost"
-      size="icon"
-      class="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-foreground"
-      @click="handleClear"
-    >
-      <X :size="16" />
-    </Button>
+    <TooltipProvider :delay-duration="0">
+      <Tooltip v-if="modelValue">
+        <TooltipTrigger as-child>
+          <Button
+            variant="ghost"
+            size="icon"
+            class="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-foreground"
+            @click="handleClear"
+          >
+            <X :size="16" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="top">{{ t('common.clear') }}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   </div>
 </template>

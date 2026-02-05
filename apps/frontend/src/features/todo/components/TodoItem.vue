@@ -320,22 +320,35 @@ watch(
           </Tooltip>
         </TooltipProvider>
         <div class="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            class="h-8 w-8 text-success hover:bg-success/10"
-            @click="handleSaveEdit"
-          >
-            <Check class="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            class="h-8 w-8 text-muted-foreground hover:bg-muted"
-            @click="emit('cancelEdit')"
-          >
-            <X class="h-4 w-4" />
-          </Button>
+          <TooltipProvider :delay-duration="0">
+            <Tooltip>
+              <TooltipTrigger as-child>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-8 w-8 text-success hover:bg-success/10"
+                  @click="handleSaveEdit"
+                >
+                  <Check class="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">{{ t('todo.save') }}</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger as-child>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-8 w-8 text-muted-foreground hover:bg-muted"
+                  @click="emit('cancelEdit')"
+                >
+                  <X class="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">{{ t('todo.cancel') }}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </template>
 
@@ -425,79 +438,107 @@ watch(
         >
           <TooltipProvider :delay-duration="0">
             <!-- AI Breakdown -->
-            <Button
-              v-if="!todo.completed && !todo.isProposedDelete"
-              variant="ghost"
-              size="icon"
-              class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-              :disabled="isBreakingDown"
-              @click.stop="handleBreakdown"
-            >
-              <component
-                :is="isBreakingDown ? Loader2 : Wand2"
-                class="h-3.5 w-3.5 md:h-4 md:w-4"
-                :class="[
-                  { 'animate-spin': isBreakingDown },
-                  isBreakingDown ? 'lucide-loader2' : 'lucide-wand2',
-                ]"
-              />
-            </Button>
+            <Tooltip v-if="!todo.completed && !todo.isProposedDelete">
+              <TooltipTrigger as-child>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                  :disabled="isBreakingDown"
+                  @click.stop="handleBreakdown"
+                >
+                  <component
+                    :is="isBreakingDown ? Loader2 : Wand2"
+                    class="h-3.5 w-3.5 md:h-4 md:w-4"
+                    :class="[
+                      { 'animate-spin': isBreakingDown },
+                      isBreakingDown ? 'lucide-loader2' : 'lucide-wand2',
+                    ]"
+                  />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">{{ t('todo.breakdown') }}</TooltipContent>
+            </Tooltip>
 
             <!-- Focus -->
-            <Button
-              v-if="!todo.completed"
-              variant="ghost"
-              size="icon"
-              class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-              :class="{ 'text-primary bg-primary/5': pomodoroStore.activeTodoId === todo.id }"
-              @click.stop="pomodoroStore.startFocus(todo.id)"
-            >
-              <Target class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-target" />
-            </Button>
+            <Tooltip v-if="!todo.completed">
+              <TooltipTrigger as-child>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                  :class="{ 'text-primary bg-primary/5': pomodoroStore.activeTodoId === todo.id }"
+                  @click.stop="pomodoroStore.startFocus(todo.id)"
+                >
+                  <Target class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-target" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">{{ t('todo.focus') }}</TooltipContent>
+            </Tooltip>
 
             <!-- Pin -->
-            <Button
-              variant="ghost"
-              size="icon"
-              class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-              :class="{ 'text-primary bg-primary/5': todo.isPinned }"
-              @click.stop="store.togglePin(todo.id)"
-            >
-              <PinOff v-if="todo.isPinned" class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-pin-off" />
-              <Pin v-else class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-pin" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger as-child>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                  :class="{ 'text-primary bg-primary/5': todo.isPinned }"
+                  @click.stop="store.togglePin(todo.id)"
+                >
+                  <PinOff v-if="todo.isPinned" class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-pin-off" />
+                  <Pin v-else class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-pin" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">{{
+                todo.isPinned ? t('todo.unpin') : t('todo.pin')
+              }}</TooltipContent>
+            </Tooltip>
 
             <!-- Edit -->
-            <Button
-              v-if="!todo.completed"
-              variant="ghost"
-              size="icon"
-              class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-              @click.stop="emit('startEdit', todo.id, todo.title)"
-            >
-              <Pencil class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-pencil" />
-            </Button>
+            <Tooltip v-if="!todo.completed">
+              <TooltipTrigger as-child>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                  @click.stop="emit('startEdit', todo.id, todo.title)"
+                >
+                  <Pencil class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-pencil" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">{{ t('todo.edit') }}</TooltipContent>
+            </Tooltip>
 
             <!-- Add Subtask -->
-            <Button
-              v-if="(level || 0) < 2 && !todo.completed"
-              variant="ghost"
-              size="icon"
-              class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-              @click.stop="startAddChild"
-            >
-              <Plus class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-plus" />
-            </Button>
+            <Tooltip v-if="(level || 0) < 2 && !todo.completed">
+              <TooltipTrigger as-child>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                  @click.stop="startAddChild"
+                >
+                  <Plus class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-plus" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">{{ t('todo.addSubtask') }}</TooltipContent>
+            </Tooltip>
 
             <!-- Delete -->
-            <Button
-              variant="ghost"
-              size="icon"
-              class="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-              @click.stop="handleDelete"
-            >
-              <Trash2 class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-trash2" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger as-child>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  @click.stop="handleDelete"
+                >
+                  <Trash2 class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-trash2" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">{{ t('todo.delete') }}</TooltipContent>
+            </Tooltip>
           </TooltipProvider>
         </div>
       </template>
@@ -540,22 +581,35 @@ watch(
         </Tooltip>
       </TooltipProvider>
       <div class="flex items-center gap-1">
-        <Button
-          variant="ghost"
-          size="icon"
-          class="h-8 w-8 text-success hover:bg-success/10"
-          @click="submitAddChild"
-        >
-          <Check class="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          class="h-8 w-8 text-muted-foreground hover:bg-muted"
-          @click="cancelAddChild"
-        >
-          <X class="h-4 w-4" />
-        </Button>
+        <TooltipProvider :delay-duration="0">
+          <Tooltip>
+            <TooltipTrigger as-child>
+              <Button
+                variant="ghost"
+                size="icon"
+                class="h-8 w-8 text-success hover:bg-success/10"
+                @click="submitAddChild"
+              >
+                <Check class="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">{{ t('todo.add') }}</TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger as-child>
+              <Button
+                variant="ghost"
+                size="icon"
+                class="h-8 w-8 text-muted-foreground hover:bg-muted"
+                @click="cancelAddChild"
+              >
+                <X class="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">{{ t('todo.cancel') }}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </div>
 
