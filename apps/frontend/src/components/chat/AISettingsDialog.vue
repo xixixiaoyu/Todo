@@ -214,119 +214,117 @@ defineExpose({
 </script>
 
 <template>
-  <Teleport to="body">
-    <Transition name="fade">
-      <div
-        v-if="modelValue"
-        class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
-        @click.self="handleClose"
-      >
-        <Transition name="scale">
+  <Transition name="fade">
+    <div
+      v-if="modelValue"
+      class="absolute inset-0 z-50 flex items-center justify-center bg-black/20 p-4 backdrop-blur-md"
+      @click.self="handleClose"
+    >
+      <Transition name="scale">
+        <div
+          v-if="modelValue"
+          class="flex max-h-[90%] w-full max-w-lg flex-col rounded-2xl border border-border/50 bg-background/95 shadow-2xl backdrop-blur-xl"
+        >
+          <!-- 标题栏 -->
           <div
-            v-if="modelValue"
-            class="flex max-h-[85vh] w-full max-w-lg flex-col rounded-2xl bg-background shadow-2xl"
+            class="relative flex shrink-0 items-center justify-between overflow-hidden border-b border-border px-8 py-5"
           >
-            <!-- 标题栏 -->
             <div
-              class="relative flex shrink-0 items-center justify-between overflow-hidden border-b border-border px-8 py-5"
+              class="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-transparent"
+            />
+            <div class="relative flex items-center gap-3">
+              <div class="h-1.5 w-1.5 rounded-full bg-primary" />
+              <h2 class="text-lg font-bold tracking-tight text-foreground">
+                {{ t('ai.settings') }}
+              </h2>
+            </div>
+            <button
+              class="relative flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground transition-all hover:bg-muted hover:text-foreground active:scale-90"
+              @click="handleClose"
             >
-              <div
-                class="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-transparent"
+              <X :size="18" stroke-width="2.5" />
+            </button>
+          </div>
+
+          <!-- Tab 切换 -->
+          <div class="flex shrink-0 gap-8 border-b border-border bg-muted/5 px-8">
+            <button
+              v-for="tab in ['settings', 'presets', 'memory'] as const"
+              :key="tab"
+              class="group relative py-4 text-sm font-bold tracking-tight transition-all"
+              :class="
+                activeTab === tab
+                  ? 'text-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              "
+              @click="activeTab = tab"
+            >
+              {{
+                t(
+                  `ai.${tab === 'settings' ? 'basicSettings' : tab === 'presets' ? 'presetManagement' : 'memory'}`,
+                )
+              }}
+              <span
+                v-if="activeTab === tab"
+                class="absolute bottom-0 left-0 h-0.5 w-full bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)]"
               />
-              <div class="relative flex items-center gap-3">
-                <div class="h-1.5 w-1.5 rounded-full bg-primary" />
-                <h2 class="text-lg font-bold tracking-tight text-foreground">
-                  {{ t('ai.settings') }}
-                </h2>
-              </div>
+            </button>
+          </div>
+
+          <!-- 内容区域 -->
+          <div class="flex-1 overflow-y-auto">
+            <!-- 基础设置 Tab -->
+            <AISettingsBasic
+              v-if="activeTab === 'settings'"
+              v-model="formData"
+              :presets="presets"
+            />
+
+            <!-- 记忆管理 Tab -->
+            <AIMemoryManager
+              v-else-if="activeTab === 'memory'"
+              v-model="formData"
+              :presets="presets"
+            />
+
+            <!-- 预设管理 Tab -->
+            <AIPresetManager v-else-if="activeTab === 'presets'" ref="presetManagerRef" />
+          </div>
+
+          <!-- 底部按钮 -->
+          <div
+            class="flex shrink-0 items-center justify-between border-t border-border px-8 py-5 bg-muted/5"
+          >
+            <div class="flex items-center gap-4">
               <button
-                class="relative flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground transition-all hover:bg-muted hover:text-foreground active:scale-90"
+                class="group flex items-center gap-2 text-xs font-medium text-muted-foreground transition-all hover:text-foreground"
+                @click="handleReset"
+              >
+                <RotateCcw :size="14" class="transition-transform group-hover:-rotate-45" />
+                {{ t('ai.resetToDefault') }}
+              </button>
+            </div>
+            <div class="flex items-center gap-3">
+              <button
+                v-if="activeTab === 'settings' && !formData.discussionMode"
+                class="rounded-xl px-5 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
+                :disabled="isDuplicatePreset"
+                @click="handleSaveAsPreset"
+              >
+                {{ t('ai.saveAsPreset') }}
+              </button>
+              <button
+                class="rounded-xl bg-muted px-8 py-2.5 text-sm font-semibold text-foreground transition-all hover:bg-muted/80 active:scale-[0.98]"
                 @click="handleClose"
               >
-                <X :size="18" stroke-width="2.5" />
+                {{ t('common.close') }}
               </button>
-            </div>
-
-            <!-- Tab 切换 -->
-            <div class="flex shrink-0 gap-8 border-b border-border bg-muted/5 px-8">
-              <button
-                v-for="tab in ['settings', 'presets', 'memory'] as const"
-                :key="tab"
-                class="group relative py-4 text-sm font-bold tracking-tight transition-all"
-                :class="
-                  activeTab === tab
-                    ? 'text-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
-                "
-                @click="activeTab = tab"
-              >
-                {{
-                  t(
-                    `ai.${tab === 'settings' ? 'basicSettings' : tab === 'presets' ? 'presetManagement' : 'memory'}`,
-                  )
-                }}
-                <span
-                  v-if="activeTab === tab"
-                  class="absolute bottom-0 left-0 h-0.5 w-full bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)]"
-                />
-              </button>
-            </div>
-
-            <!-- 内容区域 -->
-            <div class="flex-1 overflow-y-auto">
-              <!-- 基础设置 Tab -->
-              <AISettingsBasic
-                v-if="activeTab === 'settings'"
-                v-model="formData"
-                :presets="presets"
-              />
-
-              <!-- 记忆管理 Tab -->
-              <AIMemoryManager
-                v-else-if="activeTab === 'memory'"
-                v-model="formData"
-                :presets="presets"
-              />
-
-              <!-- 预设管理 Tab -->
-              <AIPresetManager v-else-if="activeTab === 'presets'" ref="presetManagerRef" />
-            </div>
-
-            <!-- 底部按钮 -->
-            <div
-              class="flex shrink-0 items-center justify-between border-t border-border px-8 py-5 bg-muted/5"
-            >
-              <div class="flex items-center gap-4">
-                <button
-                  class="group flex items-center gap-2 text-xs font-medium text-muted-foreground transition-all hover:text-foreground"
-                  @click="handleReset"
-                >
-                  <RotateCcw :size="14" class="transition-transform group-hover:-rotate-45" />
-                  {{ t('ai.resetToDefault') }}
-                </button>
-              </div>
-              <div class="flex items-center gap-3">
-                <button
-                  v-if="activeTab === 'settings' && !formData.discussionMode"
-                  class="rounded-xl px-5 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
-                  :disabled="isDuplicatePreset"
-                  @click="handleSaveAsPreset"
-                >
-                  {{ t('ai.saveAsPreset') }}
-                </button>
-                <button
-                  class="rounded-xl bg-muted px-8 py-2.5 text-sm font-semibold text-foreground transition-all hover:bg-muted/80 active:scale-[0.98]"
-                  @click="handleClose"
-                >
-                  {{ t('common.close') }}
-                </button>
-              </div>
             </div>
           </div>
-        </Transition>
-      </div>
-    </Transition>
-  </Teleport>
+        </div>
+      </Transition>
+    </div>
+  </Transition>
 
   <!-- 保存为预设确认弹窗 -->
   <AlertDialog :open="showSaveAsPresetConfirm" @update:open="showSaveAsPresetConfirm = $event">

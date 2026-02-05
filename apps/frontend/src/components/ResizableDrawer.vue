@@ -179,8 +179,8 @@ watch(
   z-index: 50;
   display: flex;
   background: hsl(var(--background));
-  border-right: 1px solid hsl(var(--border));
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  border-right: 1px solid hsl(var(--border) / 0.6);
+  box-shadow: 10px 0 30px -15px rgba(0, 0, 0, 0.08);
 }
 
 :root.dark .drawer {
@@ -250,65 +250,80 @@ watch(
 .resize-handle {
   position: absolute;
   top: 0;
-  right: -3px;
-  width: 6px;
+  right: -4px;
+  width: 8px;
   height: 100%;
   cursor: ew-resize;
   z-index: 10;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   transform: translateZ(0);
-  will-change: width, right;
-  background: rgba(148, 163, 184, 0.08);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  will-change: background-color;
+  background: transparent;
 }
 
 .resize-handle:hover,
 .resize-handle.hovering {
-  width: 12px;
-  right: -6px;
-  background: rgba(148, 163, 184, 0.15);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: rgba(var(--primary), 0.04);
 }
 
 .resize-handle.resizing {
-  background: rgba(148, 163, 184, 0.2);
-}
-
-:root.dark .resize-handle {
-  background: rgba(148, 163, 184, 0.12);
+  background: rgba(var(--primary), 0.08);
 }
 
 :root.dark .resize-handle:hover,
 :root.dark .resize-handle.hovering {
-  background: rgba(148, 163, 184, 0.2);
+  background: rgba(255, 255, 255, 0.02);
 }
 
 :root.dark .resize-handle.resizing {
-  background: rgba(148, 163, 184, 0.25);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 /* 指示线 */
 .resize-handle-line {
+  width: 4px;
+  height: 40px;
+  background: hsl(var(--border));
+  border-radius: 2px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.4;
+  position: relative;
+}
+
+.resize-handle-line::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: 2px;
-  height: 32px;
-  background: rgba(148, 163, 184, 0.3);
+  height: 12px;
+  background: hsl(var(--foreground) / 0.1);
   border-radius: 1px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s ease;
 }
 
 .resize-handle:hover .resize-handle-line,
-.resize-handle.hovering .resize-handle-line {
-  background: rgba(148, 163, 184, 0.5);
+.resize-handle.hovering .resize-handle-line,
+.resize-handle.resizing .resize-handle-line {
+  opacity: 1;
+  width: 6px;
+  height: 60px;
+  background: hsl(var(--primary) / 0.2);
+}
+
+.resize-handle:hover .resize-handle-line::after,
+.resize-handle.resizing .resize-handle-line::after {
+  height: 24px;
+  background: hsl(var(--primary));
 }
 
 .resize-handle.resizing .resize-handle-line {
-  height: 48px;
-  background: rgba(148, 163, 184, 0.6);
+  height: 80px;
+  background: hsl(var(--primary) / 0.3);
 }
 
 :root.dark .resize-handle-line {

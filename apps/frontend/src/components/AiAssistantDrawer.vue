@@ -439,6 +439,9 @@ defineOptions({
         </template>
       </AiAssistantToolbar>
 
+      <!-- 设置弹窗 -->
+      <AISettingsDialog v-model="showSettings" v-model:initial-tab="lastActiveTab" />
+
       <!-- 历史记录面板遮罩 -->
       <Transition
         enter-active-class="transition-opacity duration-150 ease-out"
@@ -491,9 +494,6 @@ defineOptions({
       </Transition>
     </div>
   </ResizableDrawer>
-
-  <!-- 设置弹窗 -->
-  <AISettingsDialog v-model="showSettings" v-model:initial-tab="lastActiveTab" />
 </template>
 
 <style scoped>
