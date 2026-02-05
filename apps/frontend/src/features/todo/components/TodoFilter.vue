@@ -42,14 +42,11 @@ async function handleClearTrash() {
 </script>
 
 <template>
-  <div class="mb-6 flex items-center justify-between md:justify-center relative min-h-11 gap-2">
-    <!-- 左侧占位 (桌面端居中用) -->
-    <div class="hidden md:block w-20"></div>
-
+  <div class="mb-6 flex items-center justify-center relative min-h-11 gap-2">
     <!-- 中间切换卡 -->
     <Tabs
       :model-value="filter"
-      class="flex-1 md:flex-none w-full md:max-w-[400px]"
+      class="flex-1 md:flex-none w-full md:w-[400px]"
       @update:model-value="emit('update:filter', $event as FilterType)"
     >
       <TabsList
