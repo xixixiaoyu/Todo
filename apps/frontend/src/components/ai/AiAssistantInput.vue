@@ -215,6 +215,7 @@ const handleNewline = (event: KeyboardEvent) => {
 defineExpose({
   focus: () => textareaRef.value?.focus(),
   adjustHeight: adjustTextareaHeight,
+  triggerFileUpload: () => fileInputRef.value?.click(),
 })
 </script>
 
@@ -379,8 +380,8 @@ defineExpose({
       @paste="(e) => emit('paste', e)"
     />
 
-    <div :class="['flex items-center justify-between px-0.5 pb-0.5', isMobile ? 'gap-1' : '']">
-      <div class="flex items-center gap-1.5">
+    <div :class="['flex items-center justify-between px-2.5 pt-1 pb-2', isMobile ? 'gap-1' : '']">
+      <div class="flex items-center gap-1">
         <!-- 附件上传按钮 -->
         <button
           :class="[

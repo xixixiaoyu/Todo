@@ -28,7 +28,7 @@ const { parsedFiles, parseFile, removeFile, clearFiles } = useFileParsing()
 const assistantInputRef = ref<InstanceType<typeof AiAssistantInput>>()
 
 const triggerFileUpload = () => {
-  assistantInputRef.value?.$el.querySelector('input[type="file"]')?.click()
+  assistantInputRef.value?.triggerFileUpload()
 }
 
 const processFiles = (files: FileList | File[]) => {
