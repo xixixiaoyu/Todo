@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch, nextTick } from 'vue'
+import { computed, ref, watch, nextTick, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Pencil } from 'lucide-vue-next'
 import { useWindowSize } from '@vueuse/core'
@@ -254,24 +254,65 @@ function initMermaidInteractions(container: HTMLElement) {
 }
 
 // 渲染 Markdown 内容
-async function updateRenderedContent() {
-  const { content, isStreaming } = props.message
+let renderTimer: ReturnType<typeof setTimeout> | null = null
 
-  if (content && !isUser.value) {
-    renderedHtml.value = await renderMarkdown(content, isStreaming)
+// 组件卸载时清理定时器
+onUnmounted(() => {
+  if (renderTimer) {
+    clearTimeout(renderTimer)
+    renderTimer = null
+  }
+})
+
+async function updateRenderedContent(immediate = false) {
+  const content = props.message.content
+  const streaming = isStreaming.value
+
+  if (!content || isUser.value) return
+
+  // 如果是流式输出，且非立即执行，则进行节流处理
+  if (streaming && !immediate) {
+    if (renderTimer) return
+    renderTimer = setTimeout(() => {
+      renderTimer = null
+      void (async () => {
+        renderedHtml.value = await renderMarkdown(props.message.content, true)
+        void nextTick(injectInteractions)
+      })()
+    }, 60) // 约 16fps，平衡流畅度与渲染开销
+    return
   }
 
+  // 非流式或强制立即执行
+  if (renderTimer) {
+    clearTimeout(renderTimer)
+    renderTimer = null
+  }
+  renderedHtml.value = await renderMarkdown(content, streaming)
   void nextTick(injectInteractions)
 }
 
 // 监听内容与状态变化
 watch(
   [() => props.message.content, isStreaming],
-  async () => {
-    await updateRenderedContent()
+  async (newValues, oldValues) => {
+    const [newContent] = newValues
+    const oldContent = oldValues ? oldValues[0] : undefined
+
+    // 只有内容真正变化时才更新
+    if (newContent !== oldContent) {
+      await updateRenderedContent()
+    }
   },
   { immediate: true },
 )
+
+// 当流式结束时，强制进行最后一次完整渲染
+watch(isStreaming, async (streaming) => {
+  if (!streaming) {
+    await updateRenderedContent(true)
+  }
+})
 </script>
 
 <template>

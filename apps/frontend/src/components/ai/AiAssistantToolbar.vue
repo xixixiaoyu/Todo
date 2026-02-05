@@ -112,12 +112,12 @@ const handlePresetMouseLeave = () => {
   <div
     :class="[
       'toolbar-container shrink-0 bg-background/5 backdrop-blur-3xl transition-all duration-300',
-      isMobile ? 'p-2.5' : 'px-6 py-4',
+      isMobile ? 'p-2' : 'px-4 pt-2 pb-4',
     ]"
   >
     <div
       :class="[isMaximized ? 'mx-auto max-w-4xl w-full' : '', 'flex flex-col']"
-      :style="{ gap: isMobile ? '8px' : '10px' }"
+      :style="{ gap: isMobile ? '6px' : '8px' }"
     >
       <!-- 快捷操作按钮 -->
       <div :class="['flex items-center text-sm', isMobile ? 'gap-1' : 'gap-2']">

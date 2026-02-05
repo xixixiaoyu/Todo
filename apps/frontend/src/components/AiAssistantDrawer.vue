@@ -355,7 +355,7 @@ defineOptions({
     v-bind="$attrs"
   >
     <div
-      class="relative flex h-full flex-col bg-[hsl(var(--ai-glass-bg))] border-l border-[hsl(var(--ai-header-yellow)/0.3)] backdrop-blur-3xl glass-grain"
+      class="relative flex h-full flex-col bg-[hsl(var(--ai-glass-bg))] border-l border-[hsl(var(--ai-header-yellow)/0.3)] backdrop-blur-2xl glass-grain"
     >
       <AiAssistantHeader
         :is-maximized="isMaximized"

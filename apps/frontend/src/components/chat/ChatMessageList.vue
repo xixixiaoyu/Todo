@@ -60,29 +60,29 @@ watch(currentSessionId, () => {
 
 // 监听消息变化
 watch(
-  () => props.messages,
-  (newMessages, oldMessages) => {
-    const lastMsg = newMessages[newMessages.length - 1]
-    const isStreaming = lastMsg?.isStreaming
-    const isNewMessage = newMessages.length > (oldMessages?.length || 0)
+  () => props.messages.length,
+  (newLen, oldLen) => {
+    const isNewMessage = newLen > (oldLen || 0)
+    if (isNewMessage) {
+      const lastMsg = props.messages[newLen - 1]
+      setStreamingMode(!!lastMsg?.isStreaming)
 
-    // 更新流式模式状态
-    setStreamingMode(!!isStreaming)
-
-    if (isStreaming) {
-      // 正在流式输出时，使用专门的高频滚动处理
-      streamingScroll()
-    } else if (isSwitchingSession.value) {
-      // 切换会话中，已经在 currentSessionId 的 watch 中处理了
-      return
-    } else if (isNewMessage && oldMessages && oldMessages.length > 0) {
-      // 仅当新消息到达时（如用户发送消息），执行平滑滚动到底部
       void nextTick(() => {
-        scrollToBottom('smooth')
+        scrollToBottom(lastMsg?.isStreaming ? 'instant' : 'smooth')
       })
-    } else if (!isStreaming && oldMessages?.[oldMessages.length - 1]?.isStreaming) {
-      // 当流式结束时，确保执行最后一次滚动检查
-      // 延迟一小段时间以等待 Markdown 最终渲染和布局稳定
+    }
+  },
+)
+
+// 专门监听最后一条消息的流式状态
+watch(
+  () => props.messages[props.messages.length - 1]?.isStreaming,
+  (isStreaming) => {
+    setStreamingMode(!!isStreaming)
+    if (isStreaming) {
+      streamingScroll()
+    } else if (props.messages.length > 0) {
+      // 流式结束，确保最后一次平滑滚动
       setTimeout(() => {
         if (isSticking.value) {
           scrollToBottom('smooth')
@@ -90,7 +90,17 @@ watch(
       }, 100)
     }
   },
-  { deep: true },
+)
+
+// 专门监听流式消息的内容变化以触发滚动
+watch(
+  () => props.messages[props.messages.length - 1]?.content,
+  (newContent, oldContent) => {
+    const lastMsg = props.messages[props.messages.length - 1]
+    if (lastMsg?.isStreaming && newContent !== oldContent) {
+      streamingScroll()
+    }
+  },
 )
 
 // 暴露方法给父组件
@@ -101,8 +111,17 @@ defineExpose({
 
 <template>
   <div class="relative flex-1 overflow-hidden">
-    <div ref="containerRef" :class="['h-full overflow-y-auto', isMobile ? 'px-3' : 'px-4']">
-      <div :class="['flex min-h-full w-full flex-col', isMaximized ? 'mx-auto max-w-4xl' : '']">
+    <div
+      ref="containerRef"
+      :class="[
+        'h-full overflow-y-auto overscroll-contain scroll-smooth-gpu',
+        isMobile ? 'px-3' : 'px-4',
+      ]"
+    >
+      <div
+        :class="['flex min-h-full w-full flex-col', isMaximized ? 'mx-auto max-w-4xl' : '']"
+        style="overflow-anchor: none"
+      >
         <!-- 空状态 -->
         <div
           v-if="messages.length === 0"

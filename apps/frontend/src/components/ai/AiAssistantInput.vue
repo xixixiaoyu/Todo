@@ -221,8 +221,8 @@ defineExpose({
 <template>
   <div
     :class="[
-      'input-container-refined relative flex flex-col rounded-[1.5rem] border border-[hsl(var(--ai-glass-border))] bg-[hsl(var(--ai-glass-bg))] shadow-[0_8px_32px_rgba(0,0,0,0.06)] backdrop-blur-2xl transition-all duration-500 focus-within:border-primary/40 focus-within:shadow-[0_12px_40px_rgba(0,0,0,0.08)]',
-      isMobile ? 'p-1.5 gap-0' : 'p-1.5 gap-0',
+      'input-container-refined relative flex flex-col rounded-[1.25rem] border border-[hsl(var(--ai-glass-border))] bg-[hsl(var(--ai-glass-bg))] shadow-[0_4px_20px_rgba(0,0,0,0.04)] backdrop-blur-2xl transition-all duration-500 focus-within:border-primary/40 focus-within:shadow-[0_8px_32px_rgba(0,0,0,0.06)]',
+      isMobile ? 'p-1 gap-0' : 'p-1 gap-0',
       isInputDisabled ? 'opacity-60 grayscale-[0.2]' : '',
     ]"
   >
@@ -370,7 +370,7 @@ defineExpose({
       "
       :class="[
         'w-full resize-none bg-transparent text-foreground outline-none placeholder:text-muted-foreground/40 leading-relaxed transition-colors',
-        isMobile ? 'px-3 pt-2 pb-0.5 text-[14px]' : 'px-4 pt-2.5 pb-1 text-[15px]',
+        isMobile ? 'px-2.5 pt-1.5 pb-0 text-[14px]' : 'px-3 pt-2 pb-0.5 text-[15px]',
       ]"
       :disabled="isInputDisabled"
       @input="(e) => emit('update:modelValue', (e.target as HTMLTextAreaElement).value)"
@@ -379,7 +379,7 @@ defineExpose({
       @paste="(e) => emit('paste', e)"
     />
 
-    <div :class="['flex items-center justify-between px-1 pb-1', isMobile ? 'gap-2' : '']">
+    <div :class="['flex items-center justify-between px-0.5 pb-0.5', isMobile ? 'gap-1' : '']">
       <div class="flex items-center gap-1.5">
         <!-- 附件上传按钮 -->
         <button

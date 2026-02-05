@@ -350,22 +350,28 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
   }
 
   /**
-   * 处理内容高度变化
+   * 处理内容高度变化（带节流优化）
    */
+  let heightChangeRafId: number | null = null
   const handleContentHeightChange = () => {
-    const el = scrollContainer.value
-    if (!el) return
+    if (heightChangeRafId !== null) return
 
-    const currentHeight = el.scrollHeight
-    updateScrollMetrics()
+    heightChangeRafId = requestAnimationFrame(() => {
+      heightChangeRafId = null
+      const el = scrollContainer.value
+      if (!el) return
 
-    if (currentHeight !== lastScrollHeight) {
-      // 内容高度发生变化
-      if (isSticking.value && isAutoScrollEnabled.value) {
-        checkAndScroll('content-change')
+      const currentHeight = el.scrollHeight
+      updateScrollMetrics()
+
+      if (Math.abs(currentHeight - lastScrollHeight) > 1) {
+        // 内容高度发生显著变化
+        if (isSticking.value && isAutoScrollEnabled.value) {
+          checkAndScroll('content-change')
+        }
+        lastScrollHeight = currentHeight
       }
-      lastScrollHeight = currentHeight
-    }
+    })
   }
 
   // === 生命周期管理 ===
