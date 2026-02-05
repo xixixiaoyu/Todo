@@ -133,7 +133,7 @@ async function handleClearTrash() {
                     <Trash2 :size="16" class="md:w-[18px] md:h-[18px]" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent side="top" :side-offset="8" class="w-64 p-4 z-50">
+                <PopoverContent side="bottom" :side-offset="8" align="end" class="w-64 p-4 z-50">
                   <div class="space-y-3">
                     <p class="text-sm font-medium leading-none">
                       {{ t('todo.clearTrashConfirm') }}
