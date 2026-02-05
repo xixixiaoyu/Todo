@@ -111,7 +111,7 @@ const handlePresetMouseLeave = () => {
 <template>
   <div
     :class="[
-      'toolbar-container shrink-0 border-t border-border/40 bg-background/20 backdrop-blur-2xl transition-all duration-300',
+      'toolbar-container shrink-0 border-t border-border/10 bg-transparent backdrop-blur-2xl transition-all duration-300',
       isMobile ? 'p-2' : 'px-6 py-3',
     ]"
   >

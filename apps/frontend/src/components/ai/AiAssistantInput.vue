@@ -221,7 +221,7 @@ defineExpose({
 <template>
   <div
     :class="[
-      'input-container-refined relative flex flex-col rounded-[1.25rem] border border-border/40 bg-background/60 shadow-2xl shadow-black/5 backdrop-blur-xl transition-all duration-300 focus-within:border-primary/30 focus-within:shadow-primary/5',
+      'input-container-refined relative flex flex-col rounded-[1.25rem] border border-border/20 bg-background/40 shadow-xl shadow-black/5 backdrop-blur-xl transition-all duration-300 focus-within:border-primary/30 focus-within:shadow-primary/5',
       isMobile ? 'p-1 gap-0' : 'p-1.5 gap-0',
       isInputDisabled ? 'opacity-60 grayscale-[0.2]' : '',
     ]"
