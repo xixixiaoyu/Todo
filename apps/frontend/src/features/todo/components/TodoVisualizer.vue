@@ -46,7 +46,7 @@ const treeData = computed(() => {
   const roots: TreeData[] = []
 
   // 预览模式下展示所有相关的任务
-  const displayTodos = todoStore.previewTodos.filter(
+  const displayTodos = todoStore.visualTodos.filter(
     (t) => !t.completed || t.isProposed || t.isProposedDelete,
   )
 

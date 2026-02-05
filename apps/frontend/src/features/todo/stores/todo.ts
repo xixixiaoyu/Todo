@@ -66,8 +66,11 @@ export const useTodoStore = defineStore(
       return applyFilterAndSort(todos.value)
     })
 
-    const previewTodos = computed(() => {
-      if (proposedChanges.value.length === 0) return filteredTodos.value
+    /**
+     * 获取应用了建议更改后的任务列表（未过滤）
+     */
+    const basePreviewTodos = computed(() => {
+      if (proposedChanges.value.length === 0) return [...todos.value]
 
       const result = todos.value.map((t) => ({ ...t }))
 
@@ -117,13 +120,24 @@ export const useTodoStore = defineStore(
         }
       }
 
-      return applyFilterAndSort(result)
+      return result
+    })
+
+    const previewTodos = computed(() => {
+      return applyFilterAndSort(basePreviewTodos.value)
+    })
+
+    /**
+     * 专门用于可视化视图的任务列表（忽略当前 Tab 过滤，但保留搜索）
+     */
+    const visualTodos = computed(() => {
+      return applyFilterAndSort(basePreviewTodos.value, true)
     })
 
     /**
      * 对任务列表应用当前的过滤、搜索和排序规则
      */
-    function applyFilterAndSort(items: Todo[]): Todo[] {
+    function applyFilterAndSort(items: Todo[], ignoreTab = false): Todo[] {
       const query = searchQuery.value.trim().toLowerCase()
 
       return items
@@ -131,7 +145,11 @@ export const useTodoStore = defineStore(
           // 排除已删除的任务
           if (todo.deletedAt) return false
 
-          const matchesFilter = filter.value === 'pending' ? !todo.completed : todo.completed
+          const matchesFilter = ignoreTab
+            ? true
+            : filter.value === 'pending'
+              ? !todo.completed
+              : todo.completed
           // 如果是建议修改的任务，强制显示在当前视图中（除非被搜索过滤）
           const isProposedAction = todo.isProposed || todo.isProposedDelete
           const matchesSearch = !query || todo.title.toLowerCase().includes(query)
@@ -816,6 +834,7 @@ export const useTodoStore = defineStore(
       completedCount,
       hasProposedChanges,
       previewTodos,
+      visualTodos,
       // 方法
       isDuplicate,
       fetchTodos,
