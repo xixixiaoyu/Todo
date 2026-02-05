@@ -118,7 +118,7 @@ watch(
   <Teleport to="body">
     <!-- 遮罩层 -->
     <Transition name="fade">
-      <div v-if="modelValue" class="drawer-overlay" :style="overlayStyle" />
+      <div v-if="modelValue" class="drawer-overlay" :style="overlayStyle" @click="closeDrawer" />
     </Transition>
 
     <!-- 抽屉 -->

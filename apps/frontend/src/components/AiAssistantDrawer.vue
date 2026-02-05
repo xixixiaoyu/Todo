@@ -451,7 +451,11 @@ defineOptions({
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="showHistory" class="absolute inset-0 z-10 bg-black/20 dark:bg-black/40" />
+        <div
+          v-if="showHistory"
+          class="absolute inset-0 z-10 bg-black/20 dark:bg-black/40"
+          @click="showHistory = false"
+        />
       </Transition>
 
       <!-- 历史记录面板 -->
