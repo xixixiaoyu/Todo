@@ -191,7 +191,7 @@ describe('AISettingsDialog', () => {
       },
     })
 
-    expect(wrapper.find('.fixed').exists()).toBe(true)
+    expect(wrapper.find('.absolute').exists()).toBe(true)
     expect(wrapper.text()).toContain('ai.settings')
   })
 
@@ -220,7 +220,7 @@ describe('AISettingsDialog', () => {
     expect(updateConfig).toHaveBeenCalled()
   })
 
-  it('closes when backdrop is clicked', async () => {
+  it('does not close when backdrop is clicked', async () => {
     const wrapper = mount(AISettingsDialog, {
       props: {
         modelValue: true,
@@ -238,8 +238,8 @@ describe('AISettingsDialog', () => {
       },
     })
 
-    await wrapper.find('.fixed.inset-0').trigger('click')
-    expect(wrapper.emitted('update:modelValue')?.[0]).toEqual([false])
+    await wrapper.find('.absolute.inset-0').trigger('click')
+    expect(wrapper.emitted('update:modelValue')).toBeUndefined()
   })
 
   it('switches tabs correctly', async () => {
