@@ -218,7 +218,6 @@ defineExpose({
     <div
       v-if="modelValue"
       class="absolute inset-0 z-50 flex items-center justify-center bg-black/20 p-4 backdrop-blur-md"
-      @click.self="handleClose"
     >
       <Transition name="scale">
         <div

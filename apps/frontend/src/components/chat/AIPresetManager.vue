@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, useId } from 'vue'
+import { ref, useId, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Plus, Eye, EyeOff, Edit3, Copy, Trash2, Download, Upload } from 'lucide-vue-next'
+import { debounce } from 'lodash-es'
 import { useAIConfig, type AIPreset } from '@/composables/useAIConfig'
 import { useToast } from '@/composables/useToast'
 
@@ -44,6 +45,31 @@ const presetForm = ref<Omit<AIPreset, 'id'>>({
 })
 
 /**
+ * 名称校验
+ */
+const nameError = computed(() => {
+  const name = presetForm.value.name.trim()
+  if (!name && (isCreatingPreset.value || editingPreset.value)) {
+    return t('validation.REQUIRED', { property: t('ai.presetNameLabel') })
+  }
+
+  const isDuplicate = presets.value.some((p) => {
+    if (isCreatingPreset.value) {
+      return p.name === name
+    }
+    if (editingPreset.value) {
+      return p.name === name && p.id !== editingPreset.value.id
+    }
+    return false
+  })
+
+  if (isDuplicate) {
+    return t('ai.presetNameDuplicate')
+  }
+  return ''
+})
+
+/**
  * 开始创建预设
  */
 function startCreatePreset() {
@@ -79,22 +105,10 @@ function startEditPreset(preset: AIPreset) {
  * 保存预设
  */
 function savePreset() {
-  const name = presetForm.value.name.trim()
-  if (!name) return
-
-  // 检查名称是否重复
-  const isDuplicate = presets.value.some((p) => {
-    if (isCreatingPreset.value) {
-      return p.name === name
+  if (nameError.value) {
+    if (presetForm.value.name.trim()) {
+      toast.error(nameError.value)
     }
-    if (editingPreset.value) {
-      return p.name === name && p.id !== editingPreset.value.id
-    }
-    return false
-  })
-
-  if (isDuplicate) {
-    toast.error(t('ai.presetNameDuplicate'))
     return
   }
 
@@ -115,6 +129,26 @@ function cancelEditPreset() {
   isCreatingPreset.value = false
   editingPreset.value = null
 }
+
+/**
+ * 自动保存逻辑 (仅针对编辑模式)
+ */
+const debouncedUpdate = debounce((id: string, form: Omit<AIPreset, 'id'>) => {
+  if (nameError.value) return
+
+  updatePreset(id, { ...form })
+}, 500)
+
+// 监听表单变化实现自动保存
+watch(
+  () => presetForm.value,
+  (newForm) => {
+    if (editingPreset.value) {
+      debouncedUpdate(editingPreset.value.id, newForm)
+    }
+  },
+  { deep: true },
+)
 
 /**
  * 删除预设
@@ -219,7 +253,7 @@ defineExpose({
           class="text-xs text-muted-foreground hover:text-foreground"
           @click="cancelEditPreset"
         >
-          {{ t('ai.cancel') }}
+          {{ editingPreset ? t('common.back') : t('ai.cancel') }}
         </button>
       </div>
 
@@ -238,7 +272,13 @@ defineExpose({
             spellcheck="false"
             :placeholder="t('ai.presetNamePlaceholder')"
             class="w-full rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
+            :class="{
+              'border-destructive focus:border-destructive focus:ring-destructive/20': nameError,
+            }"
           />
+          <p v-if="nameError" class="mt-1 text-[10px] text-destructive">
+            {{ nameError }}
+          </p>
         </div>
         <div>
           <label :for="baseUrlId" class="mb-1 block text-xs text-muted-foreground">{{
@@ -337,10 +377,12 @@ defineExpose({
       </div>
 
       <button
-        class="w-full rounded-lg bg-primary py-2 text-sm text-primary-foreground transition-colors hover:bg-primary-hover"
+        v-if="isCreatingPreset"
+        class="w-full rounded-lg bg-primary py-2 text-sm text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
+        :disabled="!!nameError"
         @click="savePreset"
       >
-        {{ t('ai.savePreset') }}
+        {{ t('ai.createPreset') }}
       </button>
     </div>
 
