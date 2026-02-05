@@ -13,6 +13,10 @@ describe('TodosService', () => {
       upsert: vi.fn(),
       findMany: vi.fn(),
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      deleteMany: vi.fn(),
     },
     $transaction: vi.fn((cb) => cb(mockPrisma)),
   }
@@ -87,7 +91,7 @@ describe('TodosService', () => {
       expect(result.serverTime).toBeDefined()
     })
 
-    it('should return deletedIds for logically deleted items on server', async () => {
+    it('should return logically deleted items in synced list', async () => {
       const userId = 1
       const syncDto: SyncMergeDto = {
         todos: [],
@@ -105,8 +109,79 @@ describe('TodosService', () => {
 
       const result = await service.sync(userId, syncDto)
 
-      expect(result.synced).toHaveLength(0)
-      expect(result.deletedIds).toContain('deleted-uuid')
+      expect(result.synced).toHaveLength(1)
+      expect(result.synced[0].id).toBe('deleted-uuid')
+      expect(result.deletedIds).toHaveLength(0)
+    })
+  })
+
+  describe('findTrash', () => {
+    it('should return all deleted todos for a user', async () => {
+      const userId = 1
+      const mockTrash = [{ id: '1', title: 'Deleted 1', userId, deletedAt: new Date() }]
+      mockPrisma.todo.findMany.mockResolvedValue(mockTrash)
+
+      const result = await service.findTrash(userId)
+
+      expect(mockPrisma.todo.findMany).toHaveBeenCalledWith({
+        where: { userId, deletedAt: { not: null } },
+        orderBy: { deletedAt: 'desc' },
+      })
+      expect(result).toEqual(mockTrash)
+    })
+  })
+
+  describe('restore', () => {
+    it('should restore a deleted todo', async () => {
+      const userId = 1
+      const todoId = '1'
+      const mockTodo = { id: todoId, userId, deletedAt: new Date() }
+      mockPrisma.todo.findFirst = vi.fn().mockResolvedValue(mockTodo)
+      mockPrisma.todo.update = vi.fn().mockResolvedValue({ ...mockTodo, deletedAt: null })
+
+      const result = await service.restore(userId, todoId)
+
+      expect(mockPrisma.todo.findFirst).toHaveBeenCalled()
+      expect(mockPrisma.todo.update).toHaveBeenCalledWith({
+        where: { id: todoId },
+        data: { deletedAt: null, updatedAt: expect.any(Date), version: { increment: 1 } },
+      })
+      expect(result?.deletedAt).toBeNull()
+      expect(mockEventsGateway.broadcastSyncNotify).toHaveBeenCalledWith(userId)
+    })
+  })
+
+  describe('deletePermanently', () => {
+    it('should physically delete a todo', async () => {
+      const userId = 1
+      const todoId = '1'
+      const mockTodo = { id: todoId, userId }
+      mockPrisma.todo.findFirst.mockResolvedValue(mockTodo)
+      mockPrisma.todo.delete.mockResolvedValue(mockTodo)
+
+      await service.deletePermanently(userId, todoId)
+
+      expect(mockPrisma.todo.findFirst).toHaveBeenCalledWith({
+        where: { id: todoId, userId },
+      })
+      expect(mockPrisma.todo.delete).toHaveBeenCalledWith({
+        where: { id: todoId },
+      })
+      expect(mockEventsGateway.broadcastSyncNotify).toHaveBeenCalledWith(userId)
+    })
+  })
+
+  describe('clearTrash', () => {
+    it('should physically delete all deleted todos', async () => {
+      const userId = 1
+      mockPrisma.todo.deleteMany = vi.fn().mockResolvedValue({ count: 5 })
+
+      await service.clearTrash(userId)
+
+      expect(mockPrisma.todo.deleteMany).toHaveBeenCalledWith({
+        where: { userId, deletedAt: { not: null } },
+      })
+      expect(mockEventsGateway.broadcastSyncNotify).toHaveBeenCalledWith(userId)
     })
   })
 

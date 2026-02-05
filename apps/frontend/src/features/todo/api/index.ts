@@ -26,4 +26,36 @@ export const todoApi = {
     const { data } = await httpClient.get<ApiResponse<Todo[]>>('/todos')
     return data
   },
+
+  /**
+   * 获取回收站中的待办事项
+   */
+  findTrash: async (): Promise<ApiResponse<Todo[]>> => {
+    const { data } = await httpClient.get<ApiResponse<Todo[]>>('/todos/trash')
+    return data
+  },
+
+  /**
+   * 恢复已删除的待办事项
+   */
+  restore: async (id: string): Promise<ApiResponse<Todo>> => {
+    const { data } = await httpClient.post<ApiResponse<Todo>>(`/todos/${id}/restore`)
+    return data
+  },
+
+  /**
+   * 永久删除待办事项
+   */
+  deletePermanently: async (id: string): Promise<ApiResponse<{ id: string }>> => {
+    const { data } = await httpClient.delete<ApiResponse<{ id: string }>>(`/todos/${id}/permanent`)
+    return data
+  },
+
+  /**
+   * 清空回收站
+   */
+  clearTrash: async (): Promise<ApiResponse<{ count: number }>> => {
+    const { data } = await httpClient.delete<ApiResponse<{ count: number }>>('/todos/trash/clear')
+    return data
+  },
 }

@@ -5,6 +5,7 @@ import {
   X,
   Pencil,
   Trash2,
+  RotateCcw,
   Plus,
   ChevronDown,
   ChevronRight,
@@ -141,7 +142,7 @@ const children = computed(() => {
 const hasChildren = computed(() => children.value.length > 0)
 
 const parentPath = computed(() => {
-  if (!props.searchQuery?.trim()) return []
+  if (!props.searchQuery?.trim() && store.filter !== 'trash') return []
   return store.getTodoPath(props.todo.id)
 })
 
@@ -208,14 +209,27 @@ const hapticSelectionStart = async () => {
   }
 }
 
-function handleSaveEdit() {
-  void store.clearError()
-  emit('saveEdit')
+async function handleSaveEdit() {
+  if (props.editingTitle.trim()) {
+    const success = await store.updateTodo(props.todo.id, props.editingTitle)
+    if (success) {
+      emit('saveEdit')
+    } else {
+      triggerFeedback()
+    }
+  } else {
+    emit('cancelEdit')
+  }
 }
 
 function handleDelete() {
   void hapticImpact(ImpactStyle.Medium)
   emit('delete', props.todo.id)
+}
+
+async function handlePermanentDelete() {
+  void hapticImpact(ImpactStyle.Medium)
+  await store.deleteTodoPermanently(props.todo.id)
 }
 
 watch(
@@ -244,6 +258,7 @@ watch(
     >
       <div class="flex items-center gap-2">
         <GripVertical
+          v-if="store.filter !== 'trash'"
           class="drag-handle h-4 w-4 cursor-grab text-muted-foreground/30 hover:text-muted-foreground transition-colors active:cursor-grabbing"
           @touchstart="hapticSelectionStart"
         />
@@ -260,6 +275,7 @@ watch(
         <div v-else class="w-6" />
 
         <Checkbox
+          v-if="store.filter !== 'trash'"
           :model-value="todo.completed"
           :disabled="todo.isProposedDelete"
           class="h-5 w-5 rounded-full border-2 data-[state=checked]:bg-success data-[state=checked]:border-success transition-transform active:scale-90"
@@ -344,19 +360,24 @@ watch(
           <!-- eslint-disable vue/no-v-html -->
           <div class="flex items-center gap-1.5 min-w-0">
             <Pin
-              v-if="todo.isPinned"
+              v-if="todo.isPinned && store.filter !== 'trash'"
               class="h-3.5 w-3.5 text-primary/70 shrink-0 group-hover:hidden"
             />
-            <Sparkles v-if="todo.isProposed" class="h-3.5 w-3.5 text-success/70 shrink-0" />
+            <Sparkles
+              v-if="todo.isProposed && store.filter !== 'trash'"
+              class="h-3.5 w-3.5 text-success/70 shrink-0"
+            />
             <span
               class="flex-1 cursor-pointer select-text text-foreground truncate"
               :class="[
-                todo.completed ? 'line-through text-muted-foreground/50' : '',
+                todo.completed && store.filter !== 'trash'
+                  ? 'line-through text-muted-foreground/50'
+                  : '',
                 todo.isProposedDelete ? 'line-through text-destructive/50' : '',
-                todo.isProposed ? 'text-success/90 font-medium' : '',
+                todo.isProposed && store.filter !== 'trash' ? 'text-success/90 font-medium' : '',
               ]"
               :title="todo.title"
-              @dblclick="emit('startEdit', todo.id, todo.title)"
+              @dblclick="store.filter !== 'trash' && emit('startEdit', todo.id, todo.title)"
               v-html="highlightMatch(todo.title, searchQuery || '')"
             >
             </span>
@@ -364,6 +385,41 @@ watch(
           <!-- eslint-enable vue/no-v-html -->
         </div>
         <div
+          v-if="store.filter === 'trash'"
+          class="absolute right-0 top-0 bottom-0 flex items-center gap-1 px-3 bg-gradient-to-l from-card via-card/95 to-transparent rounded-r-xl"
+        >
+          <TooltipProvider :delay-duration="0">
+            <Tooltip>
+              <TooltipTrigger as-child>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-8 w-8 text-primary hover:bg-primary/10"
+                  @click.stop="store.restoreTodo(todo.id)"
+                >
+                  <RotateCcw class="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">{{ t('todo.restore') }}</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger as-child>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-8 w-8 text-destructive hover:bg-destructive/10 transition-colors"
+                  @click.stop="handlePermanentDelete"
+                >
+                  <Trash2 class="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">{{ t('todo.delete') }}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        <div
+          v-else
           class="absolute right-0 top-0 bottom-0 flex items-center gap-0.5 opacity-0 md:group-hover:opacity-100 bg-gradient-to-l from-card via-card/95 to-transparent pl-8 md:pl-12 pr-2 md:pr-3 rounded-r-xl transition-all duration-200"
           :class="{ 'opacity-100': isMobileActionsVisible }"
         >

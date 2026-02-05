@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { ClipboardList, CheckCircle2, SearchX } from 'lucide-vue-next'
+import { ClipboardList, CheckCircle2, SearchX, Trash2 } from 'lucide-vue-next'
 import { computed } from 'vue'
 import draggable from 'vuedraggable'
 import type { Todo } from '../stores/todo'
@@ -11,7 +11,7 @@ const { t } = useI18n()
 
 const props = defineProps<{
   todos: Todo[]
-  filter: 'pending' | 'completed'
+  filter: 'pending' | 'completed' | 'trash'
   searchQuery: string
   editingId: string | null
   editingTitle: string
@@ -54,6 +54,13 @@ const emptyState = computed(() => {
       description: t('todo.emptyPendingDescription'),
     }
   }
+  if (props.filter === 'trash') {
+    return {
+      icon: Trash2,
+      title: t('todo.emptyTrash'),
+      description: t('todo.emptyTrashDescription'),
+    }
+  }
   return {
     icon: CheckCircle2,
     title: t('todo.emptyCompleted'),
@@ -62,8 +69,8 @@ const emptyState = computed(() => {
 })
 
 const displayTodos = computed(() => {
-  // 如果正在搜索，则显示所有匹配项（扁平化展示）
-  if (props.searchQuery) {
+  // 回收站模式：直接扁平化展示所有已删除项
+  if (props.filter === 'trash' || props.searchQuery) {
     return props.todos
   }
 

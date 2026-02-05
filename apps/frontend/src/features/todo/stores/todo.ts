@@ -21,7 +21,7 @@ export interface ProposedTodoChange {
   data: Partial<Todo> & { title?: string; parentId?: string | null }
 }
 
-export type FilterType = 'pending' | 'completed'
+export type FilterType = 'pending' | 'completed' | 'trash'
 export type ViewMode = 'list' | 'visual' | 'stats'
 
 /**
@@ -142,7 +142,13 @@ export const useTodoStore = defineStore(
 
       return items
         .filter((todo) => {
-          // 排除已删除的任务
+          // 如果是回收站模式
+          if (filter.value === 'trash') {
+            const matchesSearch = !query || todo.title.toLowerCase().includes(query)
+            return !!todo.deletedAt && matchesSearch
+          }
+
+          // 常规模式：排除已删除的任务
           if (todo.deletedAt) return false
 
           const matchesFilter = ignoreTab
@@ -158,6 +164,11 @@ export const useTodoStore = defineStore(
           return matchesFilter && matchesSearch
         })
         .sort((a, b) => {
+          // 如果是回收站模式，按删除时间排序
+          if (filter.value === 'trash') {
+            return new Date(b.deletedAt!).getTime() - new Date(a.deletedAt!).getTime()
+          }
+
           // 1. 置顶优先
           if (a.isPinned && !b.isPinned) return -1
           if (!a.isPinned && b.isPinned) return 1
@@ -489,6 +500,74 @@ export const useTodoStore = defineStore(
     }
 
     /**
+     * 恢复待办事项
+     */
+    async function restoreTodo(id: string): Promise<void> {
+      const todo = todos.value.find((t) => t.id === id)
+      if (!todo) return
+
+      todo.deletedAt = undefined
+      todo.updatedAt = new Date()
+      todo.syncStatus = 'pending'
+
+      // 如果有父任务，且父任务也被删除了，递归恢复父任务
+      if (todo.parentId) {
+        const parent = todos.value.find((t) => t.id === todo.parentId)
+        if (parent && parent.deletedAt) {
+          await restoreTodo(parent.id)
+        }
+      }
+
+      // 尝试自动同步 (防抖)
+      debouncedSync()
+    }
+
+    /**
+     * 永久删除待办事项
+     */
+    async function deleteTodoPermanently(id: string): Promise<void> {
+      const index = todos.value.findIndex((t) => t.id === id)
+      if (index === -1) return
+
+      // 递归删除子任务
+      const children = todos.value.filter((t) => t.parentId === id)
+      for (const child of children) {
+        await deleteTodoPermanently(child.id)
+      }
+
+      todos.value.splice(index, 1)
+
+      // 如果已登录，调用后端永久删除接口
+      const { useAuthStore } = await import('@/features/auth/stores/auth')
+      const authStore = useAuthStore()
+      if (authStore.isAuthenticated) {
+        try {
+          await todoApi.deletePermanently(id)
+        } catch (err) {
+          console.error('Failed to delete todo permanently:', err)
+        }
+      }
+    }
+
+    /**
+     * 清空回收站
+     */
+    async function clearTrash(): Promise<void> {
+      todos.value = todos.value.filter((t) => !t.deletedAt)
+
+      // 如果已登录，调用后端清空回收站接口
+      const { useAuthStore } = await import('@/features/auth/stores/auth')
+      const authStore = useAuthStore()
+      if (authStore.isAuthenticated) {
+        try {
+          await todoApi.clearTrash()
+        } catch (err) {
+          console.error('Failed to clear trash:', err)
+        }
+      }
+    }
+
+    /**
      * 更新待办事项标题
      */
     async function updateTodo(id: string, title: string): Promise<boolean> {
@@ -704,8 +783,8 @@ export const useTodoStore = defineStore(
           todos.value = todos.value.filter((t) => !deletedSet.has(t.id))
         }
 
-        // 4. 清理本地已成功同步的逻辑删除项，保持内存整洁
-        todos.value = todos.value.filter((t) => !(t.deletedAt && t.syncStatus === 'synced'))
+        // 4. 清理本地已成功同步且在服务器端已被物理删除的任务 (通过 deletedIds)
+        // 逻辑删除的任务 (deletedAt) 会保留在 todos 中以供回收站显示
 
         lastSyncAt.value = serverTime
         error.value = null // 清除之前的错误
@@ -842,6 +921,9 @@ export const useTodoStore = defineStore(
       toggleTodo,
       togglePin,
       breakdownTaskWithAI,
+      restoreTodo,
+      deleteTodoPermanently,
+      clearTrash,
       deleteTodo,
       updateTodo,
       reorderTodos,

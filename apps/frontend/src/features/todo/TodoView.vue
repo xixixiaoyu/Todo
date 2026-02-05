@@ -90,14 +90,29 @@ function onFireworksComplete() {
           <TodoHeader />
 
           <!-- Input Area -->
-          <TodoInput
-            v-if="todoStore.viewMode === 'list'"
-            v-model="newTodoTitle"
-            :show-tooltip="showTooltip"
-            :error-message="todoStore.error || ''"
-            @add="handleAddTodo"
-            @keydown="handleKeydown"
-          />
+          <div
+            class="relative transition-[margin] duration-500 ease-in-out"
+            :class="todoStore.filter === 'trash' ? 'h-0 mb-0' : 'h-[52px] mb-6'"
+          >
+            <Transition
+              enter-active-class="transition-all duration-500 delay-100 ease-out"
+              enter-from-class="opacity-0 -translate-y-4 scale-95"
+              enter-to-class="opacity-100 translate-y-0 scale-100"
+              leave-active-class="transition-all duration-300 ease-in"
+              leave-from-class="opacity-100 translate-y-0 scale-100"
+              leave-to-class="opacity-0 -translate-y-4 scale-95"
+            >
+              <TodoInput
+                v-if="todoStore.viewMode === 'list' && todoStore.filter !== 'trash'"
+                v-model="newTodoTitle"
+                :show-tooltip="showTooltip"
+                :error-message="todoStore.error || ''"
+                class="absolute inset-0"
+                @add="handleAddTodo"
+                @keydown="handleKeydown"
+              />
+            </Transition>
+          </div>
 
           <!-- Filter Tabs -->
           <TodoFilter

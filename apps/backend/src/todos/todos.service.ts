@@ -96,9 +96,14 @@ export class TodosService {
     // 合并客户端成功更新的项目（带有新版本号）和服务器端的其他变更
     const allChanges = [...successfullyUpdatedItems, ...otherServerChanges]
 
-    // 分离常规更新和逻辑删除
-    const synced = allChanges.filter((t) => !t.deletedAt)
-    const deletedIds = allChanges.filter((t) => t.deletedAt).map((t) => t.id)
+    // 返回自上次同步以来的所有变更，包括逻辑删除项
+    const synced = allChanges
+
+    // 物理删除的 ID 应该通过其他方式处理，或者在这里识别真正的物理删除
+    // 目前物理删除的操作（如永久删除、清空回收站）不会触发增量同步中的 deletedIds
+    // 因为 Prisma 不会自动跟踪物理删除。如果需要跟踪，通常需要一个 DeletedRecord 表。
+    // 在这里我们暂时不处理增量物理删除，而是依赖全量重新获取或单独的事件。
+    const deletedIds: string[] = []
 
     // 4. 通知其他在线设备进行同步
     if (successfullyUpdatedItems.length > 0) {
@@ -123,5 +128,74 @@ export class TodosService {
       },
       orderBy: [{ isPinned: 'desc' }, { order: 'asc' }, { createdAt: 'desc' }],
     })
+  }
+
+  /**
+   * 获取回收站中的待办事项
+   */
+  async findTrash(userId: number) {
+    return this.prisma.todo.findMany({
+      where: {
+        userId,
+        deletedAt: { not: null },
+      },
+      orderBy: { deletedAt: 'desc' },
+    })
+  }
+
+  /**
+   * 恢复已删除的待办事项
+   */
+  async restore(userId: number, id: string) {
+    const todo = await this.prisma.todo.findFirst({
+      where: { id, userId },
+    })
+
+    if (!todo) return null
+
+    const updated = await this.prisma.todo.update({
+      where: { id },
+      data: {
+        deletedAt: null,
+        updatedAt: new Date(),
+        version: { increment: 1 },
+      },
+    })
+
+    this.eventsGateway.broadcastSyncNotify(userId)
+    return updated
+  }
+
+  /**
+   * 永久删除待办事项
+   */
+  async deletePermanently(userId: number, id: string) {
+    const todo = await this.prisma.todo.findFirst({
+      where: { id, userId },
+    })
+
+    if (!todo) return null
+
+    await this.prisma.todo.delete({
+      where: { id },
+    })
+
+    this.eventsGateway.broadcastSyncNotify(userId)
+    return { id }
+  }
+
+  /**
+   * 清空回收站
+   */
+  async clearTrash(userId: number) {
+    const result = await this.prisma.todo.deleteMany({
+      where: {
+        userId,
+        deletedAt: { not: null },
+      },
+    })
+
+    this.eventsGateway.broadcastSyncNotify(userId)
+    return result
   }
 }
