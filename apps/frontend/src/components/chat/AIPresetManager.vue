@@ -389,7 +389,7 @@ defineExpose({
               : 'border-border bg-card/40 hover:bg-card/60',
           ]"
         >
-          <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
             <div
               class="flex flex-1 cursor-pointer flex-col gap-0.5 overflow-hidden"
               @click="activePresetId !== preset.id && switchPreset(preset.id)"
@@ -428,7 +428,12 @@ defineExpose({
 
             <!-- 操作按钮 -->
             <div
-              class="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100"
+              class="absolute right-0 top-0 bottom-0 flex items-center gap-1 opacity-0 transition-all duration-300 group-hover:opacity-100 translate-x-1 group-hover:translate-x-0 bg-gradient-to-l from-card via-card/95 to-transparent pl-14 pr-3 rounded-r-xl pointer-events-none group-hover:pointer-events-auto"
+              :class="[
+                activePresetId === preset.id
+                  ? 'from-[#fdfaf6] via-[#fdfaf6]/95'
+                  : 'from-card via-card/95',
+              ]"
             >
               <button
                 class="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
