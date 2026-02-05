@@ -342,11 +342,11 @@ watch(
           <!-- 正文气泡：用户消息或已有内容的 AI 消息 -->
           <div
             v-else-if="isUser || hasContent"
-            class="selectable relative select-text break-words rounded-2xl px-4 py-3 shadow-sm transition-all duration-300"
+            class="selectable relative select-text break-words rounded-[1.25rem] px-4 py-3 transition-all duration-300"
             :class="[
               isUser
-                ? 'bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-primary-foreground hover:shadow-md'
-                : 'border border-border bg-card text-foreground hover:border-primary/20 hover:shadow-md',
+                ? 'bg-gradient-to-br from-primary/95 via-primary to-primary/90 text-primary-foreground shadow-[0_4px_12px_rgba(var(--primary),0.15)] hover:shadow-[0_6px_16px_rgba(var(--primary),0.2)]'
+                : 'border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] text-foreground shadow-sm hover:border-primary/30 hover:shadow-md backdrop-blur-md',
               isEditing
                 ? 'w-full !bg-card !text-foreground ring-2 ring-primary/20 border-primary'
                 : '',

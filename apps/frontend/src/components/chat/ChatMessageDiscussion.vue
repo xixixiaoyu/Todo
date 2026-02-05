@@ -17,11 +17,11 @@ const isMobile = computed(() => windowWidth.value < 640)
 <template>
   <div
     v-if="steps && steps.length > 0"
-    class="mb-2 space-y-2 rounded-xl border border-border bg-muted/30 shadow-sm"
+    class="mb-2 space-y-2 rounded-xl border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] shadow-sm backdrop-blur-md"
     :class="[isMobile ? 'p-2.5' : 'p-3']"
   >
     <div
-      class="flex items-center gap-2 border-b border-border"
+      class="flex items-center gap-2 border-b border-[hsl(var(--ai-message-border))]"
       :class="[isMobile ? 'pb-1.5' : 'pb-2']"
     >
       <Users :size="isMobile ? 13 : 14" class="text-primary" />

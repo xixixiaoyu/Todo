@@ -112,8 +112,8 @@ watch([() => props.message.thinkingContent, () => props.message.reasoning_detail
 
 <template>
   <div
-    class="thinking-content group/thinking mb-2 overflow-hidden rounded-xl border border-ai-message-border bg-ai-message-bg/30 transition-all duration-300 hover:border-primary/20"
-    :class="{ 'is-collapsed': !isExpanded, 'ring-1 ring-primary/5': isExpanded }"
+    class="thinking-content group/thinking mb-2 overflow-hidden rounded-xl border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] transition-all duration-300 hover:border-primary/30 shadow-sm backdrop-blur-md"
+    :class="{ 'is-collapsed': !isExpanded, 'ring-1 ring-primary/10': isExpanded }"
   >
     <div
       class="thinking-header flex items-center justify-between px-3 py-2.5 cursor-pointer select-none transition-colors hover:bg-primary/5"

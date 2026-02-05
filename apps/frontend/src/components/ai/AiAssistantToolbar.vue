@@ -196,7 +196,7 @@ const handlePresetMouseLeave = () => {
                     isMobile ? 'h-8 w-8 justify-center' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
                     isDiscussionEnabled
                       ? 'border-primary/20 bg-primary/10 text-primary shadow-primary/5'
-                      : 'border-border/10 bg-background/20 text-muted-foreground hover:bg-accent hover:text-accent-foreground backdrop-blur-sm',
+                      : 'border-[hsl(var(--ai-glass-border))] bg-[hsl(var(--ai-glass-bg))] text-muted-foreground hover:bg-accent hover:text-accent-foreground backdrop-blur-md',
                   ]"
                   :title="isDiscussionEnabled ? t('ai.discussionMode') : t('ai.discussionMode')"
                   @click="emit('toggleDiscussion')"
@@ -302,7 +302,7 @@ const handlePresetMouseLeave = () => {
               isMobile ? 'h-8 w-8 justify-center' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
               isImageGenerationEnabled
                 ? 'border-primary/20 bg-primary/10 text-primary shadow-primary/5'
-                : 'border-border/10 bg-background/20 text-muted-foreground hover:bg-accent hover:text-accent-foreground backdrop-blur-sm',
+                : 'border-[hsl(var(--ai-glass-border))] bg-[hsl(var(--ai-glass-bg))] text-muted-foreground hover:bg-accent hover:text-accent-foreground backdrop-blur-md',
             ]"
             :title="t('ai.enableImageGeneration')"
             @click="emit('toggleImageGen')"
@@ -325,7 +325,7 @@ const handlePresetMouseLeave = () => {
               <DropdownMenuTrigger as-child>
                 <button
                   :class="[
-                    'flex items-center border border-border/10 bg-background/20 text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground active:scale-95 shadow-sm rounded-full backdrop-blur-sm',
+                    'flex items-center border border-[hsl(var(--ai-glass-border))] bg-[hsl(var(--ai-glass-bg))] text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground active:scale-95 shadow-sm rounded-full backdrop-blur-md',
                     isMobile ? 'h-8 px-2.5 gap-1' : 'px-3 py-1.5 gap-1.5 text-[13px]',
                   ]"
                   :title="t('ai.managePresets')"
@@ -390,7 +390,7 @@ const handlePresetMouseLeave = () => {
         <div class="flex shrink-0 items-center gap-2">
           <button
             :class="[
-              'flex items-center justify-center rounded-full border border-border/10 bg-background/20 text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground hover:scale-110 active:scale-95 shadow-sm backdrop-blur-sm',
+              'flex items-center justify-center rounded-full border border-[hsl(var(--ai-glass-border))] bg-[hsl(var(--ai-glass-bg))] text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground hover:scale-110 active:scale-95 shadow-sm backdrop-blur-md',
               isMobile ? 'h-8 w-8' : 'h-8 w-8',
             ]"
             :title="t('ai.settings')"

@@ -221,7 +221,7 @@ defineExpose({
 <template>
   <div
     :class="[
-      'input-container-refined relative flex flex-col rounded-[1.5rem] border border-border/10 bg-background/60 shadow-[0_8px_32px_rgba(0,0,0,0.04)] backdrop-blur-2xl transition-all duration-300 focus-within:border-primary/30 focus-within:shadow-[0_8px_32px_rgba(var(--primary),0.05)]',
+      'input-container-refined relative flex flex-col rounded-[1.5rem] border border-[hsl(var(--ai-glass-border))] bg-[hsl(var(--ai-glass-bg))] shadow-[0_8px_32px_rgba(0,0,0,0.06)] backdrop-blur-2xl transition-all duration-500 focus-within:border-primary/40 focus-within:shadow-[0_12px_40px_rgba(0,0,0,0.08)]',
       isMobile ? 'p-1.5 gap-0' : 'p-1.5 gap-0',
       isInputDisabled ? 'opacity-60 grayscale-[0.2]' : '',
     ]"

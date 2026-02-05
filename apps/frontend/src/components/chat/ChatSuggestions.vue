@@ -34,7 +34,7 @@ const suggestions = computed(() => [
     <button
       v-for="item in suggestions"
       :key="item.title"
-      class="group relative flex flex-col items-start rounded-xl border border-border bg-card/50 p-4 text-left transition-all hover:border-primary/30 hover:bg-primary/5 hover:shadow-sm active:scale-[0.98]"
+      class="group relative flex flex-col items-start rounded-xl border border-[hsl(var(--ai-glass-border))] bg-[hsl(var(--ai-glass-bg))] p-4 text-left transition-all hover:border-primary/40 hover:bg-primary/5 hover:shadow-md backdrop-blur-md active:scale-[0.98]"
       @click="emit('select', item.desc, { requireTodo: item.requireTodo })"
     >
       <div class="mb-3 flex w-full items-center justify-between">

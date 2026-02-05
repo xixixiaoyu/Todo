@@ -24,7 +24,7 @@ const isMobile = computed(() => !isDesktop.value && windowWidth.value < 640)
 
 <template>
   <header
-    class="flex h-14 shrink-0 items-center justify-between bg-transparent backdrop-blur-2xl z-10 px-6"
+    class="flex h-14 shrink-0 items-center justify-between border-b border-[hsl(var(--ai-header-yellow)/0.5)] bg-gradient-to-b from-[hsl(var(--ai-header-yellow)/0.98)] via-[hsl(var(--ai-header-yellow)/0.96)] to-[hsl(var(--ai-header-yellow)/0.92)] px-6 backdrop-blur-3xl z-10"
     :class="[isDesktop ? 'select-none cursor-default' : '']"
     style="--wails-draggable: drag"
     data-wails-drag
@@ -34,19 +34,20 @@ const isMobile = computed(() => !isDesktop.value && windowWidth.value < 640)
       :class="[isDesktop && isMac ? 'pl-20' : '']"
     >
       <div
-        class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary shadow-sm"
+        class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 text-primary shadow-[0_2px_8px_rgba(var(--primary),0.2)]"
       >
         <Clover :size="18" class="animate-pulse-slow" />
       </div>
-      <span class="text-[14px] font-semibold tracking-tight text-foreground/80">{{
-        t('ai.assistant')
-      }}</span>
+      <span
+        class="text-[14px] font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent"
+        >{{ t('ai.assistant') }}</span
+      >
     </div>
     <div class="flex items-center gap-1.5">
       <!-- 最大化/最小化 -->
       <button
         v-if="!isMobile"
-        class="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-95"
+        class="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary active:scale-95"
         @click="$emit('toggleMaximize')"
       >
         <Maximize2 v-if="!isMaximized" :size="15" />
