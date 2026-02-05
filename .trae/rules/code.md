@@ -1,6 +1,6 @@
 # 项目上下文
 
-基于 **NestJS 11 + Vue 3.5** 的全栈 Todo 应用，采用 **pnpm Monorepo** 架构。
+基于 **NestJS 11 + Vue 3.5** 的全栈 Todo 应用，采用 **pnpm Monorepo** 架构。当前开发环境统一使用 `pnpm docker:dev` 启动的全栈 Docker 容器环境。
 
 ## 核心原则
 
@@ -9,7 +9,18 @@
    - **JS/TS 规范**: 2 空格缩进、单引号、无分号。
    - **模块化**: 遵循 SOLID 原则。保持组件与服务单一职责，优先依赖抽象 (Interface/Type) 而非具象。
    - **现代性**: 优先使用 ES6+ 语法及类型安全 (TS) 的最佳实践，严禁 `any`。
-3. **测试驱动 (TDD Mindset)**: 逻辑新增或修改必须伴随相应的测试用例。
+3. **测试驱动 (TDD Mindset)**: **任何**逻辑的新增或修改都必须伴随相应的测试用例。没有测试支撑的代码被视为不可靠的代码。
+
+## 开发工作流
+
+1. **Contextual Synthesis (上下文综合)**: 深入理解需求背景、限制及项目上下文，识别隐藏的边界条件。
+2. **Logic Architecture (逻辑建模)**: 在脑中构建最简路径。结合最佳实践选择最优方案，预判测试点。
+3. **Implementation & Testing (精准实现与测试)**:
+   - 编写或修改业务逻辑的同时，**必须同步新增或更新对应的单元测试**。
+   - 确保测试覆盖了核心逻辑、边界情况 (Edge Cases) 以及潜在的异常路径。
+4. **Verification & Refinement (验证与精炼)**:
+   - **运行测试**: 确保所有新增及既有测试全部通过。
+   - **自我修正**: 对照“代码哲学”自检，清理无用变量、冗余注释，确保代码与测试同样优雅。
 
 ## 项目结构
 
@@ -160,6 +171,7 @@ interface ApiResponse<T> { success: boolean; data: T; message?: string; timestam
 
 ## 注意事项
 
+- **环境声明**: 当前开发环境通过 `pnpm docker:dev` 运行，所有命令执行需考虑容器环境（如数据库连接、端口映射等）。
 - **版本锁定**: 所有依赖必须使用 **精确版本** (移除 `^` 和 `~`)，以确保环境一致性。Workspace 内部引用保留 `workspace:*`。
 - 共享包修改后需 `pnpm --filter @my-app/shared build`
 - 前端 `zod` 必须显式声明
