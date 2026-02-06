@@ -124,20 +124,20 @@ const handlePresetMouseLeave = () => {
         <div class="no-scrollbar flex flex-1 items-center gap-2 overflow-x-auto py-1">
           <button
             :class="[
-              'flex shrink-0 items-center rounded-full border border-border/10 bg-background/20 text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 backdrop-blur-sm',
+              'toolbar-btn group flex shrink-0 items-center rounded-full border transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-30',
               isMobile ? 'h-8 px-2.5 gap-1' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
             ]"
             :disabled="!hasHistory || isGenerating"
             :title="t('ai.newChat')"
             @click="emit('newChat')"
           >
-            <Plus :size="isMobile ? 14 : 14" />
-            <span v-if="!isMobile" class="toolbar-text">{{ t('ai.newChat') }}</span>
+            <Plus :size="isMobile ? 14 : 14" class="transition-transform group-hover:rotate-90" />
+            <span v-if="!isMobile" class="toolbar-text font-medium">{{ t('ai.newChat') }}</span>
           </button>
 
           <!-- 历史记录按钮 -->
           <button
-            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border/10 bg-background/20 text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground active:scale-95 shadow-sm backdrop-blur-sm"
+            class="toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all active:scale-95"
             :title="t('ai.history')"
             :class="{ 'cursor-not-allowed opacity-50': isGenerating }"
             :disabled="isGenerating"
@@ -150,33 +150,45 @@ const handlePresetMouseLeave = () => {
 
           <!-- AI 思考模式开关 -->
           <button
-            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all active:scale-95 shadow-sm"
+            class="toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all active:scale-95"
             :class="
               isThinkingEnabled
-                ? 'border-primary/20 bg-primary/10 text-primary shadow-primary/5'
-                : 'border-border/10 bg-background/20 text-muted-foreground hover:bg-accent hover:text-accent-foreground backdrop-blur-sm'
+                ? 'border-primary/30 bg-primary/15 text-primary shadow-[0_0_12px_rgba(var(--primary),0.1)]'
+                : 'border-transparent'
             "
             :title="isThinkingEnabled ? t('ai.thinkingEnabled') : t('ai.thinkingDisabled')"
             @click="emit('toggleThinking')"
           >
-            <Lightbulb :size="16" :class="{ 'fill-primary/20': isThinkingEnabled }" />
+            <Lightbulb
+              :size="16"
+              :class="[
+                'transition-all duration-300',
+                isThinkingEnabled ? 'fill-primary/20 scale-110' : 'text-muted-foreground',
+              ]"
+            />
           </button>
 
           <!-- Todo 助手 -->
           <button
             :class="[
-              'flex shrink-0 items-center transition-all active:scale-95 shadow-sm rounded-full border',
+              'toolbar-btn flex shrink-0 items-center transition-all active:scale-95 rounded-full border',
               isMobile ? 'h-8 w-8 justify-center' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
               isTodoAssistantEnabled
-                ? 'border-primary/20 bg-primary/10 text-primary shadow-primary/5'
-                : 'border-border/10 bg-background/20 text-muted-foreground hover:bg-accent hover:text-accent-foreground backdrop-blur-sm',
+                ? 'border-primary/30 bg-primary/15 text-primary shadow-[0_0_12px_rgba(var(--primary),0.1)]'
+                : 'border-transparent text-muted-foreground',
             ]"
             :title="
               isTodoAssistantEnabled ? t('ai.todoAssistantEnabled') : t('ai.todoAssistantDisabled')
             "
             @click="emit('toggleTodo')"
           >
-            <Clover :size="14" :class="{ 'animate-spin-slow': isTodoAssistantEnabled }" />
+            <Clover
+              :size="14"
+              :class="[
+                'transition-all duration-500',
+                isTodoAssistantEnabled ? 'animate-spin-slow scale-110' : '',
+              ]"
+            />
             <span v-if="!isMobile" class="toolbar-text font-medium">{{
               t('ai.todoAssistant')
             }}</span>
@@ -192,17 +204,23 @@ const handlePresetMouseLeave = () => {
               <DropdownMenuTrigger as-child>
                 <button
                   :class="[
-                    'flex items-center transition-all active:scale-95 shadow-sm rounded-full border',
+                    'toolbar-btn flex items-center transition-all active:scale-95 rounded-full border',
                     isMobile ? 'h-8 w-8 justify-center' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
                     isDiscussionEnabled
-                      ? 'border-primary/20 bg-primary/10 text-primary shadow-primary/5'
-                      : 'border-[hsl(var(--ai-glass-border))] bg-[hsl(var(--ai-glass-bg))] text-muted-foreground hover:bg-accent hover:text-accent-foreground backdrop-blur-md',
+                      ? 'border-primary/30 bg-primary/15 text-primary shadow-[0_0_12px_rgba(var(--primary),0.1)]'
+                      : 'border-transparent text-muted-foreground',
                   ]"
                   :title="isDiscussionEnabled ? t('ai.discussionMode') : t('ai.discussionMode')"
                   @click="emit('toggleDiscussion')"
                   @mouseenter="clearDiscussionTimer"
                 >
-                  <Users :size="14" :class="{ 'animate-pulse-slow': isDiscussionEnabled }" />
+                  <Users
+                    :size="14"
+                    :class="[
+                      'transition-all duration-300',
+                      isDiscussionEnabled ? 'animate-pulse-slow scale-110' : '',
+                    ]"
+                  />
                   <span v-if="!isMobile" class="toolbar-text font-medium">{{
                     t('ai.discussionMode')
                   }}</span>
@@ -241,8 +259,8 @@ const handlePresetMouseLeave = () => {
                         class="flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition-all active:scale-95"
                         :class="
                           config.discussionPrimaryModelId === preset.id
-                            ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                            : 'border-border bg-background/50 text-muted-foreground hover:border-primary/50 hover:text-foreground'
+                            ? 'border-primary/50 bg-primary/20 text-primary shadow-[0_2px_8px_rgba(var(--primary),0.1)]'
+                            : 'border-border/40 bg-background/40 text-muted-foreground hover:border-primary/30 hover:bg-primary/5 hover:text-primary'
                         "
                         @click="emit('selectPrimaryModel', preset.id)"
                       >
@@ -276,8 +294,8 @@ const handlePresetMouseLeave = () => {
                         class="flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition-all active:scale-95"
                         :class="
                           config.discussionModelIds.includes(preset.id)
-                            ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                            : 'border-border bg-background/50 text-muted-foreground hover:border-primary/50 hover:text-foreground'
+                            ? 'border-primary/50 bg-primary/20 text-primary shadow-[0_2px_8px_rgba(var(--primary),0.1)]'
+                            : 'border-border/40 bg-background/40 text-muted-foreground hover:border-primary/30 hover:bg-primary/5 hover:text-primary'
                         "
                         @click="emit('toggleSecondaryModel', preset.id)"
                       >
@@ -298,16 +316,22 @@ const handlePresetMouseLeave = () => {
           <!-- 生图功能开关 -->
           <button
             :class="[
-              'flex shrink-0 items-center transition-all active:scale-95 shadow-sm rounded-full border',
+              'toolbar-btn flex shrink-0 items-center transition-all active:scale-95 rounded-full border',
               isMobile ? 'h-8 w-8 justify-center' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
               isImageGenerationEnabled
-                ? 'border-primary/20 bg-primary/10 text-primary shadow-primary/5'
-                : 'border-[hsl(var(--ai-glass-border))] bg-[hsl(var(--ai-glass-bg))] text-muted-foreground hover:bg-accent hover:text-accent-foreground backdrop-blur-md',
+                ? 'border-primary/30 bg-primary/15 text-primary shadow-[0_0_12px_rgba(var(--primary),0.1)]'
+                : 'border-transparent text-muted-foreground',
             ]"
             :title="t('ai.enableImageGeneration')"
             @click="emit('toggleImageGen')"
           >
-            <ImageIcon :size="14" :class="{ 'animate-pulse-slow': isImageGenerationEnabled }" />
+            <ImageIcon
+              :size="14"
+              :class="[
+                'transition-all duration-300',
+                isImageGenerationEnabled ? 'animate-pulse-slow scale-110' : '',
+              ]"
+            />
             <span v-if="!isMobile" class="toolbar-text font-medium">{{
               t('ai.enableImageGeneration')
             }}</span>
@@ -325,19 +349,24 @@ const handlePresetMouseLeave = () => {
               <DropdownMenuTrigger as-child>
                 <button
                   :class="[
-                    'flex items-center border border-[hsl(var(--ai-glass-border))] bg-[hsl(var(--ai-glass-bg))] text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground active:scale-95 shadow-sm rounded-full backdrop-blur-md',
+                    'toolbar-btn flex items-center border border-transparent text-muted-foreground transition-all active:scale-95 rounded-full',
                     isMobile ? 'h-8 px-2.5 gap-1' : 'px-3 py-1.5 gap-1.5 text-[13px]',
+                    showPresetDropdown ? 'bg-accent/50 text-foreground border-border/20' : '',
                   ]"
                   :title="t('ai.managePresets')"
                   @mouseenter="clearPresetTimer"
                 >
-                  <Sparkles :size="14" class="toolbar-icon-only" :class="{ hidden: !isMobile }" />
+                  <Sparkles
+                    :size="14"
+                    class="toolbar-icon-only text-primary/70"
+                    :class="{ hidden: !isMobile }"
+                  />
                   <span v-if="!isMobile" class="toolbar-text font-medium">{{
                     currentPresetName
                   }}</span>
                   <ChevronDown
                     :size="14"
-                    class="transition-transform duration-300"
+                    class="transition-transform duration-300 opacity-50"
                     :class="{ 'rotate-180': showPresetDropdown }"
                   />
                 </button>
@@ -390,13 +419,13 @@ const handlePresetMouseLeave = () => {
         <div class="flex shrink-0 items-center gap-2">
           <button
             :class="[
-              'flex items-center justify-center rounded-full border border-[hsl(var(--ai-glass-border))] bg-[hsl(var(--ai-glass-bg))] text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground hover:scale-110 active:scale-95 shadow-sm backdrop-blur-md',
+              'toolbar-btn flex items-center justify-center rounded-full border border-transparent text-muted-foreground transition-all active:scale-95',
               isMobile ? 'h-8 w-8' : 'h-8 w-8',
             ]"
             :title="t('ai.settings')"
             @click="emit('openSettings')"
           >
-            <Settings2 :size="16" />
+            <Settings2 :size="16" class="transition-transform duration-500 group-hover:rotate-90" />
           </button>
         </div>
       </div>
@@ -408,6 +437,31 @@ const handlePresetMouseLeave = () => {
 <style scoped>
 .toolbar-container {
   container-type: inline-size;
+}
+
+.toolbar-btn {
+  background-color: hsl(var(--ai-glass-bg));
+  backdrop-filter: blur(24px);
+  border-color: hsl(var(--ai-glass-border));
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.02),
+    0 4px 12px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toolbar-btn:hover:not(:disabled) {
+  background-color: hsl(var(--accent));
+  border-color: hsl(var(--primary) / 0.2);
+  color: hsl(var(--foreground));
+  transform: translateY(-1px);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.02),
+    0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.toolbar-btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.96);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 .no-scrollbar {
