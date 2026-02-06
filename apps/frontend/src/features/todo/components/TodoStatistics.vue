@@ -37,7 +37,7 @@ use([
   LegacyGridContainLabel,
 ])
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const isDark = useDark()
 const todoStore = useTodoStore()
 const pomodoroStore = usePomodoroStore()
@@ -52,10 +52,11 @@ const completionRate = computed(() =>
 
 // 每周活跃度（新增 vs 完成）
 const weeklyActivityOption = computed(() => {
-  const weekDays =
-    t('common.language') === 'zh-CN'
-      ? ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
-      : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date()
+    d.setDate(d.getDate() - (6 - i))
+    return d.toLocaleDateString(locale.value, { weekday: 'short' })
+  })
 
   // 计算过去 7 天每天新增和完成的任务数
   const createdData = Array.from({ length: 7 }, (_, i) => {
@@ -211,7 +212,7 @@ const focusDurationOption = computed(() => {
   const last7Days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date()
     d.setDate(d.getDate() - (6 - i))
-    return d.toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })
+    return d.toLocaleDateString(locale.value, { month: 'numeric', day: 'numeric' })
   })
 
   const focusData = Array.from({ length: 7 }, (_, i) => {
