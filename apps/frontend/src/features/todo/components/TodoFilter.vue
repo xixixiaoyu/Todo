@@ -22,11 +22,17 @@ const todoStore = useTodoStore()
 const toast = useToast()
 const isClearPopoverOpen = ref(false)
 
-defineProps<{
-  filter: FilterType
-  isDrawerOpen: boolean
-  showSearch: boolean
-}>()
+withDefaults(
+  defineProps<{
+    filter: FilterType
+    isDrawerOpen: boolean
+    showSearch: boolean
+    showTrash?: boolean
+  }>(),
+  {
+    showTrash: true,
+  },
+)
 
 const emit = defineEmits<{
   'update:filter': [value: FilterType]
@@ -50,7 +56,8 @@ async function handleClearTrash() {
       @update:model-value="emit('update:filter', $event as FilterType)"
     >
       <TabsList
-        class="grid w-full grid-cols-3 h-11 md:h-12 p-1 bg-muted/60 dark:bg-muted/20 backdrop-blur-xl rounded-full border border-border/80 dark:border-border/40 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)]"
+        class="grid w-full h-11 md:h-12 p-1 bg-muted/60 dark:bg-muted/20 backdrop-blur-xl rounded-full border border-border/80 dark:border-border/40 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)]"
+        :class="showTrash ? 'grid-cols-3' : 'grid-cols-2 max-w-[280px] mx-auto'"
       >
         <TabsTrigger
           value="pending"
@@ -77,6 +84,7 @@ async function handleClearTrash() {
           {{ t('todo.completed') }}
         </TabsTrigger>
         <TabsTrigger
+          v-if="showTrash"
           value="trash"
           class="flex items-center justify-center gap-1.5 md:gap-2 rounded-full px-2 md:px-4 text-[10px] md:text-sm font-medium transition-all duration-300 border border-transparent data-[state=active]:border-destructive/20 data-[state=active]:bg-gradient-to-b data-[state=active]:from-background data-[state=active]:to-background/95 data-[state=active]:text-destructive data-[state=active]:shadow-[0_2px_8px_-1px_rgba(0,0,0,0.08),0_0_1px_rgba(0,0,0,0.1)] dark:data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.6),0_0_1px_rgba(255,255,255,0.1)] data-[state=active]:scale-[1.02] data-[state=active]:font-semibold text-muted-foreground/70 hover:text-destructive/80"
         >

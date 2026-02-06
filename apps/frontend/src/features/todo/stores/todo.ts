@@ -61,6 +61,13 @@ export const useTodoStore = defineStore(
       }
     })
 
+    // 可视化视图下自动切换出回收站
+    watch(viewMode, (newMode) => {
+      if (newMode === 'visual' && filter.value === 'trash') {
+        filter.value = 'pending'
+      }
+    })
+
     // 计算属性
     const filteredTodos = computed(() => {
       return applyFilterAndSort(todos.value)
@@ -128,10 +135,10 @@ export const useTodoStore = defineStore(
     })
 
     /**
-     * 专门用于可视化视图的任务列表（忽略当前 Tab 过滤，但保留搜索）
+     * 专门用于可视化视图的任务列表（响应当前 Tab 过滤和搜索）
      */
     const visualTodos = computed(() => {
-      return applyFilterAndSort(basePreviewTodos.value, true)
+      return applyFilterAndSort(basePreviewTodos.value, false)
     })
 
     /**

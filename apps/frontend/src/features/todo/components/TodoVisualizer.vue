@@ -26,11 +26,14 @@ interface TreeData {
     borderWidth?: number
     shadowBlur?: number
     shadowColor?: string
+    shadowOffsetX?: number
+    shadowOffsetY?: number
   }
   lineStyle?: {
     color?: string
     width?: number
-    type?: 'solid' | 'dashed' | 'dotted'
+    type?: string
+    curveness?: number
   }
   label?: {
     formatter?: string
@@ -45,48 +48,60 @@ const treeData = computed(() => {
   const todoMap = new Map<string, TreeData>()
   const roots: TreeData[] = []
 
-  // 预览模式下展示所有相关的任务
-  const displayTodos = todoStore.visualTodos.filter(
-    (t) => !t.completed || t.isProposed || t.isProposedDelete,
-  )
+  // 使用 Store 中已经根据 Tab 和搜索过滤好的任务
+  const displayTodos = todoStore.visualTodos
 
   // 首先创建所有节点
   displayTodos.forEach((todo) => {
-    let color = isDark.value ? '#cbd5e1' : '#64748b'
-    let borderColor = isDark.value ? '#94a3b8' : '#475569'
-    let borderWidth = 2
-    let shadowBlur = 0
-    let shadowColor = 'transparent'
-    let lineStyle: TreeData['lineStyle'] = {
-      color: isDark.value ? '#475569' : '#cbd5e1',
-      width: 2,
+    const isPending = todoStore.filter === 'pending'
+    const isCompleted = todoStore.filter === 'completed'
+
+    // 基础颜色系统
+    let baseColor = isDark.value ? '#94a3b8' : '#64748b'
+    let accentColor = isDark.value ? '#cbd5e1' : '#475569'
+
+    if (todo.isProposed) {
+      baseColor = isDark.value ? '#10b981' : '#059669'
+      accentColor = isDark.value ? '#34d399' : '#10b981'
+    } else if (todo.isProposedDelete) {
+      baseColor = isDark.value ? '#ef4444' : '#dc2626'
+      accentColor = isDark.value ? '#f87171' : '#ef4444'
+    } else if (isCompleted) {
+      baseColor = isDark.value ? '#10b981' : '#059669'
+      accentColor = isDark.value ? '#34d399' : '#10b981'
+    } else if (isPending) {
+      baseColor = isDark.value ? '#f59e0b' : '#d97706'
+      accentColor = isDark.value ? '#fbbf24' : '#f59e0b'
+    }
+
+    const itemStyle: TreeData['itemStyle'] = {
+      color: isDark.value ? baseColor : accentColor,
+      borderColor: isDark.value ? accentColor : baseColor,
+      borderWidth: todo.isProposed ? 2 : 1.5,
+      shadowBlur: todo.isProposed ? 8 : 6,
+      shadowColor: isDark.value ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.05)',
+      shadowOffsetX: 0,
+      shadowOffsetY: 2,
+    }
+
+    const lineStyle: TreeData['lineStyle'] = {
+      color: isDark.value ? 'rgba(148, 163, 184, 0.15)' : 'rgba(100, 116, 139, 0.1)',
+      width: todo.isProposed ? 2 : 1.5,
+      curveness: 0.5,
+    }
+
+    if (todo.isProposed) {
+      lineStyle.color = isDark.value ? 'rgba(16, 185, 129, 0.4)' : 'rgba(16, 185, 129, 0.3)'
+      lineStyle.type = 'dashed'
+    } else if (todo.isProposedDelete) {
+      lineStyle.color = isDark.value ? 'rgba(239, 68, 68, 0.4)' : 'rgba(239, 68, 68, 0.3)'
+      lineStyle.type = 'dotted'
     }
 
     let labelType = 'normal'
-
-    if (todo.isProposed) {
-      color = isDark.value ? '#059669' : '#10b981'
-      borderColor = isDark.value ? '#34d399' : '#059669'
-      borderWidth = 3
-      shadowBlur = 10
-      shadowColor = isDark.value ? 'rgba(16, 185, 129, 0.4)' : 'rgba(16, 185, 129, 0.2)'
-      lineStyle = {
-        color: isDark.value ? '#059669' : '#10b981',
-        width: 3,
-        type: 'dashed',
-      }
-      labelType = 'proposed'
-    } else if (todo.isProposedDelete) {
-      color = isDark.value ? '#b91c1c' : '#ef4444'
-      borderColor = isDark.value ? '#f87171' : '#dc2626'
-      borderWidth = 2
-      lineStyle = {
-        color: isDark.value ? '#b91c1c' : '#ef4444',
-        width: 2,
-        type: 'dotted',
-      }
-      labelType = 'delete'
-    }
+    if (todo.isProposed) labelType = 'proposed'
+    else if (todo.isProposedDelete) labelType = 'delete'
+    else if (isCompleted) labelType = 'completed'
 
     todoMap.set(todo.id, {
       name: todo.title,
@@ -95,13 +110,7 @@ const treeData = computed(() => {
       isProposed: todo.isProposed,
       isProposedDelete: todo.isProposedDelete,
       children: [],
-      itemStyle: {
-        color,
-        borderColor,
-        borderWidth,
-        shadowBlur,
-        shadowColor,
-      },
+      itemStyle,
       lineStyle,
       label: {
         formatter: `{${labelType}|${todo.title}}`,
@@ -123,21 +132,57 @@ const treeData = computed(() => {
 
   // 如果有多个根节点，创建一个虚拟根节点
   if (roots.length > 1) {
-    const rootName = t('todo.pending')
+    const rootName =
+      todoStore.filter === 'pending'
+        ? t('todo.pending')
+        : todoStore.filter === 'completed'
+          ? t('todo.completed')
+          : t('todo.trash')
+
+    const rootColor =
+      todoStore.filter === 'pending'
+        ? isDark.value
+          ? '#fbbf24'
+          : '#d97706'
+        : todoStore.filter === 'completed'
+          ? isDark.value
+            ? '#10b981'
+            : '#059669'
+          : isDark.value
+            ? '#ef4444'
+            : '#dc2626'
+
     return [
       {
         name: rootName,
         children: roots,
         itemStyle: {
-          color: isDark.value ? '#fbbf24' : '#d97706',
-          borderColor: isDark.value ? '#d97706' : '#b45309',
-          borderWidth: 2,
+          color: rootColor,
+          borderColor: isDark.value ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.8)',
+          borderWidth: 1.5,
+          shadowBlur: 8,
+          shadowColor: rootColor + '33', // 20% opacity
         },
         label: {
           formatter: `{root|${rootName}}`,
         },
       },
     ]
+  }
+
+  // 如果只有一个根节点，直接返回
+  if (roots.length === 1) {
+    const singleRoot = roots[0]
+    singleRoot.label = {
+      formatter: `{root|${singleRoot.name}}`,
+    }
+    // 强制给唯一的根节点应用 root 样式
+    singleRoot.itemStyle = {
+      ...singleRoot.itemStyle,
+      borderWidth: 1.5,
+      shadowBlur: 8,
+    }
+    return [singleRoot]
   }
 
   return roots
@@ -154,18 +199,24 @@ const chartOptions = computed(() => ({
       let status = t('todo.pending')
       if (data.isProposed) status = `✨ ${t('common.confirm')}`
       if (data.isProposedDelete) status = `🗑️ ${t('common.delete')}`
-      return `<div class="px-2 py-1">
-        <div class="font-bold">${data.name}</div>
-        <div class="text-xs opacity-70 mt-1">${status}</div>
+      if (data.completed) status = `✅ ${t('todo.completed')}`
+      return `<div class="px-3 py-2">
+        <div class="font-bold text-sm">${data.name}</div>
+        <div class="text-[10px] opacity-60 mt-1 flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${data.itemStyle?.color}"></span>
+          ${status}
+        </div>
       </div>`
     },
-    backgroundColor: isDark.value ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
-    borderColor: isDark.value ? '#334155' : '#e2e8f0',
+    backgroundColor: isDark.value ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+    borderColor: isDark.value ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+    borderWidth: 1,
     textStyle: {
       color: isDark.value ? '#f8fafc' : '#1e293b',
+      fontSize: 12,
     },
     extraCssText:
-      'backdrop-filter: blur(4px); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);',
+      'backdrop-filter: blur(12px); border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.12);',
   },
   series: [
     {
@@ -173,48 +224,59 @@ const chartOptions = computed(() => ({
       data: treeData.value,
       initialTreeDepth: -1,
       top: '10%',
-      left: '15%',
+      left: '18%', // 略微收紧，因为容器去掉了
       bottom: '10%',
-      right: '25%',
-      symbolSize: (_val: unknown, params: { data: TreeData }) => {
+      right: '22%',
+      symbolSize: (val: unknown, params: { data: TreeData }) => {
         const data = params.data
-        return data.isProposed ? 18 : 14
+        if (!data.id) return 14 // 根节点大幅缩小
+        return data.children && data.children.length > 0 ? 10 : 6 // 普通节点更精致
       },
       symbol: 'circle',
       label: {
         position: 'left',
         verticalAlign: 'middle',
         align: 'right',
-        fontSize: 14,
+        fontSize: 12,
         distance: 10,
-        color: isDark.value ? '#f8fafc' : '#1e293b',
-        fontFamily: "'LXGW WenKai Screen', 'LXGW WenKai', sans-serif",
+        color: isDark.value ? '#94a3b8' : '#64748b',
+        fontFamily: "'JetBrains Mono', 'LXGW WenKai Screen', sans-serif",
+        // 确保标签不会超出容器
+        overflow: 'break',
         rich: {
           proposed: {
             color: '#10b981',
-            fontWeight: 'bold',
-            fontSize: 15,
-            padding: [4, 8],
-            borderRadius: 4,
-            backgroundColor: isDark.value ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.1)',
+            fontWeight: '600',
+            fontSize: 13,
+            padding: [4, 10],
+            borderRadius: 8,
+            backgroundColor: isDark.value ? 'rgba(16, 185, 129, 0.12)' : 'rgba(16, 185, 129, 0.08)',
           },
           delete: {
             color: isDark.value ? '#ef4444' : '#dc2626',
-            textBorderColor: 'transparent',
             textDecoration: 'line-through',
-            opacity: 0.6,
-            padding: [2, 4],
+            opacity: 0.4,
+            padding: [2, 6],
+          },
+          completed: {
+            color: '#10b981',
+            opacity: 0.8,
+            fontSize: 12,
+            padding: [2, 6],
           },
           normal: {
-            padding: [2, 4],
+            padding: [2, 6],
+            color: isDark.value ? '#cbd5e1' : '#475569',
           },
           root: {
             color: isDark.value ? '#fbbf24' : '#d97706',
-            fontWeight: 'bold',
-            fontSize: 16,
-            padding: [6, 10],
-            backgroundColor: isDark.value ? 'rgba(251, 191, 36, 0.1)' : 'rgba(217, 119, 6, 0.05)',
-            borderRadius: 6,
+            fontWeight: '700',
+            fontSize: 14,
+            padding: [6, 12],
+            backgroundColor: isDark.value ? 'rgba(251, 191, 36, 0.12)' : 'rgba(217, 119, 6, 0.06)',
+            borderRadius: 8,
+            borderWidth: 1,
+            borderColor: isDark.value ? 'rgba(251, 191, 36, 0.2)' : 'rgba(217, 119, 6, 0.1)',
           },
         },
       },
@@ -228,54 +290,50 @@ const chartOptions = computed(() => ({
         focus: 'descendant',
         itemStyle: {
           borderWidth: 4,
+          shadowBlur: 15,
+          shadowColor: 'rgba(0,0,0,0.2)',
+        },
+        label: {
+          color: isDark.value ? '#f8fafc' : '#1e293b',
+          fontWeight: 'bold',
         },
       },
       expandAndCollapse: true,
-      animationDuration: 550,
-      animationDurationUpdate: 750,
-      lineStyle: {
-        color: isDark.value ? '#475569' : '#cbd5e1',
-        width: 2,
-        curveness: 0.5,
-      },
+      animationDuration: 800,
+      animationEasing: 'cubicOut',
     },
   ],
 }))
 </script>
 
 <template>
-  <div ref="containerRef" class="flex-1 min-h-0 relative w-full h-full overflow-hidden">
+  <div ref="containerRef" class="flex-1 flex flex-col min-h-0 w-full relative group">
+    <div
+      v-if="treeData.length === 0"
+      class="flex-1 flex flex-col items-center justify-center relative z-10"
+    >
+      <div class="p-8 rounded-full bg-primary/5 mb-6 animate-pulse">
+        <Clover :size="48" class="text-primary/20" />
+      </div>
+      <p class="text-muted-foreground/60 font-medium tracking-wide">
+        {{ t('todo.emptyPending') }}
+      </p>
+    </div>
+
     <VChart
+      v-else
       ref="vChartRef"
-      class="w-full h-full"
+      class="flex-1 w-full h-full relative z-10"
       :option="chartOptions"
       :autoresize="true"
       :theme="isDark ? 'dark' : undefined"
     />
-    <div
-      v-if="treeData.length === 0"
-      class="absolute inset-0 flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-1000 ease-out"
-    >
-      <div
-        class="mb-6 flex items-center justify-center w-20 h-20 rounded-full bg-primary/5 border border-primary/10"
-      >
-        <Clover :size="32" :stroke-width="1.5" class="text-primary/40" />
-      </div>
-      <div class="text-center space-y-1.5 px-6">
-        <h3 class="text-lg font-medium tracking-tight text-foreground/60">
-          {{ t('todo.emptyPending') }}
-        </h3>
-        <p class="text-sm text-muted-foreground/40 max-w-[240px] mx-auto leading-relaxed">
-          {{ t('todo.emptyPendingDescription') }}
-        </p>
-      </div>
-    </div>
   </div>
 </template>
 
 <style scoped>
-:deep(.echarts) {
-  width: 100% !important;
-  height: 100% !important;
+/* 隐藏 ECharts 默认的高亮蓝边 */
+:deep(canvas) {
+  outline: none;
 }
 </style>

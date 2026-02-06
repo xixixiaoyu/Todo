@@ -63,7 +63,7 @@ const handleRegisterPasskey = async () => {
 
 <template>
   <header
-    class="mb-4 md:mb-6 flex items-center justify-between transition-all duration-300 select-none"
+    class="mb-2 md:mb-4 flex items-center justify-between transition-all duration-300 select-none"
     style="--wails-draggable: drag"
     @dblclick="handleDblClick"
   >

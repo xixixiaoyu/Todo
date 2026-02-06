@@ -85,14 +85,18 @@ function onFireworksComplete() {
       <Card
         class="flex-1 flex flex-col border-none shadow-none md:shadow-card dark:md:shadow-[0_8px_30px_rgba(0,0,0,0.3)] overflow-hidden rounded-none md:rounded-[24px]"
       >
-        <CardContent class="todo-container p-4 pt-6 md:p-8 md:pt-10 flex flex-col flex-1 min-h-0">
+        <CardContent class="todo-container p-4 pt-4 md:p-8 md:pt-6 flex flex-col flex-1 min-h-0">
           <!-- Header -->
           <TodoHeader />
 
-          <!-- Input Area -->
+          <!-- Input Area - Creation First -->
           <div
-            class="relative transition-[margin] duration-500 ease-in-out"
-            :class="todoStore.filter === 'trash' ? 'h-0 mb-0' : 'h-[52px] mb-6'"
+            class="relative transition-all duration-500 ease-in-out"
+            :class="
+              todoStore.viewMode === 'list' && todoStore.filter !== 'trash'
+                ? 'h-[52px] mb-6'
+                : 'h-0 mb-0 opacity-0 overflow-hidden pointer-events-none'
+            "
           >
             <Transition
               enter-active-class="transition-all duration-500 delay-100 ease-out"
@@ -114,15 +118,17 @@ function onFireworksComplete() {
             </Transition>
           </div>
 
-          <!-- Filter Tabs -->
+          <!-- Filter Tabs - Control Second -->
           <TodoFilter
-            v-if="todoStore.viewMode === 'list'"
+            v-if="todoStore.viewMode === 'list' || todoStore.viewMode === 'visual'"
             v-model:filter="todoStore.filter"
             v-model:is-drawer-open="isDrawerOpen"
             v-model:show-search="showSearch"
+            :show-trash="todoStore.viewMode !== 'visual'"
+            class="mb-6"
           />
 
-          <!-- Search Bar (Collapsible) - Moved below tabs -->
+          <!-- Search Bar (Collapsible) - Keep near tabs -->
           <Transition
             enter-active-class="transition-all duration-300 ease-out"
             enter-from-class="opacity-0 -translate-y-2"
@@ -134,36 +140,49 @@ function onFireworksComplete() {
             <TodoSearch
               v-if="showSearch"
               v-model="searchInput"
+              class="mb-4"
               @clear="clearSearch"
               @close="showSearch = false"
             />
           </Transition>
 
-          <!-- List / Visualizer -->
+          <!-- List / Visualizer / Stats with smooth transitions -->
           <div
             class="flex-1 relative flex flex-col min-h-0"
-            :class="showSearch ? 'mt-1.5' : 'mt-3'"
+            :class="!showSearch && todoStore.viewMode === 'visual' ? 'mt-0' : 'mt-2'"
           >
-            <TodoList
-              v-if="todoStore.viewMode === 'list'"
-              :todos="
-                todoStore.hasProposedChanges ? todoStore.previewTodos : todoStore.filteredTodos
-              "
-              :filter="todoStore.filter"
-              :search-query="todoStore.searchQuery"
-              :editing-id="editingId"
-              :editing-title="editingTitle"
-              @toggle="(id, currentCompleted) => handleToggleTodo(id, currentCompleted)"
-              @start-edit="startEditing"
-              @save-edit="saveEditing"
-              @cancel-edit="cancelEditing"
-              @delete="todoStore.deleteTodo"
-              @reorder="(ids, pId) => todoStore.reorderTodos(ids, pId)"
-              @update:editing-title="editingTitle = $event"
-              @edit-keydown="handleEditKeydown"
-            />
-            <TodoVisualizer v-else-if="todoStore.viewMode === 'visual'" />
-            <TodoStatistics v-else-if="todoStore.viewMode === 'stats'" />
+            <Transition
+              mode="out-in"
+              enter-active-class="transition-all duration-300 ease-out"
+              enter-from-class="opacity-0 translate-y-4"
+              enter-to-class="opacity-100 translate-y-0"
+              leave-active-class="transition-all duration-200 ease-in"
+              leave-from-class="opacity-100 translate-y-0"
+              leave-to-class="opacity-0 -translate-y-4"
+            >
+              <div :key="todoStore.viewMode" class="flex-1 flex flex-col min-h-0">
+                <TodoList
+                  v-if="todoStore.viewMode === 'list'"
+                  :todos="
+                    todoStore.hasProposedChanges ? todoStore.previewTodos : todoStore.filteredTodos
+                  "
+                  :filter="todoStore.filter"
+                  :search-query="todoStore.searchQuery"
+                  :editing-id="editingId"
+                  :editing-title="editingTitle"
+                  @toggle="(id, currentCompleted) => handleToggleTodo(id, currentCompleted)"
+                  @start-edit="startEditing"
+                  @save-edit="saveEditing"
+                  @cancel-edit="cancelEditing"
+                  @delete="todoStore.deleteTodo"
+                  @reorder="(ids, pId) => todoStore.reorderTodos(ids, pId)"
+                  @update:editing-title="editingTitle = $event"
+                  @edit-keydown="handleEditKeydown"
+                />
+                <TodoVisualizer v-else-if="todoStore.viewMode === 'visual'" />
+                <TodoStatistics v-else-if="todoStore.viewMode === 'stats'" />
+              </div>
+            </Transition>
           </div>
         </CardContent>
       </Card>
