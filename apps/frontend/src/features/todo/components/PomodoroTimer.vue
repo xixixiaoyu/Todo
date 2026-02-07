@@ -52,15 +52,15 @@ const stars = ref<Star[]>([])
 
 function generateStar(id: number): Star {
   const angle = Math.random() * Math.PI * 2
-  const distance = 45 + Math.random() * 40 // Distribute stars within/around the ring
+  const distance = 40 + Math.random() * 45 // Wider distribution
   return {
     id,
     x: 50 + Math.cos(angle) * distance,
     y: 50 + Math.sin(angle) * distance,
-    size: 1 + Math.random() * 2.5,
-    opacity: 0.2 + Math.random() * 0.6,
-    duration: 3 + Math.random() * 4,
-    delay: Math.random() * 2,
+    size: 0.8 + Math.random() * 2, // Smaller stars
+    opacity: 0.15 + Math.random() * 0.45, // Softer opacity
+    duration: 4 + Math.random() * 6,
+    delay: Math.random() * -5, // Negative delay for staggered start
   }
 }
 
@@ -69,11 +69,11 @@ watch(
   () => Math.floor(pomodoroStore.progress),
   (newProgress, oldProgress) => {
     if (newProgress > (oldProgress || 0)) {
-      // Add a star every 4% of progress (approx. 1 per minute for 25min)
-      const count = Math.floor(newProgress / 4)
+      // Add a star every 8% of progress to reduce density
+      const count = Math.floor(newProgress / 8)
       if (stars.value.length < count) {
         for (let i = stars.value.length; i < count; i++) {
-          stars.value.push(generateStar(i))
+          stars.value.push(generateStar(Date.now() + i))
         }
       }
     } else if (newProgress === 0) {
@@ -363,7 +363,7 @@ const progressRingDash = computed(() => {
                   <div
                     v-for="star in stars"
                     :key="star.id"
-                    class="absolute rounded-full bg-primary blur-[1px] animate-pulse-slow"
+                    class="absolute rounded-full bg-amber-200/40 dark:bg-amber-100/30 blur-[1.5px] animate-pulse-slow"
                     :style="{
                       left: `${star.x}%`,
                       top: `${star.y}%`,
@@ -371,7 +371,7 @@ const progressRingDash = computed(() => {
                       height: `${star.size}px`,
                       opacity: star.opacity,
                       animationDelay: `${star.delay}s`,
-                      boxShadow: `0 0 ${star.size * 2}px hsla(var(--primary), 0.5)`,
+                      boxShadow: `0 0 ${star.size * 3}px hsla(38, 90%, 70%, 0.3)`,
                     }"
                   ></div>
                 </TransitionGroup>
@@ -522,24 +522,6 @@ const progressRingDash = computed(() => {
             >
               <Square class="w-5 h-5 fill-current" />
             </Button>
-          </div>
-
-          <!-- Star Field -->
-          <div
-            v-if="!pomodoroStore.isMiniMode"
-            class="absolute inset-0 z-0 pointer-events-none opacity-20"
-          >
-            <div
-              v-for="i in 12"
-              :key="i"
-              class="absolute w-1 h-1 bg-primary rounded-full animate-pulse"
-              :style="{
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 3}s`,
-                opacity: Math.random(),
-              }"
-            ></div>
           </div>
         </div>
       </div>
