@@ -1,17 +1,18 @@
 model Todo {
-    id          String    @id @default(uuid())
-    title       String
-    completed   Boolean   @default(false)
-    order       Int       @default(0)
-    isPinned    Boolean   @default(false)
-    parentId    String?
-    userId      Int
-    user        User      @relation(fields: [userId], references: [id])
-    version     Int       @default(0)
-    createdAt   DateTime  @default(now())
-    updatedAt   DateTime  @updatedAt
-    completedAt DateTime?
-    deletedAt   DateTime?
+    id            String    @id @default(uuid())
+    title         String
+    completed     Boolean   @default(false)
+    order         Int       @default(0)
+    isPinned      Boolean   @default(false)
+    parentId      String?
+    userId        Int
+    user          User      @relation(fields: [userId], references: [id])
+    version       Int       @default(0)
+    pomodoroCount Int       @default(0)
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
+    completedAt   DateTime?
+    deletedAt     DateTime?
 
     @@index([userId, updatedAt])
     @@index([deletedAt])

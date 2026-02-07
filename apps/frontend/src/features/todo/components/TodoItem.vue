@@ -16,6 +16,7 @@ import {
   Target,
   Wand2,
   Loader2,
+  Timer,
 } from 'lucide-vue-next'
 import { ref, computed, watch, nextTick, useId } from 'vue'
 import draggable from 'vuedraggable'
@@ -394,6 +395,14 @@ watch(
               v-html="highlightMatch(todo.title, searchQuery || '')"
             >
             </span>
+            <div
+              v-if="todo.pomodoroCount > 0 && store.filter !== 'trash'"
+              class="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-rose-500/10 text-rose-500 dark:text-rose-400/90 text-[10px] font-bold shrink-0 ml-1 animate-in fade-in zoom-in-95 duration-500"
+              :title="t('pomodoro.sessions', { count: todo.pomodoroCount })"
+            >
+              <Timer class="w-3 h-3" />
+              <span>{{ todo.pomodoroCount }}</span>
+            </div>
           </div>
           <!-- eslint-enable vue/no-v-html -->
         </div>

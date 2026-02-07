@@ -13,36 +13,44 @@ const sparklesRef = ref<HTMLElement[]>([])
 onMounted(() => {
   ctx.add(() => {
     // 容器背景渐变动画
-    gsap.to('.loading-bg', {
-      backgroundPosition: '200% 50%',
-      duration: 3,
-      repeat: -1,
-      ease: 'linear',
-    })
+    const loadingBg = document.querySelector('.loading-bg')
+    if (loadingBg) {
+      gsap.to(loadingBg, {
+        backgroundPosition: '200% 50%',
+        duration: 3,
+        repeat: -1,
+        ease: 'linear',
+      })
+    }
 
     // 星星闪烁与漂浮动画
     sparklesRef.value.forEach((el, i) => {
-      gsap.to(el, {
-        y: -20 - Math.random() * 20,
-        x: (Math.random() - 0.5) * 30,
-        opacity: 0.2 + Math.random() * 0.8,
-        duration: 1.5 + Math.random() * 2,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-        delay: i * 0.2,
-      })
+      if (el) {
+        gsap.to(el, {
+          y: -20 - Math.random() * 20,
+          x: (Math.random() - 0.5) * 30,
+          opacity: 0.2 + Math.random() * 0.8,
+          duration: 1.5 + Math.random() * 2,
+          repeat: -1,
+          yoyo: true,
+          ease: 'sine.inOut',
+          delay: i * 0.2,
+        })
+      }
     })
 
     // 图标脉动
-    gsap.to('.icon-pulsate', {
-      scale: 1.1,
-      opacity: 0.8,
-      duration: 1.2,
-      repeat: -1,
-      yoyo: true,
-      ease: 'power1.inOut',
-    })
+    const iconPulsate = document.querySelector('.icon-pulsate')
+    if (iconPulsate) {
+      gsap.to(iconPulsate, {
+        scale: 1.1,
+        opacity: 0.8,
+        duration: 1.2,
+        repeat: -1,
+        yoyo: true,
+        ease: 'power1.inOut',
+      })
+    }
   })
 })
 </script>

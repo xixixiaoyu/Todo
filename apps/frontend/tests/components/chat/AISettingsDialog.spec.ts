@@ -27,6 +27,7 @@ vi.mock('lucide-vue-next', () => ({
   Download: { template: '<span>Download</span>' },
   Upload: { template: '<span>Upload</span>' },
   Search: { template: '<span>Search</span>' },
+  ChevronLeft: { template: '<span>ChevronLeft</span>' },
   Settings2: { template: '<span>Settings2</span>' },
 }))
 

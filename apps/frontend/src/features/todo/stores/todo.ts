@@ -13,6 +13,7 @@ export interface Todo extends SharedTodo {
   isProposed?: boolean
   isProposedDelete?: boolean
   syncStatus?: 'synced' | 'pending' | 'error'
+  pomodoroCount: number
 }
 
 export interface ProposedTodoChange {
@@ -92,6 +93,7 @@ export const useTodoStore = defineStore(
             isPinned: false,
             parentId: change.data.parentId,
             order: result.length,
+            pomodoroCount: 0,
             isProposed: true,
             expanded: true,
             version: 0,
@@ -348,6 +350,7 @@ export const useTodoStore = defineStore(
           expanded: true,
           version: 0,
           syncStatus: 'pending',
+          pomodoroCount: 0,
         }
         todos.value.unshift(newTodo)
 
@@ -417,6 +420,19 @@ export const useTodoStore = defineStore(
         todo.updatedAt = new Date()
         todo.syncStatus = 'pending'
         // 尝试自动同步 (防抖)
+        debouncedSync()
+      }
+    }
+
+    /**
+     * 增加任务的番茄钟计数
+     */
+    function incrementPomodoro(id: string) {
+      const todo = todos.value.find((t) => t.id === id)
+      if (todo) {
+        todo.pomodoroCount = (todo.pomodoroCount || 0) + 1
+        todo.updatedAt = new Date()
+        todo.syncStatus = 'pending'
         debouncedSync()
       }
     }
@@ -699,6 +715,7 @@ export const useTodoStore = defineStore(
         isPinned: !!todo.isPinned,
         parentId: todo.parentId || null,
         version: todo.version || 0,
+        pomodoroCount: todo.pomodoroCount || 0,
         createdAt: todo.createdAt,
         updatedAt: todo.updatedAt,
         completedAt: todo.completedAt || null,
@@ -765,6 +782,7 @@ export const useTodoStore = defineStore(
               isPinned: serverTodo.isPinned,
               parentId: serverTodo.parentId,
               version: serverTodo.version,
+              pomodoroCount: serverTodo.pomodoroCount,
               createdAt: new Date(serverTodo.createdAt),
               updatedAt: new Date(serverTodo.updatedAt),
               completedAt: serverTodo.completedAt ? new Date(serverTodo.completedAt) : undefined,
@@ -927,6 +945,7 @@ export const useTodoStore = defineStore(
       addTodo,
       toggleTodo,
       togglePin,
+      incrementPomodoro,
       breakdownTaskWithAI,
       restoreTodo,
       deleteTodoPermanently,

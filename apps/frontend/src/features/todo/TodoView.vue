@@ -48,14 +48,17 @@ onMounted(() => {
     }
 
     // 内部元素交错入场：极致响应
-    gsap.from('.todo-container > *', {
-      y: 8,
-      opacity: 0,
-      duration: 0.3,
-      stagger: 0.03,
-      ease: 'power2.out',
-      delay: 0.1,
-    })
+    const containerChildren = gsap.utils.toArray('.todo-container > *')
+    if (containerChildren.length > 0) {
+      gsap.from(containerChildren, {
+        y: 8,
+        opacity: 0,
+        duration: 0.3,
+        stagger: 0.03,
+        ease: 'power2.out',
+        delay: 0.1,
+      })
+    }
   })
 })
 
@@ -242,7 +245,7 @@ function onFireworksComplete() {
     />
 
     <!-- AI 助手抽屉 -->
-    <AiAssistantDrawer v-if="!pomodoroStore.isMiniMode" v-model="isDrawerOpen" />
+    <AiAssistantDrawer v-model="isDrawerOpen" />
 
     <!-- 番茄钟 -->
     <PomodoroTimer />

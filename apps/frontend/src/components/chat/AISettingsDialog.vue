@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { X, RotateCcw } from 'lucide-vue-next'
+import { X, RotateCcw, Sparkles } from 'lucide-vue-next'
 import { isEqual } from 'lodash-es'
 import { useAIConfig, type AIConfig, type AIPreset } from '@/composables/useAIConfig'
 import { useEscClose } from '@/composables/useEscClose'

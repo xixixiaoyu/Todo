@@ -72,6 +72,7 @@ export const usePomodoroStore = defineStore(
       activeTodoId.value = todoId
       status.value = 'focus'
       timeLeft.value = FOCUS_TIME * 60
+      isMiniMode.value = true
 
       await nativeService.haptic(ImpactStyle.Medium)
 
@@ -109,6 +110,7 @@ export const usePomodoroStore = defineStore(
       status.value = 'idle'
       activeTodoId.value = null
       timeLeft.value = FOCUS_TIME * 60
+      isMiniMode.value = false
     }
 
     async function handleTimerComplete() {
@@ -133,7 +135,10 @@ export const usePomodoroStore = defineStore(
           status.value = 'short_break'
           timeLeft.value = SHORT_BREAK * 60
         }
-        // If a todo was active, we could mark it as partially done or increment a "pomodoro count" on it
+        // Increment pomodoro count on the active todo
+        if (activeTodoId.value) {
+          todoStore.incrementPomodoro(activeTodoId.value)
+        }
       } else {
         status.value = 'idle'
         timeLeft.value = FOCUS_TIME * 60

@@ -13,14 +13,17 @@ const { gsap, ctx } = useGsap()
 
 onMounted(() => {
   ctx.add(() => {
-    gsap.from('.todo-item-wrapper', {
-      y: 10,
-      opacity: 0,
-      duration: 0.3,
-      stagger: 0.02,
-      ease: 'power2.out',
-      clearProps: 'all',
-    })
+    const items = gsap.utils.toArray('.todo-item-wrapper')
+    if (items.length > 0) {
+      gsap.from(items, {
+        y: 10,
+        opacity: 0,
+        duration: 0.3,
+        stagger: 0.02,
+        ease: 'power2.out',
+        clearProps: 'all',
+      })
+    }
   })
 })
 

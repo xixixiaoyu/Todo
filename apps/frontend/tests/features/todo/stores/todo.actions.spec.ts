@@ -14,6 +14,8 @@ describe('useTodoStore - Actions', () => {
       updatedAt: new Date(),
       isPinned: false,
       order: 0,
+      version: 0,
+      pomodoroCount: 0,
     },
     {
       id: '2',
@@ -23,6 +25,8 @@ describe('useTodoStore - Actions', () => {
       updatedAt: new Date(),
       isPinned: false,
       order: 1,
+      version: 0,
+      pomodoroCount: 0,
     },
   ]
 
@@ -61,6 +65,8 @@ describe('useTodoStore - Actions', () => {
           updatedAt: new Date(),
           isPinned: false,
           order: 5,
+          version: 0,
+          pomodoroCount: 0,
         },
       ]
 
@@ -120,6 +126,8 @@ describe('useTodoStore - Actions', () => {
           updatedAt: new Date(),
           isPinned: false,
           order: 0,
+          version: 0,
+          pomodoroCount: 0,
         },
       ]
 
@@ -164,6 +172,8 @@ describe('useTodoStore - Actions', () => {
           updatedAt: new Date(),
           isPinned: false,
           order: 0,
+          version: 0,
+          pomodoroCount: 0,
         },
         {
           id: 'child1',
@@ -174,6 +184,8 @@ describe('useTodoStore - Actions', () => {
           isPinned: false,
           parentId: 'parent',
           order: 0,
+          version: 0,
+          pomodoroCount: 0,
         },
         {
           id: 'child2',
@@ -184,6 +196,8 @@ describe('useTodoStore - Actions', () => {
           isPinned: false,
           parentId: 'parent',
           order: 1,
+          version: 0,
+          pomodoroCount: 0,
         },
       ]
 
@@ -214,6 +228,8 @@ describe('useTodoStore - Actions', () => {
           updatedAt: new Date(),
           isPinned: false,
           order: 0,
+          version: 0,
+          pomodoroCount: 0,
         },
         {
           id: 'child',
@@ -224,6 +240,8 @@ describe('useTodoStore - Actions', () => {
           isPinned: false,
           parentId: 'root',
           order: 0,
+          version: 0,
+          pomodoroCount: 0,
         },
         {
           id: 'grandchild',
@@ -234,6 +252,8 @@ describe('useTodoStore - Actions', () => {
           isPinned: false,
           parentId: 'child',
           order: 0,
+          version: 0,
+          pomodoroCount: 0,
         },
       ]
 
@@ -277,6 +297,8 @@ describe('useTodoStore - Actions', () => {
           updatedAt: new Date(),
           isPinned: false,
           order: 0,
+          version: 0,
+          pomodoroCount: 0,
         },
         {
           id: 'child1',
@@ -287,6 +309,8 @@ describe('useTodoStore - Actions', () => {
           isPinned: false,
           parentId: 'parent',
           order: 0,
+          version: 0,
+          pomodoroCount: 0,
         },
         {
           id: 'child2',
@@ -297,6 +321,8 @@ describe('useTodoStore - Actions', () => {
           isPinned: false,
           parentId: 'parent',
           order: 1,
+          version: 0,
+          pomodoroCount: 0,
         },
         {
           id: 'grandchild',
@@ -307,6 +333,8 @@ describe('useTodoStore - Actions', () => {
           isPinned: false,
           parentId: 'child1',
           order: 0,
+          version: 0,
+          pomodoroCount: 0,
         },
       ]
 
@@ -397,6 +425,8 @@ describe('useTodoStore - Actions', () => {
           updatedAt: new Date(),
           isPinned: false,
           order: 0,
+          version: 0,
+          pomodoroCount: 0,
         },
       ]
       expect(store.todos[0].isPinned).toBeFalsy()
@@ -420,6 +450,8 @@ describe('useTodoStore - Actions', () => {
           updatedAt: new Date(),
           isPinned: false,
           order: 0,
+          version: 0,
+          pomodoroCount: 0,
           parentId: null,
         },
         {
@@ -430,6 +462,8 @@ describe('useTodoStore - Actions', () => {
           updatedAt: new Date(),
           isPinned: false,
           order: 1,
+          version: 0,
+          pomodoroCount: 0,
           parentId: 'other',
         },
       ]
@@ -455,6 +489,8 @@ describe('useTodoStore - Actions', () => {
           updatedAt: new Date(),
           isPinned: false,
           order: 0,
+          version: 0,
+          pomodoroCount: 0,
           parentId: 'p1',
         },
         {
@@ -465,6 +501,8 @@ describe('useTodoStore - Actions', () => {
           updatedAt: new Date(),
           isPinned: false,
           order: 0,
+          version: 0,
+          pomodoroCount: 0,
           parentId: 'p2',
         },
       ]
@@ -486,6 +524,8 @@ describe('useTodoStore - Actions', () => {
           updatedAt: new Date(),
           isPinned: false,
           order: 0,
+          version: 0,
+          pomodoroCount: 0,
           parentId: 'p1',
         },
         {
@@ -496,6 +536,8 @@ describe('useTodoStore - Actions', () => {
           updatedAt: new Date(),
           isPinned: false,
           order: 1,
+          version: 0,
+          pomodoroCount: 0,
           parentId: 'p1',
         },
       ]
@@ -507,6 +549,58 @@ describe('useTodoStore - Actions', () => {
       expect(t1?.order).toBe(1)
       expect(t2?.order).toBe(0)
       expect(store.error).toBeNull()
+    })
+  })
+
+  describe('incrementPomodoro', () => {
+    it('should increment pomodoro count and update metadata', () => {
+      const initialDate = new Date('2024-01-01')
+      store.todos = [
+        {
+          id: '1',
+          title: 'T1',
+          completed: false,
+          createdAt: initialDate,
+          updatedAt: initialDate,
+          isPinned: false,
+          order: 0,
+          version: 0,
+          pomodoroCount: 2,
+        },
+      ]
+
+      store.incrementPomodoro('1')
+
+      const todo = store.todos[0]
+      expect(todo.pomodoroCount).toBe(3)
+      expect(new Date(todo.updatedAt).getTime()).toBeGreaterThan(initialDate.getTime())
+      expect(todo.syncStatus).toBe('pending')
+    })
+
+    it('should initialize pomodoroCount if it does not exist', () => {
+      store.todos = [
+        {
+          id: '1',
+          title: 'T1',
+          completed: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          order: 0,
+          version: 0,
+          pomodoroCount: 0,
+        },
+      ]
+
+      store.incrementPomodoro('1')
+
+      expect(store.todos[0].pomodoroCount).toBe(1)
+    })
+
+    it('should do nothing if todo is not found', () => {
+      store.todos = []
+      store.incrementPomodoro('non-existent')
+      expect(store.todos).toHaveLength(0)
     })
   })
 })

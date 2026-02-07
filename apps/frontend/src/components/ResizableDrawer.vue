@@ -164,7 +164,7 @@ watch(
 .drawer-overlay {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: 190;
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
@@ -176,7 +176,7 @@ watch(
   top: 0;
   left: 0;
   height: 100%;
-  z-index: 50;
+  z-index: 200;
   display: flex;
   background: hsl(var(--background) / 0.85);
   backdrop-filter: blur(20px);
