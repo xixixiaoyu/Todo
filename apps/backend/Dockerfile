@@ -18,7 +18,7 @@ WORKDIR /app
 # ============================================
 FROM base AS builder
 
-# 安装构建依赖 (better-sqlite3 等原生模块编译需要)
+# 安装构建依赖 (原生模块编译需要)
 RUN apk add --no-cache python3 make g++ openssl
 
 # 复制依赖配置文件
@@ -48,7 +48,7 @@ RUN pnpm --filter @my-app/backend build
 FROM base AS pruner
 
 # 安装构建依赖 (pnpm deploy 可能会重新触发原生模块的安装脚本)
-RUN apk add --no-cache python3 make g++ openssl
+RUN apk add --no-cache python3 make g++ openssl libc6-compat
 
 COPY --from=builder /app /app
 

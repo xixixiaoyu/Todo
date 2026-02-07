@@ -32,7 +32,7 @@ packages/shared/  # 共享包 (Zod Schemas, DTOs, Utils)
 
 **前端**: Vue 3.5+ / Vite 7 / Pinia / Tailwind 4 / GSAP / TanStack Query + Axios / VeeValidate + Zod / Vue I18n / Reka UI (Headless)
 **跨端**: Capacitor 8 / Wails 2.11 / PWA
-**后端**: NestJS 11+ / PostgreSQL 16 & SQLite + Prisma 7 / Redis (ioredis 5.8+) + BullMQ / JWT + Passport / nestjs-zod / Socket.IO
+**后端**: NestJS 11+ / PostgreSQL 16 + Prisma 7 / Redis (ioredis 5.8+) + BullMQ / JWT + Passport / nestjs-zod / Socket.IO
 **工具**: pnpm 9.15+ / Turbo 2.7+ / ESLint 9 / Vitest
 
 ## 前端架构
@@ -62,7 +62,6 @@ packages/shared/  # 共享包 (Zod Schemas, DTOs, Utils)
 
 ```bash
 pnpm dev                              # 同时启动前后端
-pnpm --filter @my-app/backend db:switch <sqlite|postgres> # 切换数据库类型
 pnpm db:push                          # 推送 Schema 到数据库
 pnpm lint && pnpm format              # 代码检查与格式化
 pnpm --filter @my-app/shared build    # 构建共享包
@@ -131,7 +130,7 @@ interface ApiResponse<T> { success: boolean; data: T; message?: string; timestam
 
 ## 后端关键功能
 
-- **数据库策略**: 双驱动支持。本地开发默认使用 **SQLite** 以实现零配置启动；生产环境或高级特性支持 **PostgreSQL**。通过 `PrismaService` 动态识别 `DATABASE_URL` 加载驱动。
+- **数据库策略**: 使用 **PostgreSQL**。通过 `PrismaService` 管理数据库连接。
 - **缓存**: `@Cacheable()` 装饰器，TTL 常量：`CacheableTTL.FIVE_MINUTES` / `ONE_HOUR` 等
 - **WebSocket**: `EventsGateway`，`broadcastToRoom()` / `broadcastToAll()`
 - **任务队列**: BullMQ + Redis，`InjectQueue('scheduled-tasks')`

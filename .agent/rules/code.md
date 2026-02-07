@@ -66,7 +66,7 @@ packages/shared/  # 共享包 (Zod Schemas, DTOs, Utils)
 
 **前端**: Vue 3.5+ / Vite 7 / Pinia / Tailwind 4 / GSAP / TanStack Query + Axios / VeeValidate + Zod / Vue I18n / Reka UI (Headless)
 **跨端**: Capacitor 8 / Wails 2.11 / PWA
-**后端**: NestJS 11+ / PostgreSQL 16 & SQLite + Prisma 7 / Redis (ioredis 5.8+) + BullMQ / JWT + Passport / nestjs-zod / Socket.IO
+**后端**: NestJS 11+ / PostgreSQL 16 + Prisma 7 / Redis (ioredis 5.8+) + BullMQ / JWT + Passport / nestjs-zod / Socket.IO
 **工具**: pnpm 9.15+ / Turbo 2.7+ / ESLint 9 / Vitest
 
 ## 前端架构
@@ -96,7 +96,6 @@ packages/shared/  # 共享包 (Zod Schemas, DTOs, Utils)
 
 ```bash
 pnpm dev                              # 同时启动前后端
-pnpm --filter @my-app/backend db:switch <sqlite|postgres> # 切换数据库类型
 pnpm db:push                          # 推送 Schema 到数据库
 pnpm lint && pnpm format              # 代码检查与格式化
 pnpm --filter @my-app/shared build    # 构建共享包
