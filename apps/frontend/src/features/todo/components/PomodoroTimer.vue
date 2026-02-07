@@ -251,6 +251,24 @@ const progressRingDash = computed(() => {
           <!-- Wails Drag Area for Mini Mode -->
           <div v-if="pomodoroStore.isMiniMode && isWails()" class="absolute inset-0 z-0"></div>
 
+          <!-- Colorful Background Glows -->
+          <div
+            class="absolute inset-0 overflow-hidden pointer-events-none z-0 opacity-40 dark:opacity-20"
+          >
+            <div
+              class="absolute -top-[10%] -left-[10%] w-[60%] h-[60%] rounded-full blur-[60px] animate-float-slow"
+              :class="pomodoroStore.status === 'focus' ? 'bg-rose-400/30' : 'bg-emerald-400/30'"
+            ></div>
+            <div
+              class="absolute -bottom-[10%] -right-[10%] w-[50%] h-[50%] rounded-full blur-[50px] animate-float-reverse"
+              :class="pomodoroStore.status === 'focus' ? 'bg-amber-400/30' : 'bg-blue-400/30'"
+            ></div>
+            <div
+              class="absolute top-1/4 left-1/4 w-[40%] h-[40%] rounded-full blur-[70px] animate-pulse-slow"
+              :class="pomodoroStore.status === 'focus' ? 'bg-orange-300/20' : 'bg-indigo-300/20'"
+            ></div>
+          </div>
+
           <!-- Header Controls -->
           <div
             class="relative z-20 flex items-center justify-between w-full"
@@ -558,6 +576,44 @@ const progressRingDash = computed(() => {
     stroke-width: calc(var(--stroke-width) + 0.5px);
     filter: drop-shadow(0 0 12px hsla(var(--primary), 0.6));
   }
+}
+
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(10%, 15%) scale(1.1);
+  }
+  66% {
+    transform: translate(-5%, 10%) scale(0.95);
+  }
+}
+
+@keyframes float-reverse {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(-15%, -10%) scale(0.9);
+  }
+  66% {
+    transform: translate(10%, -15%) scale(1.15);
+  }
+}
+
+.animate-float-slow {
+  animation: float-slow 15s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+  animation: float-reverse 18s ease-in-out infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse 8s ease-in-out infinite;
 }
 
 .animate-pulse-subtle {
