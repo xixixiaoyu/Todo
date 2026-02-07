@@ -355,7 +355,7 @@ defineOptions({
     v-bind="$attrs"
   >
     <div
-      class="relative flex h-full flex-col bg-[hsl(var(--ai-glass-bg))] border-l border-[hsl(var(--ai-header-yellow)/0.3)] backdrop-blur-2xl glass-grain"
+      class="relative flex h-full flex-col bg-[hsl(var(--ai-glass-bg))] border-l border-border/40"
     >
       <AiAssistantHeader
         :is-maximized="isMaximized"
@@ -471,7 +471,7 @@ defineOptions({
       >
         <div
           v-if="showHistory"
-          class="absolute inset-y-0 left-0 z-20 flex flex-col border-r border-border/40 bg-card/60 backdrop-blur-xl shadow-xl"
+          class="absolute inset-y-0 left-0 z-20 flex flex-col border-r border-border/40 bg-card shadow-xl"
           :style="{ width: isMobile ? '100%' : `${historyWidth}px` }"
         >
           <ChatHistoryPanel

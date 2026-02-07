@@ -24,7 +24,7 @@ const isMobile = computed(() => !isDesktop.value && windowWidth.value < 640)
 
 <template>
   <header
-    class="flex h-14 shrink-0 items-center justify-between border-b border-[hsl(var(--ai-header-yellow)/0.5)] bg-gradient-to-b from-[hsl(var(--ai-header-yellow)/0.98)] via-[hsl(var(--ai-header-yellow)/0.96)] to-[hsl(var(--ai-header-yellow)/0.92)] px-6 backdrop-blur-3xl z-10"
+    class="flex h-14 shrink-0 items-center justify-between border-b border-border/40 bg-[hsl(var(--ai-glass-bg))] px-6 z-10"
     :class="[isDesktop ? 'select-none cursor-default' : '']"
     style="--wails-draggable: drag"
     data-wails-drag

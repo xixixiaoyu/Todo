@@ -17,7 +17,7 @@ const isMobile = computed(() => windowWidth.value < 640)
 <template>
   <div
     v-if="steps && steps.length > 0"
-    class="mb-2 space-y-2 rounded-xl border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] shadow-sm backdrop-blur-md"
+    class="mb-2 space-y-2 rounded-xl border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] shadow-sm"
     :class="[isMobile ? 'p-2.5' : 'p-3']"
   >
     <div

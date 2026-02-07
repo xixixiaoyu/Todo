@@ -387,7 +387,7 @@ watch(isStreaming, async (streaming) => {
             :class="[
               isUser
                 ? 'bg-gradient-to-br from-primary/95 via-primary to-primary/90 text-primary-foreground shadow-[0_4px_12px_rgba(var(--primary),0.15)] hover:shadow-[0_6px_16px_rgba(var(--primary),0.2)]'
-                : 'border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] text-foreground shadow-sm hover:border-primary/30 hover:shadow-md backdrop-blur-md',
+                : 'border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] text-foreground shadow-sm hover:border-primary/30 hover:shadow-md',
               isEditing
                 ? 'w-full !bg-card !text-foreground ring-2 ring-primary/20 border-primary'
                 : '',

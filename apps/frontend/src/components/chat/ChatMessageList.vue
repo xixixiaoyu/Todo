@@ -186,7 +186,7 @@ defineExpose({
       <button
         v-if="isUserScrolledUp && isScrollable"
         :class="[
-          'absolute flex items-center justify-center rounded-full border border-border bg-card/80 text-primary shadow-lg backdrop-blur-sm transition-all hover:bg-card hover:shadow-xl active:scale-95 z-20',
+          'absolute flex items-center justify-center rounded-full border border-border bg-card text-primary shadow-lg transition-all hover:bg-card hover:shadow-xl active:scale-95 z-20',
           isMobile ? 'bottom-4 h-9 w-9' : 'bottom-6 h-10 w-10',
           isMaximized ? 'left-1/2 -translate-x-1/2' : isMobile ? 'right-4' : 'right-8',
         ]"

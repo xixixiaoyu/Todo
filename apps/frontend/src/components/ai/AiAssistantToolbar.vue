@@ -111,7 +111,7 @@ const handlePresetMouseLeave = () => {
 <template>
   <div
     :class="[
-      'toolbar-container shrink-0 bg-background/5 backdrop-blur-3xl transition-all duration-300',
+      'toolbar-container shrink-0 bg-[hsl(var(--ai-glass-bg))] transition-all duration-300',
       isMobile ? 'p-2' : 'px-4 pt-2 pb-4',
     ]"
   >
@@ -441,22 +441,22 @@ const handlePresetMouseLeave = () => {
 
 .toolbar-btn {
   background-color: hsl(var(--ai-glass-bg));
-  backdrop-filter: blur(24px);
   border-color: hsl(var(--ai-glass-border));
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.02),
     0 4px 12px rgba(0, 0, 0, 0.03);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .toolbar-btn:hover:not(:disabled) {
-  background-color: hsl(var(--accent));
-  border-color: hsl(var(--primary) / 0.2);
-  color: hsl(var(--foreground));
+  background-color: hsl(var(--accent) / 0.5);
+  border-color: hsl(var(--primary) / 0.3);
+  color: hsl(var(--primary));
   transform: translateY(-1px);
   box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.02),
-    0 8px 20px rgba(0, 0, 0, 0.06);
+    0 4px 8px rgba(0, 0, 0, 0.04),
+    0 12px 24px rgba(0, 0, 0, 0.08),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1);
 }
 
 .toolbar-btn:active:not(:disabled) {

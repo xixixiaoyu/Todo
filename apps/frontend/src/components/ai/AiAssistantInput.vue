@@ -222,7 +222,7 @@ defineExpose({
 <template>
   <div
     :class="[
-      'input-container-refined relative flex flex-col rounded-[1.25rem] border border-[hsl(var(--ai-glass-border))] bg-[hsl(var(--ai-glass-bg))] shadow-[0_4px_20px_rgba(0,0,0,0.04)] backdrop-blur-2xl transition-all duration-500 focus-within:border-primary/40 focus-within:shadow-[0_8px_32px_rgba(0,0,0,0.06)]',
+      'input-container-refined relative flex flex-col rounded-[1.25rem] border border-[hsl(var(--ai-glass-border))] bg-[hsl(var(--ai-glass-bg))] shadow-[0_4px_20px_rgba(0,0,0,0.04)] transition-all duration-500 focus-within:border-primary/40 focus-within:shadow-[0_8px_32px_rgba(0,0,0,0.06)]',
       isMobile ? 'p-1 gap-0' : 'p-1 gap-0',
       isInputDisabled ? 'opacity-60 grayscale-[0.2]' : '',
     ]"
@@ -312,7 +312,7 @@ defineExpose({
     >
       <div
         v-if="showSlashCommands"
-        class="slash-commands-menu absolute bottom-full left-0 z-50 mb-3 w-64 overflow-hidden rounded-2xl border border-border/40 bg-background/80 p-1.5 shadow-2xl shadow-black/10 backdrop-blur-2xl"
+        class="slash-commands-menu absolute bottom-full left-0 z-50 mb-3 w-64 overflow-hidden rounded-2xl border border-border/40 bg-background p-1.5 shadow-2xl shadow-black/10"
       >
         <div class="flex flex-col gap-0.5">
           <button

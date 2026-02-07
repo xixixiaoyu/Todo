@@ -25,7 +25,7 @@ const { t } = useI18n()
     >
       <div
         v-if="url"
-        class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
+        class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/95 p-4"
         @click="emit('close')"
       >
         <button

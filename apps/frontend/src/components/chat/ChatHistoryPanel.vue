@@ -151,7 +151,7 @@ function handleClearConfirm(): void {
 
 <template>
   <div
-    class="flex h-full flex-col bg-[hsl(var(--ai-glass-bg))] backdrop-blur-3xl border-r border-[hsl(var(--ai-glass-border))] shadow-2xl"
+    class="flex h-full flex-col bg-[hsl(var(--ai-glass-bg))] border-r border-border/40 shadow-2xl"
   >
     <!-- 头部 -->
     <div class="shrink-0 border-b border-[hsl(var(--ai-glass-border))] px-4 py-4">

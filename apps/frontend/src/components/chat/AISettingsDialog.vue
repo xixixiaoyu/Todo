@@ -217,12 +217,12 @@ defineExpose({
   <Transition name="fade">
     <div
       v-if="modelValue"
-      class="absolute inset-0 z-50 flex items-center justify-center bg-black/20 p-4 backdrop-blur-md"
+      class="absolute inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
     >
       <Transition name="scale">
         <div
           v-if="modelValue"
-          class="flex max-h-[90%] w-full max-w-lg flex-col rounded-2xl border border-border/50 bg-background/95 shadow-2xl backdrop-blur-xl"
+          class="flex max-h-[90%] w-full max-w-lg flex-col rounded-2xl border border-border/50 bg-background shadow-2xl"
         >
           <!-- 顶部区域：艺术化 Header -->
           <div class="relative flex shrink-0 flex-col overflow-hidden">

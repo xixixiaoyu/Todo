@@ -310,7 +310,7 @@ const chartOptions = computed(() => ({
 
 <template>
   <div
-    class="mt-4 mb-2 overflow-hidden rounded-2xl border border-primary/10 bg-primary/[0.03] backdrop-blur-md shadow-sm transition-all duration-300 hover:shadow-md group/preview"
+    class="mt-4 mb-2 overflow-hidden rounded-2xl border border-primary/10 bg-primary/[0.03] shadow-sm transition-all duration-300 hover:shadow-md group/preview"
     :class="isExpanded ? 'ring-2 ring-primary/20' : ''"
   >
     <!-- Header Summary -->
@@ -367,7 +367,7 @@ const chartOptions = computed(() => ({
         class="absolute top-2 left-1/2 -translate-x-1/2 pointer-events-none opacity-0 group-hover/preview:opacity-100 transition-opacity duration-500"
       >
         <div
-          class="flex items-center gap-1.5 px-2 py-1 rounded-full bg-background/50 backdrop-blur-md border border-primary/10 text-[9px] text-muted-foreground shadow-sm"
+          class="flex items-center gap-1.5 px-2 py-1 rounded-full bg-background/80 border border-primary/10 text-[9px] text-muted-foreground shadow-sm"
         >
           <Move :size="10" />
           <span>{{ t('ai.dragToMove') }}</span>
@@ -377,7 +377,7 @@ const chartOptions = computed(() => ({
       <!-- Empty State / Success State -->
       <div
         v-if="!hasChanges"
-        class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/60 backdrop-blur-[2px] text-muted-foreground animate-in fade-in duration-500"
+        class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/80 text-muted-foreground animate-in fade-in duration-500"
       >
         <div v-if="isApplied" class="flex flex-col items-center gap-3">
           <div
