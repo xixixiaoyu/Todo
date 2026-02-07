@@ -128,26 +128,7 @@ watch(
   },
 )
 
-// Floating animation for mini mode
-const ctx = gsap.context(() => {})
-watch(
-  () => pomodoroStore.isMiniMode,
-  (isMini) => {
-    ctx.revert()
-    if (isMini && containerRef.value) {
-      ctx.add(() => {
-        gsap.to(containerRef.value, {
-          y: '+=8',
-          duration: 3,
-          repeat: -1,
-          yoyo: true,
-          ease: 'sine.inOut',
-        })
-      })
-    }
-  },
-  { immediate: true },
-)
+// Floating animation for mini mode (Disabled as per user request for less movement)
 </script>
 
 <template>
@@ -182,10 +163,10 @@ watch(
       >
         <!-- Card Content -->
         <div
-          class="relative backdrop-blur-3xl border border-white/40 dark:border-white/10 overflow-hidden transition-all duration-700 h-full w-full glass-grain"
+          class="relative backdrop-blur-3xl border border-white/20 dark:border-white/5 overflow-hidden transition-all duration-700 h-full w-full glass-grain"
           :class="[
             pomodoroStore.isMiniMode
-              ? 'rounded-[2rem] bg-white/70 dark:bg-black/40 flex flex-col'
+              ? 'rounded-[2.5rem] bg-white/60 dark:bg-black/40 flex flex-col'
               : 'rounded-3xl p-5 bg-card/95 shadow-2xl',
             pomodoroStore.status === 'focus'
               ? 'ring-1 ring-primary/5 shadow-primary/5'
@@ -312,7 +293,7 @@ watch(
               <svg
                 :class="[
                   'transition-all duration-1000 ease-in-out drop-shadow-sm',
-                  pomodoroStore.isMiniMode ? 'w-32 h-32' : 'w-64 h-64',
+                  pomodoroStore.isMiniMode ? 'w-28 h-28' : 'w-64 h-64',
                 ]"
                 viewBox="0 0 100 100"
               >
@@ -359,7 +340,7 @@ watch(
                   class="font-mono font-light tracking-tight tabular-nums transition-all leading-none"
                   :class="[
                     pomodoroStore.isRunning ? 'text-foreground/90' : 'text-foreground/40',
-                    pomodoroStore.isMiniMode ? 'text-3xl' : 'text-7xl',
+                    pomodoroStore.isMiniMode ? 'text-2xl' : 'text-7xl',
                   ]"
                   :style="{
                     fontFamily: 'JetBrains Mono, monospace',
