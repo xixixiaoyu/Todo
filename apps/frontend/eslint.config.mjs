@@ -56,8 +56,8 @@ export default [
     files: [
       '**/capacitor.config.ts',
       '**/pwa-assets.config.ts',
-      '**/vitest.config.ts',
-      '**/vite.config.ts',
+      '**/vitest.config.mts',
+      '**/vite.config.mts',
     ],
     rules: {
       '@typescript-eslint/no-floating-promises': 'off',

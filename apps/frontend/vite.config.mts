@@ -1,8 +1,13 @@
 import { resolve } from 'path'
+import { fileURLToPath } from 'url'
+import { dirname } from 'path'
 import { defineConfig, type UserConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 import viteCompression from 'vite-plugin-compression'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 const isWails = process.env.WAILS === 'true'
 
