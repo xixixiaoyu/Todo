@@ -232,7 +232,7 @@ const handlePresetMouseLeave = () => {
                 side="top"
                 align="start"
                 :side-offset="4"
-                class="w-64 p-3"
+                class="z-[251] w-64 p-3"
               >
                 <div
                   class="space-y-4"
@@ -376,7 +376,7 @@ const handlePresetMouseLeave = () => {
                 side="top"
                 align="start"
                 :side-offset="4"
-                class="min-w-[160px] p-1"
+                class="z-[251] min-w-[160px] p-1"
               >
                 <div @mouseenter="clearPresetTimer" @mouseleave="handlePresetMouseLeave">
                   <DropdownMenuItem
