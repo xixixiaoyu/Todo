@@ -1,13 +1,28 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { ClipboardList, CheckCircle2, SearchX, Trash2 } from 'lucide-vue-next'
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import draggable from 'vuedraggable'
 import type { Todo } from '../stores/todo'
 import TodoItem from './TodoItem.vue'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { useGsap } from '@/composables/useGsap'
 
 const { t } = useI18n()
+const { gsap, ctx } = useGsap()
+
+onMounted(() => {
+  ctx.add(() => {
+    gsap.from('.todo-item-wrapper', {
+      y: 10,
+      opacity: 0,
+      duration: 0.3,
+      stagger: 0.02,
+      ease: 'power2.out',
+      clearProps: 'all',
+    })
+  })
+})
 
 const props = defineProps<{
   todos: Todo[]
@@ -128,22 +143,24 @@ const displayTodos = computed(() => {
           :disabled="!!searchQuery"
         >
           <template #item="{ element: todo }">
-            <TodoItem
-              :key="todo.id"
-              :todo="todo"
-              :all-todos="todos"
-              :editing-id="editingId"
-              :editing-title="editingTitle"
-              :search-query="searchQuery"
-              @toggle="(id, currentCompleted) => emit('toggle', id, currentCompleted)"
-              @start-edit="(id, title) => emit('startEdit', id, title)"
-              @save-edit="emit('saveEdit')"
-              @cancel-edit="emit('cancelEdit')"
-              @delete="(id) => emit('delete', id)"
-              @reorder="(ids, pId) => emit('reorder', ids, pId)"
-              @update:editing-title="(value) => emit('update:editingTitle', value)"
-              @edit-keydown="(e) => emit('editKeydown', e)"
-            />
+            <div class="todo-item-wrapper">
+              <TodoItem
+                :key="todo.id"
+                :todo="todo"
+                :all-todos="todos"
+                :editing-id="editingId"
+                :editing-title="editingTitle"
+                :search-query="searchQuery"
+                @toggle="(id, currentCompleted) => emit('toggle', id, currentCompleted)"
+                @start-edit="(id, title) => emit('startEdit', id, title)"
+                @save-edit="emit('saveEdit')"
+                @cancel-edit="emit('cancelEdit')"
+                @delete="(id) => emit('delete', id)"
+                @reorder="(ids, pId) => emit('reorder', ids, pId)"
+                @update:editing-title="(value) => emit('update:editingTitle', value)"
+                @edit-keydown="(e) => emit('editKeydown', e)"
+              />
+            </div>
           </template>
         </draggable>
       </div>

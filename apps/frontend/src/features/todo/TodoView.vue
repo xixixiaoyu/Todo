@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useTodoStore } from './stores/todo'
+import { ref, onMounted, watch } from 'vue'
+import { useTodoStore, type FilterType } from './stores/todo'
 import { usePomodoroStore } from './stores/pomodoro'
 import { useTodo } from './composables/useTodo'
 import { useGsap } from '@/composables/useGsap'
@@ -21,6 +21,17 @@ const pomodoroStore = usePomodoroStore()
 
 const cardRef = ref<HTMLElement | null>(null)
 const { gsap, ctx } = useGsap()
+
+// 追踪上一次的 filter 以决定动画方向
+const direction = ref(0) // 1: next, -1: prev
+
+watch(
+  () => todoStore.filter,
+  (newVal: FilterType, oldVal: FilterType) => {
+    const filterOrder: Record<FilterType, number> = { pending: 0, completed: 1, trash: 2 }
+    direction.value = filterOrder[newVal] > filterOrder[oldVal] ? 1 : -1
+  },
+)
 
 onMounted(() => {
   void todoStore.fetchTodos()
@@ -153,14 +164,49 @@ function onFireworksComplete() {
           >
             <Transition
               mode="out-in"
-              enter-active-class="transition-all duration-300 ease-out"
-              enter-from-class="opacity-0 translate-y-4"
-              enter-to-class="opacity-100 translate-y-0"
-              leave-active-class="transition-all duration-200 ease-in"
-              leave-from-class="opacity-100 translate-y-0"
-              leave-to-class="opacity-0 -translate-y-4"
+              :css="false"
+              @before-enter="
+                (el) => {
+                  const element = el as HTMLElement
+                  gsap.set(element, {
+                    opacity: 0,
+                    x: direction * 20,
+                    scale: 0.99,
+                    filter: 'blur(4px)',
+                  })
+                }
+              "
+              @enter="
+                (el, done) => {
+                  gsap.to(el, {
+                    opacity: 1,
+                    x: 0,
+                    scale: 1,
+                    filter: 'blur(0px)',
+                    duration: 0.3,
+                    ease: 'power2.out',
+                    onComplete: done,
+                  })
+                }
+              "
+              @leave="
+                (el, done) => {
+                  gsap.to(el, {
+                    opacity: 0,
+                    x: -direction * 15,
+                    scale: 0.99,
+                    filter: 'blur(4px)',
+                    duration: 0.2,
+                    ease: 'power2.in',
+                    onComplete: done,
+                  })
+                }
+              "
             >
-              <div :key="todoStore.viewMode" class="flex-1 flex flex-col min-h-0">
+              <div
+                :key="todoStore.viewMode + (todoStore.viewMode === 'list' ? todoStore.filter : '')"
+                class="flex-1 flex flex-col min-h-0"
+              >
                 <TodoList
                   v-if="todoStore.viewMode === 'list'"
                   :todos="
