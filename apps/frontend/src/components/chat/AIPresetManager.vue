@@ -1,7 +1,17 @@
 <script setup lang="ts">
 import { ref, useId, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Plus, Eye, EyeOff, Edit3, Copy, Trash2, Download, Upload } from 'lucide-vue-next'
+import {
+  Plus,
+  Eye,
+  EyeOff,
+  Edit3,
+  Copy,
+  Trash2,
+  Download,
+  Upload,
+  ChevronLeft,
+} from 'lucide-vue-next'
 import { debounce } from 'lodash-es'
 import { useAIConfig, type AIPreset } from '@/composables/useAIConfig'
 import { useToast } from '@/composables/useToast'
@@ -245,16 +255,24 @@ defineExpose({
 
     <!-- 编辑/创建预设表单 -->
     <div v-if="isCreatingPreset || editingPreset" class="space-y-4">
-      <div class="flex items-center justify-between">
-        <h3 class="text-sm font-medium text-foreground">
-          {{ isCreatingPreset ? t('ai.createPreset') : t('ai.editPreset') }}
-        </h3>
+      <div class="flex items-center gap-2">
         <button
-          class="text-xs text-muted-foreground hover:text-foreground"
+          class="group flex h-8 items-center gap-1 rounded-xl px-2 -ml-2 text-muted-foreground transition-all hover:bg-muted hover:text-foreground active:scale-95"
           @click="cancelEditPreset"
         >
-          {{ editingPreset ? t('common.back') : t('ai.cancel') }}
+          <ChevronLeft
+            :size="16"
+            stroke-width="2.5"
+            class="transition-transform group-hover:-translate-x-0.5"
+          />
+          <span class="text-xs font-semibold">{{
+            editingPreset ? t('common.back') : t('ai.cancel')
+          }}</span>
         </button>
+        <div class="h-3 w-[1px] bg-border/60 mx-1" />
+        <h3 class="text-sm font-bold tracking-tight text-foreground">
+          {{ isCreatingPreset ? t('ai.createPreset') : t('ai.editPreset') }}
+        </h3>
       </div>
 
       <div class="space-y-3">
@@ -401,7 +419,7 @@ defineExpose({
 
         <!-- 导入按钮 -->
         <button
-          class="flex h-[46px] w-[46px] items-center justify-center rounded-xl border border-border bg-card/40 text-muted-foreground transition-all hover:border-primary/50 hover:bg-card/60 hover:text-primary active:scale-95"
+          class="flex h-[46px] w-[46px] items-center justify-center rounded-xl border border-border bg-card/40 text-muted-foreground transition-all hover:border-blue-400/50 hover:bg-blue-500/5 hover:text-blue-500 active:scale-95"
           :title="t('ai.importPresets')"
           @click="triggerImport"
         >
@@ -410,7 +428,7 @@ defineExpose({
 
         <!-- 导出按钮 -->
         <button
-          class="flex h-[46px] w-[46px] items-center justify-center rounded-xl border border-border bg-card/40 text-muted-foreground transition-all hover:border-primary/50 hover:bg-card/60 hover:text-primary active:scale-95"
+          class="flex h-[46px] w-[46px] items-center justify-center rounded-xl border border-border bg-card/40 text-muted-foreground transition-all hover:border-amber-400/50 hover:bg-amber-500/5 hover:text-amber-500 active:scale-95"
           :class="{ 'pointer-events-none opacity-40': presets.length === 0 }"
           :title="t('ai.exportPresets')"
           @click="handleExport"

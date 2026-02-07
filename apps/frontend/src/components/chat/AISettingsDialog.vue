@@ -224,50 +224,79 @@ defineExpose({
           v-if="modelValue"
           class="flex max-h-[90%] w-full max-w-lg flex-col rounded-2xl border border-border/50 bg-background/95 shadow-2xl backdrop-blur-xl"
         >
-          <!-- 标题栏 -->
-          <div
-            class="relative flex shrink-0 items-center justify-between overflow-hidden border-b border-border px-8 py-5"
-          >
+          <!-- 顶部区域：艺术化 Header -->
+          <div class="relative flex shrink-0 flex-col overflow-hidden">
+            <!-- 多层弥散背景，营造温润感 -->
+            <div class="absolute inset-0 bg-muted/5" />
             <div
-              class="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-transparent"
+              class="absolute inset-0 bg-gradient-to-b from-primary/8 via-primary/2 to-transparent"
             />
-            <div class="relative flex items-center gap-3">
-              <div class="h-1.5 w-1.5 rounded-full bg-primary" />
-              <h2 class="text-lg font-bold tracking-tight text-foreground">
-                {{ t('ai.settings') }}
-              </h2>
-            </div>
-            <button
-              class="relative flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground transition-all hover:bg-muted hover:text-foreground active:scale-90"
-              @click="handleClose"
-            >
-              <X :size="18" stroke-width="2.5" />
-            </button>
-          </div>
+            <div class="absolute top-0 left-1/4 h-24 w-1/2 bg-primary/5 blur-[40px]" />
 
-          <!-- Tab 切换 -->
-          <div class="flex shrink-0 gap-8 border-b border-border bg-muted/5 px-8">
-            <button
-              v-for="tab in ['settings', 'presets', 'memory'] as const"
-              :key="tab"
-              class="group relative py-4 text-sm font-bold tracking-tight transition-all"
-              :class="
-                activeTab === tab
-                  ? 'text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              "
-              @click="activeTab = tab"
-            >
-              {{
-                t(
-                  `ai.${tab === 'settings' ? 'basicSettings' : tab === 'presets' ? 'presetManagement' : 'memory'}`,
-                )
-              }}
-              <span
-                v-if="activeTab === tab"
-                class="absolute bottom-0 left-0 h-0.5 w-full bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)]"
-              />
-            </button>
+            <!-- 标题内容层 -->
+            <div class="relative flex items-center justify-between px-8 pt-7 pb-3">
+              <div class="flex items-center gap-3">
+                <div class="relative flex h-7 w-7 items-center justify-center">
+                  <div
+                    class="absolute inset-0 rotate-12 rounded-lg bg-primary/10 transition-transform group-hover:rotate-0"
+                  />
+                  <Sparkles :size="15" class="relative text-primary" />
+                </div>
+                <div class="flex flex-col">
+                  <h2 class="text-[15px] font-bold tracking-tight text-foreground/90">
+                    {{ t('ai.settings') }}
+                  </h2>
+                </div>
+              </div>
+              <button
+                class="group flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-primary/10 active:scale-90"
+                @click="handleClose"
+              >
+                <X
+                  :size="16"
+                  stroke-width="2.5"
+                  class="text-muted-foreground transition-colors group-hover:text-primary"
+                />
+              </button>
+            </div>
+
+            <!-- 导航层 -->
+            <div class="relative flex gap-8 px-9">
+              <button
+                v-for="tab in ['settings', 'presets', 'memory'] as const"
+                :key="tab"
+                class="group relative py-4 text-[13px] font-bold tracking-wide transition-all"
+                :class="
+                  activeTab === tab ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                "
+                @click="activeTab = tab"
+              >
+                <span class="relative z-10">{{
+                  t(
+                    `ai.${tab === 'settings' ? 'basicSettings' : tab === 'presets' ? 'presetManagement' : 'memory'}`,
+                  )
+                }}</span>
+
+                <!-- 灵动的指示器 -->
+                <div
+                  v-if="activeTab === tab"
+                  class="absolute bottom-0 left-1/2 h-0.5 w-full -translate-x-1/2 overflow-hidden rounded-full bg-primary"
+                >
+                  <div
+                    class="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                  />
+                </div>
+                <!-- 悬停态光晕 -->
+                <div
+                  class="absolute inset-x-0 -bottom-2 h-8 w-full scale-50 bg-primary/10 opacity-0 blur-xl transition-all group-hover:scale-100 group-hover:opacity-100"
+                />
+              </button>
+            </div>
+
+            <!-- 极细边框 -->
+            <div
+              class="h-px w-full bg-gradient-to-r from-transparent via-border/60 to-transparent"
+            />
           </div>
 
           <!-- 内容区域 -->
@@ -306,17 +335,18 @@ defineExpose({
             <div class="flex items-center gap-3">
               <button
                 v-if="activeTab === 'settings' && !formData.discussionMode"
-                class="rounded-xl px-5 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
+                class="rounded-xl border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-bold tracking-tight text-primary transition-all hover:border-primary/50 hover:bg-primary/20 disabled:cursor-not-allowed disabled:border-border disabled:bg-muted/50 disabled:text-muted-foreground/50"
                 :disabled="isDuplicatePreset"
                 @click="handleSaveAsPreset"
               >
                 {{ t('ai.saveAsPreset') }}
               </button>
               <button
-                class="rounded-xl bg-muted px-8 py-2.5 text-sm font-semibold text-foreground transition-all hover:bg-muted/80 active:scale-[0.98]"
+                class="relative overflow-hidden rounded-xl bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground shadow-[0_4px_12px_rgba(var(--primary),0.3)] transition-all hover:bg-primary-hover hover:shadow-[0_6px_20px_rgba(var(--primary),0.4)] active:scale-[0.98]"
                 @click="handleClose"
               >
-                {{ t('common.close') }}
+                <div class="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent" />
+                <span class="relative">{{ t('common.close') }}</span>
               </button>
             </div>
           </div>
