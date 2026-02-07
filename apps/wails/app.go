@@ -59,11 +59,32 @@ func (a *App) Quit() {
 // SetMiniMode toggles the mini mode for Pomodoro
 func (a *App) SetMiniMode(enabled bool) {
 	if enabled {
-		// Set to mini size
-		runtime.WindowSetSize(a.ctx, 280, 200)
+		width, height := 220, 180
+		// Set to an ultra-compact mini size
+		runtime.WindowSetSize(a.ctx, width, height)
 		// Set always on top
 		runtime.WindowSetAlwaysOnTop(a.ctx, true)
-		// Move to a convenient place if needed, or let the user drag it
+
+		// Snap to top-right corner with margin
+		screens, _ := runtime.ScreenGetAll(a.ctx)
+		if len(screens) > 0 {
+			// Find primary screen
+			var primary runtime.Screen
+			for _, s := range screens {
+				if s.IsPrimary {
+					primary = s
+					break
+				}
+			}
+			if primary.Size.Width == 0 {
+				primary = screens[0]
+			}
+
+			// Margin from top (considering macOS menu bar) and right
+			marginRight := 20
+			marginTop := 40
+			runtime.WindowSetPosition(a.ctx, primary.Size.Width-width-marginRight, marginTop)
+		}
 	} else {
 		// Restore to default size
 		runtime.WindowSetSize(a.ctx, 1024, 768)
