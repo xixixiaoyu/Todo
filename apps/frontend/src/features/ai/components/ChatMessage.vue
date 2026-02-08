@@ -148,10 +148,10 @@ defineExpose({
                 ? 'rounded-[1.25rem] px-4 py-3'
                 : 'rounded-none p-0',
               isUser
-                ? 'bg-gradient-to-br from-primary/95 via-primary to-primary/90 text-primary-foreground shadow-[0_4px_12px_rgba(var(--primary),0.15)] hover:shadow-[0_6px_16px_rgba(var(--primary),0.2)]'
+                ? 'bg-gradient-to-br from-primary/95 via-primary to-primary/90 text-primary-foreground shadow-[0_4px_12px_rgba(var(--primary),0.15)]'
                 : message.role === 'tool'
                   ? 'border-none bg-transparent shadow-none'
-                  : 'border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] text-foreground shadow-sm hover:border-primary/30 hover:shadow-md',
+                  : 'border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] text-foreground shadow-sm',
               isEditing
                 ? 'w-full !bg-card !text-foreground ring-2 ring-primary/20 border-primary'
                 : '',

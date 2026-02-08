@@ -93,7 +93,7 @@ const onLeave = (el: Element) => {
 
     <!-- Main Container (材质增强) -->
     <div
-      class="inline-flex flex-col min-w-[180px] max-w-full rounded-[0.75rem] border border-border/30 bg-white/40 dark:bg-white/[0.02] backdrop-blur-md transition-all duration-500 hover:border-primary/20 hover:bg-white/60 dark:hover:bg-white/[0.04] hover:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)]"
+      class="inline-flex flex-col min-w-[180px] max-w-full rounded-[0.75rem] border border-border/30 bg-white/40 dark:bg-white/[0.02] backdrop-blur-md transition-all duration-500 hover:bg-white/60 dark:hover:bg-white/[0.04]"
       :class="{
         'border-primary/20 bg-white/80 dark:bg-white/[0.06] shadow-sm ring-1 ring-primary/5':
           isExpanded,
