@@ -7,6 +7,9 @@ import { TokenService } from './token.service'
 import { PasskeyService } from './passkey.service'
 import { PasswordService } from './password.service'
 import { AuthController } from './auth.controller'
+import { OAuthController } from './oauth.controller'
+import { PasskeyController } from './passkey.controller'
+import { PasswordController } from './password.controller'
 import { JwtStrategy } from './jwt.strategy'
 import { GoogleStrategy } from './google.strategy'
 import { PrismaModule } from '../prisma/prisma.module'
@@ -34,7 +37,7 @@ import { UsersModule } from '../users/users.module'
       }),
     }),
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, OAuthController, PasskeyController, PasswordController],
   providers: [
     AuthService,
     TokenService,
