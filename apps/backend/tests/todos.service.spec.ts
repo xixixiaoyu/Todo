@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Test, TestingModule } from '@nestjs/testing'
 import { TodosService } from '@/todos/todos.service'
 import { PrismaService } from '@/prisma/prisma.service'
-import { SyncMergeDto } from '@/todos/todos.dto'
 
 import { EventsGateway } from '@/events/events.gateway'
 
@@ -45,75 +44,6 @@ describe('TodosService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined()
-  })
-
-  describe('sync', () => {
-    it('should upsert todos and return server changes', async () => {
-      const userId = 1
-      const syncDto: SyncMergeDto = {
-        todos: [
-          {
-            id: '861a3556-9150-4819-b7b5-22e379434857',
-            title: 'Test Todo',
-            completed: false,
-            order: 0,
-            isPinned: false,
-            version: 0,
-            pomodoroCount: 0,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-        ],
-        lastSyncAt: new Date(0).toISOString(),
-      }
-
-      mockPrisma.todo.findUnique.mockResolvedValue(null)
-      mockPrisma.todo.upsert.mockResolvedValue({})
-      mockPrisma.todo.findMany.mockResolvedValue([
-        {
-          id: 'server-uuid',
-          title: 'Server Todo',
-          updatedAt: new Date(),
-          deletedAt: null,
-        },
-      ])
-
-      const result = await service.sync(userId, syncDto)
-
-      expect(mockPrisma.$transaction).toHaveBeenCalled()
-      expect(mockPrisma.todo.upsert).toHaveBeenCalled()
-      expect(mockPrisma.todo.findMany).toHaveBeenCalled()
-      // result.synced should contain both upserted item and server changes
-      expect(result.synced).toHaveLength(2)
-      expect(result.synced).toEqual(
-        expect.arrayContaining([expect.objectContaining({ id: 'server-uuid' })]),
-      )
-      expect(result.deletedIds).toHaveLength(0)
-      expect(result.serverTime).toBeDefined()
-    })
-
-    it('should return logically deleted items in synced list', async () => {
-      const userId = 1
-      const syncDto: SyncMergeDto = {
-        todos: [],
-        lastSyncAt: new Date(0).toISOString(),
-      }
-
-      mockPrisma.todo.findMany.mockResolvedValue([
-        {
-          id: 'deleted-uuid',
-          title: 'Deleted Todo',
-          updatedAt: new Date(),
-          deletedAt: new Date(),
-        },
-      ])
-
-      const result = await service.sync(userId, syncDto)
-
-      expect(result.synced).toHaveLength(1)
-      expect(result.synced[0].id).toBe('deleted-uuid')
-      expect(result.deletedIds).toHaveLength(0)
-    })
   })
 
   describe('findTrash', () => {

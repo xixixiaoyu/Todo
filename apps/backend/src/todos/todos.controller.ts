@@ -1,5 +1,6 @@
 import { Controller, Post, Body, UseGuards, Get, Headers, Param, Delete } from '@nestjs/common'
 import { TodosService } from './todos.service'
+import { TodoSyncService } from './todos-sync.service'
 import { SyncMergeDto } from './todos.dto'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { CurrentUser } from '../auth/current-user.decorator'
@@ -11,7 +12,10 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger'
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class TodosController {
-  constructor(private readonly todosService: TodosService) {}
+  constructor(
+    private readonly todosService: TodosService,
+    private readonly todoSyncService: TodoSyncService,
+  ) {}
 
   @Post('sync')
   @ApiOperation({ summary: '同步并合并待办事项 (离线优先)' })
@@ -20,7 +24,7 @@ export class TodosController {
     @Body() syncDto: SyncMergeDto,
     @Headers('X-Socket-ID') socketId?: string,
   ) {
-    return this.todosService.sync(user.id, syncDto, socketId)
+    return this.todoSyncService.sync(user.id, syncDto, socketId)
   }
 
   @Get()
