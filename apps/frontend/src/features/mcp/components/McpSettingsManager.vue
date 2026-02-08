@@ -63,26 +63,32 @@ async function handleViewTools(server: McpServerResponse) {
 </script>
 
 <template>
-  <div class="flex flex-col h-[500px]">
-    <div class="px-6 py-4 flex items-center justify-between border-b border-border/40">
-      <div>
-        <h3 class="text-sm font-bold text-foreground/90">{{ t('ai.mcp') }}</h3>
-        <p class="text-[10px] text-muted-foreground">{{ t('ai.mcpPlaceholder') }}</p>
+  <div class="flex flex-col h-[520px]">
+    <div
+      class="px-6 py-5 flex items-center justify-between border-b border-zinc-100/80 dark:border-zinc-800/50"
+    >
+      <div class="space-y-0.5">
+        <h3 class="text-sm font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
+          {{ t('ai.mcp') }}
+        </h3>
+        <p class="text-[10px] text-zinc-500 font-medium opacity-80 leading-none">
+          {{ t('ai.mcpPlaceholder') }}
+        </p>
       </div>
       <Button
         v-if="!isEditing && store.servers.length > 0"
         size="sm"
-        class="h-8 gap-1.5 rounded-lg px-3"
+        class="h-8 gap-2 rounded-full px-4 shadow-sm hover:scale-105 active:scale-95 transition-all"
         @click="handleEdit()"
       >
-        <Plus :size="14" />
-        {{ t('common.add') }}
+        <Plus :size="14" stroke-width="3" />
+        <span class="text-xs font-bold">{{ t('common.add') }}</span>
       </Button>
       <Button
-        v-else
+        v-else-if="isEditing"
         size="sm"
         variant="ghost"
-        class="h-8 rounded-lg px-3"
+        class="h-8 rounded-full px-4 text-xs font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800"
         @click="isEditing = false"
       >
         {{ t('common.back') }}

@@ -45,6 +45,7 @@ export interface ChatMessage {
   content: string
   tool_calls?: ToolCall[]
   tool_call_id?: string // 用于 role: 'tool'
+  toolName?: string // 用于 role: 'tool'，显示工具名称
   images?: string[] // 图片 URL 或 base64
   documents?: { name: string; content: string }[] // 解析后的文档内容
   thinkingContent?: string

@@ -108,13 +108,18 @@ export class McpController {
     const allTools: McpToolResponse[] = []
 
     for (const server of enabledServers) {
-      if (this.clientService.isConnected(server.id)) {
-        try {
-          const tools = await this.clientService.listTools(server.id)
-          allTools.push(...tools)
-        } catch (error) {
-          this.logger.error(`Failed to get tools from ${server.id}:`, error)
+      try {
+        // 如果未连接，尝试连接 (Lazy connection)
+        if (!this.clientService.isConnected(server.id)) {
+          this.logger.log(`Connecting to enabled server ${server.id} during tool discovery`)
+          await this.clientService.connect(server.id, server.transport, server.config)
         }
+
+        const tools = await this.clientService.listTools(server.id)
+        // 注入 serverId 以便前端/模型识别工具归属
+        allTools.push(...tools.map((t) => ({ ...t, serverId: server.id })))
+      } catch (error) {
+        this.logger.error(`Failed to get tools from enabled server ${server.id}:`, error)
       }
     }
 

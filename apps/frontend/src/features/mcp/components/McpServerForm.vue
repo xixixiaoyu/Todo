@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { McpTransportType, type CreateMcpServerDto, type McpServerResponse } from '../api/mcp'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,6 +19,8 @@ const emit = defineEmits<{
   (e: 'submit', form: CreateMcpServerDto): void
   (e: 'cancel'): void
 }>()
+
+const { t } = useI18n()
 
 const form = reactive({
   name: '',
@@ -76,8 +79,16 @@ onMounted(() => {
 // 参数管理 (Args)
 const argInput = ref('')
 function addArg() {
-  if (argInput.value.trim()) {
-    form.config.args.push(argInput.value.trim())
+  const input = argInput.value.trim()
+  if (input) {
+    // 智能拆分：如果输入包含空格（且不在引号内），拆分为多个参数
+    // 这里采用简单稳妥的正则拆分，后续可增加复杂引号支持
+    const parts = input.split(/\s+/)
+    parts.forEach((part) => {
+      if (part && !form.config.args.includes(part)) {
+        form.config.args.push(part)
+      }
+    })
     argInput.value = ''
   }
 }
@@ -99,7 +110,41 @@ function removeEnv(key: string) {
   delete form.config.env[key]
 }
 
+// 智能解析命令
+function handleCommandBlur() {
+  const rawCommand = form.config.command.trim()
+  if (!rawCommand.includes(' ')) return
+
+  // 只有当 args 为空时，才尝试从 command 中提取
+  if (form.config.args.length === 0) {
+    const parts = rawCommand.split(/\s+/)
+    if (parts.length > 1) {
+      form.config.command = parts[0]
+      // 提取后同样进行去重处理
+      const newArgs = parts.slice(1)
+      newArgs.forEach((arg) => {
+        if (!form.config.args.includes(arg)) {
+          form.config.args.push(arg)
+        }
+      })
+    }
+  }
+}
+
 function handleSubmit() {
+  // 先触发一次命令解析，防止 blur 没触发
+  handleCommandBlur()
+
+  // 如果参数输入框还有内容，先自动添加
+  if (argInput.value.trim()) {
+    addArg()
+  }
+
+  // 如果环境变量还在输入中，也尝试添加
+  if (envKey.value.trim()) {
+    addEnv()
+  }
+
   const submitData: CreateMcpServerDto = {
     name: form.name,
     description: form.description,
@@ -138,7 +183,7 @@ function handleSubmit() {
     <CardHeader>
       <CardTitle class="text-2xl font-bold flex items-center gap-2">
         <Server class="w-6 h-6 text-primary" />
-        {{ server ? 'Edit MCP Server' : 'Add MCP Server' }}
+        {{ server ? t('ai.mcpEditServer') : t('ai.mcpCreateServer') }}
       </CardTitle>
     </CardHeader>
 
@@ -146,19 +191,24 @@ function handleSubmit() {
       <!-- 基础信息 -->
       <div class="grid gap-4">
         <div class="grid gap-2">
-          <label for="name" class="text-sm font-bold text-zinc-700 dark:text-zinc-300"
-            >Server Name</label
-          >
-          <Input id="name" v-model="form.name" placeholder="e.g. Local Filesystem" required />
+          <label for="name" class="text-sm font-bold text-zinc-700 dark:text-zinc-300">
+            {{ t('ai.mcpServerName') }}
+          </label>
+          <Input
+            id="name"
+            v-model="form.name"
+            :placeholder="t('ai.mcpServerNamePlaceholder')"
+            required
+          />
         </div>
         <div class="grid gap-2">
-          <label for="description" class="text-sm font-bold text-zinc-700 dark:text-zinc-300"
-            >Description</label
-          >
+          <label for="description" class="text-sm font-bold text-zinc-700 dark:text-zinc-300">
+            {{ t('ai.mcpDescription') }}
+          </label>
           <textarea
             id="description"
             v-model="form.description"
-            placeholder="What does this server do?"
+            :placeholder="t('ai.mcpDescriptionPlaceholder')"
             rows="2"
             class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
           ></textarea>
@@ -167,9 +217,9 @@ function handleSubmit() {
           <Checkbox
             id="enabled"
             :checked="form.enabled"
-            @update:checked="(val) => (form.enabled = val)"
+            @update:checked="(val: boolean) => (form.enabled = val)"
           />
-          <label for="enabled" class="text-sm font-medium">Enabled</label>
+          <label for="enabled" class="text-sm font-medium">{{ t('ai.mcpEnabled') }}</label>
         </div>
       </div>
 
@@ -178,7 +228,9 @@ function handleSubmit() {
       <!-- Transport 选择 -->
       <div class="grid gap-4" @click.stop>
         <div class="grid gap-2">
-          <label class="text-sm font-bold text-zinc-700 dark:text-zinc-300">Transport Type</label>
+          <label class="text-sm font-bold text-zinc-700 dark:text-zinc-300">{{
+            t('ai.mcpTransportType')
+          }}</label>
           <div class="grid grid-cols-2 gap-4">
             <button
               type="button"
@@ -197,7 +249,7 @@ function handleSubmit() {
                 "
               />
               <span class="font-bold">Stdio</span>
-              <span class="text-[10px] text-zinc-500">Local process via CLI</span>
+              <span class="text-[10px] text-zinc-500">{{ t('ai.mcpStdioDescription') }}</span>
             </button>
             <button
               type="button"
@@ -214,7 +266,7 @@ function handleSubmit() {
                 :class="form.transport === McpTransportType.HTTP ? 'text-primary' : 'text-zinc-400'"
               />
               <span class="font-bold">HTTP</span>
-              <span class="text-[10px] text-zinc-500">Remote API service</span>
+              <span class="text-[10px] text-zinc-500">{{ t('ai.mcpHttpDescription') }}</span>
             </button>
           </div>
         </div>
@@ -223,22 +275,30 @@ function handleSubmit() {
       <!-- Stdio 配置 -->
       <div v-if="form.transport === McpTransportType.STDIO" class="space-y-4">
         <div class="grid gap-2">
-          <label for="command" class="text-sm font-bold text-zinc-700 dark:text-zinc-300"
-            >Command</label
-          >
+          <label for="command" class="text-sm font-bold text-zinc-700 dark:text-zinc-300">
+            {{ t('ai.mcpCommand') }}
+          </label>
           <Input
             id="command"
             v-model="form.config.command"
-            placeholder="e.g. npx, node, python"
+            :placeholder="t('ai.mcpCommandPlaceholder')"
             required
+            @blur="handleCommandBlur"
           />
-          <p class="text-[10px] text-zinc-500">The executable command to start the server.</p>
+          <p class="text-[10px] text-zinc-500">
+            {{ t('ai.mcpCommandHint') }}
+            <span v-if="form.config.args.length === 0" class="ml-1 text-primary/70">
+              (可以直接输入带参数的完整命令，失焦后将自动拆分)
+            </span>
+          </p>
         </div>
 
         <div class="grid gap-2">
-          <label class="text-sm font-bold text-zinc-700 dark:text-zinc-300">Arguments</label>
+          <label class="text-sm font-bold text-zinc-700 dark:text-zinc-300">{{
+            t('ai.mcpArguments')
+          }}</label>
           <div class="flex gap-2">
-            <Input v-model="argInput" placeholder="Add an argument" @keyup.enter="addArg" />
+            <Input v-model="argInput" :placeholder="t('ai.mcpAddArgument')" @keyup.enter="addArg" />
             <Button type="button" size="icon" variant="outline" @click="addArg">
               <Plus class="w-4 h-4" />
             </Button>
@@ -259,9 +319,9 @@ function handleSubmit() {
         </div>
 
         <div class="grid gap-2">
-          <label class="text-sm font-bold text-zinc-700 dark:text-zinc-300"
-            >Environment Variables</label
-          >
+          <label class="text-sm font-bold text-zinc-700 dark:text-zinc-300">
+            {{ t('ai.mcpEnvVars') }}
+          </label>
           <div class="flex gap-2">
             <Input v-model="envKey" placeholder="KEY" class="w-1/3" />
             <Input v-model="envValue" placeholder="VALUE" class="w-2/3" />
@@ -293,41 +353,45 @@ function handleSubmit() {
       <!-- HTTP 配置 -->
       <div v-if="form.transport === McpTransportType.HTTP" class="space-y-4">
         <div class="grid gap-2">
-          <label for="url" class="text-sm font-bold text-zinc-700 dark:text-zinc-300"
-            >Server URL</label
-          >
+          <label for="url" class="text-sm font-bold text-zinc-700 dark:text-zinc-300">
+            {{ t('ai.mcpServerUrl') }}
+          </label>
           <Input
             id="url"
             v-model="form.config.url"
-            placeholder="https://api.example.com/mcp"
+            :placeholder="t('ai.mcpServerUrlPlaceholder')"
             required
           />
-          <p class="text-[10px] text-zinc-500">The endpoint URL of the remote MCP server.</p>
+          <p class="text-[10px] text-zinc-500">{{ t('ai.mcpServerUrlHint') }}</p>
         </div>
 
         <div class="grid gap-2">
-          <label class="text-sm font-bold text-zinc-700 dark:text-zinc-300">Authentication</label>
+          <label class="text-sm font-bold text-zinc-700 dark:text-zinc-300">{{
+            t('ai.mcpAuth')
+          }}</label>
           <div
             class="p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 space-y-4 bg-zinc-50/50 dark:bg-black/10"
           >
             <div class="flex items-center gap-4">
-              <span class="text-[10px] uppercase text-zinc-400 font-bold">Method</span>
+              <span class="text-[10px] uppercase text-zinc-400 font-bold">{{
+                t('ai.mcpAuthMethod')
+              }}</span>
               <div
                 class="flex gap-2 p-1 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800"
               >
                 <button
-                  v-for="t in ['bearer', 'api_key']"
-                  :key="t"
+                  v-for="t_auth in ['bearer', 'api_key'] as const"
+                  :key="t_auth"
                   type="button"
                   :class="[
                     'px-3 py-1 rounded-lg text-xs font-bold capitalize transition-all',
-                    form.config.auth.type === t
+                    form.config.auth.type === t_auth
                       ? 'bg-primary text-white shadow-sm'
                       : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800',
                   ]"
-                  @click="form.config.auth.type = t as any"
+                  @click="form.config.auth.type = t_auth"
                 >
-                  {{ t.replace('_', ' ') }}
+                  {{ t_auth.replace('_', ' ') }}
                 </button>
               </div>
             </div>
@@ -336,12 +400,14 @@ function handleSubmit() {
               v-if="form.config.auth.type === 'bearer'"
               class="grid gap-1.5 animate-in fade-in duration-300"
             >
-              <label for="token" class="text-[10px] font-bold text-zinc-400 uppercase">Token</label>
+              <label for="token" class="text-[10px] font-bold text-zinc-400 uppercase">
+                {{ t('ai.mcpAuthToken') }}
+              </label>
               <Input
                 id="token"
                 v-model="form.config.auth.token"
                 type="password"
-                placeholder="Paste your token here"
+                :placeholder="t('ai.mcpAuthTokenPlaceholder')"
               />
             </div>
 
@@ -350,20 +416,20 @@ function handleSubmit() {
               class="grid gap-3 animate-in fade-in duration-300"
             >
               <div class="grid gap-1.5">
-                <label for="apiKey" class="text-[10px] font-bold text-zinc-400 uppercase"
-                  >API Key</label
-                >
+                <label for="apiKey" class="text-[10px] font-bold text-zinc-400 uppercase">
+                  {{ t('ai.mcpAuthApiKey') }}
+                </label>
                 <Input
                   id="apiKey"
                   v-model="form.config.auth.apiKey"
                   type="password"
-                  placeholder="Your API Key"
+                  :placeholder="t('ai.mcpAuthApiKeyPlaceholder')"
                 />
               </div>
               <div class="grid gap-1.5">
-                <label for="apiKeyHeader" class="text-[10px] font-bold text-zinc-400 uppercase"
-                  >Header Name</label
-                >
+                <label for="apiKeyHeader" class="text-[10px] font-bold text-zinc-400 uppercase">
+                  {{ t('ai.mcpAuthHeader') }}
+                </label>
                 <Input
                   id="apiKeyHeader"
                   v-model="form.config.auth.apiKeyHeader"
@@ -380,7 +446,7 @@ function handleSubmit() {
       class="flex justify-between gap-4 pt-4 border-t border-zinc-100 dark:border-zinc-800"
     >
       <Button variant="ghost" :disabled="loading" class="rounded-xl" @click="emit('cancel')">
-        Cancel
+        {{ t('common.cancel') }}
       </Button>
       <Button
         :disabled="loading"
@@ -388,7 +454,7 @@ function handleSubmit() {
         @click="handleSubmit"
       >
         <Loader2 v-if="loading" class="w-4 h-4 mr-2 animate-spin" />
-        {{ server ? 'Update Server' : 'Create Server' }}
+        {{ server ? t('ai.mcpUpdateServer') : t('ai.mcpCreateServer') }}
       </Button>
     </CardFooter>
   </Card>

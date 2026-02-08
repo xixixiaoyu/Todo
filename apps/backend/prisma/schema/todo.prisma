@@ -7,12 +7,12 @@ model Todo {
   parentId      String?
   userId        Int
   version       Int       @default(0)
-  pomodoroCount Int       @default(0)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   completedAt   DateTime?
   deletedAt     DateTime?
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pomodoroCount Int       @default(0)
+  user          User      @relation(fields: [userId], references: [id])
 
   @@index([userId, updatedAt])
   @@index([deletedAt])

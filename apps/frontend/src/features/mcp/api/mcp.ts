@@ -58,6 +58,7 @@ export const mcpApi = {
   async getTools(id: string): Promise<McpToolResponse[]> {
     const { data } = await httpClient.get<ApiResponse<McpToolResponse[]>>(
       `/mcp/servers/${id}/tools`,
+      { timeout: 30000 }, // 可能会触发连接，设置 30s 超时
     )
     return data.data
   },
@@ -76,6 +77,7 @@ export const mcpApi = {
         name: toolName,
         arguments: args,
       },
+      { timeout: 60000 }, // 工具执行可能较慢，设置 60s 超时
     )
     return data.data
   },
@@ -84,7 +86,7 @@ export const mcpApi = {
    * 连接到 MCP Server
    */
   async connect(id: string): Promise<void> {
-    await httpClient.post(`/mcp/servers/${id}/connect`)
+    await httpClient.post(`/mcp/servers/${id}/connect`, {}, { timeout: 300000 }) // 增加到 5 分钟，应对可能的重型下载或冷启动
   },
 
   /**

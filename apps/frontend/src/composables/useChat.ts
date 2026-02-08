@@ -233,14 +233,30 @@ export function useChat(options: AIRequestOptions = {}) {
     images?: string[],
     documents?: { name: string; content: string }[],
     isRetry = false,
+    iteration = 0,
   ): Promise<void> {
+    const MAX_ITERATIONS = 5 // 最大工具调用迭代次数
+
+    // 检查是否是工具调用结果的迭代
+    const isToolIteration =
+      isRetry &&
+      chatHistory.value.length > 0 &&
+      chatHistory.value[chatHistory.value.length - 1].role === 'tool'
+
     if (
       (!content.trim() &&
         (!images || images.length === 0) &&
-        (!documents || documents.length === 0)) ||
-      isGenerating.value
+        (!documents || documents.length === 0) &&
+        !isToolIteration) ||
+      (isGenerating.value && !isToolIteration)
     )
       return
+
+    if (iteration >= MAX_ITERATIONS) {
+      console.warn('Max iterations reached, stopping tool loop.')
+      isGenerating.value = false
+      return
+    }
 
     const aiConfig = getAIConfig()
 
@@ -436,15 +452,26 @@ export function useChat(options: AIRequestOptions = {}) {
         if (toolCalls.length > 0) {
           isGenerating.value = true // 保持生成状态
 
-          // 创建 Assistant 消息包含 tool_calls
-          const assistantMessage: ChatMessage = {
-            id: generateId(),
-            role: 'assistant',
-            content: currentAIResponse.value, // 可能为空
-            tool_calls: toolCalls,
-            createdAt: new Date(),
+          // 检查是否已经由 handleChunk 添加了助手消息（包含正文内容）
+          const lastMsg = chatHistory.value[chatHistory.value.length - 1]
+          const currentId = currentAssistantMessageId.value
+
+          if (lastMsg && lastMsg.role === 'assistant' && lastMsg.id === currentId) {
+            // 更新现有消息，注入工具调用
+            lastMsg.tool_calls = toolCalls
+            // 触发响应式更新
+            chatHistory.value = [...chatHistory.value]
+          } else {
+            // 创建新的 Assistant 消息（通常发生在模型只有工具调用而无正文回复时）
+            const assistantMessage: ChatMessage = {
+              id: currentId || generateId(),
+              role: 'assistant',
+              content: currentAIResponse.value,
+              tool_calls: toolCalls,
+              createdAt: new Date(),
+            }
+            chatHistory.value = [...chatHistory.value, assistantMessage]
           }
-          chatHistory.value = [...chatHistory.value, assistantMessage]
 
           // 执行每一个工具调用
           for (const call of toolCalls) {
@@ -456,11 +483,24 @@ export function useChat(options: AIRequestOptions = {}) {
             if (mcpTool && mcpTool.serverId) {
               try {
                 const result = await mcpApi.callTool(mcpTool.serverId, toolName, toolArgs)
+
+                // 针对大数据量的结果进行处理（上下文保护）
+                let contentStr = JSON.stringify(result.content)
+                const MAX_TOOL_CONTENT_LENGTH = 15000 // 约 5k-10k tokens
+
+                if (contentStr.length > MAX_TOOL_CONTENT_LENGTH) {
+                  console.warn(`Tool result too large (${contentStr.length} chars), truncating...`)
+                  contentStr =
+                    contentStr.substring(0, MAX_TOOL_CONTENT_LENGTH) +
+                    '\n\n... (Result truncated due to length) ...'
+                }
+
                 const toolResult: ChatMessage = {
                   id: generateId(),
                   role: 'tool',
                   tool_call_id: call.id,
-                  content: JSON.stringify(result.content),
+                  toolName,
+                  content: contentStr,
                   createdAt: new Date(),
                 }
                 chatHistory.value = [...chatHistory.value, toolResult]
@@ -469,6 +509,7 @@ export function useChat(options: AIRequestOptions = {}) {
                   id: generateId(),
                   role: 'tool',
                   tool_call_id: call.id,
+                  toolName,
                   content: `Error: ${error instanceof Error ? error.message : String(error)}`,
                   createdAt: new Date(),
                 }
@@ -480,6 +521,7 @@ export function useChat(options: AIRequestOptions = {}) {
                 id: generateId(),
                 role: 'tool',
                 tool_call_id: call.id,
+                toolName,
                 content: `Error: Tool ${toolName} not found or server not identified.`,
                 createdAt: new Date(),
               }
@@ -488,9 +530,7 @@ export function useChat(options: AIRequestOptions = {}) {
           }
 
           // 关键：递归/循环调用 sendMessage 以获取 AI 对工具结果的响应
-          // 注意：为了避免无限循环，这里通常应该有一个最大迭代次数
-          // 或是直接再次调用 getAIStreamResponse
-          return sendMessage('', undefined, undefined, true)
+          return sendMessage('', undefined, undefined, true, iteration + 1)
         }
       }
     } catch (err) {

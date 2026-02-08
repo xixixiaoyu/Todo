@@ -8,6 +8,7 @@ import { useMarkdown } from '@/composables/useMarkdown'
 import ImageLoadingState from './ImageLoadingState.vue'
 import ChatMessageDiscussion from './ChatMessageDiscussion.vue'
 import ChatMessageThinking from './ChatMessageThinking.vue'
+import ChatMessageTool from './ChatMessageTool.vue'
 import ChatMessageEditor from './ChatMessageEditor.vue'
 import ChatMessageActions from './ChatMessageActions.vue'
 import ChatMessageImagePreview from './ChatMessageImagePreview.vue'
@@ -18,6 +19,8 @@ import { useEscClose } from '@/composables/useEscClose'
 const props = defineProps<{
   message: ChatMessage
   isLast?: boolean
+  isPrevTool?: boolean
+  isNextTool?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -318,10 +321,25 @@ watch(isStreaming, async (streaming) => {
 <template>
   <div
     ref="messageRef"
-    :class="['flex', isMobile ? 'py-2' : 'py-4', isUser ? 'justify-end' : 'justify-start']"
+    :class="[
+      'flex',
+      isMobile
+        ? message.role === 'tool'
+          ? 'py-0'
+          : 'py-2'
+        : message.role === 'tool'
+          ? 'py-0'
+          : 'py-3',
+      isUser ? 'justify-end' : 'justify-start',
+    ]"
   >
     <!-- 消息内容 -->
-    <div :class="[isMobile ? 'max-w-[92%]' : 'max-w-[85%]', 'space-y-2']">
+    <div
+      :class="[
+        isMobile ? 'max-w-[92%]' : 'max-w-[85%]',
+        message.role === 'tool' ? 'space-y-0' : 'space-y-2',
+      ]"
+    >
       <!-- 多模型讨论过程 -->
       <ChatMessageDiscussion v-if="hasDiscussion" :steps="message.discussionSteps" />
 
@@ -383,11 +401,16 @@ watch(isStreaming, async (streaming) => {
           <!-- 正文气泡：用户消息或已有内容的 AI 消息 -->
           <div
             v-else-if="isUser || hasContent"
-            class="selectable relative select-text break-words rounded-[1.25rem] px-4 py-3 transition-all duration-300"
+            class="selectable relative select-text break-words transition-all duration-300"
             :class="[
+              isUser || message.role !== 'tool'
+                ? 'rounded-[1.25rem] px-4 py-3'
+                : 'rounded-none p-0',
               isUser
                 ? 'bg-gradient-to-br from-primary/95 via-primary to-primary/90 text-primary-foreground shadow-[0_4px_12px_rgba(var(--primary),0.15)] hover:shadow-[0_6px_16px_rgba(var(--primary),0.2)]'
-                : 'border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] text-foreground shadow-sm hover:border-primary/30 hover:shadow-md',
+                : message.role === 'tool'
+                  ? 'border-none bg-transparent shadow-none'
+                  : 'border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] text-foreground shadow-sm hover:border-primary/30 hover:shadow-md',
               isEditing
                 ? 'w-full !bg-card !text-foreground ring-2 ring-primary/20 border-primary'
                 : '',
@@ -472,25 +495,35 @@ watch(isStreaming, async (streaming) => {
 
               <!-- AI 消息内容 -->
               <template v-else>
-                <!-- AI 消息：Markdown 渲染 -->
-                <div
-                  v-if="renderedHtml"
-                  class="markdown-content selectable relative break-words leading-relaxed select-text"
-                >
-                  <!-- eslint-disable-next-line vue/no-v-html -->
-                  <div v-html="renderedHtml" />
-                </div>
+                <!-- MCP Tool Result -->
+                <ChatMessageTool
+                  v-if="message.role === 'tool'"
+                  :message="message"
+                  :is-prev-tool="isPrevTool"
+                  :is-next-tool="isNextTool"
+                />
 
-                <!-- AI 消息：兜底显示（渲染完成前或渲染失败时） -->
-                <div
-                  v-else-if="hasContent"
-                  :class="[
-                    'relative selectable select-text break-words leading-relaxed',
-                    isMobile ? 'text-[14px]' : 'text-[15px]',
-                  ]"
-                >
-                  {{ message.content }}
-                </div>
+                <template v-else>
+                  <!-- AI 消息：Markdown 渲染 -->
+                  <div
+                    v-if="renderedHtml"
+                    class="markdown-content selectable relative break-words leading-relaxed select-text"
+                  >
+                    <!-- eslint-disable-next-line vue/no-v-html -->
+                    <div v-html="renderedHtml" />
+                  </div>
+
+                  <!-- AI 消息：兜底显示（渲染完成前或渲染失败时） -->
+                  <div
+                    v-else-if="hasContent"
+                    :class="[
+                      'relative selectable select-text break-words leading-relaxed',
+                      isMobile ? 'text-[14px]' : 'text-[15px]',
+                    ]"
+                  >
+                    {{ message.content }}
+                  </div>
+                </template>
 
                 <!-- AI 建议的思维导图预览 -->
                 <ChatVisualizerPreview
@@ -503,7 +536,7 @@ watch(isStreaming, async (streaming) => {
 
               <!-- 操作按钮（AI 消息内部） -->
               <ChatMessageActions
-                v-if="!isUser && !isStreaming && hasContent"
+                v-if="!isUser && !isStreaming && hasContent && message.role !== 'tool'"
                 :content="message.content"
                 @regenerate="emit('regenerate', message.id)"
               />

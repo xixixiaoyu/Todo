@@ -19,6 +19,10 @@ export const useMcpStore = defineStore('mcp', () => {
 
   // 活跃连接状态 (serverId -> isConnected)
   const connectionStates = ref<Record<string, boolean>>({})
+  // 正在连接状态 (serverId -> isConnecting)
+  const connectingStates = ref<Record<string, boolean>>({})
+  // 错误信息 (serverId -> errorMessage)
+  const serverErrors = ref<Record<string, string | null>>({})
 
   /**
    * 加载所有 MCP 服务器配置
@@ -30,12 +34,21 @@ export const useMcpStore = defineStore('mcp', () => {
       const data = await mcpApi.getServers()
       servers.value = Array.isArray(data) ? data : []
 
-      // 初始化连接状态 (假设初始都未连接，或者后端有状态接口)
-      // 这里暂时简单处理
+      // 初始化连接状态
       if (Array.isArray(data)) {
         data.forEach((s) => {
           if (connectionStates.value[s.id] === undefined) {
             connectionStates.value[s.id] = false
+          }
+          if (connectingStates.value[s.id] === undefined) {
+            connectingStates.value[s.id] = false
+          }
+
+          // 如果服务器是启用的但未连接，尝试自动连接
+          if (s.enabled && !connectionStates.value[s.id] && !connectingStates.value[s.id]) {
+            connectServer(s.id).catch((err) => {
+              console.error(`Auto-connect failed for ${s.name}:`, err)
+            })
           }
         })
       }
@@ -56,6 +69,15 @@ export const useMcpStore = defineStore('mcp', () => {
       const newServer = await mcpApi.createServer(dto)
       servers.value.unshift(newServer)
       connectionStates.value[newServer.id] = false
+      connectingStates.value[newServer.id] = false
+
+      // 如果创建时就是启用的，尝试连接
+      if (newServer.enabled) {
+        connectServer(newServer.id).catch((err) => {
+          console.error('Initial connection failed:', err)
+        })
+      }
+
       return newServer
     } catch (err: unknown) {
       error.value = err instanceof Error ? err.message : String(err)
@@ -106,12 +128,18 @@ export const useMcpStore = defineStore('mcp', () => {
    * 连接到 MCP 服务器
    */
   async function connectServer(id: string) {
+    connectingStates.value[id] = true
+    serverErrors.value[id] = null
     try {
       await mcpApi.connect(id)
       connectionStates.value[id] = true
     } catch (err: unknown) {
       connectionStates.value[id] = false
+      const msg = err instanceof Error ? err.message : String(err)
+      serverErrors.value[id] = msg
       throw err
+    } finally {
+      connectingStates.value[id] = false
     }
   }
 
@@ -135,11 +163,38 @@ export const useMcpStore = defineStore('mcp', () => {
     return await mcpApi.getTools(id)
   }
 
+  /**
+   * 切换服务器激活状态 (包含 Enabled 持久化 和 Connect 运行时状态)
+   */
+  async function toggleActive(id: string) {
+    const server = servers.value.find((s) => s.id === id)
+    if (!server) return
+
+    const newEnabled = !server.enabled
+
+    // 1. 先更新数据库持久化状态
+    try {
+      await updateServer(id, { enabled: newEnabled })
+    } catch (err) {
+      console.error('Failed to update enabled status:', err)
+      return // 如果更新失败，不进行连接操作
+    }
+
+    // 2. 根据启用状态自动连接或断开
+    if (newEnabled) {
+      await connectServer(id)
+    } else {
+      await disconnectServer(id)
+    }
+  }
+
   return {
     servers,
     isLoading,
     error,
     connectionStates,
+    connectingStates,
+    serverErrors,
     fetchServers,
     createServer,
     updateServer,
@@ -147,5 +202,6 @@ export const useMcpStore = defineStore('mcp', () => {
     connectServer,
     disconnectServer,
     getTools,
+    toggleActive,
   }
 })

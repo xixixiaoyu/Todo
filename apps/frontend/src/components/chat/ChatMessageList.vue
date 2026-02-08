@@ -161,16 +161,14 @@ defineExpose({
         <div v-else :class="[isMobile ? 'py-2' : 'pt-6 pb-4']">
           <Transition name="session-fade" mode="out-in">
             <div :key="currentSessionId || 'empty'">
-              <TransitionGroup
-                name="message-list"
-                tag="div"
-                :class="[isMobile ? 'space-y-3' : 'space-y-4']"
-              >
+              <TransitionGroup name="message-list" tag="div" class="flex flex-col">
                 <ChatMessage
                   v-for="(msg, index) in messages"
                   :key="msg.id"
                   :message="msg"
                   :is-last="index === messages.length - 1"
+                  :is-prev-tool="index > 0 && messages[index - 1].role === 'tool'"
+                  :is-next-tool="index < messages.length - 1 && messages[index + 1].role === 'tool'"
                   @regenerate="(id) => emit('regenerate', id)"
                   @edit="(content) => emit('edit', msg.id, content)"
                 />
