@@ -55,7 +55,7 @@ export function useSocket(): UseSocketReturn {
 
       // 如果是因为认证问题（或者是断连后 token 可能过期），尝试刷新 token 并重连
       if (authStore.isAuthenticated) {
-        console.log('[Socket] Attempting to refresh token and reconnect...')
+        console.warn('[Socket] Attempting to refresh token and reconnect...')
         const refreshed = await authStore.refreshAccessToken()
         if (refreshed && socketInstance) {
           socketInstance.auth = { token: authStore.token }

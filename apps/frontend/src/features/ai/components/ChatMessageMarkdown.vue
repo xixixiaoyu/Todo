@@ -239,6 +239,11 @@ watch(
     }
   },
 )
+
+defineExpose({
+  initCodeInteractions,
+  injectInteractions,
+})
 </script>
 
 <template>

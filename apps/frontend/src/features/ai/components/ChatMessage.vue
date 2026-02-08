@@ -84,6 +84,14 @@ const hasDiscussion = computed(
 const isImageGenerating = computed(() => {
   return props.message.role === 'assistant' && props.message.content === t('ai.generatingImage')
 })
+
+const markdownRef = ref<InstanceType<typeof ChatMessageMarkdown>>()
+
+defineExpose({
+  initCodeInteractions: (container: HTMLElement) =>
+    markdownRef.value?.initCodeInteractions(container),
+  injectInteractions: () => markdownRef.value?.injectInteractions(),
+})
 </script>
 
 <template>
@@ -187,6 +195,7 @@ const isImageGenerating = computed(() => {
                 <template v-else>
                   <!-- AI 消息：Markdown 渲染 -->
                   <ChatMessageMarkdown
+                    ref="markdownRef"
                     :content="message.content"
                     :is-streaming="isStreaming"
                     :is-mobile="isMobile"
