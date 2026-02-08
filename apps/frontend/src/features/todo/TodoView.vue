@@ -13,7 +13,7 @@ import TodoVisualizer from './components/TodoVisualizer.vue'
 import TodoStatistics from './components/TodoStatistics.vue'
 import PomodoroTimer from './components/PomodoroTimer.vue'
 import Fireworks from '@/components/Fireworks.vue'
-import AiAssistantDrawer from '@/components/AiAssistantDrawer.vue'
+import AiAssistantDrawer from '@/features/ai/components/AiAssistantDrawer.vue'
 import { Card, CardContent } from '@/components/ui/card'
 
 const todoStore = useTodoStore()

@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useTodoStore } from '@/features/todo/stores/todo'
-import * as aiService from '@/services/ai'
+import * as aiService from '@/features/ai/services'
 
-vi.mock('@/services/ai', () => ({
+vi.mock('@/features/ai/services', () => ({
   getAIStaticResponse: vi.fn(),
 }))
 

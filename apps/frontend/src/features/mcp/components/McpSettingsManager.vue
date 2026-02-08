@@ -7,7 +7,7 @@ import McpServerForm from './McpServerForm.vue'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Wrench, X, Terminal, Loader2, Plus, Puzzle } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
-import { useAIConfig } from '@/composables/useAIConfig'
+import { useAIConfig } from '@/features/ai/composables/useAIConfig'
 
 const { t } = useI18n()
 const store = useMcpStore()

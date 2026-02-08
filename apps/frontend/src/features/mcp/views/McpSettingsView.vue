@@ -20,7 +20,7 @@ import {
   Terminal,
 } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
-import { useAIConfig } from '@/composables/useAIConfig'
+import { useAIConfig } from '@/features/ai/composables/useAIConfig'
 
 const router = useRouter()
 const store = useMcpStore()

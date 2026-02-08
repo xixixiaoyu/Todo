@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { sessionToMarkdown } from '@/lib/export'
-import type { ChatSession } from '@/composables/useChatHistory'
+import type { ChatSession } from '@/features/ai/composables/useChatHistory'
 import dayjs from '@/lib/dayjs'
 
 describe('sessionToMarkdown', () => {

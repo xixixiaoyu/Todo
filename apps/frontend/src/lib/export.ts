@@ -1,4 +1,4 @@
-import type { ChatSession } from '@/composables/useChatHistory'
+import type { ChatSession } from '@/features/ai/composables/useChatHistory'
 import dayjs from '@/lib/dayjs'
 
 /**

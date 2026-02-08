@@ -1,5 +1,5 @@
 import type { ComputedRef, Ref } from 'vue'
-import { getAIStaticResponse } from '@/services/ai'
+import { getAIStaticResponse } from '@/features/ai/services'
 import type { FilterType, Todo, ViewMode } from './todo.types'
 
 export function createTodoActions(deps: {

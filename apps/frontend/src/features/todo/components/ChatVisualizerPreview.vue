@@ -7,7 +7,7 @@ import type { ProposedTodoChange } from '@/features/todo/stores/todo'
 import { useTodoStore } from '@/features/todo/stores/todo'
 import { useI18n } from 'vue-i18n'
 import { Button } from '@/components/ui/button'
-import { useChatHistory } from '@/composables/useChatHistory'
+import { useChatHistory } from '@/features/ai/composables/useChatHistory'
 
 const props = defineProps<{
   actions: ProposedTodoChange[]
