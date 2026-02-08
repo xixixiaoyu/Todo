@@ -1,5 +1,5 @@
 import { Injectable, Logger, NotFoundException, ForbiddenException, Inject } from '@nestjs/common'
-import { PrismaService } from '@/prisma/prisma.service'
+import { PrismaService } from '../prisma/prisma.service'
 import type { CreateMcpServerDto, UpdateMcpServerDto, McpServerResponse } from './mcp.dto'
 
 /**
