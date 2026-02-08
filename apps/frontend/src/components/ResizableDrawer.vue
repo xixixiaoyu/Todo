@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted, type CSSProperties, toRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useEscClose } from '@/composables/useEscClose'
+import { useResizable } from '@/composables/useResizable'
 import { useWindowSize } from '@vueuse/core'
 
 interface Props {
@@ -32,11 +33,6 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-const drawerWidth = ref(props.defaultWidth)
-const isResizing = ref(false)
-const startX = ref(0)
-const startWidth = ref(0)
-const isHovering = ref(false)
 const { width: windowWidth } = useWindowSize()
 
 // 移动端检测
@@ -46,6 +42,21 @@ const resolvedMaxWidth = computed(() => {
   const windowLimit = windowWidth.value - props.rightGap
   return props.maxWidth ? Math.min(props.maxWidth, windowLimit) : windowLimit
 })
+
+const {
+  width: drawerWidth,
+  isResizing,
+  startResize,
+} = useResizable({
+  initialWidth: props.defaultWidth,
+  minWidth: props.minWidth,
+  maxWidth: () => resolvedMaxWidth.value,
+  onResizeEnd: (newWidth) => {
+    localStorage.setItem(props.storageKey, String(newWidth))
+  },
+})
+
+const isHovering = ref(false)
 
 function clampWidth(width: number) {
   return Math.max(props.minWidth, Math.min(resolvedMaxWidth.value, width))
@@ -62,10 +73,6 @@ onMounted(() => {
   }
 })
 
-watch(drawerWidth, (newWidth) => {
-  localStorage.setItem(props.storageKey, String(newWidth))
-})
-
 const drawerStyle = computed(() => ({
   width: props.isFullscreen ? '100%' : isMobile.value ? '100%' : `${drawerWidth.value}px`,
 }))
@@ -74,30 +81,6 @@ const overlayStyle = computed<CSSProperties>(() => ({
   opacity: props.modelValue ? '1' : '0',
   pointerEvents: props.modelValue ? 'auto' : 'none',
 }))
-
-function startResize(e: MouseEvent) {
-  e.preventDefault()
-  isResizing.value = true
-  startX.value = e.clientX
-  startWidth.value = drawerWidth.value
-  document.body.style.cursor = 'ew-resize'
-  document.body.style.userSelect = 'none'
-  document.addEventListener('mousemove', onResize)
-  document.addEventListener('mouseup', stopResize)
-}
-
-function onResize(e: MouseEvent) {
-  if (!isResizing.value) return
-  drawerWidth.value = clampWidth(startWidth.value + e.clientX - startX.value)
-}
-
-function stopResize() {
-  isResizing.value = false
-  document.body.style.cursor = ''
-  document.body.style.userSelect = ''
-  document.removeEventListener('mousemove', onResize)
-  document.removeEventListener('mouseup', stopResize)
-}
 
 function closeDrawer() {
   emit('update:modelValue', false)

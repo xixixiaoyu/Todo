@@ -18,6 +18,7 @@ import { useFileParsing } from '@/composables/useFileParsing'
 import { useChatHistory } from '@/features/ai/composables/useChatHistory'
 import { useTodoStore } from '@/features/todo/stores/todo'
 import { useI18n } from 'vue-i18n'
+import { useResizable } from '@/composables/useResizable'
 import { useEscClose } from '@/composables/useEscClose'
 
 const { t } = useI18n()
@@ -198,42 +199,22 @@ const lastActiveTab = ref<'settings' | 'presets' | 'memory' | 'mcp'>('settings')
 
 // 历史记录面板状态
 const showHistory = ref(false)
-const historyWidth = ref(320)
-const isResizingHistory = ref(false)
-const startHistoryX = ref(0)
-const startHistoryWidth = ref(0)
 const { width: windowWidth } = useWindowSize()
-
 const isMobile = computed(() => windowWidth.value < 640)
 
-const onHistoryResize = (e: MouseEvent) => {
-  if (!isResizingHistory.value || isMobile.value) return
-  const deltaX = e.clientX - startHistoryX.value
-  const newWidth = startHistoryWidth.value + deltaX
-  // 限制最小宽度 240px，最大宽度不超过 AI 助手抽屉的 80%
-  const containerWidth =
-    (assistantInputRef.value?.$el.closest('.drawer') as HTMLElement)?.offsetWidth || 400
-  historyWidth.value = Math.max(240, Math.min(newWidth, containerWidth * 0.8))
-}
-
-const stopHistoryResize = () => {
-  isResizingHistory.value = false
-  document.body.style.cursor = ''
-  document.body.style.userSelect = ''
-  window.removeEventListener('mousemove', onHistoryResize)
-  window.removeEventListener('mouseup', stopHistoryResize)
-}
-
-const startHistoryResize = (e: MouseEvent) => {
-  e.preventDefault()
-  isResizingHistory.value = true
-  startHistoryX.value = e.clientX
-  startHistoryWidth.value = historyWidth.value
-  document.body.style.cursor = 'ew-resize'
-  document.body.style.userSelect = 'none'
-  window.addEventListener('mousemove', onHistoryResize)
-  window.addEventListener('mouseup', stopHistoryResize)
-}
+const {
+  width: historyWidth,
+  isResizing: isResizingHistory,
+  startResize: startHistoryResize,
+} = useResizable({
+  initialWidth: 320,
+  minWidth: 240,
+  maxWidth: () => {
+    const containerWidth =
+      (assistantInputRef.value?.$el.closest('.drawer') as HTMLElement)?.offsetWidth || 400
+    return containerWidth * 0.8
+  },
+})
 
 // 快捷操作状态
 const showPresetDropdown = ref(false)

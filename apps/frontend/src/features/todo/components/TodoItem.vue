@@ -21,7 +21,7 @@ import {
 import { ref, computed, watch, nextTick, useId } from 'vue'
 import draggable from 'vuedraggable'
 import { onClickOutside } from '@vueuse/core'
-import { Haptics, ImpactStyle } from '@capacitor/haptics'
+import { useHaptics, ImpactStyle } from '@/composables/useHaptics'
 import { useTodoStore, type Todo } from '../stores/todo'
 import { usePomodoroStore } from '../stores/pomodoro'
 import { useIsMobile } from '@/composables/useWindowSize'
@@ -186,28 +186,13 @@ async function submitAddChild() {
   }
 }
 
+const { hapticImpact, hapticSelectionStart } = useHaptics()
+
 function triggerFeedback() {
   showTooltip.value = true
   setTimeout(() => {
     showTooltip.value = false
   }, 2000)
-}
-
-// 触觉反馈
-const hapticImpact = async (style: ImpactStyle = ImpactStyle.Light) => {
-  try {
-    await Haptics.impact({ style })
-  } catch {
-    // 忽略非移动端环境错误
-  }
-}
-
-const hapticSelectionStart = async () => {
-  try {
-    await Haptics.selectionStart()
-  } catch {
-    // Silence error
-  }
 }
 
 async function handleSaveEdit() {
