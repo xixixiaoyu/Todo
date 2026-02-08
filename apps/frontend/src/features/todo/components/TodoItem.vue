@@ -153,11 +153,11 @@ watch(
 </script>
 
 <template>
-  <div class="flex flex-col gap-1.5">
+  <div class="flex flex-col gap-2">
     <div
-      class="group relative flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-2.5 transition-all duration-200"
+      class="group relative flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-all duration-200 hover:shadow-md hover:shadow-black/5"
       :class="[
-        { 'opacity-90 scale-[0.98] bg-muted/30': level && level > 0 },
+        { 'opacity-90 scale-[0.98] bg-muted/30 py-2': level && level > 0 },
         { 'border-primary/30 bg-primary/[0.03] shadow-sm shadow-primary/5': todo.isPinned },
         { 'border-success/40 bg-success/[0.04] ring-1 ring-success/20': todo.isProposed },
         {
@@ -250,7 +250,7 @@ watch(
     <!-- Subtasks List (Recursive) -->
     <div
       v-if="isExpanded && hasChildren"
-      class="flex flex-col gap-1.5 ml-4 md:ml-6 border-l-2 border-primary/5 pl-4 md:pl-6"
+      class="flex flex-col gap-2 ml-4 md:ml-6 border-l-2 border-primary/5 pl-4 md:pl-6"
     >
       <draggable
         v-model="dragChildren"

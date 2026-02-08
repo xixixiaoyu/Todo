@@ -141,7 +141,7 @@ const displayTodos = computed(() => {
           ghost-class="opacity-50"
           chosen-class="scale-[1.02]"
           drag-class="rotate-1"
-          class="space-y-2 pb-6"
+          class="space-y-3 pb-6"
           :animation="0"
           :disabled="!!searchQuery"
         >
