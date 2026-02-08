@@ -6,6 +6,7 @@ import {
   type UpdateMcpServerDto,
   type McpToolResponse,
   type ToolCallResult,
+  type ApiResponse,
 } from '@my-app/shared'
 
 /**
@@ -16,32 +17,32 @@ export const mcpApi = {
    * 获取所有 MCP Server 配置
    */
   async getServers(): Promise<McpServerResponse[]> {
-    const { data } = await httpClient.get<McpServerResponse[]>('/mcp/servers')
-    return data
+    const { data } = await httpClient.get<ApiResponse<McpServerResponse[]>>('/mcp/servers')
+    return data.data
   },
 
   /**
    * 获取单个 MCP Server 配置
    */
   async getServer(id: string): Promise<McpServerResponse> {
-    const { data } = await httpClient.get<McpServerResponse>(`/mcp/servers/${id}`)
-    return data
+    const { data } = await httpClient.get<ApiResponse<McpServerResponse>>(`/mcp/servers/${id}`)
+    return data.data
   },
 
   /**
    * 创建 MCP Server 配置
    */
   async createServer(dto: CreateMcpServerDto): Promise<McpServerResponse> {
-    const { data } = await httpClient.post<McpServerResponse>('/mcp/servers', dto)
-    return data
+    const { data } = await httpClient.post<ApiResponse<McpServerResponse>>('/mcp/servers', dto)
+    return data.data
   },
 
   /**
    * 更新 MCP Server 配置
    */
   async updateServer(id: string, dto: UpdateMcpServerDto): Promise<McpServerResponse> {
-    const { data } = await httpClient.put<McpServerResponse>(`/mcp/servers/${id}`, dto)
-    return data
+    const { data } = await httpClient.put<ApiResponse<McpServerResponse>>(`/mcp/servers/${id}`, dto)
+    return data.data
   },
 
   /**
@@ -55,8 +56,10 @@ export const mcpApi = {
    * 获取 MCP Server 提供的工具列表
    */
   async getTools(id: string): Promise<McpToolResponse[]> {
-    const { data } = await httpClient.get<McpToolResponse[]>(`/mcp/servers/${id}/tools`)
-    return data
+    const { data } = await httpClient.get<ApiResponse<McpToolResponse[]>>(
+      `/mcp/servers/${id}/tools`,
+    )
+    return data.data
   },
 
   /**
@@ -67,11 +70,14 @@ export const mcpApi = {
     toolName: string,
     args: Record<string, unknown>,
   ): Promise<ToolCallResult> {
-    const { data } = await httpClient.post<ToolCallResult>(`/mcp/servers/${id}/tools/call`, {
-      name: toolName,
-      arguments: args,
-    })
-    return data
+    const { data } = await httpClient.post<ApiResponse<ToolCallResult>>(
+      `/mcp/servers/${id}/tools/call`,
+      {
+        name: toolName,
+        arguments: args,
+      },
+    )
+    return data.data
   },
 
   /**
@@ -92,7 +98,7 @@ export const mcpApi = {
    * 获取所有启用的 MCP Server 工具列表 (用于 AI 辅助)
    */
   async getAllTools(): Promise<McpToolResponse[]> {
-    const { data } = await httpClient.get<McpToolResponse[]>('/mcp/tools')
-    return data
+    const { data } = await httpClient.get<ApiResponse<McpToolResponse[]>>('/mcp/tools')
+    return data.data
   },
 }

@@ -28,15 +28,17 @@ export const useMcpStore = defineStore('mcp', () => {
     error.value = null
     try {
       const data = await mcpApi.getServers()
-      servers.value = data
+      servers.value = Array.isArray(data) ? data : []
 
       // 初始化连接状态 (假设初始都未连接，或者后端有状态接口)
       // 这里暂时简单处理
-      data.forEach((s) => {
-        if (connectionStates.value[s.id] === undefined) {
-          connectionStates.value[s.id] = false
-        }
-      })
+      if (Array.isArray(data)) {
+        data.forEach((s) => {
+          if (connectionStates.value[s.id] === undefined) {
+            connectionStates.value[s.id] = false
+          }
+        })
+      }
     } catch (err: unknown) {
       error.value = err instanceof Error ? err.message : String(err)
       console.error('Error fetching MCP servers:', err)

@@ -82,7 +82,7 @@ async function handleDisconnect(id: string) {
           >
             <Terminal v-if="server.transport === McpTransportType.STDIO" class="w-3 h-3" />
             <Globe v-else class="w-3 h-3" />
-            {{ server.transport.toUpperCase() }}
+            {{ server?.transport?.toUpperCase() || '' }}
           </Badge>
 
           <div class="flex items-center gap-2">
@@ -126,11 +126,11 @@ async function handleDisconnect(id: string) {
             class="flex items-center gap-1 text-zinc-500"
           >
             <Terminal class="w-3 h-3" />
-            <code class="text-[10px]">{{ (server.config as any).command }}</code>
+            <code class="text-[10px]">{{ (server?.config as any)?.command || '' }}</code>
           </div>
           <div v-else class="flex items-center gap-1 text-zinc-500 truncate max-w-[120px]">
             <Globe class="w-3 h-3" />
-            <span class="text-[10px] truncate">{{ (server.config as any).url }}</span>
+            <span class="text-[10px] truncate">{{ (server?.config as any)?.url || '' }}</span>
           </div>
         </div>
       </CardContent>

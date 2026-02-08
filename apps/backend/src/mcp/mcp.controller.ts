@@ -15,6 +15,7 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { CurrentUser } from '../auth/current-user.decorator'
+import type { User } from '@my-app/shared'
 import { McpServerConfigService } from './mcp-server-config.service'
 import { McpClientService } from './mcp-client.service'
 import {
@@ -25,11 +26,6 @@ import {
   type McpToolResponse,
   type ToolCallResult,
 } from './mcp.dto'
-
-interface JwtPayload {
-  sub: number
-  email: string
-}
 
 @ApiTags('MCP')
 @ApiBearerAuth()
@@ -49,10 +45,10 @@ export class McpController {
   @Post('servers')
   @ApiOperation({ summary: 'Create MCP server configuration' })
   async createServer(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: User,
     @Body() dto: CreateMcpServerDto,
   ): Promise<McpServerResponse> {
-    return this.configService.create(user.sub, dto)
+    return this.configService.create(user.id, dto)
   }
 
   /**
@@ -60,8 +56,8 @@ export class McpController {
    */
   @Get('servers')
   @ApiOperation({ summary: 'Get all MCP server configurations' })
-  async getServers(@CurrentUser() user: JwtPayload): Promise<McpServerResponse[]> {
-    return this.configService.findAll(user.sub)
+  async getServers(@CurrentUser() user: User): Promise<McpServerResponse[]> {
+    return this.configService.findAll(user.id)
   }
 
   /**
@@ -70,10 +66,10 @@ export class McpController {
   @Get('servers/:id')
   @ApiOperation({ summary: 'Get MCP server configuration by ID' })
   async getServer(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: User,
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<McpServerResponse> {
-    return this.configService.findOne(user.sub, id)
+    return this.configService.findOne(user.id, id)
   }
 
   /**
@@ -82,11 +78,11 @@ export class McpController {
   @Put('servers/:id')
   @ApiOperation({ summary: 'Update MCP server configuration' })
   async updateServer(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: User,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateMcpServerDto,
   ): Promise<McpServerResponse> {
-    return this.configService.update(user.sub, id, dto)
+    return this.configService.update(user.id, id, dto)
   }
 
   /**
@@ -96,27 +92,74 @@ export class McpController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete MCP server configuration' })
   async deleteServer(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: User,
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<void> {
-    // 先断开连接（如果有的话）
-    await this.clientService.disconnect(id)
-    await this.configService.delete(user.sub, id)
+    return this.configService.delete(user.id, id)
   }
 
   /**
-   * 获取 MCP Server 提供的工具列表
+   * 获取已启用的所有工具
+   */
+  @Get('tools')
+  @ApiOperation({ summary: 'Get all tools from all enabled MCP servers' })
+  async getAllTools(@CurrentUser() user: User): Promise<McpToolResponse[]> {
+    const enabledServers = await this.configService.findEnabled(user.id)
+    const allTools: McpToolResponse[] = []
+
+    for (const server of enabledServers) {
+      if (this.clientService.isConnected(server.id)) {
+        try {
+          const tools = await this.clientService.listTools(server.id)
+          allTools.push(...tools)
+        } catch (error) {
+          this.logger.error(`Failed to get tools from ${server.id}:`, error)
+        }
+      }
+    }
+
+    return allTools
+  }
+
+  /**
+   * 连接到 MCP 服务器
+   */
+  @Post('servers/:id/connect')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Connect to MCP server' })
+  async connect(@CurrentUser() user: User, @Param('id', ParseUUIDPipe) id: string): Promise<void> {
+    const config = await this.configService.findOne(user.id, id)
+    await this.clientService.connect(id, config.transport, config.config)
+  }
+
+  /**
+   * 断开 MCP 服务器连接
+   */
+  @Post('servers/:id/disconnect')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Disconnect from MCP server' })
+  async disconnect(
+    @CurrentUser() user: User,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<void> {
+    // 验证所有权
+    await this.configService.findOne(user.id, id)
+    await this.clientService.disconnect(id)
+  }
+
+  /**
+   * 获取单个服务器的工具
    */
   @Get('servers/:id/tools')
-  @ApiOperation({ summary: 'Get available tools from MCP server' })
+  @ApiOperation({ summary: 'Get tools from a specific MCP server' })
   async getTools(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: User,
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<McpToolResponse[]> {
-    // 先验证所有权并获取配置
-    const config = await this.configService.findOne(user.sub, id)
+    // 验证权限
+    const config = await this.configService.findOne(user.id, id)
 
-    // 确保已连接
+    // 如果未连接，尝试连接
     if (!this.clientService.isConnected(id)) {
       await this.clientService.connect(id, config.transport, config.config)
     }
@@ -125,79 +168,23 @@ export class McpController {
   }
 
   /**
-   * 调用 MCP Server 的工具
+   * 调用工具
    */
   @Post('servers/:id/tools/call')
   @ApiOperation({ summary: 'Call a tool on MCP server' })
   async callTool(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: User,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: CallToolDto,
   ): Promise<ToolCallResult> {
-    // 先验证所有权并获取配置
-    const config = await this.configService.findOne(user.sub, id)
+    // 验证权限
+    const config = await this.configService.findOne(user.id, id)
 
     // 确保已连接
     if (!this.clientService.isConnected(id)) {
       await this.clientService.connect(id, config.transport, config.config)
     }
 
-    return this.clientService.callTool(id, dto.name, dto.arguments)
-  }
-
-  /**
-   * 获取所有启用的 MCP Server 工具列表 (用于 AI 辅助)
-   */
-  @Get('tools')
-  @ApiOperation({ summary: 'Get all tools from all enabled MCP servers' })
-  async getEnabledTools(@CurrentUser() user: JwtPayload): Promise<McpToolResponse[]> {
-    const enabledServers = await this.configService.findEnabled(user.sub)
-    const allTools: McpToolResponse[] = []
-
-    for (const server of enabledServers) {
-      try {
-        // 自动连接
-        if (!this.clientService.isConnected(server.id)) {
-          await this.clientService.connect(server.id, server.transport, server.config)
-        }
-        const tools = await this.clientService.listTools(server.id)
-        // 注入 serverId
-        allTools.push(...tools.map((t) => ({ ...t, serverId: server.id })))
-      } catch (error) {
-        this.logger.error(`Failed to load tools from server ${server.name} (${server.id}):`, error)
-        // 忽略单个服务器故障，继续加载其他服务
-      }
-    }
-
-    return allTools
-  }
-
-  /**
-   * 手动连接到 MCP Server
-   */
-  @Post('servers/:id/connect')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Connect to MCP server' })
-  async connect(
-    @CurrentUser() user: JwtPayload,
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<void> {
-    const config = await this.configService.findOne(user.sub, id)
-    await this.clientService.connect(id, config.transport, config.config)
-  }
-
-  /**
-   * 断开与 MCP Server 的连接
-   */
-  @Post('servers/:id/disconnect')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Disconnect from MCP server' })
-  async disconnect(
-    @CurrentUser() user: JwtPayload,
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<void> {
-    // 验证所有权
-    await this.configService.findOne(user.sub, id)
-    await this.clientService.disconnect(id)
+    return this.clientService.callTool(id, dto.name, dto.arguments || {})
   }
 }
