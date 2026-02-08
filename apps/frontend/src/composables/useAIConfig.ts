@@ -17,6 +17,7 @@ export interface AIConfig {
   discussionPrimaryModelId: string | null
   memoryModelId: string | null
   enableImageGeneration: boolean
+  mcpEnabled: boolean
 }
 
 export interface AIPreset {
@@ -70,6 +71,7 @@ const DEFAULT_CONFIG: AIConfig = {
   discussionPrimaryModelId: null,
   memoryModelId: null,
   enableImageGeneration: false,
+  mcpEnabled: true,
 }
 
 // 全局配置状态（单例）

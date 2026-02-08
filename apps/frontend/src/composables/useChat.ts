@@ -407,13 +407,15 @@ export function useChat(options: AIRequestOptions = {}) {
           },
         )
       } else {
-        // 获取 MCP 工具
+        // 获取 MCP 工具（仅在全局启用时）
         const { mcpApi } = await import('@/features/mcp/api/mcp')
         let mcpTools: import('@/features/mcp/api/mcp').McpToolResponse[] = []
-        try {
-          mcpTools = await mcpApi.getAllTools()
-        } catch (e) {
-          console.error('Failed to fetch MCP tools:', e)
+        if (aiConfig.mcpEnabled) {
+          try {
+            mcpTools = await mcpApi.getAllTools()
+          } catch (e) {
+            console.error('Failed to fetch MCP tools:', e)
+          }
         }
 
         // 转换为 AI 格式

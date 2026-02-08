@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useMcpStore } from '../stores/mcp'
 import { type McpServerResponse, type CreateMcpServerDto, type McpToolResponse } from '../api/mcp'
 import McpServerList from './McpServerList.vue'
@@ -8,9 +8,16 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Wrench, X, Terminal, Loader2, Plus } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
+import { useAIConfig } from '@/composables/useAIConfig'
 
 const { t } = useI18n()
 const store = useMcpStore()
+const { config, updateConfig } = useAIConfig()
+
+const mcpEnabled = computed({
+  get: () => config.value.mcpEnabled,
+  set: (val) => updateConfig({ mcpEnabled: val }),
+})
 
 const isEditing = ref(false)
 const selectedServer = ref<McpServerResponse | undefined>(undefined)
@@ -68,9 +75,29 @@ async function handleViewTools(server: McpServerResponse) {
       class="px-6 py-5 flex items-center justify-between border-b border-zinc-100/80 dark:border-zinc-800/50"
     >
       <div class="space-y-0.5">
-        <h3 class="text-sm font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
-          {{ t('ai.mcp') }}
-        </h3>
+        <div class="flex items-center gap-2">
+          <h3 class="text-sm font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
+            {{ t('ai.mcp') }}
+          </h3>
+          <!-- MCP 全局开关 -->
+          <button
+            type="button"
+            role="switch"
+            :aria-checked="mcpEnabled"
+            class="relative inline-flex h-4 w-7 items-center rounded-full transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 hover:scale-105 active:scale-95"
+            :class="
+              mcpEnabled
+                ? 'bg-primary shadow-[0_0_6px_rgba(var(--primary),0.4)]'
+                : 'bg-zinc-200 dark:bg-zinc-700'
+            "
+            @click="mcpEnabled = !mcpEnabled"
+          >
+            <span
+              class="inline-block h-2.5 w-2.5 rounded-full bg-white shadow-sm transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+              :style="{ transform: mcpEnabled ? 'translateX(14px)' : 'translateX(2px)' }"
+            />
+          </button>
+        </div>
         <p class="text-[10px] text-zinc-500 font-medium opacity-80 leading-none">
           {{ t('ai.mcpPlaceholder') }}
         </p>
