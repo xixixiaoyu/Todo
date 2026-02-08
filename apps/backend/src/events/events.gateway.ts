@@ -47,8 +47,29 @@ export class EventsGateway
     private readonly jwtService: JwtService,
   ) {}
 
-  afterInit() {
+  afterInit(server: Server) {
     this.logger.log('WebSocket 网关已初始化')
+
+    // 添加认证中间件
+    server.use((socket, next) => {
+      void (async () => {
+        try {
+          const token =
+            socket.handshake.auth?.token || socket.handshake.headers?.authorization?.split(' ')[1]
+
+          if (!token) {
+            return next(new Error('unauthorized'))
+          }
+
+          const payload = await this.jwtService.verifyAsync(token)
+          socket.data.user = payload
+          next()
+        } catch {
+          this.logger.warn(`WebSocket 认证失败: ${socket.id}`)
+          next(new Error('unauthorized'))
+        }
+      })()
+    })
   }
 
   onModuleDestroy() {
@@ -60,30 +81,20 @@ export class EventsGateway
   }
 
   async handleConnection(client: Socket) {
-    try {
-      // 验证 Token
-      const token =
-        client.handshake.auth?.token || client.handshake.headers?.authorization?.split(' ')[1]
+    // 此时 token 已被中间件验证，直接从 data 中获取用户信息
+    const user = client.data.user
 
-      if (!token) {
-        this.logger.warn(`客户端连接被拒绝: 无 Token [${client.id}]`)
-        client.disconnect()
-        return
-      }
-
-      const payload = await this.jwtService.verifyAsync(token)
-      client.data.user = payload
-
-      this.logger.log(`客户端已连接并认证: ${client.id} (User: ${payload.sub})`)
-
-      // 自动加入用户房间
-      const userId = payload.sub
-      await client.join(`user:${userId}`)
-      this.logger.debug(`客户端 ${client.id} 已自动加入房间 user:${userId}`)
-    } catch {
-      this.logger.warn(`客户端连接认证失败: ${client.id}`)
+    if (!user) {
+      this.logger.warn(`客户端连接未认证: ${client.id}`)
       client.disconnect()
+      return
     }
+
+    this.logger.log(`客户端已连接: ${client.id} (User: ${user.sub})`)
+
+    // 自动加入用户房间
+    await client.join(`user:${user.sub}`)
+    this.logger.debug(`客户端 ${client.id} 已自动加入房间 user:${user.sub}`)
   }
 
   handleDisconnect(client: Socket) {

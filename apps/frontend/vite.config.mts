@@ -105,6 +105,9 @@ export default defineConfig(async (): Promise<UserConfig> => {
           target: process.env.VITE_PROXY_TARGET || 'http://localhost:3000',
           ws: true,
           changeOrigin: true,
+          // 增加超时设置，防止长连接意外断开
+          timeout: 60000,
+          proxyTimeout: 60000,
         },
       },
       headers: {
