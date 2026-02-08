@@ -13,6 +13,7 @@ import {
 } from 'lucide-vue-next'
 import ThemeToggle from './ThemeToggle.vue'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   DropdownMenu,
@@ -74,9 +75,15 @@ const handleRegisterPasskey = async () => {
         <Clover :size="20" class="md:w-6 md:h-6" />
       </div>
       <h1
-        class="hidden sm:block cursor-default text-amber-600 text-xl md:text-2xl font-extrabold tracking-tight transition-transform hover:scale-105"
+        class="hidden sm:flex items-center gap-2 cursor-default text-amber-600 text-xl md:text-2xl font-extrabold tracking-tight transition-transform hover:scale-105"
       >
         {{ t('common.appName') }}
+        <Badge
+          variant="outline"
+          class="px-1 h-3.5 text-[8px] uppercase border-amber-500/20 text-amber-600/70 bg-amber-500/5 font-medium tracking-widest select-none"
+        >
+          {{ t('common.beta') }}
+        </Badge>
       </h1>
     </div>
     <div class="flex items-center gap-1.5 md:gap-2">

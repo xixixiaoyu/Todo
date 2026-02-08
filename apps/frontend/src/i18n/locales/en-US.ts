@@ -1,7 +1,9 @@
 export default {
   common: {
     appName: 'Lumina',
-    appDescription: 'Lumina — Efficient and pure AI personal todo management',
+    beta: 'Beta',
+    appDescription:
+      'Simple in form, deep in thought - pure and efficient AI-powered task management',
     loading: 'Loading...',
     refresh: 'Refresh',
     back: 'Back',
