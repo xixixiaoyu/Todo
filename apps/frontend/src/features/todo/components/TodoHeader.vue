@@ -191,7 +191,7 @@ const handleRegisterPasskey = async () => {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <div class="flex items-center justify-between px-2 py-1.5">
-            <span class="text-sm">{{ t('common.theme') }}</span>
+            <span class="text-sm">{{ t('common.theme.label') }}</span>
             <ThemeToggle />
           </div>
           <DropdownMenuItem class="rounded-lg cursor-pointer" @click="toggleLanguage">

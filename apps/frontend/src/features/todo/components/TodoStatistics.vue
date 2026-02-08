@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, onMounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useDark } from '@vueuse/core'
+import { useDark, useResizeObserver } from '@vueuse/core'
 import VChart from 'vue-echarts'
+import { debounce } from 'lodash-es'
 import { useTodoStore } from '../stores/todo'
 import { usePomodoroStore } from '../stores/pomodoro'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -41,6 +42,60 @@ const { t, locale } = useI18n()
 const isDark = useDark()
 const todoStore = useTodoStore()
 const pomodoroStore = usePomodoroStore()
+
+const isReady = ref(false)
+const containerRef = ref<HTMLElement | null>(null)
+const completionChartRef = ref<InstanceType<typeof VChart> | null>(null)
+const weeklyChartRef = ref<InstanceType<typeof VChart> | null>(null)
+const focusChartRef = ref<InstanceType<typeof VChart> | null>(null)
+
+// 使用 ResizeObserver 确保容器尺寸就绪后再初始化图表，并添加防抖优化性能
+const debouncedResize = debounce(() => {
+  completionChartRef.value?.resize()
+  weeklyChartRef.value?.resize()
+  focusChartRef.value?.resize()
+}, 100)
+
+useResizeObserver(containerRef, (entries) => {
+  const entry = entries[0]
+  const { width, height } = entry.contentRect
+  if (width > 0 && height > 0) {
+    if (!isReady.value) {
+      isReady.value = true
+    }
+    debouncedResize()
+  }
+})
+
+onMounted(async () => {
+  await nextTick()
+  const checkSize = () => {
+    if (
+      containerRef.value &&
+      containerRef.value.clientWidth > 0 &&
+      containerRef.value.clientHeight > 0
+    ) {
+      isReady.value = true
+    } else {
+      let attempts = 0
+      const retry = () => {
+        if (attempts > 20) return
+        if (
+          containerRef.value &&
+          containerRef.value.clientWidth > 0 &&
+          containerRef.value.clientHeight > 0
+        ) {
+          isReady.value = true
+        } else {
+          attempts++
+          requestAnimationFrame(retry)
+        }
+      }
+      retry()
+    }
+  }
+  checkSize()
+})
 
 // 概览数据
 const totalTasks = computed(() => todoStore.todos.length)
@@ -300,7 +355,7 @@ const focusDurationOption = computed(() => {
 </script>
 
 <template>
-  <div class="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-1">
+  <div ref="containerRef" class="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-1">
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <!-- 总任务 -->
       <Card
@@ -393,8 +448,9 @@ const focusDurationOption = computed(() => {
           </CardTitle>
         </CardHeader>
         <CardContent class="h-[300px] relative">
-          <VChart :option="completionChartOption" autoresize />
+          <VChart v-if="isReady" :option="completionChartOption" autoresize />
           <div
+            v-if="isReady"
             class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
           >
             <span
@@ -414,7 +470,7 @@ const focusDurationOption = computed(() => {
           </CardTitle>
         </CardHeader>
         <CardContent class="h-[300px]">
-          <VChart :option="weeklyActivityOption" autoresize />
+          <VChart v-if="isReady" :option="weeklyActivityOption" autoresize />
         </CardContent>
       </Card>
     </div>
@@ -428,7 +484,7 @@ const focusDurationOption = computed(() => {
         </CardTitle>
       </CardHeader>
       <CardContent class="h-[280px]">
-        <VChart :option="focusDurationOption" autoresize />
+        <VChart v-if="isReady" :option="focusDurationOption" autoresize />
       </CardContent>
     </Card>
   </div>

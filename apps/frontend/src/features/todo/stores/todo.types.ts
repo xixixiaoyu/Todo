@@ -19,3 +19,31 @@ export interface ProposedTodoChange {
 
 export type FilterType = 'pending' | 'completed' | 'trash'
 export type ViewMode = 'list' | 'visual' | 'stats'
+
+export interface TreeData {
+  name: string
+  id?: string
+  completed?: boolean
+  isProposed?: boolean
+  isProposedDelete?: boolean
+  children?: TreeData[]
+  itemStyle?: {
+    color?: string
+    borderColor?: string
+    borderWidth?: number
+    shadowBlur?: number
+    shadowColor?: string
+    shadowOffsetX?: number
+    shadowOffsetY?: number
+  }
+  lineStyle?: {
+    color?: string
+    width?: number
+    type?: string
+    curveness?: number
+  }
+  label?: {
+    formatter?: string
+    rich?: Record<string, unknown>
+  }
+}

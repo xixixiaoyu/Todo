@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, nextTick } from 'vue'
 import { Clover } from 'lucide-vue-next'
 import VChart from 'vue-echarts'
-import { useDark } from '@vueuse/core'
+import { useDark, useResizeObserver } from '@vueuse/core'
 import { useTodoStore } from '../stores/todo'
+import type { TreeData } from '../stores/todo.types'
 import { useI18n } from 'vue-i18n'
+import { debounce } from 'lodash-es'
 
 const todoStore = useTodoStore()
 const isDark = useDark()
@@ -12,34 +14,53 @@ const { t } = useI18n()
 
 const vChartRef = ref<InstanceType<typeof VChart> | null>(null)
 const containerRef = ref<HTMLElement | null>(null)
+const isReady = ref(false)
 
-interface TreeData {
-  name: string
-  id?: string
-  completed?: boolean
-  isProposed?: boolean
-  isProposedDelete?: boolean
-  children?: TreeData[]
-  itemStyle?: {
-    color?: string
-    borderColor?: string
-    borderWidth?: number
-    shadowBlur?: number
-    shadowColor?: string
-    shadowOffsetX?: number
-    shadowOffsetY?: number
+// 使用 ResizeObserver 确保容器尺寸就绪后再初始化图表，并添加防抖优化性能
+const debouncedResize = debounce(() => {
+  vChartRef.value?.resize()
+}, 100)
+
+useResizeObserver(containerRef, (entries) => {
+  const entry = entries[0]
+  const { width, height } = entry.contentRect
+  if (width > 0 && height > 0) {
+    if (!isReady.value) {
+      isReady.value = true
+    }
+    debouncedResize()
   }
-  lineStyle?: {
-    color?: string
-    width?: number
-    type?: string
-    curveness?: number
+})
+
+onMounted(async () => {
+  await nextTick()
+  const checkSize = () => {
+    if (
+      containerRef.value &&
+      containerRef.value.clientWidth > 0 &&
+      containerRef.value.clientHeight > 0
+    ) {
+      isReady.value = true
+    } else {
+      let attempts = 0
+      const retry = () => {
+        if (attempts > 20) return // 增加尝试次数以应对可能的动画
+        if (
+          containerRef.value &&
+          containerRef.value.clientWidth > 0 &&
+          containerRef.value.clientHeight > 0
+        ) {
+          isReady.value = true
+        } else {
+          attempts++
+          requestAnimationFrame(retry)
+        }
+      }
+      retry()
+    }
   }
-  label?: {
-    formatter?: string
-    rich?: Record<string, unknown>
-  }
-}
+  checkSize()
+})
 
 /**
  * 将扁平化的待办事项转换为树形结构
@@ -227,7 +248,7 @@ const chartOptions = computed(() => ({
       left: '18%', // 略微收紧，因为容器去掉了
       bottom: '10%',
       right: '22%',
-      symbolSize: (val: unknown, params: { data: TreeData }) => {
+      symbolSize: (_: unknown, params: { data: TreeData }) => {
         const data = params.data
         if (!data.id) return 14 // 根节点大幅缩小
         return data.children && data.children.length > 0 ? 10 : 6 // 普通节点更精致
@@ -299,7 +320,7 @@ const chartOptions = computed(() => ({
         },
       },
       expandAndCollapse: true,
-      animationDuration: 800,
+      animationDuration: 400,
       animationEasing: 'cubicOut',
     },
   ],
@@ -308,26 +329,30 @@ const chartOptions = computed(() => ({
 
 <template>
   <div ref="containerRef" class="flex-1 flex flex-col min-h-0 w-full relative group">
-    <div
-      v-if="treeData.length === 0"
-      class="flex-1 flex flex-col items-center justify-center relative z-10"
-    >
-      <div class="p-8 rounded-full bg-primary/5 mb-6 animate-pulse">
-        <Clover :size="48" class="text-primary/20" />
+    <Transition name="fade" mode="out-in">
+      <div
+        v-if="treeData.length === 0"
+        key="empty"
+        class="flex-1 flex flex-col items-center justify-center relative z-10"
+      >
+        <div class="p-8 rounded-full bg-primary/5 mb-6 animate-pulse">
+          <Clover :size="48" class="text-primary/20" />
+        </div>
+        <p class="text-muted-foreground/60 font-medium tracking-wide">
+          {{ t('todo.emptyPending') }}
+        </p>
       </div>
-      <p class="text-muted-foreground/60 font-medium tracking-wide">
-        {{ t('todo.emptyPending') }}
-      </p>
-    </div>
 
-    <VChart
-      v-else
-      ref="vChartRef"
-      class="flex-1 w-full h-full relative z-10"
-      :option="chartOptions"
-      :autoresize="true"
-      :theme="isDark ? 'dark' : undefined"
-    />
+      <VChart
+        v-else
+        key="chart"
+        ref="vChartRef"
+        class="flex-1 w-full h-full relative z-10"
+        :option="chartOptions"
+        :autoresize="true"
+        :theme="isDark ? 'dark' : undefined"
+      />
+    </Transition>
   </div>
 </template>
 
@@ -335,5 +360,15 @@ const chartOptions = computed(() => ({
 /* 隐藏 ECharts 默认的高亮蓝边 */
 :deep(canvas) {
   outline: none;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

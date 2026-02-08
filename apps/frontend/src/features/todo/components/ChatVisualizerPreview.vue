@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted, nextTick, toRef } from 'vue'
 import VChart from 'vue-echarts'
-import { useDark } from '@vueuse/core'
+import { useDark, useResizeObserver } from '@vueuse/core'
 import { Sparkles, Check, X, Maximize2, Minimize2, Move } from 'lucide-vue-next'
 import type { ProposedTodoChange } from '@/features/todo/stores/todo'
 import { useTodoStore } from '@/features/todo/stores/todo'
+import type { TreeData } from '@/features/todo/stores/todo.types'
 import { useI18n } from 'vue-i18n'
 import { Button } from '@/components/ui/button'
 import { useChatHistory } from '@/features/ai/composables/useChatHistory'
+import { useProposedTreeData } from '../composables/useProposedTreeData'
+import { debounce } from 'lodash-es'
 
 const props = defineProps<{
   actions: ProposedTodoChange[]
@@ -20,11 +23,54 @@ const { updateSessionMessages, currentSession } = useChatHistory()
 const isDark = useDark()
 const { t } = useI18n()
 
+const { treeData } = useProposedTreeData(toRef(props, 'actions'), isDark)
+
 const isExpanded = ref(false)
 const isApplying = ref(false)
 const isDiscarding = ref(false)
 const isApplied = ref(props.processedStatus === 'applied')
 const isDiscarded = ref(props.processedStatus === 'discarded')
+const isReady = ref(false)
+const containerRef = ref<HTMLElement | null>(null)
+const vChartRef = ref<InstanceType<typeof VChart> | null>(null)
+
+// 使用 ResizeObserver 确保容器尺寸就绪后再初始化图表，并添加防抖优化性能
+const debouncedResize = debounce(() => {
+  vChartRef.value?.resize()
+}, 100)
+
+useResizeObserver(containerRef, (entries) => {
+  const entry = entries[0]
+  const { width, height } = entry.contentRect
+  if (width > 0 && height > 0) {
+    if (!isReady.value) {
+      isReady.value = true
+    }
+    debouncedResize()
+  }
+})
+
+onMounted(async () => {
+  await nextTick()
+  const checkSize = () => {
+    if (containerRef.value && containerRef.value.clientWidth > 0) {
+      isReady.value = true
+    } else {
+      let attempts = 0
+      const retry = () => {
+        if (attempts > 20) return
+        if (containerRef.value && containerRef.value.clientWidth > 0) {
+          isReady.value = true
+        } else {
+          attempts++
+          requestAnimationFrame(retry)
+        }
+      }
+      retry()
+    }
+  }
+  checkSize()
+})
 
 // 响应式更新本地状态
 watch(
@@ -80,173 +126,6 @@ function handleDiscard() {
   isDiscarded.value = true
   updateMessageStatus('discarded')
 }
-
-interface TreeData {
-  name: string
-  id?: string
-  children?: TreeData[]
-  itemStyle?: {
-    color?: string
-    borderColor?: string
-    borderWidth?: number
-    shadowBlur?: number
-    shadowColor?: string
-  }
-  lineStyle?: {
-    color?: string
-    width?: number
-    type?: 'solid' | 'dashed' | 'dotted'
-  }
-  label?: {
-    formatter?: string
-    rich?: Record<string, unknown>
-  }
-}
-
-/**
- * 专门为 AI 建议生成的轻量级树形数据
- */
-const treeData = computed(() => {
-  const todoMap = new Map<string, TreeData>()
-  const roots: TreeData[] = []
-
-  // 1. 获取涉及到的所有原始任务 ID
-  const involvedTodoIds = new Set<string>()
-  props.actions.forEach((action) => {
-    if (action.data.id) involvedTodoIds.add(action.data.id)
-    if (action.data.parentId) involvedTodoIds.add(action.data.parentId)
-  })
-
-  // 2. 准备基础节点（从现有 todos 中提取相关的）
-  const baseTodos = todoStore.todos.filter((t) => involvedTodoIds.has(t.id))
-
-  baseTodos.forEach((todo) => {
-    todoMap.set(todo.id, {
-      name: todo.title,
-      id: todo.id,
-      children: [],
-      itemStyle: {
-        color: isDark.value ? '#cbd5e1' : '#64748b',
-        borderColor: isDark.value ? '#94a3b8' : '#475569',
-        borderWidth: 1,
-      },
-      label: {
-        formatter: `{normal|${todo.title}}`,
-      },
-    })
-  })
-
-  // 3. 应用 AI 建议的变更
-  props.actions.forEach((action) => {
-    if (action.type === 'add') {
-      const id = action.id || `new-${Math.random()}`
-      const node: TreeData = {
-        name: action.data.title || '',
-        id,
-        children: [],
-        itemStyle: {
-          color: isDark.value ? '#059669' : '#10b981',
-          borderColor: isDark.value ? '#34d399' : '#059669',
-          borderWidth: 2,
-          shadowBlur: 8,
-          shadowColor: 'rgba(16, 185, 129, 0.3)',
-        },
-        lineStyle: {
-          color: isDark.value ? '#059669' : '#10b981',
-          width: 2,
-          type: 'dashed',
-        },
-        label: {
-          formatter: `{proposed|✨ ${action.data.title}}`,
-        },
-      }
-      todoMap.set(id, node)
-
-      if (action.data.parentId && todoMap.has(action.data.parentId)) {
-        todoMap.get(action.data.parentId)!.children?.push(node)
-      } else {
-        roots.push(node)
-      }
-    } else if (action.type === 'update' || action.type === 'toggle') {
-      const node = todoMap.get(action.data.id!)
-      if (node) {
-        node.itemStyle = {
-          ...node.itemStyle,
-          color: isDark.value ? '#059669' : '#10b981',
-          borderWidth: 2,
-        }
-        if (action.data.title) {
-          node.name = action.data.title
-          node.label = { formatter: `{proposed|✨ ${action.data.title}}` }
-        }
-      }
-    } else if (action.type === 'pin') {
-      const node = todoMap.get(action.data.id!)
-      if (node) {
-        node.itemStyle = {
-          ...node.itemStyle,
-          color: '#fbbf24',
-          borderWidth: 2,
-        }
-        node.label = {
-          formatter: `{pin|📌 ${node.name}}`,
-        }
-      }
-    } else if (action.type === 'delete') {
-      const node = todoMap.get(action.data.id!)
-      if (node) {
-        node.itemStyle = {
-          ...node.itemStyle,
-          color: isDark.value ? '#b91c1c' : '#ef4444',
-          borderColor: isDark.value ? '#f87171' : '#dc2626',
-          borderWidth: 1,
-        }
-        node.label = {
-          formatter: `{delete|🗑️ ${node.name}}`,
-        }
-        node.lineStyle = {
-          type: 'dotted',
-          color: isDark.value ? '#b91c1c' : '#ef4444',
-        }
-      }
-    }
-  })
-
-  // 4. 建立父子关系（对于非新增节点）
-  baseTodos.forEach((todo) => {
-    const node = todoMap.get(todo.id)!
-    if (todo.parentId && todoMap.has(todo.parentId)) {
-      // 避免重复添加
-      if (!todoMap.get(todo.parentId)!.children?.includes(node)) {
-        todoMap.get(todo.parentId)!.children?.push(node)
-      }
-    } else if (!roots.includes(node)) {
-      // 只有当它确实是根节点且没被作为新增节点处理过时才加入 roots
-      const isChildOfAny = Array.from(todoMap.values()).some((parent) =>
-        parent.children?.includes(node),
-      )
-      if (!isChildOfAny) {
-        roots.push(node)
-      }
-    }
-  })
-
-  if (roots.length === 0) return []
-
-  // 虚拟根节点
-  if (roots.length > 1) {
-    return [
-      {
-        name: 'Changes Preview',
-        children: roots,
-        itemStyle: { color: '#fbbf24', borderWidth: 2 },
-        label: { formatter: '{root|Changes Preview}' },
-      },
-    ]
-  }
-
-  return roots
-})
 
 const chartOptions = computed(() => ({
   backgroundColor: 'transparent',
@@ -356,10 +235,11 @@ const chartOptions = computed(() => ({
 
     <!-- Visualizer Area -->
     <div
+      ref="containerRef"
       class="relative w-full transition-all duration-500 ease-in-out"
       :style="{ height: isExpanded ? '480px' : '280px' }"
     >
-      <VChart :option="chartOptions" autoresize />
+      <VChart v-if="isReady" :option="chartOptions" autoresize />
 
       <!-- Interaction Hint -->
       <div

@@ -39,10 +39,12 @@ export default {
       unknownError: 'Unknown error',
     },
     theme: {
+      label: 'Theme Mode',
       light: 'Light Mode',
       dark: 'Dark Mode',
       system: 'System Preference',
     },
+    settings: 'Settings',
   },
   home: {
     welcomeMessage: 'Welcome to Lumina',

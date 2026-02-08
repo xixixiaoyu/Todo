@@ -39,6 +39,7 @@ export default {
       unknownError: '未知错误',
     },
     theme: {
+      label: '主题模式',
       light: '浅色模式',
       dark: '暗色模式',
       system: '跟随系统',
@@ -50,6 +51,7 @@ export default {
       confirmPassword: '确认密码',
     },
     success: '操作成功',
+    settings: '设置',
   },
   home: {
     welcomeMessage: '欢迎使用简思',

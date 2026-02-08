@@ -229,7 +229,11 @@ function onFireworksComplete() {
               "
             >
               <div
-                :key="todoStore.viewMode + (todoStore.viewMode === 'list' ? todoStore.filter : '')"
+                :key="
+                  todoStore.viewMode === 'list'
+                    ? todoStore.viewMode + todoStore.filter
+                    : todoStore.viewMode
+                "
                 class="flex-1 flex flex-col min-h-0"
               >
                 <TodoList
