@@ -48,6 +48,8 @@ describe('AI Utils - injectSystemPrompts', () => {
       toggleMemory: vi.fn(),
       updateAutoCompressThreshold: vi.fn(),
       getMemoryModelOptions: vi.fn(),
+      exportMemories: vi.fn(() => '[]'),
+      importMemories: vi.fn(),
     } as ReturnType<typeof useMemory>)
   })
 
@@ -64,6 +66,8 @@ describe('AI Utils - injectSystemPrompts', () => {
         title: 'Task 1',
         completed: false,
         order: 1,
+        version: 0,
+        pomodoroCount: 0,
         createdAt: new Date(),
         updatedAt: new Date(),
         isPinned: false,
@@ -74,6 +78,8 @@ describe('AI Utils - injectSystemPrompts', () => {
         completed: false,
         isPinned: true,
         order: 0,
+        version: 0,
+        pomodoroCount: 0,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -83,6 +89,8 @@ describe('AI Utils - injectSystemPrompts', () => {
         completed: false,
         parentId: '1',
         order: 0,
+        version: 0,
+        pomodoroCount: 0,
         createdAt: new Date(),
         updatedAt: new Date(),
         isPinned: false,
@@ -92,6 +100,8 @@ describe('AI Utils - injectSystemPrompts', () => {
         title: 'Completed Task',
         completed: true,
         order: 2,
+        version: 0,
+        pomodoroCount: 0,
         createdAt: new Date(),
         updatedAt: new Date(),
         isPinned: false,
@@ -130,6 +140,8 @@ describe('AI Utils - injectSystemPrompts', () => {
       toggleMemory: vi.fn(),
       updateAutoCompressThreshold: vi.fn(),
       getMemoryModelOptions: vi.fn(),
+      exportMemories: vi.fn(() => '[]'),
+      importMemories: vi.fn(),
     } as ReturnType<typeof useMemory>)
 
     const result = injectSystemPrompts([], '', false)

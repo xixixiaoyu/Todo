@@ -24,6 +24,8 @@ describe('useTodoStore - Expansion', () => {
           isPinned: false,
           order: 0,
           expanded: true,
+          version: 0,
+          pomodoroCount: 0,
         },
         {
           id: '2',
@@ -34,6 +36,8 @@ describe('useTodoStore - Expansion', () => {
           isPinned: false,
           order: 0,
           parentId: '1',
+          version: 0,
+          pomodoroCount: 0,
         },
         {
           id: '3',
@@ -44,6 +48,8 @@ describe('useTodoStore - Expansion', () => {
           isPinned: false,
           order: 1,
           expanded: true,
+          version: 0,
+          pomodoroCount: 0,
         },
         {
           id: '4',
@@ -54,6 +60,8 @@ describe('useTodoStore - Expansion', () => {
           isPinned: false,
           order: 0,
           parentId: '3',
+          version: 0,
+          pomodoroCount: 0,
         },
       ]
       expect(store.isAllExpanded).toBe(true)
@@ -80,6 +88,8 @@ describe('useTodoStore - Expansion', () => {
           isPinned: false,
           order: 0,
           expanded: true,
+          version: 0,
+          pomodoroCount: 0,
         },
       ]
       store.toggleTodoExpansion('1')
@@ -100,6 +110,8 @@ describe('useTodoStore - Expansion', () => {
           isPinned: false,
           order: 0,
           expanded: true,
+          version: 0,
+          pomodoroCount: 0,
         },
         {
           id: '2',
@@ -110,6 +122,8 @@ describe('useTodoStore - Expansion', () => {
           isPinned: false,
           order: 0,
           parentId: '1',
+          version: 0,
+          pomodoroCount: 0,
         },
         {
           id: '3',
@@ -120,6 +134,8 @@ describe('useTodoStore - Expansion', () => {
           isPinned: false,
           order: 1,
           expanded: true,
+          version: 0,
+          pomodoroCount: 0,
         },
         {
           id: '4',
@@ -130,6 +146,8 @@ describe('useTodoStore - Expansion', () => {
           isPinned: false,
           order: 0,
           parentId: '3',
+          version: 0,
+          pomodoroCount: 0,
         },
       ]
       expect(store.isAllExpanded).toBe(true)
@@ -158,6 +176,8 @@ describe('useTodoStore - Expansion', () => {
           isPinned: false,
           order: 0,
           expanded: false,
+          version: 0,
+          pomodoroCount: 0,
         },
         {
           id: '2',
@@ -168,6 +188,8 @@ describe('useTodoStore - Expansion', () => {
           isPinned: false,
           order: 0,
           parentId: '1',
+          version: 0,
+          pomodoroCount: 0,
         },
         {
           id: '3',
@@ -178,6 +200,8 @@ describe('useTodoStore - Expansion', () => {
           isPinned: false,
           order: 1,
           expanded: true,
+          version: 0,
+          pomodoroCount: 0,
         },
         {
           id: '4',
@@ -188,6 +212,8 @@ describe('useTodoStore - Expansion', () => {
           isPinned: false,
           order: 0,
           parentId: '3',
+          version: 0,
+          pomodoroCount: 0,
         },
       ]
 
@@ -213,6 +239,8 @@ describe('useTodoStore - Expansion', () => {
           isPinned: false,
           order: 0,
           expanded: false,
+          version: 0,
+          pomodoroCount: 0,
         },
         {
           id: '2',
@@ -223,6 +251,8 @@ describe('useTodoStore - Expansion', () => {
           isPinned: false,
           order: 0,
           parentId: '1',
+          version: 0,
+          pomodoroCount: 0,
         },
       ]
       store.setSearchQuery('P')

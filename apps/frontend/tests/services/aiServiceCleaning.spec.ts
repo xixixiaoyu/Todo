@@ -22,6 +22,8 @@ vi.mock('@/composables/useMemory', () => ({
     compressMemories: vi.fn(),
     updateAutoCompressThreshold: vi.fn(),
     getMemoryModelOptions: vi.fn(),
+    exportMemories: vi.fn(() => '[]'),
+    importMemories: vi.fn(),
   }),
 }))
 

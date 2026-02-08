@@ -50,6 +50,8 @@ vi.mock('@/composables/useMemory', () => ({
     getMemoryModelOptions: vi.fn(() => ({})),
     compressMemories: vi.fn(),
     updateAutoCompressThreshold: vi.fn(),
+    exportMemories: vi.fn(() => '[]'),
+    importMemories: vi.fn(),
   })),
 }))
 
@@ -82,6 +84,7 @@ const mockConfig = ref({
   thinkingMode: 'disabled',
   todoAssistant: false,
   enableImageGeneration: false,
+  mcpEnabled: true,
 })
 
 vi.mock('@/composables/useAIConfig', () => ({

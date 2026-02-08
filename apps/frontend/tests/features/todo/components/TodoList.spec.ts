@@ -43,6 +43,8 @@ describe('TodoList', () => {
       updatedAt: new Date(),
       isPinned: false,
       order: 0,
+      version: 0,
+      pomodoroCount: 0,
     },
     {
       id: '2',
@@ -52,6 +54,8 @@ describe('TodoList', () => {
       updatedAt: new Date(),
       isPinned: false,
       order: 1,
+      version: 0,
+      pomodoroCount: 0,
     },
   ]
 

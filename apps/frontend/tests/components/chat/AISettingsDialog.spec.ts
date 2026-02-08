@@ -46,6 +46,7 @@ const mockConfig = ref<AIConfig>({
   discussionPrimaryModelId: null,
   memoryModelId: null,
   enableImageGeneration: false,
+  mcpEnabled: true,
 })
 
 const mockPresets = ref<AIPreset[]>([])
@@ -170,6 +171,7 @@ describe('AISettingsDialog', () => {
       discussionPrimaryModelId: null,
       memoryModelId: null,
       enableImageGeneration: false,
+      mcpEnabled: true,
     }
     mockPresets.value = []
     mockActivePresetId.value = null

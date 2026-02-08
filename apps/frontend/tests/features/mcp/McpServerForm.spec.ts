@@ -48,6 +48,7 @@ vi.mock('lucide-vue-next', () => ({
   Globe: { render: () => h('div') },
   Server: { render: () => h('div') },
   Loader2: { render: () => h('div') },
+  ChevronRight: { render: () => h('div') },
 }))
 
 describe('McpServerForm.vue', () => {
@@ -131,7 +132,9 @@ describe('McpServerForm.vue', () => {
     expect(wrapper.text()).toContain('--debug')
 
     // Remove it
-    const removeBtn = wrapper.find('.group button')
+    const argChip = wrapper.findAll('span').find((s) => s.text().includes('--debug'))
+    expect(argChip).toBeTruthy()
+    const removeBtn = argChip!.find('button')
     await removeBtn.trigger('click')
     await nextTick()
 

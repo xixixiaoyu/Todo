@@ -59,6 +59,7 @@ describe('Todo Store Sync', () => {
             order: 0,
             isPinned: false,
             version: 0,
+            pomodoroCount: 0,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           },
@@ -125,6 +126,7 @@ describe('Todo Store Sync', () => {
         order: 0,
         isPinned: false,
         version: 0,
+        pomodoroCount: 0,
       },
     ]
 
@@ -132,6 +134,7 @@ describe('Todo Store Sync', () => {
       data: {
         synced: [],
         deletedIds: ['to-be-deleted'],
+        version: 0,
         serverTime: new Date().toISOString(),
       } as SyncResponse,
     }
@@ -160,6 +163,7 @@ describe('Todo Store Sync', () => {
       data: {
         synced: [],
         deletedIds: [],
+        version: 0,
         serverTime: new Date().toISOString(),
       } as SyncResponse,
     }

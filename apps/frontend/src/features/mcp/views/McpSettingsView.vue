@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useMcpStore } from '../stores/mcp'
 import { type McpServerResponse, type CreateMcpServerDto, type McpToolResponse } from '../api/mcp'
 import McpServerList from '../components/McpServerList.vue'
@@ -20,9 +20,13 @@ import {
   Terminal,
 } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
+import { useAIConfig } from '@/composables/useAIConfig'
 
 const router = useRouter()
 const store = useMcpStore()
+const { config } = useAIConfig()
+
+const mcpEnabled = computed(() => config.value.mcpEnabled)
 
 const isEditing = ref(false)
 const selectedServer = ref<McpServerResponse | undefined>(undefined)
@@ -150,6 +154,7 @@ function handleGoBack() {
         <div v-else class="space-y-6">
           <McpServerList
             :servers="store.servers"
+            :mcp-enabled="mcpEnabled"
             @edit="handleEdit"
             @view-tools="handleViewTools"
           />

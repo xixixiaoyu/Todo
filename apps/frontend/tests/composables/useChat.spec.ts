@@ -65,6 +65,8 @@ vi.mock('@/composables/useMemory', () => ({
     getMemoryModelOptions: vi.fn(() => ({})),
     compressMemories: vi.fn(),
     updateAutoCompressThreshold: vi.fn(),
+    exportMemories: vi.fn(() => '[]'),
+    importMemories: vi.fn(),
   })),
 }))
 
@@ -83,6 +85,7 @@ vi.mock('@/composables/useAIConfig', () => ({
     thinkingMode: 'disabled',
     todoAssistant: false,
     enableImageGeneration: false,
+    mcpEnabled: true,
   })),
   getAIThinkingMode: vi.fn(() => 'disabled'),
 }))
@@ -121,6 +124,7 @@ describe('useChat', () => {
       thinkingMode: 'disabled',
       todoAssistant: false,
       enableImageGeneration: false,
+      mcpEnabled: true,
     })
     mockUpdateSessionMessages.mockImplementation((sessionId, messages) => {
       if (mockCurrentSession.value && mockCurrentSession.value.id === sessionId) {

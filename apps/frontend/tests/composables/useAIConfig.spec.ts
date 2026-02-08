@@ -69,9 +69,12 @@ describe('useAIConfig - Core', () => {
       localStorage.setItem('ai-config', JSON.stringify(savedConfig))
 
       _resetAIConfig() // 手动触发重置以从 localStorage 加载
-      const { config } = useAIConfig()
+      const { config, DEFAULT_CONFIG } = useAIConfig()
 
-      expect(config.value).toEqual(savedConfig)
+      expect(config.value).toEqual({
+        ...DEFAULT_CONFIG,
+        ...savedConfig,
+      })
     })
 
     it('should merge saved config with defaults', () => {

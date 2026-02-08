@@ -40,6 +40,16 @@ vi.mock('@/composables/useAIConfig', () => ({
     discussionMode: true,
     discussionModelIds: ['m1', 'm2'],
     discussionPrimaryModelId: 'm1',
+    memoryModelId: null,
+    baseUrl: '',
+    apiKey: '',
+    model: '',
+    systemPrompt: '',
+    temperature: 0.7,
+    thinkingMode: 'enabled',
+    todoAssistant: false,
+    enableImageGeneration: false,
+    mcpEnabled: true,
   })),
   getAIThinkingMode: vi.fn(() => 'enabled'),
 }))
@@ -79,6 +89,7 @@ describe('useChat - Discussion Mode', () => {
       thinkingMode: 'enabled',
       todoAssistant: false,
       enableImageGeneration: false,
+      mcpEnabled: true,
     } as AIConfig)
 
     mockGetMultiModelDiscussionStream.mockImplementation(

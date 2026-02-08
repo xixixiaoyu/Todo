@@ -14,6 +14,8 @@ describe('useTodoStore - Filtering', () => {
       updatedAt: new Date(),
       isPinned: false,
       order: 0,
+      version: 0,
+      pomodoroCount: 0,
     },
     {
       id: '2',
@@ -23,6 +25,8 @@ describe('useTodoStore - Filtering', () => {
       updatedAt: new Date(),
       isPinned: false,
       order: 1,
+      version: 0,
+      pomodoroCount: 0,
     },
   ]
 
@@ -81,6 +85,8 @@ describe('useTodoStore - Filtering', () => {
           updatedAt: new Date(),
           isPinned: false,
           order: 0,
+          version: 0,
+          pomodoroCount: 0,
         },
         {
           id: 'c1',
@@ -91,6 +97,8 @@ describe('useTodoStore - Filtering', () => {
           updatedAt: new Date(),
           isPinned: false,
           order: 0,
+          version: 0,
+          pomodoroCount: 0,
         },
         {
           id: 'c2',
@@ -101,6 +109,8 @@ describe('useTodoStore - Filtering', () => {
           updatedAt: new Date(),
           isPinned: false,
           order: 1,
+          version: 0,
+          pomodoroCount: 0,
         },
       ]
       store.todos = nestedTodos
@@ -124,6 +134,8 @@ describe('useTodoStore - Filtering', () => {
           updatedAt: new Date(),
           isPinned: false,
           order: 1,
+          version: 0,
+          pomodoroCount: 0,
         },
         {
           id: '2',
@@ -133,6 +145,8 @@ describe('useTodoStore - Filtering', () => {
           updatedAt: new Date(),
           isPinned: false,
           order: 0,
+          version: 0,
+          pomodoroCount: 0,
         },
       ]
       store.filter = 'pending'
@@ -151,6 +165,8 @@ describe('useTodoStore - Filtering', () => {
           updatedAt: new Date(),
           isPinned: false,
           order: 0,
+          version: 0,
+          pomodoroCount: 0,
         },
         {
           id: '2',
@@ -161,6 +177,8 @@ describe('useTodoStore - Filtering', () => {
           isPinned: false,
           order: 0,
           parentId: '1',
+          version: 0,
+          pomodoroCount: 0,
         },
         {
           id: '3',
@@ -171,6 +189,8 @@ describe('useTodoStore - Filtering', () => {
           isPinned: false,
           order: 0,
           parentId: '2',
+          version: 0,
+          pomodoroCount: 0,
         },
       ]
 
@@ -190,6 +210,8 @@ describe('useTodoStore - Filtering', () => {
           updatedAt: new Date(),
           isPinned: false,
           order: 0,
+          version: 0,
+          pomodoroCount: 0,
         },
         {
           id: '2',
@@ -199,6 +221,8 @@ describe('useTodoStore - Filtering', () => {
           updatedAt: new Date(),
           isPinned: false,
           order: 1,
+          version: 0,
+          pomodoroCount: 0,
         },
         {
           id: '3',
@@ -208,6 +232,8 @@ describe('useTodoStore - Filtering', () => {
           updatedAt: new Date(),
           order: 2,
           isPinned: true,
+          version: 0,
+          pomodoroCount: 0,
         },
       ]
 

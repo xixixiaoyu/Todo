@@ -59,6 +59,7 @@ describe('TodoItem', () => {
     isPinned: false,
     order: 0,
     version: 0,
+    pomodoroCount: 0,
   }
 
   it('should render todo title', () => {
@@ -147,6 +148,7 @@ describe('TodoItem', () => {
         order: 0,
         expanded: false,
         version: 0,
+        pomodoroCount: 0,
       },
       {
         id: '1',
@@ -159,6 +161,7 @@ describe('TodoItem', () => {
         parentId: 'parent',
         expanded: false,
         version: 0,
+        pomodoroCount: 0,
       },
     ]
 
@@ -419,6 +422,7 @@ describe('TodoItem', () => {
         order: 0,
         parentId: 'parent-1',
         version: 0,
+        pomodoroCount: 0,
       }
       store.todos = [parentTodo, childTodo]
 
