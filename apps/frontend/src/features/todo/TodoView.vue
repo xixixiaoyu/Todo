@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useTodoStore, type FilterType } from './stores/todo'
 import { usePomodoroStore } from './stores/pomodoro'
 import { useTodo } from './composables/useTodo'
@@ -20,7 +20,10 @@ const todoStore = useTodoStore()
 const pomodoroStore = usePomodoroStore()
 
 const cardRef = ref<HTMLElement | null>(null)
+const inputContainerRef = ref<HTMLElement | null>(null)
 const { gsap, ctx } = useGsap()
+
+const isInputVisible = computed(() => todoStore.viewMode === 'list' && todoStore.filter !== 'trash')
 
 // 追踪上一次的 filter 以决定动画方向
 const direction = ref(0) // 1: next, -1: prev
@@ -33,10 +36,38 @@ watch(
   },
 )
 
+watch(
+  isInputVisible,
+  (visible) => {
+    if (!inputContainerRef.value) return
+
+    ctx.add(() => {
+      gsap.to(inputContainerRef.value, {
+        height: visible ? 52 : 0,
+        marginBottom: visible ? 24 : 0,
+        opacity: visible ? 1 : 0,
+        duration: 0.5,
+        ease: 'expo.out',
+        overwrite: true,
+      })
+    })
+  },
+  { immediate: true },
+)
+
 onMounted(() => {
   void todoStore.fetchTodos()
 
   ctx.add(() => {
+    // 初始化输入框状态，避免首屏闪烁
+    if (inputContainerRef.value) {
+      gsap.set(inputContainerRef.value, {
+        height: isInputVisible.value ? 52 : 0,
+        marginBottom: isInputVisible.value ? 24 : 0,
+        opacity: isInputVisible.value ? 1 : 0,
+      })
+    }
+
     // 整体卡片入场：更快的 Power4 曲线，减少位移
     if (cardRef.value) {
       gsap.from(cardRef.value, {
@@ -104,24 +135,17 @@ function onFireworksComplete() {
           <TodoHeader />
 
           <!-- Input Area - Creation First -->
-          <div
-            class="relative transition-all duration-500 ease-in-out"
-            :class="
-              todoStore.viewMode === 'list' && todoStore.filter !== 'trash'
-                ? 'h-[52px] mb-6'
-                : 'h-0 mb-0 opacity-0 overflow-hidden pointer-events-none'
-            "
-          >
+          <div ref="inputContainerRef" class="relative overflow-hidden">
             <Transition
-              enter-active-class="transition-all duration-500 delay-100 ease-out"
-              enter-from-class="opacity-0 -translate-y-4 scale-95"
+              enter-active-class="transition-all duration-400 ease-out"
+              enter-from-class="opacity-0 -translate-y-2 scale-[0.98]"
               enter-to-class="opacity-100 translate-y-0 scale-100"
               leave-active-class="transition-all duration-300 ease-in"
               leave-from-class="opacity-100 translate-y-0 scale-100"
-              leave-to-class="opacity-0 -translate-y-4 scale-95"
+              leave-to-class="opacity-0 -translate-y-2 scale-[0.98]"
             >
               <TodoInput
-                v-if="todoStore.viewMode === 'list' && todoStore.filter !== 'trash'"
+                v-if="isInputVisible"
                 v-model="newTodoTitle"
                 :show-tooltip="showTooltip"
                 :error-message="todoStore.error || ''"
@@ -173,9 +197,8 @@ function onFireworksComplete() {
                   const element = el as HTMLElement
                   gsap.set(element, {
                     opacity: 0,
-                    x: direction * 20,
-                    scale: 0.99,
-                    filter: 'blur(4px)',
+                    x: direction * 12,
+                    willChange: 'transform, opacity',
                   })
                 }
               "
@@ -184,11 +207,12 @@ function onFireworksComplete() {
                   gsap.to(el, {
                     opacity: 1,
                     x: 0,
-                    scale: 1,
-                    filter: 'blur(0px)',
-                    duration: 0.3,
-                    ease: 'power2.out',
-                    onComplete: done,
+                    duration: 0.4,
+                    ease: 'expo.out',
+                    onComplete: () => {
+                      gsap.set(el, { clearProps: 'will-change' })
+                      done()
+                    },
                   })
                 }
               "
@@ -196,10 +220,8 @@ function onFireworksComplete() {
                 (el, done) => {
                   gsap.to(el, {
                     opacity: 0,
-                    x: -direction * 15,
-                    scale: 0.99,
-                    filter: 'blur(4px)',
-                    duration: 0.2,
+                    x: -direction * 8,
+                    duration: 0.25,
                     ease: 'power2.in',
                     onComplete: done,
                   })
