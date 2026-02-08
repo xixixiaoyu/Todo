@@ -13,7 +13,7 @@ import {
 } from 'lucide-vue-next'
 import ThemeToggle from './ThemeToggle.vue'
 import { Button } from '@/components/ui/button'
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -223,38 +223,29 @@ const handleRegisterPasskey = async () => {
 
       <!-- Auth Section -->
       <DropdownMenu v-if="authStore.isAuthenticated">
-        <TooltipProvider :delay-duration="0">
-          <Tooltip>
-            <TooltipTrigger as-child>
-              <DropdownMenuTrigger as-child>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  class="relative h-10 w-10 rounded-xl bg-card border-border hover:bg-accent transition-all overflow-hidden group/user"
-                >
-                  <div
-                    v-if="authStore.user?.avatar"
-                    class="w-full h-full bg-cover bg-center transition-transform duration-300 group-hover/user:scale-110"
-                    :style="{ backgroundImage: `url(${authStore.user.avatar})` }"
-                  ></div>
-                  <div
-                    v-else
-                    class="flex h-full w-full items-center justify-center bg-amber-500 text-white font-bold text-sm transition-colors group-hover/user:bg-amber-600"
-                  >
-                    {{ authStore.user?.name?.charAt(0).toUpperCase() || 'U' }}
-                  </div>
-                  <!-- 登录状态小圆点 -->
-                  <span
-                    class="absolute bottom-0.5 right-0.5 h-2.5 w-2.5 rounded-full border-2 border-card bg-emerald-500"
-                  ></span>
-                </Button>
-              </DropdownMenuTrigger>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              {{ authStore.user?.name || t('common.user') }}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <DropdownMenuTrigger as-child>
+          <Button
+            variant="outline"
+            size="icon"
+            class="relative h-10 w-10 rounded-xl bg-card border-border hover:bg-accent transition-all overflow-hidden group/user"
+          >
+            <div
+              v-if="authStore.user?.avatar"
+              class="w-full h-full bg-cover bg-center transition-transform duration-300 group-hover/user:scale-110"
+              :style="{ backgroundImage: `url(${authStore.user.avatar})` }"
+            ></div>
+            <div
+              v-else
+              class="flex h-full w-full items-center justify-center bg-amber-500 text-white font-bold text-sm transition-colors group-hover/user:bg-amber-600"
+            >
+              {{ authStore.user?.name?.charAt(0).toUpperCase() || 'U' }}
+            </div>
+            <!-- 登录状态小圆点 -->
+            <span
+              class="absolute bottom-0.5 right-0.5 h-2.5 w-2.5 rounded-full border-2 border-card bg-emerald-500"
+            ></span>
+          </Button>
+        </DropdownMenuTrigger>
         <DropdownMenuContent align="end" class="w-56 rounded-xl p-2">
           <DropdownMenuLabel class="font-normal">
             <div class="flex flex-col space-y-1">
