@@ -97,9 +97,24 @@ packages/shared/  # 共享包 (Zod Schemas, DTOs, Utils)
 ```bash
 pnpm dev                              # 同时启动前后端
 pnpm db:push                          # 推送 Schema 到数据库
-pnpm lint && pnpm format              # 代码检查与格式化
-pnpm --filter @my-app/shared build    # 构建共享包
-pnpm test                             # 运行测试
+pnpm lint && pnpm format              # 代码检查与格式化 (全栈)
+pnpm test                             # 运行测试 (全栈)
+pnpm type-check                       # 类型检查 (全栈)
+
+# 单独校验命令 (按需执行)
+pnpm --filter @my-app/frontend lint     # 前端 Lint
+pnpm --filter @my-app/frontend test     # 前端测试
+pnpm --filter @my-app/frontend type-check # 前端类型检查
+
+pnpm --filter @my-app/backend lint      # 后端 Lint
+pnpm --filter @my-app/backend test      # 后端测试
+pnpm --filter @my-app/backend type-check # 后端类型检查
+
+pnpm --filter @my-app/shared build      # 构建共享包
+pnpm --filter @my-app/shared lint       # 共享包 Lint
+pnpm --filter @my-app/shared test       # 共享包测试
+pnpm --filter @my-app/shared type-check # 共享包类型检查
+
 pnpm wails:dev                        # 启动 Wails 开发模式
 pnpm wails:build                      # 打包 Wails 应用
 pnpm docker:dev                              # 启动开发环境 (后台运行)
