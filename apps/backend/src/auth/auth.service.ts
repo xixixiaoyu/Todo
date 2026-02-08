@@ -118,27 +118,39 @@ export class AuthService {
    * 令牌刷新与登出
    */
   async refreshToken(refreshToken: string): Promise<AuthResponse> {
-    const isBlacklisted = await this.tokenService.isBlacklisted(refreshToken)
-    if (isBlacklisted) {
+    try {
+      const isBlacklisted = await this.tokenService.isBlacklisted(refreshToken)
+      if (isBlacklisted) {
+        throw new UnauthorizedException('auth.INVALID_REFRESH_TOKEN')
+      }
+
+      const payload = this.tokenService.verifyToken<JwtPayload>(refreshToken)
+
+      if (payload.type !== 'refresh') {
+        throw new UnauthorizedException('auth.INVALID_REFRESH_TOKEN')
+      }
+
+      const user = await this.usersService.findOne(payload.sub)
+      if (!user) {
+        throw new UnauthorizedException('auth.USER_NOT_FOUND')
+      }
+
+      return this.tokenService.buildAuthResponse(user)
+    } catch (error) {
+      // 确保所有异常都被转换为 UnauthorizedException，避免 500 错误
+      if (error instanceof UnauthorizedException) {
+        throw error
+      }
       throw new UnauthorizedException('auth.INVALID_REFRESH_TOKEN')
     }
-
-    const payload = this.tokenService.verifyToken<JwtPayload>(refreshToken)
-
-    if (payload.type !== 'refresh') {
-      throw new UnauthorizedException('auth.INVALID_REFRESH_TOKEN')
-    }
-
-    const user = await this.usersService.findOne(payload.sub)
-    if (!user) {
-      throw new UnauthorizedException('auth.USER_NOT_FOUND')
-    }
-
-    return this.tokenService.buildAuthResponse(user)
   }
 
   async logout(refreshToken: string): Promise<void> {
-    await this.tokenService.blacklistToken(refreshToken)
+    try {
+      await this.tokenService.blacklistToken(refreshToken)
+    } catch {
+      // 忽略黑名单操作失败，确保登出接口始终成功
+    }
   }
 
   /**
