@@ -353,6 +353,7 @@ export default {
     mcpDescriptionPlaceholder: '该服务主要提供哪些工具？',
     mcpEnabled: '已启用',
     mcpDisabled: '已禁用',
+    mcpToggleError: '切换失败，请重试',
     mcpTransportType: '传输类型',
     mcpStdioDescription: '通过命令行运行的本地进程',
     mcpHttpDescription: '远程 API 服务',

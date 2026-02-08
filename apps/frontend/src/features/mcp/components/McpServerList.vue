@@ -4,9 +4,9 @@ import { useI18n } from 'vue-i18n'
 import { McpTransportType, type McpServerResponse } from '../api/mcp'
 import { useMcpStore } from '../stores/mcp'
 import { useGsap } from '@/composables/useGsap'
+import { useToast } from '@/composables/useToast'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Checkbox } from '@/components/ui/checkbox'
 import {
   Activity,
   Globe,
@@ -31,7 +31,11 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const store = useMcpStore()
 const { gsap, ctx } = useGsap()
+const { error: toastError } = useToast()
 const containerRef = ref<HTMLElement | null>(null)
+
+// 本地 loading 状态，避免 Checkbox 视觉状态与实际状态不一致
+const togglingServers = ref<Record<string, boolean>>({})
 
 // 交错入场动画
 function animateList() {
@@ -68,7 +72,17 @@ watch(
  * 切换激活状态
  */
 async function toggleActive(server: McpServerResponse) {
-  await store.toggleActive(server.id)
+  if (togglingServers.value[server.id]) return
+
+  togglingServers.value[server.id] = true
+  try {
+    await store.toggleActive(server.id)
+  } catch (err) {
+    console.error('Failed to toggle server:', err)
+    toastError(t('ai.mcpToggleError') || '切换失败，请重试')
+  } finally {
+    togglingServers.value[server.id] = false
+  }
 }
 
 async function handleDelete(id: string) {
@@ -124,11 +138,24 @@ async function handleConnect(id: string) {
 
           <div class="flex items-center gap-3">
             <div class="flex flex-col items-end">
-              <Checkbox
-                :checked="server.enabled"
-                class="rounded-full w-5 h-5 transition-all duration-300 data-[state=checked]:scale-110"
-                @update:checked="toggleActive(server)"
-              />
+              <button
+                type="button"
+                role="switch"
+                :aria-checked="server.enabled"
+                :disabled="togglingServers[server.id]"
+                class="relative inline-flex h-5 w-9 items-center rounded-full transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95"
+                :class="
+                  server.enabled
+                    ? 'bg-primary shadow-[0_0_8px_rgba(var(--primary),0.4)]'
+                    : 'bg-zinc-200 dark:bg-zinc-700'
+                "
+                @click="toggleActive(server)"
+              >
+                <span
+                  class="inline-block h-3.5 w-3.5 rounded-full bg-white shadow-md transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  :style="{ transform: server.enabled ? 'translateX(18px)' : 'translateX(2px)' }"
+                />
+              </button>
             </div>
           </div>
         </div>

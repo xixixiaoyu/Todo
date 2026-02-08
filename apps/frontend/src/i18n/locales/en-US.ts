@@ -365,6 +365,7 @@ export default {
     mcpDescriptionPlaceholder: 'What does this server do?',
     mcpEnabled: 'Enabled',
     mcpDisabled: 'Disabled',
+    mcpToggleError: 'Toggle failed, please try again',
     mcpTransportType: 'Transport Type',
     mcpStdioDescription: 'Local process via CLI',
     mcpHttpDescription: 'Remote API service',
