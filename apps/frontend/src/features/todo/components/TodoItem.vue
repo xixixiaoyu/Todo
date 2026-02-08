@@ -1,40 +1,23 @@
 <script setup lang="ts">
-import { useI18n } from 'vue-i18n'
-import {
-  Check,
-  X,
-  Pencil,
-  Trash2,
-  RotateCcw,
-  Plus,
-  ChevronDown,
-  ChevronRight,
-  GripVertical,
-  Pin,
-  PinOff,
-  Sparkles,
-  Target,
-  Wand2,
-  Loader2,
-  Timer,
-} from 'lucide-vue-next'
-import { ref, computed, watch, nextTick, useId } from 'vue'
+import { ref, computed, watch, useId } from 'vue'
 import draggable from 'vuedraggable'
-import { onClickOutside } from '@vueuse/core'
+import { ChevronDown, ChevronRight, GripVertical } from 'lucide-vue-next'
 import { useHaptics, ImpactStyle } from '@/composables/useHaptics'
 import { useTodoStore, type Todo } from '../stores/todo'
-import { usePomodoroStore } from '../stores/pomodoro'
 import { useIsMobile } from '@/composables/useWindowSize'
-import { highlightMatch } from '@/lib/utils'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 
-const { t } = useI18n()
+// Sub-components
+import TodoItemActions from './TodoItemActions.vue'
+import TodoItemContent from './TodoItemContent.vue'
+import TodoItemEdit from './TodoItemEdit.vue'
+import TodoItemAddSubtask from './TodoItemAddSubtask.vue'
+
 const store = useTodoStore()
-const pomodoroStore = usePomodoroStore()
 const { isMobile } = useIsMobile()
+const { hapticImpact, hapticSelectionStart } = useHaptics()
+
 const editInputId = useId()
 const subtaskInputId = useId()
 
@@ -58,9 +41,44 @@ const emit = defineEmits<{
   editKeydown: [e: KeyboardEvent]
 }>()
 
+// --- State ---
 const isBreakingDown = ref(false)
 const isMobileActionsVisible = ref(false)
+const isAddingChild = ref(false)
+const showTooltip = ref(false)
 
+// --- Computed ---
+const isExpanded = computed(() => props.todo.expanded ?? false)
+const hasChildren = computed(() => children.value.length > 0)
+const children = computed(() => {
+  if (props.searchQuery) return []
+  return props.allTodos
+    .filter((t) => t.parentId === props.todo.id && !t.deletedAt)
+    .sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1
+      if (!a.isPinned && b.isPinned) return 1
+      if (!a.completed && b.completed) return -1
+      if (a.completed && !b.completed) return 1
+      return (a.order ?? 0) - (b.order ?? 0)
+    })
+})
+
+const dragChildren = computed({
+  get: () => children.value,
+  set: (val) => {
+    store.reorderTodos(
+      val.map((t) => t.id),
+      props.todo.id,
+    )
+  },
+})
+
+const parentPath = computed(() => {
+  if (!props.searchQuery?.trim() && store.filter !== 'trash') return []
+  return store.getTodoPath(props.todo.id)
+})
+
+// --- Methods ---
 function toggleMobileActions() {
   if (isMobile.value) {
     isMobileActionsVisible.value = !isMobileActionsVisible.value
@@ -77,116 +95,9 @@ async function handleBreakdown() {
   }
 }
 
-const dragChildren = computed({
-  get: () => children.value,
-  set: (val) => {
-    store.reorderTodos(
-      val.map((t) => t.id),
-      props.todo.id,
-    )
-  },
-})
-
-const isAddingChild = ref(false)
-const showTooltip = ref(false)
-
-const isExpanded = computed(() => props.todo.expanded ?? false)
-
-const newChildTitle = ref('')
-const subtaskInputRef = ref<InstanceType<typeof Input> | null>(null)
-const editInputRef = ref<InstanceType<typeof Input> | null>(null)
-const subtaskContainerRef = ref<HTMLElement | null>(null)
-
-onClickOutside(subtaskContainerRef, () => {
-  if (isAddingChild.value) {
-    cancelAddChild()
-  }
-})
-
-watch(isAddingChild, (newValue) => {
-  if (newValue) {
-    void nextTick(() => {
-      subtaskInputRef.value?.$el?.focus?.()
-    })
-  }
-})
-
-watch(
-  () => props.editingId,
-  (newId) => {
-    if (newId === props.todo.id) {
-      void nextTick(() => {
-        editInputRef.value?.$el?.focus?.()
-      })
-    }
-  },
-)
-
-const children = computed(() => {
-  // 搜索模式下，不渲染子任务列表（扁平化展示）
-  if (props.searchQuery) return []
-
-  return props.allTodos
-    .filter((t) => t.parentId === props.todo.id && !t.deletedAt)
-    .sort((a, b) => {
-      // 1. 置顶优先
-      if (a.isPinned && !b.isPinned) return -1
-      if (!a.isPinned && b.isPinned) return 1
-      // 2. 未完成优先
-      if (!a.completed && b.completed) return -1
-      if (a.completed && !b.completed) return 1
-      // 3. 其次按 order 排序
-      return (a.order ?? 0) - (b.order ?? 0)
-    })
-})
-
-const hasChildren = computed(() => children.value.length > 0)
-
-const parentPath = computed(() => {
-  if (!props.searchQuery?.trim() && store.filter !== 'trash') return []
-  return store.getTodoPath(props.todo.id)
-})
-
 function toggleExpand() {
   store.toggleTodoExpansion(props.todo.id)
 }
-
-function startAddChild() {
-  isAddingChild.value = true
-  newChildTitle.value = ''
-  store.clearError()
-}
-
-function cancelAddChild() {
-  isAddingChild.value = false
-  newChildTitle.value = ''
-  store.clearError()
-  showTooltip.value = false
-}
-
-async function submitAddChild() {
-  if (newChildTitle.value.trim()) {
-    store.setSilencingToast(true)
-    store.clearError()
-    const success = await store.addTodo(newChildTitle.value, props.todo.id)
-    if (success) {
-      await hapticImpact(ImpactStyle.Light)
-      isAddingChild.value = false
-      newChildTitle.value = ''
-      if (!isExpanded.value) {
-        store.toggleTodoExpansion(props.todo.id)
-      }
-      store.setSilencingToast(false)
-    } else {
-      triggerFeedback()
-      setTimeout(() => {
-        store.setSilencingToast(false)
-      }, 2000)
-    }
-  }
-}
-
-const { hapticImpact, hapticSelectionStart } = useHaptics()
 
 function triggerFeedback() {
   showTooltip.value = true
@@ -218,10 +129,23 @@ async function handlePermanentDelete() {
   await store.deleteTodoPermanently(props.todo.id)
 }
 
+function handleAddSubtask() {
+  isAddingChild.value = true
+  store.clearError()
+}
+
+function handleSubtaskAdded() {
+  isAddingChild.value = false
+  if (!isExpanded.value) {
+    store.toggleTodoExpansion(props.todo.id)
+  }
+}
+
+// --- Watchers ---
 watch(
   () => store.error,
   (newError) => {
-    if (newError && props.editingId === props.todo.id) {
+    if (newError && (props.editingId === props.todo.id || isAddingChild.value)) {
       triggerFeedback()
     }
   },
@@ -231,7 +155,7 @@ watch(
 <template>
   <div class="flex flex-col gap-1.5">
     <div
-      class="group relative flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-2.5"
+      class="group relative flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-2.5 transition-all duration-200"
       :class="[
         { 'opacity-90 scale-[0.98] bg-muted/30': level && level > 0 },
         { 'border-primary/30 bg-primary/[0.03] shadow-sm shadow-primary/5': todo.isPinned },
@@ -242,6 +166,7 @@ watch(
         },
       ]"
     >
+      <!-- Left: Drag & Expand & Checkbox -->
       <div class="flex items-center gap-2">
         <GripVertical
           v-if="store.filter !== 'trash'"
@@ -274,370 +199,86 @@ watch(
         />
       </div>
 
-      <!-- 编辑模式 -->
-      <template v-if="editingId === todo.id">
-        <TooltipProvider :delay-duration="0">
-          <Tooltip :open="showTooltip && editingId === todo.id">
-            <TooltipTrigger as-child>
-              <div class="flex-1">
-                <label :for="editInputId" class="sr-only">{{ t('todo.editPlaceholder') }}</label>
-                <Input
-                  :id="editInputId"
-                  ref="editInputRef"
-                  name="edit-todo"
-                  :model-value="editingTitle"
-                  type="text"
-                  class="h-10 w-full bg-background text-foreground text-base focus-visible:ring-primary/20"
-                  :placeholder="t('todo.editPlaceholder')"
-                  @update:model-value="emit('update:editingTitle', $event as string)"
-                  @keydown="emit('editKeydown', $event)"
-                  @blur="handleSaveEdit"
-                />
-              </div>
-            </TooltipTrigger>
-            <TooltipContent
-              v-if="store.error"
-              side="top"
-              align="start"
-              class="bg-destructive text-destructive-foreground border-none"
-            >
-              <p>{{ store.error.includes('.') ? t(store.error) : store.error }}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        <div class="flex items-center gap-1">
-          <TooltipProvider :delay-duration="0">
-            <Tooltip>
-              <TooltipTrigger as-child>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="h-8 w-8 text-success hover:bg-success/10"
-                  @click="handleSaveEdit"
-                >
-                  <Check class="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">{{ t('todo.save') }}</TooltipContent>
-            </Tooltip>
+      <!-- Center: Edit Mode or Content -->
+      <TodoItemEdit
+        v-if="editingId === todo.id"
+        :model-value="editingTitle"
+        :input-id="editInputId"
+        :error="store.error"
+        :show-tooltip="showTooltip"
+        @update:model-value="emit('update:editingTitle', $event)"
+        @save="handleSaveEdit"
+        @cancel="emit('cancelEdit')"
+        @keydown="emit('editKeydown', $event)"
+      />
 
-            <Tooltip>
-              <TooltipTrigger as-child>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="h-8 w-8 text-muted-foreground hover:bg-muted"
-                  @click="emit('cancelEdit')"
-                >
-                  <X class="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">{{ t('todo.cancel') }}</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      </template>
+      <TodoItemContent
+        v-else
+        :todo="todo"
+        :search-query="searchQuery"
+        :parent-path="parentPath"
+        @start-edit="emit('startEdit', todo.id, todo.title)"
+        @toggle-mobile-actions="toggleMobileActions"
+      />
 
-      <!-- 显示模式 -->
-      <template v-else>
-        <div class="flex-1 flex flex-col min-w-0" @click="toggleMobileActions">
-          <!-- 父任务上下文 (仅在搜索时显示) -->
-          <div
-            v-if="parentPath.length > 0"
-            class="flex items-center gap-1 text-[10px] text-muted-foreground/50 mb-0.5 select-none overflow-hidden"
-          >
-            <template v-for="(name, index) in parentPath" :key="index">
-              <span
-                class="truncate max-w-[80px] hover:text-muted-foreground transition-colors cursor-default"
-              >
-                {{ name }}
-              </span>
-              <ChevronRight :size="10" class="shrink-0 opacity-40" />
-            </template>
-          </div>
-
-          <!-- eslint-disable vue/no-v-html -->
-          <div class="flex items-center gap-1.5 min-w-0">
-            <Pin
-              v-if="todo.isPinned && store.filter !== 'trash'"
-              class="h-3.5 w-3.5 text-primary/70 shrink-0 group-hover:hidden"
-            />
-            <Sparkles
-              v-if="todo.isProposed && store.filter !== 'trash'"
-              class="h-3.5 w-3.5 text-success/70 shrink-0"
-            />
-            <span
-              class="flex-1 cursor-pointer select-text text-foreground truncate"
-              :class="[
-                todo.completed && store.filter !== 'trash'
-                  ? 'line-through text-muted-foreground/50'
-                  : '',
-                todo.isProposedDelete ? 'line-through text-destructive/50' : '',
-                todo.isProposed && store.filter !== 'trash' ? 'text-success/90 font-medium' : '',
-              ]"
-              :title="todo.title"
-              @dblclick="store.filter !== 'trash' && emit('startEdit', todo.id, todo.title)"
-              v-html="highlightMatch(todo.title, searchQuery || '')"
-            >
-            </span>
-            <div
-              v-if="todo.pomodoroCount > 0 && store.filter !== 'trash'"
-              class="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-rose-500/10 text-rose-500 dark:text-rose-400/90 text-[10px] font-bold shrink-0 ml-1 animate-in fade-in zoom-in-95 duration-500"
-              :title="t('pomodoro.sessions', { count: todo.pomodoroCount })"
-            >
-              <Timer class="w-3 h-3" />
-              <span>{{ todo.pomodoroCount }}</span>
-            </div>
-          </div>
-          <!-- eslint-enable vue/no-v-html -->
-        </div>
-        <div
-          v-if="store.filter === 'trash'"
-          class="absolute right-0 top-0 bottom-0 flex items-center gap-1 px-3 bg-gradient-to-l from-card via-card/95 to-transparent rounded-r-xl"
-        >
-          <TooltipProvider :delay-duration="0">
-            <Tooltip>
-              <TooltipTrigger as-child>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="h-8 w-8 text-primary hover:bg-primary/10"
-                  @click.stop="store.restoreTodo(todo.id)"
-                >
-                  <RotateCcw class="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">{{ t('todo.restore') }}</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger as-child>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="h-8 w-8 text-destructive hover:bg-destructive/10 transition-colors"
-                  @click.stop="handlePermanentDelete"
-                >
-                  <Trash2 class="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">{{ t('todo.delete') }}</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-        <div
-          v-else
-          class="absolute right-0 top-0 bottom-0 flex items-center gap-0.5 opacity-0 md:group-hover:opacity-100 bg-gradient-to-l from-card via-card/95 to-transparent pl-8 md:pl-12 pr-2 md:pr-3 rounded-r-xl transition-all duration-200"
-          :class="{ 'opacity-100': isMobileActionsVisible }"
-        >
-          <TooltipProvider :delay-duration="0">
-            <!-- AI Breakdown -->
-            <Tooltip v-if="!todo.completed && !todo.isProposedDelete">
-              <TooltipTrigger as-child>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                  :disabled="isBreakingDown"
-                  @click.stop="handleBreakdown"
-                >
-                  <component
-                    :is="isBreakingDown ? Loader2 : Wand2"
-                    class="h-3.5 w-3.5 md:h-4 md:w-4"
-                    :class="[
-                      { 'animate-spin': isBreakingDown },
-                      isBreakingDown ? 'lucide-loader2' : 'lucide-wand2',
-                    ]"
-                  />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">{{ t('todo.breakdown') }}</TooltipContent>
-            </Tooltip>
-
-            <!-- Focus -->
-            <Tooltip v-if="!todo.completed">
-              <TooltipTrigger as-child>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                  :class="{ 'text-primary bg-primary/5': pomodoroStore.activeTodoId === todo.id }"
-                  @click.stop="pomodoroStore.startFocus(todo.id)"
-                >
-                  <Target class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-target" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">{{ t('todo.focus') }}</TooltipContent>
-            </Tooltip>
-
-            <!-- Pin -->
-            <Tooltip>
-              <TooltipTrigger as-child>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                  :class="{ 'text-primary bg-primary/5': todo.isPinned }"
-                  @click.stop="store.togglePin(todo.id)"
-                >
-                  <PinOff v-if="todo.isPinned" class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-pin-off" />
-                  <Pin v-else class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-pin" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">{{
-                todo.isPinned ? t('todo.unpin') : t('todo.pin')
-              }}</TooltipContent>
-            </Tooltip>
-
-            <!-- Edit -->
-            <Tooltip v-if="!todo.completed">
-              <TooltipTrigger as-child>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                  @click.stop="emit('startEdit', todo.id, todo.title)"
-                >
-                  <Pencil class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-pencil" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">{{ t('todo.edit') }}</TooltipContent>
-            </Tooltip>
-
-            <!-- Add Subtask -->
-            <Tooltip v-if="(level || 0) < 2 && !todo.completed">
-              <TooltipTrigger as-child>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                  @click.stop="startAddChild"
-                >
-                  <Plus class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-plus" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">{{ t('todo.addSubtask') }}</TooltipContent>
-            </Tooltip>
-
-            <!-- Delete -->
-            <Tooltip>
-              <TooltipTrigger as-child>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                  @click.stop="handleDelete"
-                >
-                  <Trash2 class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-trash2" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">{{ t('todo.delete') }}</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      </template>
+      <!-- Right: Actions -->
+      <TodoItemActions
+        v-if="editingId !== todo.id"
+        :todo="todo"
+        :is-breaking-down="isBreakingDown"
+        :is-mobile-actions-visible="isMobileActionsVisible"
+        :level="level"
+        @start-edit="emit('startEdit', todo.id, todo.title)"
+        @delete="handleDelete"
+        @breakdown="handleBreakdown"
+        @add-subtask="handleAddSubtask"
+        @permanent-delete="handlePermanentDelete"
+      />
     </div>
 
-    <!-- 添加子任务输入框 -->
-    <div
+    <!-- Subtask Input -->
+    <TodoItemAddSubtask
       v-if="isAddingChild"
-      ref="subtaskContainerRef"
-      class="flex items-center gap-2 px-4 py-2.5 ml-10 border-l-2 border-primary/10"
-    >
-      <TooltipProvider :delay-duration="0">
-        <Tooltip :open="showTooltip && isAddingChild">
-          <TooltipTrigger as-child>
-            <div class="flex-1">
-              <label :for="subtaskInputId" class="sr-only">{{
-                t('todo.subtaskPlaceholder')
-              }}</label>
-              <Input
-                :id="subtaskInputId"
-                ref="subtaskInputRef"
-                v-model="newChildTitle"
-                name="new-subtask"
-                type="text"
-                class="h-9 w-full bg-background text-sm"
-                :placeholder="t('todo.subtaskPlaceholder')"
-                @keydown.enter="submitAddChild"
-                @keydown.esc="cancelAddChild"
-              />
-            </div>
-          </TooltipTrigger>
-          <TooltipContent
-            v-if="store.error"
-            side="top"
-            align="start"
-            class="bg-destructive text-destructive-foreground border-none"
-          >
-            <p>{{ store.error.includes('.') ? t(store.error) : store.error }}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      <div class="flex items-center gap-1">
-        <TooltipProvider :delay-duration="0">
-          <Tooltip>
-            <TooltipTrigger as-child>
-              <Button
-                variant="ghost"
-                size="icon"
-                class="h-8 w-8 text-success hover:bg-success/10"
-                @click="submitAddChild"
-              >
-                <Check class="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top">{{ t('todo.add') }}</TooltipContent>
-          </Tooltip>
+      :parent-id="todo.id"
+      :input-id="subtaskInputId"
+      :error="store.error"
+      :show-tooltip="showTooltip"
+      @added="handleSubtaskAdded"
+      @cancel="isAddingChild = false"
+    />
 
-          <Tooltip>
-            <TooltipTrigger as-child>
-              <Button
-                variant="ghost"
-                size="icon"
-                class="h-8 w-8 text-muted-foreground hover:bg-muted"
-                @click="cancelAddChild"
-              >
-                <X class="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top">{{ t('todo.cancel') }}</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
-    </div>
-
-    <!-- 子任务列表 (最多支持三层) -->
+    <!-- Subtasks List (Recursive) -->
     <div
-      v-if="(level || 0) < 2 && isExpanded"
-      class="ml-10 flex flex-col gap-1.5 border-l-2 border-primary/5 pl-2 transition-all"
+      v-if="isExpanded && hasChildren"
+      class="flex flex-col gap-1.5 ml-4 md:ml-6 border-l-2 border-primary/5 pl-4 md:pl-6"
     >
       <draggable
         v-model="dragChildren"
         item-key="id"
         handle=".drag-handle"
         group="todos"
+        :animation="200"
         ghost-class="opacity-50"
         chosen-class="scale-[1.01]"
         class="flex flex-col gap-1.5 min-h-[4px]"
-        :animation="0"
+        @start="hapticSelectionStart"
       >
-        <template #item="{ element: child }">
+        <template #item="{ element }">
           <TodoItem
-            :todo="child"
+            :todo="element"
             :all-todos="allTodos"
-            :level="(level || 0) + 1"
             :editing-id="editingId"
             :editing-title="editingTitle"
             :search-query="searchQuery"
-            @toggle="(id, currentCompleted) => emit('toggle', id, currentCompleted)"
+            :level="(level || 0) + 1"
+            @toggle="(id, completed) => emit('toggle', id, completed)"
             @start-edit="(id, title) => emit('startEdit', id, title)"
             @save-edit="emit('saveEdit')"
             @cancel-edit="emit('cancelEdit')"
             @delete="(id) => emit('delete', id)"
-            @reorder="(ids, pId) => emit('reorder', ids, pId)"
-            @update:editing-title="(value) => emit('update:editingTitle', value)"
-            @edit-keydown="(e) => emit('editKeydown', e)"
+            @reorder="(ids, parentId) => emit('reorder', ids, parentId)"
+            @update:editing-title="emit('update:editingTitle', $event)"
+            @edit-keydown="emit('editKeydown', $event)"
           />
         </template>
       </draggable>
