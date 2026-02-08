@@ -2,15 +2,13 @@ model McpServer {
   id          String   @id @default(uuid())
   name        String
   description String?
-  // Transport 类型: "stdio" | "http"
   transport   String
-  // stdio: command 和 args; http: url 和 headers
   config      Json
   enabled     Boolean  @default(true)
   userId      Int
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("mcp_servers")

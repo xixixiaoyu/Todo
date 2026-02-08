@@ -1,17 +1,17 @@
 model User {
-    id                   Int             @id @default(autoincrement())
-    email                String          @unique
-    name                 String
-    password             String?
-    avatar               String?
-    googleId             String?         @unique
-    resetPasswordToken   String?
-    resetPasswordExpires DateTime?
-    createdAt            DateTime        @default(now())
-    updatedAt            DateTime        @updatedAt
-    authenticators       Authenticator[]
-    todos                Todo[]
-    mcpServers           McpServer[]
+  id                   Int             @id @default(autoincrement())
+  email                String          @unique
+  name                 String
+  password             String?
+  avatar               String?
+  googleId             String?         @unique
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  authenticators       Authenticator[]
+  mcpServers           McpServer[]
+  todos                Todo[]
 
-    @@map("users")
+  @@map("users")
 }
