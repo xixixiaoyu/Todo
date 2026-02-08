@@ -29,6 +29,7 @@ vi.mock('lucide-vue-next', () => ({
   Search: { template: '<span>Search</span>' },
   ChevronLeft: { template: '<span>ChevronLeft</span>' },
   Settings2: { template: '<span>Settings2</span>' },
+  Blocks: { template: '<span>Blocks</span>' },
 }))
 
 // Mock composables

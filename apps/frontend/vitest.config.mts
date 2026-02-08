@@ -16,7 +16,7 @@ export default defineConfig({
       '@': resolve(__dirname, './src'),
       '@my-app/shared': resolve(__dirname, '../../packages/shared/src/index.ts'),
     },
-    setupFiles: [],
+    setupFiles: ['./tests/setup.ts'],
     // 限制并发，防止 Worker 崩溃导致卡死
     fileParallelism: false,
   },

@@ -15,6 +15,7 @@ import {
   Check,
   Star,
   Sparkles,
+  Blocks,
 } from 'lucide-vue-next'
 import {
   DropdownMenu,
@@ -51,7 +52,7 @@ const emit = defineEmits<{
   (e: 'selectPrimaryModel', id: string): void
   (e: 'toggleSecondaryModel', id: string): void
   (e: 'selectPreset', id: string): void
-  (e: 'openSettings', tab?: 'settings' | 'presets'): void
+  (e: 'openSettings', tab?: 'settings' | 'presets' | 'memory' | 'mcp'): void
 }>()
 
 const { t } = useI18n()
@@ -335,6 +336,17 @@ const handlePresetMouseLeave = () => {
             <span v-if="!isMobile" class="toolbar-text font-medium">{{
               t('ai.enableImageGeneration')
             }}</span>
+          </button>
+
+          <!-- MCP 工具 -->
+          <button
+            :class="[
+              'toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all active:scale-95 border-transparent text-muted-foreground',
+            ]"
+            :title="t('ai.mcp')"
+            @click="emit('openSettings', 'mcp')"
+          >
+            <Blocks :size="16" />
           </button>
 
           <div class="h-4 w-px shrink-0 bg-border/20 mx-0.5" />

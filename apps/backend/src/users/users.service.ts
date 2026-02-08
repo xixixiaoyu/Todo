@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common'
 import * as bcrypt from 'bcryptjs'
 import { PrismaService } from '../prisma/prisma.service'
-import { Prisma } from '@prisma/client'
+import { Prisma } from '../generated/client'
 import type { User, RegisterInput, PrismaUser } from '@my-app/shared'
 import { formatUser, formatUsers } from '@my-app/shared'
 

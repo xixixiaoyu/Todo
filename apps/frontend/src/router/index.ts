@@ -44,6 +44,12 @@ const router = createRouter({
       component: () => import('@/features/auth/views/AuthCallbackView.vue'),
     },
     {
+      path: '/settings/mcp',
+      name: 'mcp-settings',
+      component: () => import('@/features/mcp/views/McpSettingsView.vue'),
+      meta: { title: 'mcp.settings.title' },
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: () => import('@/views/error/NotFoundView.vue'),

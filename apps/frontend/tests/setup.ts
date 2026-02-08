@@ -1,35 +1,33 @@
-import { beforeEach } from 'vitest'
-import { config } from '@vue/test-utils'
-import { createPinia, setActivePinia } from 'pinia'
+import { vi } from 'vitest'
 
-// Fix KaTeX quirks mode warning
-if (typeof document !== 'undefined') {
-  Object.defineProperty(document, 'compatMode', {
-    get: () => 'CSS1Compat',
-    configurable: true,
-  })
-}
+// Mock MCP API globally
+vi.mock('@/features/mcp/api/mcp', () => ({
+  mcpApi: {
+    getAllTools: vi.fn().mockResolvedValue([]),
+    getServers: vi.fn().mockResolvedValue([]),
+    createServer: vi.fn().mockResolvedValue({}),
+    updateServer: vi.fn().mockResolvedValue({}),
+    deleteServer: vi.fn().mockResolvedValue({}),
+    getTools: vi.fn().mockResolvedValue([]),
+    callTool: vi.fn().mockResolvedValue({}),
+  },
+  McpTransportType: {
+    STDIO: 'stdio',
+    HTTP: 'http',
+  },
+}))
 
-// Initialize Pinia
-const pinia = createPinia()
-setActivePinia(pinia)
-
-// Global plugins
-config.global.plugins = [pinia]
-
-// Global stubs for UI components that require providers
-config.global.stubs = {
-  TooltipProvider: { template: '<div><slot /></div>' },
-  Tooltip: { template: '<div><slot /></div>' },
-  TooltipTrigger: { template: '<div><slot /></div>' },
-  TooltipContent: { template: '<div><slot /></div>' },
-}
-
-// Clear state before each test
-beforeEach(() => {
-  setActivePinia(pinia)
-  pinia.state.value = {}
-  if (typeof localStorage !== 'undefined') {
-    localStorage.clear()
-  }
+// Mock window.matchMedia if needed
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation((query) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(), // deprecated
+    removeListener: vi.fn(), // deprecated
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
 })

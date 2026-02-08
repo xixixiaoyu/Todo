@@ -342,6 +342,13 @@ export default {
       'No presets available. Please add models for discussion in "Preset Management" first.',
     parallelSynthesisPrompt:
       'I have invited several AI models to independently answer the user query: "{originalQuery}". Here are their responses:\n\n{discussionData}\n\nAs the "Primary Model", please deeply analyze and synthesize all inputs to provide the most accurate, professional, and comprehensive final answer. IMPORTANT: Do NOT mention "secondary models", "other models", "the responses above", or anything that implies a multi-model discussion process in your final answer. Directly present the most perfect and unified response.',
+    mcp: 'MCP Extensions',
+    mcpPlaceholder: 'Configure and manage your MCP services',
+    addMcpServer: 'Add MCP Server',
+    mcpServerDescription: 'Connect to local or remote tools',
+    mcpConnected: 'Connected',
+    mcpDisconnected: 'Disconnected',
+    mcpConfirmDelete: 'Are you sure you want to delete this server configuration?',
     memory: 'Memory',
     memoryEnabled: 'Memory Enabled',
     memoryDisabled: 'Memory Disabled',

@@ -2,6 +2,7 @@
 export { z } from 'zod'
 export * from './schemas/auth.schema'
 export * from './schemas/todo.schema'
+export * from './schemas/mcp.schema'
 export * from './schemas/i18n-keys'
 
 // 通用响应类型

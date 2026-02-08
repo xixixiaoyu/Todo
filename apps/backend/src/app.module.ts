@@ -17,6 +17,7 @@ import { EventsModule } from './events'
 import { UploadModule } from './upload'
 import { TodosModule } from './todos/todos.module'
 import { ScheduledTasksModule } from './scheduled-tasks'
+import { McpModule } from './mcp/mcp.module'
 
 /**
  * 应用程序根模块
@@ -153,6 +154,7 @@ import { ScheduledTasksModule } from './scheduled-tasks'
     UploadModule, // 文件上传模块
     TodosModule, // 待办事项模块
     ScheduledTasksModule, // 定时任务模块
+    McpModule, // MCP 模块
   ],
   providers: [
     // 全局速率限制守卫

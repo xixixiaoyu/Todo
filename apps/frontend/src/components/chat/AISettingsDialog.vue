@@ -20,13 +20,14 @@ import {
 import AISettingsBasic from './AISettingsBasic.vue'
 import AIMemoryManager from './AIMemoryManager.vue'
 import AIPresetManager from './AIPresetManager.vue'
+import McpSettingsManager from '@/features/mcp/components/McpSettingsManager.vue'
 
 const props = defineProps<{
-  initialTab?: 'settings' | 'presets' | 'memory'
+  initialTab?: 'settings' | 'presets' | 'memory' | 'mcp'
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:initialTab', tab: 'settings' | 'presets' | 'memory'): void
+  (e: 'update:initialTab', tab: 'settings' | 'presets' | 'memory' | 'mcp'): void
 }>()
 
 const modelValue = defineModel<boolean>({ required: true })
@@ -41,7 +42,7 @@ const { config, updateConfig, DEFAULT_CONFIG, presets, addPreset, activePresetId
 const presetManagerRef = ref<InstanceType<typeof AIPresetManager> | null>(null)
 
 // 当前 Tab
-const activeTab = ref<'settings' | 'presets' | 'memory'>(props.initialTab || 'settings')
+const activeTab = ref<'settings' | 'presets' | 'memory' | 'mcp'>(props.initialTab || 'settings')
 
 // 监听内部 Tab 变化并通知外部
 watch(activeTab, (newTab) => {
@@ -263,7 +264,7 @@ defineExpose({
             <!-- 导航层 -->
             <div class="relative flex gap-8 px-9">
               <button
-                v-for="tab in ['settings', 'presets', 'memory'] as const"
+                v-for="tab in ['settings', 'presets', 'memory', 'mcp'] as const"
                 :key="tab"
                 class="group relative py-4 text-[13px] font-bold tracking-wide transition-all"
                 :class="
@@ -273,7 +274,7 @@ defineExpose({
               >
                 <span class="relative z-10">{{
                   t(
-                    `ai.${tab === 'settings' ? 'basicSettings' : tab === 'presets' ? 'presetManagement' : 'memory'}`,
+                    `ai.${tab === 'settings' ? 'basicSettings' : tab === 'presets' ? 'presetManagement' : tab}`,
                   )
                 }}</span>
 
@@ -317,6 +318,9 @@ defineExpose({
 
             <!-- 预设管理 Tab -->
             <AIPresetManager v-else-if="activeTab === 'presets'" ref="presetManagerRef" />
+
+            <!-- MCP 扩展 Tab -->
+            <McpSettingsManager v-else-if="activeTab === 'mcp'" />
           </div>
 
           <!-- 底部按钮 -->

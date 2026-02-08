@@ -36,6 +36,7 @@ apps/frontend/.env
 
 # Testing
 coverage
+test-results.json
 
 # Prisma
 prisma/*.db

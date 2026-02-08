@@ -4,7 +4,13 @@
 
 import { getAIConfig } from '@/composables/useAIConfig'
 import i18n from '@/i18n'
-import type { ChatMessage, AIRequestOptions, ReasoningDetailItem, MultiModalContent } from './types'
+import type {
+  ChatMessage,
+  AIRequestOptions,
+  ReasoningDetailItem,
+  MultiModalContent,
+  ToolCall,
+} from './types'
 import { buildApiUrl, getHeaders, injectSystemPrompts } from './utils'
 
 const t = i18n.global.t
@@ -40,6 +46,7 @@ export async function getAIStreamResponse(
   onThinking?: (thinking: string) => void,
   onReasoningDetails?: (details: string) => void,
   options: AIRequestOptions = {},
+  onToolCall?: (toolCall: ToolCall) => void,
 ): Promise<void> {
   const aiConfig = getAIConfig()
   const {
@@ -49,6 +56,8 @@ export async function getAIStreamResponse(
     temperature = aiConfig.temperature,
     systemPrompt = aiConfig.systemPrompt,
     thinkingMode = aiConfig.thinkingMode,
+    tools,
+    toolChoice,
   } = options
 
   const signal = getAbortSignal()
@@ -67,6 +76,12 @@ export async function getAIStreamResponse(
       messages: messagesWithSystemPrompts,
       temperature,
       stream: true,
+    }
+
+    // 添加工具配置
+    if (tools && tools.length > 0) {
+      requestBody.tools = tools
+      requestBody.tool_choice = toolChoice || 'auto'
     }
 
     // 适配 OpenRouter 的推理参数
@@ -106,6 +121,9 @@ export async function getAIStreamResponse(
     let isReading = true
     let doneReceived = false
 
+    // 累积 tool_calls
+    const toolCallsMap = new Map<number, ToolCall>()
+
     /**
      * 处理单行数据的辅助函数
      */
@@ -122,6 +140,10 @@ export async function getAIStreamResponse(
       if (data === '[DONE]') {
         onChunk('[DONE]')
         doneReceived = true
+        // 如果有工具调用且未完成，触发回调
+        for (const toolCall of toolCallsMap.values()) {
+          if (onToolCall) onToolCall(toolCall)
+        }
         return
       }
 
@@ -135,6 +157,26 @@ export async function getAIStreamResponse(
           const content = delta?.content
           if (content) {
             onChunk(content)
+          }
+
+          // 处理工具调用 (Tool Calls)
+          const tool_calls = delta?.tool_calls
+          if (tool_calls && Array.isArray(tool_calls)) {
+            for (const call of tool_calls) {
+              const index = call.index
+              if (!toolCallsMap.has(index)) {
+                toolCallsMap.set(index, {
+                  id: call.id || '',
+                  type: 'function',
+                  function: { name: call.function?.name || '', arguments: '' },
+                })
+              }
+              const existingCall = toolCallsMap.get(index)!
+              if (call.id) existingCall.id = call.id
+              if (call.function?.name) existingCall.function.name = call.function.name
+              if (call.function?.arguments)
+                existingCall.function.arguments += call.function.arguments
+            }
           }
 
           // 处理思考过程（如 DeepSeek-R1 模型）
@@ -194,6 +236,9 @@ export async function getAIStreamResponse(
     // 如果正常结束但没有收到 [DONE]
     if (!doneReceived) {
       onChunk('[DONE]')
+      for (const toolCall of toolCallsMap.values()) {
+        if (onToolCall) onToolCall(toolCall)
+      }
     }
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {

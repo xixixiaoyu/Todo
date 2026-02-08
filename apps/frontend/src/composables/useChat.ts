@@ -10,6 +10,8 @@ import {
   type ChatMessage,
   type AIRequestOptions,
   type DiscussionStep,
+  type Tool,
+  type ToolCall,
 } from '@/services/aiService'
 import { useChatHistory } from './useChatHistory'
 import { getAIThinkingMode, getAIConfig } from './useAIConfig'
@@ -370,6 +372,7 @@ export function useChat(options: AIRequestOptions = {}) {
       }
 
       if (aiConfig.discussionMode && aiConfig.discussionModelIds.length > 0) {
+        // 多模型讨论模式暂不支持工具调用 (根据具体实现决定)
         await getMultiModelDiscussionStream(
           chatHistory.value,
           (steps) => {
@@ -379,7 +382,6 @@ export function useChat(options: AIRequestOptions = {}) {
           (thinking: string) => {
             currentThinkingContent.value += thinking
           },
-          // 处理推理详情 (OpenRouter)
           (details: string) => {
             currentReasoningDetails.value += details
           },
@@ -389,22 +391,107 @@ export function useChat(options: AIRequestOptions = {}) {
           },
         )
       } else {
+        // 获取 MCP 工具
+        const { mcpApi } = await import('@/features/mcp/api/mcp')
+        let mcpTools: import('@/features/mcp/api/mcp').McpToolResponse[] = []
+        try {
+          mcpTools = await mcpApi.getAllTools()
+        } catch (e) {
+          console.error('Failed to fetch MCP tools:', e)
+        }
+
+        // 转换为 AI 格式
+        const aiTools: Tool[] = mcpTools.map((t) => ({
+          type: 'function',
+          function: {
+            name: t.name,
+            description: t.description,
+            parameters: t.inputSchema,
+          },
+        }))
+
+        // 存储本次请求的工具调用结果
+        const toolCalls: ToolCall[] = []
+
         await getAIStreamResponse(
           chatHistory.value,
           handleChunk,
-          // 处理思考过程
           (thinking: string) => {
             currentThinkingContent.value += thinking
           },
-          // 处理推理详情 (OpenRouter)
           (details: string) => {
             currentReasoningDetails.value += details
           },
           {
             ...options,
             thinkingMode: getAIThinkingMode(),
+            tools: aiTools.length > 0 ? aiTools : undefined,
+          },
+          (toolCall) => {
+            toolCalls.push(toolCall)
           },
         )
+
+        // 处理工具调用
+        if (toolCalls.length > 0) {
+          isGenerating.value = true // 保持生成状态
+
+          // 创建 Assistant 消息包含 tool_calls
+          const assistantMessage: ChatMessage = {
+            id: generateId(),
+            role: 'assistant',
+            content: currentAIResponse.value, // 可能为空
+            tool_calls: toolCalls,
+            createdAt: new Date(),
+          }
+          chatHistory.value = [...chatHistory.value, assistantMessage]
+
+          // 执行每一个工具调用
+          for (const call of toolCalls) {
+            const toolName = call.function.name
+            const toolArgs = JSON.parse(call.function.arguments || '{}')
+
+            // 查找对应的 MCP Server
+            const mcpTool = mcpTools.find((t) => t.name === toolName)
+            if (mcpTool && mcpTool.serverId) {
+              try {
+                const result = await mcpApi.callTool(mcpTool.serverId, toolName, toolArgs)
+                const toolResult: ChatMessage = {
+                  id: generateId(),
+                  role: 'tool',
+                  tool_call_id: call.id,
+                  content: JSON.stringify(result.content),
+                  createdAt: new Date(),
+                }
+                chatHistory.value = [...chatHistory.value, toolResult]
+              } catch (error) {
+                const toolError: ChatMessage = {
+                  id: generateId(),
+                  role: 'tool',
+                  tool_call_id: call.id,
+                  content: `Error: ${error instanceof Error ? error.message : String(error)}`,
+                  createdAt: new Date(),
+                }
+                chatHistory.value = [...chatHistory.value, toolError]
+              }
+            } else {
+              // 工具未找到
+              const toolNotFound: ChatMessage = {
+                id: generateId(),
+                role: 'tool',
+                tool_call_id: call.id,
+                content: `Error: Tool ${toolName} not found or server not identified.`,
+                createdAt: new Date(),
+              }
+              chatHistory.value = [...chatHistory.value, toolNotFound]
+            }
+          }
+
+          // 关键：递归/循环调用 sendMessage 以获取 AI 对工具结果的响应
+          // 注意：为了避免无限循环，这里通常应该有一个最大迭代次数
+          // 或是直接再次调用 getAIStreamResponse
+          return sendMessage('', undefined, undefined, true)
+        }
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : t('ai.requestFailed')

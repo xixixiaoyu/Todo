@@ -1,0 +1,140 @@
+import { z } from 'zod'
+
+/**
+ * MCP Server Transport 类型
+ */
+export const McpTransportType = {
+  STDIO: 'stdio',
+  HTTP: 'http',
+} as const
+
+export type McpTransportType = (typeof McpTransportType)[keyof typeof McpTransportType]
+
+/**
+ * Stdio Transport 配置 Schema
+ */
+export const StdioConfigSchema = z.object({
+  command: z.string().min(1, 'Command is required'),
+  args: z.array(z.string()).optional().default([]),
+  env: z.record(z.string()).optional(),
+  cwd: z.string().optional(),
+})
+
+export type StdioConfig = z.infer<typeof StdioConfigSchema>
+
+/**
+ * 创建 MCP Server 参数
+ */
+export type CreateMcpServerDto = z.infer<typeof CreateMcpServerSchema>
+
+/**
+ * 更新 MCP Server 参数
+ */
+export type UpdateMcpServerDto = z.infer<typeof UpdateMcpServerSchema>
+
+/**
+ * HTTP Transport 配置 Schema
+ */
+export const HttpConfigSchema = z.object({
+  url: z.string().url('Invalid URL format'),
+  headers: z.record(z.string()).optional(),
+  // OAuth / Bearer Token 支持
+  auth: z
+    .object({
+      type: z.enum(['bearer', 'api_key', 'oauth']),
+      token: z.string().optional(),
+      apiKey: z.string().optional(),
+      apiKeyHeader: z.string().optional().default('X-API-Key'),
+    })
+    .optional(),
+})
+
+export type HttpConfig = z.infer<typeof HttpConfigSchema>
+
+/**
+ * 创建 MCP Server 配置的基础对象 Schema
+ */
+export const McpServerBaseSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(100),
+  description: z.string().max(500).optional(),
+  transport: z.enum([McpTransportType.STDIO, McpTransportType.HTTP]),
+  config: z.union([StdioConfigSchema, HttpConfigSchema]),
+  enabled: z.boolean().optional().default(true),
+})
+
+/**
+ * 验证 Transport 和 Config 是否匹配的逻辑
+ */
+const validateTransportConfig = (data: Record<string, unknown>) => {
+  if (!data.transport || !data.config) return true // 让 partial 模式下的校验通过
+  if (data.transport === McpTransportType.STDIO) {
+    return StdioConfigSchema.safeParse(data.config).success
+  }
+  if (data.transport === McpTransportType.HTTP) {
+    return HttpConfigSchema.safeParse(data.config).success
+  }
+  return false
+}
+
+/**
+ * 创建 MCP Server 配置 Schema
+ */
+export const CreateMcpServerSchema = McpServerBaseSchema.refine(validateTransportConfig, {
+  message: 'Config must match the transport type',
+  path: ['config'],
+})
+
+/**
+ * 更新 MCP Server 配置 Schema
+ */
+export const UpdateMcpServerSchema = McpServerBaseSchema.partial().refine(validateTransportConfig, {
+  message: 'Config must match the transport type',
+  path: ['config'],
+})
+
+/**
+ * 调用工具 Schema
+ */
+export const CallToolSchema = z.object({
+  name: z.string().min(1, 'Tool name is required'),
+  arguments: z.record(z.unknown()).optional().default({}),
+})
+
+/**
+ * MCP Server 响应类型
+ */
+export interface McpServerResponse {
+  id: string
+  name: string
+  description: string | null
+  transport: McpTransportType
+  config: StdioConfig | HttpConfig
+  enabled: boolean
+  userId: number
+  createdAt: string | Date
+  updatedAt: string | Date
+}
+
+/**
+ * MCP Tool 响应类型
+ */
+export interface McpToolResponse {
+  name: string
+  description?: string
+  inputSchema: Record<string, unknown>
+  serverId?: string // 所属服务器 ID
+}
+
+/**
+ * Tool 调用结果类型
+ */
+export interface ToolCallResult {
+  content: Array<{
+    type: string
+    text?: string
+    data?: string
+    mimeType?: string
+    [key: string]: unknown
+  }>
+  isError?: boolean
+}
