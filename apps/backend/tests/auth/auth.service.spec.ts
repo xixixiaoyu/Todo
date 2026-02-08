@@ -1,24 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { AuthService } from '../../src/auth/auth.service'
+import { TokenService } from '../../src/auth/token.service'
+import { PasskeyService } from '../../src/auth/passkey.service'
+import { PasswordService } from '../../src/auth/password.service'
 import { UnauthorizedException } from '@nestjs/common'
-import { JwtService } from '@nestjs/jwt'
-import { ConfigService } from '@nestjs/config'
 import { UsersService } from '../../src/users/users.service'
-import { MailService } from '../../src/mail/mail.service'
-import { RedisService } from '../../src/redis/redis.service'
-import { PrismaService } from '../../src/prisma/prisma.service'
 import * as bcrypt from 'bcryptjs'
 import type { User } from '@my-app/shared'
-import * as simplewebauthn from '@simplewebauthn/server'
-import type { PublicKeyCredentialCreationOptionsJSON } from '@simplewebauthn/server'
-
-// Mock simplewebauthn
-vi.mock('@simplewebauthn/server', () => ({
-  generateRegistrationOptions: vi.fn(),
-  verifyRegistrationResponse: vi.fn(),
-  generateAuthenticationOptions: vi.fn(),
-  verifyAuthenticationResponse: vi.fn(),
-}))
 
 // Mock dependencies
 const mockUsersService = {
@@ -30,32 +18,25 @@ const mockUsersService = {
   update: vi.fn(),
 }
 
-const mockJwtService = {
-  sign: vi.fn(),
-  verify: vi.fn(),
+const mockTokenService = {
+  buildAuthResponse: vi.fn(),
+  isBlacklisted: vi.fn(),
+  verifyToken: vi.fn(),
+  blacklistToken: vi.fn(),
 }
 
-const mockConfigService = {
-  get: vi.fn((key: string, defaultValue?: unknown) => defaultValue),
+const mockPasskeyService = {
+  generateRegistrationOptions: vi.fn(),
+  verifyRegistration: vi.fn(),
+  generateAuthenticationOptions: vi.fn(),
+  verifyAuthentication: vi.fn(),
 }
 
-const mockMailService = {
-  sendPasswordReset: vi.fn(),
-}
-
-const mockRedisService = {
-  has: vi.fn(),
-  set: vi.fn(),
-  get: vi.fn(),
-}
-
-const mockPrismaService = {
-  authenticator: {
-    findMany: vi.fn(),
-    create: vi.fn(),
-    findUnique: vi.fn(),
-    update: vi.fn(),
-  },
+const mockPasswordService = {
+  hash: vi.fn(),
+  compare: vi.fn(),
+  requestReset: vi.fn(),
+  reset: vi.fn(),
 }
 
 describe('AuthService', () => {
@@ -65,11 +46,9 @@ describe('AuthService', () => {
     vi.clearAllMocks()
     service = new AuthService(
       mockUsersService as unknown as UsersService,
-      mockJwtService as unknown as JwtService,
-      mockConfigService as unknown as ConfigService,
-      mockMailService as unknown as MailService,
-      mockRedisService as unknown as RedisService,
-      mockPrismaService as unknown as PrismaService,
+      mockTokenService as unknown as TokenService,
+      mockPasskeyService as unknown as PasskeyService,
+      mockPasswordService as unknown as PasswordService,
     )
   })
 
@@ -86,12 +65,12 @@ describe('AuthService', () => {
         updatedAt: new Date(),
       }
       mockUsersService.findInternalByEmail.mockResolvedValue(mockUser)
+      mockPasswordService.compare.mockResolvedValue(true)
 
       const result = await service.validateUser('test@example.com', 'password123')
 
       expect(result).not.toBeNull()
       expect(result?.email).toBe('test@example.com')
-      // 使用类型断言检查 password 是否已被 formatUser 移除
       expect((result as Record<string, unknown>).password).toBeUndefined()
     })
 
@@ -106,6 +85,7 @@ describe('AuthService', () => {
       mockUsersService.findInternalByEmail.mockResolvedValue({
         password: hashedPassword,
       })
+      mockPasswordService.compare.mockResolvedValue(false)
       const result = await service.validateUser('test@example.com', 'wrongpassword')
       expect(result).toBeNull()
     })
@@ -129,12 +109,15 @@ describe('AuthService', () => {
         updatedAt: new Date().toISOString(),
       }
       vi.spyOn(service, 'validateUser').mockResolvedValue(mockUser)
-      mockJwtService.sign.mockReturnValue('mock-token')
+      mockTokenService.buildAuthResponse.mockReturnValue({
+        accessToken: 'mock-token',
+        refreshToken: 'mock-token',
+        user: mockUser,
+      })
 
       const result = await service.login({ email: 'test@example.com', password: 'password' })
 
       expect(result.accessToken).toBe('mock-token')
-      expect(result.refreshToken).toBe('mock-token')
       expect(result.user).toEqual(mockUser)
     })
   })
@@ -170,6 +153,9 @@ describe('AuthService', () => {
         id: 2,
         email: 'new@google.com',
         googleId: 'new-123',
+        name: 'New User',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       })
 
       const profile = {
@@ -196,15 +182,22 @@ describe('AuthService', () => {
     }
 
     it('should generate registration options', async () => {
-      mockPrismaService.authenticator.findMany.mockResolvedValue([])
-      vi.mocked(simplewebauthn.generateRegistrationOptions).mockResolvedValue({
+      mockPasskeyService.generateRegistrationOptions.mockResolvedValue({
         challenge: 'mock-challenge',
-      } as unknown as PublicKeyCredentialCreationOptionsJSON)
+      })
 
       const options = await service.generatePasskeyRegistrationOptions(mockUser)
 
       expect(options.challenge).toBe('mock-challenge')
-      expect(mockRedisService.set).toHaveBeenCalled()
+      expect(mockPasskeyService.generateRegistrationOptions).toHaveBeenCalledWith(mockUser)
+    })
+  })
+
+  describe('logout', () => {
+    it('should call tokenService.blacklistToken', async () => {
+      const refreshToken = 'mock-refresh-token'
+      await service.logout(refreshToken)
+      expect(mockTokenService.blacklistToken).toHaveBeenCalledWith(refreshToken)
     })
   })
 })

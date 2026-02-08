@@ -3,6 +3,9 @@ import { JwtModule } from '@nestjs/jwt'
 import { PassportModule } from '@nestjs/passport'
 import { ConfigService } from '@nestjs/config'
 import { AuthService } from './auth.service'
+import { TokenService } from './token.service'
+import { PasskeyService } from './passkey.service'
+import { PasswordService } from './password.service'
 import { AuthController } from './auth.controller'
 import { JwtStrategy } from './jwt.strategy'
 import { GoogleStrategy } from './google.strategy'
@@ -32,7 +35,14 @@ import { UsersModule } from '../users/users.module'
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, GoogleStrategy],
-  exports: [AuthService, JwtModule, PassportModule],
+  providers: [
+    AuthService,
+    TokenService,
+    PasskeyService,
+    PasswordService,
+    JwtStrategy,
+    GoogleStrategy,
+  ],
+  exports: [AuthService, TokenService, PasskeyService, PasswordService, JwtModule, PassportModule],
 })
 export class AuthModule {}

@@ -213,11 +213,10 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: '用户登出' })
   async logout(
-    @CurrentUser() user: User,
     @Body() logoutDto: LogoutDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ message: string }> {
-    await this.authService.logout(user.id, logoutDto.refreshToken)
+    await this.authService.logout(logoutDto.refreshToken)
 
     // 清除 Cookie
     res.clearCookie('accessToken')

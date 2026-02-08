@@ -105,6 +105,7 @@ export class UsersService {
     return this.prisma.user.update({
       where: { id },
       data,
+      include: { authenticators: true },
     })
   }
 
@@ -137,8 +138,9 @@ export class UsersService {
         name: createUserDto.name,
         password: hashedPassword,
       },
+      include: { authenticators: true },
     })
 
-    return formatUser(user)
+    return formatUser(user as unknown as PrismaUser)
   }
 }
