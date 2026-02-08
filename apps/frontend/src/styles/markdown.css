@@ -159,14 +159,14 @@
 }
 
 .dark .markdown-content {
-  @apply text-[#e0e0e0];
+  @apply text-[#d1d1d1];
 }
 
 .markdown-content h1 {
   @apply mb-4 mt-8 text-2xl font-bold text-[#2a2a2a] flex items-center gap-3 tracking-tight;
 }
 .dark .markdown-content h1 {
-  @apply text-[#f8f8f8];
+  @apply text-[#ececec];
 }
 .markdown-content h1::before {
   content: '';
@@ -177,14 +177,14 @@
   @apply mb-4 mt-7 text-xl font-bold text-[#2a2a2a] border-b border-[#e8e4dd]/60 pb-2 tracking-tight;
 }
 .dark .markdown-content h2 {
-  @apply text-[#f8f8f8] border-[#3a3a3a];
+  @apply text-[#ececec] border-[#3a3a3a];
 }
 
 .markdown-content h3 {
   @apply mb-3 mt-6 text-lg font-bold text-[#3a3a3a] tracking-tight;
 }
 .dark .markdown-content h3 {
-  @apply text-[#f8f8f8];
+  @apply text-[#ececec];
 }
 
 .markdown-content h4,
@@ -195,7 +195,7 @@
 .dark .markdown-content h4,
 .dark .markdown-content h5,
 .dark .markdown-content h6 {
-  @apply text-[#f8f8f8];
+  @apply text-[#ececec];
 }
 
 .markdown-content p {
