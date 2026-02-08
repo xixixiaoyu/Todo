@@ -1,51 +1,67 @@
+import 'reflect-metadata'
 import { Test, TestingModule } from '@nestjs/testing'
 import { McpClientService } from '@/mcp/mcp-client.service'
 import { McpTransportType } from '@/mcp/mcp.dto'
-import { Client } from '@modelcontextprotocol/sdk/client/index.js'
+import { McpTransportFactory } from '@/mcp/core/mcp-transport.factory'
+import { McpConnectionManager } from '@/mcp/core/mcp-connection.manager'
+import { McpToolRegistry } from '@/mcp/core/mcp-tool.registry'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-
-// Mock instances to be used in tests
-const mockClientInstance = {
-  connect: vi.fn().mockResolvedValue(undefined),
-  close: vi.fn().mockResolvedValue(undefined),
-  listTools: vi.fn().mockResolvedValue({ tools: [] }),
-  callTool: vi.fn().mockResolvedValue({ content: [], isError: false }),
-}
-
-// Mock the MCP SDK
-vi.mock('@modelcontextprotocol/sdk/client/index.js', () => {
-  return {
-    Client: vi.fn().mockImplementation(function () {
-      return mockClientInstance
-    }),
-  }
-})
-
-vi.mock('@modelcontextprotocol/sdk/client/stdio.js', () => {
-  return {
-    StdioClientTransport: vi.fn().mockImplementation(function () {
-      return {}
-    }),
-  }
-})
-
-vi.mock('@modelcontextprotocol/sdk/client/streamableHttp.js', () => {
-  return {
-    StreamableHTTPClientTransport: vi.fn().mockImplementation(function () {
-      return {}
-    }),
-  }
-})
 
 describe('McpClientService', () => {
   let service: McpClientService
+  let transportFactory: McpTransportFactory
+  let connectionManager: McpConnectionManager
+  let toolRegistry: McpToolRegistry
+
+  const mockTransport = {}
+  const mockClient = {
+    callTool: vi.fn(),
+  }
+  const mockConnection = {
+    client: mockClient,
+    transport: mockTransport,
+    serverId: 'test-server',
+  }
 
   beforeEach(async () => {
+    const mockTransportFactory = {
+      createTransport: vi.fn().mockResolvedValue(mockTransport),
+    }
+    const mockConnectionManager = {
+      connect: vi.fn().mockResolvedValue(mockConnection),
+      disconnect: vi.fn().mockResolvedValue(undefined),
+      getConnection: vi.fn().mockReturnValue(mockConnection),
+      hasConnection: vi.fn().mockReturnValue(true),
+      getAllServerIds: vi.fn().mockReturnValue(['test-server']),
+    }
+    const mockToolRegistry = {
+      getTools: vi.fn().mockResolvedValue([]),
+      refreshTools: vi.fn().mockResolvedValue([]),
+      clearCache: vi.fn(),
+    }
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [McpClientService],
+      providers: [
+        McpClientService,
+        {
+          provide: McpTransportFactory,
+          useValue: mockTransportFactory,
+        },
+        {
+          provide: McpConnectionManager,
+          useValue: mockConnectionManager,
+        },
+        {
+          provide: McpToolRegistry,
+          useValue: mockToolRegistry,
+        },
+      ],
     }).compile()
 
     service = module.get<McpClientService>(McpClientService)
+    transportFactory = module.get<McpTransportFactory>(McpTransportFactory)
+    connectionManager = module.get<McpConnectionManager>(McpConnectionManager)
+    toolRegistry = module.get<McpToolRegistry>(McpToolRegistry)
     vi.clearAllMocks()
   })
 
@@ -54,92 +70,62 @@ describe('McpClientService', () => {
   })
 
   describe('connect', () => {
-    it('should connect to a stdio server', async () => {
-      const serverId = 'test-stdio'
-      const config = {
-        command: 'node',
-        args: ['test.js'],
-        env: { KEY: 'VALUE' },
-      }
-
-      await service.connect(serverId, McpTransportType.STDIO, config)
-
-      expect(Client).toHaveBeenCalled()
-      expect(service.isConnected(serverId)).toBe(true)
-    })
-
-    it('should connect to an http server', async () => {
-      const serverId = 'test-http'
-      const config = {
-        url: 'http://localhost:8080/mcp',
-        headers: { Authorization: 'Bearer test' },
-      }
-
-      await service.connect(serverId, McpTransportType.HTTP, config)
-
-      expect(Client).toHaveBeenCalled()
-      expect(service.isConnected(serverId)).toBe(true)
-    })
-
-    it('should disconnect before connecting if already connected', async () => {
-      const serverId = 'test-reconnect'
+    it('should connect to a server', async () => {
+      const serverId = 'test-server'
       const config = { command: 'node', args: [] }
 
       await service.connect(serverId, McpTransportType.STDIO, config)
-      const disconnectSpy = vi.spyOn(service, 'disconnect')
 
-      await service.connect(serverId, McpTransportType.STDIO, config)
-
-      expect(disconnectSpy).toHaveBeenCalledWith(serverId)
+      expect(transportFactory.createTransport).toHaveBeenCalledWith(
+        serverId,
+        McpTransportType.STDIO,
+        config,
+      )
+      expect(connectionManager.connect).toHaveBeenCalledWith(serverId, mockTransport)
+      expect(toolRegistry.refreshTools).toHaveBeenCalledWith(serverId)
     })
   })
 
   describe('tools and execution', () => {
     const serverId = 'test-server'
 
-    beforeEach(async () => {
-      await service.connect(serverId, McpTransportType.STDIO, { command: 'node', args: [] })
-    })
-
     it('should list tools', async () => {
       const mockTools = [{ name: 'tool1', description: 'desc1', inputSchema: {} }]
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const connection = (service as any).connections.get(serverId)!
-
-      // Clear registry to force a refresh with the new mock value
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(service as any).toolRegistry.delete(serverId)
-      connection.client.listTools.mockResolvedValue({ tools: mockTools })
+      vi.mocked(toolRegistry.getTools).mockResolvedValue(mockTools)
 
       const tools = await service.listTools(serverId)
 
-      expect(tools).toHaveLength(1)
-      expect(tools[0].name).toBe('tool1')
+      expect(tools).toEqual(mockTools)
+      expect(toolRegistry.getTools).toHaveBeenCalledWith(serverId)
     })
 
     it('should call a tool', async () => {
       const mockResult = { content: [{ type: 'text', text: 'result' }], isError: false }
       const mockTools = [{ name: 'tool1', description: 'desc1', inputSchema: {} }]
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const connection = (service as any).connections.get(serverId)!
 
-      // Ensure the tool exists in registry for the call to proceed
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(service as any).toolRegistry.set(serverId, mockTools)
-      connection.client.callTool.mockResolvedValue(mockResult)
+      vi.mocked(toolRegistry.getTools).mockResolvedValue(mockTools)
+      vi.mocked(mockClient.callTool).mockResolvedValue(mockResult)
 
       const result = await service.callTool(serverId, 'tool1', { arg: 'val' })
 
       expect(result.content[0].text).toBe('result')
-      expect(connection.client.callTool).toHaveBeenCalledWith({
+      expect(mockClient.callTool).toHaveBeenCalledWith({
         name: 'tool1',
         arguments: { arg: 'val' },
       })
     })
 
     it('should throw error if calling tool on non-existent server', async () => {
+      vi.mocked(connectionManager.getConnection).mockReturnValue(undefined)
       await expect(service.callTool('invalid', 'tool1', {})).rejects.toThrow(
         'Not connected to MCP server',
+      )
+    })
+
+    it('should throw error if tool does not exist', async () => {
+      vi.mocked(toolRegistry.getTools).mockResolvedValue([])
+      await expect(service.callTool(serverId, 'invalid-tool', {})).rejects.toThrow(
+        'Tool "invalid-tool" not found',
       )
     })
   })
@@ -147,11 +133,11 @@ describe('McpClientService', () => {
   describe('disconnect', () => {
     it('should disconnect and remove connection', async () => {
       const serverId = 'test-disconnect'
-      await service.connect(serverId, McpTransportType.STDIO, { command: 'node', args: [] })
 
       await service.disconnect(serverId)
 
-      expect(service.isConnected(serverId)).toBe(false)
+      expect(toolRegistry.clearCache).toHaveBeenCalledWith(serverId)
+      expect(connectionManager.disconnect).toHaveBeenCalledWith(serverId)
     })
   })
 })

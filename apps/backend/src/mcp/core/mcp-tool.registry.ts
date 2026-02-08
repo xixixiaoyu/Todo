@@ -1,0 +1,47 @@
+import { Injectable, Logger } from '@nestjs/common'
+import { McpToolResponse } from '../mcp.dto'
+import { McpConnectionManager } from './mcp-connection.manager'
+
+@Injectable()
+export class McpToolRegistry {
+  private readonly logger = new Logger(McpToolRegistry.name)
+  private readonly toolCache = new Map<string, McpToolResponse[]>()
+
+  constructor(private readonly connectionManager: McpConnectionManager) {}
+
+  async getTools(serverId: string): Promise<McpToolResponse[]> {
+    if (this.toolCache.has(serverId)) {
+      return this.toolCache.get(serverId)!
+    }
+
+    return this.refreshTools(serverId)
+  }
+
+  async refreshTools(serverId: string): Promise<McpToolResponse[]> {
+    const connection = this.connectionManager.getConnection(serverId)
+    if (!connection) {
+      this.toolCache.delete(serverId)
+      return []
+    }
+
+    try {
+      const result = await connection.client.listTools()
+      const tools: McpToolResponse[] = result.tools.map((tool) => ({
+        name: tool.name,
+        description: tool.description,
+        inputSchema: tool.inputSchema as Record<string, unknown>,
+      }))
+
+      this.toolCache.set(serverId, tools)
+      this.logger.log(`Registered ${tools.length} tools for server: ${serverId}`)
+      return tools
+    } catch (error) {
+      this.logger.error(`Failed to refresh tools for server ${serverId}:`, error)
+      return this.toolCache.get(serverId) || []
+    }
+  }
+
+  clearCache(serverId: string): void {
+    this.toolCache.delete(serverId)
+  }
+}
