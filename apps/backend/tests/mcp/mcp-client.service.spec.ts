@@ -103,9 +103,12 @@ describe('McpClientService', () => {
 
     it('should list tools', async () => {
       const mockTools = [{ name: 'tool1', description: 'desc1', inputSchema: {} }]
-      const connection = (
-        service as unknown as { connections: Map<string, { client: typeof mockClientInstance }> }
-      ).connections.get(serverId)!
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const connection = (service as any).connections.get(serverId)!
+
+      // Clear registry to force a refresh with the new mock value
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(service as any).toolRegistry.delete(serverId)
       connection.client.listTools.mockResolvedValue({ tools: mockTools })
 
       const tools = await service.listTools(serverId)
@@ -116,9 +119,13 @@ describe('McpClientService', () => {
 
     it('should call a tool', async () => {
       const mockResult = { content: [{ type: 'text', text: 'result' }], isError: false }
-      const connection = (
-        service as unknown as { connections: Map<string, { client: typeof mockClientInstance }> }
-      ).connections.get(serverId)!
+      const mockTools = [{ name: 'tool1', description: 'desc1', inputSchema: {} }]
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const connection = (service as any).connections.get(serverId)!
+
+      // Ensure the tool exists in registry for the call to proceed
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(service as any).toolRegistry.set(serverId, mockTools)
       connection.client.callTool.mockResolvedValue(mockResult)
 
       const result = await service.callTool(serverId, 'tool1', { arg: 'val' })

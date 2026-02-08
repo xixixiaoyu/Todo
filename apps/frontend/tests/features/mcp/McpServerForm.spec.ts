@@ -8,6 +8,37 @@ import {
   type McpServerResponse,
 } from '@/features/mcp/api/mcp'
 
+// Mock vue-i18n
+vi.mock('vue-i18n', () => ({
+  useI18n: () => ({
+    t: (key: string) => {
+      const translations: Record<string, string> = {
+        'ai.mcpCreateServer': 'Create MCP Server',
+        'ai.mcpEditServer': 'Edit MCP Server',
+        'ai.mcpServerName': 'Server Name',
+        'ai.mcpServerNamePlaceholder': 'Enter server name',
+        'ai.mcpDescription': 'Description',
+        'ai.mcpDescriptionPlaceholder': 'Enter description',
+        'ai.mcpEnabled': 'Enabled',
+        'ai.mcpTransportType': 'Transport Type',
+        'ai.mcpStdio': 'Stdio',
+        'ai.mcpHttp': 'HTTP',
+        'ai.mcpCommand': 'Command',
+        'ai.mcpCommandPlaceholder': 'e.g. node',
+        'ai.mcpArguments': 'Arguments',
+        'ai.mcpAddArgument': 'Add an argument',
+        'ai.mcpUrl': 'URL',
+        'ai.mcpUrlPlaceholder': 'e.g. http://localhost:3000',
+        'common.cancel': 'Cancel',
+        'common.save': 'Save',
+        'common.update': 'Update',
+        'common.create': 'Create',
+      }
+      return translations[key] || key
+    },
+  }),
+}))
+
 // Mock Lucide icons
 vi.mock('lucide-vue-next', () => ({
   X: { render: () => h('div') },
@@ -22,7 +53,7 @@ vi.mock('lucide-vue-next', () => ({
 describe('McpServerForm.vue', () => {
   it('renders correctly for new server', () => {
     const wrapper = mount(McpServerForm)
-    expect(wrapper.text()).toContain('Add MCP Server')
+    expect(wrapper.text()).toContain('Create MCP Server')
     expect(wrapper.find('input#name').exists()).toBe(true)
   })
 
@@ -78,7 +109,7 @@ describe('McpServerForm.vue', () => {
     // Find the submit button by text
     const submitBtn = wrapper
       .findAll('button')
-      .find((b) => b.text().includes('Update Server') || b.text().includes('Create Server'))
+      .find((b) => b.text().includes('Update') || b.text().includes('Create'))
     await submitBtn?.trigger('click')
     await nextTick()
 
@@ -99,9 +130,9 @@ describe('McpServerForm.vue', () => {
 
     expect(wrapper.text()).toContain('--debug')
 
-    // Remove it - find the X button within the badge
-    const removeBtn = wrapper.find('button .w-3.h-3').element.parentElement
-    await (removeBtn as HTMLElement).click()
+    // Remove it
+    const removeBtn = wrapper.find('.group button')
+    await removeBtn.trigger('click')
     await nextTick()
 
     expect(wrapper.text()).not.toContain('--debug')
