@@ -1,7 +1,10 @@
 # ============================================
 # Stage 1: Build dependencies (monorepo base)
 # ============================================
-FROM node:20-alpine AS base
+ARG NODE_IMAGE=node:20-alpine
+ARG NGINX_IMAGE=nginx:alpine
+
+FROM ${NODE_IMAGE} AS base
 
 # npm 镜像源配置 (淘宝镜像)
 ENV COREPACK_NPM_REGISTRY=https://registry.npmmirror.com
@@ -40,7 +43,7 @@ RUN pnpm --filter @my-app/frontend build
 # ============================================
 # Stage 3: Production image with Nginx
 # ============================================
-FROM nginx:alpine AS production
+FROM ${NGINX_IMAGE} AS production
 
 # 创建非 root 用户
 RUN addgroup -g 1001 -S frontend && \

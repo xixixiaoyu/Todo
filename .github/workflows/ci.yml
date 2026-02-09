@@ -37,6 +37,19 @@ jobs:
       - name: 安装依赖
         run: pnpm install --frozen-lockfile
 
+      - name: 校验 Docker Compose 配置
+        run: |
+          POSTGRES_PASSWORD=check REDIS_PASSWORD=check JWT_SECRET=check JWT_REFRESH_SECRET=check CORS_ORIGIN=http://localhost docker compose -f docker-compose.yml config >/dev/null
+          docker compose -f docker-compose.dev.yml config >/dev/null
+
+      - name: 校验生产镜像引用可复现
+        run: |
+          missing=$(grep -nE '^[[:space:]]*image:' docker-compose.yml | grep -v '@sha256:' | grep -v 'jc21/nginx-proxy-manager:2.13.7' || true)
+          if [ -n "$missing" ]; then
+            echo "$missing"
+            exit 1
+          fi
+
       - name: 配置 Turbo 缓存
         uses: actions/cache@v4
         with:
@@ -85,6 +98,19 @@ jobs:
 
       - name: 安装依赖
         run: pnpm install --frozen-lockfile
+
+      - name: 校验 Docker Compose 配置
+        run: |
+          POSTGRES_PASSWORD=check REDIS_PASSWORD=check JWT_SECRET=check JWT_REFRESH_SECRET=check CORS_ORIGIN=http://localhost docker compose -f docker-compose.yml config >/dev/null
+          docker compose -f docker-compose.dev.yml config >/dev/null
+
+      - name: 校验生产镜像引用可复现
+        run: |
+          missing=$(grep -nE '^[[:space:]]*image:' docker-compose.yml | grep -v '@sha256:' | grep -v 'jc21/nginx-proxy-manager:2.13.7' || true)
+          if [ -n "$missing" ]; then
+            echo "$missing"
+            exit 1
+          fi
 
       - name: 配置 Turbo 缓存
         uses: actions/cache@v4

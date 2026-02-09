@@ -3,7 +3,7 @@
 # Lumina (简思) 自动化部署脚本
 # 适用环境：已安装 Docker & Docker Compose 的 Linux 服务器
 
-set -e
+set -euo pipefail
 
 echo "🚀 开始部署 Lumina (简思) 项目..."
 
@@ -25,6 +25,10 @@ if [ ! -f .env ]; then
     exit 1
 fi
 
+set -a
+. ./.env
+set +a
+
 # 2. 拉取/构建镜像并启动
 echo "📦 正在构建并启动容器..."
 sudo docker compose up -d --build
@@ -36,9 +40,33 @@ sudo docker image prune -f
 
 # 4. 执行数据库迁移
 echo "🗄️ 正在同步数据库 Schema..."
-# 等待数据库就绪
-sleep 5
-sudo docker compose exec backend ./node_modules/.bin/prisma db push
+echo "⏳ 等待 PostgreSQL 就绪..."
+for i in {1..60}; do
+    if sudo docker compose exec -T postgres pg_isready -U "${POSTGRES_USER:-postgres}" >/dev/null 2>&1; then
+        break
+    fi
+    sleep 2
+done
+
+if ! sudo docker compose exec -T postgres pg_isready -U "${POSTGRES_USER:-postgres}" >/dev/null 2>&1; then
+    echo "❌ PostgreSQL 未就绪，终止部署"
+    exit 1
+fi
+
+echo "⏳ 等待后端健康检查通过..."
+for i in {1..60}; do
+    if sudo docker compose exec -T backend wget --no-verbose --tries=1 --spider http://localhost:3000/api/health/liveness >/dev/null 2>&1; then
+        break
+    fi
+    sleep 2
+done
+
+if ! sudo docker compose exec -T backend wget --no-verbose --tries=1 --spider http://localhost:3000/api/health/liveness >/dev/null 2>&1; then
+    echo "❌ 后端未就绪，终止部署"
+    exit 1
+fi
+
+sudo docker compose exec -T backend ./node_modules/.bin/prisma db push
 
 echo "✅ 部署完成！"
 echo "🌐 前端访问地址: http://服务器IP"

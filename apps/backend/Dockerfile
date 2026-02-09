@@ -1,7 +1,9 @@
 # ============================================
 # Stage 1: Base (Node + pnpm setup)
 # ============================================
-FROM node:20-alpine AS base
+ARG NODE_IMAGE=node:20-alpine
+
+FROM ${NODE_IMAGE} AS base
 
 # npm 镜像源配置 (淘宝镜像)
 ENV COREPACK_NPM_REGISTRY=https://registry.npmmirror.com
@@ -60,7 +62,7 @@ RUN pnpm --filter @my-app/backend --prod deploy /out
 # ============================================
 # Stage 4: Production (Final lean image)
 # ============================================
-FROM node:20-alpine AS production
+FROM ${NODE_IMAGE} AS production
 
 # 仅安装运行时可能需要的最小库及 PM2
 RUN apk add --no-cache openssl libgcc libstdc++ wget && \
