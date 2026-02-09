@@ -2,11 +2,23 @@ import { Controller, Get, UseGuards, Res } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger'
 import { AuthGuard } from '@nestjs/passport'
 import { ConfigService } from '@nestjs/config'
-import type { Response } from 'express'
 import { AuthService } from './auth.service'
 import { JwtAuthGuard } from './jwt-auth.guard'
 import { CurrentUser } from './current-user.decorator'
 import type { User, AuthResponse } from '@my-app/shared'
+
+type CookieOptions = {
+  httpOnly?: boolean
+  secure?: boolean
+  sameSite?: 'lax' | 'strict' | 'none'
+  maxAge?: number
+}
+
+type CookieReply = {
+  setCookie: (name: string, value: string, options?: CookieOptions) => unknown
+  clearCookie: (name: string) => unknown
+  redirect: (url: string) => unknown
+}
 
 /**
  * OAuth 认证控制器
@@ -35,7 +47,7 @@ export class OAuthController {
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   @ApiOperation({ summary: 'Google OAuth 回调' })
-  async googleAuthRedirect(@CurrentUser() user: User, @Res() res: Response) {
+  async googleAuthRedirect(@CurrentUser() user: User, @Res() res: CookieReply) {
     const authResponse = await this.authService.googleLogin(user)
 
     const isProduction = this.configService.get<string>('NODE_ENV') === 'production'
@@ -45,13 +57,13 @@ export class OAuthController {
       sameSite: 'lax' as const,
     }
 
-    res.cookie('accessToken', authResponse.accessToken, {
+    res.setCookie('accessToken', authResponse.accessToken, {
       ...cookieOptions,
       maxAge: (authResponse.expiresIn || 900) * 1000,
     })
 
     if (authResponse.refreshToken) {
-      res.cookie('refreshToken', authResponse.refreshToken, {
+      res.setCookie('refreshToken', authResponse.refreshToken, {
         ...cookieOptions,
         maxAge: 7 * 24 * 60 * 60 * 1000,
       })
@@ -71,7 +83,7 @@ export class OAuthController {
   @ApiOperation({ summary: 'OAuth 登录' })
   async oauthLogin(
     @CurrentUser() user: User,
-    @Res({ passthrough: true }) res: Response,
+    @Res({ passthrough: true }) res: CookieReply,
   ): Promise<AuthResponse> {
     const response = await this.authService.googleLogin(user)
 

@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 import { AllExceptionsFilter } from '../../../src/common/filters/all-exceptions.filter'
 import { HttpException, HttpStatus, ArgumentsHost, ConflictException } from '@nestjs/common'
 import { I18nContext } from 'nestjs-i18n'
-import type { Response, Request } from 'express'
 
 describe('AllExceptionsFilter', () => {
   let filter: AllExceptionsFilter
@@ -10,7 +9,7 @@ describe('AllExceptionsFilter', () => {
     status: Mock
     json: Mock
   }
-  let mockRequest: Partial<Request>
+  let mockRequest: { url?: string; method?: string }
   let mockArgumentsHost: any // eslint-disable-line @typescript-eslint/no-explicit-any
   let mockI18n: any // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -26,8 +25,8 @@ describe('AllExceptionsFilter', () => {
     }
     mockArgumentsHost = {
       switchToHttp: () => ({
-        getResponse: () => mockResponse as unknown as Response,
-        getRequest: () => mockRequest as Request,
+        getResponse: () => mockResponse,
+        getRequest: () => mockRequest,
         getNext: vi.fn(),
       }),
     }

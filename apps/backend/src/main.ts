@@ -3,10 +3,12 @@ import { NestFactory } from '@nestjs/core'
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'
 import { ZodValidationPipe, cleanupOpenApiDoc } from 'nestjs-zod'
 import { Logger } from 'nestjs-pino'
-import helmet from 'helmet'
-import cookieParser from 'cookie-parser'
-import compression from 'compression'
-import { Request, Response, NextFunction } from 'express'
+import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify'
+import fastifyCors from '@fastify/cors'
+import fastifyCookie from '@fastify/cookie'
+import fastifyHelmet from '@fastify/helmet'
+import fastifyCompress from '@fastify/compress'
+import fastifyMultipart from '@fastify/multipart'
 import { AppModule } from './app.module'
 import { AllExceptionsFilter, SanitizeInterceptor, TransformInterceptor } from './common'
 
@@ -14,15 +16,26 @@ import { AllExceptionsFilter, SanitizeInterceptor, TransformInterceptor } from '
  * 应用程序启动入口
  */
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true })
+  const app = await NestFactory.create<NestFastifyApplication>(
+    AppModule,
+    new FastifyAdapter({ logger: false }),
+    { bufferLogs: true },
+  )
   // 使用 Pino 作为全局日志器
   const logger = app.get(Logger)
   app.useLogger(logger)
   app.flushLogs()
 
+  const fastify = app.getHttpAdapter().getInstance()
+  const register = (
+    fastify as unknown as { register: (plugin: unknown, opts?: unknown) => Promise<unknown> }
+  ).register.bind(
+    fastify as unknown as { register: (plugin: unknown, opts?: unknown) => Promise<unknown> },
+  )
+
   // 1. 启用 CORS (必须尽早调用，确保错误响应也能包含 CORS 头)
   const corsOrigin = process.env.CORS_ORIGIN
-  app.enableCors({
+  await register(fastifyCors, {
     origin:
       corsOrigin === '*'
         ? true
@@ -31,7 +44,7 @@ async function bootstrap() {
             'wails://localhost',
             'http://wails.localhost',
           ],
-    credentials: true, // 允许携带凭证
+    credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: [
       'Content-Type',
@@ -46,71 +59,71 @@ async function bootstrap() {
   app.setGlobalPrefix('api')
 
   // Helmet 安全头（防止 XSS、点击劫持等）
-  app.use(
-    helmet({
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
-          scriptSrc: ["'self'"],
-          imgSrc: ["'self'", 'data:', 'https:'],
-        },
+  await register(fastifyHelmet, {
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", 'data:', 'https:'],
       },
-      crossOriginEmbedderPolicy: false,
-      crossOriginResourcePolicy: { policy: 'cross-origin' }, // 允许跨域资源共享
-    }),
+    },
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+
+  await register(fastifyCookie)
+
+  await register(fastifyCompress, {
+    threshold: 1024,
+    zlibOptions: { level: 6 },
+  })
+
+  const uploadMaxSize = Number(process.env.UPLOAD_MAX_SIZE) || 10 * 1024 * 1024
+  const uploadMaxFiles = Number(process.env.UPLOAD_MAX_FILES) || 10
+  await register(fastifyMultipart, {
+    limits: {
+      fileSize: uploadMaxSize,
+      files: uploadMaxFiles,
+    },
+  })
+
+  fastify.addHook(
+    'onSend',
+    async (_req: unknown, reply: { header: (k: string, v: string) => void }, payload: unknown) => {
+      reply.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+      return payload
+    },
   )
 
-  // 自定义 Permissions-Policy，修复 browsing-topics 警告
-  app.use((_req: Request, res: Response, next: NextFunction) => {
-    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
-    next()
-  })
+  fastify.addHook(
+    'onRequest',
+    async (
+      req: { method: string; url: string; headers: Record<string, unknown>; ip: string },
+      reply: { code: (statusCode: number) => { send: (body: unknown) => unknown } },
+    ) => {
+      const safeMethods = ['GET', 'HEAD', 'OPTIONS']
+      if (safeMethods.includes(req.method)) {
+        return
+      }
 
-  // Cookie 解析器
-  app.use(cookieParser())
+      if (req.url.includes('/api/health')) {
+        return
+      }
 
-  // 轻量级 CSRF 防护：要求所有非幂等请求（POST/PUT/DELETE等）必须包含自定义 Header
-  // 这种方法比传统的 CSRF Token 更适合无状态 API，且性能损耗极小
-  app.use((req: Request, res: Response, next: NextFunction) => {
-    const safeMethods = ['GET', 'HEAD', 'OPTIONS']
-    if (safeMethods.includes(req.method)) {
-      return next()
-    }
-
-    // 排除健康检查等内部接口（可选）
-    if (req.originalUrl.includes('/api/health')) {
-      return next()
-    }
-
-    const requestedWith = req.headers['x-requested-with']
-    if (!requestedWith) {
-      logger.warn(
-        { method: req.method, url: req.originalUrl, ip: req.ip },
-        'CSRF 潜在攻击拦截：缺失 X-Requested-With Header',
-      )
-      return res.status(403).json({
-        success: false,
-        message: 'Security check failed: X-Requested-With header is missing',
-        timestamp: new Date().toISOString(),
-      })
-    }
-    next()
-  })
-
-  // 响应压缩中间件（提升传输效率）
-  app.use(
-    compression({
-      threshold: 1024, // 只压缩大于 1KB 的响应
-      level: 6, // 压缩级别（1-9），6 为平衡性能与压缩率
-      filter: (req, res) => {
-        // 不压缩 SSE 和 WebSocket 响应
-        if (req.headers['accept'] === 'text/event-stream') {
-          return false
-        }
-        return compression.filter(req, res)
-      },
-    }),
+      const requestedWith = req.headers['x-requested-with']
+      if (!requestedWith) {
+        logger.warn(
+          { method: req.method, url: req.url, ip: req.ip },
+          'CSRF 潜在攻击拦截：缺失 X-Requested-With Header',
+        )
+        reply.code(403).send({
+          success: false,
+          message: 'Security check failed: X-Requested-With header is missing',
+          timestamp: new Date().toISOString(),
+        })
+      }
+    },
   )
 
   // 全局 Zod 验证管道（替代 class-validator）

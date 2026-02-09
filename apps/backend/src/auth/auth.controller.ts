@@ -1,12 +1,15 @@
 import { Controller, Post, Body, Get, UseGuards, Res } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger'
 import { Throttle, SkipThrottle } from '@nestjs/throttler'
-import type { Response } from 'express'
 import { AuthService } from './auth.service'
 import { JwtAuthGuard } from './jwt-auth.guard'
 import { CurrentUser } from './current-user.decorator'
 import { LoginDto, RegisterDto, RefreshTokenDto, LogoutDto } from './auth.dto'
 import type { User, AuthResponse } from '@my-app/shared'
+
+type CookieReply = {
+  clearCookie: (name: string) => unknown
+}
 
 /**
  * 核心认证控制器
@@ -69,7 +72,7 @@ export class AuthController {
   @ApiOperation({ summary: '用户登出' })
   async logout(
     @Body() logoutDto: LogoutDto,
-    @Res({ passthrough: true }) res: Response,
+    @Res({ passthrough: true }) res: CookieReply,
   ): Promise<{ message: string }> {
     await this.authService.logout(logoutDto.refreshToken)
 

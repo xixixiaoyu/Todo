@@ -3,17 +3,26 @@ import {
   Post,
   Delete,
   Param,
-  UseInterceptors,
-  UploadedFile,
-  UploadedFiles,
   BadRequestException,
   UseGuards,
+  Req,
 } from '@nestjs/common'
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express'
 import { ApiTags, ApiOperation, ApiConsumes, ApiBody, ApiBearerAuth } from '@nestjs/swagger'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
-import { StorageService, UploadResult } from './storage.service'
+import { StorageService, type UploadResult, type UploadedFile } from './storage.service'
 import { FileParsingService } from './file-parsing.service'
+
+type MultipartFile = {
+  fieldname: string
+  filename: string
+  mimetype: string
+  toBuffer: () => Promise<Buffer>
+}
+
+type MultipartRequest = {
+  file: () => Promise<MultipartFile | undefined>
+  files: () => AsyncIterableIterator<MultipartFile>
+}
 
 /**
  * 文件上传控制器
@@ -27,6 +36,49 @@ export class UploadController {
     private readonly storageService: StorageService,
     private readonly fileParsingService: FileParsingService,
   ) {}
+
+  private ensureAllowedFile(originalname: string, mimetype: string) {
+    const allowedMimes = [
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/plain',
+      'text/markdown',
+      'application/json',
+      'text/csv',
+    ]
+
+    if (
+      allowedMimes.includes(mimetype) ||
+      mimetype.startsWith('text/') ||
+      originalname.match(/\.(ts|js|py|go|java|c|cpp|h|hpp|rs|json|md|txt)$/i)
+    ) {
+      return
+    }
+
+    throw new BadRequestException(`不支持的文件类型: ${mimetype}`)
+  }
+
+  private async toUploadedFile(part: MultipartFile): Promise<UploadedFile> {
+    const buffer = await part.toBuffer()
+    const originalname = part.filename
+    const mimetype = part.mimetype
+
+    this.ensureAllowedFile(originalname, mimetype)
+
+    return {
+      originalname,
+      mimetype,
+      size: buffer.length,
+      buffer,
+    }
+  }
 
   /**
    * 上传单个文件
@@ -42,11 +94,13 @@ export class UploadController {
       },
     },
   })
-  @UseInterceptors(FileInterceptor('file'))
-  async uploadSingle(@UploadedFile() file: Express.Multer.File): Promise<UploadResult> {
-    if (!file) {
+  async uploadSingle(@Req() req: MultipartRequest): Promise<UploadResult> {
+    const part = await req.file()
+    if (!part || part.fieldname !== 'file') {
       throw new BadRequestException('upload.FILE_REQUIRED')
     }
+
+    const file = await this.toUploadedFile(part)
     return this.storageService.upload(file)
   }
 
@@ -65,11 +119,13 @@ export class UploadController {
       },
     },
   })
-  @UseInterceptors(FileInterceptor('file'))
-  async parseFile(@UploadedFile() file: Express.Multer.File): Promise<{ content: string }> {
-    if (!file) {
+  async parseFile(@Req() req: MultipartRequest): Promise<{ content: string }> {
+    const part = await req.file()
+    if (!part || part.fieldname !== 'file') {
       throw new BadRequestException('upload.FILE_REQUIRED')
     }
+
+    const file = await this.toUploadedFile(part)
     const content = await this.fileParsingService.parseFile(file)
     return { content }
   }
@@ -91,11 +147,18 @@ export class UploadController {
       },
     },
   })
-  @UseInterceptors(FilesInterceptor('files', 10))
-  async uploadMultiple(@UploadedFiles() files: Express.Multer.File[]): Promise<UploadResult[]> {
-    if (!files || files.length === 0) {
+  async uploadMultiple(@Req() req: MultipartRequest): Promise<UploadResult[]> {
+    const files: UploadedFile[] = []
+
+    for await (const part of req.files()) {
+      if (part.fieldname !== 'files') continue
+      files.push(await this.toUploadedFile(part))
+    }
+
+    if (files.length === 0) {
       throw new BadRequestException('upload.FILE_REQUIRED')
     }
+
     return this.storageService.uploadMany(files)
   }
 

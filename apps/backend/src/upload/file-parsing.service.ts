@@ -3,6 +3,7 @@ import { extname } from 'path'
 import { PDFParse } from 'pdf-parse'
 import * as mammoth from 'mammoth'
 import * as XLSX from 'xlsx'
+import type { UploadedFile } from './storage.service'
 
 @Injectable()
 export class FileParsingService {
@@ -11,8 +12,8 @@ export class FileParsingService {
   /**
    * 解析上传的文件并提取文本内容
    */
-  async parseFile(file: Express.Multer.File): Promise<string> {
-    const originalName = Buffer.from(file.originalname, 'latin1').toString('utf8')
+  async parseFile(file: UploadedFile): Promise<string> {
+    const originalName = file.originalname
     const ext = extname(originalName).toLowerCase()
 
     try {
