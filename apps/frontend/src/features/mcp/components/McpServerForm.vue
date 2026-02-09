@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { McpTransportType, type CreateMcpServerDto, type McpServerResponse } from '../api/mcp'
 import { Input } from '@/components/ui/input'
@@ -18,7 +18,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
-const form = reactive({
+const form = ref({
   name: '',
   description: '',
   transport: McpTransportType.STDIO as McpTransportType,
@@ -44,24 +44,24 @@ const form = reactive({
 // 初始化表单
 onMounted(() => {
   if (props.server) {
-    form.name = props.server.name
-    form.description = props.server.description || ''
-    form.transport = props.server.transport
-    form.enabled = props.server.enabled
+    form.value.name = props.server.name
+    form.value.description = props.server.description || ''
+    form.value.transport = props.server.transport
+    form.value.enabled = props.server.enabled
 
     if (props.server.transport === McpTransportType.STDIO) {
       const config = props.server.config as Record<string, unknown>
-      form.config.command = (config.command as string) || ''
-      form.config.args = [...((config.args as string[]) || [])]
-      form.config.env = { ...((config.env as Record<string, string>) || {}) }
-      form.config.cwd = (config.cwd as string) || ''
+      form.value.config.command = (config.command as string) || ''
+      form.value.config.args = [...((config.args as string[]) || [])]
+      form.value.config.env = { ...((config.env as Record<string, string>) || {}) }
+      form.value.config.cwd = (config.cwd as string) || ''
     } else {
       const config = props.server.config as Record<string, unknown>
-      form.config.url = (config.url as string) || ''
-      form.config.headers = { ...((config.headers as Record<string, string>) || {}) }
+      form.value.config.url = (config.url as string) || ''
+      form.value.config.headers = { ...((config.headers as Record<string, string>) || {}) }
       if (config.auth) {
         const auth = config.auth as Record<string, unknown>
-        form.config.auth = {
+        form.value.config.auth = {
           type: auth.type as 'bearer' | 'api_key' | 'oauth',
           token: (auth.token as string) || '',
           apiKey: (auth.apiKey as string) || '',
@@ -79,15 +79,15 @@ function addArg() {
   if (input) {
     const parts = input.split(/\s+/)
     parts.forEach((part) => {
-      if (part && !form.config.args.includes(part)) {
-        form.config.args.push(part)
+      if (part && !form.value.config.args.includes(part)) {
+        form.value.config.args.push(part)
       }
     })
     argInput.value = ''
   }
 }
 function removeArg(index: number) {
-  form.config.args.splice(index, 1)
+  form.value.config.args.splice(index, 1)
 }
 
 // 环境变量管理 (Env)
@@ -95,28 +95,28 @@ const envKey = ref('')
 const envValue = ref('')
 function addEnv() {
   if (envKey.value.trim()) {
-    form.config.env[envKey.value.trim()] = envValue.value
+    form.value.config.env[envKey.value.trim()] = envValue.value
     envKey.value = ''
     envValue.value = ''
   }
 }
 function removeEnv(key: string) {
-  delete form.config.env[key]
+  delete form.value.config.env[key]
 }
 
 // 智能解析命令
 function handleCommandBlur() {
-  const rawCommand = form.config.command.trim()
+  const rawCommand = form.value.config.command.trim()
   if (!rawCommand.includes(' ')) return
 
-  if (form.config.args.length === 0) {
+  if (form.value.config.args.length === 0) {
     const parts = rawCommand.split(/\s+/)
     if (parts.length > 1) {
-      form.config.command = parts[0]
+      form.value.config.command = parts[0]
       const newArgs = parts.slice(1)
       newArgs.forEach((arg) => {
-        if (!form.config.args.includes(arg)) {
-          form.config.args.push(arg)
+        if (!form.value.config.args.includes(arg)) {
+          form.value.config.args.push(arg)
         }
       })
     }
@@ -135,28 +135,31 @@ function handleSubmit() {
   }
 
   const submitData: CreateMcpServerDto = {
-    name: form.name,
-    description: form.description,
-    transport: form.transport,
-    enabled: form.enabled,
+    name: form.value.name,
+    description: form.value.description,
+    transport: form.value.transport,
+    enabled: form.value.enabled,
     config:
-      form.transport === McpTransportType.STDIO
+      form.value.transport === McpTransportType.STDIO
         ? {
-            command: form.config.command,
-            args: form.config.args,
-            env: Object.keys(form.config.env).length > 0 ? form.config.env : undefined,
-            cwd: form.config.cwd || undefined,
+            command: form.value.config.command,
+            args: form.value.config.args,
+            env: Object.keys(form.value.config.env).length > 0 ? form.value.config.env : undefined,
+            cwd: form.value.config.cwd || undefined,
           }
         : {
-            url: form.config.url,
-            headers: Object.keys(form.config.headers).length > 0 ? form.config.headers : undefined,
+            url: form.value.config.url,
+            headers:
+              Object.keys(form.value.config.headers).length > 0
+                ? form.value.config.headers
+                : undefined,
             auth:
-              form.config.auth.token || form.config.auth.apiKey
+              form.value.config.auth.token || form.value.config.auth.apiKey
                 ? {
-                    type: form.config.auth.type,
-                    token: form.config.auth.token || undefined,
-                    apiKey: form.config.auth.apiKey || undefined,
-                    apiKeyHeader: form.config.auth.apiKeyHeader,
+                    type: form.value.config.auth.type,
+                    token: form.value.config.auth.token || undefined,
+                    apiKey: form.value.config.auth.apiKey || undefined,
+                    apiKeyHeader: form.value.config.auth.apiKeyHeader,
                   }
                 : undefined,
           },
