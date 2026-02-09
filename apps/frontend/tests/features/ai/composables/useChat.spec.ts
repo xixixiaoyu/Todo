@@ -15,8 +15,9 @@ import {
   abortCurrentRequest,
   generateId,
 } from '@/features/ai/services/aiService'
-import type { ChatMessage } from '@/features/ai/services/aiService'
+import type { ChatMessage, ToolCall } from '@/features/ai/services/aiService'
 import { getAIConfig } from '@/features/ai/composables/useAIConfig'
+import { mcpApi } from '@/features/mcp/api/mcp'
 
 // Mock chat history
 const mockCurrentSession = ref<ChatSession | null>(null)
@@ -347,6 +348,58 @@ describe('useChat', () => {
 
       expect(mockGetAIStreamResponse).toHaveBeenCalledTimes(4) // Initial + 3 retries
       expect(error.value).toBe('Persistent error')
+    })
+
+    it('should namespace MCP tool names to avoid collisions', async () => {
+      const serverA = '11111111-1111-1111-1111-111111111111'
+      const serverB = '22222222-2222-2222-2222-222222222222'
+      vi.mocked(mcpApi.getAllTools).mockResolvedValue([
+        { name: 'search', description: 'a', inputSchema: {}, serverId: serverA },
+        { name: 'search', description: 'b', inputSchema: {}, serverId: serverB },
+      ])
+
+      vi.mocked(mcpApi.callTool).mockResolvedValue({
+        content: [{ type: 'text', text: 'ok' }],
+        isError: false,
+      })
+
+      let calls = 0
+      const aiToolNameA = `mcp_${serverA.slice(0, 8)}_search`
+
+      mockGetAIStreamResponse.mockImplementation(
+        async (
+          _messages: ChatMessage[],
+          onChunk: OnChunk,
+          _onThinking?: OnThinking,
+          _onReasoning?: OnReasoningDetails,
+          _options?: unknown,
+          onToolCall?: (toolCall: ToolCall) => void,
+        ) => {
+          calls++
+
+          if (calls === 1) {
+            onToolCall?.({
+              id: 'tc1',
+              type: 'function',
+              function: {
+                name: aiToolNameA,
+                arguments: JSON.stringify({ q: 'x' }),
+              },
+            } as ToolCall)
+            onChunk('[DONE]')
+            return
+          }
+
+          onChunk('Final')
+          onChunk('[DONE]')
+        },
+      )
+
+      const { sendMessage, messages } = useChat()
+      await sendMessage('test message')
+
+      expect(mcpApi.callTool).toHaveBeenCalledWith(serverA, 'search', { q: 'x' })
+      expect(messages.value.some((m) => m.role === 'tool' && m.toolName === 'search')).toBe(true)
     })
   })
 

@@ -1,4 +1,6 @@
 import 'dotenv/config'
+import { existsSync } from 'fs'
+import { join } from 'path'
 import { NestFactory } from '@nestjs/core'
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'
 import { ZodValidationPipe, cleanupOpenApiDoc } from 'nestjs-zod'
@@ -9,6 +11,7 @@ import fastifyCookie from '@fastify/cookie'
 import fastifyHelmet from '@fastify/helmet'
 import fastifyCompress from '@fastify/compress'
 import fastifyMultipart from '@fastify/multipart'
+import fastifyStatic from '@fastify/static'
 import { AppModule } from './app.module'
 import { AllExceptionsFilter, SanitizeInterceptor, TransformInterceptor } from './common'
 
@@ -18,7 +21,7 @@ import { AllExceptionsFilter, SanitizeInterceptor, TransformInterceptor } from '
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
-    new FastifyAdapter({ logger: false }),
+    new FastifyAdapter({ logger: false, trustProxy: true }),
     { bufferLogs: true },
   )
   // 使用 Pino 作为全局日志器
@@ -54,6 +57,15 @@ async function bootstrap() {
       'Accept-Language',
     ],
   })
+
+  const staticRoot = join(__dirname, '..', 'public')
+  if (existsSync(staticRoot)) {
+    await register(fastifyStatic, {
+      root: staticRoot,
+      prefix: '/public/',
+      decorateReply: false,
+    })
+  }
 
   // 设置全局路由前缀
   app.setGlobalPrefix('api')

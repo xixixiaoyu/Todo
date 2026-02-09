@@ -47,10 +47,28 @@ export class McpTransportFactory {
     })
 
     const env: Record<string, string> = {}
-    // 复制当前环境变量，并确保值不为 undefined
-    Object.entries(process.env).forEach(([key, value]) => {
+
+    const allowedKeys = [
+      'PATH',
+      'HOME',
+      'USER',
+      'SHELL',
+      'TMPDIR',
+      'TEMP',
+      'TMP',
+      'LANG',
+      'LC_ALL',
+      'NODE_ENV',
+      'NODE_OPTIONS',
+      'HTTP_PROXY',
+      'HTTPS_PROXY',
+      'NO_PROXY',
+    ]
+
+    for (const key of allowedKeys) {
+      const value = process.env[key]
       if (value !== undefined) env[key] = value
-    })
+    }
 
     if (config.env) {
       for (const [key, value] of Object.entries(config.env)) {
@@ -59,7 +77,7 @@ export class McpTransportFactory {
     }
 
     this.logger.log(
-      `Spawning MCP server: ${command} ${args.join(' ')} (CWD: ${config.cwd || 'default'})`,
+      `Spawning MCP server: ${command} (args: ${args.length}) (CWD: ${config.cwd || 'default'})`,
     )
 
     return new StdioClientTransport({
@@ -81,7 +99,7 @@ export class McpTransportFactory {
 
     // 处理认证
     if (config.auth) {
-      if (config.auth.type === 'bearer' && config.auth.token) {
+      if ((config.auth.type === 'bearer' || config.auth.type === 'oauth') && config.auth.token) {
         headers['Authorization'] = `Bearer ${config.auth.token}`
       } else if (config.auth.type === 'api_key' && config.auth.apiKey) {
         headers[config.auth.apiKeyHeader || 'X-API-Key'] = config.auth.apiKey

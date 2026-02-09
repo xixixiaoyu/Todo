@@ -19,6 +19,28 @@ import type { McpToolResponse } from '@/features/mcp/api/mcp'
 
 const MAX_RETRIES = 3
 
+function fnv1a(input: string): string {
+  let hash = 0x811c9dc5
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i)
+    hash = Math.imul(hash, 0x01000193)
+  }
+  return (hash >>> 0).toString(16)
+}
+
+function buildMcpAiToolName(serverId: string, toolName: string): string {
+  const safeServer = serverId.slice(0, 8).replace(/[^a-zA-Z0-9_-]/g, '_')
+  const safeTool = toolName.replace(/[^a-zA-Z0-9_-]/g, '_')
+  const prefix = `mcp_${safeServer}_`
+  const full = `${prefix}${safeTool}`
+
+  if (full.length <= 64) return full
+
+  const hash = fnv1a(`${serverId}:${toolName}`).slice(0, 8)
+  const keep = Math.max(0, 64 - prefix.length - 1 - hash.length)
+  return `${prefix}${safeTool.slice(0, keep)}_${hash}`.slice(0, 64)
+}
+
 /**
  * 聊天动作逻辑 composable
  */
@@ -268,14 +290,23 @@ export function useChatActions(options: AIRequestOptions = {}) {
           }
         }
 
-        const aiTools: Tool[] = mcpTools.map((t) => ({
-          type: 'function',
-          function: {
-            name: t.name,
-            description: t.description,
-            parameters: t.inputSchema,
-          },
-        }))
+        const mcpToolLookup = new Map<string, { serverId: string; toolName: string }>()
+
+        const aiTools: Tool[] = mcpTools
+          .filter((t) => !!t.serverId)
+          .map((t) => {
+            const serverId = t.serverId as string
+            const aiName = buildMcpAiToolName(serverId, t.name)
+            mcpToolLookup.set(aiName, { serverId, toolName: t.name })
+            return {
+              type: 'function',
+              function: {
+                name: aiName,
+                description: t.description,
+                parameters: t.inputSchema,
+              },
+            }
+          })
 
         const toolCalls: ToolCall[] = []
 
@@ -318,12 +349,13 @@ export function useChatActions(options: AIRequestOptions = {}) {
           }
 
           for (const call of toolCalls) {
-            const toolName = call.function.name
+            const aiToolName = call.function.name
             const toolArgs = JSON.parse(call.function.arguments || '{}')
-            const mcpTool = mcpTools.find((t) => t.name === toolName)
-            if (mcpTool && mcpTool.serverId) {
+
+            const mcpTool = mcpToolLookup.get(aiToolName)
+            if (mcpTool) {
               try {
-                const result = await mcpApi.callTool(mcpTool.serverId, toolName, toolArgs)
+                const result = await mcpApi.callTool(mcpTool.serverId, mcpTool.toolName, toolArgs)
                 let contentStr = JSON.stringify(result.content)
                 const MAX_TOOL_CONTENT_LENGTH = 15000
 
@@ -338,7 +370,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
                   id: generateId(),
                   role: 'tool',
                   tool_call_id: call.id,
-                  toolName,
+                  toolName: mcpTool.toolName,
                   content: contentStr,
                   createdAt: new Date(),
                 }
@@ -348,7 +380,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
                   id: generateId(),
                   role: 'tool',
                   tool_call_id: call.id,
-                  toolName,
+                  toolName: mcpTool.toolName,
                   content: `Error: ${error instanceof Error ? error.message : String(error)}`,
                   createdAt: new Date(),
                 }
@@ -359,8 +391,8 @@ export function useChatActions(options: AIRequestOptions = {}) {
                 id: generateId(),
                 role: 'tool',
                 tool_call_id: call.id,
-                toolName,
-                content: `Error: Tool ${toolName} not found or server not identified.`,
+                toolName: aiToolName,
+                content: `Error: Tool ${aiToolName} not found or server not identified.`,
                 createdAt: new Date(),
               }
               chatHistory.value = [...chatHistory.value, toolNotFound]
