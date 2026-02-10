@@ -23,6 +23,7 @@ const mockTokenService = {
   isBlacklisted: vi.fn(),
   verifyToken: vi.fn(),
   blacklistToken: vi.fn(),
+  isUserSessionInvalidated: vi.fn(),
 }
 
 const mockPasskeyService = {
@@ -198,6 +199,59 @@ describe('AuthService', () => {
       const refreshToken = 'mock-refresh-token'
       await service.logout(refreshToken)
       expect(mockTokenService.blacklistToken).toHaveBeenCalledWith(refreshToken)
+    })
+  })
+
+  describe('refreshToken', () => {
+    it('should throw UnauthorizedException if token is blacklisted', async () => {
+      mockTokenService.isBlacklisted.mockResolvedValue(true)
+
+      await expect(service.refreshToken('refresh-token')).rejects.toThrow(UnauthorizedException)
+    })
+
+    it('should throw UnauthorizedException if session is invalidated', async () => {
+      mockTokenService.isBlacklisted.mockResolvedValue(false)
+      mockTokenService.verifyToken.mockReturnValue({
+        sub: 1,
+        email: 'test@example.com',
+        type: 'refresh',
+        iat: 100,
+      })
+      mockTokenService.isUserSessionInvalidated.mockResolvedValue(true)
+
+      await expect(service.refreshToken('refresh-token')).rejects.toThrow(UnauthorizedException)
+      expect(mockUsersService.findOne).not.toHaveBeenCalled()
+    })
+
+    it('should return auth response when refresh token is valid', async () => {
+      const mockUser: User = {
+        id: 1,
+        email: 'test@example.com',
+        name: 'Test',
+        avatar: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+
+      mockTokenService.isBlacklisted.mockResolvedValue(false)
+      mockTokenService.verifyToken.mockReturnValue({
+        sub: 1,
+        email: 'test@example.com',
+        type: 'refresh',
+        iat: 100,
+      })
+      mockTokenService.isUserSessionInvalidated.mockResolvedValue(false)
+      mockUsersService.findOne.mockResolvedValue(mockUser)
+      mockTokenService.buildAuthResponse.mockReturnValue({
+        accessToken: 'new-access',
+        refreshToken: 'new-refresh',
+        user: mockUser,
+      })
+
+      const result = await service.refreshToken('refresh-token')
+
+      expect(result.accessToken).toBe('new-access')
+      expect(mockTokenService.buildAuthResponse).toHaveBeenCalledWith(mockUser)
     })
   })
 })

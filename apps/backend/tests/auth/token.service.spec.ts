@@ -31,6 +31,7 @@ describe('TokenService', () => {
     redisService = {
       set: vi.fn(),
       has: vi.fn(),
+      get: vi.fn(),
     } as unknown as RedisService
 
     service = new TokenService(jwtService, configService, redisService)
@@ -136,6 +137,44 @@ describe('TokenService', () => {
         'blacklist:blacklisted-token',
         expect.any(Object),
       )
+    })
+  })
+
+  describe('invalidateUserSessions', () => {
+    it('should set invalidation timestamp in redis', async () => {
+      await service.invalidateUserSessions(123)
+
+      expect(redisService.set).toHaveBeenCalledWith(
+        'invalidate:123',
+        expect.any(Number),
+        expect.objectContaining({ prefix: 'auth', ttl: 604800 }),
+      )
+    })
+  })
+
+  describe('isUserSessionInvalidated', () => {
+    it('should return false when no invalidation exists', async () => {
+      vi.mocked(redisService.get).mockResolvedValue(undefined)
+
+      await expect(service.isUserSessionInvalidated(1, 100)).resolves.toBe(false)
+    })
+
+    it('should return true when token iat is missing and invalidation exists', async () => {
+      vi.mocked(redisService.get).mockResolvedValue(200)
+
+      await expect(service.isUserSessionInvalidated(1, undefined)).resolves.toBe(true)
+    })
+
+    it('should return true when token issued before invalidation', async () => {
+      vi.mocked(redisService.get).mockResolvedValue(200)
+
+      await expect(service.isUserSessionInvalidated(1, 199)).resolves.toBe(true)
+    })
+
+    it('should return false when token issued after invalidation', async () => {
+      vi.mocked(redisService.get).mockResolvedValue('200')
+
+      await expect(service.isUserSessionInvalidated(1, 200)).resolves.toBe(false)
     })
   })
 

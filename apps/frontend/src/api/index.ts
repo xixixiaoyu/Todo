@@ -141,7 +141,15 @@ httpClient.interceptors.response.use(
         return new Promise((resolve, reject) => {
           subscribeTokenRefresh(
             (token) => {
-              originalRequest.headers.Authorization = `Bearer ${token}`
+              const headers = originalRequest.headers
+              if (headers?.set) {
+                headers.set('Authorization', `Bearer ${token}`)
+              } else {
+                originalRequest.headers = {
+                  ...(headers || {}),
+                  Authorization: `Bearer ${token}`,
+                }
+              }
               resolve(httpClient(originalRequest))
             },
             (err) => {

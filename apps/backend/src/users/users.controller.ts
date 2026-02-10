@@ -40,6 +40,8 @@ export class UsersController {
    * 创建新用户（注册）
    */
   @Post()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: '创建新用户' })
   async create(@Body() createUserDto: RegisterDto): Promise<User> {
     return this.usersService.create(createUserDto)

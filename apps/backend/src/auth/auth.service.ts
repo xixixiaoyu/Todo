@@ -130,6 +130,14 @@ export class AuthService {
         throw new UnauthorizedException('auth.INVALID_REFRESH_TOKEN')
       }
 
+      const isInvalidated = await this.tokenService.isUserSessionInvalidated(
+        payload.sub,
+        payload.iat,
+      )
+      if (isInvalidated) {
+        throw new UnauthorizedException('auth.INVALID_REFRESH_TOKEN')
+      }
+
       const user = await this.usersService.findOne(payload.sub)
       if (!user) {
         throw new UnauthorizedException('auth.USER_NOT_FOUND')

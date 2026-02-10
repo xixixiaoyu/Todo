@@ -4,6 +4,7 @@ import * as bcrypt from 'bcryptjs'
 import * as crypto from 'crypto'
 import { UsersService } from '../users/users.service'
 import { MailService } from '../mail/mail.service'
+import { TokenService } from './token.service'
 
 @Injectable()
 export class PasswordService {
@@ -12,6 +13,7 @@ export class PasswordService {
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
     private readonly mailService: MailService,
+    private readonly tokenService: TokenService,
   ) {}
 
   /**
@@ -79,6 +81,8 @@ export class PasswordService {
       resetPasswordToken: null,
       resetPasswordExpires: null,
     })
+
+    await this.tokenService.invalidateUserSessions(user.id)
   }
 
   /**

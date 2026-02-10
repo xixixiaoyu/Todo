@@ -9,6 +9,7 @@ export interface JwtPayload {
   email: string
   type: 'access' | 'refresh'
   exp?: number
+  iat?: number
 }
 
 @Injectable()
@@ -38,6 +39,37 @@ export class TokenService {
     this.refreshTokenExpiresIn = Number(this.configService.get('JWT_REFRESH_EXPIRES_IN', 604800))
     this.accessTokenSecret = jwtSecret
     this.refreshTokenSecret = refreshSecret ?? jwtSecret
+  }
+
+  async invalidateUserSessions(userId: number): Promise<void> {
+    const nowSec = Math.floor(Date.now() / 1000)
+    await this.redisService.set(`invalidate:${userId}`, nowSec, {
+      prefix: CachePrefix.AUTH,
+      ttl: this.refreshTokenExpiresIn,
+    })
+  }
+
+  async isUserSessionInvalidated(userId: number, tokenIat?: number): Promise<boolean> {
+    const invalidatedAt = await this.redisService.get<number | string>(`invalidate:${userId}`, {
+      prefix: CachePrefix.AUTH,
+    })
+
+    if (invalidatedAt === undefined) {
+      return false
+    }
+
+    const invalidatedAtSec =
+      typeof invalidatedAt === 'string' ? Number(invalidatedAt) : invalidatedAt
+
+    if (!Number.isFinite(invalidatedAtSec)) {
+      return false
+    }
+
+    if (typeof tokenIat !== 'number') {
+      return true
+    }
+
+    return tokenIat < invalidatedAtSec
   }
 
   /**

@@ -3,6 +3,7 @@ import { PasswordService } from '../../src/auth/password.service'
 import { UsersService } from '../../src/users/users.service'
 import { ConfigService } from '@nestjs/config'
 import { MailService } from '../../src/mail/mail.service'
+import { TokenService } from '../../src/auth/token.service'
 import * as bcrypt from 'bcryptjs'
 import { BadRequestException } from '@nestjs/common'
 
@@ -11,6 +12,7 @@ describe('PasswordService', () => {
   let usersService: UsersService
   let configService: ConfigService
   let mailService: MailService
+  let tokenService: TokenService
 
   beforeEach(() => {
     usersService = {
@@ -25,7 +27,11 @@ describe('PasswordService', () => {
       sendPasswordReset: vi.fn(),
     } as unknown as MailService
 
-    service = new PasswordService(usersService, configService, mailService)
+    tokenService = {
+      invalidateUserSessions: vi.fn(),
+    } as unknown as TokenService
+
+    service = new PasswordService(usersService, configService, mailService, tokenService)
   })
 
   describe('hash', () => {
@@ -102,6 +108,8 @@ describe('PasswordService', () => {
           resetPasswordExpires: null,
         }),
       )
+
+      expect(tokenService.invalidateUserSessions).toHaveBeenCalledWith(1)
     })
 
     it('should throw BadRequestException if token is invalid or expired', async () => {
