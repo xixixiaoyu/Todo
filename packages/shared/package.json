@@ -30,7 +30,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "lint": "cross-env NODE_OPTIONS='--max-old-space-size=4096' eslint . --fix --cache",
+    "lint": "cross-env NODE_OPTIONS='--max-old-space-size=4096' eslint . --cache",
+    "lint:fix": "cross-env NODE_OPTIONS='--max-old-space-size=4096' eslint . --fix --cache",
     "clean": "rm -rf dist"
   },
   "dependencies": {

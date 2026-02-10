@@ -18,7 +18,15 @@ describe('TokenService', () => {
       verify: vi.fn(),
     } as unknown as JwtService
     configService = {
-      get: vi.fn((key: string, defaultValue: unknown) => defaultValue),
+      get: vi.fn((key: string, defaultValue: unknown) => {
+        if (key === 'JWT_SECRET') {
+          return 'access-secret'
+        }
+        if (key === 'JWT_REFRESH_SECRET') {
+          return 'refresh-secret'
+        }
+        return defaultValue
+      }),
     } as unknown as ConfigService
     redisService = {
       set: vi.fn(),
@@ -39,7 +47,7 @@ describe('TokenService', () => {
       expect(token).toBe('access-token')
       expect(jwtService.sign).toHaveBeenCalledWith(
         { sub: userId, email, type: 'access' },
-        expect.objectContaining({ expiresIn: 900 }),
+        expect.objectContaining({ expiresIn: 900, secret: 'access-secret' }),
       )
     })
   })
@@ -55,7 +63,7 @@ describe('TokenService', () => {
       expect(token).toBe('refresh-token')
       expect(jwtService.sign).toHaveBeenCalledWith(
         { sub: userId, email, type: 'refresh' },
-        expect.objectContaining({ expiresIn: 604800 }),
+        expect.objectContaining({ expiresIn: 604800, secret: 'refresh-secret' }),
       )
     })
   })
@@ -68,6 +76,7 @@ describe('TokenService', () => {
       const result = service.verifyToken('valid-token')
 
       expect(result).toEqual(payload)
+      expect(jwtService.verify).toHaveBeenCalledWith('valid-token', { secret: 'refresh-secret' })
     })
 
     it('should throw UnauthorizedException if token is invalid', () => {
@@ -76,6 +85,12 @@ describe('TokenService', () => {
       })
 
       expect(() => service.verifyToken('invalid-token')).toThrow(UnauthorizedException)
+      expect(jwtService.verify).toHaveBeenNthCalledWith(1, 'invalid-token', {
+        secret: 'refresh-secret',
+      })
+      expect(jwtService.verify).toHaveBeenNthCalledWith(2, 'invalid-token', {
+        secret: 'access-secret',
+      })
     })
   })
 
@@ -94,6 +109,9 @@ describe('TokenService', () => {
           ttl: expect.any(Number),
         }),
       )
+      expect(jwtService.verify).toHaveBeenCalledWith('token-to-blacklist', {
+        secret: 'access-secret',
+      })
     })
 
     it('should do nothing if token is invalid', async () => {
