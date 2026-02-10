@@ -3,7 +3,24 @@ import { PrismaService } from '../prisma/prisma.service'
 import { SyncMergeDto } from './todos.dto'
 import type { SyncItem } from '@my-app/shared'
 import { EventsGateway } from '../events/events.gateway'
-import { Todo } from '../generated/client'
+import type { Prisma } from '../generated/client'
+
+const todoSelect = {
+  id: true,
+  title: true,
+  completed: true,
+  order: true,
+  isPinned: true,
+  parentId: true,
+  version: true,
+  createdAt: true,
+  updatedAt: true,
+  completedAt: true,
+  deletedAt: true,
+  pomodoroCount: true,
+} as const
+
+type TodoPublic = Prisma.TodoGetPayload<{ select: typeof todoSelect }>
 
 @Injectable()
 export class TodoSyncService {
@@ -22,7 +39,7 @@ export class TodoSyncService {
     const since = lastSyncAt ? new Date(lastSyncAt) : new Date(0)
 
     // 1. 处理客户端推送的变更 (使用事务保证原子性)
-    const successfullyUpdatedItems: Todo[] = []
+    const successfullyUpdatedItems: TodoPublic[] = []
     if (todos && todos.length > 0) {
       await this.prisma.$transaction(async (tx) => {
         for (const todo of todos as SyncItem[]) {
@@ -73,6 +90,7 @@ export class TodoSyncService {
               id: todo.id,
               createdAt: new Date(todo.createdAt),
             },
+            select: todoSelect,
           })
 
           successfullyUpdatedItems.push(updated)
@@ -88,6 +106,7 @@ export class TodoSyncService {
           gte: since, // 改为 gte，配合前端过滤，确保不漏掉同一毫秒的更新
         },
       },
+      select: todoSelect,
     })
 
     // 过滤掉那些客户端成功更新的项目，稍后会将它们与 serverChanges 合并

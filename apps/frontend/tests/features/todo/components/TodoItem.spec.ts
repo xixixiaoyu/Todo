@@ -78,6 +78,48 @@ describe('TodoItem', () => {
     expect(wrapper.text()).toContain('Test todo')
   })
 
+  it('should expand by default when expanded is undefined', () => {
+    const parentTodo: Todo = {
+      id: 'parent',
+      title: 'Parent',
+      completed: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isPinned: false,
+      order: 0,
+      version: 0,
+      pomodoroCount: 0,
+    }
+
+    const childTodo: Todo = {
+      id: 'child',
+      title: 'Child',
+      completed: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isPinned: false,
+      order: 0,
+      parentId: 'parent',
+      version: 0,
+      pomodoroCount: 0,
+    }
+
+    const wrapper = mount(TodoItem, {
+      props: {
+        todo: parentTodo,
+        allTodos: [parentTodo, childTodo],
+        editingId: null,
+        editingTitle: '',
+      },
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    expect(wrapper.text()).toContain('Child')
+    expect(wrapper.find('.lucide-chevron-down').exists()).toBe(true)
+  })
+
   it('should emit toggle event when checkbox clicked', async () => {
     const wrapper = mount(TodoItem, {
       props: {

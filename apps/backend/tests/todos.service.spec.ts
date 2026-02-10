@@ -56,6 +56,7 @@ describe('TodosService', () => {
 
       expect(mockPrisma.todo.findMany).toHaveBeenCalledWith({
         where: { userId, deletedAt: { not: null } },
+        select: expect.any(Object),
         orderBy: { deletedAt: 'desc' },
       })
       expect(result).toEqual(mockTrash)
@@ -76,6 +77,7 @@ describe('TodosService', () => {
       expect(mockPrisma.todo.update).toHaveBeenCalledWith({
         where: { id: todoId },
         data: { deletedAt: null, updatedAt: expect.any(Date), version: { increment: 1 } },
+        select: expect.any(Object),
       })
       expect(result?.deletedAt).toBeNull()
       expect(mockEventsGateway.broadcastSyncNotify).toHaveBeenCalledWith(userId)
@@ -133,6 +135,7 @@ describe('TodosService', () => {
           userId,
           deletedAt: null,
         },
+        select: expect.any(Object),
         orderBy: [{ isPinned: 'desc' }, { order: 'asc' }, { createdAt: 'desc' }],
       })
       expect(result).toEqual(mockTodos)

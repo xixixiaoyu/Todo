@@ -4,6 +4,28 @@ import { useTodoStore } from '@/features/todo/stores/todo'
 import { todoApi } from '@/features/todo/api'
 import type { SyncResponse } from '@my-app/shared'
 
+const mockSocket = {
+  on: vi.fn(),
+  off: vi.fn(),
+  once: vi.fn(),
+  emit: vi.fn(),
+}
+
+const connectMock = vi.fn(() => mockSocket)
+const waitForConnectionMock = vi.fn().mockResolvedValue('mock-socket-id')
+
+let authStoreMock: {
+  isAuthenticated: boolean
+  token: string | null
+  hydrateFromStorage: () => void
+  $subscribe?: (cb: (mutation: unknown, state: { token?: string | null }) => void) => void
+} = {
+  isAuthenticated: true,
+  token: 'mock-token',
+  hydrateFromStorage: vi.fn(),
+  $subscribe: vi.fn(),
+}
+
 // Mock todoApi
 vi.mock('@/features/todo/api', () => ({
   todoApi: {
@@ -15,8 +37,7 @@ vi.mock('@/features/todo/api', () => ({
 // Mock auth store
 vi.mock('@/features/auth/stores/auth', () => ({
   useAuthStore: vi.fn(() => ({
-    isAuthenticated: true,
-    hydrateFromStorage: vi.fn(),
+    ...authStoreMock,
   })),
 }))
 
@@ -24,13 +45,8 @@ vi.mock('@/features/auth/stores/auth', () => ({
 vi.mock('@/composables/useSocket', () => ({
   useSocket: () => ({
     socketId: { value: 'mock-socket-id' },
-    connect: vi.fn(() => ({
-      on: vi.fn(),
-      off: vi.fn(),
-      once: vi.fn(),
-      emit: vi.fn(),
-    })),
-    waitForConnection: vi.fn().mockResolvedValue('mock-socket-id'),
+    connect: connectMock,
+    waitForConnection: waitForConnectionMock,
   }),
 }))
 
@@ -39,6 +55,13 @@ describe('Todo Store Sync', () => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
     localStorage.clear()
+
+    authStoreMock = {
+      isAuthenticated: true,
+      token: 'mock-token',
+      hydrateFromStorage: vi.fn(),
+      $subscribe: vi.fn(),
+    }
   })
 
   it('should sync pending todos and update lastSyncAt', async () => {
@@ -176,5 +199,30 @@ describe('Todo Store Sync', () => {
     // Logically deleted and synced items should remain in memory for Trash view
     expect(store.todos.find((t) => t.id === id)).toBeDefined()
     expect(store.todos.find((t) => t.id === id)?.deletedAt).toBeDefined()
+  })
+
+  it('should attach todos:sync listener after login when initially unauthenticated', async () => {
+    const subscribers: Array<(mutation: unknown, state: { token?: string | null }) => void> = []
+
+    authStoreMock.isAuthenticated = false
+    authStoreMock.token = null
+    authStoreMock.$subscribe = vi.fn((cb) => {
+      subscribers.push(cb)
+    })
+
+    const store = useTodoStore()
+
+    await store.initSocketListener()
+    expect(connectMock).not.toHaveBeenCalled()
+
+    authStoreMock.isAuthenticated = true
+    authStoreMock.token = 'new-token'
+    subscribers.forEach((cb) => cb({}, { token: 'new-token' }))
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(connectMock).toHaveBeenCalled()
+    expect(mockSocket.off).toHaveBeenCalledWith('todos:sync', expect.any(Function))
+    expect(mockSocket.on).toHaveBeenCalledWith('todos:sync', expect.any(Function))
   })
 })

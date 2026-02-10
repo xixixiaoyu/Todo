@@ -2,6 +2,21 @@ import { Injectable, Inject, forwardRef } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import { EventsGateway } from '../events/events.gateway'
 
+const todoSelect = {
+  id: true,
+  title: true,
+  completed: true,
+  order: true,
+  isPinned: true,
+  parentId: true,
+  version: true,
+  createdAt: true,
+  updatedAt: true,
+  completedAt: true,
+  deletedAt: true,
+  pomodoroCount: true,
+} as const
+
 @Injectable()
 export class TodosService {
   constructor(
@@ -19,6 +34,7 @@ export class TodosService {
         userId,
         deletedAt: null,
       },
+      select: todoSelect,
       orderBy: [{ isPinned: 'desc' }, { order: 'asc' }, { createdAt: 'desc' }],
     })
   }
@@ -32,6 +48,7 @@ export class TodosService {
         userId,
         deletedAt: { not: null },
       },
+      select: todoSelect,
       orderBy: { deletedAt: 'desc' },
     })
   }
@@ -53,6 +70,7 @@ export class TodosService {
         updatedAt: new Date(),
         version: { increment: 1 },
       },
+      select: todoSelect,
     })
 
     this.eventsGateway.broadcastSyncNotify(userId)

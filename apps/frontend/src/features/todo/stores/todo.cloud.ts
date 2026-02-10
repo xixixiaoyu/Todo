@@ -110,6 +110,10 @@ export function createTodoCloud(deps: {
 
   const debouncedSync = debounce(() => void sync(), 1000)
 
+  const onTodosSync = () => {
+    debouncedSync()
+  }
+
   async function mergeOnLogin(): Promise<void> {
     deps.lastSyncAt.value = null
 
@@ -130,21 +134,31 @@ export function createTodoCloud(deps: {
   async function initSocketListener(): Promise<void> {
     if (isSocketInitialized) return
 
+    isSocketInitialized = true
+
     const authStore = (await import('@/features/auth/stores/auth')).useAuthStore()
     authStore.hydrateFromStorage()
-    if (!authStore.isAuthenticated) return
 
-    const { useSocket } = await import('@/composables/useSocket')
-    const { connect } = useSocket()
-    const socket = connect()
+    const attach = async (force = false) => {
+      if (!force && !authStore.isAuthenticated) return
+      const { useSocket } = await import('@/composables/useSocket')
+      const { connect } = useSocket()
+      const socket = connect()
+      if (!socket) return
 
-    if (!socket) return
+      socket.off('todos:sync', onTodosSync)
+      socket.on('todos:sync', onTodosSync)
+    }
 
-    socket.on('todos:sync', () => {
-      debouncedSync()
+    await attach()
+
+    if (typeof authStore.$subscribe !== 'function') return
+
+    authStore.$subscribe((_mutation, state) => {
+      if (state.token) {
+        void attach(true)
+      }
     })
-
-    isSocketInitialized = true
   }
 
   async function deleteTodoPermanently(id: string): Promise<void> {

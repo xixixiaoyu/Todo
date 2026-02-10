@@ -48,7 +48,7 @@ const isAddingChild = ref(false)
 const showTooltip = ref(false)
 
 // --- Computed ---
-const isExpanded = computed(() => props.todo.expanded ?? false)
+const isExpanded = computed(() => props.todo.expanded ?? true)
 const hasChildren = computed(() => children.value.length > 0)
 const children = computed(() => {
   if (props.searchQuery) return []
