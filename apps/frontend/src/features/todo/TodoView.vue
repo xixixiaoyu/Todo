@@ -29,6 +29,14 @@ const isInputVisible = computed(() => todoStore.viewMode === 'list' && todoStore
 const direction = ref(0) // 1: next, -1: prev
 
 watch(
+  () => todoStore.viewMode,
+  (newVal, oldVal) => {
+    const viewOrder: Record<'list' | 'visual' | 'stats', number> = { list: 0, visual: 1, stats: 2 }
+    direction.value = viewOrder[newVal] > viewOrder[oldVal] ? 1 : -1
+  },
+)
+
+watch(
   () => todoStore.filter,
   (newVal: FilterType, oldVal: FilterType) => {
     const filterOrder: Record<FilterType, number> = { pending: 0, completed: 1, trash: 2 }
@@ -190,25 +198,30 @@ function onFireworksComplete() {
             :class="!showSearch && todoStore.viewMode === 'visual' ? 'mt-0' : 'mt-2'"
           >
             <Transition
-              mode="out-in"
               :css="false"
               @before-enter="
                 (el) => {
                   const element = el as HTMLElement
+                  gsap.killTweensOf(element)
                   gsap.set(element, {
                     opacity: 0,
                     x: direction * 12,
+                    y: 6,
+                    scale: 0.99,
                     willChange: 'transform, opacity',
                   })
                 }
               "
               @enter="
                 (el, done) => {
+                  gsap.killTweensOf(el)
                   gsap.to(el, {
                     opacity: 1,
                     x: 0,
-                    duration: 0.4,
-                    ease: 'expo.out',
+                    y: 0,
+                    scale: 1,
+                    duration: 0.32,
+                    ease: 'power3.out',
                     onComplete: () => {
                       gsap.set(el, { clearProps: 'will-change' })
                       done()
@@ -216,47 +229,63 @@ function onFireworksComplete() {
                   })
                 }
               "
+              @before-leave="
+                (el) => {
+                  const element = el as HTMLElement
+                  gsap.killTweensOf(element)
+                  gsap.set(element, {
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    width: '100%',
+                    height: '100%',
+                  })
+                }
+              "
               @leave="
                 (el, done) => {
+                  gsap.killTweensOf(el)
                   gsap.to(el, {
                     opacity: 0,
                     x: -direction * 8,
-                    duration: 0.25,
+                    y: -4,
+                    scale: 0.99,
+                    duration: 0.22,
                     ease: 'power2.in',
-                    onComplete: done,
+                    onComplete: () => {
+                      gsap.set(el, { clearProps: 'position,top,left,right,bottom,width,height' })
+                      done()
+                    },
                   })
                 }
               "
             >
-              <div
-                :key="
-                  todoStore.viewMode === 'list'
-                    ? todoStore.viewMode + todoStore.filter
-                    : todoStore.viewMode
+              <TodoList
+                v-if="todoStore.viewMode === 'list'"
+                :key="`list-${todoStore.filter}`"
+                :todos="
+                  todoStore.hasProposedChanges ? todoStore.previewTodos : todoStore.filteredTodos
                 "
-                class="flex-1 flex flex-col min-h-0"
-              >
-                <TodoList
-                  v-if="todoStore.viewMode === 'list'"
-                  :todos="
-                    todoStore.hasProposedChanges ? todoStore.previewTodos : todoStore.filteredTodos
-                  "
-                  :filter="todoStore.filter"
-                  :search-query="todoStore.searchQuery"
-                  :editing-id="editingId"
-                  :editing-title="editingTitle"
-                  @toggle="(id, currentCompleted) => handleToggleTodo(id, currentCompleted)"
-                  @start-edit="startEditing"
-                  @save-edit="saveEditing"
-                  @cancel-edit="cancelEditing"
-                  @delete="todoStore.deleteTodo"
-                  @reorder="(ids, pId) => todoStore.reorderTodos(ids, pId)"
-                  @update:editing-title="editingTitle = $event"
-                  @edit-keydown="handleEditKeydown"
-                />
-                <TodoVisualizer v-else-if="todoStore.viewMode === 'visual'" />
-                <TodoStatistics v-else-if="todoStore.viewMode === 'stats'" />
-              </div>
+                :filter="todoStore.filter"
+                :search-query="todoStore.searchQuery"
+                :editing-id="editingId"
+                :editing-title="editingTitle"
+                @toggle="(id, currentCompleted) => handleToggleTodo(id, currentCompleted)"
+                @start-edit="startEditing"
+                @save-edit="saveEditing"
+                @cancel-edit="cancelEditing"
+                @delete="todoStore.deleteTodo"
+                @reorder="(ids, pId) => todoStore.reorderTodos(ids, pId)"
+                @update:editing-title="editingTitle = $event"
+                @edit-keydown="handleEditKeydown"
+              />
+
+              <KeepAlive v-else>
+                <TodoVisualizer v-if="todoStore.viewMode === 'visual'" key="visual" />
+                <TodoStatistics v-else-if="todoStore.viewMode === 'stats'" key="stats" />
+              </KeepAlive>
             </Transition>
           </div>
         </CardContent>

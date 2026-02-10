@@ -8,6 +8,8 @@ import type { TreeData } from '../stores/todo.types'
 import { useI18n } from 'vue-i18n'
 import { debounce } from 'lodash-es'
 
+defineOptions({ name: 'TodoVisualizer' })
+
 const todoStore = useTodoStore()
 const isDark = useDark()
 const { t } = useI18n()

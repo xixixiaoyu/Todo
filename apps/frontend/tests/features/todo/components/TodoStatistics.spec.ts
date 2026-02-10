@@ -8,10 +8,14 @@ import { useTodoStore } from '@/features/todo/stores/todo'
 import { usePomodoroStore } from '@/features/todo/stores/pomodoro'
 import type { Todo } from '@/features/todo/stores/todo'
 
+let mockResizeObserverReady = true
+
 vi.mock('@vueuse/core', () => ({
   useDark: () => ref(false),
   useResizeObserver: (_target: unknown, callback: (entries: unknown[]) => void) => {
-    callback([{ contentRect: { width: 800, height: 600 } }])
+    if (mockResizeObserverReady) {
+      callback([{ contentRect: { width: 800, height: 600 } }])
+    }
   },
 }))
 
@@ -120,6 +124,7 @@ describe('TodoStatistics', () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date(2026, 1, 10, 12, 0, 0))
     setActivePinia(createPinia())
+    mockResizeObserverReady = true
   })
 
   afterEach(() => {
@@ -214,5 +219,33 @@ describe('TodoStatistics', () => {
     expect(created[6]).toBe(1)
     expect(created[5]).toBe(1)
     expect(completed[6]).toBe(1)
+  })
+
+  it('容器未就绪时应显示图表骨架屏', async () => {
+    mockResizeObserverReady = false
+
+    const todoStore = useTodoStore()
+    const pomodoroStore = usePomodoroStore()
+
+    pomodoroStore.history = []
+    pomodoroStore.completedSessions = 0
+    todoStore.todos = []
+
+    const wrapper = mount(TodoStatistics, {
+      global: {
+        plugins: [i18n],
+        stubs: {
+          Card: { template: '<div><slot /></div>' },
+          CardContent: { template: '<div><slot /></div>' },
+          CardHeader: { template: '<div><slot /></div>' },
+          CardTitle: { template: '<div><slot /></div>' },
+        },
+      },
+    })
+
+    await nextTick()
+
+    expect(wrapper.findAll('[data-test="chart-skeleton"]').length).toBeGreaterThan(0)
+    expect(wrapper.findAllComponents({ name: 'VChart' }).length).toBe(0)
   })
 })

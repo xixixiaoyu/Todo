@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, nextTick, onBeforeUnmount } from 'vue'
+import { computed, ref, onMounted, nextTick, onBeforeUnmount, onActivated } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useDark, useResizeObserver } from '@vueuse/core'
 import VChart from 'vue-echarts'
@@ -37,6 +37,8 @@ use([
   GridComponent,
   LegacyGridContainLabel,
 ])
+
+defineOptions({ name: 'TodoStatistics' })
 
 const { t, locale } = useI18n()
 const isDark = useDark()
@@ -99,6 +101,16 @@ onMounted(async () => {
     }
   }
   checkSize()
+})
+
+onActivated(() => {
+  requestAnimationFrame(() => {
+    if (!containerRef.value) return
+    if (containerRef.value.clientWidth > 0 && containerRef.value.clientHeight > 0) {
+      isReady.value = true
+      debouncedResize()
+    }
+  })
 })
 
 // 概览数据
@@ -453,12 +465,27 @@ const focusDurationOption = computed(() => {
           </CardTitle>
         </CardHeader>
         <CardContent class="h-[300px] relative">
-          <VChart
-            v-if="isReady"
-            ref="completionChartRef"
-            :option="completionChartOption"
-            autoresize
-          />
+          <Transition
+            enter-active-class="transition-opacity duration-300 ease-out"
+            enter-from-class="opacity-0"
+            enter-to-class="opacity-100"
+            leave-active-class="transition-opacity duration-200 ease-in"
+            leave-from-class="opacity-100"
+            leave-to-class="opacity-0"
+            mode="out-in"
+          >
+            <VChart
+              v-if="isReady"
+              ref="completionChartRef"
+              :option="completionChartOption"
+              autoresize
+            />
+            <div
+              v-else
+              data-test="chart-skeleton"
+              class="absolute inset-4 rounded-xl bg-muted/40 animate-pulse"
+            />
+          </Transition>
           <div
             v-if="isReady"
             class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
@@ -480,7 +507,22 @@ const focusDurationOption = computed(() => {
           </CardTitle>
         </CardHeader>
         <CardContent class="h-[300px]">
-          <VChart v-if="isReady" ref="weeklyChartRef" :option="weeklyActivityOption" autoresize />
+          <Transition
+            enter-active-class="transition-opacity duration-300 ease-out"
+            enter-from-class="opacity-0"
+            enter-to-class="opacity-100"
+            leave-active-class="transition-opacity duration-200 ease-in"
+            leave-from-class="opacity-100"
+            leave-to-class="opacity-0"
+            mode="out-in"
+          >
+            <VChart v-if="isReady" ref="weeklyChartRef" :option="weeklyActivityOption" autoresize />
+            <div
+              v-else
+              data-test="chart-skeleton"
+              class="h-full w-full rounded-xl bg-muted/40 animate-pulse"
+            />
+          </Transition>
         </CardContent>
       </Card>
     </div>
@@ -494,7 +536,22 @@ const focusDurationOption = computed(() => {
         </CardTitle>
       </CardHeader>
       <CardContent class="h-[280px]">
-        <VChart v-if="isReady" ref="focusChartRef" :option="focusDurationOption" autoresize />
+        <Transition
+          enter-active-class="transition-opacity duration-300 ease-out"
+          enter-from-class="opacity-0"
+          enter-to-class="opacity-100"
+          leave-active-class="transition-opacity duration-200 ease-in"
+          leave-from-class="opacity-100"
+          leave-to-class="opacity-0"
+          mode="out-in"
+        >
+          <VChart v-if="isReady" ref="focusChartRef" :option="focusDurationOption" autoresize />
+          <div
+            v-else
+            data-test="chart-skeleton"
+            class="h-full w-full rounded-xl bg-muted/40 animate-pulse"
+          />
+        </Transition>
       </CardContent>
     </Card>
   </div>
