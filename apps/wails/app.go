@@ -23,6 +23,14 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 }
 
+func (a *App) shutdown(_ context.Context) {
+	a.ctx = nil
+}
+
+func (a *App) ready() bool {
+	return a.ctx != nil
+}
+
 // Greet returns a greeting for the given name
 func (a *App) Greet(name string) string {
 	return fmt.Sprintf("Hello %s, It's show time!", name)
@@ -30,6 +38,9 @@ func (a *App) Greet(name string) string {
 
 // ShowInfoDialog shows an information dialog
 func (a *App) ShowInfoDialog(title, message string) {
+	if !a.ready() {
+		return
+	}
 	runtime.MessageDialog(a.ctx, runtime.MessageDialogOptions{
 		Type:    runtime.InfoDialog,
 		Title:   title,
@@ -39,6 +50,9 @@ func (a *App) ShowInfoDialog(title, message string) {
 
 // ShowErrorDialog shows an error dialog
 func (a *App) ShowErrorDialog(title, message string) {
+	if !a.ready() {
+		return
+	}
 	runtime.MessageDialog(a.ctx, runtime.MessageDialogOptions{
 		Type:    runtime.ErrorDialog,
 		Title:   title,
@@ -48,16 +62,46 @@ func (a *App) ShowErrorDialog(title, message string) {
 
 // OpenBrowser opens the given URL in the system's default browser
 func (a *App) OpenBrowser(url string) {
+	if !a.ready() {
+		return
+	}
 	runtime.BrowserOpenURL(a.ctx, url)
 }
 
 // Quit the application
 func (a *App) Quit() {
+	if !a.ready() {
+		return
+	}
 	runtime.Quit(a.ctx)
+}
+
+func selectPrimaryScreen(screens []runtime.Screen) (runtime.Screen, bool) {
+	if len(screens) == 0 {
+		return runtime.Screen{}, false
+	}
+
+	for _, s := range screens {
+		if s.IsPrimary {
+			return s, true
+		}
+	}
+
+	return screens[0], true
+}
+
+func calcMiniModePosition(screen runtime.Screen, width int) (x int, y int) {
+	marginRight := 20
+	marginTop := 40
+	return screen.Size.Width - width - marginRight, marginTop
 }
 
 // SetMiniMode toggles the mini mode for Pomodoro
 func (a *App) SetMiniMode(enabled bool) {
+	if !a.ready() {
+		return
+	}
+
 	if enabled {
 		width, height := 220, 180
 		// Set to an ultra-compact mini size
@@ -67,23 +111,10 @@ func (a *App) SetMiniMode(enabled bool) {
 
 		// Snap to top-right corner with margin
 		screens, _ := runtime.ScreenGetAll(a.ctx)
-		if len(screens) > 0 {
-			// Find primary screen
-			var primary runtime.Screen
-			for _, s := range screens {
-				if s.IsPrimary {
-					primary = s
-					break
-				}
-			}
-			if primary.Size.Width == 0 {
-				primary = screens[0]
-			}
-
-			// Margin from top (considering macOS menu bar) and right
-			marginRight := 20
-			marginTop := 40
-			runtime.WindowSetPosition(a.ctx, primary.Size.Width-width-marginRight, marginTop)
+		primary, ok := selectPrimaryScreen(screens)
+		if ok {
+			x, y := calcMiniModePosition(primary, width)
+			runtime.WindowSetPosition(a.ctx, x, y)
 		}
 	} else {
 		// Restore to default size
@@ -97,6 +128,10 @@ func (a *App) SetMiniMode(enabled bool) {
 
 // ToggleWindow toggles the window visibility
 func (a *App) ToggleWindow() {
+	if !a.ready() {
+		return
+	}
+
 	if runtime.WindowIsMinimised(a.ctx) {
 		runtime.WindowUnminimise(a.ctx)
 		runtime.WindowShow(a.ctx)
@@ -116,6 +151,9 @@ func (a *App) ToggleWindow() {
 
 // ShowNotification shows a system notification
 func (a *App) ShowNotification(title, message string) {
+	if !a.ready() {
+		return
+	}
 	runtime.EventsEmit(a.ctx, "notification", map[string]string{
 		"title":   title,
 		"message": message,

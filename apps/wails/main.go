@@ -3,10 +3,7 @@ package main
 import (
 	"embed"
 	"io/fs"
-	"net/http"
-	"os"
 	"runtime"
-	"strings"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/menu"
@@ -66,24 +63,9 @@ func main() {
 		BackgroundColour:  &options.RGBA{R: 0, G: 0, B: 0, A: 0},
 		AssetServer: &assetserver.Options{
 			Assets: frontendAssets,
-			Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				// 允许通过 /local-file/ 路径访问本地文件
-				if strings.HasPrefix(r.URL.Path, "/local-file/") {
-					path := strings.TrimPrefix(r.URL.Path, "/local-file/")
-					// 解码路径（处理空格等字符）
-					// 注意：生产环境应增加更严格的路径校验以防目录穿越攻击
-					data, err := os.ReadFile(path)
-					if err != nil {
-						w.WriteHeader(http.StatusNotFound)
-						return
-					}
-					w.Write(data)
-					return
-				}
-				w.WriteHeader(http.StatusNotFound)
-			}),
 		},
-		OnStartup: app.startup,
+		OnStartup:  app.startup,
+		OnShutdown: app.shutdown,
 		Bind: []any{
 			app,
 		},
