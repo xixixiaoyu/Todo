@@ -31,6 +31,8 @@ export const common = {
   current_task: 'Current Task',
   resizeDrawer: 'Resize Drawer',
   toggleLanguage: 'Switch Language',
+  expand: 'Expand',
+  collapse: 'Collapse',
   error: {
     requestFailed: 'Request failed',
     networkError: 'Network error, please try again later',

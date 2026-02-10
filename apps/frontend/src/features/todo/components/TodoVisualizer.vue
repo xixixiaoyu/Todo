@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, nextTick } from 'vue'
+import { computed, ref, onMounted, nextTick, onBeforeUnmount } from 'vue'
 import { Clover } from 'lucide-vue-next'
 import VChart from 'vue-echarts'
 import { useDark, useResizeObserver } from '@vueuse/core'
@@ -20,6 +20,10 @@ const isReady = ref(false)
 const debouncedResize = debounce(() => {
   vChartRef.value?.resize()
 }, 100)
+
+onBeforeUnmount(() => {
+  debouncedResize.cancel()
+})
 
 useResizeObserver(containerRef, (entries) => {
   const entry = entries[0]
@@ -325,6 +329,10 @@ const chartOptions = computed(() => ({
     },
   ],
 }))
+
+const emptyText = computed(() =>
+  todoStore.filter === 'completed' ? t('todo.emptyCompleted') : t('todo.emptyPending'),
+)
 </script>
 
 <template>
@@ -339,12 +347,12 @@ const chartOptions = computed(() => ({
           <Clover :size="48" class="text-primary/20" />
         </div>
         <p class="text-muted-foreground/60 font-medium tracking-wide">
-          {{ t('todo.emptyPending') }}
+          {{ emptyText }}
         </p>
       </div>
 
       <VChart
-        v-else
+        v-else-if="isReady"
         key="chart"
         ref="vChartRef"
         class="flex-1 w-full h-full relative z-10"
@@ -352,6 +360,19 @@ const chartOptions = computed(() => ({
         :autoresize="true"
         :theme="isDark ? 'dark' : undefined"
       />
+
+      <div
+        v-else
+        key="loading"
+        class="flex-1 flex flex-col items-center justify-center relative z-10"
+      >
+        <div class="p-8 rounded-full bg-primary/5 mb-6 animate-pulse">
+          <Clover :size="48" class="text-primary/20" />
+        </div>
+        <p class="text-muted-foreground/60 font-medium tracking-wide">
+          {{ t('common.loading') }}
+        </p>
+      </div>
     </Transition>
   </div>
 </template>

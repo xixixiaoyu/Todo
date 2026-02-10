@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, nextTick } from 'vue'
+import { computed, ref, onMounted, nextTick, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useDark, useResizeObserver } from '@vueuse/core'
 import VChart from 'vue-echarts'
@@ -56,6 +56,10 @@ const debouncedResize = debounce(() => {
   focusChartRef.value?.resize()
 }, 100)
 
+onBeforeUnmount(() => {
+  debouncedResize.cancel()
+})
+
 useResizeObserver(containerRef, (entries) => {
   const entry = entries[0]
   const { width, height } = entry.contentRect
@@ -98,8 +102,10 @@ onMounted(async () => {
 })
 
 // 概览数据
-const totalTasks = computed(() => todoStore.todos.length)
-const completedTasks = computed(() => todoStore.todos.filter((t) => t.completed).length)
+const activeTodos = computed(() => todoStore.todos.filter((t) => !t.deletedAt))
+
+const totalTasks = computed(() => activeTodos.value.length)
+const completedTasks = computed(() => activeTodos.value.filter((t) => t.completed).length)
 const pendingTasks = computed(() => totalTasks.value - completedTasks.value)
 const completionRate = computed(() =>
   totalTasks.value > 0 ? Math.round((completedTasks.value / totalTasks.value) * 100) : 0,
@@ -121,9 +127,10 @@ const weeklyActivityOption = computed(() => {
     const nextD = new Date(d)
     nextD.setDate(nextD.getDate() + 1)
 
-    return todoStore.todos.filter(
-      (t) => new Date(t.createdAt) >= d && new Date(t.createdAt) < nextD,
-    ).length
+    return activeTodos.value.filter((t) => {
+      const createdAt = new Date(t.createdAt)
+      return createdAt >= d && createdAt < nextD
+    }).length
   })
 
   const completedData = Array.from({ length: 7 }, (_, i) => {
@@ -133,13 +140,11 @@ const weeklyActivityOption = computed(() => {
     const nextD = new Date(d)
     nextD.setDate(nextD.getDate() + 1)
 
-    return todoStore.todos.filter(
-      (t) =>
-        t.completed &&
-        t.completedAt &&
-        new Date(t.completedAt) >= d &&
-        new Date(t.completedAt) < nextD,
-    ).length
+    return activeTodos.value.filter((t) => {
+      if (!t.completed || !t.completedAt) return false
+      const completedAt = new Date(t.completedAt)
+      return completedAt >= d && completedAt < nextD
+    }).length
   })
 
   return {
@@ -448,7 +453,12 @@ const focusDurationOption = computed(() => {
           </CardTitle>
         </CardHeader>
         <CardContent class="h-[300px] relative">
-          <VChart v-if="isReady" :option="completionChartOption" autoresize />
+          <VChart
+            v-if="isReady"
+            ref="completionChartRef"
+            :option="completionChartOption"
+            autoresize
+          />
           <div
             v-if="isReady"
             class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
@@ -470,7 +480,7 @@ const focusDurationOption = computed(() => {
           </CardTitle>
         </CardHeader>
         <CardContent class="h-[300px]">
-          <VChart v-if="isReady" :option="weeklyActivityOption" autoresize />
+          <VChart v-if="isReady" ref="weeklyChartRef" :option="weeklyActivityOption" autoresize />
         </CardContent>
       </Card>
     </div>
@@ -484,7 +494,7 @@ const focusDurationOption = computed(() => {
         </CardTitle>
       </CardHeader>
       <CardContent class="h-[280px]">
-        <VChart v-if="isReady" :option="focusDurationOption" autoresize />
+        <VChart v-if="isReady" ref="focusChartRef" :option="focusDurationOption" autoresize />
       </CardContent>
     </Card>
   </div>

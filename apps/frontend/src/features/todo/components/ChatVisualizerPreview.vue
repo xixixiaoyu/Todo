@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, nextTick, toRef } from 'vue'
+import { computed, ref, watch, onMounted, nextTick, toRef, onBeforeUnmount } from 'vue'
 import VChart from 'vue-echarts'
 import { useDark, useResizeObserver } from '@vueuse/core'
 import { Sparkles, Check, X, Maximize2, Minimize2, Move } from 'lucide-vue-next'
@@ -38,6 +38,10 @@ const vChartRef = ref<InstanceType<typeof VChart> | null>(null)
 const debouncedResize = debounce(() => {
   vChartRef.value?.resize()
 }, 100)
+
+onBeforeUnmount(() => {
+  debouncedResize.cancel()
+})
 
 useResizeObserver(containerRef, (entries) => {
   const entry = entries[0]
@@ -225,7 +229,10 @@ const chartOptions = computed(() => ({
       </div>
 
       <button
+        type="button"
         class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+        :aria-label="isExpanded ? t('common.collapse') : t('common.expand')"
+        :title="isExpanded ? t('common.collapse') : t('common.expand')"
         @click="isExpanded = !isExpanded"
       >
         <Minimize2 v-if="isExpanded" :size="14" />
@@ -239,7 +246,7 @@ const chartOptions = computed(() => ({
       class="relative w-full transition-all duration-500 ease-in-out"
       :style="{ height: isExpanded ? '480px' : '280px' }"
     >
-      <VChart v-if="isReady" :option="chartOptions" autoresize />
+      <VChart v-if="isReady" ref="vChartRef" :option="chartOptions" autoresize />
 
       <!-- Interaction Hint -->
       <div

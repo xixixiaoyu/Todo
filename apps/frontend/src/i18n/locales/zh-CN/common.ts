@@ -31,6 +31,8 @@ export const common = {
   current_task: '当前任务',
   resizeDrawer: '调整抽屉宽度',
   toggleLanguage: '切换语言',
+  expand: '展开',
+  collapse: '收起',
   error: {
     requestFailed: '请求失败',
     networkError: '网络错误，请稍后再试',
