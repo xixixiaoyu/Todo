@@ -481,9 +481,15 @@ describe('useAuthStore', () => {
       store.refreshToken = 'refresh-token'
       store.user = mockUser
 
-      vi.mocked(authApi.logout).mockRejectedValue(new Error('Network error'))
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      const error = new Error('Network error')
+      vi.mocked(authApi.logout).mockRejectedValue(error)
 
       await store.logout()
+
+      expect(warnSpy).toHaveBeenCalledWith('Backend logout failed (likely token expired):', error)
+
+      warnSpy.mockRestore()
 
       expect(store.token).toBeNull()
       expect(store.refreshToken).toBeNull()

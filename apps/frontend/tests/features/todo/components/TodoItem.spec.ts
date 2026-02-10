@@ -37,6 +37,10 @@ const i18n = createI18n({
         cancel: '取消',
         edit: '编辑',
         addSubtask: '添加子任务',
+        breakdown: 'AI 拆解',
+        focus: '专注',
+        pin: '置顶',
+        delete: '删除',
       },
       common: {
         delete: '删除',

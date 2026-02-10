@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest'
 import { AllExceptionsFilter } from '../../../src/common/filters/all-exceptions.filter'
 import { HttpException, HttpStatus, ArgumentsHost, ConflictException, Logger } from '@nestjs/common'
 import { I18nContext } from 'nestjs-i18n'
@@ -10,8 +10,8 @@ describe('AllExceptionsFilter', () => {
     send: Mock
   }
   let mockRequest: { url?: string; method?: string; raw?: { url?: string } }
-  let mockArgumentsHost: any // eslint-disable-line @typescript-eslint/no-explicit-any
-  let mockI18n: any // eslint-disable-line @typescript-eslint/no-explicit-any
+  let mockArgumentsHost: ArgumentsHost
+  let mockI18n: { t: Mock }
 
   beforeEach(() => {
     filter = new AllExceptionsFilter()
@@ -33,11 +33,17 @@ describe('AllExceptionsFilter', () => {
         getRequest: () => mockRequest,
         getNext: vi.fn(),
       }),
-    }
+    } as unknown as ArgumentsHost
     mockI18n = {
       t: vi.fn((key: string) => key),
     }
-    vi.spyOn(I18nContext, 'current').mockReturnValue(mockI18n as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+    vi.spyOn(I18nContext, 'current').mockReturnValue(
+      mockI18n as unknown as ReturnType<typeof I18nContext.current>,
+    )
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it('should handle normal HttpException', () => {

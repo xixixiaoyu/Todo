@@ -2,30 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { nextTick } from 'vue'
 import { useAIConfig, _resetAIConfig, aiThinkingMode } from '@/features/ai/composables/useAIConfig'
 
-// Mock localStorage
-const mockLocalStorage = (() => {
-  let store: Record<string, string> = {}
-
-  return {
-    getItem(key: string): string | null {
-      return store[key] || null
-    },
-    setItem(key: string, value: string): void {
-      store[key] = value.toString()
-    },
-    removeItem(key: string): void {
-      delete store[key]
-    },
-    clear(): void {
-      store = {}
-    },
-  }
-})()
-
-Object.defineProperty(window, 'localStorage', {
-  value: mockLocalStorage,
-})
-
 describe('useAIConfig - Presets', () => {
   beforeEach(() => {
     localStorage.clear()

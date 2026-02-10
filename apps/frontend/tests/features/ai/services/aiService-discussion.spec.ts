@@ -4,32 +4,17 @@ import { _resetAIConfig } from '@/features/ai/composables/useAIConfig'
 import type { ChatMessage } from '@/features/ai/services/aiService'
 import type { AIPreset } from '@/features/ai/composables/useAIConfig'
 
-// Mock localStorage
-const mockLocalStorage = (() => {
-  let store: Record<string, string> = {}
-  return {
-    getItem: vi.fn((key: string) => store[key] || null),
-    setItem: vi.fn((key: string, value: string) => {
-      store[key] = value.toString()
-    }),
-    removeItem: vi.fn((key: string) => {
-      delete store[key]
-    }),
-    clear: vi.fn(() => {
-      store = {}
-    }),
+const fetchMock = vi.mocked(fetch)
+
+function toUrlString(input: string | URL | Request) {
+  if (typeof input === 'string') {
+    return input
   }
-})()
-
-Object.defineProperty(window, 'localStorage', {
-  value: mockLocalStorage,
-})
-
-// Mock fetch
-const mockFetch = vi.fn()
-Object.defineProperty(window, 'fetch', {
-  value: mockFetch,
-})
+  if (input instanceof URL) {
+    return input.toString()
+  }
+  return input.url
+}
 
 // Mock i18n
 vi.mock('@/i18n', () => ({
@@ -48,28 +33,30 @@ vi.mock('@/i18n', () => ({
 describe('aiService - Multi-model Discussion', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockLocalStorage.clear()
+    localStorage.clear()
 
     // Default fetch mock for single model stream
-    mockFetch.mockImplementation(async () => ({
-      ok: true,
-      body: {
-        getReader: () => ({
-          read: vi
-            .fn()
-            .mockResolvedValueOnce({
-              value: new TextEncoder().encode(
-                'data: {"choices":[{"delta":{"content":"Default response"}}]}\n\n',
-              ),
-              done: false,
-            })
-            .mockResolvedValueOnce({
-              value: new TextEncoder().encode('data: [DONE]\n\n'),
-              done: true,
-            }),
-        }),
-      },
-    }))
+    fetchMock.mockImplementation(async () => {
+      return {
+        ok: true,
+        body: {
+          getReader: () => ({
+            read: vi
+              .fn()
+              .mockResolvedValueOnce({
+                value: new TextEncoder().encode(
+                  'data: {"choices":[{"delta":{"content":"Default response"}}]}\n\n',
+                ),
+                done: false,
+              })
+              .mockResolvedValueOnce({
+                value: new TextEncoder().encode('data: [DONE]\n\n'),
+                done: true,
+              }),
+          }),
+        },
+      } as unknown as Response
+    })
   })
 
   it('should fall back to single model if no primary or secondary presets are selected', async () => {
@@ -138,8 +125,8 @@ describe('aiService - Multi-model Discussion', () => {
         todoAssistant: false,
       },
     ]
-    mockLocalStorage.setItem('ai-presets', JSON.stringify(presets))
-    mockLocalStorage.setItem(
+    localStorage.setItem('ai-presets', JSON.stringify(presets))
+    localStorage.setItem(
       'ai-config',
       JSON.stringify({
         discussionMode: true,
@@ -149,7 +136,8 @@ describe('aiService - Multi-model Discussion', () => {
     )
     _resetAIConfig()
 
-    mockFetch.mockImplementation(async (url: string, init: RequestInit) => {
+    fetchMock.mockImplementation(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = toUrlString(input)
       const body = init?.body ? JSON.parse(init.body as string) : {}
       // 流式请求 (synthesis)
       if (body.stream === true) {
@@ -171,7 +159,7 @@ describe('aiService - Multi-model Discussion', () => {
                 }),
             }),
           },
-        }
+        } as unknown as Response
       }
 
       // 并行请求 (non-stream)
@@ -181,7 +169,7 @@ describe('aiService - Multi-model Discussion', () => {
         json: async () => ({
           choices: [{ message: { content } }],
         }),
-      }
+      } as unknown as Response
     })
 
     await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)
@@ -225,8 +213,8 @@ describe('aiService - Multi-model Discussion', () => {
         todoAssistant: false,
       },
     ]
-    mockLocalStorage.setItem('ai-presets', JSON.stringify(presets))
-    mockLocalStorage.setItem(
+    localStorage.setItem('ai-presets', JSON.stringify(presets))
+    localStorage.setItem(
       'ai-config',
       JSON.stringify({
         discussionMode: true,
@@ -236,7 +224,7 @@ describe('aiService - Multi-model Discussion', () => {
     )
     _resetAIConfig()
 
-    mockFetch.mockImplementation(async (url: string, init: RequestInit) => {
+    fetchMock.mockImplementation(async (_input: string | URL | Request, init?: RequestInit) => {
       const body = init?.body ? JSON.parse(init.body as string) : {}
       // 流式请求 (synthesis)
       if (body.stream === true) {
@@ -261,7 +249,7 @@ describe('aiService - Multi-model Discussion', () => {
                   }),
               }),
             },
-          }
+          } as unknown as Response
         }
       }
 
@@ -270,7 +258,7 @@ describe('aiService - Multi-model Discussion', () => {
         ok: false,
         status: 500,
         text: async () => 'Internal Server Error',
-      }
+      } as unknown as Response
     })
 
     await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)
@@ -299,8 +287,8 @@ describe('aiService - Multi-model Discussion', () => {
         model: 'model-a',
       },
     ]
-    mockLocalStorage.setItem('ai-presets', JSON.stringify(presets))
-    mockLocalStorage.setItem(
+    localStorage.setItem('ai-presets', JSON.stringify(presets))
+    localStorage.setItem(
       'ai-config',
       JSON.stringify({
         discussionMode: true,
@@ -310,7 +298,8 @@ describe('aiService - Multi-model Discussion', () => {
     )
     _resetAIConfig()
 
-    mockFetch.mockImplementation(async (url: string, init: RequestInit) => {
+    fetchMock.mockImplementation(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = toUrlString(input)
       const body = init?.body ? JSON.parse(init.body as string) : {}
       // 流式请求
       if (body.stream === true) {
@@ -332,14 +321,14 @@ describe('aiService - Multi-model Discussion', () => {
                 }),
             }),
           },
-        }
+        } as unknown as Response
       }
 
       if (url.includes('api.a.com')) {
         throw new Error('Network error')
       }
 
-      return { ok: false }
+      return { ok: false } as unknown as Response
     })
 
     await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)
@@ -379,7 +368,8 @@ describe('aiService - Multi-model Discussion', () => {
     )
     _resetAIConfig()
 
-    mockFetch.mockImplementation(async (url: string, init: RequestInit) => {
+    fetchMock.mockImplementation(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = toUrlString(input)
       const body = init?.body ? JSON.parse(init.body as string) : {}
 
       if (body.stream === false) {
@@ -390,12 +380,12 @@ describe('aiService - Multi-model Discussion', () => {
           json: async () => ({
             choices: [{ message: { content: 'Answer 1' } }],
           }),
-        }
+        } as unknown as Response
       }
 
       // Final synthesis request (should use p1, not basic)
       expect(url).toContain('api.p1.com')
-      expect((init.headers as Record<string, string>).Authorization).toBe('Bearer key-p1')
+      expect((init?.headers as Record<string, string>).Authorization).toBe('Bearer key-p1')
 
       return {
         ok: true,
@@ -415,7 +405,7 @@ describe('aiService - Multi-model Discussion', () => {
               }),
           }),
         },
-      }
+      } as unknown as Response
     })
 
     await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)
@@ -448,7 +438,7 @@ describe('aiService - Multi-model Discussion', () => {
     )
     _resetAIConfig()
 
-    mockFetch.mockImplementation(async (url: string, init: RequestInit) => {
+    fetchMock.mockImplementation(async (_input: string | URL | Request, init?: RequestInit) => {
       const body = init?.body ? JSON.parse(init.body as string) : {}
       // 流式请求
       if (body.stream === true) {
@@ -470,14 +460,14 @@ describe('aiService - Multi-model Discussion', () => {
                 }),
             }),
           },
-        }
+        } as unknown as Response
       }
       return {
         ok: true,
         json: async () => ({
           choices: [{ message: { content: 'Answer' } }],
         }),
-      }
+      } as unknown as Response
     })
 
     await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)
@@ -517,7 +507,7 @@ describe('aiService - Multi-model Discussion', () => {
     )
     _resetAIConfig()
 
-    mockFetch.mockImplementation(async (url: string, init: RequestInit) => {
+    fetchMock.mockImplementation(async (_input: string | URL | Request, init?: RequestInit) => {
       const body = init?.body ? JSON.parse(init.body as string) : {}
       if (body.stream === false) {
         expect(body.thinking).toEqual({ type: 'enabled' }) // Global setting
@@ -526,7 +516,7 @@ describe('aiService - Multi-model Discussion', () => {
           json: async () => ({
             choices: [{ message: { content: 'Success' } }],
           }),
-        }
+        } as unknown as Response
       }
       return {
         ok: true,
@@ -546,7 +536,7 @@ describe('aiService - Multi-model Discussion', () => {
               }),
           }),
         },
-      }
+      } as unknown as Response
     })
 
     await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)
@@ -573,7 +563,7 @@ describe('aiService - Multi-model Discussion', () => {
     )
     _resetAIConfig()
 
-    mockFetch.mockImplementation(async (url: string, init: RequestInit) => {
+    fetchMock.mockImplementation(async (_input: string | URL | Request, init?: RequestInit) => {
       const body = init?.body ? JSON.parse(init.body as string) : {}
 
       if (body.stream === false) {
@@ -584,7 +574,7 @@ describe('aiService - Multi-model Discussion', () => {
           json: async () => ({
             choices: [{ message: { content: 'Success' } }],
           }),
-        }
+        } as unknown as Response
       }
 
       // Final synthesis request
@@ -607,7 +597,7 @@ describe('aiService - Multi-model Discussion', () => {
               }),
           }),
         },
-      }
+      } as unknown as Response
     })
 
     await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)
@@ -644,7 +634,7 @@ describe('aiService - Multi-model Discussion', () => {
     )
     _resetAIConfig()
 
-    mockFetch.mockImplementation(async (url: string, init: RequestInit) => {
+    fetchMock.mockImplementation(async (_input: string | URL | Request, init?: RequestInit) => {
       const body = init?.body ? JSON.parse(init.body as string) : {}
 
       if (body.stream === false) {
@@ -656,7 +646,7 @@ describe('aiService - Multi-model Discussion', () => {
           json: async () => ({
             choices: [{ message: { content: 'Success' } }],
           }),
-        }
+        } as unknown as Response
       }
 
       // Final synthesis request
@@ -679,7 +669,7 @@ describe('aiService - Multi-model Discussion', () => {
               }),
           }),
         },
-      }
+      } as unknown as Response
     })
 
     await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)

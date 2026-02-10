@@ -1,9 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { getAIStreamResponse, type ChatMessage } from '@/features/ai/services/aiService'
+import { _resetAIConfig } from '@/features/ai/composables/useAIConfig'
 
-// Mock global fetch
-const mockFetch = vi.fn()
-global.fetch = mockFetch
+const fetchMock = vi.mocked(fetch)
+
+function getFirstRequestBody() {
+  const init = fetchMock.mock.calls[0]?.[1] as RequestInit | undefined
+  expect(init).toBeDefined()
+
+  const body = init?.body
+  expect(typeof body).toBe('string')
+
+  return JSON.parse(body as string) as { messages: unknown[] }
+}
 
 // Mock useMemory and useTodoStore since they are used in injectSystemPrompts
 vi.mock('@/features/ai/composables/useMemory', () => ({
@@ -36,18 +45,29 @@ vi.mock('@/features/todo/stores/todo', () => ({
 describe('aiService - Message Cleaning', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+
+    localStorage.clear()
+    localStorage.setItem(
+      'ai-config',
+      JSON.stringify({
+        baseUrl: 'https://api.example.com',
+        apiKey: 'sk-test',
+        model: 'test-model',
+      }),
+    )
+    _resetAIConfig()
   })
 
   it('should clean non-standard fields like reasoning_details before sending', async () => {
     const onChunk = vi.fn()
-    mockFetch.mockResolvedValueOnce({
+    fetchMock.mockResolvedValueOnce({
       ok: true,
       body: {
         getReader: () => ({
           read: vi.fn().mockResolvedValueOnce({ value: undefined, done: true }),
         }),
       },
-    })
+    } as unknown as Response)
 
     const messagesWithExtraFields: ChatMessage[] = [
       { id: 'user-1', role: 'user', content: 'Hi' },
@@ -62,19 +82,21 @@ describe('aiService - Message Cleaning', () => {
 
     await getAIStreamResponse(messagesWithExtraFields, onChunk)
 
-    const lastCallBody = JSON.parse(mockFetch.mock.calls[0][1].body)
-    const sentMessages = lastCallBody.messages
+    const sentMessages = getFirstRequestBody().messages
+    expect(Array.isArray(sentMessages)).toBe(true)
 
     // Check assistant message
-    const assistantMsg = sentMessages.find((m: { role: string }) => m.role === 'assistant')
+    const assistantMsg = (sentMessages as Array<{ role?: string }>).find(
+      (m) => m.role === 'assistant',
+    )
     expect(assistantMsg).toBeDefined()
-    expect(assistantMsg.content).toBe('Hello')
+    expect(assistantMsg).toMatchObject({ role: 'assistant', content: 'Hello' })
     // Should NOT have reasoning_details, id, or createdAt
-    expect(assistantMsg.reasoning_details).toBeUndefined()
-    expect(assistantMsg.id).toBeUndefined()
-    expect(assistantMsg.createdAt).toBeUndefined()
+    expect((assistantMsg as Record<string, unknown>).reasoning_details).toBeUndefined()
+    expect((assistantMsg as Record<string, unknown>).id).toBeUndefined()
+    expect((assistantMsg as Record<string, unknown>).createdAt).toBeUndefined()
 
     // Check keys length to ensure no extra fields
-    expect(Object.keys(assistantMsg)).toEqual(['role', 'content'])
+    expect(Object.keys(assistantMsg as Record<string, unknown>)).toEqual(['role', 'content'])
   })
 })

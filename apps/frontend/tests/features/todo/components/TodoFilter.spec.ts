@@ -14,6 +14,7 @@ const i18n = createI18n({
       todo: {
         pending: '待完成',
         completed: '已完成',
+        trash: '回收站',
         search: '搜索',
         expandAll: '全部展开',
         collapseAll: '全部收起',

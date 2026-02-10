@@ -1,34 +1,44 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { getAIStaticResponse } from '@/features/ai/services/aiService'
+import { _resetAIConfig } from '@/features/ai/composables/useAIConfig'
 
-// Mock fetch
-const mockFetch = vi.fn()
-Object.defineProperty(window, 'fetch', {
-  value: mockFetch,
-})
+const fetchMock = vi.mocked(fetch)
 
 describe('aiService - Static Response', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+
+    localStorage.clear()
+    localStorage.setItem(
+      'ai-config',
+      JSON.stringify({
+        baseUrl: 'https://api.example.com',
+        apiKey: 'sk-test',
+        model: 'test-model',
+      }),
+    )
+    _resetAIConfig()
   })
 
   it('should get static response with reasoning', async () => {
     const messages = [{ role: 'user' as const, content: 'hello' }]
 
-    mockFetch.mockImplementation(async () => ({
-      ok: true,
-      json: async () => ({
-        choices: [
-          {
-            message: {
-              content: 'Hello world',
-              reasoning_content: 'DeepSeek thinking',
-              reasoning: 'Standard reasoning',
+    fetchMock.mockImplementation(async () => {
+      return {
+        ok: true,
+        json: async () => ({
+          choices: [
+            {
+              message: {
+                content: 'Hello world',
+                reasoning_content: 'DeepSeek thinking',
+                reasoning: 'Standard reasoning',
+              },
             },
-          },
-        ],
-      }),
-    }))
+          ],
+        }),
+      } as unknown as Response
+    })
 
     const result = await getAIStaticResponse(messages)
 
@@ -40,19 +50,21 @@ describe('aiService - Static Response', () => {
   it('should handle array format reasoning_details in non-stream response', async () => {
     const messages = [{ role: 'user' as const, content: 'hello' }]
 
-    mockFetch.mockImplementation(async () => ({
-      ok: true,
-      json: async () => ({
-        choices: [
-          {
-            message: {
-              content: 'Hello world',
-              reasoning: [{ type: 'reasoning.text', text: 'Step 1. ' }, { text: 'Step 2.' }],
+    fetchMock.mockImplementation(async () => {
+      return {
+        ok: true,
+        json: async () => ({
+          choices: [
+            {
+              message: {
+                content: 'Hello world',
+                reasoning: [{ type: 'reasoning.text', text: 'Step 1. ' }, { text: 'Step 2.' }],
+              },
             },
-          },
-        ],
-      }),
-    }))
+          ],
+        }),
+      } as unknown as Response
+    })
 
     const result = await getAIStaticResponse(messages)
 

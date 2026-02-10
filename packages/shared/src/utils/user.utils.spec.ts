@@ -48,6 +48,25 @@ describe('user.utils', () => {
       expect(result.avatar).toBeNull()
       expect(result.googleId).toBeNull()
     })
+
+    it('should treat missing authenticators as no passkey', () => {
+      const userWithoutAuthenticators: PrismaUser = {
+        ...mockPrismaUser,
+        authenticators: undefined,
+      }
+      const result = formatUser(userWithoutAuthenticators)
+      expect(result.hasPasskey).toBe(false)
+    })
+
+    it('should not mutate the input user object', () => {
+      const user: PrismaUser = {
+        ...mockPrismaUser,
+        authenticators: [{ id: 'auth1' }],
+      }
+      const original = structuredClone(user)
+      formatUser(user)
+      expect(user).toEqual(original)
+    })
   })
 
   describe('formatUsers', () => {
@@ -57,6 +76,10 @@ describe('user.utils', () => {
       expect(result).toHaveLength(2)
       expect(result[0].id).toBe(1)
       expect(result[1].id).toBe(2)
+    })
+
+    it('should handle empty array', () => {
+      expect(formatUsers([])).toEqual([])
     })
   })
 })

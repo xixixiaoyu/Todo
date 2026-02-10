@@ -34,30 +34,52 @@ const i18n = createI18n({
   locale: 'zh-CN',
   messages: {
     'zh-CN': {
+      ai: {
+        assistant: 'AI 助手',
+      },
       todo: {
         visualMode: '可视化视图',
         listMode: '列表视图',
+        statsMode: '统计视图',
       },
       common: {
         appName: '简思',
         beta: 'Beta',
+        settings: '设置',
         toggleLanguage: '切换语言',
         logout: '退出登录',
+        theme: {
+          label: '主题',
+          light: '浅色',
+          dark: '深色',
+          system: '跟随系统',
+        },
       },
       login: {
         title: '登录账户',
       },
     },
     'en-US': {
+      ai: {
+        assistant: 'AI Assistant',
+      },
       todo: {
         visualMode: 'Visual Mode',
         listMode: 'List Mode',
+        statsMode: 'Statistics',
       },
       common: {
         appName: 'Lumina',
         beta: 'Beta',
+        settings: 'Settings',
         toggleLanguage: 'Switch Language',
         logout: 'Logout',
+        theme: {
+          label: 'Theme',
+          light: 'Light',
+          dark: 'Dark',
+          system: 'System',
+        },
       },
       login: {
         title: 'Sign in to your account',

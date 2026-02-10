@@ -1,13 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { getAIStreamResponse } from '@/features/ai/services/aiService'
+import { _resetAIConfig } from '@/features/ai/composables/useAIConfig'
 
-// Mock global fetch
-const mockFetch = vi.fn()
-global.fetch = mockFetch
+const fetchMock = vi.mocked(fetch)
 
 describe('aiService - Stream Parsing', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+
+    localStorage.clear()
+    localStorage.setItem(
+      'ai-config',
+      JSON.stringify({
+        baseUrl: 'https://api.example.com',
+        apiKey: 'sk-test',
+        model: 'test-model',
+      }),
+    )
+    _resetAIConfig()
   })
 
   it('should handle standard SSE format with "data: " prefix and reasoning', async () => {
@@ -15,7 +25,7 @@ describe('aiService - Stream Parsing', () => {
     const onThinking = vi.fn()
     const encoder = new TextEncoder()
 
-    mockFetch.mockResolvedValueOnce({
+    fetchMock.mockResolvedValueOnce({
       ok: true,
       body: {
         getReader: () => ({
@@ -37,7 +47,7 @@ describe('aiService - Stream Parsing', () => {
             }),
         }),
       },
-    })
+    } as unknown as Response)
 
     await getAIStreamResponse([], onChunk, onThinking)
 
@@ -51,7 +61,7 @@ describe('aiService - Stream Parsing', () => {
     const onReasoningDetails = vi.fn()
     const encoder = new TextEncoder()
 
-    mockFetch.mockResolvedValueOnce({
+    fetchMock.mockResolvedValueOnce({
       ok: true,
       body: {
         getReader: () => ({
@@ -69,7 +79,7 @@ describe('aiService - Stream Parsing', () => {
             }),
         }),
       },
-    })
+    } as unknown as Response)
 
     await getAIStreamResponse([], onChunk, undefined, onReasoningDetails)
 
@@ -82,7 +92,7 @@ describe('aiService - Stream Parsing', () => {
     const onChunk = vi.fn()
     const encoder = new TextEncoder()
 
-    mockFetch.mockResolvedValueOnce({
+    fetchMock.mockResolvedValueOnce({
       ok: true,
       body: {
         getReader: () => ({
@@ -100,7 +110,7 @@ describe('aiService - Stream Parsing', () => {
             }),
         }),
       },
-    })
+    } as unknown as Response)
 
     await getAIStreamResponse([], onChunk)
     expect(onChunk).toHaveBeenCalledWith('Part1')
@@ -111,7 +121,7 @@ describe('aiService - Stream Parsing', () => {
     const onChunk = vi.fn()
     const encoder = new TextEncoder()
 
-    mockFetch.mockResolvedValueOnce({
+    fetchMock.mockResolvedValueOnce({
       ok: true,
       body: {
         getReader: () => ({
@@ -127,7 +137,7 @@ describe('aiService - Stream Parsing', () => {
             }),
         }),
       },
-    })
+    } as unknown as Response)
 
     await getAIStreamResponse([], onChunk)
 

@@ -3,32 +3,20 @@ import { getAIStreamResponse } from '@/features/ai/services/aiService'
 import { _resetAIConfig } from '@/features/ai/composables/useAIConfig'
 import type { ChatMessage } from '@/features/ai/services/aiService'
 
-// Mock localStorage
-const mockLocalStorage = (() => {
-  let store: Record<string, string> = {}
-  return {
-    getItem: vi.fn((key: string) => store[key] || null),
-    setItem: vi.fn((key: string, value: string) => {
-      store[key] = value.toString()
-    }),
-    removeItem: vi.fn((key: string) => {
-      delete store[key]
-    }),
-    clear: vi.fn(() => {
-      store = {}
-    }),
-  }
-})()
+const fetchMock = vi.mocked(fetch)
 
-Object.defineProperty(window, 'localStorage', {
-  value: mockLocalStorage,
-})
+function getFirstRequestBody() {
+  const init = fetchMock.mock.calls[0]?.[1] as RequestInit | undefined
+  const body = init?.body
+  expect(typeof body).toBe('string')
+  return JSON.parse(body as string) as { messages: Array<{ role: string; content: unknown }> }
+}
 
-// Mock fetch
-const mockFetch = vi.fn()
-Object.defineProperty(window, 'fetch', {
-  value: mockFetch,
-})
+function getUserMessage(body: { messages: Array<{ role: string; content: unknown }> }) {
+  const userMessage = body.messages.find((m) => m.role === 'user')
+  expect(userMessage).toBeDefined()
+  return userMessage as { role: string; content: unknown }
+}
 
 // Mock i18n
 vi.mock('@/i18n', () => ({
@@ -70,7 +58,7 @@ vi.mock('@/features/todo/stores/todo', () => ({
 describe('aiService - Multi-modal Support', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockLocalStorage.clear()
+    localStorage.clear()
 
     // Default config
     localStorage.setItem(
@@ -85,25 +73,28 @@ describe('aiService - Multi-modal Support', () => {
     _resetAIConfig()
 
     // Default fetch mock for stream
-    mockFetch.mockImplementation(async () => ({
-      ok: true,
-      body: {
-        getReader: () => ({
-          read: vi
-            .fn()
-            .mockResolvedValueOnce({
-              value: new TextEncoder().encode(
-                'data: {"choices":[{"delta":{"content":"Test response"}}]} \n\n',
-              ),
-              done: false,
-            })
-            .mockResolvedValueOnce({
-              value: new TextEncoder().encode('data: [DONE]\n\n'),
-              done: true,
+    fetchMock.mockImplementation(
+      async () =>
+        ({
+          ok: true,
+          body: {
+            getReader: () => ({
+              read: vi
+                .fn()
+                .mockResolvedValueOnce({
+                  value: new TextEncoder().encode(
+                    'data: {"choices":[{"delta":{"content":"Test response"}}]} \n\n',
+                  ),
+                  done: false,
+                })
+                .mockResolvedValueOnce({
+                  value: new TextEncoder().encode('data: [DONE]\n\n'),
+                  done: true,
+                }),
             }),
-        }),
-      },
-    }))
+          },
+        }) as unknown as Response,
+    )
   })
 
   it('should format multi-modal messages correctly for OpenRouter in stream mode', async () => {
@@ -119,24 +110,22 @@ describe('aiService - Multi-modal Support', () => {
     const onChunk = vi.fn()
     await getAIStreamResponse(messages, onChunk)
 
-    expect(mockFetch).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining('/chat/completions'),
       expect.objectContaining({
         method: 'POST',
       }),
     )
 
-    const callBody = JSON.parse(mockFetch.mock.calls[0][1].body)
-    const userMessage = callBody.messages.find(
-      (m: { role: string; content: string | unknown[] }) => m.role === 'user',
-    )
-
+    const userMessage = getUserMessage(getFirstRequestBody())
     expect(Array.isArray(userMessage.content)).toBe(true)
-    expect(userMessage.content).toContainEqual({
+
+    const content = userMessage.content as Array<unknown>
+    expect(content).toContainEqual({
       type: 'text',
       text: 'What is in this image?',
     })
-    expect(userMessage.content).toContainEqual({
+    expect(content).toContainEqual({
       type: 'image_url',
       image_url: {
         url: 'https://example.com/image.jpg',
@@ -157,18 +146,16 @@ describe('aiService - Multi-modal Support', () => {
     const onChunk = vi.fn()
     await getAIStreamResponse(messages, onChunk)
 
-    const callBody = JSON.parse(mockFetch.mock.calls[0][1].body)
-    const userMessage = callBody.messages.find(
-      (m: { role: string; content: string | unknown[] }) => m.role === 'user',
-    )
+    const userMessage = getUserMessage(getFirstRequestBody())
+    const content = userMessage.content as Array<unknown>
 
-    expect(userMessage.content).toHaveLength(3) // 1 text + 2 images
-    expect(userMessage.content[0]).toEqual({ type: 'text', text: 'Compare these images' })
-    expect(userMessage.content[1]).toEqual({
+    expect(content).toHaveLength(3)
+    expect(content[0]).toEqual({ type: 'text', text: 'Compare these images' })
+    expect(content[1]).toEqual({
       type: 'image_url',
       image_url: { url: 'https://example.com/1.jpg' },
     })
-    expect(userMessage.content[2]).toEqual({
+    expect(content[2]).toEqual({
       type: 'image_url',
       image_url: { url: 'https://example.com/2.jpg' },
     })
@@ -186,11 +173,7 @@ describe('aiService - Multi-modal Support', () => {
     const onChunk = vi.fn()
     await getAIStreamResponse(messages, onChunk)
 
-    const callBody = JSON.parse(mockFetch.mock.calls[0][1].body)
-    const userMessage = callBody.messages.find(
-      (m: { role: string; content: string | unknown[] }) => m.role === 'user',
-    )
-
+    const userMessage = getUserMessage(getFirstRequestBody())
     expect(typeof userMessage.content).toBe('string')
     expect(userMessage.content).toBe('Hello')
   })

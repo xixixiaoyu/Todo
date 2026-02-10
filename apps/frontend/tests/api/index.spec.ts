@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { httpClient } from '@/api'
 import { useAuthStore } from '@/features/auth/stores/auth'
 
 // Mock axios
@@ -32,18 +31,6 @@ vi.mock('@/features/auth/stores/auth', () => ({
   useAuthStore: vi.fn(),
 }))
 
-// Mock localStorage
-const localStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-}
-
-Object.defineProperty(global, 'localStorage', {
-  value: localStorageMock,
-})
-
 // Mock document.cookie
 Object.defineProperty(document, 'cookie', {
   writable: true,
@@ -60,7 +47,10 @@ describe('httpClient', () => {
     vi.restoreAllMocks()
   })
 
-  it('should create axios instance with correct config', () => {
+  it('should create axios instance with correct config', async () => {
+    vi.resetModules()
+    const { httpClient } = await import('@/api')
+
     // The httpClient is created at module import time
     // We just verify it exists and has the expected structure
     expect(httpClient).toBeDefined()
@@ -69,16 +59,22 @@ describe('httpClient', () => {
     expect(httpClient.interceptors.response).toBeDefined()
   })
 
-  it('should set up request interceptor', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mockInstance = httpClient as any
-    expect(mockInstance.interceptors.request.use).toBeDefined()
+  it('should set up request interceptor', async () => {
+    vi.resetModules()
+    const { httpClient } = await import('@/api')
+
+    const requestUse = vi.mocked(httpClient.interceptors.request.use)
+    expect(requestUse).toHaveBeenCalledTimes(1)
+    expect(typeof requestUse.mock.calls[0]?.[0]).toBe('function')
   })
 
-  it('should set up response interceptor', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mockInstance = httpClient as any
-    expect(mockInstance.interceptors.response.use).toBeDefined()
+  it('should set up response interceptor', async () => {
+    vi.resetModules()
+    const { httpClient } = await import('@/api')
+
+    const responseUse = vi.mocked(httpClient.interceptors.response.use)
+    expect(responseUse).toHaveBeenCalledTimes(1)
+    expect(typeof responseUse.mock.calls[0]?.[1]).toBe('function')
   })
 })
 
@@ -139,84 +135,67 @@ describe('response interceptor', () => {
 
 describe('getToken', () => {
   beforeEach(() => {
-    localStorageMock.getItem.mockClear()
+    vi.resetModules()
+    localStorage.clear()
   })
 
-  it('should get token from localStorage when exists', () => {
-    localStorageMock.getItem.mockReturnValue(
-      JSON.stringify({ token: 'test-token', refreshToken: 'refresh-token' }),
-    )
+  it('should get token from localStorage when exists', async () => {
+    localStorage.setItem('auth', JSON.stringify({ token: 'test-token', refreshToken: 'r1' }))
 
-    const getToken = (): string | null => {
-      const authData = localStorage.getItem('auth')
-      if (authData) {
-        try {
-          const parsed = JSON.parse(authData)
-          return parsed.token || null
-        } catch {
-          return null
-        }
-      }
-      return null
-    }
+    const { getToken, setToken } = await import('@/api')
+    setToken(null)
 
     expect(getToken()).toBe('test-token')
   })
 
-  it('should return null when localStorage has no auth data', () => {
-    localStorageMock.getItem.mockReturnValue(null)
-
-    const getToken = (): string | null => {
-      const authData = localStorage.getItem('auth')
-      if (authData) {
-        try {
-          const parsed = JSON.parse(authData)
-          return parsed.token || null
-        } catch {
-          return null
-        }
-      }
-      return null
-    }
+  it('should return null when localStorage has no auth data', async () => {
+    const { getToken, setToken } = await import('@/api')
+    setToken(null)
 
     expect(getToken()).toBeNull()
   })
 
-  it('should return null when localStorage has invalid JSON', () => {
-    localStorageMock.getItem.mockReturnValue('invalid json')
+  it('should return null when localStorage has invalid JSON', async () => {
+    localStorage.setItem('auth', 'invalid json')
 
-    const getToken = (): string | null => {
-      const authData = localStorage.getItem('auth')
-      if (authData) {
-        try {
-          const parsed = JSON.parse(authData)
-          return parsed.token || null
-        } catch {
-          return null
-        }
-      }
-      return null
-    }
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    const { getToken, setToken } = await import('@/api')
+    setToken(null)
+
+    expect(getToken()).toBeNull()
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to parse auth token from localStorage:'),
+      expect.any(SyntaxError),
+    )
+
+    warnSpy.mockRestore()
+  })
+
+  it('should return null when auth data has no token', async () => {
+    localStorage.setItem('auth', JSON.stringify({ refreshToken: 'refresh-token' }))
+
+    const { getToken, setToken } = await import('@/api')
+    setToken(null)
 
     expect(getToken()).toBeNull()
   })
 
-  it('should return null when auth data has no token', () => {
-    localStorageMock.getItem.mockReturnValue(JSON.stringify({ refreshToken: 'refresh-token' }))
+  it('should read token from pinia-persisted state shape', async () => {
+    localStorage.setItem('auth', JSON.stringify({ state: { token: 'state-token' } }))
 
-    const getToken = (): string | null => {
-      const authData = localStorage.getItem('auth')
-      if (authData) {
-        try {
-          const parsed = JSON.parse(authData)
-          return parsed.token || null
-        } catch {
-          return null
-        }
-      }
-      return null
-    }
+    const { getToken, setToken } = await import('@/api')
+    setToken(null)
 
-    expect(getToken()).toBeNull()
+    expect(getToken()).toBe('state-token')
+  })
+
+  it('should prefer in-memory token over localStorage', async () => {
+    localStorage.setItem('auth', JSON.stringify({ token: 'storage-token' }))
+
+    const { getToken, setToken } = await import('@/api')
+    setToken('memory-token')
+
+    expect(getToken()).toBe('memory-token')
   })
 })

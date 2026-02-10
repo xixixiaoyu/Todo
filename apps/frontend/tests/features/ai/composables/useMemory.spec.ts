@@ -145,13 +145,28 @@ describe('useMemory', () => {
 
     it('should throw error for invalid JSON format during import', () => {
       const { importMemories } = useMemory()
-      expect(() => importMemories('invalid-json')).toThrow()
+
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      expect(() => importMemories('invalid-json')).toThrow(SyntaxError)
+      expect(errorSpy).toHaveBeenCalledWith('[Memory] Import failed:', expect.any(SyntaxError))
+
+      errorSpy.mockRestore()
     })
 
     it('should throw error if imported data is not an array', () => {
       const { importMemories } = useMemory()
       const invalidData = JSON.stringify({ key: 'value' })
+
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
       expect(() => importMemories(invalidData)).toThrow('Invalid memories format')
+      expect(errorSpy).toHaveBeenCalledWith(
+        '[Memory] Import failed:',
+        expect.objectContaining({ message: 'Invalid memories format: expected an array' }),
+      )
+
+      errorSpy.mockRestore()
     })
 
     it('should filter out non-string items and empty strings during import', () => {

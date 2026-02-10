@@ -49,7 +49,12 @@ describe('useRequest', () => {
     const mockFn = vi.fn().mockRejectedValue(mockError)
     const { data, loading, error, execute } = useRequest(mockFn)
 
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
     await execute()
+
+    expect(errorSpy).toHaveBeenCalledWith('Request failed:', mockError)
+    errorSpy.mockRestore()
 
     expect(data.value).toBeNull()
     expect(loading.value).toBe(false)
@@ -60,7 +65,12 @@ describe('useRequest', () => {
     const mockFn = vi.fn().mockRejectedValue('String error')
     const { error, execute } = useRequest(mockFn)
 
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
     await execute()
+
+    expect(errorSpy).toHaveBeenCalledWith('Request failed:', 'String error')
+    errorSpy.mockRestore()
 
     expect(error.value).toBe(i18n.global.t('common.error.requestFailed'))
   })
@@ -72,11 +82,16 @@ describe('useRequest', () => {
       .mockResolvedValueOnce('success')
     const { error, execute } = useRequest(mockFn)
 
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
     await execute()
     expect(error.value).toBe('First error')
+    expect(errorSpy).toHaveBeenCalledWith('Request failed:', expect.any(Error))
 
     await execute()
     expect(error.value).toBeNull()
+
+    errorSpy.mockRestore()
   })
 
   it('should support multiple execute calls', async () => {

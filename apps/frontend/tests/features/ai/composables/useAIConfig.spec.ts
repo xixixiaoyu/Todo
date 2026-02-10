@@ -7,30 +7,6 @@ import {
   getAIThinkingMode,
 } from '@/features/ai/composables/useAIConfig'
 
-// Mock localStorage
-const mockLocalStorage = (() => {
-  let store: Record<string, string> = {}
-
-  return {
-    getItem(key: string): string | null {
-      return store[key] || null
-    },
-    setItem(key: string, value: string): void {
-      store[key] = value.toString()
-    },
-    removeItem(key: string): void {
-      delete store[key]
-    },
-    clear(): void {
-      store = {}
-    },
-  }
-})()
-
-Object.defineProperty(window, 'localStorage', {
-  value: mockLocalStorage,
-})
-
 describe('useAIConfig - Core', () => {
   beforeEach(() => {
     localStorage.clear()
@@ -231,20 +207,28 @@ describe('useAIConfig - Core', () => {
       const { config } = useAIConfig()
       const originalValue = { ...config.value }
 
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
       // @ts-expect-error - testing readonly property
       config.value = { ...config.value, apiKey: 'modified' }
 
       expect(config.value).toEqual(originalValue)
+
+      warnSpy.mockRestore()
     })
 
     it('should make activePresetId readonly', () => {
       const { activePresetId } = useAIConfig()
       const originalValue = activePresetId.value
 
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
       // @ts-expect-error - testing readonly property
       activePresetId.value = 'modified-id'
 
       expect(activePresetId.value).toBe(originalValue)
+
+      warnSpy.mockRestore()
     })
   })
 
@@ -349,12 +333,29 @@ describe('useAIConfig - Core', () => {
 
     it('should throw error for invalid JSON', () => {
       const { importPresets } = useAIConfig()
-      expect(() => importPresets('invalid-json')).toThrow()
+
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      expect(() => importPresets('invalid-json')).toThrow(SyntaxError)
+      expect(errorSpy).toHaveBeenCalledWith('导入预设失败:', expect.any(SyntaxError))
+
+      errorSpy.mockRestore()
     })
 
     it('should throw error for invalid data structure', () => {
       const { importPresets } = useAIConfig()
-      expect(() => importPresets(JSON.stringify({ not: 'an array' }))).toThrow()
+
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      expect(() => importPresets(JSON.stringify({ not: 'an array' }))).toThrow(
+        'Invalid presets format',
+      )
+      expect(errorSpy).toHaveBeenCalledWith(
+        '导入预设失败:',
+        expect.objectContaining({ message: 'Invalid presets format: expected an array' }),
+      )
+
+      errorSpy.mockRestore()
     })
 
     it('should filter out invalid preset items during import', () => {
