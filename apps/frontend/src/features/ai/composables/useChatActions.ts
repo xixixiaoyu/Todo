@@ -178,7 +178,8 @@ export function useChatActions(options: AIRequestOptions = {}) {
     }
 
     isGenerating.value = true
-    currentAssistantMessageId.value = generateId()
+    const assistantMessageId = generateId()
+    currentAssistantMessageId.value = assistantMessageId
 
     try {
       const handleChunk = (chunk: string) => {
@@ -216,7 +217,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
             }
 
             const aiMessage: ChatMessage = {
-              id: currentAssistantMessageId.value!,
+              id: assistantMessageId,
               role: 'assistant',
               content: currentAIResponse.value,
               thinkingContent: currentThinkingContent.value || undefined,
@@ -241,7 +242,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
         } else if (chunk === '[ABORTED]') {
           if (currentAIResponse.value) {
             const aiMessage: ChatMessage = {
-              id: currentAssistantMessageId.value!,
+              id: assistantMessageId,
               role: 'assistant',
               content: currentAIResponse.value + `\n\n*${t('ai.aborted')}*`,
               thinkingContent: currentThinkingContent.value || undefined,
@@ -331,26 +332,49 @@ export function useChatActions(options: AIRequestOptions = {}) {
 
         if (toolCalls.length > 0) {
           isGenerating.value = true
-          const lastMsg = chatHistory.value[chatHistory.value.length - 1]
-          const currentId = currentAssistantMessageId.value
+          const index = chatHistory.value.findIndex(
+            (m) => m.id === assistantMessageId && m.role === 'assistant',
+          )
 
-          if (lastMsg && lastMsg.role === 'assistant' && lastMsg.id === currentId) {
-            lastMsg.tool_calls = toolCalls
+          if (index > -1) {
+            chatHistory.value[index] = {
+              ...chatHistory.value[index],
+              tool_calls: toolCalls,
+            }
             chatHistory.value = [...chatHistory.value]
           } else {
-            const assistantMessage: ChatMessage = {
-              id: currentId || generateId(),
-              role: 'assistant',
-              content: currentAIResponse.value,
-              tool_calls: toolCalls,
-              createdAt: new Date(),
-            }
-            chatHistory.value = [...chatHistory.value, assistantMessage]
+            chatHistory.value = [
+              ...chatHistory.value,
+              {
+                id: assistantMessageId,
+                role: 'assistant',
+                content: '',
+                tool_calls: toolCalls,
+                createdAt: new Date(),
+              },
+            ]
           }
 
           for (const call of toolCalls) {
             const aiToolName = call.function.name
-            const toolArgs = JSON.parse(call.function.arguments || '{}')
+            let toolArgs: Record<string, unknown> = {}
+            try {
+              const parsed = JSON.parse(call.function.arguments || '{}') as unknown
+              if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                toolArgs = parsed as Record<string, unknown>
+              }
+            } catch {
+              const toolBadArgs: ChatMessage = {
+                id: generateId(),
+                role: 'tool',
+                tool_call_id: call.id,
+                toolName: aiToolName,
+                content: 'Error: Invalid tool arguments JSON.',
+                createdAt: new Date(),
+              }
+              chatHistory.value = [...chatHistory.value, toolBadArgs]
+              continue
+            }
 
             const mcpTool = mcpToolLookup.get(aiToolName)
             if (mcpTool) {
