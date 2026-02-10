@@ -76,3 +76,16 @@ export interface MultiModalContent {
     url: string
   }
 }
+
+export type AIChatCompletionMessage =
+  | {
+      role: 'system' | 'user' | 'assistant'
+      content: string | MultiModalContent[]
+      reasoning_details?: string
+      tool_calls?: ToolCall[]
+    }
+  | {
+      role: 'tool'
+      content: string
+      tool_call_id?: string
+    }

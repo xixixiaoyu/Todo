@@ -1,4 +1,6 @@
 import { stableHash, getCurrentTheme } from './utils'
+import DOMPurify from 'dompurify'
+import { MERMAID_PURIFY_CONFIG } from './purify'
 
 // Mermaid 单例和加载状态
 let mermaid: typeof import('mermaid').default | null = null
@@ -57,12 +59,12 @@ export async function initializeMermaid(theme: 'default' | 'dark' = 'default') {
   mermaidInstance.initialize({
     startOnLoad: false,
     theme: isDark ? 'dark' : 'default',
-    securityLevel: 'loose', // 允许内联样式以保证渲染效果
+    securityLevel: 'strict',
     fontFamily: fontStack,
     fontSize: 14,
     flowchart: {
       useMaxWidth: false,
-      htmlLabels: true,
+      htmlLabels: false,
       curve: 'basis', // 使用更平滑的曲线
       padding: 15,
     },
@@ -137,7 +139,7 @@ export async function processMermaidQueue(queue: MermaidQueueItem[]) {
           .replace(/style="[^"]*background[^"]*"/gi, 'style="background: transparent"')
           .replace(/<rect[^>]*class="ghost"[^>]*><\/rect>/gi, '') // 移除某些主题下的幽灵矩形
 
-        fullHtml = `
+        const unsafeHtml = `
           <div id="${item.id}" class="mermaid-container" data-processed="true" data-raw="${encodeURIComponent(
             item.code,
           )}">
@@ -153,6 +155,8 @@ export async function processMermaidQueue(queue: MermaidQueueItem[]) {
             <div class="mermaid-diagram">${optimizedSvg}</div>
           </div>
         `
+
+        fullHtml = DOMPurify.sanitize(unsafeHtml, MERMAID_PURIFY_CONFIG)
         mermaidCodeCache.set(cacheKey, fullHtml)
       } catch (e) {
         console.error('Mermaid render error:', e)

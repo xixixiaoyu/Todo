@@ -8,8 +8,8 @@ import type {
   ChatMessage,
   AIRequestOptions,
   ReasoningDetailItem,
-  MultiModalContent,
   ToolCall,
+  AIChatCompletionMessage,
 } from './types'
 import { buildApiUrl, getHeaders, injectSystemPrompts } from './utils'
 
@@ -256,11 +256,7 @@ export async function getAIStreamResponse(
  */
 export async function fetchNonStreamResponse(
   config: { baseUrl: string; apiKey: string; model: string; temperature?: number },
-  messages: Array<{
-    role: string
-    content: string | MultiModalContent[]
-    reasoning_details?: string
-  }>,
+  messages: AIChatCompletionMessage[],
   thinkingMode?: string,
   signal?: AbortSignal,
 ): Promise<{ content: string; reasoning_details?: string }> {
@@ -314,11 +310,7 @@ export async function fetchNonStreamResponse(
  * 获取非流式 AI 响应
  */
 export async function getAIStaticResponse(
-  messages: Array<{
-    role: string
-    content: string | MultiModalContent[]
-    reasoning_details?: string
-  }>,
+  messages: AIChatCompletionMessage[],
   options: AIRequestOptions = {},
 ): Promise<{ content: string; reasoning_details?: string }> {
   const aiConfig = getAIConfig()

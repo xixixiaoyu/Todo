@@ -4,6 +4,7 @@ import { injectSystemPrompts } from '@/features/ai/services/utils'
 import { useTodoStore } from '@/features/todo/stores/todo'
 import { useMemory } from '@/features/ai/composables/useMemory'
 import { createPinia, setActivePinia } from 'pinia'
+import type { ChatMessage, ToolCall } from '@/features/ai/services/aiService'
 
 // Mock dependencies
 vi.mock('@/features/ai/composables/useAIConfig', () => ({
@@ -109,7 +110,12 @@ describe('AI Utils - injectSystemPrompts', () => {
     ]
 
     const result = injectSystemPrompts([], '', true)
-    const systemMessage = result.find((m) => m.role === 'system')
+    const systemMessage = result.find(
+      (m) =>
+        m.role === 'system' &&
+        typeof m.content === 'string' &&
+        m.content.includes('Todo 助手上下文'),
+    )
 
     expect(systemMessage?.content).toContain('用户当前有 3 个待完成的待办事项')
     // Check sorting and hierarchy
@@ -153,5 +159,41 @@ describe('AI Utils - injectSystemPrompts', () => {
     expect(memoryMessage).toBeDefined()
     expect(memoryMessage?.content).toContain('- Memory 1')
     expect(memoryMessage?.content).toContain('- Memory 2')
+  })
+
+  it('should preserve tool_calls and tool_call_id for tool protocol', () => {
+    const toolCalls: ToolCall[] = [
+      {
+        id: 'tc1',
+        type: 'function',
+        function: { name: 'mcp_x_tool', arguments: '{"q":"x"}' },
+      },
+    ]
+
+    const messages: ChatMessage[] = [
+      {
+        id: 'a1',
+        role: 'assistant',
+        content: 'calling tool',
+        tool_calls: toolCalls,
+      },
+      {
+        id: 't1',
+        role: 'tool',
+        tool_call_id: 'tc1',
+        content: '{"ok":true}',
+      },
+    ]
+
+    const result = injectSystemPrompts(messages, 'Base prompt', false)
+
+    const assistant = result.find((m) => m.role === 'assistant') as
+      | { tool_calls?: ToolCall[] }
+      | undefined
+
+    const tool = result.find((m) => m.role === 'tool') as { tool_call_id?: string } | undefined
+
+    expect(assistant?.tool_calls?.[0]?.id).toBe('tc1')
+    expect(tool?.tool_call_id).toBe('tc1')
   })
 })

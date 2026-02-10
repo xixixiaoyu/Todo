@@ -13,7 +13,7 @@ describe('aiService - Static Response', () => {
   })
 
   it('should get static response with reasoning', async () => {
-    const messages = [{ role: 'user', content: 'hello' }]
+    const messages = [{ role: 'user' as const, content: 'hello' }]
 
     mockFetch.mockImplementation(async () => ({
       ok: true,
@@ -38,7 +38,7 @@ describe('aiService - Static Response', () => {
   })
 
   it('should handle array format reasoning_details in non-stream response', async () => {
-    const messages = [{ role: 'user', content: 'hello' }]
+    const messages = [{ role: 'user' as const, content: 'hello' }]
 
     mockFetch.mockImplementation(async () => ({
       ok: true,
