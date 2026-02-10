@@ -8,6 +8,35 @@ set -euo pipefail
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 cd "$SCRIPT_DIR"
 
+if [ -d .git ]; then
+    if ! command -v git >/dev/null 2>&1; then
+        echo "❌ 未检测到 git，但当前目录是 Git 仓库，无法执行代码更新"
+        exit 1
+    fi
+
+    if [ -n "$(git status --porcelain)" ]; then
+        echo "❌ 当前工作区存在未提交修改，已终止（避免覆盖本地改动）"
+        exit 1
+    fi
+
+    GIT_REMOTE=${GIT_REMOTE:-origin}
+    GIT_BRANCH=${GIT_BRANCH:-main}
+
+    echo "📥 正在更新代码（${GIT_REMOTE}/${GIT_BRANCH}）..."
+    git fetch "$GIT_REMOTE" --prune
+
+    if ! git show-ref --verify --quiet "refs/remotes/${GIT_REMOTE}/${GIT_BRANCH}"; then
+        echo "❌ 未找到远端分支：${GIT_REMOTE}/${GIT_BRANCH}"
+        exit 1
+    fi
+
+    if ! git checkout "$GIT_BRANCH" >/dev/null 2>&1; then
+        git checkout -b "$GIT_BRANCH" --track "${GIT_REMOTE}/${GIT_BRANCH}"
+    fi
+
+    git pull --ff-only "$GIT_REMOTE" "$GIT_BRANCH"
+fi
+
 if ! command -v docker >/dev/null 2>&1; then
     echo "❌ 未检测到 docker，请先安装 Docker"
     exit 1
