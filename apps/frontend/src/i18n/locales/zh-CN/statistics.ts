@@ -1,0 +1,18 @@
+export const statistics = {
+  title: '进度统计',
+  overview: '概览',
+  completionRate: '完成率',
+  totalTasks: '总任务',
+  pendingTasks: '待完成',
+  completedTasks: '已完成',
+  trend7Days: '近 7 天趋势',
+  createdTasks: '新增任务',
+  focusTime: '专注时长',
+  focusSessions: '专注次数',
+  pomodoroSessions: '番茄数',
+  noData: '暂无数据',
+  completionTrend: '完成趋势',
+  taskDistribution: '任务分布',
+  productivityScore: '生产力指数',
+  weeklyActivity: '每周活跃度',
+} as const

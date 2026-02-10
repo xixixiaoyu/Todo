@@ -7,6 +7,7 @@ import { BullModule } from '@nestjs/bullmq'
 import { LoggerModule } from 'nestjs-pino'
 import { I18nModule, AcceptLanguageResolver, HeaderResolver } from 'nestjs-i18n'
 import * as path from 'path'
+import { I18nTsLoader } from './i18n/i18n-ts.loader'
 import { PrismaModule } from './prisma/prisma.module'
 import { RedisModule } from './redis'
 import { UsersModule } from './users/users.module'
@@ -138,6 +139,7 @@ import { McpModule } from './mcp/mcp.module'
     // 国际化模块
     I18nModule.forRoot({
       fallbackLanguage: 'en-US',
+      loader: I18nTsLoader,
       loaderOptions: {
         path: path.join(__dirname, '/i18n/'),
         watch: true,
