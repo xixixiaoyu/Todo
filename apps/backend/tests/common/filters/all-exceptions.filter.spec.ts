@@ -1,27 +1,31 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 import { AllExceptionsFilter } from '../../../src/common/filters/all-exceptions.filter'
-import { HttpException, HttpStatus, ArgumentsHost, ConflictException } from '@nestjs/common'
+import { HttpException, HttpStatus, ArgumentsHost, ConflictException, Logger } from '@nestjs/common'
 import { I18nContext } from 'nestjs-i18n'
 
 describe('AllExceptionsFilter', () => {
   let filter: AllExceptionsFilter
   let mockResponse: {
     status: Mock
-    json: Mock
+    send: Mock
   }
-  let mockRequest: { url?: string; method?: string }
+  let mockRequest: { url?: string; method?: string; raw?: { url?: string } }
   let mockArgumentsHost: any // eslint-disable-line @typescript-eslint/no-explicit-any
   let mockI18n: any // eslint-disable-line @typescript-eslint/no-explicit-any
 
   beforeEach(() => {
     filter = new AllExceptionsFilter()
+
+    vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined)
+
     mockResponse = {
       status: vi.fn().mockReturnThis(),
-      json: vi.fn().mockReturnThis(),
+      send: vi.fn().mockReturnThis(),
     }
     mockRequest = {
       url: '/test',
       method: 'POST',
+      raw: { url: '/test' },
     }
     mockArgumentsHost = {
       switchToHttp: () => ({
@@ -41,7 +45,7 @@ describe('AllExceptionsFilter', () => {
     filter.catch(exception, mockArgumentsHost as ArgumentsHost)
 
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST)
-    expect(mockResponse.json).toHaveBeenCalledWith(
+    expect(mockResponse.send).toHaveBeenCalledWith(
       expect.objectContaining({
         success: false,
         message: 'Test error',
@@ -56,7 +60,7 @@ describe('AllExceptionsFilter', () => {
     filter.catch(exception, mockArgumentsHost as ArgumentsHost)
 
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.CONFLICT)
-    expect(mockResponse.json).toHaveBeenCalledWith(
+    expect(mockResponse.send).toHaveBeenCalledWith(
       expect.objectContaining({
         success: false,
         message: 'auth.EMAIL_EXISTS',
@@ -89,7 +93,7 @@ describe('AllExceptionsFilter', () => {
     filter.catch(exception, mockArgumentsHost as ArgumentsHost)
 
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST)
-    const jsonResult = mockResponse.json.mock.calls[0][0]
+    const jsonResult = mockResponse.send.mock.calls[0][0]
     expect(jsonResult.success).toBe(false)
     expect(jsonResult.errors).toEqual({
       email: 'validation.REQUIRED',
@@ -100,13 +104,14 @@ describe('AllExceptionsFilter', () => {
   })
 
   it('should handle unknown errors as internal server error', () => {
-    const exception = new Error('Unknown')
+    const exception = new Error('Database connection failed')
     filter.catch(exception, mockArgumentsHost as ArgumentsHost)
 
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR)
-    expect(mockResponse.json).toHaveBeenCalledWith(
+    expect(mockResponse.send).toHaveBeenCalledWith(
       expect.objectContaining({
         success: false,
+        message: 'common.error.INTERNAL_SERVER_ERROR',
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       }),
     )

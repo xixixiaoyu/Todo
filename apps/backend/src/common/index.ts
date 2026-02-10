@@ -5,4 +5,7 @@ export * from './filters/all-exceptions.filter'
 export * from './interceptors/transform.interceptor'
 export * from './interceptors/sanitize.interceptor'
 
+// 类型定义
+export * from './types'
+
 // 中间件

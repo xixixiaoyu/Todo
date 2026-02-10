@@ -241,7 +241,9 @@ export const useAuthStore = defineStore(
      * Google 登录
      */
     function loginWithGoogle() {
-      const apiUrl = import.meta.env.VITE_API_BASE_URL
+      const apiUrl =
+        import.meta.env.VITE_API_BASE_URL ||
+        (import.meta.env.IS_WAILS ? 'http://localhost:3000/api' : '/api')
       window.location.href = `${apiUrl}/auth/google`
     }
 

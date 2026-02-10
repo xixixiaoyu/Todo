@@ -6,19 +6,7 @@ import { AuthService } from './auth.service'
 import { JwtAuthGuard } from './jwt-auth.guard'
 import { CurrentUser } from './current-user.decorator'
 import type { User, AuthResponse } from '@my-app/shared'
-
-type CookieOptions = {
-  httpOnly?: boolean
-  secure?: boolean
-  sameSite?: 'lax' | 'strict' | 'none'
-  maxAge?: number
-}
-
-type CookieReply = {
-  setCookie: (name: string, value: string, options?: CookieOptions) => unknown
-  clearCookie: (name: string) => unknown
-  redirect: (url: string) => unknown
-}
+import type { FastifyReplyWithCookie } from '../common'
 
 /**
  * OAuth 认证控制器
@@ -47,7 +35,7 @@ export class OAuthController {
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   @ApiOperation({ summary: 'Google OAuth 回调' })
-  async googleAuthRedirect(@CurrentUser() user: User, @Res() res: CookieReply) {
+  async googleAuthRedirect(@CurrentUser() user: User, @Res() res: FastifyReplyWithCookie) {
     const authResponse = await this.authService.googleLogin(user)
 
     const isProduction = this.configService.get<string>('NODE_ENV') === 'production'
@@ -83,7 +71,7 @@ export class OAuthController {
   @ApiOperation({ summary: 'OAuth 登录' })
   async oauthLogin(
     @CurrentUser() user: User,
-    @Res({ passthrough: true }) res: CookieReply,
+    @Res({ passthrough: true }) res: FastifyReplyWithCookie,
   ): Promise<AuthResponse> {
     const response = await this.authService.googleLogin(user)
 

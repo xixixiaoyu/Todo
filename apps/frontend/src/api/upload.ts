@@ -14,7 +14,7 @@ export async function parseFileApi(file: File): Promise<ApiResponse<ParseFileRes
 
   const response = await httpClient.post<ApiResponse<ParseFileResult>>('/upload/parse', formData, {
     headers: {
-      'Content-Type': 'multipart/form-data',
+      'Content-Type': null,
     },
   })
 

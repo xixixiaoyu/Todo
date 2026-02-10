@@ -11,32 +11,42 @@ import { ApiTags, ApiOperation, ApiConsumes, ApiBody, ApiBearerAuth } from '@nes
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { StorageService, type UploadResult, type UploadedFile } from './storage.service'
 import { FileParsingService } from './file-parsing.service'
-
-type MultipartFile = {
-  fieldname: string
-  filename: string
-  mimetype: string
-  toBuffer: () => Promise<Buffer>
-}
-
-type MultipartRequest = {
-  file: () => Promise<MultipartFile | undefined>
-  files: () => AsyncIterableIterator<MultipartFile>
-}
+import type { FastifyRequestWithMultipart, MultipartFile } from '../common'
 
 /**
  * 文件上传控制器
  */
 @ApiTags('上传')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller('upload')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 export class UploadController {
   constructor(
     private readonly storageService: StorageService,
     private readonly fileParsingService: FileParsingService,
   ) {}
 
+  /**
+   * 将 Fastify MultipartFile 转换为通用 UploadedFile 格式
+   */
+  private async toUploadedFile(part: MultipartFile): Promise<UploadedFile> {
+    const buffer = await part.toBuffer()
+    const originalname = part.filename
+    const mimetype = part.mimetype
+
+    this.ensureAllowedFile(originalname, mimetype)
+
+    return {
+      originalname,
+      mimetype,
+      size: buffer.length,
+      buffer,
+    }
+  }
+
+  /**
+   * 检查文件类型是否允许
+   */
   private ensureAllowedFile(originalname: string, mimetype: string) {
     const allowedMimes = [
       'image/jpeg',
@@ -65,21 +75,6 @@ export class UploadController {
     throw new BadRequestException(`不支持的文件类型: ${mimetype}`)
   }
 
-  private async toUploadedFile(part: MultipartFile): Promise<UploadedFile> {
-    const buffer = await part.toBuffer()
-    const originalname = part.filename
-    const mimetype = part.mimetype
-
-    this.ensureAllowedFile(originalname, mimetype)
-
-    return {
-      originalname,
-      mimetype,
-      size: buffer.length,
-      buffer,
-    }
-  }
-
   /**
    * 上传单个文件
    */
@@ -94,7 +89,7 @@ export class UploadController {
       },
     },
   })
-  async uploadSingle(@Req() req: MultipartRequest): Promise<UploadResult> {
+  async uploadSingle(@Req() req: FastifyRequestWithMultipart): Promise<UploadResult> {
     const part = await req.file()
     if (!part || part.fieldname !== 'file') {
       throw new BadRequestException('upload.FILE_REQUIRED')
@@ -106,7 +101,6 @@ export class UploadController {
 
   /**
    * 解析文件内容
-   * 上传文件并直接返回提取出的文本，不保存到存储服务
    */
   @Post('parse')
   @ApiOperation({ summary: '解析文件内容' })
@@ -119,7 +113,7 @@ export class UploadController {
       },
     },
   })
-  async parseFile(@Req() req: MultipartRequest): Promise<{ content: string }> {
+  async parseFile(@Req() req: FastifyRequestWithMultipart): Promise<{ content: string }> {
     const part = await req.file()
     if (!part || part.fieldname !== 'file') {
       throw new BadRequestException('upload.FILE_REQUIRED')
@@ -147,7 +141,7 @@ export class UploadController {
       },
     },
   })
-  async uploadMultiple(@Req() req: MultipartRequest): Promise<UploadResult[]> {
+  async uploadMultiple(@Req() req: FastifyRequestWithMultipart): Promise<UploadResult[]> {
     const files: UploadedFile[] = []
 
     for await (const part of req.files()) {

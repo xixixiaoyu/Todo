@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common'
 import { I18nContext } from 'nestjs-i18n'
+import type { FastifyReply, FastifyRequest } from 'fastify'
 
 /**
  * 全局异常过滤器
@@ -25,31 +26,18 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp()
-    const response = ctx.getResponse<unknown>()
-    const request = ctx.getRequest<unknown>()
+    const response = ctx.getResponse<FastifyReply>()
+    const request = ctx.getRequest<FastifyRequest>()
     const i18n = I18nContext.current(host)
-
-    const res = response as {
-      status?: (code: number) => unknown
-      code?: (code: number) => unknown
-      json?: (body: unknown) => unknown
-      send?: (body: unknown) => unknown
-    }
-
-    const req = request as {
-      originalUrl?: string
-      url?: string
-      method?: string
-    }
 
     // 获取 HTTP 状态码
     let status =
       exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR
 
     // 记录错误日志
-    const url = req.originalUrl || req.url || ''
+    const url = request.raw?.url || request.url || ''
     this.logger.error(
-      `${req.method} ${url} - ${status} - ${
+      `${request.method} ${url} - ${status} - ${
         exception instanceof Error ? exception.message : 'Unknown error'
       }`,
       exception instanceof Error ? exception.stack : undefined,
@@ -135,28 +123,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
 
     // 返回标准化错误响应
-    if (typeof res.status === 'function') {
-      res.status(status)
-    } else if (typeof res.code === 'function') {
-      res.code(status)
-    }
-
-    const body = {
+    void response.status(status).send({
       success: false,
       data: null,
       message,
       errors, // 新增：结构化错误对象
       statusCode: status,
       timestamp: new Date().toISOString(),
-    }
-
-    if (typeof res.json === 'function') {
-      res.json(body)
-      return
-    }
-
-    if (typeof res.send === 'function') {
-      res.send(body)
-    }
+    })
   }
 }

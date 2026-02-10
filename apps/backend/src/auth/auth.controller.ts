@@ -6,13 +6,10 @@ import { JwtAuthGuard } from './jwt-auth.guard'
 import { CurrentUser } from './current-user.decorator'
 import { LoginDto, RegisterDto, RefreshTokenDto, LogoutDto } from './auth.dto'
 import type { User, AuthResponse } from '@my-app/shared'
-
-type CookieReply = {
-  clearCookie: (name: string) => unknown
-}
+import type { FastifyReplyWithCookie } from '../common'
 
 /**
- * 核心认证控制器
+ * 用户认证控制器
  */
 @ApiTags('认证')
 @Controller('auth')
@@ -21,7 +18,6 @@ export class AuthController {
 
   /**
    * 用户登录
-   * 限制: 每分钟最多 5 次尝试（防止暴力破解）
    */
   @Post('login')
   @Throttle({ default: { limit: 5, ttl: 60000 } })
@@ -45,7 +41,7 @@ export class AuthController {
    * 刷新访问令牌
    */
   @Post('refresh')
-  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 刷新令牌限制
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: '刷新访问令牌' })
   async refreshToken(@Body() refreshTokenDto: RefreshTokenDto): Promise<AuthResponse> {
     return this.authService.refreshToken(refreshTokenDto.refreshToken)
@@ -59,7 +55,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: '获取当前用户信息' })
-  async getProfile(@CurrentUser() user: User): Promise<User> {
+  async getMe(@CurrentUser() user: User): Promise<User> {
     return user
   }
 
@@ -72,7 +68,7 @@ export class AuthController {
   @ApiOperation({ summary: '用户登出' })
   async logout(
     @Body() logoutDto: LogoutDto,
-    @Res({ passthrough: true }) res: CookieReply,
+    @Res({ passthrough: true }) res: FastifyReplyWithCookie,
   ): Promise<{ message: string }> {
     await this.authService.logout(logoutDto.refreshToken)
 
