@@ -24,7 +24,7 @@ const isMobile = computed(() => !isDesktop.value && windowWidth.value < 640)
 
 <template>
   <header
-    class="flex h-14 shrink-0 items-center justify-between border-b border-border/40 bg-[hsl(var(--ai-glass-bg))] px-6 z-10"
+    class="flex h-14 shrink-0 items-center justify-between border-b border-border/10 bg-transparent px-6 z-10"
     :class="[isDesktop ? 'select-none cursor-default' : '']"
     style="--wails-draggable: drag"
     data-wails-drag
@@ -34,7 +34,7 @@ const isMobile = computed(() => !isDesktop.value && windowWidth.value < 640)
       :class="[isDesktop && isMac ? 'pl-20' : '']"
     >
       <div
-        class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 text-primary shadow-[0_2px_8px_rgba(var(--primary),0.2)]"
+        class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 text-primary shadow-[0_2px_8px_hsl(var(--primary)_/_0.2)]"
       >
         <Clover :size="18" class="animate-pulse-slow" />
       </div>

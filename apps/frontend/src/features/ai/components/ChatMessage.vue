@@ -148,7 +148,7 @@ defineExpose({
                 ? 'rounded-[1.25rem] px-4 py-3'
                 : 'rounded-none p-0',
               isUser
-                ? 'bg-gradient-to-br from-primary/95 via-primary to-primary/90 text-primary-foreground shadow-[0_4px_12px_rgba(var(--primary),0.15)]'
+                ? 'bg-gradient-to-br from-primary/95 via-primary to-primary/90 text-primary-foreground shadow-[0_4px_12px_hsl(var(--primary)_/_0.15)]'
                 : message.role === 'tool'
                   ? 'border-none bg-transparent shadow-none'
                   : 'border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] text-foreground shadow-sm',

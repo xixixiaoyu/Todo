@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, nextTick, onBeforeUnmount } from 'vue'
+import { computed, ref, onMounted, nextTick, onBeforeUnmount, onActivated } from 'vue'
 import { Clover } from 'lucide-vue-next'
 import VChart from 'vue-echarts'
 import { useDark, useResizeObserver } from '@vueuse/core'
@@ -8,7 +8,9 @@ import type { TreeData } from '../stores/todo.types'
 import { useI18n } from 'vue-i18n'
 import { debounce } from 'lodash-es'
 
-defineOptions({ name: 'TodoVisualizer' })
+defineOptions({
+  name: 'TodoVisualizer',
+})
 
 const todoStore = useTodoStore()
 const isDark = useDark()
@@ -20,6 +22,8 @@ const isReady = ref(false)
 
 // 使用 ResizeObserver 确保容器尺寸就绪后再初始化图表，并添加防抖优化性能
 const debouncedResize = debounce(() => {
+  if (!containerRef.value) return
+  if (containerRef.value.clientWidth <= 0 || containerRef.value.clientHeight <= 0) return
   vChartRef.value?.resize()
 }, 100)
 
@@ -30,12 +34,15 @@ onBeforeUnmount(() => {
 useResizeObserver(containerRef, (entries) => {
   const entry = entries[0]
   const { width, height } = entry.contentRect
-  if (width > 0 && height > 0) {
-    if (!isReady.value) {
-      isReady.value = true
-    }
-    debouncedResize()
+  if (width <= 0 || height <= 0) {
+    isReady.value = false
+    return
   }
+
+  if (!isReady.value) {
+    isReady.value = true
+  }
+  debouncedResize()
 })
 
 onMounted(async () => {
@@ -66,6 +73,16 @@ onMounted(async () => {
     }
   }
   checkSize()
+})
+
+onActivated(() => {
+  requestAnimationFrame(() => {
+    if (!containerRef.value) return
+    if (containerRef.value.clientWidth > 0 && containerRef.value.clientHeight > 0) {
+      isReady.value = true
+      debouncedResize()
+    }
+  })
 })
 
 /**
@@ -359,7 +376,7 @@ const emptyText = computed(() =>
         ref="vChartRef"
         class="flex-1 w-full h-full relative z-10"
         :option="chartOptions"
-        :autoresize="true"
+        :autoresize="false"
         :theme="isDark ? 'dark' : undefined"
       />
 

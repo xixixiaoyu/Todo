@@ -154,7 +154,7 @@ const handlePresetMouseLeave = () => {
             class="toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all active:scale-95"
             :class="
               isThinkingEnabled
-                ? 'border-primary/30 bg-primary/15 text-primary shadow-[0_0_12px_rgba(var(--primary),0.1)]'
+                ? 'border-primary/30 bg-primary/15 text-primary shadow-[0_0_12px_hsl(var(--primary)_/_0.1)]'
                 : 'border-transparent'
             "
             :title="isThinkingEnabled ? t('ai.thinkingEnabled') : t('ai.thinkingDisabled')"
@@ -175,7 +175,7 @@ const handlePresetMouseLeave = () => {
               'toolbar-btn flex shrink-0 items-center transition-all active:scale-95 rounded-full border',
               isMobile ? 'h-8 w-8 justify-center' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
               isTodoAssistantEnabled
-                ? 'border-primary/30 bg-primary/15 text-primary shadow-[0_0_12px_rgba(var(--primary),0.1)]'
+                ? 'border-primary/30 bg-primary/15 text-primary shadow-[0_0_12px_hsl(var(--primary)_/_0.1)]'
                 : 'border-transparent text-muted-foreground',
             ]"
             :title="
@@ -208,7 +208,7 @@ const handlePresetMouseLeave = () => {
                     'toolbar-btn flex items-center transition-all active:scale-95 rounded-full border',
                     isMobile ? 'h-8 w-8 justify-center' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
                     isDiscussionEnabled
-                      ? 'border-primary/30 bg-primary/15 text-primary shadow-[0_0_12px_rgba(var(--primary),0.1)]'
+                      ? 'border-primary/30 bg-primary/15 text-primary shadow-[0_0_12px_hsl(var(--primary)_/_0.1)]'
                       : 'border-transparent text-muted-foreground',
                   ]"
                   :title="isDiscussionEnabled ? t('ai.discussionMode') : t('ai.discussionMode')"
@@ -260,7 +260,7 @@ const handlePresetMouseLeave = () => {
                         class="flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition-all active:scale-95"
                         :class="
                           config.discussionPrimaryModelId === preset.id
-                            ? 'border-primary/50 bg-primary/20 text-primary shadow-[0_2px_8px_rgba(var(--primary),0.1)]'
+                            ? 'border-primary/50 bg-primary/20 text-primary shadow-[0_2px_8px_hsl(var(--primary)_/_0.1)]'
                             : 'border-border/40 bg-background/40 text-muted-foreground hover:border-primary/30 hover:bg-primary/5 hover:text-primary'
                         "
                         @click="emit('selectPrimaryModel', preset.id)"
@@ -295,7 +295,7 @@ const handlePresetMouseLeave = () => {
                         class="flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition-all active:scale-95"
                         :class="
                           config.discussionModelIds.includes(preset.id)
-                            ? 'border-primary/50 bg-primary/20 text-primary shadow-[0_2px_8px_rgba(var(--primary),0.1)]'
+                            ? 'border-primary/50 bg-primary/20 text-primary shadow-[0_2px_8px_hsl(var(--primary)_/_0.1)]'
                             : 'border-border/40 bg-background/40 text-muted-foreground hover:border-primary/30 hover:bg-primary/5 hover:text-primary'
                         "
                         @click="emit('toggleSecondaryModel', preset.id)"
@@ -320,7 +320,7 @@ const handlePresetMouseLeave = () => {
               'toolbar-btn flex shrink-0 items-center transition-all active:scale-95 rounded-full border',
               isMobile ? 'h-8 w-8 justify-center' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
               isImageGenerationEnabled
-                ? 'border-primary/30 bg-primary/15 text-primary shadow-[0_0_12px_rgba(var(--primary),0.1)]'
+                ? 'border-primary/30 bg-primary/15 text-primary shadow-[0_0_12px_hsl(var(--primary)_/_0.1)]'
                 : 'border-transparent text-muted-foreground',
             ]"
             :title="t('ai.enableImageGeneration')"

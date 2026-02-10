@@ -2,13 +2,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createI18n } from 'vue-i18n'
 import { createPinia, setActivePinia } from 'pinia'
-import { defineComponent, h, ref } from 'vue'
+import { defineComponent, h, ref, nextTick } from 'vue'
 import TodoVisualizer from '@/features/todo/components/TodoVisualizer.vue'
 import { useTodoStore } from '@/features/todo/stores/todo'
 
+let mockResizeRect = { width: 800, height: 600 }
+
 vi.mock('@vueuse/core', () => ({
   useDark: () => ref(false),
-  useResizeObserver: () => undefined,
+  useResizeObserver: (_target: unknown, callback: (entries: unknown[]) => void) => {
+    callback([{ contentRect: mockResizeRect }])
+  },
 }))
 
 vi.mock('vue-echarts', () => ({
@@ -49,6 +53,7 @@ const i18n = createI18n({
 describe('TodoVisualizer', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    mockResizeRect = { width: 800, height: 600 }
   })
 
   it('在 completed 过滤下应显示对应的空状态文案', () => {
@@ -63,5 +68,37 @@ describe('TodoVisualizer', () => {
     })
 
     expect(wrapper.text()).toContain('还没有已完成的事项')
+  })
+
+  it('容器尺寸为 0 时应显示加载状态并避免渲染图表', async () => {
+    mockResizeRect = { width: 0, height: 0 }
+
+    const store = useTodoStore()
+    store.filter = 'pending'
+    store.todos = [
+      {
+        id: '1',
+        title: 'Test',
+        completed: false,
+        order: 0,
+        isPinned: false,
+        parentId: null,
+        version: 0,
+        pomodoroCount: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]
+
+    const wrapper = mount(TodoVisualizer, {
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    await nextTick()
+
+    expect(wrapper.text()).toContain('加载中...')
+    expect(wrapper.find('[data-test="vchart"]').exists()).toBe(false)
   })
 })

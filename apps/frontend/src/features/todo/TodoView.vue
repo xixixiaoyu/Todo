@@ -25,6 +25,16 @@ const { gsap, ctx } = useGsap()
 
 const isInputVisible = computed(() => todoStore.viewMode === 'list' && todoStore.filter !== 'trash')
 
+const currentViewKey = computed(() =>
+  todoStore.viewMode === 'list' ? `list-${todoStore.filter}` : todoStore.viewMode,
+)
+
+const currentViewComponent = computed(() => {
+  if (todoStore.viewMode === 'list') return TodoList
+  if (todoStore.viewMode === 'visual') return TodoVisualizer
+  return TodoStatistics
+})
+
 // 追踪上一次的 filter 以决定动画方向
 const direction = ref(0) // 1: next, -1: prev
 
@@ -120,6 +130,35 @@ const {
   handleEditKeydown,
 } = useTodo()
 
+const currentViewProps = computed(() => {
+  if (todoStore.viewMode !== 'list') return {}
+
+  return {
+    todos: todoStore.hasProposedChanges ? todoStore.previewTodos : todoStore.filteredTodos,
+    filter: todoStore.filter,
+    searchQuery: todoStore.searchQuery,
+    editingId: editingId.value,
+    editingTitle: editingTitle.value,
+  }
+})
+
+const currentViewListeners = computed(() => {
+  if (todoStore.viewMode !== 'list') return {}
+
+  return {
+    toggle: (id: string, currentCompleted: boolean) => handleToggleTodo(id, currentCompleted),
+    startEdit: (id: string, title: string) => startEditing(id, title),
+    saveEdit: () => saveEditing(),
+    cancelEdit: () => cancelEditing(),
+    delete: (id: string) => void todoStore.deleteTodo(id),
+    reorder: (ids: string[], pId: string | null) => todoStore.reorderTodos(ids, pId),
+    'update:editingTitle': (value: string) => {
+      editingTitle.value = value
+    },
+    editKeydown: (e: KeyboardEvent) => handleEditKeydown(e),
+  }
+})
+
 function onFireworksComplete() {
   showFireworks.value = false
 }
@@ -127,16 +166,21 @@ function onFireworksComplete() {
 
 <template>
   <div
-    class="flex-1 bg-background p-0 md:p-8 flex items-center md:items-end justify-center overflow-hidden"
+    class="h-full bg-background p-0 md:p-8 flex items-center md:items-end justify-center overflow-hidden relative"
     :class="{ 'p-0 items-center': pomodoroStore.isMiniMode }"
   >
+    <!-- 背景装饰：柔和的径向渐变增加深度感 -->
+    <div
+      class="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(251,191,36,0.03),transparent_70%)] pointer-events-none"
+    ></div>
+
     <div
       v-if="!pomodoroStore.isMiniMode"
       ref="cardRef"
-      class="w-full max-w-4xl h-full md:h-[94vh] flex flex-col"
+      class="w-full max-w-4xl h-full md:h-[94vh] flex flex-col z-10"
     >
       <Card
-        class="flex-1 flex flex-col border-none shadow-none md:shadow-card dark:md:shadow-[0_8px_30px_rgba(0,0,0,0.3)] overflow-hidden rounded-none md:rounded-[24px]"
+        class="flex-1 flex flex-col border-none shadow-none md:shadow-card dark:md:shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden rounded-none md:rounded-[24px] bg-card/30 md:bg-card/50 backdrop-blur-2xl"
       >
         <CardContent class="todo-container p-4 pt-4 md:p-8 md:pt-6 flex flex-col flex-1 min-h-0">
           <!-- Header -->
@@ -208,6 +252,7 @@ function onFireworksComplete() {
                     x: direction * 12,
                     y: 6,
                     scale: 0.99,
+                    zIndex: 1,
                     willChange: 'transform, opacity',
                   })
                 }
@@ -223,7 +268,7 @@ function onFireworksComplete() {
                     duration: 0.32,
                     ease: 'power3.out',
                     onComplete: () => {
-                      gsap.set(el, { clearProps: 'will-change' })
+                      gsap.set(el, { clearProps: 'willChange,zIndex' })
                       done()
                     },
                   })
@@ -241,6 +286,8 @@ function onFireworksComplete() {
                     bottom: 0,
                     width: '100%',
                     height: '100%',
+                    zIndex: 0,
+                    pointerEvents: 'none',
                   })
                 }
               "
@@ -255,36 +302,24 @@ function onFireworksComplete() {
                     duration: 0.22,
                     ease: 'power2.in',
                     onComplete: () => {
-                      gsap.set(el, { clearProps: 'position,top,left,right,bottom,width,height' })
+                      gsap.set(el, {
+                        clearProps:
+                          'position,top,left,right,bottom,width,height,zIndex,pointerEvents',
+                      })
                       done()
                     },
                   })
                 }
               "
             >
-              <TodoList
-                v-if="todoStore.viewMode === 'list'"
-                :key="`list-${todoStore.filter}`"
-                :todos="
-                  todoStore.hasProposedChanges ? todoStore.previewTodos : todoStore.filteredTodos
-                "
-                :filter="todoStore.filter"
-                :search-query="todoStore.searchQuery"
-                :editing-id="editingId"
-                :editing-title="editingTitle"
-                @toggle="(id, currentCompleted) => handleToggleTodo(id, currentCompleted)"
-                @start-edit="startEditing"
-                @save-edit="saveEditing"
-                @cancel-edit="cancelEditing"
-                @delete="todoStore.deleteTodo"
-                @reorder="(ids, pId) => todoStore.reorderTodos(ids, pId)"
-                @update:editing-title="editingTitle = $event"
-                @edit-keydown="handleEditKeydown"
-              />
-
-              <KeepAlive v-else>
-                <TodoVisualizer v-if="todoStore.viewMode === 'visual'" key="visual" />
-                <TodoStatistics v-else-if="todoStore.viewMode === 'stats'" key="stats" />
+              <KeepAlive :include="['TodoVisualizer', 'TodoStatistics']">
+                <component
+                  :is="currentViewComponent"
+                  :key="currentViewKey"
+                  v-bind="currentViewProps"
+                  class="flex-1 flex flex-col min-h-0"
+                  v-on="currentViewListeners"
+                />
               </KeepAlive>
             </Transition>
           </div>

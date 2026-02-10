@@ -253,11 +253,11 @@ watch(
 
 .resize-handle:hover,
 .resize-handle.hovering {
-  background: rgba(var(--primary), 0.04);
+  background: hsl(var(--primary) / 0.04);
 }
 
 .resize-handle.resizing {
-  background: rgba(var(--primary), 0.08);
+  background: hsl(var(--primary) / 0.08);
 }
 
 :root.dark .resize-handle:hover,

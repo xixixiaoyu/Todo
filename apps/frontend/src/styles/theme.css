@@ -63,35 +63,35 @@
   }
 
   .dark {
-    /* 基础颜色 - 调浅背景，降低对比度 */
-    --background: 240 6% 10%;
-    --foreground: 0 0% 90%;
-    --card: 240 6% 12%;
-    --card-foreground: 0 0% 90%;
-    --popover: 240 6% 12%;
-    --popover-foreground: 0 0% 90%;
+    /* 基础颜色 - 加深背景以提升对比度 */
+    --background: 240 6% 7%;
+    --foreground: 0 0% 95%;
+    --card: 240 6% 10%;
+    --card-foreground: 0 0% 95%;
+    --popover: 240 6% 10%;
+    --popover-foreground: 0 0% 95%;
 
-    /* 主题色 - 降低主色亮度，使其更柔和 */
-    --primary: 32 35% 60%;
-    --primary-hover: 32 35% 65%;
-    --primary-foreground: 32 10% 12%;
+    /* 主题色 - 稍微提高亮度，在深色背景下更鲜明 */
+    --primary: 32 45% 65%;
+    --primary-hover: 32 45% 70%;
+    --primary-foreground: 32 10% 8%;
 
     /* 次要色 */
-    --secondary: 240 4% 18%;
-    --secondary-foreground: 0 0% 90%;
-    --muted: 240 4% 16%;
-    --muted-foreground: 240 4% 55%;
-    --accent: 240 4% 18%;
-    --accent-foreground: 0 0% 90%;
+    --secondary: 240 4% 15%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: 240 4% 12%;
+    --muted-foreground: 240 4% 60%;
+    --accent: 240 4% 15%;
+    --accent-foreground: 0 0% 95%;
 
     /* 警告/错误色 */
-    --destructive: 15 50% 50%;
-    --destructive-foreground: 0 0% 90%;
+    --destructive: 15 60% 60%;
+    --destructive-foreground: 0 0% 95%;
 
-    /* 边框和输入 - 调亮边框使其更自然 */
-    --border: 240 4% 20%;
-    --input: 240 4% 20%;
-    --ring: 32 35% 60%;
+    /* 边框和输入 - 更加细腻的对比 */
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 32 45% 65%;
 
     --text-color: 0 0% 90%;
     --text-secondary: 240 4% 55%;

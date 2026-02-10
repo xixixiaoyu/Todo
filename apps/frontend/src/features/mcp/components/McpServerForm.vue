@@ -548,7 +548,7 @@ function handleSubmit() {
         </button>
         <button
           :disabled="loading"
-          class="group flex h-10 items-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-[0_2px_10px_rgba(var(--primary),0.25)] transition-all hover:shadow-[0_4px_14px_rgba(var(--primary),0.35)] hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50"
+          class="group flex h-10 items-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-[0_2px_10px_hsl(var(--primary)_/_0.25)] transition-all hover:shadow-[0_4px_14px_hsl(var(--primary)_/_0.35)] hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50"
           @click="handleSubmit"
         >
           <Loader2 v-if="loading" class="w-4 h-4 animate-spin" />

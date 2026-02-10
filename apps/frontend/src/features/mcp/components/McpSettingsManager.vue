@@ -96,7 +96,7 @@ async function handleViewTools(server: McpServerResponse) {
               class="relative inline-flex h-5 w-9 items-center rounded-full transition-all duration-300 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               :class="
                 mcpEnabled
-                  ? 'bg-primary shadow-[0_2px_8px_rgba(var(--primary),0.35)]'
+                  ? 'bg-primary shadow-[0_2px_8px_hsl(var(--primary)_/_0.35)]'
                   : 'bg-muted-foreground/20'
               "
               @click="mcpEnabled = !mcpEnabled"
@@ -117,7 +117,7 @@ async function handleViewTools(server: McpServerResponse) {
       <div class="relative flex items-center gap-2">
         <button
           v-if="!isEditing && store.servers.length > 0"
-          class="group flex h-9 items-center gap-2 rounded-full bg-primary px-4 text-xs font-semibold text-primary-foreground shadow-[0_2px_8px_rgba(var(--primary),0.25)] transition-all duration-200 hover:shadow-[0_4px_12px_rgba(var(--primary),0.35)] hover:-translate-y-0.5 active:translate-y-0"
+          class="group flex h-9 items-center gap-2 rounded-full bg-primary px-4 text-xs font-semibold text-primary-foreground shadow-[0_2px_8px_hsl(var(--primary)_/_0.25)] transition-all duration-200 hover:shadow-[0_4px_12px_hsl(var(--primary)_/_0.35)] hover:-translate-y-0.5 active:translate-y-0"
           @click="handleEdit()"
         >
           <Plus :size="14" stroke-width="2.5" class="transition-transform group-hover:rotate-90" />

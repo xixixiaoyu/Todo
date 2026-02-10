@@ -346,7 +346,7 @@ defineExpose({
                 {{ t('ai.saveAsPreset') }}
               </button>
               <button
-                class="relative overflow-hidden rounded-xl bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground shadow-[0_4px_12px_rgba(var(--primary),0.3)] transition-all hover:bg-primary-hover hover:shadow-[0_6px_20px_rgba(var(--primary),0.4)] active:scale-[0.98]"
+                class="relative overflow-hidden rounded-xl bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground shadow-[0_4px_12px_hsl(var(--primary)_/_0.3)] transition-all hover:bg-primary-hover hover:shadow-[0_6px_20px_hsl(var(--primary)_/_0.4)] active:scale-[0.98]"
                 @click="handleClose"
               >
                 <div class="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent" />

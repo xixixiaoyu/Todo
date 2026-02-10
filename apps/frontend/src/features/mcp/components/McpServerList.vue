@@ -143,7 +143,7 @@ function getStatusStyle(server: McpServerResponse) {
     <div
       v-for="server in servers"
       :key="server.id"
-      class="mcp-card group relative flex flex-col rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm transition-all duration-300 hover:border-primary/25 hover:bg-card/80 hover:shadow-[0_4px_16px_rgba(var(--primary),0.06)]"
+      class="mcp-card group relative flex flex-col rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm transition-all duration-300 hover:border-primary/25 hover:bg-card/80 hover:shadow-[0_4px_16px_hsl(var(--primary)_/_0.06)]"
     >
       <!-- 主内容区 -->
       <div class="p-4">
@@ -173,7 +173,7 @@ function getStatusStyle(server: McpServerResponse) {
             class="relative inline-flex h-5 w-9 items-center rounded-full transition-all duration-300 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:opacity-40 disabled:cursor-not-allowed"
             :class="
               server.enabled && mcpEnabled
-                ? 'bg-primary shadow-[0_2px_8px_rgba(var(--primary),0.35)]'
+                ? 'bg-primary shadow-[0_2px_8px_hsl(var(--primary)_/_0.35)]'
                 : 'bg-muted-foreground/20'
             "
             @click="toggleActive(server)"
@@ -241,7 +241,7 @@ function getStatusStyle(server: McpServerResponse) {
           <!-- 连接/重试按钮 -->
           <button
             v-if="server.enabled && !store.connectionStates[server.id]"
-            class="group flex h-7 items-center gap-1.5 rounded-full bg-primary/10 px-3 text-[11px] font-semibold text-primary transition-all duration-200 hover:bg-primary hover:text-primary-foreground hover:shadow-[0_2px_6px_rgba(var(--primary),0.25)] disabled:opacity-40"
+            class="group flex h-7 items-center gap-1.5 rounded-full bg-primary/10 px-3 text-[11px] font-semibold text-primary transition-all duration-200 hover:bg-primary hover:text-primary-foreground hover:shadow-[0_2px_6px_hsl(var(--primary)_/_0.25)] disabled:opacity-40"
             :disabled="store.connectingStates[server.id] || !mcpEnabled"
             @click="handleConnect(server.id)"
           >
@@ -321,7 +321,7 @@ function getStatusStyle(server: McpServerResponse) {
         {{ t('ai.mcpServerDescription') }}
       </p>
       <button
-        class="group flex h-10 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-[0_2px_12px_rgba(var(--primary),0.25)] transition-all duration-200 hover:shadow-[0_4px_16px_rgba(var(--primary),0.35)] hover:-translate-y-0.5 active:translate-y-0"
+        class="group flex h-10 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-[0_2px_12px_hsl(var(--primary)_/_0.25)] transition-all duration-200 hover:shadow-[0_4px_16px_hsl(var(--primary)_/_0.35)] hover:-translate-y-0.5 active:translate-y-0"
         @click="emit('edit', undefined)"
       >
         <Plus class="w-4 h-4 transition-transform group-hover:rotate-90" />

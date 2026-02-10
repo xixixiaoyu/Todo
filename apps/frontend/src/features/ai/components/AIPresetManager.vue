@@ -461,7 +461,7 @@ defineExpose({
                 <!-- 活跃状态：精致的小圆点 -->
                 <div
                   v-if="activePresetId === preset.id"
-                  class="h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)]"
+                  class="h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary)_/_0.5)]"
                 />
                 <!-- 助手标识：极简文本 -->
                 <div
