@@ -59,7 +59,7 @@ async function handleSubmit() {
 <template>
   <div
     ref="containerRef"
-    class="flex items-center gap-2 px-4 py-2.5 ml-10 border-l-2 border-primary/10"
+    class="flex items-center gap-2 px-4 py-2.5 ml-10 border-l-2 border-primary/25"
   >
     <TooltipProvider :delay-duration="0">
       <Tooltip :open="showTooltip">
