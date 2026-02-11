@@ -48,8 +48,22 @@ const isAddingChild = ref(false)
 const showTooltip = ref(false)
 
 // --- Computed ---
+const isChild = computed(() => (props.level ?? 0) > 0)
 const isExpanded = computed(() => props.todo.expanded ?? true)
 const hasChildren = computed(() => children.value.length > 0)
+const itemClass = computed(() => {
+  if (isChild.value) {
+    return 'bg-muted/20 border-border/40 py-2 px-4 hover:bg-muted/25 hover:border-border/55'
+  }
+
+  return 'bg-card border-border/60 px-4 py-3 hover:border-border/80'
+})
+
+const checkboxClass = computed(() => {
+  const border = isChild.value ? 'border-primary/45' : 'border-primary/70'
+
+  return `h-5 w-5 rounded-full border-2 ${border} data-[state=checked]:bg-success data-[state=checked]:border-success transition-transform active:scale-90`
+})
 const children = computed(() => {
   if (props.searchQuery) return []
   return props.allTodos
@@ -157,9 +171,7 @@ watch(
     <div
       class="group relative flex items-center gap-3 rounded-xl border transition-all duration-200 hover:shadow-md hover:shadow-black/5"
       :class="[
-        level && level > 0
-          ? 'bg-transparent border-border/50 py-2 opacity-95 scale-[0.99] hover:bg-muted/5 px-4'
-          : 'bg-card border-border px-4 py-3',
+        itemClass,
         { 'border-primary/30 bg-primary/[0.03] shadow-sm shadow-primary/5': todo.isPinned },
         { 'border-success/40 bg-success/[0.04] ring-1 ring-success/20': todo.isProposed },
         {
@@ -191,7 +203,7 @@ watch(
           v-if="store.filter !== 'trash'"
           :model-value="todo.completed"
           :disabled="todo.isProposedDelete"
-          class="h-5 w-5 rounded-full border-2 data-[state=checked]:bg-success data-[state=checked]:border-success transition-transform active:scale-90"
+          :class="checkboxClass"
           @update:model-value="
             () => {
               void hapticImpact(ImpactStyle.Light)
@@ -252,7 +264,7 @@ watch(
     <!-- Subtasks List (Recursive) -->
     <div
       v-if="isExpanded && hasChildren"
-      class="flex flex-col gap-2 ml-4 md:ml-6 border-l border-border/30 pl-4 md:pl-6"
+      class="flex flex-col gap-2 ml-4 md:ml-6 border-l border-primary/10 pl-4 md:pl-6"
     >
       <draggable
         v-model="dragChildren"

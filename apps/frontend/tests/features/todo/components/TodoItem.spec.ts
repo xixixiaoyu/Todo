@@ -490,6 +490,45 @@ describe('TodoItem', () => {
   })
 
   describe('nesting levels', () => {
+    it('should apply lighter styling for child items', () => {
+      const rootWrapper = mount(TodoItem, {
+        props: {
+          todo: mockTodo,
+          allTodos: [mockTodo],
+          editingId: null,
+          editingTitle: '',
+          level: 0,
+        },
+        global: {
+          plugins: [i18n],
+        },
+      })
+
+      const childWrapper = mount(TodoItem, {
+        props: {
+          todo: mockTodo,
+          allTodos: [mockTodo],
+          editingId: null,
+          editingTitle: '',
+          level: 1,
+        },
+        global: {
+          plugins: [i18n],
+        },
+      })
+
+      const rootItem = rootWrapper.find('div.group')
+      const childItem = childWrapper.find('div.group')
+
+      expect(rootItem.classes()).toContain('bg-card')
+      expect(rootItem.classes()).toContain('border-border/60')
+      expect(childItem.classes()).toContain('bg-muted/20')
+      expect(childItem.classes()).toContain('border-border/40')
+
+      expect(rootWrapper.findComponent(Checkbox).classes()).toContain('border-primary/70')
+      expect(childWrapper.findComponent(Checkbox).classes()).toContain('border-primary/45')
+    })
+
     it('should show add subtask button at level 0 (root)', () => {
       const wrapper = mount(TodoItem, {
         props: {
