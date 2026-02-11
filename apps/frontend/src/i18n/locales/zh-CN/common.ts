@@ -46,6 +46,20 @@ export const common = {
     dark: '暗色模式',
     system: '跟随系统',
   },
+  themeColor: {
+    label: '主题色',
+    desc: '选择经典配色，或使用调色盘自定义',
+    custom: '自定义',
+    reset: '恢复默认',
+    presets: {
+      warmAmber: '琥珀',
+      oceanBlue: '海蓝',
+      emerald: '翡翠',
+      rose: '玫瑰',
+      violet: '紫罗兰',
+      graphite: '石墨',
+    },
+  },
   fields: {
     email: '邮箱',
     password: '密码',

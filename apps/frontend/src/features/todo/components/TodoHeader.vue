@@ -12,6 +12,7 @@ import {
   MoreHorizontal,
 } from 'lucide-vue-next'
 import ThemeToggle from './ThemeToggle.vue'
+import ThemeColorPicker from './ThemeColorPicker.vue'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -70,17 +71,17 @@ const handleRegisterPasskey = async () => {
   >
     <div class="flex items-center gap-2 md:gap-3 group">
       <div
-        class="p-1.5 md:p-2 rounded-xl bg-amber-500/10 text-amber-600 transition-transform group-hover:rotate-12"
+        class="p-1.5 md:p-2 rounded-xl bg-primary/10 text-primary transition-transform group-hover:rotate-12"
       >
         <Clover :size="20" class="md:w-6 md:h-6" />
       </div>
       <h1
-        class="hidden sm:flex items-center gap-2 cursor-default text-amber-600 text-xl md:text-2xl font-extrabold tracking-tight transition-transform hover:scale-105"
+        class="hidden sm:flex items-center gap-2 cursor-default text-primary text-xl md:text-2xl font-extrabold tracking-tight transition-transform hover:scale-105"
       >
         {{ t('common.appName') }}
         <Badge
           variant="outline"
-          class="px-1 h-3.5 text-[8px] uppercase border-amber-500/20 text-amber-600/70 bg-amber-500/5 font-medium tracking-widest select-none"
+          class="px-1 h-3.5 text-[8px] uppercase border-primary/20 text-primary/70 bg-primary/5 font-medium tracking-widest select-none"
         >
           {{ t('common.beta') }}
         </Badge>
@@ -91,7 +92,7 @@ const handleRegisterPasskey = async () => {
       <Button
         variant="ghost"
         size="sm"
-        class="h-9 px-2 md:px-3 rounded-xl bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 transition-all duration-300 gap-1.5 md:gap-2 font-bold border border-amber-500/20 group/ai"
+        class="h-9 px-2 md:px-3 rounded-xl bg-primary/10 text-primary hover:bg-primary/15 transition-all duration-300 gap-1.5 md:gap-2 font-bold border border-primary/20 group/ai"
         @click="todoStore.setDrawerOpen(true)"
       >
         <Clover
@@ -201,6 +202,10 @@ const handleRegisterPasskey = async () => {
             <span class="text-sm">{{ t('common.theme.label') }}</span>
             <ThemeToggle />
           </div>
+          <div class="flex items-center justify-between px-2 py-1.5">
+            <span class="text-sm">{{ t('common.themeColor.label') }}</span>
+            <ThemeColorPicker />
+          </div>
           <DropdownMenuItem class="rounded-lg cursor-pointer" @click="toggleLanguage">
             <Languages class="mr-2 h-4 w-4" />
             <span>{{ locale === 'zh-CN' ? 'English' : '中文' }}</span>
@@ -210,6 +215,8 @@ const handleRegisterPasskey = async () => {
 
       <div class="hidden md:flex items-center gap-2">
         <ThemeToggle />
+
+        <ThemeColorPicker />
 
         <Tooltip>
           <TooltipTrigger as-child>

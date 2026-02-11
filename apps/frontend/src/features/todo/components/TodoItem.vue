@@ -53,14 +53,14 @@ const isExpanded = computed(() => props.todo.expanded ?? true)
 const hasChildren = computed(() => children.value.length > 0)
 const itemClass = computed(() => {
   if (isChild.value) {
-    return 'bg-muted/35 border-border/60 py-2 px-4 hover:bg-muted/45 hover:border-border/75'
+    return 'bg-muted/20 border-border/40 py-2 px-4 hover:bg-muted/30 hover:border-border/60'
   }
 
   return 'bg-card border-border/60 px-4 py-3 hover:border-border/80'
 })
 
 const checkboxClass = computed(() => {
-  const border = isChild.value ? 'border-primary/60' : 'border-primary/70'
+  const border = isChild.value ? 'border-primary/45' : 'border-primary/70'
 
   return `h-5 w-5 rounded-full border-2 ${border} data-[state=checked]:bg-success data-[state=checked]:border-success transition-transform active:scale-90`
 })

@@ -8,6 +8,99 @@ import { applyFilterAndSort } from '../stores/todo.filtering'
 import type { TreeData } from '../stores/todo.types'
 import { useI18n } from 'vue-i18n'
 import { debounce } from 'lodash-es'
+import { useTheme } from '@/composables/useTheme'
+
+type Rgb = {
+  r: number
+  g: number
+  b: number
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value))
+}
+
+function getCssVar(name: string) {
+  if (typeof window === 'undefined') return ''
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+}
+
+function parseRgb(value: string): Rgb | null {
+  const parts = value
+    .split(',')
+    .map((v) => Number.parseInt(v.trim(), 10))
+    .filter((v) => !Number.isNaN(v))
+
+  if (parts.length !== 3) return null
+  return { r: clamp(parts[0], 0, 255), g: clamp(parts[1], 0, 255), b: clamp(parts[2], 0, 255) }
+}
+
+function parseHslTriplet(value: string) {
+  const [hRaw, sRaw, lRaw] = value.split(/\s+/)
+  const h = Number.parseFloat(hRaw)
+  const s = Number.parseFloat((sRaw ?? '').replace('%', ''))
+  const l = Number.parseFloat((lRaw ?? '').replace('%', ''))
+
+  if ([h, s, l].some((n) => Number.isNaN(n))) return null
+  return { h, s, l }
+}
+
+function hslToRgb(h: number, s: number, l: number): Rgb {
+  const hh = ((h % 360) + 360) % 360
+  const ss = clamp(s, 0, 100) / 100
+  const ll = clamp(l, 0, 100) / 100
+
+  const c = (1 - Math.abs(2 * ll - 1)) * ss
+  const x = c * (1 - Math.abs(((hh / 60) % 2) - 1))
+  const m = ll - c / 2
+
+  let r1 = 0
+  let g1 = 0
+  let b1 = 0
+
+  if (hh < 60) {
+    r1 = c
+    g1 = x
+  } else if (hh < 120) {
+    r1 = x
+    g1 = c
+  } else if (hh < 180) {
+    g1 = c
+    b1 = x
+  } else if (hh < 240) {
+    g1 = x
+    b1 = c
+  } else if (hh < 300) {
+    r1 = x
+    b1 = c
+  } else {
+    r1 = c
+    b1 = x
+  }
+
+  return {
+    r: Math.round((r1 + m) * 255),
+    g: Math.round((g1 + m) * 255),
+    b: Math.round((b1 + m) * 255),
+  }
+}
+
+function rgbString({ r, g, b }: Rgb) {
+  return `rgb(${r}, ${g}, ${b})`
+}
+
+function rgbaString({ r, g, b }: Rgb, alpha: number) {
+  return `rgba(${r}, ${g}, ${b}, ${clamp(alpha, 0, 1)})`
+}
+
+function mixRgb(a: Rgb, b: Rgb, amount: number): Rgb {
+  const t = clamp(amount, 0, 1)
+  return {
+    r: Math.round(a.r + (b.r - a.r) * t),
+    g: Math.round(a.g + (b.g - a.g) * t),
+    b: Math.round(a.b + (b.b - a.b) * t),
+  }
+}
 
 defineOptions({
   name: 'TodoVisualizer',
@@ -20,6 +113,7 @@ const props = defineProps<{
 const todoStore = useTodoStore()
 const isDark = useDark()
 const { t } = useI18n()
+const { themeColor } = useTheme()
 
 const vChartRef = ref<InstanceType<typeof VChart> | null>(null)
 const containerRef = ref<HTMLElement | null>(null)
@@ -94,6 +188,9 @@ onActivated(() => {
  * 将扁平化的待办事项转换为树形结构
  */
 const treeData = computed(() => {
+  const _themeColor = themeColor.value
+  void _themeColor
+
   const todoMap = new Map<string, TreeData>()
   const roots: TreeData[] = []
 
@@ -110,6 +207,15 @@ const treeData = computed(() => {
     const isPending = props.filter === 'pending'
     const isCompleted = props.filter === 'completed'
 
+    const primaryRgb =
+      parseRgb(getCssVar('--primary-rgb')) ??
+      (isDark.value ? { r: 201, g: 184, b: 150 } : { r: 129, g: 95, b: 49 })
+
+    const successHsl = parseHslTriplet(getCssVar('--success'))
+    const successRgb = successHsl
+      ? hslToRgb(successHsl.h, successHsl.s, successHsl.l)
+      : { r: 5, g: 150, b: 105 }
+
     // 基础颜色系统
     let baseColor = isDark.value ? '#94a3b8' : '#64748b'
     let accentColor = isDark.value ? '#cbd5e1' : '#475569'
@@ -121,11 +227,15 @@ const treeData = computed(() => {
       baseColor = isDark.value ? '#ef4444' : '#dc2626'
       accentColor = isDark.value ? '#f87171' : '#ef4444'
     } else if (isCompleted) {
-      baseColor = isDark.value ? '#10b981' : '#059669'
-      accentColor = isDark.value ? '#34d399' : '#10b981'
+      baseColor = rgbString(successRgb)
+      accentColor = rgbString(
+        mixRgb(successRgb, { r: 255, g: 255, b: 255 }, isDark.value ? 0.2 : 0.1),
+      )
     } else if (isPending) {
-      baseColor = isDark.value ? '#f59e0b' : '#d97706'
-      accentColor = isDark.value ? '#fbbf24' : '#f59e0b'
+      baseColor = rgbString(primaryRgb)
+      accentColor = rgbString(
+        mixRgb(primaryRgb, { r: 255, g: 255, b: 255 }, isDark.value ? 0.18 : 0.12),
+      )
     }
 
     const itemStyle: TreeData['itemStyle'] = {
@@ -150,6 +260,8 @@ const treeData = computed(() => {
     } else if (todo.isProposedDelete) {
       lineStyle.color = isDark.value ? 'rgba(239, 68, 68, 0.4)' : 'rgba(239, 68, 68, 0.3)'
       lineStyle.type = 'dotted'
+    } else if (isPending) {
+      lineStyle.color = rgbaString(primaryRgb, isDark.value ? 0.22 : 0.18)
     }
 
     let labelType = 'normal'
@@ -193,29 +305,35 @@ const treeData = computed(() => {
           ? t('todo.completed')
           : t('todo.trash')
 
-    const rootColor =
+    const primaryRgb =
+      parseRgb(getCssVar('--primary-rgb')) ??
+      (isDark.value ? { r: 201, g: 184, b: 150 } : { r: 129, g: 95, b: 49 })
+    const successHsl = parseHslTriplet(getCssVar('--success'))
+    const successRgb = successHsl
+      ? hslToRgb(successHsl.h, successHsl.s, successHsl.l)
+      : { r: 5, g: 150, b: 105 }
+    const destructiveHsl = parseHslTriplet(getCssVar('--destructive'))
+    const destructiveRgb = destructiveHsl
+      ? hslToRgb(destructiveHsl.h, destructiveHsl.s, destructiveHsl.l)
+      : { r: 220, g: 38, b: 38 }
+
+    const rootRgb =
       props.filter === 'pending'
-        ? isDark.value
-          ? '#fbbf24'
-          : '#d97706'
+        ? primaryRgb
         : props.filter === 'completed'
-          ? isDark.value
-            ? '#10b981'
-            : '#059669'
-          : isDark.value
-            ? '#ef4444'
-            : '#dc2626'
+          ? successRgb
+          : destructiveRgb
 
     return [
       {
         name: rootName,
         children: roots,
         itemStyle: {
-          color: rootColor,
+          color: rgbString(rootRgb),
           borderColor: isDark.value ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.8)',
           borderWidth: 1.5,
           shadowBlur: 8,
-          shadowColor: rootColor + '33', // 20% opacity
+          shadowColor: rgbaString(rootRgb, 0.2),
         },
         label: {
           formatter: `{root|${rootName}}`,
@@ -242,122 +360,131 @@ const treeData = computed(() => {
   return roots
 })
 
-const chartOptions = computed(() => ({
-  backgroundColor: 'transparent',
-  tooltip: {
-    trigger: 'item',
-    triggerOn: 'mousemove',
-    formatter: (params: { data: TreeData }) => {
-      const data = params.data
-      if (!data.id) return data.name
-      let status = t('todo.pending')
-      if (data.isProposed) status = `✨ ${t('common.confirm')}`
-      if (data.isProposedDelete) status = `🗑️ ${t('common.delete')}`
-      if (data.completed) status = `✅ ${t('todo.completed')}`
-      return `<div class="px-3 py-2">
+const chartOptions = computed(() => {
+  const _themeColor = themeColor.value
+  void _themeColor
+
+  return {
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'item',
+      triggerOn: 'mousemove',
+      formatter: (params: { data: TreeData }) => {
+        const data = params.data
+        if (!data.id) return data.name
+        let status = t('todo.pending')
+        if (data.isProposed) status = `✨ ${t('common.confirm')}`
+        if (data.isProposedDelete) status = `🗑️ ${t('common.delete')}`
+        if (data.completed) status = `✅ ${t('todo.completed')}`
+        return `<div class="px-3 py-2">
         <div class="font-bold text-sm">${data.name}</div>
         <div class="text-[10px] opacity-60 mt-1 flex items-center gap-1">
           <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${data.itemStyle?.color}"></span>
           ${status}
         </div>
       </div>`
-    },
-    backgroundColor: isDark.value ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.8)',
-    borderColor: isDark.value ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-    borderWidth: 1,
-    textStyle: {
-      color: isDark.value ? '#f8fafc' : '#1e293b',
-      fontSize: 12,
-    },
-    extraCssText:
-      'backdrop-filter: blur(12px); border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.12);',
-  },
-  series: [
-    {
-      type: 'tree',
-      data: treeData.value,
-      initialTreeDepth: -1,
-      top: '10%',
-      left: '18%', // 略微收紧，因为容器去掉了
-      bottom: '10%',
-      right: '22%',
-      symbolSize: (_: unknown, params: { data: TreeData }) => {
-        const data = params.data
-        if (!data.id) return 14 // 根节点大幅缩小
-        return data.children && data.children.length > 0 ? 10 : 6 // 普通节点更精致
       },
-      symbol: 'circle',
-      label: {
-        position: 'left',
-        verticalAlign: 'middle',
-        align: 'right',
+      backgroundColor: isDark.value ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+      borderColor: isDark.value ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+      borderWidth: 1,
+      textStyle: {
+        color: isDark.value ? '#f8fafc' : '#1e293b',
         fontSize: 12,
-        distance: 10,
-        color: isDark.value ? '#94a3b8' : '#64748b',
-        fontFamily: "'JetBrains Mono', 'LXGW WenKai Screen', sans-serif",
-        // 确保标签不会超出容器
-        overflow: 'break',
-        rich: {
-          proposed: {
-            color: '#10b981',
-            fontWeight: '600',
-            fontSize: 13,
-            padding: [4, 10],
-            borderRadius: 8,
-            backgroundColor: isDark.value ? 'rgba(16, 185, 129, 0.12)' : 'rgba(16, 185, 129, 0.08)',
-          },
-          delete: {
-            color: isDark.value ? '#ef4444' : '#dc2626',
-            textDecoration: 'line-through',
-            opacity: 0.4,
-            padding: [2, 6],
-          },
-          completed: {
-            color: '#10b981',
-            opacity: 0.8,
-            fontSize: 12,
-            padding: [2, 6],
-          },
-          normal: {
-            padding: [2, 6],
-            color: isDark.value ? '#cbd5e1' : '#475569',
-          },
-          root: {
-            color: isDark.value ? '#fbbf24' : '#d97706',
-            fontWeight: '700',
-            fontSize: 14,
-            padding: [6, 12],
-            backgroundColor: isDark.value ? 'rgba(251, 191, 36, 0.12)' : 'rgba(217, 119, 6, 0.06)',
-            borderRadius: 8,
-            borderWidth: 1,
-            borderColor: isDark.value ? 'rgba(251, 191, 36, 0.2)' : 'rgba(217, 119, 6, 0.1)',
-          },
-        },
       },
-      leaves: {
-        label: {
-          position: 'right',
-          align: 'left',
-        },
-      },
-      emphasis: {
-        focus: 'descendant',
-        itemStyle: {
-          borderWidth: 4,
-          shadowBlur: 15,
-          shadowColor: 'rgba(0,0,0,0.2)',
-        },
-        label: {
-          color: isDark.value ? '#f8fafc' : '#1e293b',
-          fontWeight: 'bold',
-        },
-      },
-      expandAndCollapse: true,
-      animationDuration: 400,
-      animationEasing: 'cubicOut',
+      extraCssText:
+        'backdrop-filter: blur(12px); border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.12);',
     },
-  ],
-}))
+    series: [
+      {
+        type: 'tree',
+        data: treeData.value,
+        initialTreeDepth: -1,
+        top: '10%',
+        left: '18%', // 略微收紧，因为容器去掉了
+        bottom: '10%',
+        right: '22%',
+        symbolSize: (_: unknown, params: { data: TreeData }) => {
+          const data = params.data
+          if (!data.id) return 14 // 根节点大幅缩小
+          return data.children && data.children.length > 0 ? 10 : 6 // 普通节点更精致
+        },
+        symbol: 'circle',
+        label: {
+          position: 'left',
+          verticalAlign: 'middle',
+          align: 'right',
+          fontSize: 12,
+          distance: 10,
+          color: isDark.value ? '#94a3b8' : '#64748b',
+          fontFamily: "'JetBrains Mono', 'LXGW WenKai Screen', sans-serif",
+          // 确保标签不会超出容器
+          overflow: 'break',
+          rich: {
+            proposed: {
+              color: '#10b981',
+              fontWeight: '600',
+              fontSize: 13,
+              padding: [4, 10],
+              borderRadius: 8,
+              backgroundColor: isDark.value
+                ? 'rgba(16, 185, 129, 0.12)'
+                : 'rgba(16, 185, 129, 0.08)',
+            },
+            delete: {
+              color: isDark.value ? '#ef4444' : '#dc2626',
+              textDecoration: 'line-through',
+              opacity: 0.4,
+              padding: [2, 6],
+            },
+            completed: {
+              color: '#10b981',
+              opacity: 0.8,
+              fontSize: 12,
+              padding: [2, 6],
+            },
+            normal: {
+              padding: [2, 6],
+              color: isDark.value ? '#cbd5e1' : '#475569',
+            },
+            root: {
+              color: isDark.value ? '#fbbf24' : '#d97706',
+              fontWeight: '700',
+              fontSize: 14,
+              padding: [6, 12],
+              backgroundColor: isDark.value
+                ? 'rgba(251, 191, 36, 0.12)'
+                : 'rgba(217, 119, 6, 0.06)',
+              borderRadius: 8,
+              borderWidth: 1,
+              borderColor: isDark.value ? 'rgba(251, 191, 36, 0.2)' : 'rgba(217, 119, 6, 0.1)',
+            },
+          },
+        },
+        leaves: {
+          label: {
+            position: 'right',
+            align: 'left',
+          },
+        },
+        emphasis: {
+          focus: 'descendant',
+          itemStyle: {
+            borderWidth: 4,
+            shadowBlur: 15,
+            shadowColor: 'rgba(0,0,0,0.2)',
+          },
+          label: {
+            color: isDark.value ? '#f8fafc' : '#1e293b',
+            fontWeight: 'bold',
+          },
+        },
+        expandAndCollapse: true,
+        animationDuration: 400,
+        animationEasing: 'cubicOut',
+      },
+    ],
+  }
+})
 
 const emptyText = computed(() =>
   props.filter === 'completed' ? t('todo.emptyCompleted') : t('todo.emptyPending'),
@@ -368,7 +495,20 @@ const emptyText = computed(() =>
   <div ref="containerRef" class="flex-1 flex flex-col min-h-0 w-full relative group">
     <Transition name="fade" mode="out-in">
       <div
-        v-if="treeData.length === 0"
+        v-if="!isReady"
+        key="loading"
+        class="flex-1 flex flex-col items-center justify-center relative z-10"
+      >
+        <div class="p-8 rounded-full bg-primary/5 mb-6 animate-pulse">
+          <Clover :size="48" class="text-primary/20" />
+        </div>
+        <p class="text-muted-foreground/60 font-medium tracking-wide">
+          {{ t('common.loading') }}
+        </p>
+      </div>
+
+      <div
+        v-else-if="treeData.length === 0"
         key="empty"
         class="flex-1 flex flex-col items-center justify-center relative z-10"
       >

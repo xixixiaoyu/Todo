@@ -46,6 +46,20 @@ export const common = {
     dark: 'Dark Mode',
     system: 'System Preference',
   },
+  themeColor: {
+    label: 'Theme Color',
+    desc: 'Pick a classic palette or choose a custom color',
+    custom: 'Custom',
+    reset: 'Reset to default',
+    presets: {
+      warmAmber: 'Warm Amber',
+      oceanBlue: 'Ocean Blue',
+      emerald: 'Emerald',
+      rose: 'Rose',
+      violet: 'Violet',
+      graphite: 'Graphite',
+    },
+  },
   fields: {
     email: 'Email',
     password: 'Password',

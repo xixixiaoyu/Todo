@@ -7,6 +7,7 @@ import { debounce } from 'lodash-es'
 import { useTodoStore } from '../stores/todo'
 import { usePomodoroStore } from '../stores/pomodoro'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useTheme } from '@/composables/useTheme'
 import {
   CheckCircle2,
   Circle,
@@ -26,6 +27,98 @@ import {
 } from 'echarts/components'
 import { LegacyGridContainLabel } from 'echarts/features'
 
+type Rgb = {
+  r: number
+  g: number
+  b: number
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value))
+}
+
+function getCssVar(name: string) {
+  if (typeof window === 'undefined') return ''
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+}
+
+function parseRgb(value: string): Rgb | null {
+  const parts = value
+    .split(',')
+    .map((v) => Number.parseInt(v.trim(), 10))
+    .filter((v) => !Number.isNaN(v))
+
+  if (parts.length !== 3) return null
+  return { r: clamp(parts[0], 0, 255), g: clamp(parts[1], 0, 255), b: clamp(parts[2], 0, 255) }
+}
+
+function parseHslTriplet(value: string) {
+  const [hRaw, sRaw, lRaw] = value.split(/\s+/)
+  const h = Number.parseFloat(hRaw)
+  const s = Number.parseFloat((sRaw ?? '').replace('%', ''))
+  const l = Number.parseFloat((lRaw ?? '').replace('%', ''))
+
+  if ([h, s, l].some((n) => Number.isNaN(n))) return null
+  return { h, s, l }
+}
+
+function hslToRgb(h: number, s: number, l: number): Rgb {
+  const hh = ((h % 360) + 360) % 360
+  const ss = clamp(s, 0, 100) / 100
+  const ll = clamp(l, 0, 100) / 100
+
+  const c = (1 - Math.abs(2 * ll - 1)) * ss
+  const x = c * (1 - Math.abs(((hh / 60) % 2) - 1))
+  const m = ll - c / 2
+
+  let r1 = 0
+  let g1 = 0
+  let b1 = 0
+
+  if (hh < 60) {
+    r1 = c
+    g1 = x
+  } else if (hh < 120) {
+    r1 = x
+    g1 = c
+  } else if (hh < 180) {
+    g1 = c
+    b1 = x
+  } else if (hh < 240) {
+    g1 = x
+    b1 = c
+  } else if (hh < 300) {
+    r1 = x
+    b1 = c
+  } else {
+    r1 = c
+    b1 = x
+  }
+
+  return {
+    r: Math.round((r1 + m) * 255),
+    g: Math.round((g1 + m) * 255),
+    b: Math.round((b1 + m) * 255),
+  }
+}
+
+function rgbString({ r, g, b }: Rgb) {
+  return `rgb(${r}, ${g}, ${b})`
+}
+
+function rgbaString({ r, g, b }: Rgb, alpha: number) {
+  return `rgba(${r}, ${g}, ${b}, ${clamp(alpha, 0, 1)})`
+}
+
+function mixRgb(a: Rgb, b: Rgb, amount: number): Rgb {
+  const t = clamp(amount, 0, 1)
+  return {
+    r: Math.round(a.r + (b.r - a.r) * t),
+    g: Math.round(a.g + (b.g - a.g) * t),
+    b: Math.round(a.b + (b.b - a.b) * t),
+  }
+}
+
 use([
   CanvasRenderer,
   PieChart,
@@ -44,6 +137,7 @@ const { t, locale } = useI18n()
 const isDark = useDark()
 const todoStore = useTodoStore()
 const pomodoroStore = usePomodoroStore()
+const { themeColor } = useTheme()
 
 const isReady = ref(false)
 const containerRef = ref<HTMLElement | null>(null)
@@ -125,6 +219,20 @@ const completionRate = computed(() =>
 
 // 每周活跃度（新增 vs 完成）
 const weeklyActivityOption = computed(() => {
+  const _themeColor = themeColor.value
+  void _themeColor
+
+  const primaryRgb =
+    parseRgb(getCssVar('--primary-rgb')) ??
+    (isDark.value ? { r: 201, g: 184, b: 150 } : { r: 129, g: 95, b: 49 })
+  const successHsl = parseHslTriplet(getCssVar('--success'))
+  const successRgb = successHsl
+    ? hslToRgb(successHsl.h, successHsl.s, successHsl.l)
+    : { r: 5, g: 150, b: 105 }
+
+  const createdColor = rgbString(primaryRgb)
+  const completedColor = rgbString(successRgb)
+
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const d = new Date()
     d.setDate(d.getDate() - (6 - i))
@@ -212,7 +320,7 @@ const weeklyActivityOption = computed(() => {
         type: 'bar',
         barWidth: '25%',
         itemStyle: {
-          color: isDark.value ? '#38bdf8' : '#0ea5e9',
+          color: createdColor,
           borderRadius: [4, 4, 0, 0],
         },
       },
@@ -222,7 +330,7 @@ const weeklyActivityOption = computed(() => {
         type: 'bar',
         barWidth: '25%',
         itemStyle: {
-          color: isDark.value ? '#8b5cf6' : '#7c3aed',
+          color: completedColor,
           borderRadius: [4, 4, 0, 0],
         },
       },
@@ -231,56 +339,81 @@ const weeklyActivityOption = computed(() => {
 })
 
 // 完成率饼图配置
-const completionChartOption = computed(() => ({
-  backgroundColor: 'transparent',
-  tooltip: {
-    trigger: 'item',
-    formatter: '{b}: {c} ({d}%)',
-  },
-  series: [
-    {
-      name: t('statistics.completionRate'),
-      type: 'pie',
-      radius: ['60%', '85%'],
-      avoidLabelOverlap: false,
-      itemStyle: {
-        borderRadius: 10,
-        borderColor: isDark.value ? '#1e293b' : '#fff',
-        borderWidth: 2,
-      },
-      label: {
-        show: false,
-        position: 'center',
-      },
-      emphasis: {
-        label: {
-          show: true,
-          fontSize: 20,
-          fontWeight: 'bold',
-          color: isDark.value ? '#f8fafc' : '#1e293b',
-        },
-      },
-      labelLine: {
-        show: false,
-      },
-      data: [
-        {
-          value: completedTasks.value,
-          name: t('todo.completed'),
-          itemStyle: { color: isDark.value ? '#10b981' : '#059669' },
-        },
-        {
-          value: pendingTasks.value,
-          name: t('todo.pending'),
-          itemStyle: { color: isDark.value ? '#334155' : '#e2e8f0' },
-        },
-      ],
+const completionChartOption = computed(() => {
+  const _themeColor = themeColor.value
+  void _themeColor
+
+  const primaryRgb =
+    parseRgb(getCssVar('--primary-rgb')) ??
+    (isDark.value ? { r: 201, g: 184, b: 150 } : { r: 129, g: 95, b: 49 })
+  const successHsl = parseHslTriplet(getCssVar('--success'))
+  const successRgb = successHsl
+    ? hslToRgb(successHsl.h, successHsl.s, successHsl.l)
+    : { r: 5, g: 150, b: 105 }
+
+  const pendingRgb = mixRgb(primaryRgb, { r: 255, g: 255, b: 255 }, isDark.value ? 0.35 : 0.65)
+
+  return {
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b}: {c} ({d}%)',
     },
-  ],
-}))
+    series: [
+      {
+        name: t('statistics.completionRate'),
+        type: 'pie',
+        radius: ['60%', '85%'],
+        avoidLabelOverlap: false,
+        itemStyle: {
+          borderRadius: 10,
+          borderColor: isDark.value ? '#1e293b' : '#fff',
+          borderWidth: 2,
+        },
+        label: {
+          show: false,
+          position: 'center',
+        },
+        emphasis: {
+          label: {
+            show: true,
+            fontSize: 20,
+            fontWeight: 'bold',
+            color: isDark.value ? '#f8fafc' : '#1e293b',
+          },
+        },
+        labelLine: {
+          show: false,
+        },
+        data: [
+          {
+            value: completedTasks.value,
+            name: t('todo.completed'),
+            itemStyle: { color: rgbString(successRgb) },
+          },
+          {
+            value: pendingTasks.value,
+            name: t('todo.pending'),
+            itemStyle: { color: rgbString(pendingRgb) },
+          },
+        ],
+      },
+    ],
+  }
+})
 
 // 近 7 天专注时长趋势
 const focusDurationOption = computed(() => {
+  const _themeColor = themeColor.value
+  void _themeColor
+
+  const primaryRgb =
+    parseRgb(getCssVar('--primary-rgb')) ??
+    (isDark.value ? { r: 201, g: 184, b: 150 } : { r: 129, g: 95, b: 49 })
+  const focusColor = rgbString(primaryRgb)
+  const focusAreaStart = rgbaString(primaryRgb, isDark.value ? 0.28 : 0.22)
+  const focusAreaEnd = rgbaString(primaryRgb, 0)
+
   const last7Days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date()
     d.setDate(d.getDate() - (6 - i))
@@ -350,8 +483,8 @@ const focusDurationOption = computed(() => {
         smooth: true,
         symbol: 'circle',
         symbolSize: 8,
-        itemStyle: { color: '#f59e0b' },
-        lineStyle: { width: 3, color: '#f59e0b' },
+        itemStyle: { color: focusColor },
+        lineStyle: { width: 3, color: focusColor },
         areaStyle: {
           color: {
             type: 'linear',
@@ -360,8 +493,8 @@ const focusDurationOption = computed(() => {
             x2: 0,
             y2: 1,
             colorStops: [
-              { offset: 0, color: 'rgba(245, 158, 11, 0.3)' },
-              { offset: 1, color: 'rgba(245, 158, 11, 0)' },
+              { offset: 0, color: focusAreaStart },
+              { offset: 1, color: focusAreaEnd },
             ],
           },
         },
@@ -414,13 +547,13 @@ const focusDurationOption = computed(() => {
 
       <!-- 待完成 -->
       <Card
-        class="border-none shadow-sm bg-gradient-to-br from-blue-500/10 to-blue-500/5 hover:from-blue-500/15 hover:to-blue-500/10 transition-colors"
+        class="border-none shadow-sm bg-gradient-to-br from-primary/10 to-primary/5 hover:from-primary/15 hover:to-primary/10 transition-colors"
       >
         <CardContent class="p-4 flex items-center space-x-4">
           <div
-            class="w-12 h-12 flex items-center justify-center bg-blue-500/10 rounded-full shadow-inner"
+            class="w-12 h-12 flex items-center justify-center bg-primary/10 rounded-full shadow-inner"
           >
-            <Circle class="w-6 h-6 text-blue-500" />
+            <Circle class="w-6 h-6 text-primary" />
           </div>
           <div>
             <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -433,13 +566,13 @@ const focusDurationOption = computed(() => {
 
       <!-- 番茄数 -->
       <Card
-        class="border-none shadow-sm bg-gradient-to-br from-amber-500/10 to-amber-500/5 hover:from-amber-500/15 hover:to-amber-500/10 transition-colors"
+        class="border-none shadow-sm bg-gradient-to-br from-primary/10 to-primary/5 hover:from-primary/15 hover:to-primary/10 transition-colors"
       >
         <CardContent class="p-4 flex items-center space-x-4">
           <div
-            class="w-12 h-12 flex items-center justify-center bg-amber-500/10 rounded-full shadow-inner"
+            class="w-12 h-12 flex items-center justify-center bg-primary/10 rounded-full shadow-inner"
           >
-            <Timer class="w-6 h-6 text-amber-500" />
+            <Timer class="w-6 h-6 text-primary" />
           </div>
           <div>
             <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -502,7 +635,7 @@ const focusDurationOption = computed(() => {
       <Card class="lg:col-span-8 border-none shadow-sm overflow-hidden bg-card/50 backdrop-blur-sm">
         <CardHeader class="pb-2">
           <CardTitle class="text-sm font-semibold flex items-center gap-2">
-            <TrendingUp class="w-4 h-4 text-violet-500" />
+            <TrendingUp class="w-4 h-4 text-primary" />
             {{ t('statistics.weeklyActivity') }}
           </CardTitle>
         </CardHeader>
@@ -531,7 +664,7 @@ const focusDurationOption = computed(() => {
     <Card class="border-none shadow-sm overflow-hidden bg-card/50 backdrop-blur-sm">
       <CardHeader class="pb-2">
         <CardTitle class="text-sm font-semibold flex items-center gap-2">
-          <Timer class="w-4 h-4 text-amber-500" />
+          <Timer class="w-4 h-4 text-primary" />
           {{ t('statistics.focusTime') }}
         </CardTitle>
       </CardHeader>

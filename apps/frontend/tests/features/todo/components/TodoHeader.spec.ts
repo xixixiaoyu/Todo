@@ -24,6 +24,7 @@ vi.mock('lucide-vue-next', () => ({
   Monitor: { template: '<span>Monitor</span>' },
   Sun: { template: '<span>Sun</span>' },
   Moon: { template: '<span>Moon</span>' },
+  Fingerprint: { template: '<span>Fingerprint</span>' },
   BarChart3: { template: '<span>BarChart3</span>' },
   MoreHorizontal: { template: '<span>MoreHorizontal</span>' },
 }))
@@ -54,6 +55,9 @@ const i18n = createI18n({
           dark: '深色',
           system: '跟随系统',
         },
+        themeColor: {
+          label: '主题色',
+        },
       },
       login: {
         title: '登录账户',
@@ -79,6 +83,9 @@ const i18n = createI18n({
           light: 'Light',
           dark: 'Dark',
           system: 'System',
+        },
+        themeColor: {
+          label: 'Theme Color',
         },
       },
       login: {
@@ -110,6 +117,7 @@ describe('TodoHeader', () => {
           DropdownMenuItem: { template: '<div><slot /></div>' },
           DropdownMenuLabel: { template: '<div><slot /></div>' },
           DropdownMenuSeparator: { template: '<div><slot /></div>' },
+          ThemeColorPicker: { template: '<div />' },
         },
       },
     })
@@ -134,6 +142,7 @@ describe('TodoHeader', () => {
           DropdownMenuItem: true,
           DropdownMenuLabel: true,
           DropdownMenuSeparator: true,
+          ThemeColorPicker: { template: '<div />' },
         },
       },
     })
@@ -172,6 +181,7 @@ describe('TodoHeader', () => {
           DropdownMenuItem: true,
           DropdownMenuLabel: true,
           DropdownMenuSeparator: true,
+          ThemeColorPicker: { template: '<div />' },
         },
       },
     })

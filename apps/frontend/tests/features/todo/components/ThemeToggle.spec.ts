@@ -28,6 +28,9 @@ describe('ThemeToggle', () => {
     mockedUseTheme.mockReturnValue({
       theme: theme as unknown as ReturnType<typeof useTheme>['theme'],
       setTheme,
+      themeColor: ref<string | null>(null) as unknown as ReturnType<typeof useTheme>['themeColor'],
+      setThemeColor: vi.fn(),
+      resetThemeColor: vi.fn(),
     })
 
     const wrapper = mount({

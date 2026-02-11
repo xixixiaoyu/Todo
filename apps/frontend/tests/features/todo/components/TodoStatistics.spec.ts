@@ -43,6 +43,16 @@ vi.mock('lucide-vue-next', () => ({
   PieChart: { template: '<span />' },
 }))
 
+vi.mock('@/composables/useTheme', () => ({
+  useTheme: () => ({
+    themeColor: ref<string | null>(null),
+    theme: ref<'light' | 'dark' | 'auto'>('light'),
+    setTheme: vi.fn(),
+    setThemeColor: vi.fn(),
+    resetThemeColor: vi.fn(),
+  }),
+}))
+
 vi.mock('echarts/core', () => ({
   use: () => undefined,
 }))

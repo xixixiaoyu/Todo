@@ -29,6 +29,16 @@ vi.mock('lucide-vue-next', () => ({
   Clover: { template: '<span />' },
 }))
 
+vi.mock('@/composables/useTheme', () => ({
+  useTheme: () => ({
+    themeColor: ref<string | null>(null),
+    theme: ref<'light' | 'dark' | 'auto'>('light'),
+    setTheme: vi.fn(),
+    setThemeColor: vi.fn(),
+    resetThemeColor: vi.fn(),
+  }),
+}))
+
 const i18n = createI18n({
   legacy: false,
   locale: 'zh-CN',
@@ -62,6 +72,9 @@ describe('TodoVisualizer', () => {
     store.filter = 'completed'
 
     const wrapper = mount(TodoVisualizer, {
+      props: {
+        filter: 'completed',
+      },
       global: {
         plugins: [i18n],
       },
@@ -91,6 +104,9 @@ describe('TodoVisualizer', () => {
     ]
 
     const wrapper = mount(TodoVisualizer, {
+      props: {
+        filter: 'pending',
+      },
       global: {
         plugins: [i18n],
       },

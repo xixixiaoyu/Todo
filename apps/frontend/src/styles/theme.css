@@ -11,9 +11,10 @@
     --popover-foreground: 240 10% 3.9%;
 
     /* 主题色 */
-    --primary: 32 45% 45%;
-    --primary-hover: 32 45% 40%;
-    --primary-foreground: 0 0% 100%;
+    --primary: var(--user-primary, 32 45% 45%);
+    --primary-hover: var(--user-primary-hover, 32 45% 40%);
+    --primary-foreground: var(--user-primary-foreground, 0 0% 100%);
+    --primary-rgb: var(--user-primary-rgb, 129, 95, 49);
 
     /* 次要色 */
     --secondary: 32 15% 95%;
@@ -30,14 +31,14 @@
     /* 边框和输入 */
     --border: 32 15% 88%;
     --input: 32 15% 88%;
-    --ring: 32 45% 45%;
+    --ring: var(--primary);
 
     /* 圆角 */
     --radius: 0.75rem;
     --border-radius: 0.75rem;
 
     /* 图表色 */
-    --chart-1: 32 45% 45%;
+    --chart-1: var(--primary);
     --chart-2: 155 35% 45%;
     --chart-3: 20 65% 55%;
     --chart-4: 45 65% 55%;
@@ -72,9 +73,10 @@
     --popover-foreground: 0 0% 95%;
 
     /* 主题色 - 稍微提高亮度，在深色背景下更鲜明 */
-    --primary: 32 45% 65%;
-    --primary-hover: 32 45% 70%;
-    --primary-foreground: 32 10% 8%;
+    --primary: var(--user-primary-dark, 32 45% 65%);
+    --primary-hover: var(--user-primary-hover-dark, 32 45% 70%);
+    --primary-foreground: var(--user-primary-foreground-dark, 32 10% 8%);
+    --primary-rgb: var(--user-primary-rgb-dark, 201, 184, 150);
 
     /* 次要色 */
     --secondary: 240 4% 15%;
@@ -91,7 +93,7 @@
     /* 边框和输入 - 更加细腻的对比 */
     --border: 240 4% 16%;
     --input: 240 4% 16%;
-    --ring: 32 45% 65%;
+    --ring: var(--primary);
 
     --text-color: 0 0% 90%;
     --text-secondary: 240 4% 55%;
