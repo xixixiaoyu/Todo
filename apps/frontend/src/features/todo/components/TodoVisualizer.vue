@@ -3,7 +3,8 @@ import { computed, ref, onMounted, nextTick, onBeforeUnmount, onActivated } from
 import { Clover } from 'lucide-vue-next'
 import VChart from 'vue-echarts'
 import { useDark, useResizeObserver } from '@vueuse/core'
-import { useTodoStore } from '../stores/todo'
+import { useTodoStore, type FilterType } from '../stores/todo'
+import { applyFilterAndSort } from '../stores/todo.filtering'
 import type { TreeData } from '../stores/todo.types'
 import { useI18n } from 'vue-i18n'
 import { debounce } from 'lodash-es'
@@ -11,6 +12,10 @@ import { debounce } from 'lodash-es'
 defineOptions({
   name: 'TodoVisualizer',
 })
+
+const props = defineProps<{
+  filter: FilterType
+}>()
 
 const todoStore = useTodoStore()
 const isDark = useDark()
@@ -92,13 +97,18 @@ const treeData = computed(() => {
   const todoMap = new Map<string, TreeData>()
   const roots: TreeData[] = []
 
-  // 使用 Store 中已经根据 Tab 和搜索过滤好的任务
-  const displayTodos = todoStore.visualTodos
+  // 使用传入的 prop filter 而非 store 的全局 filter，配合 key 确保切换时动画丝滑不跳动
+  const displayTodos = applyFilterAndSort(
+    todoStore.hasProposedChanges ? todoStore.previewTodos : todoStore.todos,
+    props.filter,
+    todoStore.searchQuery,
+    false,
+  )
 
   // 首先创建所有节点
   displayTodos.forEach((todo) => {
-    const isPending = todoStore.filter === 'pending'
-    const isCompleted = todoStore.filter === 'completed'
+    const isPending = props.filter === 'pending'
+    const isCompleted = props.filter === 'completed'
 
     // 基础颜色系统
     let baseColor = isDark.value ? '#94a3b8' : '#64748b'
@@ -177,18 +187,18 @@ const treeData = computed(() => {
   // 如果有多个根节点，创建一个虚拟根节点
   if (roots.length > 1) {
     const rootName =
-      todoStore.filter === 'pending'
+      props.filter === 'pending'
         ? t('todo.pending')
-        : todoStore.filter === 'completed'
+        : props.filter === 'completed'
           ? t('todo.completed')
           : t('todo.trash')
 
     const rootColor =
-      todoStore.filter === 'pending'
+      props.filter === 'pending'
         ? isDark.value
           ? '#fbbf24'
           : '#d97706'
-        : todoStore.filter === 'completed'
+        : props.filter === 'completed'
           ? isDark.value
             ? '#10b981'
             : '#059669'
@@ -350,7 +360,7 @@ const chartOptions = computed(() => ({
 }))
 
 const emptyText = computed(() =>
-  todoStore.filter === 'completed' ? t('todo.emptyCompleted') : t('todo.emptyPending'),
+  props.filter === 'completed' ? t('todo.emptyCompleted') : t('todo.emptyPending'),
 )
 </script>
 
@@ -371,7 +381,7 @@ const emptyText = computed(() =>
       </div>
 
       <VChart
-        v-else-if="isReady"
+        v-else
         key="chart"
         ref="vChartRef"
         class="flex-1 w-full h-full relative z-10"
@@ -379,19 +389,6 @@ const emptyText = computed(() =>
         :autoresize="false"
         :theme="isDark ? 'dark' : undefined"
       />
-
-      <div
-        v-else
-        key="loading"
-        class="flex-1 flex flex-col items-center justify-center relative z-10"
-      >
-        <div class="p-8 rounded-full bg-primary/5 mb-6 animate-pulse">
-          <Clover :size="48" class="text-primary/20" />
-        </div>
-        <p class="text-muted-foreground/60 font-medium tracking-wide">
-          {{ t('common.loading') }}
-        </p>
-      </div>
     </Transition>
   </div>
 </template>

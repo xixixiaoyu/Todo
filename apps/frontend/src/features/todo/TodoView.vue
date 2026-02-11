@@ -26,7 +26,7 @@ const { gsap, ctx } = useGsap()
 const isInputVisible = computed(() => todoStore.viewMode === 'list' && todoStore.filter !== 'trash')
 
 const currentViewKey = computed(() =>
-  todoStore.viewMode === 'list' ? `list-${todoStore.filter}` : todoStore.viewMode,
+  todoStore.viewMode === 'stats' ? 'stats' : `${todoStore.viewMode}-${todoStore.filter}`,
 )
 
 const currentViewComponent = computed(() => {
@@ -131,11 +131,17 @@ const {
 } = useTodo()
 
 const currentViewProps = computed(() => {
-  if (todoStore.viewMode !== 'list') return {}
+  if (todoStore.viewMode === 'stats') return {}
+
+  const baseProps = {
+    filter: todoStore.filter,
+  }
+
+  if (todoStore.viewMode !== 'list') return baseProps
 
   return {
+    ...baseProps,
     todos: todoStore.hasProposedChanges ? todoStore.previewTodos : todoStore.filteredTodos,
-    filter: todoStore.filter,
     searchQuery: todoStore.searchQuery,
     editingId: editingId.value,
     editingTitle: editingTitle.value,
@@ -242,6 +248,7 @@ function onFireworksComplete() {
             :class="!showSearch && todoStore.viewMode === 'visual' ? 'mt-0' : 'mt-2'"
           >
             <Transition
+              mode="out-in"
               :css="false"
               @before-enter="
                 (el) => {
@@ -249,45 +256,26 @@ function onFireworksComplete() {
                   gsap.killTweensOf(element)
                   gsap.set(element, {
                     opacity: 0,
-                    x: direction * 12,
-                    y: 6,
-                    scale: 0.99,
-                    zIndex: 1,
+                    x: direction * 10,
+                    y: 4,
+                    scale: 0.995,
                     willChange: 'transform, opacity',
                   })
                 }
               "
               @enter="
                 (el, done) => {
-                  gsap.killTweensOf(el)
                   gsap.to(el, {
                     opacity: 1,
                     x: 0,
                     y: 0,
                     scale: 1,
-                    duration: 0.32,
-                    ease: 'power3.out',
+                    duration: 0.3,
+                    ease: 'power2.out',
                     onComplete: () => {
-                      gsap.set(el, { clearProps: 'willChange,zIndex' })
+                      gsap.set(el, { clearProps: 'willChange' })
                       done()
                     },
-                  })
-                }
-              "
-              @before-leave="
-                (el) => {
-                  const element = el as HTMLElement
-                  gsap.killTweensOf(element)
-                  gsap.set(element, {
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    width: '100%',
-                    height: '100%',
-                    zIndex: 0,
-                    pointerEvents: 'none',
                   })
                 }
               "
@@ -296,18 +284,12 @@ function onFireworksComplete() {
                   gsap.killTweensOf(el)
                   gsap.to(el, {
                     opacity: 0,
-                    x: -direction * 8,
+                    x: -direction * 10,
                     y: -4,
-                    scale: 0.99,
-                    duration: 0.22,
-                    ease: 'power2.in',
-                    onComplete: () => {
-                      gsap.set(el, {
-                        clearProps:
-                          'position,top,left,right,bottom,width,height,zIndex,pointerEvents',
-                      })
-                      done()
-                    },
+                    scale: 0.995,
+                    duration: 0.2,
+                    ease: 'power2.inOut',
+                    onComplete: done,
                   })
                 }
               "
