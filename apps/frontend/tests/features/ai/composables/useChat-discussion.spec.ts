@@ -16,6 +16,8 @@ const mockCurrentSession = ref<ChatSession | null>(null)
 const mockGetOrCreateCurrentSession = vi.fn()
 const mockUpdateSessionMessages = vi.fn()
 const mockCreateSession = vi.fn()
+const mockUpdateSessionContextSummary = vi.fn()
+const mockClearSessionContextSummary = vi.fn()
 
 vi.mock('@/features/ai/composables/useChatHistory', () => ({
   useChatHistory: vi.fn(() => ({
@@ -23,6 +25,8 @@ vi.mock('@/features/ai/composables/useChatHistory', () => ({
     getOrCreateCurrentSession: mockGetOrCreateCurrentSession,
     updateSessionMessages: mockUpdateSessionMessages,
     createSession: mockCreateSession,
+    updateSessionContextSummary: mockUpdateSessionContextSummary,
+    clearSessionContextSummary: mockClearSessionContextSummary,
   })),
 }))
 
@@ -50,6 +54,9 @@ vi.mock('@/features/ai/composables/useAIConfig', () => ({
     todoAssistant: false,
     enableImageGeneration: false,
     mcpEnabled: true,
+    contextCompressionEnabled: true,
+    contextCompressionTriggerChars: 24000,
+    contextCompressionModelId: null,
   })),
   getAIThinkingMode: vi.fn(() => 'enabled'),
 }))
@@ -90,6 +97,9 @@ describe('useChat - Discussion Mode', () => {
       todoAssistant: false,
       enableImageGeneration: false,
       mcpEnabled: true,
+      contextCompressionEnabled: true,
+      contextCompressionTriggerChars: 24000,
+      contextCompressionModelId: null,
     } as AIConfig)
 
     mockGetMultiModelDiscussionStream.mockImplementation(

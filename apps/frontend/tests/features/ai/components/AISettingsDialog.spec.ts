@@ -47,6 +47,9 @@ const mockConfig = ref<AIConfig>({
   memoryModelId: null,
   enableImageGeneration: false,
   mcpEnabled: true,
+  contextCompressionEnabled: true,
+  contextCompressionTriggerChars: 24000,
+  contextCompressionModelId: null,
 })
 
 const mockPresets = ref<AIPreset[]>([])
@@ -172,6 +175,9 @@ describe('AISettingsDialog', () => {
       memoryModelId: null,
       enableImageGeneration: false,
       mcpEnabled: true,
+      contextCompressionEnabled: true,
+      contextCompressionTriggerChars: 24000,
+      contextCompressionModelId: null,
     }
     mockPresets.value = []
     mockActivePresetId.value = null

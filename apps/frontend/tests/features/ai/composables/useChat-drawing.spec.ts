@@ -13,6 +13,9 @@ const mockCurrentSession = ref<ChatSession | null>(null)
 const mockGetOrCreateCurrentSession = vi.fn<() => ChatSession>()
 const mockUpdateSessionMessages = vi.fn<(sessionId: string, messages: ChatMessage[]) => void>()
 const mockCreateSession = vi.fn<() => ChatSession>()
+const mockUpdateSessionContextSummary =
+  vi.fn<(sessionId: string, data: { summary: string; untilMessageId: string }) => void>()
+const mockClearSessionContextSummary = vi.fn<(sessionId: string) => void>()
 
 vi.mock('@/features/ai/composables/useChatHistory', async () => {
   return {
@@ -21,6 +24,8 @@ vi.mock('@/features/ai/composables/useChatHistory', async () => {
       getOrCreateCurrentSession: mockGetOrCreateCurrentSession,
       updateSessionMessages: mockUpdateSessionMessages,
       createSession: mockCreateSession,
+      updateSessionContextSummary: mockUpdateSessionContextSummary,
+      clearSessionContextSummary: mockClearSessionContextSummary,
     })),
   }
 })
@@ -86,6 +91,9 @@ const mockConfig = ref({
   todoAssistant: false,
   enableImageGeneration: false,
   mcpEnabled: true,
+  contextCompressionEnabled: true,
+  contextCompressionTriggerChars: 24000,
+  contextCompressionModelId: null,
 })
 
 vi.mock('@/features/ai/composables/useAIConfig', () => ({

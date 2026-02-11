@@ -18,6 +18,9 @@ export interface AIConfig {
   memoryModelId: string | null
   enableImageGeneration: boolean
   mcpEnabled: boolean
+  contextCompressionEnabled: boolean
+  contextCompressionTriggerChars: number
+  contextCompressionModelId: string | null
 }
 
 export interface AIPreset {
@@ -72,6 +75,9 @@ const DEFAULT_CONFIG: AIConfig = {
   memoryModelId: null,
   enableImageGeneration: false,
   mcpEnabled: true,
+  contextCompressionEnabled: true,
+  contextCompressionTriggerChars: 24000,
+  contextCompressionModelId: null,
 }
 
 // 全局配置状态（单例）

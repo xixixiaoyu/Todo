@@ -151,6 +151,7 @@ export async function getMultiModelDiscussionStream(
         messages,
         modelSystemPrompt,
         aiConfig.todoAssistant,
+        options.contextSummary,
       )
 
       const response = await fetchNonStreamResponse(

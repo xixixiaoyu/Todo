@@ -24,6 +24,9 @@ const mockCurrentSession = ref<ChatSession | null>(null)
 const mockGetOrCreateCurrentSession = vi.fn<() => ChatSession>()
 const mockUpdateSessionMessages = vi.fn<(sessionId: string, messages: ChatMessage[]) => void>()
 const mockCreateSession = vi.fn<() => ChatSession>()
+const mockUpdateSessionContextSummary =
+  vi.fn<(sessionId: string, data: { summary: string; untilMessageId: string }) => void>()
+const mockClearSessionContextSummary = vi.fn<(sessionId: string) => void>()
 
 vi.mock('@/features/ai/composables/useChatHistory', async () => {
   return {
@@ -32,6 +35,8 @@ vi.mock('@/features/ai/composables/useChatHistory', async () => {
       getOrCreateCurrentSession: mockGetOrCreateCurrentSession,
       updateSessionMessages: mockUpdateSessionMessages,
       createSession: mockCreateSession,
+      updateSessionContextSummary: mockUpdateSessionContextSummary,
+      clearSessionContextSummary: mockClearSessionContextSummary,
     })),
   }
 })
@@ -89,6 +94,9 @@ vi.mock('@/features/ai/composables/useAIConfig', () => ({
     todoAssistant: false,
     enableImageGeneration: false,
     mcpEnabled: true,
+    contextCompressionEnabled: true,
+    contextCompressionTriggerChars: 24000,
+    contextCompressionModelId: null,
   })),
   getAIThinkingMode: vi.fn(() => 'disabled'),
 }))
@@ -130,6 +138,9 @@ describe('useChat', () => {
       todoAssistant: false,
       enableImageGeneration: false,
       mcpEnabled: true,
+      contextCompressionEnabled: true,
+      contextCompressionTriggerChars: 24000,
+      contextCompressionModelId: null,
     })
     mockUpdateSessionMessages.mockImplementation((sessionId, messages) => {
       if (mockCurrentSession.value && mockCurrentSession.value.id === sessionId) {
@@ -400,6 +411,67 @@ describe('useChat', () => {
 
       expect(mcpApi.callTool).toHaveBeenCalledWith(serverA, 'search', { q: 'x' })
       expect(messages.value.some((m) => m.role === 'tool' && m.toolName === 'search')).toBe(true)
+    })
+
+    it('should compress long context and pass summary to request', async () => {
+      mockIsMemoryEnabled.value = false
+      vi.mocked(getAIConfig).mockReturnValue({
+        discussionMode: false,
+        discussionModelIds: [],
+        discussionPrimaryModelId: null,
+        memoryModelId: null,
+        baseUrl: '',
+        apiKey: '',
+        model: '',
+        systemPrompt: '',
+        temperature: 0.7,
+        thinkingMode: 'disabled',
+        todoAssistant: false,
+        enableImageGeneration: false,
+        mcpEnabled: true,
+        contextCompressionEnabled: true,
+        contextCompressionTriggerChars: 10,
+        contextCompressionModelId: null,
+      })
+
+      mockCurrentSession.value = {
+        id: 's1',
+        title: 'T1',
+        messages: [
+          { id: 'u1', role: 'user', content: 'old user message long long long' },
+          { id: 'a1', role: 'assistant', content: 'old assistant message long long long' },
+        ],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+
+      const mockGetAIStaticResponse = vi.mocked(getAIStaticResponse)
+      mockGetAIStaticResponse.mockResolvedValueOnce({ content: 'summary' })
+
+      mockGetAIStreamResponse.mockImplementation(
+        async (_messages: ChatMessage[], onChunk: OnChunk) => {
+          onChunk('ok')
+          onChunk('[DONE]')
+        },
+      )
+
+      const { sendMessage } = useChat()
+      await sendMessage('new message')
+
+      const firstCall = mockGetAIStreamResponse.mock.calls[0]
+      expect(firstCall).toBeDefined()
+
+      const sentMessages = firstCall[0]
+      expect(sentMessages).toHaveLength(1)
+      expect(sentMessages[0].role).toBe('user')
+      expect(sentMessages[0].content).toBe('new message')
+
+      const sentOptions = firstCall[4] as { contextSummary?: string } | undefined
+      expect(sentOptions?.contextSummary).toBe('summary')
+      expect(mockUpdateSessionContextSummary).toHaveBeenCalledWith('s1', {
+        summary: 'summary',
+        untilMessageId: 'a1',
+      })
     })
   })
 

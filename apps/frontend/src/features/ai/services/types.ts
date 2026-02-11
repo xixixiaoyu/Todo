@@ -65,6 +65,7 @@ export interface AIRequestOptions {
   maxTokens?: number
   systemPrompt?: string
   thinkingMode?: 'enabled' | 'disabled'
+  contextSummary?: string
   tools?: Tool[]
   toolChoice?: 'none' | 'auto' | 'required' | { type: 'function'; function: { name: string } }
 }

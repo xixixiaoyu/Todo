@@ -43,6 +43,12 @@ export const ai = {
   tempCreative: '创意 (2)',
   systemPromptLabel: '系统提示词 (System Prompt)',
   systemPromptPlaceholder: '设置 AI 的角色 and 行为...',
+  contextCompression: '上下文压缩',
+  contextCompressionDesc: '对长对话进行摘要压缩，在尽量保真前提下控制上下文长度。',
+  contextCompressionTriggerLabel: '触发阈值 (字符数)',
+  contextCompressionModelPreset: '压缩专用预设',
+  contextCompressionModelTip:
+    '为上下文压缩指定一个专用预设（如更擅长摘要与信息抽取的模型）可提升压缩质量与稳定性。留空则使用当前主配置。',
   createPreset: '创建预设',
   editPreset: '编辑预设',
   copyPreset: '复制预设',

@@ -9,9 +9,13 @@ import type { ChatSession } from '@/features/ai/composables/useChatHistory'
 /**
  * 模拟从 localStorage 解析出的会话类型（Date 变为 string）
  */
-type SerializedChatSession = Omit<ChatSession, 'createdAt' | 'updatedAt'> & {
+type SerializedChatSession = Omit<
+  ChatSession,
+  'createdAt' | 'updatedAt' | 'contextSummaryUpdatedAt'
+> & {
   createdAt: string
   updatedAt: string
+  contextSummaryUpdatedAt?: string
 }
 
 // Mock i18n

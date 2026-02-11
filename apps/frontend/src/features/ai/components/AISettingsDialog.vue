@@ -23,11 +23,14 @@ import AIPresetManager from './AIPresetManager.vue'
 import McpSettingsManager from '@/features/mcp/components/McpSettingsManager.vue'
 
 const props = defineProps<{
-  initialTab?: 'settings' | 'presets' | 'memory' | 'mcp'
+  initialTab?: 'settings' | 'contextCompression' | 'presets' | 'memory' | 'mcp'
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:initialTab', tab: 'settings' | 'presets' | 'memory' | 'mcp'): void
+  (
+    e: 'update:initialTab',
+    tab: 'settings' | 'contextCompression' | 'presets' | 'memory' | 'mcp',
+  ): void
 }>()
 
 const modelValue = defineModel<boolean>({ required: true })
@@ -42,7 +45,9 @@ const { config, updateConfig, DEFAULT_CONFIG, presets, addPreset, activePresetId
 const presetManagerRef = ref<InstanceType<typeof AIPresetManager> | null>(null)
 
 // 当前 Tab
-const activeTab = ref<'settings' | 'presets' | 'memory' | 'mcp'>(props.initialTab || 'settings')
+const activeTab = ref<'settings' | 'contextCompression' | 'presets' | 'memory' | 'mcp'>(
+  props.initialTab || 'settings',
+)
 
 // 监听内部 Tab 变化并通知外部
 watch(activeTab, (newTab) => {
@@ -264,7 +269,13 @@ defineExpose({
             <!-- 导航层 -->
             <div class="relative flex gap-8 px-9">
               <button
-                v-for="tab in ['settings', 'presets', 'memory', 'mcp'] as const"
+                v-for="tab in [
+                  'settings',
+                  'contextCompression',
+                  'presets',
+                  'memory',
+                  'mcp',
+                ] as const"
                 :key="tab"
                 class="group relative py-4 text-[13px] font-bold tracking-wide transition-all"
                 :class="
@@ -307,6 +318,13 @@ defineExpose({
               v-if="activeTab === 'settings'"
               v-model="formData"
               :presets="presets"
+            />
+
+            <AISettingsBasic
+              v-else-if="activeTab === 'contextCompression'"
+              v-model="formData"
+              :presets="presets"
+              mode="contextCompression"
             />
 
             <!-- 记忆管理 Tab -->

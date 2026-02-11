@@ -7,6 +7,9 @@ export interface ChatSession {
   id: string
   title: string
   messages: ChatMessage[]
+  contextSummary?: string
+  contextSummaryUpdatedAt?: Date
+  contextSummaryUntilMessageId?: string
   createdAt: Date
   updatedAt: Date
   isPinned?: boolean
@@ -57,6 +60,9 @@ function loadSessions(): void {
         ...s,
         createdAt: new Date(s.createdAt),
         updatedAt: new Date(s.updatedAt),
+        contextSummaryUpdatedAt: s.contextSummaryUpdatedAt
+          ? new Date(s.contextSummaryUpdatedAt)
+          : undefined,
         messages: s.messages.map((msg: ChatMessage) => ({
           ...msg,
           createdAt: msg.createdAt ? new Date(msg.createdAt) : undefined,
@@ -253,6 +259,29 @@ export function useChatHistory() {
     }
   }
 
+  function updateSessionContextSummary(
+    sessionId: string,
+    data: { summary: string; untilMessageId: string },
+  ): void {
+    const session = sessions.value.find((s) => s.id === sessionId)
+    if (!session) return
+
+    session.contextSummary = data.summary
+    session.contextSummaryUntilMessageId = data.untilMessageId
+    session.contextSummaryUpdatedAt = new Date()
+    session.updatedAt = new Date()
+  }
+
+  function clearSessionContextSummary(sessionId: string): void {
+    const session = sessions.value.find((s) => s.id === sessionId)
+    if (!session) return
+
+    session.contextSummary = undefined
+    session.contextSummaryUntilMessageId = undefined
+    session.contextSummaryUpdatedAt = undefined
+    session.updatedAt = new Date()
+  }
+
   /**
    * 切换置顶状态
    */
@@ -332,6 +361,8 @@ export function useChatHistory() {
     createSession,
     switchSession,
     updateSessionMessages,
+    updateSessionContextSummary,
+    clearSessionContextSummary,
     renameSession,
     togglePin,
     deleteSession,

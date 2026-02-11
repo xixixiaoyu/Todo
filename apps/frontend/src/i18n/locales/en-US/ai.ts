@@ -48,6 +48,12 @@ export const ai = {
   tempCreative: 'Creative (2)',
   systemPromptLabel: 'System Prompt',
   systemPromptPlaceholder: 'Set AI role and behavior...',
+  contextCompression: 'Context Compression',
+  contextCompressionDesc: 'Summarize long chats to keep context within limits.',
+  contextCompressionTriggerLabel: 'Trigger threshold (chars)',
+  contextCompressionModelPreset: 'Compression Preset',
+  contextCompressionModelTip:
+    'Use a dedicated preset for context compression to improve summary quality and stability. Leave empty to use current main configuration.',
   createPreset: 'Create Preset',
   editPreset: 'Edit Preset',
   copyPreset: 'Copy Preset',
