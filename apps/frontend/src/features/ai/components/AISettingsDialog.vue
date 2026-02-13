@@ -23,13 +23,13 @@ import AIPresetManager from './AIPresetManager.vue'
 import McpSettingsManager from '@/features/mcp/components/McpSettingsManager.vue'
 
 const props = defineProps<{
-  initialTab?: 'settings' | 'contextCompression' | 'presets' | 'memory' | 'mcp'
+  initialTab?: 'settings' | 'presets' | 'memory' | 'mcp' | 'contextCompression'
 }>()
 
 const emit = defineEmits<{
   (
     e: 'update:initialTab',
-    tab: 'settings' | 'contextCompression' | 'presets' | 'memory' | 'mcp',
+    tab: 'settings' | 'presets' | 'memory' | 'mcp' | 'contextCompression',
   ): void
 }>()
 
@@ -45,7 +45,7 @@ const { config, updateConfig, DEFAULT_CONFIG, presets, addPreset, activePresetId
 const presetManagerRef = ref<InstanceType<typeof AIPresetManager> | null>(null)
 
 // 当前 Tab
-const activeTab = ref<'settings' | 'contextCompression' | 'presets' | 'memory' | 'mcp'>(
+const activeTab = ref<'settings' | 'presets' | 'memory' | 'mcp' | 'contextCompression'>(
   props.initialTab || 'settings',
 )
 
@@ -271,10 +271,10 @@ defineExpose({
               <button
                 v-for="tab in [
                   'settings',
-                  'contextCompression',
                   'presets',
                   'memory',
                   'mcp',
+                  'contextCompression',
                 ] as const"
                 :key="tab"
                 class="group relative py-4 text-[13px] font-bold tracking-wide transition-all"
@@ -320,12 +320,8 @@ defineExpose({
               :presets="presets"
             />
 
-            <AISettingsBasic
-              v-else-if="activeTab === 'contextCompression'"
-              v-model="formData"
-              :presets="presets"
-              mode="contextCompression"
-            />
+            <!-- 预设管理 Tab -->
+            <AIPresetManager v-else-if="activeTab === 'presets'" ref="presetManagerRef" />
 
             <!-- 记忆管理 Tab -->
             <AIMemoryManager
@@ -334,11 +330,16 @@ defineExpose({
               :presets="presets"
             />
 
-            <!-- 预设管理 Tab -->
-            <AIPresetManager v-else-if="activeTab === 'presets'" ref="presetManagerRef" />
-
             <!-- MCP 扩展 Tab -->
             <McpSettingsManager v-else-if="activeTab === 'mcp'" />
+
+            <!-- 上下文压缩 Tab -->
+            <AISettingsBasic
+              v-else-if="activeTab === 'contextCompression'"
+              v-model="formData"
+              :presets="presets"
+              mode="contextCompression"
+            />
           </div>
 
           <!-- 底部按钮 -->

@@ -484,10 +484,10 @@ function toggleSecondaryModel(presetId: string) {
                 <p class="text-[12px] font-semibold text-foreground/70">
                   {{ t('ai.contextCompressionModelPreset') }}
                 </p>
-                <div class="group relative">
+                <div class="group/tooltip relative">
                   <Info :size="12" class="text-muted-foreground/50 cursor-help" />
                   <div
-                    class="absolute bottom-full right-0 mb-2 hidden w-56 rounded-lg border border-border bg-popover p-2 text-[10px] leading-relaxed text-popover-foreground shadow-xl group-hover:block"
+                    class="absolute bottom-full right-0 mb-2 hidden w-56 rounded-lg border border-border bg-popover p-2 text-[10px] leading-relaxed text-popover-foreground shadow-xl group-hover/tooltip:block"
                   >
                     {{ t('ai.contextCompressionModelTip') }}
                   </div>

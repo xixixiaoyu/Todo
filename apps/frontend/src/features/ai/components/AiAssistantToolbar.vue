@@ -52,7 +52,7 @@ const emit = defineEmits<{
   (e: 'selectPrimaryModel', id: string): void
   (e: 'toggleSecondaryModel', id: string): void
   (e: 'selectPreset', id: string): void
-  (e: 'openSettings', tab?: 'settings' | 'presets' | 'memory' | 'mcp'): void
+  (e: 'openSettings', tab?: 'settings' | 'presets' | 'memory' | 'mcp' | 'contextCompression'): void
 }>()
 
 const { t } = useI18n()

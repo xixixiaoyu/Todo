@@ -195,7 +195,9 @@ const chatInput = ref('')
 
 // 设置弹窗状态
 const showSettings = ref(false)
-const lastActiveTab = ref<'settings' | 'presets' | 'memory' | 'mcp'>('settings')
+const lastActiveTab = ref<'settings' | 'presets' | 'memory' | 'mcp' | 'contextCompression'>(
+  'settings',
+)
 
 // 历史记录面板状态
 const showHistory = ref(false)
@@ -314,7 +316,7 @@ const handleSelectSuggestion = async (text: string, options?: { requireTodo?: bo
 }
 
 // 打开设置
-const openSettings = (tab?: 'settings' | 'presets' | 'memory' | 'mcp') => {
+const openSettings = (tab?: 'settings' | 'presets' | 'memory' | 'mcp' | 'contextCompression') => {
   if (tab) {
     lastActiveTab.value = tab
   }

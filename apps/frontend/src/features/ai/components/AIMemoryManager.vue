@@ -259,10 +259,10 @@ function handleClearConfirm() {
           <label class="text-xs font-medium text-muted-foreground">{{
             t('ai.memoryModelPreset')
           }}</label>
-          <div class="group relative">
+          <div class="group/tooltip relative">
             <Info :size="12" class="text-muted-foreground/50 cursor-help" />
             <div
-              class="absolute bottom-full right-0 mb-2 hidden w-48 rounded-lg border border-border bg-popover p-2 text-[10px] leading-relaxed text-popover-foreground shadow-xl group-hover:block"
+              class="absolute bottom-full right-0 mb-2 hidden w-48 rounded-lg border border-border bg-popover p-2 text-[10px] leading-relaxed text-popover-foreground shadow-xl group-hover/tooltip:block"
             >
               {{ t('ai.memoryModelTip') }}
             </div>
@@ -295,10 +295,10 @@ function handleClearConfirm() {
             <label class="text-xs font-medium text-muted-foreground">{{
               t('ai.memoryAutoCompressThreshold')
             }}</label>
-            <div class="group relative">
+            <div class="group/tooltip relative">
               <Info :size="12" class="text-muted-foreground/50 cursor-help" />
               <div
-                class="absolute bottom-full right-0 mb-2 hidden w-64 rounded-lg border border-border bg-popover p-2 text-[10px] leading-relaxed text-popover-foreground shadow-xl group-hover:block"
+                class="absolute bottom-full right-0 mb-2 hidden w-64 rounded-lg border border-border bg-popover p-2 text-[10px] leading-relaxed text-popover-foreground shadow-xl group-hover/tooltip:block"
               >
                 {{ t('ai.memoryAutoCompressThresholdTip') }}
               </div>
