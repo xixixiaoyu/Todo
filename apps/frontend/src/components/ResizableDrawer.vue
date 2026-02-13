@@ -251,6 +251,31 @@ watch(
   background: transparent;
 }
 
+.resize-handle::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  height: 100%;
+  background: hsl(var(--border) / 0.4);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  opacity: 1;
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  pointer-events: none;
+}
+
+.resize-handle:hover::before,
+.resize-handle.hovering::before,
+.resize-handle.resizing::before {
+  width: 24px;
+  background: linear-gradient(to right, transparent, hsl(var(--primary) / 0.05) 50%, transparent);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+}
+
 .resize-handle:hover,
 .resize-handle.hovering {
   background: hsl(var(--primary) / 0.04);
@@ -258,6 +283,16 @@ watch(
 
 .resize-handle.resizing {
   background: hsl(var(--primary) / 0.08);
+}
+
+:root.dark .resize-handle::before {
+  background: hsl(var(--border) / 0.2);
+}
+
+:root.dark .resize-handle:hover::before,
+:root.dark .resize-handle.hovering::before,
+:root.dark .resize-handle.resizing::before {
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.04) 50%, transparent);
 }
 
 :root.dark .resize-handle:hover,
