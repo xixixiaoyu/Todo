@@ -270,4 +270,12 @@ defineExpose({
   background-color: hsl(var(--ai-message-border));
   border-radius: 20px;
 }
+
+:global(.dark) .overflow-y-auto {
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+:global(.dark) .overflow-y-auto::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.15);
+}
 </style>

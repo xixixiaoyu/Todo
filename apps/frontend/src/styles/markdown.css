@@ -66,7 +66,7 @@
 }
 
 .dark .code-content {
-  scrollbar-color: #3a3a3a transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
 }
 
 .code-content code {
