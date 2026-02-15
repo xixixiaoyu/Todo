@@ -64,40 +64,40 @@
   }
 
   .dark {
-    /* 基础颜色 - 加深背景以提升对比度 */
-    --background: 240 6% 7%;
-    --foreground: 0 0% 95%;
-    --card: 240 6% 10%;
-    --card-foreground: 0 0% 95%;
-    --popover: 240 6% 10%;
-    --popover-foreground: 0 0% 95%;
+    /* 基础颜色 - 柔和深邃的 Zinc 风格，降低极端对比度，营造舒适沉浸感 */
+    --background: 240 5% 10%; /* 提升亮度，告别死黑，接近 Vercel Dark */
+    --foreground: 240 5% 90%; /* 降低文字亮度至 90%，柔和护眼 */
+    --card: 240 4% 12%; /* 卡片微提亮，与背景形成细腻层次 */
+    --card-foreground: 240 5% 90%;
+    --popover: 240 4% 12%;
+    --popover-foreground: 240 5% 90%;
 
-    /* 主题色 - 稍微提高亮度，在深色背景下更鲜明 */
-    --primary: var(--user-primary-dark, 32 45% 65%);
-    --primary-hover: var(--user-primary-hover-dark, 32 45% 70%);
-    --primary-foreground: var(--user-primary-foreground-dark, 32 10% 8%);
-    --primary-rgb: var(--user-primary-rgb-dark, 201, 184, 150);
+    /* 主题色 - 保持活力但更沉稳，避免荧光感刺眼 */
+    --primary: var(--user-primary-dark, 32 85% 60%);
+    --primary-hover: var(--user-primary-hover-dark, 32 85% 55%);
+    --primary-foreground: var(--user-primary-foreground-dark, 32 10% 10%);
+    --primary-rgb: var(--user-primary-rgb-dark, 245, 158, 11);
 
-    /* 次要色 */
-    --secondary: 240 4% 15%;
-    --secondary-foreground: 0 0% 95%;
-    --muted: 240 4% 12%;
-    --muted-foreground: 240 4% 60%;
-    --accent: 240 4% 15%;
-    --accent-foreground: 0 0% 95%;
+    /* 次要色 - 融入背景，低调优雅 */
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 240 5% 90%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 60%;
+    --accent: 240 4% 16%;
+    --accent-foreground: 240 5% 90%;
 
-    /* 警告/错误色 */
-    --destructive: 15 60% 60%;
-    --destructive-foreground: 0 0% 95%;
+    /* 警告/错误色 - 降低饱和度 */
+    --destructive: 0 70% 60%;
+    --destructive-foreground: 0 0% 98%;
 
-    /* 边框和输入 - 更加细腻的对比 */
-    --border: 240 4% 16%;
-    --input: 240 4% 16%;
+    /* 边框和输入 - 更加细腻的灰度 */
+    --border: 240 4% 18%;
+    --input: 240 4% 18%;
     --ring: var(--primary);
 
-    --text-color: 0 0% 90%;
-    --text-secondary: 240 4% 55%;
-    --todo-completed: 240 4% 45%;
+    --text-color: 240 5% 90%;
+    --text-secondary: 240 5% 60%;
+    --todo-completed: 240 5% 45%;
     --success: 145 30% 50%;
     --error: 15 50% 50%;
 
@@ -105,12 +105,12 @@
     --primary-color: var(--primary);
     --text-color-base: var(--text-color);
     --text-secondary-color: var(--text-secondary);
-    --ai-message-bg: 240 6% 14%;
-    --ai-message-border: 240 6% 22%;
+    --ai-message-bg: 240 4% 14%;
+    --ai-message-border: 240 4% 20%;
     --ai-accent-hover: var(--accent);
-    --ai-glass-bg: 240 6% 10%;
-    --ai-glass-border: 240 6% 18%;
-    --ai-header-yellow: 32 35% 15%;
+    --ai-glass-bg: 240 4% 10%;
+    --ai-glass-border: 240 4% 18%;
+    --ai-header-yellow: 32 60% 15%;
   }
 
   /* 性能优化辅助类 */
