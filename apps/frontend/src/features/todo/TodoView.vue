@@ -25,9 +25,11 @@ const { gsap, ctx } = useGsap()
 
 const isInputVisible = computed(() => todoStore.viewMode === 'list' && todoStore.filter !== 'trash')
 
-const currentViewKey = computed(() =>
-  todoStore.viewMode === 'stats' ? 'stats' : `${todoStore.viewMode}-${todoStore.filter}`,
-)
+const currentViewKey = computed(() => {
+  if (todoStore.viewMode === 'visual') return 'visual'
+  if (todoStore.viewMode === 'stats') return 'stats'
+  return `${todoStore.viewMode}-${todoStore.filter}`
+})
 
 const currentViewComponent = computed(() => {
   if (todoStore.viewMode === 'list') return TodoList

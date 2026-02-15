@@ -495,20 +495,7 @@ const emptyText = computed(() =>
   <div ref="containerRef" class="flex-1 flex flex-col min-h-0 w-full relative group">
     <Transition name="fade" mode="out-in">
       <div
-        v-if="!isReady"
-        key="loading"
-        class="flex-1 flex flex-col items-center justify-center relative z-10"
-      >
-        <div class="p-8 rounded-full bg-primary/5 mb-6 animate-pulse">
-          <Clover :size="48" class="text-primary/20" />
-        </div>
-        <p class="text-muted-foreground/60 font-medium tracking-wide">
-          {{ t('common.loading') }}
-        </p>
-      </div>
-
-      <div
-        v-else-if="treeData.length === 0"
+        v-if="treeData.length === 0"
         key="empty"
         class="flex-1 flex flex-col items-center justify-center relative z-10"
       >
@@ -521,14 +508,27 @@ const emptyText = computed(() =>
       </div>
 
       <VChart
-        v-else
-        key="chart"
+        v-else-if="isReady"
+        :key="`chart-${props.filter}`"
         ref="vChartRef"
         class="flex-1 w-full h-full relative z-10"
         :option="chartOptions"
         :autoresize="false"
         :theme="isDark ? 'dark' : undefined"
       />
+
+      <div
+        v-else
+        key="loading"
+        class="flex-1 flex flex-col items-center justify-center relative z-10"
+      >
+        <div class="p-8 rounded-full bg-primary/5 mb-6 animate-pulse">
+          <Clover :size="48" class="text-primary/20" />
+        </div>
+        <p class="text-muted-foreground/60 font-medium tracking-wide">
+          {{ t('common.loading') }}
+        </p>
+      </div>
     </Transition>
   </div>
 </template>
