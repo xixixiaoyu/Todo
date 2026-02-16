@@ -24,14 +24,14 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup",
-    "type-check": "tsc --noEmit",
+    "build": "cross-env NODE_OPTIONS='--max-old-space-size=8192' tsup",
+    "type-check": "cross-env NODE_OPTIONS='--max-old-space-size=8192' tsc --noEmit",
     "dev": "tsup",
-    "test": "vitest run",
+    "test": "cross-env NODE_OPTIONS='--max-old-space-size=8192' vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "lint": "cross-env NODE_OPTIONS='--max-old-space-size=4096' eslint . --cache",
-    "lint:fix": "cross-env NODE_OPTIONS='--max-old-space-size=4096' eslint . --fix --cache",
+    "lint": "cross-env NODE_OPTIONS='--max-old-space-size=8192' eslint . --cache",
+    "lint:fix": "cross-env NODE_OPTIONS='--max-old-space-size=8192' eslint . --fix --cache",
     "clean": "rm -rf dist"
   },
   "dependencies": {
