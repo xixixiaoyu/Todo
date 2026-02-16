@@ -283,15 +283,21 @@ function onFireworksComplete() {
               "
               @leave="
                 (el, done) => {
-                  gsap.killTweensOf(el)
-                  gsap.to(el, {
+                  const element = el as HTMLElement
+                  gsap.killTweensOf(element)
+                  // 提前设置 will-change 优化性能
+                  gsap.set(element, { willChange: 'transform, opacity, filter' })
+                  gsap.to(element, {
                     opacity: 0,
                     x: -direction * 15,
                     scale: 0.98,
                     filter: 'blur(4px)',
                     duration: 0.25,
                     ease: 'power2.in',
-                    onComplete: done,
+                    onComplete: () => {
+                      gsap.set(element, { clearProps: 'willChange,filter' })
+                      done()
+                    },
                   })
                 }
               "

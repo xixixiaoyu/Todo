@@ -24,7 +24,11 @@ export function parseRgb(value: string): Rgb | null {
 }
 
 export function parseHslTriplet(value: string): { h: number; s: number; l: number } | null {
-  const [hRaw, sRaw, lRaw] = value.split(/\s+/)
+  // Support space or comma separated values, e.g., "200 50% 50%" or "200, 50%, 50%"
+  const parts = value.split(/[\s,]+/).filter(Boolean)
+  if (parts.length < 3) return null
+
+  const [hRaw, sRaw, lRaw] = parts
   const h = Number.parseFloat(hRaw)
   const s = Number.parseFloat((sRaw ?? '').replace('%', ''))
   const l = Number.parseFloat((lRaw ?? '').replace('%', ''))
