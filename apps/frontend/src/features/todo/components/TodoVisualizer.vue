@@ -51,10 +51,7 @@ onBeforeUnmount(() => {
 useResizeObserver(containerRef, (entries) => {
   const entry = entries[0]
   const { width, height } = entry.contentRect
-  if (width <= 0 || height <= 0) {
-    isReady.value = false
-    return
-  }
+  if (width <= 0 || height <= 0) return
 
   if (!isReady.value) {
     isReady.value = true
@@ -434,19 +431,6 @@ const emptyText = computed(() =>
         :autoresize="false"
         :theme="isDark ? 'dark' : undefined"
       />
-
-      <div
-        v-else
-        key="loading"
-        class="flex-1 flex flex-col items-center justify-center relative z-10"
-      >
-        <div class="p-8 rounded-full bg-primary/5 mb-6 animate-pulse">
-          <Clover :size="48" class="text-primary/20" />
-        </div>
-        <p class="text-muted-foreground/60 font-medium tracking-wide">
-          {{ t('common.loading') }}
-        </p>
-      </div>
     </Transition>
   </div>
 </template>
