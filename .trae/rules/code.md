@@ -132,7 +132,6 @@ type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse
 
 ## 测试规范（Vitest）
 
-- 流程：先写失败测试 → 实现 → 重构；变更点必须覆盖主路径与关键边界
 - **前端**：Vitest + Happy DOM + `@vue/test-utils`，测试文件在 `apps/frontend/tests/`
 - **后端**：Vitest + Node + `@nestjs/testing`，测试文件在 `apps/backend/tests/`，配置使用 `vitest.config.mts`
 - **共享包**：Vitest + Node，测试文件在 `packages/shared/src/**/*.spec.ts`
