@@ -76,12 +76,23 @@ import { cn } from '@/lib/utils'
 ## API 响应格式
 
 ```ts
-interface ApiResponse<T> {
-  success: boolean
+interface ApiSuccessResponse<T> {
+  success: true
   data: T
+  timestamp: string
   message?: string
+}
+
+interface ApiErrorResponse {
+  success: false
+  data: null
+  message: string
+  errors?: Record<string, string>
+  statusCode: number
   timestamp: string
 }
+
+type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse
 ```
 
 ## 国际化（i18n）
@@ -100,7 +111,7 @@ interface ApiResponse<T> {
 - **数据请求**：优先 TanStack Query 管理缓存与并发；Axios 只做传输层封装
 - **组件约定**：`<script setup lang="ts">` → `<template>` → `<style>`，Composition API 优先
 
-## UI 与交互规范（Tailwind 4 + Reka UI + GSAP）
+## UI 与交互规范（Tailwind 3.4 + Reka UI + GSAP）
 
 - **布局**：Mobile First；优先 Flex/Grid，避免硬编码尺寸；关键容器使用 `mx-auto` + `max-w-*`
 - **视觉**：留白与呼吸感优先；圆角设计遵循 `--radius: 0.75rem`
@@ -113,7 +124,7 @@ interface ApiResponse<T> {
 - **分层**：Controller 只处理协议层（DTO/鉴权/序列化），领域逻辑在 Service，持久化在 Prisma 层封装
 - **数据一致性**：写操作优先事务；避免在请求链路中做不可控的外部副作用
 - **鉴权**：accessToken + refreshToken；非 GET 请求携带 `Authorization` 头
-- **限流**：遵循既定策略（1s/10、10s/50、1min/100），避免误伤关键链路
+- **限流**：默认策略（1s/10、10s/50、1min/100），可通过 `THROTTLE_*` 环境变量覆盖
 - **缓存**：仅缓存确定性且可失效的数据；TTL 统一用常量（如 `CacheableTTL.FIVE_MINUTES`）
 - **实时通信**：通过 `EventsGateway` 广播，避免在业务层散落 Socket 逻辑
 - **任务队列**：BullMQ + Redis；耗时/可重试工作进入队列，避免阻塞请求
