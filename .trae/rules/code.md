@@ -1,184 +1,190 @@
-# 项目上下文
+# AI 开发规范（Todo Monorepo）
 
-基于 **NestJS 11 + Vue 3.5** 的全栈 Todo 应用，采用 **pnpm Monorepo** 架构。当前开发环境统一使用 `pnpm docker:dev` 启动的全栈 Docker 容器环境。
+本文件用于约束 AI 在本仓库内的开发行为，确保产出可维护、可测试、可交付。
 
-## 核心原则
+## 项目概览
 
-1. **测试驱动 (TDD First)**: 逻辑变动必须伴随测试。没有测试支撑的代码视为不可靠，禁止交付。
-2. **极简代码哲学**: JS/TS 采用 2 空格、单引号、无分号；坚持 SOLID 原则，优先依赖抽象，严禁 `any`。
+基于 **NestJS 11 + Vue 3.5** 的全栈 Todo 应用，采用 **pnpm Monorepo**。当前开发环境默认使用 `pnpm docker:dev` 启动全栈 Docker 容器。
 
-## 项目结构
+## 必须遵守（不可妥协）
+
+- 核心业务逻辑变更必须补齐/更新测试；没有测试支撑的改动不交付
+- 代码风格遵循项目约定：2 空格、单引号、无分号，TypeScript 严格类型，禁止 `any`
+- 只在必要时新增文件；优先复用既有模块与模式，保持改动面最小
+- 不引入会泄露密钥/隐私的日志与代码；不在仓库内写入任何密钥
+- 变更完成后必须通过：`pnpm lint`、`pnpm test`、`pnpm type-check`
+
+## 目录结构
 
 ```
-apps/backend/     # NestJS 后端 (Business Brain)
-apps/frontend/    # Vue 3 前端 (Web Core)
-apps/wails/       # Wails (Go) 桌面端 (Native Shell)
-packages/shared/  # 共享包 (Zod Schemas, DTOs, Utils)
+apps/backend/     # NestJS 后端（Business Brain）
+apps/frontend/    # Vue 3 前端（Web Core）
+apps/wails/       # Wails（Go）桌面端（Native Shell）
+packages/shared/  # 共享包（Zod Schemas, DTOs, Utils）
 ```
 
-## 架构哲学
+## 架构原则（Thin Shell, Thick Brain）
 
-**Thin Native Shell + Thick Cloud Brain** (轻原生壳 + 重云端大脑)
+- **职责分工**
+  - **前端（Vue）**：界面与交互、状态管理、请求编排、可视化与动效
+  - **后端（NestJS）**：领域逻辑、鉴权、持久化、任务队列、实时通信
+  - **原生壳（Wails/Capacitor）**：系统级能力（托盘、快捷键、文件、窗口）
+- **通信策略**
+  - **业务流（Vue ↔ NestJS）**：标准 HTTPS/WS 直连，不经原生层转发
+  - **原生流（Vue ↔ Wails/Capacitor）**：仅在调用系统能力时走 JS Bridge
 
-- **职责分工**:
-  - **UI 层 (Vue 3)**: 界面展示、交互逻辑、Pinia 状态管理。采用 **Feature-based Modularization** (基于功能的模块化)。
-  - **原生壳 (Wails/Capacitor)**: 系统托盘、全局快捷键、本地文件、窗口控制。
-  - **业务大脑 (NestJS)**: 数据库 (Prisma)、用户认证、多端同步、AI 逻辑。
-- **通信策略**:
-  - **业务流 (Vue ↔ NestJS)**: 标准 HTTPS/WS 直接通信，不经原生层转发，确保多端高度复用。
-  - **原生流 (Vue ↔ Wails/Capacitor)**: 仅在调用系统底层功能时使用 JS Bridge (`window.go...` 或插件)。
+## 依赖边界（防止跨层污染）
 
-## 技术栈
+- `packages/shared` 必须保持可移植与无副作用：不依赖前端/后端实现，不访问运行时环境（如 `window`、`process.env` 业务分支）
+- `apps/frontend` 只能依赖 `packages/shared` 与前端自身模块，不引入后端私有实现
+- `apps/backend` 只能依赖 `packages/shared` 与后端自身模块，不引入前端私有实现
+- `apps/wails` 只承载原生能力与桥接，不承载业务规则
 
-**前端**: Vue 3.5+ / Vite 7 / Pinia / Tailwind 4 / GSAP / TanStack Query + Axios / VeeValidate + Zod / Vue I18n / Reka UI (Headless)
-**跨端**: Capacitor 8 / Wails 2.11 / PWA
-**后端**: NestJS 11+ / PostgreSQL 16 + Prisma 7 / Redis (ioredis 5.8+) + BullMQ / JWT + Passport / nestjs-zod / Socket.IO
-**工具**: pnpm 9.15+ / Turbo 2.7+ / ESLint 9 / Vitest
+## 交付标准（Definition of Done）
 
-## 前端架构
+- 功能完整：覆盖主路径与关键边界条件，交互与状态一致
+- 兼容性：不破坏既有 API/Schema/存量数据（必要时提供迁移）
+- 可观测：错误可定位（语义化错误码/信息），不打印敏感信息
+- 可维护：遵循既有架构、命名、文件组织；无重复实现
+- 质量门禁：`pnpm lint`、`pnpm test`、`pnpm type-check` 全绿
 
-- **目录结构**:
-  - `src/features/`: 按业务功能划分（如 `auth`, `todo`）。每个 feature 包含自己的 `api`, `stores`, `components`, `composables`, `views`。
-  - `src/services/`: 抽象公共服务层，如 AI 核心逻辑 (`services/ai/`)、原生能力对接 (`services/native.ts`)。
-  - `src/composables/`: 全局可复用的组合式函数，如 `useGsap` (动画), `useSocket` (即时通讯), `useMarkdown` (渲染)。
-- **状态管理**: 优先使用 Pinia。持久化存储使用 `pinia-plugin-persistedstate`。
-- **UI 组件**: 基于 Tailwind 4 + Reka UI。
+## 工作流（AI 执行顺序）
 
-## 视觉设计
+- **Synthesis**：快速确定需求边界与隐含约束，优先查阅代码现状而非凭空假设
+- **Modeling**：抽象最小数据流与接口；先定 DTO/Schema/返回结构，再写业务实现
+- **Execution**：按既有模式落地，避免跨层调用；优先小 PR 风格的可审阅改动
+- **Refinement**：自检与重构；收敛重复逻辑，补边界测试，确保质量门禁通过
 
-- **风格**: 现代简约，强调留白与呼吸感，追求精致的微交互。
-- **色彩**: 温暖大地色系（Light）与低对比度深灰（Dark），支持自动切换。
-- **字体**: 优先 `LXGW WenKai` (中文) 与 `JetBrains Mono` (等宽)，提升阅读体验。
-- **形状**: 大圆角设计 (`--radius: 0.75rem`)，柔化视觉边界。
-- **动效**: GSAP 驱动，响应迅速（<300ms），避免无意义的装饰性动画。
+## TypeScript 与代码风格
 
-## 布局规范
+- 统一使用 2 空格、单引号、无分号；保持与仓库 ESLint/Prettier 一致
+- 类型优先：用类型表达约束与状态，宁可显式定义，也不要 `any`
+- 错误处理：对外暴露的失败必须可预期（可辨别、可恢复或可提示）
+- 导入约定
 
-- **响应式优先**: 坚持 Mobile First 原则，确保在不同设备（Mobile/Desktop/PWA）上均有极致的自适应体验。
-- **灵活容器**: 核心内容推荐使用 `mx-auto` 居中并配合 `max-w-*` 限制，确保大屏下的视觉聚焦与阅读舒适度。
-- **流式结构**: 优先采用 `Flexbox` 与 `Grid` 构建灵活布局，避免硬编码尺寸，保持界面的呼吸感与弹性。
+```ts
+import { xxx } from '@my-app/shared'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+```
+
+## 共享契约（Zod → DTO → 类型推断）
+
+- 共享包定义 Schema，前端用 `toTypedSchema(Schema)`，后端用 `createZodDto(Schema)`
+- 共享类型的变更必须同步影响前后端，避免运行时漂移
+
+## API 响应格式
+
+```ts
+interface ApiResponse<T> {
+  success: boolean
+  data: T
+  message?: string
+  timestamp: string
+}
+```
+
+## 国际化（i18n）
+
+- 前后端语言资源分离管理
+- 新增文案必须中英文同步，禁止硬编码 UI 文本
+- 约定：枚举值大写蛇形；UI 文本小写驼峰
+
+## 前端规范（Vue 3.5 + Vite + Pinia）
+
+- **组织方式**：Feature-based Modularization
+  - `src/features/<feature>/{api,stores,components,composables,views}`
+  - `src/services/` 放跨 feature 的抽象服务（如 AI、原生桥接）
+  - `src/composables/` 放全局可复用组合式函数
+- **状态管理**：优先 Pinia；需要持久化时使用 `pinia-plugin-persistedstate`
+- **数据请求**：优先 TanStack Query 管理缓存与并发；Axios 只做传输层封装
+- **组件约定**：`<script setup lang="ts">` → `<template>` → `<style>`，Composition API 优先
+
+## UI 与交互规范（Tailwind 4 + Reka UI + GSAP）
+
+- **布局**：Mobile First；优先 Flex/Grid，避免硬编码尺寸；关键容器使用 `mx-auto` + `max-w-*`
+- **视觉**：留白与呼吸感优先；圆角设计遵循 `--radius: 0.75rem`
+- **动效**：必须使用 `useGsap`，并将动画包裹在 `ctx.add(() => { ... })` 内确保自动清理
+- **Tailwind**：原子化优先；动态 class 通过 `cn()` 合并
+- **A11y**：交互控件需可键盘操作、可聚焦、可读 label；状态变化需有可感知反馈
+
+## 后端规范（NestJS 11 + Prisma + Redis + BullMQ）
+
+- **分层**：Controller 只处理协议层（DTO/鉴权/序列化），领域逻辑在 Service，持久化在 Prisma 层封装
+- **数据一致性**：写操作优先事务；避免在请求链路中做不可控的外部副作用
+- **鉴权**：accessToken + refreshToken；非 GET 请求携带 `Authorization` 头
+- **限流**：遵循既定策略（1s/10、10s/50、1min/100），避免误伤关键链路
+- **缓存**：仅缓存确定性且可失效的数据；TTL 统一用常量（如 `CacheableTTL.FIVE_MINUTES`）
+- **实时通信**：通过 `EventsGateway` 广播，避免在业务层散落 Socket 逻辑
+- **任务队列**：BullMQ + Redis；耗时/可重试工作进入队列，避免阻塞请求
+- **日志**：只打印排障必要信息；禁止输出 token、cookie、邮箱验证码等敏感数据
+
+## 测试规范（Vitest）
+
+- 流程：先写失败测试 → 实现 → 重构；变更点必须覆盖主路径与关键边界
+- **前端**：Vitest + Happy DOM + `@vue/test-utils`，测试文件在 `apps/frontend/tests/`
+- **后端**：Vitest + Node + `@nestjs/testing`，测试文件在 `apps/backend/tests/`，配置使用 `vitest.config.mts`
+- **共享包**：Vitest + Node，测试文件在 `packages/shared/src/**/*.spec.ts`
+- 覆盖率：`@vitest/coverage-v8`，报告输出 `text`、`json`、`html`
+- 常用命令：`pnpm test` / `pnpm test:watch` / `pnpm test:coverage`
+
+## 服务端入口
+
+- Swagger：`http://localhost:3000/api/docs`
+- Health Check：`http://localhost:3000/api/health/liveness`
+
+## 代理与跨域
+
+- Docker 开发时前端容器通过 `VITE_PROXY_TARGET` 配置代理目标（通常为 `http://backend:3000`）
+- 部署时确保前端域名与后端 CORS 配置一致
+
+## 跨端规范（Wails/Capacitor）
+
+- 原生层只提供能力，不承载业务决策
+- 原生接口必须可降级：前端需对桥接调用失败进行可恢复处理
 
 ## 常用命令
 
 ```bash
 pnpm dev                              # 同时启动前后端
 pnpm db:push                          # 推送 Schema 到数据库
-pnpm lint && pnpm format              # 代码检查与格式化 (全栈)
-pnpm test                             # 运行测试 (全栈)
-pnpm type-check                       # 类型检查 (全栈)
+pnpm lint && pnpm format              # 代码检查与格式化（全栈）
+pnpm test                             # 运行测试（全栈）
+pnpm type-check                       # 类型检查（全栈）
 
-# 单独校验命令 (按需执行)
-pnpm --filter @my-app/frontend lint     # 前端 Lint
-pnpm --filter @my-app/frontend test     # 前端测试
-pnpm --filter @my-app/frontend type-check # 前端类型检查
+# 单独校验命令（按需执行）
+pnpm --filter @my-app/frontend lint
+pnpm --filter @my-app/frontend test
+pnpm --filter @my-app/frontend type-check
 
-pnpm --filter @my-app/backend lint      # 后端 Lint
-pnpm --filter @my-app/backend test      # 后端测试
-pnpm --filter @my-app/backend type-check # 后端类型检查
+pnpm --filter @my-app/backend lint
+pnpm --filter @my-app/backend test
+pnpm --filter @my-app/backend type-check
 
-pnpm --filter @my-app/shared build      # 构建共享包
-pnpm --filter @my-app/shared lint       # 共享包 Lint
-pnpm --filter @my-app/shared test       # 共享包测试
-pnpm --filter @my-app/shared type-check # 共享包类型检查
+pnpm --filter @my-app/shared build
+pnpm --filter @my-app/shared lint
+pnpm --filter @my-app/shared test
+pnpm --filter @my-app/shared type-check
 
-pnpm wails:dev                        # 启动 Wails 开发模式
-pnpm wails:build                      # 打包 Wails 应用
-pnpm docker:dev                              # 启动开发环境 (后台运行)
-pnpm docker:dev:logs                         # 查看实时日志 (F-follow)
-pnpm docker:dev:ps                           # 查看容器运行状态
-pnpm docker:dev:restart                      # 重启前后端服务 (更新依赖后常用)
-pnpm docker:dev:down                         # 停止并移除容器
-pnpm docker:dev:clean                        # 清理容器、镜像及卷 (重置环境)
-pnpm docker:prune                            # 清理系统中无用的 Docker 镜像与 volume
-docker compose up postgres redis -d          # 仅启动数据库与缓存
-docker compose up -d                         # 启动生产模式完整栈
-pnpm docker:build                            # 手动构建生产镜像
+pnpm wails:dev
+pnpm wails:build
+pnpm docker:dev
+pnpm docker:dev:logs
+pnpm docker:dev:ps
+pnpm docker:dev:restart
+pnpm docker:dev:down
+pnpm docker:dev:clean
+pnpm docker:prune
+docker compose up postgres redis -d
+docker compose up -d
+pnpm docker:build
 ```
 
-## 代码规范
+## 环境与依赖（Docker 开发流）
 
-**模块导入**:
-```typescript
-import { xxx } from '@my-app/shared'           // 共享包
-import { Button } from '@/components/ui/button' // UI 组件
-import { cn } from '@/lib/utils'                // 工具函数
-```
-
-**Vue 组件**: `<script setup lang="ts">` -> `<template>` -> `<style>`，优先 Composition API。
-
-**Tailwind**: 原子化优先，动态类用 `cn()` 合并，响应式遵循 Mobile First。
-
-**GSAP 动画**: 必须使用 `useGsap` composable，动画包裹在 `ctx.add(() => { ... })` 中自动清理。追求丝滑、快速的视觉体验，避免冗长拖沓。
-
-**Prettier**: 无分号、单引号、2 空格缩进、trailing comma。
-
-## 国际化 (i18n)
-
-**架构**: 前后端分离，各自管理语言资源。
-
-**前端** (`apps/frontend/src/i18n/`): Vue I18n + TypeScript (`MessageSchema`)，切换优先级：`localStorage` → 浏览器语言 → `zh-CN` (Fallback)
-
-**后端** (`apps/backend/src/i18n/`): NestJS I18n + JSON 格式，Fallback 为 `en-US`
-
-**约定**:
-- 枚举值大写蛇形，UI 文本小写驼峰
-- 新增文案需中英文同步
-- 禁止硬编码，统一使用 `t()`
-
-## Zod 类型共享
-
-共享包定义 Schema → 前端 `toTypedSchema(Schema)` + 后端 `createZodDto(Schema)` → 类型自动推断。
-
-## API 响应格式
-
-```typescript
-interface ApiResponse<T> { success: boolean; data: T; message?: string; timestamp: string }
-```
-
-## 测试规范
-
-- **前端**: Vitest + Happy DOM，`@vue/test-utils`，文件在 `apps/frontend/tests/`
-- **后端**: Vitest + Node，`@nestjs/testing`，文件在 `apps/backend/tests/`，配置使用 `vitest.config.mts`
-- **共享包**: Vitest + Node，文件在 `packages/shared/src/**/*.spec.ts`
-- **覆盖率**: 统一使用 `@vitest/coverage-v8`，报告输出为 `text`、`json`、`html`
-- **命令**: `pnpm test` / `pnpm test:watch` / `pnpm test:coverage`
-
-## 后端关键功能
-
-- **数据库策略**: 使用 **PostgreSQL**。通过 `PrismaService` 管理数据库连接。
-- **缓存**: `@Cacheable()` 装饰器，TTL 常量：`CacheableTTL.FIVE_MINUTES` / `ONE_HOUR` 等
-- **WebSocket**: `EventsGateway`，`broadcastToRoom()` / `broadcastToAll()`
-- **任务队列**: BullMQ + Redis，`InjectQueue('scheduled-tasks')`
-- **Swagger**: `http://localhost:3000/api/docs`
-- **Health Check**: `http://localhost:3000/api/health/liveness`
-- **邮件**: `MailService.sendVerificationCode()` / `sendPasswordReset()`
-- **文件上传**: `StorageService.upload()` / `uploadMany()` / `delete()`，S3/OSS/MinIO
-
-## 跨端与部署
-
-- **适配路径**: UI 与业务逻辑 90% 复用。进军移动端时，仅需使用 Capacitor 替换 Wails 原生层实现。
-- **Capacitor**: `pnpm cap:sync` / `cap:open:ios` / `cap:run:android`
-- **Wails**: `pnpm wails:dev` / `pnpm wails:build`
-- **Docker 开发流**:
-  - **环境启动**: 先执行 `pnpm install` 及 `pnpm --filter @my-app/shared build`，再运行 `pnpm docker:dev`。
-  - **热更新**: 挂载宿主机目录到容器，`apps/` 代码修改将触发 `nest start --watch` 或 `vite` 的热重载。
-  - **依赖同步**: 若 `package.json` 变动，需执行 `pnpm docker:dev:restart` 重新触发容器内依赖检查。
-  - **数据库推送**: 容器启动后，首次运行需执行 `pnpm db:push` 以同步 Schema 到 PostgreSQL。
-- **Docker 生产部署**:
-  - **多阶段构建**: 使用 `Dockerfile` 进行生产级构建，最小化镜像体积。
-  - **一键部署**: `docker compose up -d`（含健康检查、资源限制、安全配置）。
-
-## 注意事项
-
-- **环境声明**: 当前开发环境通过 `pnpm docker:dev` 运行，所有命令执行需考虑容器环境（如数据库连接、端口映射等）。
-- **版本锁定**: 所有依赖必须使用 **精确版本** (移除 `^` 和 `~`)，以确保环境一致性。Workspace 内部引用保留 `workspace:*`。
-- 共享包修改后需 `pnpm --filter @my-app/shared build`
-- 前端 `zod` 必须显式声明
-- **环境重置**: 若遇到容器状态异常或数据库数据冲突，请运行 `pnpm docker:dev:clean`。
-- **数据库同步**: 开发前若不使用全栈 Docker 环境，需手动启动 `docker compose up postgres redis -d`，并执行 `pnpm db:push`。
-- **Docker 代理**: 前端容器通过 `VITE_PROXY_TARGET` 环境变量动态配置 Vite 代理目标（通常指向 `http://backend:3000`）。
-- **API 前缀**: 后端所有接口均带有 `/api` 前缀（包括 Swagger 和健康检查）。
-- **认证**：accessToken + refreshToken，非 GET 请求携带 Authorization 头
-- 限流：1s/10次 (Short)、10s/50次 (Medium)、1min/100次 (Long)
-- 代码修改后必须运行 `pnpm lint` 和 `pnpm test`
-- 部署时请确保前端域名与后端跨域配置 ( CORS ) 一致。
+- 开发默认在 `pnpm docker:dev` 下运行，命令执行需考虑容器网络与端口映射
+- 依赖版本必须使用精确版本（移除 `^`/`~`），workspace 依赖保留 `workspace:*`
+- 共享包修改后需先构建：`pnpm --filter @my-app/shared build`
+- 前端 `zod` 需显式声明
+- 若容器状态异常：优先 `pnpm docker:dev:restart`，仍异常再 `pnpm docker:dev:clean`
+- 后端接口统一 `/api` 前缀；Swagger：`http://localhost:3000/api/docs`
