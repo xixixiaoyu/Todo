@@ -11,6 +11,10 @@ import { useGsap } from '@/composables/useGsap'
 const { t } = useI18n()
 const { gsap, ctx } = useGsap()
 
+defineOptions({
+  name: 'TodoList',
+})
+
 onMounted(() => {
   ctx.add(() => {
     const items = gsap.utils.toArray('.todo-item-wrapper')

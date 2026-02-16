@@ -258,10 +258,10 @@ function onFireworksComplete() {
                   gsap.killTweensOf(element)
                   gsap.set(element, {
                     opacity: 0,
-                    x: direction * 10,
-                    y: 4,
-                    scale: 0.995,
-                    willChange: 'transform, opacity',
+                    x: direction * 15,
+                    scale: 0.98,
+                    filter: 'blur(4px)',
+                    willChange: 'transform, opacity, filter',
                   })
                 }
               "
@@ -270,12 +270,12 @@ function onFireworksComplete() {
                   gsap.to(el, {
                     opacity: 1,
                     x: 0,
-                    y: 0,
                     scale: 1,
-                    duration: 0.3,
-                    ease: 'power2.out',
+                    filter: 'blur(0px)',
+                    duration: 0.4,
+                    ease: 'power3.out',
                     onComplete: () => {
-                      gsap.set(el, { clearProps: 'willChange' })
+                      gsap.set(el, { clearProps: 'willChange,filter' })
                       done()
                     },
                   })
@@ -286,17 +286,17 @@ function onFireworksComplete() {
                   gsap.killTweensOf(el)
                   gsap.to(el, {
                     opacity: 0,
-                    x: -direction * 10,
-                    y: -4,
-                    scale: 0.995,
-                    duration: 0.2,
-                    ease: 'power2.inOut',
+                    x: -direction * 15,
+                    scale: 0.98,
+                    filter: 'blur(4px)',
+                    duration: 0.25,
+                    ease: 'power2.in',
                     onComplete: done,
                   })
                 }
               "
             >
-              <KeepAlive :include="['TodoVisualizer', 'TodoStatistics']">
+              <KeepAlive :include="['TodoList', 'TodoVisualizer', 'TodoStatistics']">
                 <component
                   :is="currentViewComponent"
                   :key="currentViewKey"
