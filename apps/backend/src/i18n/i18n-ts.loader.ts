@@ -1,4 +1,4 @@
-import { Inject, type OnModuleDestroy } from '@nestjs/common'
+import { Inject, type OnModuleDestroy, Logger } from '@nestjs/common'
 import { readdir } from 'fs/promises'
 import * as path from 'path'
 import { Subject, merge, of, switchMap, type Observable } from 'rxjs'
@@ -84,6 +84,7 @@ function readDefaultExport(moduleValue: unknown): TranslationNode {
 }
 
 export class I18nTsLoader extends I18nLoader implements OnModuleDestroy {
+  private readonly logger = new Logger(I18nTsLoader.name)
   private readonly options: I18nTsLoaderOptions
   private readonly events = new Subject<void>()
   private watcher?: { close: () => Promise<void> }
@@ -143,8 +144,15 @@ export class I18nTsLoader extends I18nLoader implements OnModuleDestroy {
   }
 
   protected async loadTranslationFile(filePath: string): Promise<TranslationNode> {
-    const moduleValue = (await import(filePath)) as unknown
-    return readDefaultExport(moduleValue)
+    try {
+      delete require.cache[require.resolve(filePath)]
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const moduleValue = require(filePath)
+      return readDefaultExport(moduleValue)
+    } catch (e) {
+      this.logger.error(`Failed to load translation file: ${filePath}`, e)
+      return {}
+    }
   }
 
   private async parseLanguages(): Promise<string[]> {

@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import { mkdtemp, mkdir, rm, writeFile } from 'fs/promises'
 import { tmpdir } from 'os'
 import * as path from 'path'
@@ -78,5 +78,24 @@ describe('I18nTsLoader', () => {
     const loadResult = await loader.load()
     const translations = isObservable(loadResult) ? await firstValueFrom(loadResult) : loadResult
     expect(translations['en-US']).toMatchObject({ auth: { EMAIL_EXISTS: 'js' } })
+  })
+
+  it('should handle syntax errors in translation files gracefully', async () => {
+    tempPath = await mkdtemp(path.join(tmpdir(), 'i18n-ts-loader-'))
+    await mkdir(path.join(tempPath, 'en-US'))
+    // Create a file with syntax error
+    await writeFile(path.join(tempPath, 'en-US', 'error.ts'), 'export default { invalid code }')
+
+    const loader = new I18nTsLoader({ path: tempPath, watch: false })
+
+    // Silence the logger for this test
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    vi.spyOn((loader as any).logger, 'error').mockImplementation(() => {})
+
+    const loadResult = await loader.load()
+    const translations = isObservable(loadResult) ? await firstValueFrom(loadResult) : loadResult
+
+    expect(translations['en-US']).toBeDefined()
+    expect(translations['en-US']).toEqual({})
   })
 })
