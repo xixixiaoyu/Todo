@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import i18n from '@/i18n'
 import ChatMessage from '@/features/ai/components/ChatMessage.vue'
+import ChatMessageMarkdown from '@/features/ai/components/ChatMessageMarkdown.vue'
 
 // Mock Lucide icons
 vi.mock('lucide-vue-next', () => ({
@@ -301,5 +302,55 @@ describe('ChatMessage', () => {
     expect(mockWriteText).toHaveBeenCalledWith('console.log("hi")')
 
     document.body.removeChild(container)
+  })
+
+  it('should emit ask-selection when asking about selected text', async () => {
+    const wrapper = mount(ChatMessageMarkdown, {
+      props: { content: 'Hello world', isStreaming: false, isMobile: false },
+      global: {
+        stubs: {
+          Teleport: true,
+        },
+      },
+    })
+
+    await flushPromises()
+
+    const htmlContainer = wrapper.find('.markdown-content > div').element
+    const textNode = htmlContainer.childNodes[0]
+    expect(textNode).toBeTruthy()
+
+    const range = document.createRange()
+    range.setStart(textNode, 0)
+    range.setEnd(textNode, 5)
+    const selection = window.getSelection()
+    selection?.removeAllRanges()
+    selection?.addRange(range)
+
+    await wrapper.trigger('mouseup')
+    await flushPromises()
+
+    const askBtn = wrapper
+      .findAll('button')
+      .find((b) => b.text().trim() === 'ai.askSelectionAction')
+    expect(askBtn?.exists()).toBe(true)
+
+    await askBtn!.trigger('click')
+    await flushPromises()
+
+    const input = wrapper.find('input')
+    expect(input.exists()).toBe(true)
+    await input.setValue('What does this mean?')
+
+    const sendBtn = wrapper.findAll('button').find((b) => b.text().trim() === 'ai.send')
+    expect(sendBtn?.exists()).toBe(true)
+    await sendBtn!.trigger('click')
+
+    const emitted = wrapper.emitted('ask-selection')
+    expect(emitted).toBeTruthy()
+    const prompt = emitted![0][0] as string
+    expect(prompt).toContain('What does this mean?')
+    expect(prompt).toContain('ai.askSelectionQuote')
+    expect(prompt).toContain('Hello')
   })
 })

@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { ref, watch, nextTick, onUnmounted } from 'vue'
+import { ref, watch, nextTick, onMounted, onUnmounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useDraggable, useWindowSize } from '@vueuse/core'
 import { useMarkdown } from '@/composables/useMarkdown'
+import { useEscClose } from '@/composables/useEscClose'
+import { GlobalSelectionManager } from '@/features/ai/utils/GlobalSelectionManager'
 
 const props = defineProps<{
   content: string
@@ -9,11 +12,147 @@ const props = defineProps<{
   isMobile: boolean
 }>()
 
+const emit = defineEmits<{
+  (e: 'ask-selection', prompt: string): void
+}>()
+
 const { t } = useI18n()
 const { renderMarkdown, getMermaidSvgMap } = useMarkdown()
 
 const containerRef = ref<HTMLDivElement>()
 const renderedHtml = ref('')
+
+const isAskButtonVisible = ref(false)
+const isAskPanelOpen = ref(false)
+const askButtonX = ref(0)
+const askButtonY = ref(0)
+const selectionText = ref('')
+const questionText = ref('')
+
+const panelRef = ref<HTMLElement | null>(null)
+const panelHandleRef = ref<HTMLElement | null>(null)
+const { width: windowWidth, height: windowHeight } = useWindowSize()
+const { x: panelX, y: panelY } = useDraggable(panelRef, {
+  initialValue: { x: 0, y: 0 },
+  handle: panelHandleRef,
+  preventDefault: true,
+})
+
+const panelStyle = computed(() => ({
+  left: `${panelX.value}px`,
+  top: `${panelY.value}px`,
+}))
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max)
+}
+
+function clampPanelIntoViewport() {
+  const panel = panelRef.value
+  if (!panel) return
+
+  const margin = 12
+  const panelRect = panel.getBoundingClientRect()
+  const maxX = Math.max(margin, windowWidth.value - panelRect.width - margin)
+  const maxY = Math.max(margin, windowHeight.value - panelRect.height - margin)
+  panelX.value = clamp(panelX.value, margin, maxX)
+  panelY.value = clamp(panelY.value, margin, maxY)
+}
+
+function buildAskPrompt(selected: string, question: string) {
+  const quote = selected.trim()
+  const q = question.trim()
+  const quoted = quote.replace(/\n/g, '\n> ')
+  return `${q}\n\n---\n\n${t('ai.askSelectionQuote')}\n\n> ${quoted}`
+}
+
+function closeAskPanel() {
+  isAskPanelOpen.value = false
+  questionText.value = ''
+}
+
+useEscClose(isAskPanelOpen, closeAskPanel)
+
+function getSelectionInContainer() {
+  const root = containerRef.value
+  if (!root) return null
+
+  const selection = window.getSelection?.()
+  if (!selection || selection.rangeCount === 0) return null
+
+  const range = selection.getRangeAt(0)
+  const commonAncestor = range.commonAncestorContainer
+  if (!root.contains(commonAncestor)) return null
+
+  const text = selection.toString().trim()
+  if (!text) return null
+
+  const rect = range.getBoundingClientRect()
+  const clientRects = range.getClientRects()
+  const fallbackRect = clientRects.length > 0 ? clientRects[0] : null
+  const safeRect = rect.width || rect.height ? rect : fallbackRect
+  return { text, rect: safeRect }
+}
+
+function updateAskAnchor() {
+  const info = getSelectionInContainer()
+  if (!info) {
+    isAskButtonVisible.value = false
+    selectionText.value = ''
+    return
+  }
+
+  selectionText.value = info.text
+  isAskButtonVisible.value = true
+
+  const rect = info.rect
+  const baseX = rect ? rect.left : 12
+  const baseY = rect ? rect.bottom : 12
+
+  const x = clamp(baseX, 12, windowWidth.value - 48)
+  const y = clamp(baseY + 8, 12, windowHeight.value - 48)
+
+  askButtonX.value = x
+  askButtonY.value = y
+}
+
+function openAskPanel() {
+  if (!selectionText.value.trim()) return
+
+  isAskPanelOpen.value = true
+  isAskButtonVisible.value = false
+
+  const x = clamp(askButtonX.value, 12, windowWidth.value - 360)
+  const y = clamp(askButtonY.value + 8, 12, windowHeight.value - 220)
+  panelX.value = x
+  panelY.value = y
+
+  void nextTick(() => {
+    clampPanelIntoViewport()
+    const input = panelRef.value?.querySelector('input') as HTMLInputElement | null
+    input?.focus()
+  })
+}
+
+function submitAsk() {
+  if (!selectionText.value.trim() || !questionText.value.trim()) return
+  emit('ask-selection', buildAskPrompt(selectionText.value, questionText.value))
+  closeAskPanel()
+  selectionText.value = ''
+}
+
+function onDocSelectionChange() {
+  if (isAskPanelOpen.value) return
+  updateAskAnchor()
+}
+
+function onDocMouseDown(e: MouseEvent) {
+  if (!isAskPanelOpen.value) return
+  const target = e.target as Node | null
+  if (!target) return
+  if (panelRef.value?.contains(target)) return
+  closeAskPanel()
+}
 
 // 注入交互逻辑（Mermaid 和 代码块）
 function injectInteractions() {
@@ -187,6 +326,24 @@ onUnmounted(() => {
   }
 })
 
+let registeredEl: HTMLElement | null = null
+
+onMounted(() => {
+  if (containerRef.value) {
+    registeredEl = containerRef.value
+    GlobalSelectionManager.getInstance().register(registeredEl, {
+      onSelectionChange: onDocSelectionChange,
+      onOutsideClick: onDocMouseDown,
+    })
+  }
+})
+
+onUnmounted(() => {
+  if (registeredEl) {
+    GlobalSelectionManager.getInstance().unregister(registeredEl)
+  }
+})
+
 async function updateRenderedContent(immediate = false) {
   const content = props.content
   const streaming = props.isStreaming
@@ -240,6 +397,15 @@ watch(
   },
 )
 
+watch([windowWidth, windowHeight], () => {
+  if (isAskPanelOpen.value) {
+    clampPanelIntoViewport()
+  }
+  if (isAskButtonVisible.value) {
+    updateAskAnchor()
+  }
+})
+
 defineExpose({
   initCodeInteractions,
   injectInteractions,
@@ -247,7 +413,12 @@ defineExpose({
 </script>
 
 <template>
-  <div ref="containerRef">
+  <div
+    ref="containerRef"
+    @mouseup="updateAskAnchor"
+    @keyup="updateAskAnchor"
+    @touchend="updateAskAnchor"
+  >
     <div
       v-if="renderedHtml"
       class="markdown-content selectable relative break-words leading-relaxed select-text"
@@ -267,6 +438,77 @@ defineExpose({
       {{ content }}
     </div>
   </div>
+
+  <Teleport to="body">
+    <button
+      v-if="isAskButtonVisible && selectionText"
+      type="button"
+      class="fixed z-[220] rounded-full border border-border/30 bg-card/70 px-3 py-1.5 text-xs font-medium text-foreground shadow-lg backdrop-blur-2xl transition-colors hover:bg-card/85 active:scale-[0.98]"
+      :style="{ left: `${askButtonX}px`, top: `${askButtonY}px`, '--wails-draggable': 'no-drag' }"
+      @click="openAskPanel"
+    >
+      {{ t('ai.askSelectionAction') }}
+    </button>
+
+    <div
+      v-if="isAskPanelOpen"
+      ref="panelRef"
+      class="fixed z-[230] w-[min(360px,calc(100vw-24px))] rounded-2xl border border-border/30 bg-card/70 shadow-2xl backdrop-blur-3xl"
+      :style="{ ...panelStyle, '--wails-draggable': 'no-drag' }"
+      role="dialog"
+      :aria-label="t('ai.askSelectionTitle')"
+    >
+      <div
+        ref="panelHandleRef"
+        class="flex items-center justify-between gap-3 border-b border-border/20 px-4 py-3 cursor-move select-none"
+      >
+        <div class="min-w-0">
+          <div class="truncate text-sm font-semibold text-foreground">
+            {{ t('ai.askSelectionTitle') }}
+          </div>
+          <div class="truncate text-[11px] text-muted-foreground">
+            {{ selectionText }}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="shrink-0 rounded-lg px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
+          :aria-label="t('common.close')"
+          @click="closeAskPanel"
+        >
+          {{ t('common.close') }}
+        </button>
+      </div>
+
+      <div class="space-y-3 p-4">
+        <input
+          v-model="questionText"
+          class="h-10 w-full rounded-xl border border-border/30 bg-background/40 px-3 text-sm text-foreground outline-none ring-0 placeholder:text-muted-foreground/70 focus:border-primary/40 focus:bg-background/55"
+          :placeholder="t('ai.askSelectionPlaceholder')"
+          @keydown.enter.prevent="submitAsk"
+        />
+
+        <div class="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            class="h-9 rounded-xl px-3 text-sm text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
+            @click="closeAskPanel"
+          >
+            {{ t('common.cancel') }}
+          </button>
+          <button
+            type="button"
+            class="h-9 rounded-xl bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+            :disabled="!questionText.trim()"
+            @click="submitAsk"
+          >
+            {{ t('ai.send') }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <style scoped>

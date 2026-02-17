@@ -315,6 +315,17 @@ const handleSelectSuggestion = async (text: string, options?: { requireTodo?: bo
   await handleSend()
 }
 
+const handleAskSelection = async (prompt: string) => {
+  const text = prompt.trim()
+  if (!text) return
+
+  chatInput.value = text
+  await nextTick()
+  assistantInputRef.value?.adjustHeight()
+  if (isGenerating.value) return
+  await handleSend()
+}
+
 // 打开设置
 const openSettings = (tab?: 'settings' | 'presets' | 'memory' | 'mcp' | 'contextCompression') => {
   if (tab) {
@@ -358,6 +369,7 @@ defineOptions({
           @regenerate="regenerateMessage"
           @edit="editAndResendMessage"
           @select-suggestion="handleSelectSuggestion"
+          @ask-selection="handleAskSelection"
         />
       </div>
 

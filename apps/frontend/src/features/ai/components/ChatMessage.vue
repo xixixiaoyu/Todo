@@ -27,6 +27,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'regenerate', id: string): void
   (e: 'edit', content: string): void
+  (e: 'ask-selection', prompt: string): void
 }>()
 
 const { t } = useI18n()
@@ -199,6 +200,7 @@ defineExpose({
                     :content="message.content"
                     :is-streaming="isStreaming"
                     :is-mobile="isMobile"
+                    @ask-selection="(prompt) => emit('ask-selection', prompt)"
                   />
                 </template>
 
