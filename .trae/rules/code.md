@@ -141,6 +141,10 @@ type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse
 - **共享包**：Vitest + Node，测试文件在 `packages/shared/src/**/*.spec.ts`
 - 覆盖率：`@vitest/coverage-v8`，报告输出 `text`、`json`、`html`
 - 常用命令：`pnpm test` / `pnpm test:watch` / `pnpm test:coverage`
+- 运行单个文件：
+  - 使用 `pnpm --filter <package> test -- <relative_path>`
+  - 注意：路径需相对于包目录（如 `tests/features/foo.spec.ts`），**不要包含** `apps/frontend/` 等前缀
+  - 示例：`pnpm --filter @my-app/frontend test -- tests/features/ai/services/aiServiceParams.spec.ts`
 
 ## 服务端入口
 
