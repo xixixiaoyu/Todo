@@ -8,11 +8,15 @@
 
 ## 必须遵守（不可妥协）
 
-- 核心业务逻辑变更必须补齐/更新测试；没有测试支撑的改动不交付
+- 任何会影响行为的变更必须补齐/更新测试；没有测试支撑的改动不交付
+- 纯格式化/不改行为的重构可不新增测试，但必须保证既有测试与质量门禁全绿
 - 代码风格遵循项目约定：2 空格、单引号、无分号，TypeScript 严格类型，禁止 `any`
 - 只在必要时新增文件；优先复用既有模块与模式，保持改动面最小
+- 依赖版本必须使用精确版本（移除 `^`/`~`），workspace 依赖保留 `workspace:*`
+- 修改 `packages/shared` 后必须先执行 `pnpm --filter @my-app/shared build` 再验证下游
 - 不引入会泄露密钥/隐私的日志与代码；不在仓库内写入任何密钥
 - 变更完成后必须通过：`pnpm lint`、`pnpm test`、`pnpm type-check`
+- 破坏性清理命令仅在明确要求时执行（如 `pnpm docker:prune`）
 
 ## 目录结构
 
@@ -35,7 +39,7 @@ packages/shared/  # 共享包（Zod Schemas, DTOs, Utils）
 
 ## 依赖边界（防止跨层污染）
 
-- `packages/shared` 必须保持可移植与无副作用：不依赖前端/后端实现，不访问运行时环境（如 `window`、`process.env` 业务分支）
+- `packages/shared` 必须保持可移植与无副作用：不依赖前端/后端实现，不访问运行时环境（如 `window`、`document`），不读取 `process.env` 做业务分支，不在模块顶层产生副作用
 - `apps/frontend` 只能依赖 `packages/shared` 与前端自身模块，不引入后端私有实现
 - `apps/backend` 只能依赖 `packages/shared` 与后端自身模块，不引入前端私有实现
 - `apps/wails` 只承载原生能力与桥接，不承载业务规则
@@ -157,10 +161,14 @@ type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse
 
 ```bash
 pnpm dev                              # 同时启动前后端
+pnpm docker:dev                       # Docker 开发（默认）
+
+pnpm lint                             # 质量门禁：代码检查（必跑）
+pnpm test                             # 质量门禁：运行测试（必跑）
+pnpm type-check                       # 质量门禁：类型检查（必跑）
+pnpm format                           # 可选：自动格式化（按需）
+
 pnpm db:push                          # 推送 Schema 到数据库
-pnpm lint && pnpm format              # 代码检查与格式化（全栈）
-pnpm test                             # 运行测试（全栈）
-pnpm type-check                       # 类型检查（全栈）
 
 # 单独校验命令（按需执行）
 pnpm --filter @my-app/frontend lint
@@ -178,7 +186,6 @@ pnpm --filter @my-app/shared type-check
 
 pnpm wails:dev
 pnpm wails:build
-pnpm docker:dev
 pnpm docker:dev:logs
 pnpm docker:dev:ps
 pnpm docker:dev:restart
