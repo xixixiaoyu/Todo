@@ -462,12 +462,18 @@ describe('useChat', () => {
       expect(firstCall).toBeDefined()
 
       const sentMessages = firstCall[0]
-      expect(sentMessages).toHaveLength(1)
+      // Current implementation uses background compression (fire-and-forget),
+      // so the first request sends full history while compression starts in background.
+      expect(sentMessages).toHaveLength(3)
       expect(sentMessages[0].role).toBe('user')
-      expect(sentMessages[0].content).toBe('new message')
+      expect(sentMessages[0].content).toBe('old user message long long long')
 
       const sentOptions = firstCall[4] as { contextSummary?: string } | undefined
-      expect(sentOptions?.contextSummary).toBe('summary')
+      // Summary is not yet available for this request
+      expect(sentOptions?.contextSummary).toBeUndefined()
+
+      // Wait for background compression to trigger
+      await vi.waitUntil(() => mockUpdateSessionContextSummary.mock.calls.length > 0)
       expect(mockUpdateSessionContextSummary).toHaveBeenCalledWith('s1', {
         summary: 'summary',
         untilMessageId: 'a1',

@@ -431,6 +431,17 @@ const emptyText = computed(() =>
         :autoresize="false"
         :theme="isDark ? 'dark' : undefined"
       />
+
+      <div
+        v-else
+        key="loading"
+        class="flex-1 flex flex-col items-center justify-center relative z-10"
+      >
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+        <p class="text-muted-foreground/60 font-medium tracking-wide">
+          {{ t('common.loading') }}
+        </p>
+      </div>
     </Transition>
   </div>
 </template>
