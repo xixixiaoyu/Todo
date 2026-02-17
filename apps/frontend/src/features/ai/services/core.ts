@@ -54,6 +54,7 @@ export async function getAIStreamResponse(
     baseUrl = aiConfig.baseUrl,
     apiKey = aiConfig.apiKey,
     temperature = aiConfig.temperature,
+    top_p = 0.95,
     systemPrompt = aiConfig.systemPrompt,
     thinkingMode = aiConfig.thinkingMode,
     contextSummary,
@@ -77,6 +78,7 @@ export async function getAIStreamResponse(
       model,
       messages: messagesWithSystemPrompts,
       temperature,
+      top_p,
       stream: true,
     }
 
@@ -257,7 +259,7 @@ export async function getAIStreamResponse(
  * 发送非流式 AI 请求的通用工具函数
  */
 export async function fetchNonStreamResponse(
-  config: { baseUrl: string; apiKey: string; model: string; temperature?: number },
+  config: { baseUrl: string; apiKey: string; model: string; temperature?: number; top_p?: number },
   messages: AIChatCompletionMessage[],
   thinkingMode?: string,
   signal?: AbortSignal,
@@ -266,6 +268,7 @@ export async function fetchNonStreamResponse(
     model: config.model,
     messages,
     temperature: config.temperature ?? 0.7,
+    top_p: config.top_p ?? 0.95,
     stream: false,
   }
 
@@ -321,10 +324,11 @@ export async function getAIStaticResponse(
     baseUrl = aiConfig.baseUrl,
     apiKey = aiConfig.apiKey,
     temperature = 0.3,
+    top_p = 0.95,
   } = options
 
   return fetchNonStreamResponse(
-    { baseUrl, apiKey, model, temperature },
+    { baseUrl, apiKey, model, temperature, top_p },
     messages,
     aiConfig.thinkingMode,
   )

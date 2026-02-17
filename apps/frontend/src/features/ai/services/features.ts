@@ -22,7 +22,12 @@ export async function getAIImageResponse(
   options: AIRequestOptions = {},
 ): Promise<string[]> {
   const aiConfig = getAIConfig()
-  const { model = aiConfig.model, baseUrl = aiConfig.baseUrl, apiKey = aiConfig.apiKey } = options
+  const {
+    model = aiConfig.model,
+    baseUrl = aiConfig.baseUrl,
+    apiKey = aiConfig.apiKey,
+    top_p = 0.95,
+  } = options
 
   // 构建多模态内容
   const content: MultiModalContent[] = [{ type: 'text', text: prompt }]
@@ -46,6 +51,7 @@ export async function getAIImageResponse(
           content,
         },
       ],
+      top_p,
       // 开启图片生成能力 (针对 Gemini 2.0+ 或其他支持 modalities 的模型)
       modalities: ['image', 'text'],
     }),

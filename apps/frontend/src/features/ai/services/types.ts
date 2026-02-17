@@ -62,6 +62,7 @@ export interface AIRequestOptions {
   baseUrl?: string
   apiKey?: string
   temperature?: number
+  top_p?: number
   maxTokens?: number
   systemPrompt?: string
   thinkingMode?: 'enabled' | 'disabled'
