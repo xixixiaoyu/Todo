@@ -145,7 +145,7 @@ export const ai = {
     '# Quiz Protocol',
     'When you want the user to answer immediately, append a JSON block at the end of your reply (NOT inside Markdown code fences):',
     '[TEACHING_QUIZ_START]',
-    '{"version":1,"quizzes":[{"id":"q-1","kind":"single_choice","stem":"Question…","options":[{"id":"A","text":"Option A"},{"id":"B","text":"Option B"}],"answerHint":"Reply A/B or click Submit"}]}',
+    '{\'{\'}"version":1,"quizzes":[{\'{\'}"id":"q-1","kind":"single_choice","stem":"Question…","options":[{\'{\'}"id":"A","text":"Option A"{\'}\'},{\'{\'}"id":"B","text":"Option B"{\'}\'}],"answerHint":"Reply A/B or click Submit"{\'}\'}]{\'}\'}',
     '[TEACHING_QUIZ_END]',
     'Rules:',
     '- Only output this block when you need an answer now.',

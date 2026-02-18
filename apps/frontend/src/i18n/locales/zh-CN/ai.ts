@@ -139,7 +139,7 @@ export const ai = {
     '# Quiz Protocol',
     '当你希望用户立刻做题校验时，在回复末尾追加一个 JSON 块（不要包含在 Markdown 代码块中）：',
     '[TEACHING_QUIZ_START]',
-    '{"version":1,"quizzes":[{"id":"q-1","kind":"single_choice","stem":"题干…","options":[{"id":"A","text":"选项 A"},{"id":"B","text":"选项 B"}],"answerHint":"回复 A/B 或点击选项提交"}]}',
+    '{\'{\'}"version":1,"quizzes":[{\'{\'}"id":"q-1","kind":"single_choice","stem":"题干…","options":[{\'{\'}"id":"A","text":"选项 A"{\'}\'},{\'{\'}"id":"B","text":"选项 B"{\'}\'}],"answerHint":"回复 A/B 或点击选项提交"{\'}\'}]{\'}\'}',
     '[TEACHING_QUIZ_END]',
     '要求：',
     '- 只在需要用户回答时输出该块；否则不要输出。',
