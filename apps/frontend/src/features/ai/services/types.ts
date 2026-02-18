@@ -39,6 +39,23 @@ export interface Tool {
   }
 }
 
+export type AssistantMode = 'default' | 'teaching'
+
+export type TeachingQuizKind = 'single_choice' | 'multi_choice' | 'short_answer'
+
+export interface TeachingQuizOption {
+  id: string
+  text: string
+}
+
+export interface TeachingQuiz {
+  id: string
+  kind: TeachingQuizKind
+  stem: string
+  options?: TeachingQuizOption[]
+  answerHint?: string
+}
+
 export interface ChatMessage {
   id: string
   role: 'user' | 'assistant' | 'system' | 'tool'
@@ -53,6 +70,7 @@ export interface ChatMessage {
   discussionSteps?: DiscussionStep[]
   todoActions?: import('@/features/todo/stores/todo').ProposedTodoChange[] // AI 建议的 Todo 变更
   todoActionsProcessed?: 'applied' | 'discarded' // AI 建议的处理状态
+  teachingQuizzes?: TeachingQuiz[]
   isStreaming?: boolean
   createdAt?: Date
 }
@@ -65,6 +83,7 @@ export interface AIRequestOptions {
   top_p?: number
   maxTokens?: number
   systemPrompt?: string
+  assistantMode?: AssistantMode
   thinkingMode?: 'enabled' | 'disabled'
   contextSummary?: string
   tools?: Tool[]

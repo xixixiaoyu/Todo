@@ -14,6 +14,7 @@ vi.mock('lucide-vue-next', () => {
     'Minimize2',
     'Send',
     'Lightbulb',
+    'GraduationCap',
     'Settings2',
     'ChevronDown',
     'ChevronLeft',
@@ -98,6 +99,7 @@ vi.mock('@/features/ai/composables/useChat', () => ({
 
 const mockUpdateConfig = vi.fn()
 const mockConfig = ref({
+  assistantMode: 'default',
   baseUrl: '',
   apiKey: '',
   model: '',

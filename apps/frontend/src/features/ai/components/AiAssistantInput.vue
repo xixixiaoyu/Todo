@@ -25,6 +25,7 @@ const props = defineProps<{
   isTodoAssistantEnabled: boolean
   isDiscussionEnabled: boolean
   isThinkingEnabled: boolean
+  isTeachingEnabled: boolean
   selectedImages: string[]
   parsedFiles: ParsedFile[]
   isGenerating: boolean
@@ -367,7 +368,9 @@ defineExpose({
           ? t('ai.generating')
           : isImageGenerationEnabled
             ? t('ai.imagePromptPlaceholder')
-            : t('ai.placeholder')
+            : isTeachingEnabled
+              ? t('ai.teachingPlaceholder')
+              : t('ai.placeholder')
       "
       :class="[
         'w-full resize-none bg-transparent text-foreground outline-none placeholder:text-muted-foreground/40 leading-relaxed transition-colors',

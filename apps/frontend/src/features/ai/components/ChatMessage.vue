@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useWindowSize } from '@vueuse/core'
 import type { ChatMessage } from '@/features/ai/composables/useChat'
+import type { TeachingQuizKind } from '@/features/ai/services/aiService'
 import ImageLoadingState from './ImageLoadingState.vue'
 import ChatMessageDiscussion from './ChatMessageDiscussion.vue'
 import ChatMessageThinking from './ChatMessageThinking.vue'
@@ -14,6 +15,7 @@ import ChatMessageLoading from './ChatMessageLoading.vue'
 import ChatMessageImages from './ChatMessageImages.vue'
 import ChatMessageMarkdown from './ChatMessageMarkdown.vue'
 import ChatMessageUser from './ChatMessageUser.vue'
+import TeachingQuizPanel from './TeachingQuizPanel.vue'
 
 import { useEscClose } from '@/composables/useEscClose'
 
@@ -28,6 +30,10 @@ const emit = defineEmits<{
   (e: 'regenerate', id: string): void
   (e: 'edit', content: string): void
   (e: 'ask-selection', prompt: string): void
+  (
+    e: 'teaching-submit',
+    payload: { quizId: string; kind: TeachingQuizKind; answer: string | string[] },
+  ): void
 }>()
 
 const { t } = useI18n()
@@ -203,6 +209,13 @@ defineExpose({
                     @ask-selection="(prompt) => emit('ask-selection', prompt)"
                   />
                 </template>
+
+                <TeachingQuizPanel
+                  v-if="message.teachingQuizzes && message.teachingQuizzes.length > 0"
+                  :quizzes="message.teachingQuizzes"
+                  :disabled="isStreaming"
+                  @submit="(payload) => emit('teaching-submit', payload)"
+                />
 
                 <!-- AI 建议的思维导图预览 -->
                 <ChatVisualizerPreview

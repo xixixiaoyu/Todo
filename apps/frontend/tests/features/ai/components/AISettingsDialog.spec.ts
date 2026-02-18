@@ -34,6 +34,7 @@ vi.mock('lucide-vue-next', () => ({
 
 // Mock composables
 const mockConfig = ref<AIConfig>({
+  assistantMode: 'default',
   baseUrl: 'https://api.example.com',
   apiKey: 'test-key',
   model: 'test-model',
@@ -65,6 +66,7 @@ const switchPreset = vi.fn((id) => {
   if (preset) {
     mockActivePresetId.value = id
     mockConfig.value = {
+      assistantMode: mockConfig.value.assistantMode,
       discussionMode: false,
       discussionModelIds: [] as string[],
       discussionPrimaryModelId: null,
@@ -93,6 +95,7 @@ const updatePreset = vi.fn((id, updates) => {
     mockPresets.value[index] = { ...mockPresets.value[index], ...updates }
     if (mockActivePresetId.value === id) {
       mockConfig.value = {
+        assistantMode: mockConfig.value.assistantMode,
         discussionMode: false,
         discussionModelIds: [] as string[],
         discussionPrimaryModelId: null,
@@ -162,6 +165,7 @@ describe('AISettingsDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockConfig.value = {
+      assistantMode: 'default',
       baseUrl: 'https://api.example.com',
       apiKey: 'test-key',
       model: 'test-model',

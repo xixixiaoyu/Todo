@@ -6,7 +6,12 @@ import { getAIConfig } from '@/features/ai/composables/useAIConfig'
 import { useTodoStore, type Todo } from '@/features/todo/stores/todo'
 import { useMemory } from '@/features/ai/composables/useMemory'
 import i18n from '@/i18n'
-import type { ChatMessage, MultiModalContent, AIChatCompletionMessage } from './types'
+import type {
+  ChatMessage,
+  MultiModalContent,
+  AIChatCompletionMessage,
+  AssistantMode,
+} from './types'
 
 const t = i18n.global.t
 
@@ -96,6 +101,7 @@ export function injectSystemPrompts(
   messages: ChatMessage[],
   systemPrompt: string,
   todoAssistant: boolean,
+  assistantMode: AssistantMode,
   contextSummary?: string,
 ): AIChatCompletionMessage[] {
   const result: AIChatCompletionMessage[] = []
@@ -105,6 +111,13 @@ export function injectSystemPrompts(
   // 1. 基础系统提示词
   if (systemPrompt) {
     systemBlocks.push({ content: systemPrompt })
+  }
+
+  if (assistantMode === 'teaching') {
+    const teachingPrompt = t('ai.teachingModeSystemPrompt')
+    if (teachingPrompt) {
+      systemBlocks.push({ content: teachingPrompt })
+    }
   }
 
   const hasDocuments = messages.some((m) => !!m.documents?.length)

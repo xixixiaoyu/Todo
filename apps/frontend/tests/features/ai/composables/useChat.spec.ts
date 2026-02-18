@@ -125,6 +125,7 @@ describe('useChat', () => {
     // 重置 mock 实现
     mockCurrentSession.value = null
     vi.mocked(getAIConfig).mockReturnValue({
+      assistantMode: 'default',
       discussionMode: false,
       discussionModelIds: [],
       discussionPrimaryModelId: null,
@@ -416,6 +417,7 @@ describe('useChat', () => {
     it('should compress long context and pass summary to request', async () => {
       mockIsMemoryEnabled.value = false
       vi.mocked(getAIConfig).mockReturnValue({
+        assistantMode: 'default',
         discussionMode: false,
         discussionModelIds: [],
         discussionPrimaryModelId: null,

@@ -1,5 +1,5 @@
 import { computed } from 'vue'
-import type { AIRequestOptions, ChatMessage } from '@/features/ai/services/aiService'
+import type { AIRequestOptions, ChatMessage, TeachingQuiz } from '@/features/ai/services/aiService'
 import type { ProposedTodoChange } from '@/features/todo/stores/todo'
 import { useChatState } from './useChatState'
 import { useChatActions } from './useChatActions'
@@ -39,6 +39,7 @@ export function useChat(options: AIRequestOptions = {}) {
       if (!lastMessage || lastMessage.id !== streamingId) {
         let displayContent = currentAIResponse.value
         let actions: ProposedTodoChange[] | undefined
+        let teachingQuizzes: TeachingQuiz[] | undefined
 
         // 流式过程中解析 TODO_ACTIONS
         const startTag = '[TODO_ACTIONS_START]'
@@ -73,6 +74,40 @@ export function useChat(options: AIRequestOptions = {}) {
           }
         }
 
+        const quizStartTag = '[TEACHING_QUIZ_START]'
+        const quizEndTag = '[TEACHING_QUIZ_END]'
+
+        if (displayContent.includes(quizStartTag)) {
+          const startIndex = displayContent.indexOf(quizStartTag)
+          const contentBefore = displayContent.substring(0, startIndex)
+
+          if (displayContent.includes(quizEndTag)) {
+            const endIndex = displayContent.indexOf(quizEndTag)
+            const contentAfter = displayContent.substring(endIndex + quizEndTag.length)
+            const jsonStr = displayContent
+              .substring(startIndex + quizStartTag.length, endIndex)
+              .trim()
+
+            try {
+              const parsed = JSON.parse(jsonStr) as unknown
+              if (Array.isArray(parsed)) {
+                teachingQuizzes = parsed as TeachingQuiz[]
+              } else if (parsed && typeof parsed === 'object') {
+                const obj = parsed as { quizzes?: unknown }
+                if (Array.isArray(obj.quizzes)) {
+                  teachingQuizzes = obj.quizzes as TeachingQuiz[]
+                }
+              }
+            } catch {
+              // 解析失败说明可能还没传输完
+            }
+
+            displayContent = (contentBefore + contentAfter).trim()
+          } else {
+            displayContent = contentBefore.trim()
+          }
+        }
+
         allMessages.push({
           id: streamingId,
           role: 'assistant',
@@ -84,6 +119,7 @@ export function useChat(options: AIRequestOptions = {}) {
           todoActions:
             actions ||
             (currentTodoActions.value.length > 0 ? [...currentTodoActions.value] : undefined),
+          teachingQuizzes,
           isStreaming: true,
         })
       }

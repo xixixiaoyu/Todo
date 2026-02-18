@@ -125,13 +125,28 @@ const toggleThinkingMode = () => {
 // 思考模式是否开启
 const isThinkingEnabled = computed(() => aiThinkingMode.value === 'enabled')
 
+const toggleTeachingMode = () => {
+  const isTeaching = config.value.assistantMode === 'teaching'
+  updateConfig({
+    assistantMode: isTeaching ? 'default' : 'teaching',
+    // 互斥：开启教学模式时，关闭其他模式
+    ...(!isTeaching
+      ? { todoAssistant: false, discussionMode: false, enableImageGeneration: false }
+      : {}),
+  })
+}
+
+const isTeachingEnabled = computed(() => config.value.assistantMode === 'teaching')
+
 // 切换 Todo 助手
 const toggleTodoAssistant = () => {
   const newValue = !config.value.todoAssistant
   updateConfig({
     todoAssistant: newValue,
     // 互斥：开启 Todo 助手时，关闭其他模式
-    ...(newValue ? { discussionMode: false, enableImageGeneration: false } : {}),
+    ...(newValue
+      ? { discussionMode: false, enableImageGeneration: false, assistantMode: 'default' }
+      : {}),
   })
 }
 
@@ -144,7 +159,9 @@ const toggleDiscussionMode = () => {
   updateConfig({
     discussionMode: newValue,
     // 互斥：开启多模型协作时，关闭其他模式
-    ...(newValue ? { todoAssistant: false, enableImageGeneration: false } : {}),
+    ...(newValue
+      ? { todoAssistant: false, enableImageGeneration: false, assistantMode: 'default' }
+      : {}),
   })
 }
 
@@ -157,7 +174,7 @@ const toggleImageGeneration = () => {
   updateConfig({
     enableImageGeneration: newValue,
     // 互斥：开启生图模式时，关闭其他模式
-    ...(newValue ? { todoAssistant: false, discussionMode: false } : {}),
+    ...(newValue ? { todoAssistant: false, discussionMode: false, assistantMode: 'default' } : {}),
   })
 }
 
@@ -326,6 +343,15 @@ const handleAskSelection = async (prompt: string) => {
   await handleSend()
 }
 
+const handleTeachingSubmit = async (payload: {
+  quizId: string
+  kind: string
+  answer: string | string[]
+}) => {
+  if (isGenerating.value) return
+  await sendMessage(`[TEACHING_ANSWER]\n${JSON.stringify(payload)}`)
+}
+
 // 打开设置
 const openSettings = (tab?: 'settings' | 'presets' | 'memory' | 'mcp' | 'contextCompression') => {
   if (tab) {
@@ -370,6 +396,7 @@ defineOptions({
           @edit="editAndResendMessage"
           @select-suggestion="handleSelectSuggestion"
           @ask-selection="handleAskSelection"
+          @teaching-submit="handleTeachingSubmit"
         />
       </div>
 
@@ -391,6 +418,7 @@ defineOptions({
         :has-history="hasHistory"
         :is-generating="isGenerating"
         :is-thinking-enabled="isThinkingEnabled"
+        :is-teaching-enabled="isTeachingEnabled"
         :is-todo-assistant-enabled="isTodoAssistantEnabled"
         :is-discussion-enabled="isDiscussionEnabled"
         :is-image-generation-enabled="isImageGenerationEnabled"
@@ -402,6 +430,7 @@ defineOptions({
         @new-chat="handleNewChat"
         @open-history="openHistory"
         @toggle-thinking="toggleThinkingMode"
+        @toggle-teaching="toggleTeachingMode"
         @toggle-todo="toggleTodoAssistant"
         @toggle-discussion="toggleDiscussionMode"
         @toggle-image-gen="toggleImageGeneration"
@@ -419,6 +448,7 @@ defineOptions({
             :is-todo-assistant-enabled="isTodoAssistantEnabled"
             :is-discussion-enabled="isDiscussionEnabled"
             :is-thinking-enabled="isThinkingEnabled"
+            :is-teaching-enabled="isTeachingEnabled"
             :selected-images="selectedImages"
             :parsed-files="parsedFiles"
             :is-generating="isGenerating"

@@ -41,6 +41,7 @@ vi.mock('@/features/ai/services/aiService', async (importOriginal) => {
 
 vi.mock('@/features/ai/composables/useAIConfig', () => ({
   getAIConfig: vi.fn(() => ({
+    assistantMode: 'default',
     discussionMode: true,
     discussionModelIds: ['m1', 'm2'],
     discussionPrimaryModelId: 'm1',
@@ -84,6 +85,7 @@ describe('useChat - Discussion Mode', () => {
 
   it('should handle multi-model discussion mode with thinking', async () => {
     vi.mocked(getAIConfig).mockReturnValue({
+      assistantMode: 'default',
       discussionMode: true,
       discussionModelIds: ['m1', 'm2'],
       discussionPrimaryModelId: 'm1',

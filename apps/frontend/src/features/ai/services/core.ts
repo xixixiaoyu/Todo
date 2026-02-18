@@ -56,6 +56,7 @@ export async function getAIStreamResponse(
     temperature = aiConfig.temperature,
     top_p = 0.95,
     systemPrompt = aiConfig.systemPrompt,
+    assistantMode = aiConfig.assistantMode,
     thinkingMode = aiConfig.thinkingMode,
     contextSummary,
     tools,
@@ -69,6 +70,7 @@ export async function getAIStreamResponse(
     messages,
     systemPrompt,
     aiConfig.todoAssistant,
+    assistantMode,
     contextSummary,
   )
 

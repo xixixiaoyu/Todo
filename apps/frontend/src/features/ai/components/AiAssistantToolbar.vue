@@ -7,6 +7,7 @@ import {
   Plus,
   History,
   Lightbulb,
+  GraduationCap,
   Clover,
   Users,
   Image as ImageIcon,
@@ -29,6 +30,7 @@ defineProps<{
   hasHistory: boolean
   isGenerating: boolean
   isThinkingEnabled: boolean
+  isTeachingEnabled: boolean
   isTodoAssistantEnabled: boolean
   isDiscussionEnabled: boolean
   isImageGenerationEnabled: boolean
@@ -46,6 +48,7 @@ const emit = defineEmits<{
   (e: 'newChat'): void
   (e: 'openHistory'): void
   (e: 'toggleThinking'): void
+  (e: 'toggleTeaching'): void
   (e: 'toggleTodo'): void
   (e: 'toggleDiscussion'): void
   (e: 'toggleImageGen'): void
@@ -165,6 +168,25 @@ const handlePresetMouseLeave = () => {
               :class="[
                 'transition-all duration-300',
                 isThinkingEnabled ? 'fill-primary/20 scale-110' : 'text-muted-foreground',
+              ]"
+            />
+          </button>
+
+          <button
+            class="toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all active:scale-95"
+            :class="
+              isTeachingEnabled
+                ? 'border-primary/30 bg-primary/15 text-primary shadow-[0_0_12px_hsl(var(--primary)_/_0.1)]'
+                : 'border-transparent'
+            "
+            :title="isTeachingEnabled ? t('ai.teachingEnabled') : t('ai.teachingDisabled')"
+            @click="emit('toggleTeaching')"
+          >
+            <GraduationCap
+              :size="16"
+              :class="[
+                'transition-all duration-300',
+                isTeachingEnabled ? 'scale-110 text-primary' : 'text-muted-foreground',
               ]"
             />
           </button>

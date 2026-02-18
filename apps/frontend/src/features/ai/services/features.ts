@@ -157,6 +157,7 @@ export async function getMultiModelDiscussionStream(
         messages,
         modelSystemPrompt,
         aiConfig.todoAssistant,
+        aiConfig.assistantMode,
         options.contextSummary,
       )
 

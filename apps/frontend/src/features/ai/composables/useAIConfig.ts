@@ -3,8 +3,10 @@ import i18n from '@/i18n'
 import { generateId } from '@/features/ai/services/aiService'
 
 export type ThinkingMode = 'enabled' | 'disabled'
+export type AssistantMode = 'default' | 'teaching'
 
 export interface AIConfig {
+  assistantMode: AssistantMode
   baseUrl: string
   apiKey: string
   model: string
@@ -62,6 +64,7 @@ export function saveAIThinkingMode(mode: 'enabled' | 'disabled'): void {
 
 // 默认配置
 const DEFAULT_CONFIG: AIConfig = {
+  assistantMode: 'default',
   baseUrl: import.meta.env.VITE_AI_API_URL || 'https://api.deepseek.com',
   apiKey: import.meta.env.VITE_AI_API_KEY || '',
   model: import.meta.env.VITE_AI_MODEL || 'deepseek-chat',

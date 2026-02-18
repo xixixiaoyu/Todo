@@ -7,6 +7,7 @@ import {
   abortCurrentRequest,
   generateId,
   type ChatMessage,
+  type TeachingQuiz,
   type AIRequestOptions,
   type Tool,
   type ToolCall,
@@ -391,6 +392,8 @@ export function useChatActions(options: AIRequestOptions = {}) {
       const handleChunk = (chunk: string) => {
         if (chunk === '[DONE]') {
           if (currentAIResponse.value) {
+            let teachingQuizzes: TeachingQuiz[] | undefined
+
             if (aiConfig.todoAssistant) {
               const content = currentAIResponse.value
               const startTag = '[TODO_ACTIONS_START]'
@@ -422,6 +425,37 @@ export function useChatActions(options: AIRequestOptions = {}) {
               }
             }
 
+            {
+              const content = currentAIResponse.value
+              const startTag = '[TEACHING_QUIZ_START]'
+              const endTag = '[TEACHING_QUIZ_END]'
+
+              if (content.includes(startTag) && content.includes(endTag)) {
+                const startIndex = content.indexOf(startTag) + startTag.length
+                const endIndex = content.indexOf(endTag)
+                const jsonStr = content.substring(startIndex, endIndex).trim()
+
+                try {
+                  const parsed = JSON.parse(jsonStr) as unknown
+                  if (Array.isArray(parsed)) {
+                    teachingQuizzes = parsed as TeachingQuiz[]
+                  } else if (parsed && typeof parsed === 'object') {
+                    const obj = parsed as { quizzes?: unknown }
+                    if (Array.isArray(obj.quizzes)) {
+                      teachingQuizzes = obj.quizzes as TeachingQuiz[]
+                    }
+                  }
+                } catch (e) {
+                  console.error('Failed to parse teaching quizzes:', e)
+                }
+
+                currentAIResponse.value = (
+                  content.substring(0, content.indexOf(startTag)) +
+                  content.substring(endIndex + endTag.length)
+                ).trim()
+              }
+            }
+
             const aiMessage: ChatMessage = {
               id: assistantMessageId,
               role: 'assistant',
@@ -434,6 +468,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
                   : undefined,
               todoActions:
                 currentTodoActions.value.length > 0 ? [...currentTodoActions.value] : undefined,
+              teachingQuizzes,
               createdAt: new Date(),
             }
             const newHistory = [...chatHistory.value, aiMessage]

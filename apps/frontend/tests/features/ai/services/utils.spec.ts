@@ -55,7 +55,7 @@ describe('AI Utils - injectSystemPrompts', () => {
   })
 
   it('should inject base system prompt', () => {
-    const result = injectSystemPrompts([], 'Base prompt', false)
+    const result = injectSystemPrompts([], 'Base prompt', false, 'default')
     expect(result).toContainEqual({ role: 'system', content: 'Base prompt' })
   })
 
@@ -109,7 +109,7 @@ describe('AI Utils - injectSystemPrompts', () => {
       },
     ]
 
-    const result = injectSystemPrompts([], '', true)
+    const result = injectSystemPrompts([], '', true, 'default')
     const systemMessage = result.find(
       (m) =>
         m.role === 'system' &&
@@ -150,7 +150,7 @@ describe('AI Utils - injectSystemPrompts', () => {
       importMemories: vi.fn(),
     } as ReturnType<typeof useMemory>)
 
-    const result = injectSystemPrompts([], '', false)
+    const result = injectSystemPrompts([], '', false, 'default')
     const memoryMessage = result.find(
       (m) =>
         typeof m.content === 'string' &&
@@ -185,7 +185,7 @@ describe('AI Utils - injectSystemPrompts', () => {
       },
     ]
 
-    const result = injectSystemPrompts(messages, 'Base prompt', false)
+    const result = injectSystemPrompts(messages, 'Base prompt', false, 'default')
 
     const assistant = result.find((m) => m.role === 'assistant') as
       | { tool_calls?: ToolCall[] }
