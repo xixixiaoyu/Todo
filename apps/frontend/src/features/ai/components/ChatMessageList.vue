@@ -16,6 +16,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'regenerate', id: string): void
+  (e: 'delete', id: string): void
   (e: 'edit', id: string, content: string): void
   (e: 'select-suggestion', text: string, options?: { requireTodo?: boolean }): void
   (e: 'ask-selection', prompt: string): void
@@ -176,6 +177,7 @@ defineExpose({
                   :is-prev-tool="index > 0 && messages[index - 1].role === 'tool'"
                   :is-next-tool="index < messages.length - 1 && messages[index + 1].role === 'tool'"
                   @regenerate="(id) => emit('regenerate', id)"
+                  @delete="(id) => emit('delete', id)"
                   @edit="(content) => emit('edit', msg.id, content)"
                   @ask-selection="(prompt) => emit('ask-selection', prompt)"
                   @teaching-submit="(payload) => emit('teaching-submit', payload)"

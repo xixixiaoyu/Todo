@@ -128,6 +128,27 @@ export function useChat(options: AIRequestOptions = {}) {
     return allMessages
   })
 
+  function deleteMessage(id: string) {
+    const history = [...chatHistory.value]
+    const index = history.findIndex((m) => m.id === id)
+    if (index === -1) return
+
+    // 如果是 AI 消息，尝试删除它前面的用户消息
+    if (history[index].role === 'assistant') {
+      if (index > 0 && history[index - 1].role === 'user') {
+        // 删除用户消息和 AI 消息
+        history.splice(index - 1, 2)
+      } else {
+        // 只删除 AI 消息
+        history.splice(index, 1)
+      }
+    } else {
+      history.splice(index, 1)
+    }
+
+    chatHistory.value = history
+  }
+
   return {
     // 状态 (直接暴露 state 中的响应式引用)
     ...state,
@@ -135,5 +156,6 @@ export function useChat(options: AIRequestOptions = {}) {
 
     // 动作
     ...actions,
+    deleteMessage,
   }
 }

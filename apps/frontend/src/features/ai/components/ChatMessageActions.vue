@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Copy, Check, RefreshCw } from 'lucide-vue-next'
+import { Copy, Check, RefreshCw, Trash2 } from 'lucide-vue-next'
 
 const props = defineProps<{
   content: string
@@ -9,6 +9,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'regenerate'): void
+  (e: 'delete'): void
 }>()
 
 const { t } = useI18n()
@@ -68,6 +69,16 @@ async function copyContent() {
     >
       <RefreshCw :size="14" />
       <span>{{ t('ai.regenerate') }}</span>
+    </button>
+    <button
+      :class="[
+        'flex items-center gap-1.5 rounded-lg font-medium text-muted-foreground/80 transition-all hover:bg-red-500/10 hover:text-red-600 active:scale-95',
+        isMobile ? 'flex-1 justify-center py-2 text-[13px]' : 'px-2.5 py-1.5 text-[12px]',
+      ]"
+      @click="emit('delete')"
+    >
+      <Trash2 :size="14" />
+      <span>{{ t('ai.delete') }}</span>
     </button>
   </div>
 </template>

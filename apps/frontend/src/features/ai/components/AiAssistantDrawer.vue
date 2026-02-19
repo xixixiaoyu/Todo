@@ -200,6 +200,7 @@ const {
   stopGenerating,
   clearHistory,
   regenerateMessage,
+  deleteMessage,
   editAndResendMessage,
   updateTeachingQuizAnswer,
 } = useChat()
@@ -407,6 +408,7 @@ defineOptions({
           :messages="messages"
           :is-maximized="isMaximized"
           @regenerate="regenerateMessage"
+          @delete="deleteMessage"
           @edit="editAndResendMessage"
           @select-suggestion="handleSelectSuggestion"
           @ask-selection="handleAskSelection"

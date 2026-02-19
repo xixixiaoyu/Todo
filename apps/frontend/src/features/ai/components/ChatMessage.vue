@@ -28,6 +28,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'regenerate', id: string): void
+  (e: 'delete', id: string): void
   (e: 'edit', content: string): void
   (e: 'ask-selection', prompt: string): void
   (
@@ -236,6 +237,7 @@ defineExpose({
                 v-if="!isUser && !isStreaming && hasContent && message.role !== 'tool'"
                 :content="message.content"
                 @regenerate="emit('regenerate', message.id)"
+                @delete="emit('delete', message.id)"
               />
             </template>
           </div>
