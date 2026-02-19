@@ -34,6 +34,10 @@ const emit = defineEmits<{
     e: 'teaching-submit',
     payload: { quizId: string; kind: TeachingQuizKind; answer: string | string[] },
   ): void
+  (
+    e: 'teaching-submit-batch',
+    payload: Array<{ quizId: string; kind: TeachingQuizKind; answer: string | string[] }>,
+  ): void
 }>()
 
 const { t } = useI18n()
@@ -215,6 +219,7 @@ defineExpose({
                   :quizzes="message.teachingQuizzes"
                   :disabled="isStreaming"
                   @submit="(payload) => emit('teaching-submit', payload)"
+                  @submit-batch="(payload) => emit('teaching-submit-batch', payload)"
                 />
 
                 <!-- AI 建议的思维导图预览 -->

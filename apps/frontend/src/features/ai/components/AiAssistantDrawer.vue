@@ -352,6 +352,13 @@ const handleTeachingSubmit = async (payload: {
   await sendMessage(`[TEACHING_ANSWER]\n${JSON.stringify(payload)}`)
 }
 
+const handleTeachingSubmitBatch = async (
+  payload: Array<{ quizId: string; kind: string; answer: string | string[] }>,
+) => {
+  if (isGenerating.value) return
+  await sendMessage(`[TEACHING_ANSWERS]\n${JSON.stringify(payload)}`)
+}
+
 // 打开设置
 const openSettings = (tab?: 'settings' | 'presets' | 'memory' | 'mcp' | 'contextCompression') => {
   if (tab) {
@@ -397,6 +404,7 @@ defineOptions({
           @select-suggestion="handleSelectSuggestion"
           @ask-selection="handleAskSelection"
           @teaching-submit="handleTeachingSubmit"
+          @teaching-submit-batch="handleTeachingSubmitBatch"
         />
       </div>
 

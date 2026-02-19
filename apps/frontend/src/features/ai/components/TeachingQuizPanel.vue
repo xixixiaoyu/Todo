@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { GraduationCap, AlertCircle } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
@@ -12,23 +12,31 @@ const props = defineProps<{
   disabled?: boolean
 }>()
 
+const SUBMIT_RESET_DELAY = 800
+
 const emit = defineEmits<{
   (
     e: 'submit',
     payload: { quizId: string; kind: TeachingQuizKind; answer: string | string[] },
   ): void
+  (
+    e: 'submit-batch',
+    payload: Array<{ quizId: string; kind: TeachingQuizKind; answer: string | string[] }>,
+  ): void
 }>()
 
 const { t } = useI18n()
 
+const isBatchMode = computed(() => props.quizzes.length > 1)
 const singleSelections = reactive<Record<string, string | null>>({})
 const multiSelections = reactive<Record<string, Record<string, boolean>>>({})
 const shortAnswers = reactive<Record<string, string>>({})
 const errors = reactive<Record<string, string>>({})
 const submittingIds = ref<Set<string>>(new Set())
+const submittingBatch = ref(false)
 
 function isSubmitting(quizId: string): boolean {
-  return submittingIds.value.has(quizId)
+  return submittingBatch.value || submittingIds.value.has(quizId)
 }
 
 function selectSingle(quizId: string, optionId: string) {
@@ -47,21 +55,25 @@ function updateShortAnswer(quizId: string, value: string) {
   errors[quizId] = ''
 }
 
+function getAnswerForQuiz(quiz: TeachingQuiz): string | string[] | null {
+  if (quiz.kind === 'single_choice') {
+    return singleSelections[quiz.id] ?? null
+  }
+
+  if (quiz.kind === 'multi_choice') {
+    const map = multiSelections[quiz.id] || {}
+    const selected = Object.keys(map).filter((k) => map[k])
+    return selected.length > 0 ? selected : null
+  }
+
+  const text = (shortAnswers[quiz.id] ?? '').trim()
+  return text ? text : null
+}
+
 function submitQuiz(quiz: TeachingQuiz) {
   if (props.disabled || isSubmitting(quiz.id)) return
 
-  let answer: string | string[] | null = null
-
-  if (quiz.kind === 'single_choice') {
-    answer = singleSelections[quiz.id] ?? null
-  } else if (quiz.kind === 'multi_choice') {
-    const map = multiSelections[quiz.id] || {}
-    const selected = Object.keys(map).filter((k) => map[k])
-    answer = selected.length > 0 ? selected : null
-  } else {
-    const text = (shortAnswers[quiz.id] ?? '').trim()
-    answer = text ? text : null
-  }
+  const answer = getAnswerForQuiz(quiz)
 
   if (!answer || (Array.isArray(answer) && answer.length === 0)) {
     errors[quiz.id] = t('ai.teachingAnswerRequired')
@@ -74,7 +86,32 @@ function submitQuiz(quiz: TeachingQuiz) {
     const next = new Set(submittingIds.value)
     next.delete(quiz.id)
     submittingIds.value = next
-  }, 800)
+  }, SUBMIT_RESET_DELAY)
+}
+
+function submitAll() {
+  if (props.disabled || submittingBatch.value) return
+
+  const payload: Array<{ quizId: string; kind: TeachingQuizKind; answer: string | string[] }> = []
+  let hasError = false
+
+  for (const quiz of props.quizzes) {
+    const answer = getAnswerForQuiz(quiz)
+    if (!answer || (Array.isArray(answer) && answer.length === 0)) {
+      errors[quiz.id] = t('ai.teachingAnswerRequired')
+      hasError = true
+      continue
+    }
+    payload.push({ quizId: quiz.id, kind: quiz.kind, answer })
+  }
+
+  if (hasError) return
+
+  submittingBatch.value = true
+  emit('submit-batch', payload)
+  window.setTimeout(() => {
+    submittingBatch.value = false
+  }, SUBMIT_RESET_DELAY)
 }
 
 function optionKey(optionId: string): string {
@@ -84,15 +121,17 @@ function optionKey(optionId: string): string {
 
 <template>
   <div class="mt-4 space-y-3">
-    <div class="flex items-center gap-2 px-1">
-      <div class="flex h-7 w-7 items-center justify-center rounded-xl bg-primary/10 text-primary">
-        <GraduationCap :size="15" />
-      </div>
-      <div class="flex flex-col">
-        <span class="text-[10px] font-bold uppercase tracking-widest text-primary/70">{{
-          t('ai.teachingQuizTitle')
-        }}</span>
-        <span class="text-[11px] text-muted-foreground/70">{{ t('ai.teachingQuizHint') }}</span>
+    <div class="flex items-center justify-between gap-2 px-1">
+      <div class="flex items-center gap-2">
+        <div class="flex h-7 w-7 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <GraduationCap :size="15" />
+        </div>
+        <div class="flex flex-col">
+          <span class="text-[10px] font-bold uppercase tracking-widest text-primary/70">{{
+            t('ai.teachingQuizTitle')
+          }}</span>
+          <span class="text-[11px] text-muted-foreground/70">{{ t('ai.teachingQuizHint') }}</span>
+        </div>
       </div>
     </div>
 
@@ -120,6 +159,7 @@ function optionKey(optionId: string): string {
               )
             "
             :disabled="disabled || isSubmitting(quiz.id)"
+            :aria-pressed="singleSelections[quiz.id] === opt.id"
             @click="selectSingle(quiz.id, opt.id)"
           >
             <span
@@ -146,7 +186,7 @@ function optionKey(optionId: string): string {
               :checked="!!(multiSelections[quiz.id] && multiSelections[quiz.id][opt.id])"
               class="mt-0.5 border-border/60 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
               :disabled="disabled || isSubmitting(quiz.id)"
-              @update:checked="(val: boolean) => toggleMulti(quiz.id, opt.id, val)"
+              @update:checked="(val: boolean) => toggleMulti(quiz.id, opt.id, val === true)"
             />
             <div class="flex-1 space-y-0.5">
               <div class="text-sm font-medium text-foreground/90">
@@ -177,6 +217,7 @@ function optionKey(optionId: string): string {
             {{ quiz.answerHint || t('ai.teachingAnswerHintDefault') }}
           </div>
           <Button
+            v-if="!isBatchMode"
             variant="secondary"
             size="sm"
             class="rounded-xl"
@@ -187,6 +228,21 @@ function optionKey(optionId: string): string {
           </Button>
         </div>
       </div>
+    </div>
+
+    <div v-if="isBatchMode" class="flex justify-end pt-1 px-1">
+      <Button
+        size="sm"
+        class="w-full sm:w-auto rounded-xl px-6 transition-all active:scale-[0.98]"
+        :disabled="disabled || submittingBatch"
+        @click="submitAll"
+      >
+        <span
+          v-if="submittingBatch"
+          class="mr-2 h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent"
+        />
+        {{ t('ai.teachingSubmitAll') }}
+      </Button>
     </div>
   </div>
 </template>

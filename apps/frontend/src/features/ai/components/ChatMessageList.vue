@@ -20,6 +20,10 @@ const emit = defineEmits<{
   (e: 'select-suggestion', text: string, options?: { requireTodo?: boolean }): void
   (e: 'ask-selection', prompt: string): void
   (e: 'teaching-submit', payload: { quizId: string; kind: string; answer: string | string[] }): void
+  (
+    e: 'teaching-submit-batch',
+    payload: Array<{ quizId: string; kind: string; answer: string | string[] }>,
+  ): void
 }>()
 
 const { t } = useI18n()
@@ -175,6 +179,7 @@ defineExpose({
                   @edit="(content) => emit('edit', msg.id, content)"
                   @ask-selection="(prompt) => emit('ask-selection', prompt)"
                   @teaching-submit="(payload) => emit('teaching-submit', payload)"
+                  @teaching-submit-batch="(payload) => emit('teaching-submit-batch', payload)"
                 />
               </TransitionGroup>
             </div>
