@@ -201,6 +201,7 @@ const {
   clearHistory,
   regenerateMessage,
   editAndResendMessage,
+  updateTeachingQuizAnswer,
 } = useChat()
 
 const todoStore = useTodoStore()
@@ -349,6 +350,9 @@ const handleTeachingSubmit = async (payload: {
   answer: string | string[]
 }) => {
   if (isGenerating.value) return
+  // 更新本地状态
+  updateTeachingQuizAnswer(payload.quizId, payload.answer)
+  // 发送消息
   await sendMessage(`[TEACHING_ANSWER]\n${JSON.stringify(payload)}`)
 }
 
@@ -356,6 +360,9 @@ const handleTeachingSubmitBatch = async (
   payload: Array<{ quizId: string; kind: string; answer: string | string[] }>,
 ) => {
   if (isGenerating.value) return
+  // 批量更新本地状态
+  payload.forEach((p) => updateTeachingQuizAnswer(p.quizId, p.answer))
+  // 发送消息
   await sendMessage(`[TEACHING_ANSWERS]\n${JSON.stringify(payload)}`)
 }
 

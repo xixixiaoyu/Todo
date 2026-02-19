@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { GraduationCap, AlertCircle } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
@@ -34,6 +34,30 @@ const shortAnswers = reactive<Record<string, string>>({})
 const errors = reactive<Record<string, string>>({})
 const submittingIds = ref<Set<string>>(new Set())
 const submittingBatch = ref(false)
+
+// 初始化/同步状态
+watch(
+  () => props.quizzes,
+  (newQuizzes) => {
+    for (const quiz of newQuizzes) {
+      if (quiz.userAnswer) {
+        if (quiz.kind === 'single_choice') {
+          singleSelections[quiz.id] = quiz.userAnswer as string
+        } else if (quiz.kind === 'multi_choice') {
+          const answers = Array.isArray(quiz.userAnswer) ? quiz.userAnswer : [quiz.userAnswer]
+          const map: Record<string, boolean> = {}
+          answers.forEach((ans) => {
+            if (typeof ans === 'string') map[ans] = true
+          })
+          multiSelections[quiz.id] = map
+        } else {
+          shortAnswers[quiz.id] = quiz.userAnswer as string
+        }
+      }
+    }
+  },
+  { deep: true, immediate: true },
+)
 
 function isSubmitting(quizId: string): boolean {
   return submittingBatch.value || submittingIds.value.has(quizId)

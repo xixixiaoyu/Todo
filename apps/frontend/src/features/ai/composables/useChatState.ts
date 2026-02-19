@@ -69,6 +69,32 @@ export function useChatState() {
     error.value = null
   }
 
+  /**
+   * 更新教学模式问答的用户答案
+   */
+  function updateTeachingQuizAnswer(quizId: string, answer: string | string[]) {
+    if (!chatHistory.value.length) return
+
+    // 深拷贝以确保触发更新
+    const messages = [...chatHistory.value]
+    let updated = false
+
+    for (const msg of messages) {
+      if (msg.teachingQuizzes) {
+        const quiz = msg.teachingQuizzes.find((q) => q.id === quizId)
+        if (quiz) {
+          quiz.userAnswer = answer
+          updated = true
+          break
+        }
+      }
+    }
+
+    if (updated) {
+      chatHistory.value = messages
+    }
+  }
+
   return {
     // 状态
     chatHistory,
@@ -86,5 +112,6 @@ export function useChatState() {
     // 方法
     resetStreamingState,
     clearError,
+    updateTeachingQuizAnswer,
   }
 }

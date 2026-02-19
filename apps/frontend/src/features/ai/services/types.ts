@@ -54,6 +54,7 @@ export interface TeachingQuiz {
   stem: string
   options?: TeachingQuizOption[]
   answerHint?: string
+  userAnswer?: string | string[]
 }
 
 export interface ChatMessage {
