@@ -4,7 +4,9 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 vi.mock('lucide-vue-next', () => ({
   ChevronDown: { template: '<span class="lucide-chevron-down">ChevronDown</span>' },
   ChevronRight: { template: '<span class="lucide-chevron-right">ChevronRight</span>' },
+  ChevronLeft: { template: '<span class="lucide-chevron-left">ChevronLeft</span>' },
   CalendarClock: { template: '<span class="lucide-calendar-clock">CalendarClock</span>' },
+  Clock3: { template: '<span class="lucide-clock3">Clock3</span>' },
   Plus: { template: '<span class="lucide-plus">Plus</span>' },
   Trash2: { template: '<span class="lucide-trash2">Trash2</span>' },
   Wand2: { template: '<span class="lucide-wand2">Wand2</span>' },

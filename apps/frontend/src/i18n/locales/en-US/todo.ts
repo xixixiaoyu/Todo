@@ -54,4 +54,13 @@ export const todo = {
   clearRemindAt: 'Clear reminder',
   remindAfterDue: 'Reminder cannot be after due time',
   reminderToast: 'Reminder: {title}',
+  quickDueTonight2359: 'Tonight 23:59',
+  quickDueTomorrow0900: 'Tomorrow 09:00',
+  quickDueNextMon0900: 'Next Mon 09:00',
+  quickDueWeekend2359: 'This weekend 23:59',
+  quickRemindIn15m: 'In 15m',
+  quickRemindIn1h: 'In 1h',
+  quickRemindIn3h: 'In 3h',
+  quickRemindBeforeDue10m: '10m before due',
+  quickRemindBeforeDue30m: '30m before due',
 } as const

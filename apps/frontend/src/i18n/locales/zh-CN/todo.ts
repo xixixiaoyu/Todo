@@ -54,4 +54,13 @@ export const todo = {
   clearRemindAt: '清除提醒',
   remindAfterDue: '提醒时间不能晚于截止时间',
   reminderToast: '提醒：{title}',
+  quickDueTonight2359: '今晚 23:59',
+  quickDueTomorrow0900: '明天 09:00',
+  quickDueNextMon0900: '下周一 09:00',
+  quickDueWeekend2359: '本周末 23:59',
+  quickRemindIn15m: '15 分钟后',
+  quickRemindIn1h: '1 小时后',
+  quickRemindIn3h: '3 小时后',
+  quickRemindBeforeDue10m: '提前 10 分钟',
+  quickRemindBeforeDue30m: '提前 30 分钟',
 } as const
