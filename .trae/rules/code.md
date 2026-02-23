@@ -4,7 +4,13 @@
 
 ## 项目概览
 
-基于 **NestJS 11 + Vue 3.5** 的全栈 Todo 应用，采用 **pnpm Monorepo**。当前开发环境默认使用 `pnpm docker:dev` 启动全栈 Docker 容器。
+Lumina（简思）是基于 **NestJS 11（Fastify） + Vue 3.5（Vite）** 的全栈 Todo 应用，采用 **pnpm Monorepo + Turborepo** 组织与编排任务。开发环境默认使用 `pnpm docker:dev` 启动全栈 Docker 容器。
+
+## 工具链与版本
+
+- Node：>= 20.19.0（推荐使用 corepack）
+- pnpm：>= 9.15.0（仓库锁定 `pnpm@9.15.0`）
+- 任务编排：Turborepo（根目录 `pnpm <task>` 会分发到各 workspace）
 
 ## 必须遵守（不可妥协）
 
@@ -80,14 +86,13 @@ import { cn } from '@/lib/utils'
 ## API 响应格式
 
 ```ts
-interface ApiSuccessResponse<T> {
+type ApiSuccessResponse<T> = {
   success: true
   data: T
   timestamp: string
-  message?: string
 }
 
-interface ApiErrorResponse {
+type ApiErrorResponse = {
   success: false
   data: null
   message: string
@@ -98,6 +103,11 @@ interface ApiErrorResponse {
 
 type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse
 ```
+
+- 成功响应由后端 `TransformInterceptor` 统一包装：`{ success: true, data, timestamp }`
+- 错误响应由后端 `AllExceptionsFilter` 统一包装：`{ success: false, data: null, message, errors?, statusCode, timestamp }`
+- 安全前置拦截（如缺失 `X-Requested-With`）可能返回最小错误体：至少包含 `success/message/timestamp`
+- `@my-app/shared` 当前导出的 `ApiResponse<T>` 为兼容类型（`success/data/message?/timestamp`），可视为上述响应的子集/超集使用
 
 ## 国际化（i18n）
 
@@ -127,7 +137,9 @@ type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse
 
 - **分层**：Controller 只处理协议层（DTO/鉴权/序列化），领域逻辑在 Service，持久化在 Prisma 层封装
 - **数据一致性**：写操作优先事务；避免在请求链路中做不可控的外部副作用
-- **鉴权**：accessToken + refreshToken；非 GET 请求携带 `Authorization` 头
+- **鉴权**：accessToken + refreshToken；需要认证的接口使用 `Authorization: Bearer <accessToken>`
+- **Cookie 规则**：仅 OAuth 回调路径会从 Cookie 提取 accessToken，其余接口不接受 Cookie 认证
+- **安全约束**：除 `GET/HEAD/OPTIONS` 外，必须携带 `X-Requested-With: XMLHttpRequest`
 - **限流**：默认策略（1s/10、10s/50、1min/100），可通过 `THROTTLE_*` 环境变量覆盖
 - **缓存**：仅缓存确定性且可失效的数据；TTL 统一用常量（如 `CacheableTTL.FIVE_MINUTES`）
 - **实时通信**：通过 `EventsGateway` 广播，避免在业务层散落 Socket 逻辑
@@ -172,6 +184,11 @@ pnpm test                             # 质量门禁：运行测试（必跑）
 pnpm type-check                       # 质量门禁：类型检查（必跑）
 pnpm format                           # 可选：自动格式化（按需）
 
+pnpm docker:up                        # Docker 生产编排：启动
+pnpm docker:down                      # Docker 生产编排：停止
+pnpm docker:logs                      # Docker 生产编排：日志
+pnpm docker:clean                     # Docker 生产编排：清理（谨慎）
+
 pnpm db:push                          # 推送 Schema 到数据库
 
 # 单独校验命令（按需执行）
@@ -196,8 +213,6 @@ pnpm docker:dev:restart
 pnpm docker:dev:down
 pnpm docker:dev:clean
 pnpm docker:prune
-docker compose up postgres redis -d
-docker compose up -d
 pnpm docker:build
 ```
 
