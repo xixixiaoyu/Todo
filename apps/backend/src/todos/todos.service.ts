@@ -1,4 +1,4 @@
-import { Injectable, Inject, forwardRef } from '@nestjs/common'
+import { Injectable, Inject } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import { EventsGateway } from '../events/events.gateway'
 
@@ -24,7 +24,7 @@ const todoSelect = {
 export class TodosService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
-    @Inject(forwardRef(() => EventsGateway))
+    @Inject(EventsGateway)
     private readonly eventsGateway: EventsGateway,
   ) {}
 

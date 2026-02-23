@@ -8,10 +8,9 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets'
-import { Logger, Inject, forwardRef, OnModuleDestroy } from '@nestjs/common'
+import { Logger, OnModuleDestroy } from '@nestjs/common'
 import { Server, Socket } from 'socket.io'
 import { JwtService } from '@nestjs/jwt'
-import { TodosService } from '../todos/todos.service'
 
 /**
  * WebSocket 事件网关
@@ -41,11 +40,7 @@ export class EventsGateway
   private readonly logger = new Logger(EventsGateway.name)
   private readonly broadcastTimers = new Map<number, NodeJS.Timeout>()
 
-  constructor(
-    @Inject(forwardRef(() => TodosService))
-    private readonly todosService: TodosService,
-    private readonly jwtService: JwtService,
-  ) {}
+  constructor(private readonly jwtService: JwtService) {}
 
   afterInit(server: Server) {
     this.logger.log('WebSocket 网关已初始化')

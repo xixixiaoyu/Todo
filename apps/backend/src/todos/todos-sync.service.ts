@@ -1,4 +1,4 @@
-import { Injectable, Inject, forwardRef } from '@nestjs/common'
+import { Injectable, Inject } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import { SyncMergeDto } from './todos.dto'
 import type { SyncItem } from '@my-app/shared'
@@ -29,7 +29,7 @@ type TodoPublic = Prisma.TodoGetPayload<{ select: typeof todoSelect }>
 export class TodoSyncService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
-    @Inject(forwardRef(() => EventsGateway))
+    @Inject(EventsGateway)
     private readonly eventsGateway: EventsGateway,
   ) {}
 
