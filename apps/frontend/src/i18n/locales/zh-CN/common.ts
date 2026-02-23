@@ -24,6 +24,7 @@ export const common = {
   apply: '应用',
   discard: '放弃',
   close: '关闭',
+  loadMore: '加载更多',
   none: '无',
   minutes: '分钟',
   focusing: '专注中',
@@ -65,6 +66,10 @@ export const common = {
     password: '密码',
     name: '姓名',
     confirmPassword: '确认密码',
+    data: {
+      title: '标题',
+      parentId: '父任务',
+    },
   },
   success: '操作成功',
   settings: '设置',

@@ -33,6 +33,24 @@ function truncateText(input: string, maxChars: number): string {
   return `${input.slice(0, maxChars)}\n\n…(truncated)…`
 }
 
+function stripTodoIdsFromText(input: string): string {
+  const uuid = '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'
+  const tempId = 'temp-[A-Za-z0-9_-]+'
+
+  let out = input
+  out = out.replace(
+    new RegExp(`^\\s*(?:ID|Id|id)\\s*[:：]\\s*(?:${uuid}|${tempId})\\s*$`, 'gm'),
+    '',
+  )
+  out = out.replace(
+    new RegExp(`\\s*[（(]\\s*(?:ID|Id|id)\\s*[:：]\\s*(?:${uuid}|${tempId})\\s*[)）]\\s*`, 'g'),
+    ' ',
+  )
+  out = out.replace(new RegExp(`\\b(?:ID|Id|id)\\s*[:：]\\s*(?:${uuid}|${tempId})\\b`, 'g'), '')
+  out = out.replace(/\n{3,}/g, '\n\n').trim()
+  return out
+}
+
 function estimateMessageSize(msg: ChatMessage): number {
   const base = msg.content?.length ?? 0
   const docs = (msg.documents ?? []).reduce((acc, d) => acc + d.name.length + d.content.length, 0)
@@ -408,6 +426,9 @@ export function useChatActions(options: AIRequestOptions = {}) {
 
             const teachingQuizzes: TeachingQuiz[] | undefined = parsed.teachingQuizzes
             currentAIResponse.value = parsed.cleanText
+            if (aiConfig.todoAssistant && currentAIResponse.value) {
+              currentAIResponse.value = stripTodoIdsFromText(currentAIResponse.value)
+            }
             const structuredBlockErrors = parsed.errors.length > 0 ? [...parsed.errors] : undefined
 
             const aiMessage: ChatMessage = {

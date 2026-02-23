@@ -6,6 +6,7 @@ import { getAIConfig } from '@/features/ai/composables/useAIConfig'
 import { useTodoStore, type Todo, type ProposedTodoChange } from '@/features/todo/stores/todo'
 import { useMemory } from '@/features/ai/composables/useMemory'
 import i18n from '@/i18n'
+import { z } from 'zod'
 import type {
   ChatMessage,
   MultiModalContent,
@@ -18,6 +19,42 @@ import type {
 } from './types'
 
 const t = i18n.global.t
+
+function getLocaleValue(): string {
+  const l = i18n.global.locale as unknown
+  if (typeof l === 'string') return l
+  if (l && typeof l === 'object' && 'value' in l) {
+    const v = (l as { value: unknown }).value
+    return typeof v === 'string' ? v : 'zh-CN'
+  }
+  return 'zh-CN'
+}
+
+function getRawLocaleMessage(path: string): string | undefined {
+  const locale = getLocaleValue()
+  const getter = (i18n.global as unknown as { getLocaleMessage?: (l: string) => unknown })
+    .getLocaleMessage
+  if (typeof getter !== 'function') return undefined
+
+  const root = getter(locale) as unknown
+  if (!root || typeof root !== 'object') return undefined
+
+  const keys = path.split('.').filter(Boolean)
+  let cur: unknown = root
+  for (const k of keys) {
+    if (!cur || typeof cur !== 'object') return undefined
+    cur = (cur as Record<string, unknown>)[k]
+  }
+  return typeof cur === 'string' ? cur : undefined
+}
+
+function formatTemplate(template: string, params: Record<string, string | number>): string {
+  let out = template
+  for (const [k, v] of Object.entries(params)) {
+    out = out.split(`{${k}}`).join(String(v))
+  }
+  return out
+}
 
 /**
  * 构建完整的 API URL
@@ -183,33 +220,90 @@ function normalizeTeachingQuizzes(parsed: unknown): TeachingQuiz[] | null {
 }
 
 function normalizeTodoActions(parsed: unknown): ProposedTodoChange[] | null {
-  if (!Array.isArray(parsed)) return null
+  const trimmedNonEmpty = z
+    .string()
+    .transform((s) => s.trim())
+    .refine((s) => s.length > 0)
+
+  const todoId = trimmedNonEmpty
+
+  const addActionSchema = z.object({
+    type: z.literal('add'),
+    id: todoId.optional(),
+    data: z
+      .object({
+        title: trimmedNonEmpty,
+        parentId: z.union([todoId, z.null()]).optional(),
+      })
+      .passthrough(),
+  })
+
+  const updateActionSchema = z.object({
+    type: z.literal('update'),
+    id: todoId.optional(),
+    data: z
+      .object({
+        id: todoId,
+        title: trimmedNonEmpty,
+      })
+      .passthrough(),
+  })
+
+  const idOnlyActionDataSchema = z.object({ id: todoId }).passthrough()
+
+  const deleteActionSchema = z.object({
+    type: z.literal('delete'),
+    id: todoId.optional(),
+    data: idOnlyActionDataSchema,
+  })
+
+  const toggleActionSchema = z.object({
+    type: z.literal('toggle'),
+    id: todoId.optional(),
+    data: idOnlyActionDataSchema,
+  })
+
+  const pinActionSchema = z.object({
+    type: z.literal('pin'),
+    id: todoId.optional(),
+    data: idOnlyActionDataSchema,
+  })
+
+  const todoActionSchema = z.union([
+    addActionSchema,
+    updateActionSchema,
+    deleteActionSchema,
+    toggleActionSchema,
+    pinActionSchema,
+  ])
+
+  const res = z.array(z.unknown()).safeParse(parsed)
+  if (!res.success) return null
+
   const normalized: ProposedTodoChange[] = []
 
-  for (let i = 0; i < parsed.length; i++) {
-    const item = parsed[i]
-    if (!isRecord(item)) continue
+  for (let i = 0; i < res.data.length; i++) {
+    const item = res.data[i]
+    const parsedItem = todoActionSchema.safeParse(item)
+    if (!parsedItem.success) continue
 
-    const type = item.type
-    if (
-      type !== 'add' &&
-      type !== 'update' &&
-      type !== 'delete' &&
-      type !== 'toggle' &&
-      type !== 'pin'
-    )
-      continue
+    const action = parsedItem.data
+    const id = isNonEmptyString(action.id) ? action.id : `temp-${i + 1}`
 
-    const data = item.data
-    if (!isRecord(data)) continue
-
-    const rawId = item.id
-    const id = isNonEmptyString(rawId) ? rawId : `temp-${i + 1}`
+    const parentId =
+      action.type === 'add'
+        ? typeof action.data.parentId === 'string'
+          ? action.data.parentId
+          : (action.data.parentId ?? undefined)
+        : undefined
 
     normalized.push({
       id,
-      type,
-      data: data as ProposedTodoChange['data'],
+      type: action.type,
+      data: {
+        ...action.data,
+        ...(action.type === 'add' ? { parentId } : {}),
+      } as ProposedTodoChange['data'],
     })
   }
 
@@ -285,7 +379,7 @@ interface TodoWithChildren extends Todo {
  */
 function formatTodoItems(todos: Todo[]): string {
   // 1. 过滤未完成任务
-  const pendingTodos = todos.filter((t) => !t.completed)
+  const pendingTodos = todos.filter((t) => !t.completed && !t.deletedAt)
   if (pendingTodos.length === 0) return ''
 
   // 2. 构建层级结构
@@ -382,40 +476,18 @@ export function injectSystemPrompts(
   if (todoAssistant) {
     const todoStore = useTodoStore()
     const todoList = formatTodoItems(todoStore.todos)
-    const pendingCount = todoStore.todos.filter((t) => !t.completed).length
+    const pendingCount = todoStore.todos.filter((t) => !t.completed && !t.deletedAt).length
 
     systemBlocks.push({
-      content: `[Todo 助手上下文]
-用户当前有 ${pendingCount} 个待完成的待办事项（带有 📌 的为置顶任务）：
-${todoList || t('common.none') || 'None'}
-
-支持层级结构：
-- 如果要创建子任务，请在 add 操作中指定 parentId。
-- 你可以一次性创建父任务和子任务：先为父任务生成一个唯一的临时 ID（如 "temp-1"），然后在子任务的 parentId 中引用该 ID。`,
-    })
-
-    systemBlocks.push({
-      content: `[重要指令：Todo 操作格式]
-如果你认为需要修改待办事项（增加、删除、修改、切换完成状态、置顶/取消置顶），请在回复的最后添加一个 JSON 块（不要包含在 Markdown 代码块中），格式如下：
-
-[TODO_ACTIONS_START]
-[
-  { "type": "add", "id": "temp-parent-1", "data": { "title": "父任务标题" } },
-  { "type": "add", "id": "temp-child-1", "data": { "title": "子任务标题", "parentId": "temp-parent-1" } },
-  { "type": "update", "data": { "id": "现有任务ID", "title": "新标题" } },
-  { "type": "delete", "data": { "id": "现有任务ID" } },
-  { "type": "toggle", "data": { "id": "现有任务ID" } },
-  { "type": "pin", "data": { "id": "现有任务ID" } }
-]
-[TODO_ACTIONS_END]
-
-注意：
-1. 只要你在回复中建议了新的待办事项、任务拆解或对现有任务的修改，就必须输出对应的 JSON 块。不用担心用户是否同意，用户会在可视化界面预览并手动点击“应用”后才会真正修改数据。
-2. 对于新任务，必须生成唯一的临时 ID（如 "temp-1"），并在需要关联父子关系时正确引用。
-3. 对于现有任务，务必使用上下文提供的真实 ID。
-4. "pin" 操作用于切换置顶状态，如果任务当前已置顶，发送 "pin" 将取消置顶。
-5. 请保持回复简洁且具有行动导向。
-6. 严禁在 JSON 块中使用任何注释或 Markdown 标记。`,
+      content: (() => {
+        const params = {
+          count: pendingCount,
+          todoList: todoList || t('common.none') || 'None',
+        }
+        const raw = getRawLocaleMessage('ai.todoAssistantPrompt')
+        if (raw) return formatTemplate(raw, params)
+        return t('ai.todoAssistantPrompt', params) as string
+      })(),
     })
   }
 

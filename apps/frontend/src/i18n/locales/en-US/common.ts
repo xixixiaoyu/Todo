@@ -24,6 +24,7 @@ export const common = {
   apply: 'Apply',
   discard: 'Discard',
   close: 'Close',
+  loadMore: 'Load more',
   none: 'None',
   minutes: 'Minutes',
   focusing: 'Focusing',
@@ -65,6 +66,10 @@ export const common = {
     password: 'Password',
     name: 'Name',
     confirmPassword: 'Confirm Password',
+    data: {
+      title: 'Title',
+      parentId: 'Parent Task',
+    },
   },
   success: 'Success',
   settings: 'Settings',

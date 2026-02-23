@@ -37,6 +37,16 @@ const containerRef = ref<HTMLElement | null>(null)
 const { width: windowWidth } = useWindowSize()
 const isMobile = computed(() => windowWidth.value < 640)
 
+const DEFAULT_WINDOW_SIZE = 200
+const WINDOW_STEP = 200
+const renderLimit = ref(DEFAULT_WINDOW_SIZE)
+
+const windowStartIndex = computed(() => Math.max(0, props.messages.length - renderLimit.value))
+const visibleMessages = computed(() => props.messages.slice(windowStartIndex.value))
+const hiddenCount = computed(() =>
+  Math.max(0, props.messages.length - visibleMessages.value.length),
+)
+
 // 使用智能滚动 Composable
 const {
   isSticking,
@@ -55,6 +65,7 @@ const {
 // 监听会话 ID 变化
 watch(currentSessionId, () => {
   isSwitchingSession.value = true
+  renderLimit.value = DEFAULT_WINDOW_SIZE
   // 切换会话时，立即滚动到底部，不使用平滑滚动以提升响应感
   void nextTick(() => {
     scrollToBottom('instant')
@@ -64,6 +75,33 @@ watch(currentSessionId, () => {
     }, 100)
   })
 })
+
+async function revealOlderMessages(step = WINDOW_STEP) {
+  if (!containerRef.value) {
+    renderLimit.value += step
+    return
+  }
+  if (hiddenCount.value <= 0) return
+
+  const container = containerRef.value
+  const prevScrollHeight = container.scrollHeight
+  const prevScrollTop = container.scrollTop
+
+  renderLimit.value += step
+  await nextTick()
+
+  const nextScrollHeight = container.scrollHeight
+  const delta = nextScrollHeight - prevScrollHeight
+  container.scrollTop = prevScrollTop + (delta > 0 ? delta : 0)
+}
+
+function handleScroll() {
+  if (!containerRef.value) return
+  if (isSwitchingSession.value) return
+  if (hiddenCount.value <= 0) return
+  if (containerRef.value.scrollTop > 200) return
+  void revealOlderMessages()
+}
 
 // 监听消息变化
 watch(
@@ -124,6 +162,7 @@ defineExpose({
         'h-full overflow-y-auto overscroll-contain scroll-smooth-gpu',
         isMobile ? 'px-3' : 'px-4',
       ]"
+      @scroll.passive="handleScroll"
     >
       <div
         :class="['flex min-h-full w-full flex-col', isMaximized ? 'mx-auto max-w-4xl' : '']"
@@ -168,14 +207,30 @@ defineExpose({
         <div v-else :class="[isMobile ? 'py-2' : 'pt-6 pb-4']">
           <Transition name="session-fade" mode="out-in">
             <div :key="currentSessionId || 'empty'">
+              <div v-if="hiddenCount > 0" class="flex justify-center pb-2">
+                <button
+                  type="button"
+                  data-test="load-older"
+                  class="rounded-full border border-border bg-background/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-background"
+                  @click="revealOlderMessages()"
+                >
+                  {{ t('common.loadMore') }}
+                </button>
+              </div>
               <TransitionGroup name="message-list" tag="div" class="flex flex-col">
                 <ChatMessage
-                  v-for="(msg, index) in messages"
+                  v-for="(msg, index) in visibleMessages"
                   :key="msg.id"
                   :message="msg"
-                  :is-last="index === messages.length - 1"
-                  :is-prev-tool="index > 0 && messages[index - 1].role === 'tool'"
-                  :is-next-tool="index < messages.length - 1 && messages[index + 1].role === 'tool'"
+                  :is-last="index + windowStartIndex === messages.length - 1"
+                  :is-prev-tool="
+                    index + windowStartIndex > 0 &&
+                    messages[index + windowStartIndex - 1].role === 'tool'
+                  "
+                  :is-next-tool="
+                    index + windowStartIndex < messages.length - 1 &&
+                    messages[index + windowStartIndex + 1].role === 'tool'
+                  "
                   @regenerate="(id) => emit('regenerate', id)"
                   @delete="(id) => emit('delete', id)"
                   @edit="(content) => emit('edit', msg.id, content)"

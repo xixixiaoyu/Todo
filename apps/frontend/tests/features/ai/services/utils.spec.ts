@@ -114,6 +114,18 @@ describe('AI Utils - injectSystemPrompts', () => {
         updatedAt: new Date(),
         isPinned: false,
       },
+      {
+        id: '5',
+        title: 'Trashed Task',
+        completed: false,
+        deletedAt: new Date(),
+        order: 3,
+        version: 0,
+        pomodoroCount: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        isPinned: false,
+      },
     ]
 
     const result = injectSystemPrompts([], '', true, 'default')
@@ -121,10 +133,8 @@ describe('AI Utils - injectSystemPrompts', () => {
       (m) =>
         m.role === 'system' &&
         typeof m.content === 'string' &&
-        m.content.includes('Todo 助手上下文'),
+        m.content.includes('- 📌 Pinned Task (ID: 2)'),
     )
-
-    expect(systemMessage?.content).toContain('用户当前有 3 个待完成的待办事项')
     // Check sorting and hierarchy
     // Pinned task should be first
     // Task 1 should be next
@@ -135,6 +145,8 @@ describe('AI Utils - injectSystemPrompts', () => {
     expect(content).toContain('  - Child Task (ID: 3)')
     // Completed task should not be present
     expect(systemMessage?.content).not.toContain('Completed Task')
+    // Trashed task should not be present
+    expect(systemMessage?.content).not.toContain('Trashed Task')
   })
 
   it('should inject memories when enabled', () => {
@@ -287,5 +299,13 @@ describe('AI Utils - parseAssistantBlocks', () => {
     const res = parseAssistantBlocks(input, { enableTodoActions: false })
     expect(res.todoActions).toBeUndefined()
     expect(res.cleanText).toBe('x\n\ny')
+  })
+
+  it('should validate todo actions strictly and ignore invalid items', () => {
+    const input =
+      'x\n[TODO_ACTIONS_START]\n[{"type":"update","data":{"title":"missing id"}},{"type":"add","data":{"title":" ok "}},{"type":"pin","data":{"id":"1"}}]\n[TODO_ACTIONS_END]\ny'
+    const res = parseAssistantBlocks(input, { enableTodoActions: true })
+    expect(res.todoActions?.map((a) => a.type)).toEqual(['add', 'pin'])
+    expect(res.todoActions?.[0]?.data.title).toBe('ok')
   })
 })
