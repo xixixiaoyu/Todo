@@ -209,8 +209,8 @@ export async function getAIStreamResponse(
           if (reasoningDetails && onReasoningDetails) {
             onReasoningDetails(reasoningDetails)
           }
-        } catch (e) {
-          console.warn('Failed to parse AI stream chunk:', e, data)
+        } catch {
+          console.warn('Failed to parse AI stream chunk')
         }
       }
     }

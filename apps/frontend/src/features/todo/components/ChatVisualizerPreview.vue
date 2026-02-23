@@ -117,7 +117,12 @@ const hasChanges = computed(
 
 async function handleApply() {
   isApplying.value = true
-  await todoStore.applyProposedChanges()
+  if (props.messageId) {
+    todoStore.setProposedChanges(props.messageId, props.actions)
+    await todoStore.applyProposedChanges(props.messageId)
+  } else {
+    await todoStore.applyProposedChanges()
+  }
   isApplying.value = false
   isApplied.value = true
   updateMessageStatus('applied')
@@ -125,7 +130,12 @@ async function handleApply() {
 
 function handleDiscard() {
   isDiscarding.value = true
-  todoStore.discardProposedChanges()
+  if (props.messageId) {
+    todoStore.setProposedChanges(props.messageId, props.actions)
+    todoStore.discardProposedChanges(props.messageId)
+  } else {
+    todoStore.discardProposedChanges()
+  }
   isDiscarding.value = false
   isDiscarded.value = true
   updateMessageStatus('discarded')

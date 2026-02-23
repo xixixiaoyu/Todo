@@ -104,9 +104,45 @@ function saveSessions(immediate = false): void {
     saveTimer = null
   }
 
+  const truncateText = (input: string, maxChars: number) => {
+    if (input.length <= maxChars) return input
+    return input.slice(0, maxChars)
+  }
+
+  const sanitizeMessageForStorage = (msg: ChatMessage): ChatMessage => {
+    const images =
+      msg.images && msg.images.length > 0
+        ? msg.images.filter((url) => typeof url === 'string' && !url.startsWith('data:'))
+        : undefined
+
+    const documents =
+      msg.documents && msg.documents.length > 0
+        ? msg.documents.map((d) => ({
+            name: d.name,
+            content: truncateText(d.content, 4000),
+          }))
+        : undefined
+
+    return {
+      ...msg,
+      images,
+      documents,
+      content: truncateText(msg.content, 20000),
+      thinkingContent: msg.thinkingContent ? truncateText(msg.thinkingContent, 20000) : undefined,
+      reasoning_details: msg.reasoning_details
+        ? truncateText(msg.reasoning_details, 20000)
+        : undefined,
+    }
+  }
+
   const doSave = () => {
     try {
-      const data = JSON.stringify(sessions.value)
+      const data = JSON.stringify(
+        sessions.value.map((s) => ({
+          ...s,
+          messages: s.messages.map(sanitizeMessageForStorage),
+        })),
+      )
       localStorage.setItem(SESSIONS_STORAGE_KEY, data)
     } catch (e) {
       if (e instanceof Error && e.name === 'QuotaExceededError') {

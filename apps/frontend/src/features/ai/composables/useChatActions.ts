@@ -403,7 +403,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
                 id: action.id || generateId(),
               }))
               currentTodoActions.value = proposedActions
-              todoStore.addProposedChanges(proposedActions)
+              todoStore.setProposedChanges(assistantMessageId, proposedActions)
             }
 
             const teachingQuizzes: TeachingQuiz[] | undefined = parsed.teachingQuizzes

@@ -18,7 +18,9 @@ export const useTodoStore = defineStore(
     const isDrawerOpen = ref(false)
     const isMaximized = ref(false)
     const isSilencingToast = ref(false)
-    const proposedChanges = ref<ProposedTodoChange[]>([])
+    const proposedChangeSets = ref<Record<string, ProposedTodoChange[]>>({})
+    const proposedChangeSetOrder = ref<string[]>([])
+    const activeProposedChangeSetId = ref<string | null>(null)
     const lastSyncAt = ref<string | null>(null)
 
     const filteredTodos = computed(() =>
@@ -55,6 +57,12 @@ export const useTodoStore = defineStore(
     const completedCount = computed(
       () => todos.value.filter((todo) => todo.completed && !todo.deletedAt).length,
     )
+
+    const proposedChanges = computed<ProposedTodoChange[]>(() => {
+      const activeId = activeProposedChangeSetId.value
+      if (!activeId) return []
+      return proposedChangeSets.value[activeId] ?? []
+    })
 
     const hasProposedChanges = computed(() => proposedChanges.value.length > 0)
 
@@ -170,44 +178,160 @@ export const useTodoStore = defineStore(
       isSilencingToast,
     })
 
-    function addProposedChanges(changes: ProposedTodoChange[]): void {
-      proposedChanges.value = [...proposedChanges.value, ...changes]
+    function setActiveProposedChangeSet(setId: string | null): void {
+      activeProposedChangeSetId.value = setId
     }
 
-    function clearProposedChanges(): void {
-      proposedChanges.value = []
+    function setProposedChanges(setId: string, changes: ProposedTodoChange[]): void {
+      proposedChangeSets.value = {
+        ...proposedChangeSets.value,
+        [setId]: [...changes],
+      }
+      proposedChangeSetOrder.value = [
+        ...proposedChangeSetOrder.value.filter((id) => id !== setId),
+        setId,
+      ]
+      setActiveProposedChangeSet(setId)
     }
 
-    async function applyProposedChanges(): Promise<void> {
-      if (proposedChanges.value.length === 0) return
+    function addProposedChanges(setId: string, changes: ProposedTodoChange[]): void {
+      const prev = proposedChangeSets.value[setId] ?? []
+      setProposedChanges(setId, [...prev, ...changes])
+    }
 
-      for (const change of proposedChanges.value) {
+    function clearProposedChanges(setId?: string): void {
+      if (!setId) {
+        proposedChangeSets.value = {}
+        proposedChangeSetOrder.value = []
+        setActiveProposedChangeSet(null)
+        return
+      }
+
+      const rest = { ...proposedChangeSets.value }
+      delete rest[setId]
+      proposedChangeSets.value = rest
+      proposedChangeSetOrder.value = proposedChangeSetOrder.value.filter((id) => id !== setId)
+      if (activeProposedChangeSetId.value === setId) {
+        setActiveProposedChangeSet(
+          proposedChangeSetOrder.value.length > 0
+            ? proposedChangeSetOrder.value[proposedChangeSetOrder.value.length - 1]
+            : null,
+        )
+      }
+    }
+
+    async function applyProposedChanges(setId?: string): Promise<void> {
+      const targetId = setId ?? activeProposedChangeSetId.value ?? undefined
+      if (!targetId) return
+
+      const changes = proposedChangeSets.value[targetId] ?? []
+      if (changes.length === 0) return
+
+      const addActions = changes.filter((c) => c.type === 'add')
+      const nonAddActions = changes.filter((c) => c.type !== 'add')
+
+      const addById = new Map<string, ProposedTodoChange>()
+      const addIds: string[] = []
+      for (const a of addActions) {
+        if (!a.id) continue
+        addById.set(a.id, a)
+        addIds.push(a.id)
+      }
+
+      const addIdSet = new Set(addIds)
+      const incomingCount = new Map<string, number>()
+      const outgoing = new Map<string, string[]>()
+
+      for (const id of addIds) {
+        incomingCount.set(id, 0)
+        outgoing.set(id, [])
+      }
+
+      for (const id of addIds) {
+        const action = addById.get(id)
+        const parentId = action?.data.parentId
+        if (parentId && addIdSet.has(parentId)) {
+          outgoing.get(parentId)!.push(id)
+          incomingCount.set(id, (incomingCount.get(id) ?? 0) + 1)
+        }
+      }
+
+      const queue: string[] = addIds.filter((id) => (incomingCount.get(id) ?? 0) === 0)
+      const orderedAddIds: string[] = []
+      const queued = new Set(queue)
+
+      while (queue.length > 0) {
+        const id = queue.shift()!
+        orderedAddIds.push(id)
+        const outs = outgoing.get(id) ?? []
+        for (const next of outs) {
+          incomingCount.set(next, (incomingCount.get(next) ?? 0) - 1)
+          if ((incomingCount.get(next) ?? 0) === 0 && !queued.has(next)) {
+            queue.push(next)
+            queued.add(next)
+          }
+        }
+      }
+
+      if (orderedAddIds.length < addIds.length) {
+        for (const id of addIds) {
+          if (!orderedAddIds.includes(id)) orderedAddIds.push(id)
+        }
+      }
+
+      const idMap = new Map<string, string>()
+      const existingTodoIds = new Set(todos.value.map((t) => t.id))
+
+      for (const id of orderedAddIds) {
+        const change = addById.get(id)
+        if (!change) continue
+        const rawTitle = change.data.title
+        const title = typeof rawTitle === 'string' ? rawTitle.trim() : ''
+        if (!title) continue
+
+        const parentIdRaw = change.data.parentId
+        const parentId =
+          typeof parentIdRaw === 'string' && parentIdRaw
+            ? (idMap.get(parentIdRaw) ?? (existingTodoIds.has(parentIdRaw) ? parentIdRaw : null))
+            : null
+
+        const newId = await actions.addTodo(title, parentId ?? null)
+        if (newId) {
+          idMap.set(id, newId)
+          existingTodoIds.add(newId)
+        }
+      }
+
+      for (const change of nonAddActions) {
+        const rawId = change.data.id
+        const targetTodoId = typeof rawId === 'string' && rawId ? (idMap.get(rawId) ?? rawId) : null
+
         switch (change.type) {
-          case 'add':
-            if (change.data.title) {
-              await actions.addTodo(change.data.title, change.data.parentId ?? null, change.id)
-            }
+          case 'update': {
+            const rawTitle = change.data.title
+            const title = typeof rawTitle === 'string' ? rawTitle.trim() : ''
+            if (targetTodoId && title) await actions.updateTodo(targetTodoId, title)
             break
-          case 'update':
-            if (change.data.id && change.data.title)
-              await actions.updateTodo(change.data.id, change.data.title)
-            break
+          }
           case 'delete':
-            if (change.data.id) await actions.deleteTodo(change.data.id)
+            if (targetTodoId) await actions.deleteTodo(targetTodoId)
             break
           case 'toggle':
-            if (change.data.id) await actions.toggleTodo(change.data.id)
+            if (targetTodoId) await actions.toggleTodo(targetTodoId)
             break
           case 'pin':
-            if (change.data.id) await actions.togglePin(change.data.id)
+            if (targetTodoId) await actions.togglePin(targetTodoId)
             break
         }
       }
-      clearProposedChanges()
+
+      clearProposedChanges(targetId)
     }
 
-    function discardProposedChanges(): void {
-      clearProposedChanges()
+    function discardProposedChanges(setId?: string): void {
+      const targetId = setId ?? activeProposedChangeSetId.value ?? undefined
+      if (!targetId) return
+      clearProposedChanges(targetId)
     }
 
     return {
@@ -222,6 +346,7 @@ export const useTodoStore = defineStore(
       isSilencingToast,
       isAllExpanded,
       proposedChanges,
+      activeProposedChangeSetId,
       lastSyncAt,
       filteredTodos,
       pendingCount,
@@ -236,6 +361,8 @@ export const useTodoStore = defineStore(
       mergeOnLogin,
       resetSyncStatus,
       addProposedChanges,
+      setProposedChanges,
+      setActiveProposedChangeSet,
       clearProposedChanges,
       applyProposedChanges,
       discardProposedChanges,
