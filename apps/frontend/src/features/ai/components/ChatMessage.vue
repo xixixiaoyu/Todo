@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useWindowSize } from '@vueuse/core'
+import { useWindowSize, useTimeoutFn } from '@vueuse/core'
 import { AlertCircle, Copy, Check } from 'lucide-vue-next'
 import type { ChatMessage } from '@/features/ai/composables/useChat'
 import type { TeachingQuizKind } from '@/features/ai/services/aiService'
@@ -122,13 +122,19 @@ const diagnosticsText = computed(() => {
 
 const diagnosticsCopied = ref(false)
 
+const { start: startResetCopied } = useTimeoutFn(
+  () => {
+    diagnosticsCopied.value = false
+  },
+  2000,
+  { immediate: false },
+)
+
 async function copyDiagnostics() {
   try {
     await navigator.clipboard.writeText(diagnosticsText.value)
     diagnosticsCopied.value = true
-    setTimeout(() => {
-      diagnosticsCopied.value = false
-    }, 2000)
+    startResetCopied()
   } catch {
     console.warn(t('common.error.requestFailed'))
   }
