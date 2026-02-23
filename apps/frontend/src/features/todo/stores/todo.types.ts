@@ -3,6 +3,9 @@ import type { Todo as SharedTodo } from '@my-app/shared'
 export interface Todo extends SharedTodo {
   completedAt?: Date
   deletedAt?: Date
+  dueAt?: Date
+  remindAt?: Date
+  remindedAt?: Date
   parentId?: string | null
   expanded?: boolean
   isProposed?: boolean

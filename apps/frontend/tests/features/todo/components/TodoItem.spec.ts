@@ -4,6 +4,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 vi.mock('lucide-vue-next', () => ({
   ChevronDown: { template: '<span class="lucide-chevron-down">ChevronDown</span>' },
   ChevronRight: { template: '<span class="lucide-chevron-right">ChevronRight</span>' },
+  CalendarClock: { template: '<span class="lucide-calendar-clock">CalendarClock</span>' },
   Plus: { template: '<span class="lucide-plus">Plus</span>' },
   Trash2: { template: '<span class="lucide-trash2">Trash2</span>' },
   Wand2: { template: '<span class="lucide-wand2">Wand2</span>' },
@@ -40,6 +41,7 @@ const i18n = createI18n({
         breakdown: 'AI 拆解',
         focus: '专注',
         pin: '置顶',
+        schedule: '截止/提醒',
         delete: '删除',
       },
       common: {

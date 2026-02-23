@@ -13,6 +13,9 @@ const todoSelect = {
   isPinned: true,
   parentId: true,
   version: true,
+  dueAt: true,
+  remindAt: true,
+  remindedAt: true,
   createdAt: true,
   updatedAt: true,
   completedAt: true,
@@ -53,11 +56,18 @@ export class TodoSyncService {
 
           const existing = await tx.todo.findUnique({
             where: { id: todo.id },
-            select: { updatedAt: true, userId: true, version: true },
+            select: {
+              updatedAt: true,
+              userId: true,
+              version: true,
+              remindAt: true,
+              remindedAt: true,
+            },
           })
 
           const clientUpdatedAt = new Date(todo.updatedAt)
           const clientVersion = todo.version ?? 0
+          const clientRemindAt = todo.remindAt ? new Date(todo.remindAt) : null
 
           if (existing && existing.userId !== userId) {
             continue
@@ -76,6 +86,12 @@ export class TodoSyncService {
             }
           }
 
+          const keepRemindedAt =
+            !!existing?.remindAt &&
+            !!existing.remindedAt &&
+            !!clientRemindAt &&
+            existing.remindAt.getTime() === clientRemindAt.getTime()
+
           const data = {
             title: todo.title,
             completed: todo.completed,
@@ -83,6 +99,9 @@ export class TodoSyncService {
             isPinned: todo.isPinned,
             parentId: todo.parentId,
             pomodoroCount: todo.pomodoroCount,
+            dueAt: todo.dueAt ? new Date(todo.dueAt) : null,
+            remindAt: clientRemindAt,
+            remindedAt: keepRemindedAt ? existing!.remindedAt : null,
             completedAt: todo.completedAt ? new Date(todo.completedAt) : null,
             deletedAt: todo.deletedAt ? new Date(todo.deletedAt) : null,
             updatedAt: clientUpdatedAt,

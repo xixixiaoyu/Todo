@@ -5,6 +5,7 @@ import type { ProposedTodoChange, FilterType, ViewMode, Todo } from './todo.type
 import { applyFilterAndSort } from './todo.filtering'
 import { createTodoCloud } from './todo.cloud'
 import { createTodoActions } from './todo.actions'
+import { normalizeTodoDatesInPlace } from './todo.dates'
 
 export const useTodoStore = defineStore(
   'todo',
@@ -35,6 +36,18 @@ export const useTodoStore = defineStore(
       if (currentParentTodos.length === 0) return false
       return currentParentTodos.some((t) => (t.expanded ?? true) !== false)
     })
+
+    const normalizeAllTodos = () => {
+      todos.value.forEach(normalizeTodoDatesInPlace)
+    }
+
+    watch(
+      todos,
+      () => {
+        normalizeAllTodos()
+      },
+      { immediate: true },
+    )
 
     watch(searchQuery, (newQuery) => {
       if (newQuery.trim()) {
@@ -139,6 +152,9 @@ export const useTodoStore = defineStore(
         parentId: todo.parentId || null,
         version: todo.version || 0,
         pomodoroCount: todo.pomodoroCount || 0,
+        dueAt: todo.dueAt || null,
+        remindAt: todo.remindAt || null,
+        remindedAt: todo.remindedAt || null,
         createdAt: todo.createdAt,
         updatedAt: todo.updatedAt,
         completedAt: todo.completedAt || null,

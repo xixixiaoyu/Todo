@@ -3,6 +3,7 @@ import { Logger, Inject } from '@nestjs/common'
 import { Job } from 'bullmq'
 import { SCHEDULED_TASKS_QUEUE } from './constants'
 import { PrismaService } from '../prisma/prisma.service'
+import { EventsGateway } from '../events/events.gateway'
 
 interface ScheduledJobData {
   type: string
@@ -20,6 +21,8 @@ export class ScheduledTasksProcessor extends WorkerHost {
   constructor(
     @Inject(PrismaService)
     private readonly prisma: PrismaService,
+    @Inject(EventsGateway)
+    private readonly eventsGateway: EventsGateway,
   ) {
     super()
   }
@@ -33,6 +36,9 @@ export class ScheduledTasksProcessor extends WorkerHost {
         break
       case 'cleanup-expired':
         await this.handleCleanupExpired(job)
+        break
+      case 'todo-reminders':
+        await this.handleTodoReminders(job)
         break
       case 'daily-stats':
         await this.handleDailyStats(job)
@@ -117,6 +123,51 @@ export class ScheduledTasksProcessor extends WorkerHost {
 
     // 可以在这里继续添加其他清理逻辑
     // 例如：删除过期的 session、清理临时文件等
+  }
+
+  private async handleTodoReminders(job: Job): Promise<void> {
+    const now = new Date()
+    this.logger.debug(`[${job.id}] 执行待办提醒推送...`)
+
+    try {
+      const dueTodos = await this.prisma.todo.findMany({
+        where: {
+          deletedAt: null,
+          completed: false,
+          remindAt: {
+            lte: now,
+          },
+          remindedAt: null,
+        },
+        select: { id: true, userId: true, title: true },
+        take: 200,
+      })
+
+      if (dueTodos.length === 0) return
+
+      for (const todo of dueTodos) {
+        this.eventsGateway.broadcastToRoom(`user:${todo.userId}`, 'todos:remind', {
+          todoId: todo.id,
+          remindedAt: now.toISOString(),
+        })
+      }
+
+      const ids = dueTodos.map((t) => t.id)
+      await this.prisma.todo.updateMany({
+        where: {
+          id: { in: ids },
+          remindedAt: null,
+        },
+        data: {
+          remindedAt: now,
+          updatedAt: now,
+          version: { increment: 1 },
+        },
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      this.logger.error(`待办提醒推送失败: ${message}`)
+    }
   }
 
   /**

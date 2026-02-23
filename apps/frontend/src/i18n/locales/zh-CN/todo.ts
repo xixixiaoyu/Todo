@@ -47,4 +47,11 @@ export const todo = {
   clearTrash: '清空回收站',
   clearTrashConfirm: '确定要清空回收站吗？此操作不可撤销。',
   clearTrashSuccess: '回收站已清空',
+  schedule: '截止/提醒',
+  dueAt: '截止时间',
+  remindAt: '提醒时间',
+  clearDueAt: '清除截止',
+  clearRemindAt: '清除提醒',
+  remindAfterDue: '提醒时间不能晚于截止时间',
+  reminderToast: '提醒：{title}',
 } as const

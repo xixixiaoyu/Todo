@@ -1,6 +1,7 @@
 import type { ComputedRef, Ref } from 'vue'
 import { getAIStaticResponse } from '@/features/ai/services'
 import type { FilterType, Todo, ViewMode } from './todo.types'
+import { toDate } from './todo.dates'
 
 export function createTodoActions(deps: {
   todos: Ref<Todo[]>
@@ -27,6 +28,7 @@ export function createTodoActions(deps: {
   restoreTodo: (id: string) => Promise<void>
   deleteTodo: (id: string) => Promise<void>
   updateTodo: (id: string, title: string) => Promise<boolean>
+  updateTodoSchedule: (id: string, dueAt: Date | null, remindAt: Date | null) => boolean
   reorderTodos: (orderedIds: string[], parentId?: string | null) => void
   setDrawerOpen: (open: boolean) => void
   setMaximized: (maximized: boolean) => void
@@ -338,6 +340,34 @@ export function createTodoActions(deps: {
     return true
   }
 
+  function updateTodoSchedule(id: string, dueAt: Date | null, remindAt: Date | null): boolean {
+    const todo = deps.todos.value.find((t) => t.id === id)
+    if (!todo) return false
+
+    if (dueAt && Number.isNaN(dueAt.getTime())) return false
+    if (remindAt && Number.isNaN(remindAt.getTime())) return false
+
+    if (dueAt && remindAt && remindAt.getTime() > dueAt.getTime()) {
+      deps.error.value = 'todo.remindAfterDue'
+      return false
+    }
+
+    const prevRemindAt = toDate(todo.remindAt)?.getTime() ?? null
+    const nextRemindAt = remindAt ? remindAt.getTime() : null
+
+    todo.dueAt = dueAt || undefined
+    todo.remindAt = remindAt || undefined
+
+    if (prevRemindAt !== nextRemindAt) {
+      todo.remindedAt = undefined
+    }
+
+    todo.updatedAt = new Date()
+    todo.syncStatus = 'pending'
+    deps.debouncedSync()
+    return true
+  }
+
   function setDrawerOpen(open: boolean): void {
     deps.isDrawerOpen.value = open
   }
@@ -410,6 +440,7 @@ export function createTodoActions(deps: {
     restoreTodo,
     deleteTodo,
     updateTodo,
+    updateTodoSchedule,
     reorderTodos,
     setDrawerOpen,
     setMaximized,

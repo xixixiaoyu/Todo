@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { Pin, Sparkles, Timer, ChevronRight } from 'lucide-vue-next'
+import { Pin, Sparkles, Timer, ChevronRight, CalendarClock, Bell } from 'lucide-vue-next'
+import { computed } from 'vue'
 import { type Todo, useTodoStore } from '../stores/todo'
 import { highlightMatch } from '@/lib/utils'
+import { formatDate } from '@/lib/dayjs'
+import { toDate } from '../stores/todo.dates'
 
 const { t } = useI18n()
 const store = useTodoStore()
 
-defineProps<{
+const props = defineProps<{
   todo: Todo
   searchQuery?: string
   parentPath: string[]
@@ -17,6 +20,13 @@ const emit = defineEmits<{
   startEdit: []
   toggleMobileActions: []
 }>()
+
+const isOverdue = computed(() => {
+  const dueAt = toDate(props.todo.dueAt)
+  if (!dueAt) return false
+  if (props.todo.completed) return false
+  return dueAt.getTime() < Date.now()
+})
 </script>
 
 <template>
@@ -69,6 +79,29 @@ const emit = defineEmits<{
       >
         <Timer class="w-3 h-3" />
         <span>{{ todo.pomodoroCount }}</span>
+      </div>
+
+      <div
+        v-if="todo.dueAt && store.filter !== 'trash'"
+        class="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold shrink-0 ml-1"
+        :class="
+          isOverdue
+            ? 'bg-destructive/10 text-destructive'
+            : 'bg-primary/10 text-primary dark:text-primary/90'
+        "
+        :title="t('todo.dueAt')"
+      >
+        <CalendarClock class="w-3 h-3" />
+        <span>{{ formatDate(todo.dueAt, 'MM-DD HH:mm') }}</span>
+      </div>
+
+      <div
+        v-if="todo.remindAt && !todo.remindedAt && store.filter !== 'trash'"
+        class="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400/90 text-[10px] font-bold shrink-0 ml-1"
+        :title="t('todo.remindAt')"
+      >
+        <Bell class="w-3 h-3" />
+        <span>{{ formatDate(todo.remindAt, 'MM-DD HH:mm') }}</span>
       </div>
     </div>
   </div>

@@ -6,22 +6,27 @@ import {
   Loader2,
   Wand2,
   Target,
+  CalendarClock,
   Pin,
   PinOff,
   Pencil,
   Plus,
 } from 'lucide-vue-next'
+import { ref, watch } from 'vue'
 import { type Todo } from '../stores/todo'
 import { useTodoStore } from '../stores/todo'
 import { usePomodoroStore } from '../stores/pomodoro'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Input } from '@/components/ui/input'
+import { toDate } from '../stores/todo.dates'
 
 const { t } = useI18n()
 const store = useTodoStore()
 const pomodoroStore = usePomodoroStore()
 
-defineProps<{
+const props = defineProps<{
   todo: Todo
   isBreakingDown: boolean
   isMobileActionsVisible: boolean
@@ -35,6 +40,61 @@ const emit = defineEmits<{
   addSubtask: []
   permanentDelete: []
 }>()
+
+const isScheduleOpen = ref(false)
+const dueAtInput = ref('')
+const remindAtInput = ref('')
+
+function pad2(n: number): string {
+  return n.toString().padStart(2, '0')
+}
+
+function toLocalDateTimeInput(date?: Date): string {
+  const d = toDate(date)
+  if (!d) return ''
+  const yyyy = d.getFullYear()
+  const mm = pad2(d.getMonth() + 1)
+  const dd = pad2(d.getDate())
+  const hh = pad2(d.getHours())
+  const min = pad2(d.getMinutes())
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}`
+}
+
+function parseLocalDateTimeInput(value: string): Date | null {
+  const v = value.trim()
+  if (!v) return null
+  const d = new Date(v)
+  if (Number.isNaN(d.getTime())) return null
+  return d
+}
+
+watch(
+  isScheduleOpen,
+  (open) => {
+    if (!open) return
+    dueAtInput.value = toLocalDateTimeInput(props.todo.dueAt)
+    remindAtInput.value = toLocalDateTimeInput(props.todo.remindAt)
+  },
+  { immediate: true },
+)
+
+function handleSaveSchedule() {
+  const dueAt = parseLocalDateTimeInput(dueAtInput.value)
+  const remindAt = parseLocalDateTimeInput(remindAtInput.value)
+  const ok = store.updateTodoSchedule(props.todo.id, dueAt, remindAt)
+  if (!ok) return
+  isScheduleOpen.value = false
+}
+
+function clearDueAt() {
+  dueAtInput.value = ''
+  void store.updateTodoSchedule(props.todo.id, null, parseLocalDateTimeInput(remindAtInput.value))
+}
+
+function clearRemindAt() {
+  remindAtInput.value = ''
+  void store.updateTodoSchedule(props.todo.id, parseLocalDateTimeInput(dueAtInput.value), null)
+}
 </script>
 
 <template>
@@ -118,6 +178,77 @@ const emit = defineEmits<{
           </Button>
         </TooltipTrigger>
         <TooltipContent side="top">{{ t('todo.focus') }}</TooltipContent>
+      </Tooltip>
+
+      <Tooltip v-if="!todo.isProposedDelete">
+        <TooltipTrigger as-child>
+          <Popover v-model:open="isScheduleOpen">
+            <PopoverTrigger as-child>
+              <Button
+                variant="ghost"
+                size="icon"
+                class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                :class="todo.remindAt || todo.dueAt ? 'text-primary bg-primary/5' : ''"
+                @click.stop
+              >
+                <CalendarClock class="h-3.5 w-3.5 md:h-4 md:w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent side="bottom" :side-offset="8" align="end" class="w-72 p-4 z-50">
+              <div class="space-y-3">
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between gap-2">
+                    <p class="text-sm font-medium leading-none">{{ t('todo.dueAt') }}</p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      class="h-7 rounded-lg px-2 text-xs"
+                      @click.stop="clearDueAt"
+                    >
+                      {{ t('todo.clearDueAt') }}
+                    </Button>
+                  </div>
+                  <Input v-model="dueAtInput" type="datetime-local" class="h-9 rounded-lg" />
+                </div>
+
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between gap-2">
+                    <p class="text-sm font-medium leading-none">{{ t('todo.remindAt') }}</p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      class="h-7 rounded-lg px-2 text-xs"
+                      @click.stop="clearRemindAt"
+                    >
+                      {{ t('todo.clearRemindAt') }}
+                    </Button>
+                  </div>
+                  <Input v-model="remindAtInput" type="datetime-local" class="h-9 rounded-lg" />
+                </div>
+
+                <div class="flex justify-end gap-2 pt-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    class="h-8 rounded-lg px-3 text-xs"
+                    @click.stop="isScheduleOpen = false"
+                  >
+                    {{ t('common.cancel') }}
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    class="h-8 rounded-lg px-3 text-xs"
+                    @click.stop="handleSaveSchedule"
+                  >
+                    {{ t('common.confirm') }}
+                  </Button>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </TooltipTrigger>
+        <TooltipContent side="top">{{ t('todo.schedule') }}</TooltipContent>
       </Tooltip>
 
       <!-- Pin -->

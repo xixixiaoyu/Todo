@@ -7,6 +7,9 @@ model Todo {
   parentId      String?
   userId        Int
   version       Int       @default(0)
+  dueAt         DateTime?
+  remindAt      DateTime?
+  remindedAt    DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   completedAt   DateTime?
@@ -15,6 +18,8 @@ model Todo {
   user          User      @relation(fields: [userId], references: [id])
 
   @@index([userId, updatedAt])
+  @@index([userId, remindAt])
+  @@index([userId, dueAt])
   @@index([deletedAt])
   @@map("todos")
 }

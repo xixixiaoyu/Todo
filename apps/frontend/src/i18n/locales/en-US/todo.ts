@@ -47,4 +47,11 @@ export const todo = {
   clearTrash: 'Empty Trash',
   clearTrashConfirm: 'Are you sure you want to empty the trash? This action cannot be undone.',
   clearTrashSuccess: 'Trash cleared',
+  schedule: 'Schedule',
+  dueAt: 'Due',
+  remindAt: 'Remind',
+  clearDueAt: 'Clear due',
+  clearRemindAt: 'Clear reminder',
+  remindAfterDue: 'Reminder cannot be after due time',
+  reminderToast: 'Reminder: {title}',
 } as const

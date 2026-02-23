@@ -3,6 +3,9 @@ import type { Ref } from 'vue'
 import type { Todo as SharedTodo } from '@my-app/shared'
 import { todoApi } from '../api'
 import type { Todo } from './todo.types'
+import i18n from '@/i18n'
+import { useToast } from '@/composables/useToast'
+import { toDate } from './todo.dates'
 
 export function createTodoCloud(deps: {
   todos: Ref<Todo[]>
@@ -20,6 +23,8 @@ export function createTodoCloud(deps: {
   clearTrash: () => Promise<void>
 } {
   let isSocketInitialized = false
+  const toast = useToast()
+  const { t } = i18n.global
 
   async function sync(retryCount = 0): Promise<void> {
     if (deps.loading.value && retryCount === 0) return
@@ -70,6 +75,9 @@ export function createTodoCloud(deps: {
             parentId: serverTodo.parentId,
             version: serverTodo.version,
             pomodoroCount: serverTodo.pomodoroCount,
+            dueAt: serverTodo.dueAt ? new Date(serverTodo.dueAt) : undefined,
+            remindAt: serverTodo.remindAt ? new Date(serverTodo.remindAt) : undefined,
+            remindedAt: serverTodo.remindedAt ? new Date(serverTodo.remindedAt) : undefined,
             createdAt: new Date(serverTodo.createdAt),
             updatedAt: new Date(serverTodo.updatedAt),
             completedAt: serverTodo.completedAt ? new Date(serverTodo.completedAt) : undefined,
@@ -114,6 +122,42 @@ export function createTodoCloud(deps: {
     debouncedSync()
   }
 
+  const onTodosRemind = (payload: { todoId: string; remindedAt?: string }) => {
+    const todo = deps.todos.value.find((x) => x.id === payload.todoId)
+    if (!todo || todo.deletedAt || todo.completed) return
+
+    if (!todo.remindedAt) {
+      toast.info(t('todo.reminderToast', { title: todo.title }))
+    }
+
+    todo.remindedAt = payload.remindedAt ? new Date(payload.remindedAt) : new Date()
+    todo.syncStatus = 'synced'
+  }
+
+  const startLocalReminderLoop = (() => {
+    let started = false
+    return () => {
+      if (started) return
+      started = true
+      setInterval(() => {
+        const now = Date.now()
+        for (const todo of deps.todos.value) {
+          if (todo.deletedAt || todo.completed) continue
+          if (!todo.remindAt || todo.remindedAt) continue
+          const remindAt = toDate(todo.remindAt)
+          if (!remindAt) continue
+          if (remindAt.getTime() > now) continue
+
+          toast.info(t('todo.reminderToast', { title: todo.title }))
+          todo.remindedAt = new Date()
+          todo.updatedAt = new Date()
+          todo.syncStatus = 'pending'
+          debouncedSync()
+        }
+      }, 15_000)
+    }
+  })()
+
   async function mergeOnLogin(): Promise<void> {
     deps.lastSyncAt.value = null
 
@@ -135,6 +179,7 @@ export function createTodoCloud(deps: {
     if (isSocketInitialized) return
 
     isSocketInitialized = true
+    startLocalReminderLoop()
 
     const authStore = (await import('@/features/auth/stores/auth')).useAuthStore()
     authStore.hydrateFromStorage()
@@ -148,6 +193,9 @@ export function createTodoCloud(deps: {
 
       socket.off('todos:sync', onTodosSync)
       socket.on('todos:sync', onTodosSync)
+
+      socket.off('todos:remind', onTodosRemind)
+      socket.on('todos:remind', onTodosRemind)
     }
 
     await attach()

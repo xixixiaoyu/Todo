@@ -3,6 +3,7 @@ import { BullModule, InjectQueue } from '@nestjs/bullmq'
 import { Queue } from 'bullmq'
 import { ScheduledTasksProcessor } from './scheduled-tasks.processor'
 import { SCHEDULED_TASKS_QUEUE } from './constants'
+import { EventsModule } from '../events'
 
 export { SCHEDULED_TASKS_QUEUE }
 
@@ -16,6 +17,7 @@ export { SCHEDULED_TASKS_QUEUE }
     BullModule.registerQueue({
       name: SCHEDULED_TASKS_QUEUE,
     }),
+    EventsModule,
   ],
   providers: [ScheduledTasksProcessor],
   exports: [BullModule],
@@ -42,6 +44,18 @@ export class ScheduledTasksModule implements OnModuleInit {
       {
         repeat: {
           pattern: '* * * * *', // 每分钟
+        },
+        removeOnComplete: true,
+        removeOnFail: false,
+      },
+    )
+
+    await this.queue.add(
+      'todo-reminders',
+      { type: 'todo-reminders' },
+      {
+        repeat: {
+          pattern: '* * * * *',
         },
         removeOnComplete: true,
         removeOnFail: false,
