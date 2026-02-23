@@ -9,22 +9,12 @@ import {
   Lightbulb,
   GraduationCap,
   Clover,
-  Users,
   Image as ImageIcon,
-  ChevronDown,
   Settings2,
-  Check,
-  Star,
-  Sparkles,
   Blocks,
 } from 'lucide-vue-next'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu'
+import AiAssistantToolbarDiscussionMenu from '@/features/ai/components/AiAssistantToolbarDiscussionMenu.vue'
+import AiAssistantToolbarPresetMenu from '@/features/ai/components/AiAssistantToolbarPresetMenu.vue'
 
 defineProps<{
   hasHistory: boolean
@@ -62,54 +52,6 @@ const { t } = useI18n()
 
 const { width: windowWidth } = useWindowSize()
 const isMobile = computed(() => windowWidth.value < 640)
-
-// 讨论模型快速选择弹窗状态
-let discussionHoverTimer: ReturnType<typeof setTimeout> | null = null
-
-const handleDiscussionMouseEnter = () => {
-  if (discussionHoverTimer) {
-    clearTimeout(discussionHoverTimer)
-    discussionHoverTimer = null
-  }
-  showDiscussionPopover.value = true
-}
-
-const clearDiscussionTimer = () => {
-  if (discussionHoverTimer) {
-    clearTimeout(discussionHoverTimer)
-    discussionHoverTimer = null
-  }
-}
-
-const handleDiscussionMouseLeave = () => {
-  discussionHoverTimer = setTimeout(() => {
-    showDiscussionPopover.value = false
-  }, 150)
-}
-
-// 预设下拉框状态
-let presetHoverTimer: ReturnType<typeof setTimeout> | null = null
-
-const handlePresetMouseEnter = () => {
-  if (presetHoverTimer) {
-    clearTimeout(presetHoverTimer)
-    presetHoverTimer = null
-  }
-  showPresetDropdown.value = true
-}
-
-const clearPresetTimer = () => {
-  if (presetHoverTimer) {
-    clearTimeout(presetHoverTimer)
-    presetHoverTimer = null
-  }
-}
-
-const handlePresetMouseLeave = () => {
-  presetHoverTimer = setTimeout(() => {
-    showPresetDropdown.value = false
-  }, 150)
-}
 </script>
 
 <template>
@@ -218,123 +160,16 @@ const handlePresetMouseLeave = () => {
           </button>
 
           <!-- 多模型协同讨论 -->
-          <div
-            class="relative shrink-0"
-            @mouseenter="handleDiscussionMouseEnter"
-            @mouseleave="handleDiscussionMouseLeave"
-          >
-            <DropdownMenu v-model:open="showDiscussionPopover" :modal="false">
-              <DropdownMenuTrigger as-child>
-                <button
-                  :class="[
-                    'toolbar-btn flex items-center transition-all active:scale-95 rounded-full border',
-                    isMobile ? 'h-8 w-8 justify-center' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
-                    isDiscussionEnabled
-                      ? 'border-primary/30 bg-primary/15 text-primary shadow-[0_0_12px_hsl(var(--primary)_/_0.1)]'
-                      : 'border-transparent text-muted-foreground',
-                  ]"
-                  :title="isDiscussionEnabled ? t('ai.discussionMode') : t('ai.discussionMode')"
-                  @click="emit('toggleDiscussion')"
-                  @mouseenter="clearDiscussionTimer"
-                >
-                  <Users
-                    :size="14"
-                    :class="[
-                      'transition-all duration-300',
-                      isDiscussionEnabled ? 'animate-pulse-slow scale-110' : '',
-                    ]"
-                  />
-                  <span v-if="!isMobile" class="toolbar-text font-medium">{{
-                    t('ai.discussionMode')
-                  }}</span>
-                </button>
-              </DropdownMenuTrigger>
-
-              <DropdownMenuContent
-                v-if="isDiscussionEnabled"
-                side="top"
-                align="start"
-                :side-offset="4"
-                class="z-[251] w-64 p-3"
-              >
-                <div
-                  class="space-y-4"
-                  @mouseenter="clearDiscussionTimer"
-                  @mouseleave="handleDiscussionMouseLeave"
-                >
-                  <!-- 主模型 -->
-                  <div class="space-y-2">
-                    <p
-                      class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-70"
-                    >
-                      {{ t('ai.discussionPrimaryModel') }}
-                    </p>
-                    <div
-                      v-if="presets.length === 0"
-                      class="text-[11px] text-muted-foreground/50 py-1"
-                    >
-                      {{ t('ai.noPresetsForDiscussion') }}
-                    </div>
-                    <div v-else class="flex flex-wrap gap-1.5">
-                      <button
-                        v-for="preset in presets"
-                        :key="'quick-primary-' + preset.id"
-                        class="flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition-all active:scale-95"
-                        :class="
-                          config.discussionPrimaryModelId === preset.id
-                            ? 'border-primary/50 bg-primary/20 text-primary shadow-[0_2px_8px_hsl(var(--primary)_/_0.1)]'
-                            : 'border-border/40 bg-background/40 text-muted-foreground hover:border-primary/30 hover:bg-primary/5 hover:text-primary'
-                        "
-                        @click="emit('selectPrimaryModel', preset.id)"
-                      >
-                        <Star
-                          v-if="config.discussionPrimaryModelId === preset.id"
-                          :size="10"
-                          class="fill-current"
-                        />
-                        <span class="font-medium">{{ preset.name }}</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <!-- 副模型 -->
-                  <div class="space-y-2">
-                    <p
-                      class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-70"
-                    >
-                      {{ t('ai.discussionSecondaryModels') }}
-                    </p>
-                    <div
-                      v-if="presets.length === 0"
-                      class="text-[11px] text-muted-foreground/50 py-1"
-                    >
-                      {{ t('ai.noPresetsForDiscussion') }}
-                    </div>
-                    <div v-else class="flex flex-wrap gap-1.5">
-                      <button
-                        v-for="preset in presets"
-                        :key="'quick-secondary-' + preset.id"
-                        class="flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition-all active:scale-95"
-                        :class="
-                          config.discussionModelIds.includes(preset.id)
-                            ? 'border-primary/50 bg-primary/20 text-primary shadow-[0_2px_8px_hsl(var(--primary)_/_0.1)]'
-                            : 'border-border/40 bg-background/40 text-muted-foreground hover:border-primary/30 hover:bg-primary/5 hover:text-primary'
-                        "
-                        @click="emit('toggleSecondaryModel', preset.id)"
-                      >
-                        <Check
-                          v-if="config.discussionModelIds.includes(preset.id)"
-                          :size="10"
-                          stroke-width="3"
-                        />
-                        <span class="font-medium">{{ preset.name }}</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          <AiAssistantToolbarDiscussionMenu
+            v-model:open="showDiscussionPopover"
+            :is-mobile="isMobile"
+            :is-discussion-enabled="isDiscussionEnabled"
+            :presets="presets"
+            :config="config"
+            @toggle="emit('toggleDiscussion')"
+            @select-primary-model="(id) => emit('selectPrimaryModel', id)"
+            @toggle-secondary-model="(id) => emit('toggleSecondaryModel', id)"
+          />
 
           <!-- 生图功能开关 -->
           <button
@@ -374,79 +209,15 @@ const handlePresetMouseLeave = () => {
           <div class="h-4 w-px shrink-0 bg-border/20 mx-0.5" />
 
           <!-- 预设下拉框 -->
-          <div
-            class="relative shrink-0"
-            @mouseenter="handlePresetMouseEnter"
-            @mouseleave="handlePresetMouseLeave"
-          >
-            <DropdownMenu v-model:open="showPresetDropdown" :modal="false">
-              <DropdownMenuTrigger as-child>
-                <button
-                  :class="[
-                    'toolbar-btn flex items-center border border-transparent text-muted-foreground transition-all active:scale-95 rounded-full',
-                    isMobile ? 'h-8 px-2.5 gap-1' : 'px-3 py-1.5 gap-1.5 text-[13px]',
-                    showPresetDropdown ? 'bg-accent/50 text-foreground border-border/20' : '',
-                  ]"
-                  :title="t('ai.managePresets')"
-                  @mouseenter="clearPresetTimer"
-                >
-                  <Sparkles
-                    :size="14"
-                    class="toolbar-icon-only text-primary/70"
-                    :class="{ hidden: !isMobile }"
-                  />
-                  <span v-if="!isMobile" class="toolbar-text font-medium">{{
-                    currentPresetName
-                  }}</span>
-                  <ChevronDown
-                    :size="14"
-                    class="transition-transform duration-300 opacity-50"
-                    :class="{ 'rotate-180': showPresetDropdown }"
-                  />
-                </button>
-              </DropdownMenuTrigger>
-
-              <DropdownMenuContent
-                side="top"
-                align="start"
-                :side-offset="4"
-                class="z-[251] min-w-[160px] p-1"
-              >
-                <div @mouseenter="clearPresetTimer" @mouseleave="handlePresetMouseLeave">
-                  <DropdownMenuItem
-                    v-for="preset in presets"
-                    :key="preset.id"
-                    class="flex w-full items-center gap-2 px-3 py-2 text-xs"
-                    :class="{
-                      'bg-accent text-primary': activePreset?.id === preset.id,
-                    }"
-                    @click="emit('selectPreset', preset.id)"
-                    @mouseenter="clearPresetTimer"
-                  >
-                    <div class="flex h-4 w-4 items-center justify-center">
-                      <Check
-                        v-if="activePreset?.id === preset.id"
-                        :size="12"
-                        class="text-primary"
-                      />
-                    </div>
-                    <span>{{ preset.name }}</span>
-                  </DropdownMenuItem>
-
-                  <DropdownMenuSeparator />
-
-                  <DropdownMenuItem
-                    class="flex w-full items-center gap-2 px-3 py-2 text-xs text-muted-foreground"
-                    @click="emit('openSettings', 'presets')"
-                    @mouseenter="clearPresetTimer"
-                  >
-                    <Settings2 :size="12" />
-                    <span>{{ t('ai.managePresets') }}</span>
-                  </DropdownMenuItem>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          <AiAssistantToolbarPresetMenu
+            v-model:open="showPresetDropdown"
+            :is-mobile="isMobile"
+            :current-preset-name="currentPresetName"
+            :presets="presets"
+            :active-preset="activePreset"
+            @select-preset="(id) => emit('selectPreset', id)"
+            @open-presets-settings="emit('openSettings', 'presets')"
+          />
         </div>
 
         <!-- 设置 -->
@@ -473,7 +244,7 @@ const handlePresetMouseLeave = () => {
   container-type: inline-size;
 }
 
-.toolbar-btn {
+.toolbar-container :deep(.toolbar-btn) {
   background-color: hsl(var(--ai-glass-bg));
   border-color: hsl(var(--ai-glass-border));
   box-shadow:
@@ -482,7 +253,7 @@ const handlePresetMouseLeave = () => {
   transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
-.toolbar-btn:hover:not(:disabled) {
+.toolbar-container :deep(.toolbar-btn:hover:not(:disabled)) {
   background-color: hsl(var(--accent) / 0.5);
   border-color: hsl(var(--primary) / 0.3);
   color: hsl(var(--primary));
@@ -493,7 +264,7 @@ const handlePresetMouseLeave = () => {
     inset 0 1px 1px rgba(255, 255, 255, 0.1);
 }
 
-.toolbar-btn:active:not(:disabled) {
+.toolbar-container :deep(.toolbar-btn:active:not(:disabled)) {
   transform: translateY(0) scale(0.96);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
@@ -508,15 +279,15 @@ const handlePresetMouseLeave = () => {
 }
 
 @container (max-width: 520px) {
-  .toolbar-text {
+  .toolbar-container :deep(.toolbar-text) {
     display: none;
   }
 
-  .toolbar-icon-only {
+  .toolbar-container :deep(.toolbar-icon-only) {
     display: block !important;
   }
 
-  .toolbar-container button {
+  .toolbar-container :deep(button) {
     padding-left: 0.5rem;
     padding-right: 0.5rem;
   }
