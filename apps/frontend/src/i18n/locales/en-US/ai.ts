@@ -31,6 +31,12 @@ export const ai = {
   thoughtProcess: 'Thought Process',
   copy: 'Copy',
   copied: 'Copied',
+  structuredBlockWarningTitle: 'Structured output issue',
+  structuredBlockWarningDesc:
+    'Some structured blocks were invalid and have been ignored. You can copy diagnostics for debugging.',
+  structuredBlockCopyDiagnostics: 'Copy diagnostics',
+  structuredBlockDiagnosticsCopied: 'Diagnostics copied',
+  structuredBlockShowDetails: 'Show details',
   send: 'Send',
   regenerate: 'Regenerate',
   askSelectionAction: 'Ask',

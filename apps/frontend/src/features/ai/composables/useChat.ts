@@ -1,7 +1,7 @@
 import { computed } from 'vue'
 import type { AIRequestOptions, ChatMessage, TeachingQuiz } from '@/features/ai/services/aiService'
 import type { ProposedTodoChange } from '@/features/todo/stores/todo'
-import { safeJsonParse, stripTaggedBlocks } from '@/features/ai/services/aiService'
+import { parseAssistantBlocks } from '@/features/ai/services/aiService'
 import { useChatState } from './useChatState'
 import { useChatActions } from './useChatActions'
 
@@ -38,47 +38,11 @@ export function useChat(options: AIRequestOptions = {}) {
 
       // 避免在流式结束瞬间产生重复
       if (!lastMessage || lastMessage.id !== streamingId) {
-        let displayContent = currentAIResponse.value
-        let actions: ProposedTodoChange[] | undefined
-        let teachingQuizzes: TeachingQuiz[] | undefined
-
-        {
-          const { text, inners } = stripTaggedBlocks(
-            displayContent,
-            '[TODO_ACTIONS_START]',
-            '[TODO_ACTIONS_END]',
-          )
-          displayContent = text
-          const parsedActions =
-            inners.length > 0 ? safeJsonParse(inners[inners.length - 1]) : undefined
-          if (Array.isArray(parsedActions)) {
-            actions = parsedActions.map((a: unknown) => {
-              const action = a as ProposedTodoChange
-              return {
-                ...action,
-                id: action.id || `stream-${Math.random().toString(36).slice(2, 9)}`,
-              }
-            })
-          }
-        }
-
-        {
-          const { text, inners } = stripTaggedBlocks(
-            displayContent,
-            '[TEACHING_QUIZ_START]',
-            '[TEACHING_QUIZ_END]',
-          )
-          displayContent = text
-          const parsed = inners.length > 0 ? safeJsonParse(inners[inners.length - 1]) : undefined
-          if (Array.isArray(parsed)) {
-            teachingQuizzes = parsed as TeachingQuiz[]
-          } else if (parsed && typeof parsed === 'object') {
-            const obj = parsed as { quizzes?: unknown }
-            if (Array.isArray(obj.quizzes)) {
-              teachingQuizzes = obj.quizzes as TeachingQuiz[]
-            }
-          }
-        }
+        const parsed = parseAssistantBlocks(currentAIResponse.value, { enableTodoActions: true })
+        const displayContent = parsed.cleanText
+        const actions: ProposedTodoChange[] | undefined = parsed.todoActions
+        const teachingQuizzes: TeachingQuiz[] | undefined = parsed.teachingQuizzes
+        const structuredBlockErrors = parsed.errors.length > 0 ? [...parsed.errors] : undefined
 
         allMessages.push({
           id: streamingId,
@@ -92,6 +56,7 @@ export function useChat(options: AIRequestOptions = {}) {
             actions ||
             (currentTodoActions.value.length > 0 ? [...currentTodoActions.value] : undefined),
           teachingQuizzes,
+          structuredBlockErrors,
           isStreaming: true,
         })
       }

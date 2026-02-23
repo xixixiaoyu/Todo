@@ -293,6 +293,47 @@ describe('ChatMessage', () => {
     document.body.removeChild(container)
   })
 
+  it('should show structured block warning and copy diagnostics', async () => {
+    const mockWriteText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', {
+      value: {
+        writeText: mockWriteText,
+      },
+      configurable: true,
+    })
+
+    const message = {
+      id: '1',
+      role: 'assistant' as const,
+      content: 'Hello',
+      structuredBlockErrors: [
+        {
+          block: 'todo_actions' as const,
+          code: 'invalid_json' as const,
+          raw: 'not json',
+        },
+      ],
+    }
+
+    const wrapper = mount(ChatMessage, {
+      props: { message },
+    })
+
+    expect(wrapper.text()).toContain('ai.structuredBlockWarningTitle')
+
+    const copyBtn = wrapper
+      .findAll('button')
+      .find((b) => b.text().includes('ai.structuredBlockCopyDiagnostics'))
+    expect(copyBtn?.exists()).toBe(true)
+
+    await copyBtn?.trigger('click')
+
+    expect(mockWriteText).toHaveBeenCalledTimes(1)
+    const arg = mockWriteText.mock.calls[0][0] as string
+    expect(arg).toContain('"messageId": "1"')
+    expect(arg).toContain('"block": "todo_actions"')
+  })
+
   it('should emit ask-selection when asking about selected text', async () => {
     const wrapper = mount(ChatMessageMarkdown, {
       props: { content: 'Hello world', isStreaming: false, isMobile: false },

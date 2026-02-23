@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useWindowSize } from '@vueuse/core'
+import { AlertCircle, Copy, Check } from 'lucide-vue-next'
 import type { ChatMessage } from '@/features/ai/composables/useChat'
 import type { TeachingQuizKind } from '@/features/ai/services/aiService'
 import ImageLoadingState from './ImageLoadingState.vue'
@@ -96,6 +97,42 @@ const hasDiscussion = computed(
 const isImageGenerating = computed(() => {
   return props.message.role === 'assistant' && props.message.content === t('ai.generatingImage')
 })
+
+const showStructuredBlockWarning = computed(() => {
+  return (
+    props.message.role === 'assistant' &&
+    !isUser.value &&
+    !isStreaming.value &&
+    !!props.message.structuredBlockErrors &&
+    props.message.structuredBlockErrors.length > 0
+  )
+})
+
+const diagnosticsText = computed(() => {
+  if (!props.message.structuredBlockErrors) return ''
+  return JSON.stringify(
+    {
+      messageId: props.message.id,
+      errors: props.message.structuredBlockErrors,
+    },
+    null,
+    2,
+  )
+})
+
+const diagnosticsCopied = ref(false)
+
+async function copyDiagnostics() {
+  try {
+    await navigator.clipboard.writeText(diagnosticsText.value)
+    diagnosticsCopied.value = true
+    setTimeout(() => {
+      diagnosticsCopied.value = false
+    }, 2000)
+  } catch {
+    console.warn(t('common.error.requestFailed'))
+  }
+}
 
 const markdownRef = ref<InstanceType<typeof ChatMessageMarkdown>>()
 
@@ -205,6 +242,53 @@ defineExpose({
                 />
 
                 <template v-else>
+                  <div
+                    v-if="showStructuredBlockWarning"
+                    class="mb-2 rounded-xl border border-ai-message-border bg-background/40 px-3 py-2 text-foreground/90"
+                  >
+                    <div class="flex items-start gap-2">
+                      <AlertCircle :size="14" class="mt-0.5 text-amber-600" />
+                      <div class="min-w-0 flex-1">
+                        <div class="text-xs font-medium">
+                          {{ t('ai.structuredBlockWarningTitle') }}
+                        </div>
+                        <div class="mt-0.5 text-xs text-muted-foreground">
+                          {{ t('ai.structuredBlockWarningDesc') }}
+                        </div>
+                      </div>
+                      <button
+                        class="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground/80 transition-all hover:bg-primary/10 hover:text-primary active:scale-95"
+                        :title="
+                          diagnosticsCopied
+                            ? t('ai.structuredBlockDiagnosticsCopied')
+                            : t('ai.structuredBlockCopyDiagnostics')
+                        "
+                        @click="copyDiagnostics"
+                      >
+                        <Check v-if="diagnosticsCopied" :size="14" class="text-green-600" />
+                        <Copy v-else :size="14" />
+                        <span>
+                          {{
+                            diagnosticsCopied
+                              ? t('ai.structuredBlockDiagnosticsCopied')
+                              : t('ai.structuredBlockCopyDiagnostics')
+                          }}
+                        </span>
+                      </button>
+                    </div>
+
+                    <details class="mt-2">
+                      <summary class="cursor-pointer select-none text-xs text-muted-foreground">
+                        {{ t('ai.structuredBlockShowDetails') }}
+                      </summary>
+                      <pre
+                        class="mt-2 max-h-40 overflow-auto rounded-lg bg-background/60 p-2 text-[11px] leading-relaxed text-muted-foreground"
+                      >
+                        {{ diagnosticsText }}
+                      </pre>
+                    </details>
+                  </div>
+
                   <!-- AI 消息：Markdown 渲染 -->
                   <ChatMessageMarkdown
                     ref="markdownRef"

@@ -3,7 +3,7 @@
  */
 
 import { getAIConfig } from '@/features/ai/composables/useAIConfig'
-import { useTodoStore, type Todo } from '@/features/todo/stores/todo'
+import { useTodoStore, type Todo, type ProposedTodoChange } from '@/features/todo/stores/todo'
 import { useMemory } from '@/features/ai/composables/useMemory'
 import i18n from '@/i18n'
 import type {
@@ -11,6 +11,10 @@ import type {
   MultiModalContent,
   AIChatCompletionMessage,
   AssistantMode,
+  TeachingQuiz,
+  TeachingQuizKind,
+  StructuredBlockError,
+  StructuredBlockKind,
 } from './types'
 
 const t = i18n.global.t
@@ -103,6 +107,172 @@ export function safeJsonParse(input: string): unknown | undefined {
     return JSON.parse(input) as unknown
   } catch {
     return undefined
+  }
+}
+
+export interface ParsedAssistantBlocks {
+  cleanText: string
+  todoActions?: ProposedTodoChange[]
+  teachingQuizzes?: TeachingQuiz[]
+  errors: StructuredBlockError[]
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value)
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0
+}
+
+function normalizeTeachingQuizKind(value: unknown): TeachingQuizKind | null {
+  if (value === 'single_choice' || value === 'multi_choice' || value === 'short_answer')
+    return value
+  return null
+}
+
+function normalizeTeachingQuizOption(value: unknown) {
+  if (!isRecord(value)) return null
+  const id = value.id
+  const text = value.text
+  if (!isNonEmptyString(id) || !isNonEmptyString(text)) return null
+  return { id, text }
+}
+
+function normalizeTeachingQuiz(value: unknown): TeachingQuiz | null {
+  if (!isRecord(value)) return null
+  const id = value.id
+  const kind = normalizeTeachingQuizKind(value.kind)
+  const stem = value.stem
+  if (!isNonEmptyString(id) || !kind || typeof stem !== 'string') return null
+
+  const answerHint = typeof value.answerHint === 'string' ? value.answerHint : undefined
+  const optionsRaw = value.options
+  const options = Array.isArray(optionsRaw)
+    ? optionsRaw.map(normalizeTeachingQuizOption).filter((x): x is NonNullable<typeof x> => !!x)
+    : undefined
+
+  const userAnswer = (() => {
+    const ua = value.userAnswer
+    if (typeof ua === 'string') return ua
+    if (Array.isArray(ua) && ua.every((x) => typeof x === 'string')) return ua
+    return undefined
+  })()
+
+  return {
+    id,
+    kind,
+    stem,
+    ...(options && options.length > 0 ? { options } : {}),
+    ...(answerHint ? { answerHint } : {}),
+    ...(userAnswer !== undefined ? { userAnswer } : {}),
+  }
+}
+
+function normalizeTeachingQuizzes(parsed: unknown): TeachingQuiz[] | null {
+  const quizzes = (() => {
+    if (Array.isArray(parsed)) return parsed
+    if (isRecord(parsed) && Array.isArray(parsed.quizzes)) return parsed.quizzes
+    return null
+  })()
+  if (!quizzes) return null
+
+  const normalized = quizzes.map(normalizeTeachingQuiz).filter((x): x is TeachingQuiz => !!x)
+  if (normalized.length === 0) return null
+  return normalized
+}
+
+function normalizeTodoActions(parsed: unknown): ProposedTodoChange[] | null {
+  if (!Array.isArray(parsed)) return null
+  const normalized: ProposedTodoChange[] = []
+
+  for (let i = 0; i < parsed.length; i++) {
+    const item = parsed[i]
+    if (!isRecord(item)) continue
+
+    const type = item.type
+    if (
+      type !== 'add' &&
+      type !== 'update' &&
+      type !== 'delete' &&
+      type !== 'toggle' &&
+      type !== 'pin'
+    )
+      continue
+
+    const data = item.data
+    if (!isRecord(data)) continue
+
+    const rawId = item.id
+    const id = isNonEmptyString(rawId) ? rawId : `temp-${i + 1}`
+
+    normalized.push({
+      id,
+      type,
+      data: data as ProposedTodoChange['data'],
+    })
+  }
+
+  return normalized.length > 0 ? normalized : null
+}
+
+function parseLastValidJsonBlock<T>(
+  inners: string[],
+  validate: (value: unknown) => T | null,
+  errorBlock: StructuredBlockKind,
+  errors: StructuredBlockError[],
+): T | null {
+  for (let i = inners.length - 1; i >= 0; i--) {
+    const raw = inners[i]
+    const parsed = safeJsonParse(raw)
+    if (parsed === undefined) {
+      errors.push({ block: errorBlock, code: 'invalid_json', raw })
+      continue
+    }
+    const normalized = validate(parsed)
+    if (normalized) return normalized
+    errors.push({ block: errorBlock, code: 'invalid_shape', raw })
+  }
+  errors.push({ block: errorBlock, code: 'no_valid_block' })
+  return null
+}
+
+export function parseAssistantBlocks(
+  content: string,
+  options?: { enableTodoActions?: boolean },
+): ParsedAssistantBlocks {
+  const errors: StructuredBlockError[] = []
+  const normalizeText = (input: string) => input.replace(/\n{3,}/g, '\n\n').trim()
+
+  const todoRes = stripTaggedBlocks(content, '[TODO_ACTIONS_START]', '[TODO_ACTIONS_END]')
+  if (todoRes.hasPartialStart) errors.push({ block: 'todo_actions', code: 'partial_block' })
+  const todoActions =
+    options?.enableTodoActions && todoRes.inners.length > 0
+      ? parseLastValidJsonBlock(todoRes.inners, normalizeTodoActions, 'todo_actions', errors) ||
+        undefined
+      : undefined
+
+  const teachingRes = stripTaggedBlocks(
+    todoRes.text,
+    '[TEACHING_QUIZ_START]',
+    '[TEACHING_QUIZ_END]',
+  )
+  if (teachingRes.hasPartialStart) errors.push({ block: 'teaching_quiz', code: 'partial_block' })
+  const teachingQuizzes =
+    teachingRes.inners.length > 0
+      ? parseLastValidJsonBlock(
+          teachingRes.inners,
+          normalizeTeachingQuizzes,
+          'teaching_quiz',
+          errors,
+        ) || undefined
+      : undefined
+
+  return {
+    cleanText: normalizeText(teachingRes.text),
+    ...(todoActions ? { todoActions } : {}),
+    ...(teachingQuizzes ? { teachingQuizzes } : {}),
+    errors,
   }
 }
 

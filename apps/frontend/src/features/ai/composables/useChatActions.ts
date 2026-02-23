@@ -6,8 +6,7 @@ import {
   getAIStaticResponse,
   abortCurrentRequest,
   generateId,
-  safeJsonParse,
-  stripTaggedBlocks,
+  parseAssistantBlocks,
   type ChatMessage,
   type TeachingQuiz,
   type AIRequestOptions,
@@ -394,45 +393,22 @@ export function useChatActions(options: AIRequestOptions = {}) {
       const handleChunk = (chunk: string) => {
         if (chunk === '[DONE]') {
           if (currentAIResponse.value) {
-            let teachingQuizzes: TeachingQuiz[] | undefined
+            const parsed = parseAssistantBlocks(currentAIResponse.value, {
+              enableTodoActions: aiConfig.todoAssistant,
+            })
 
-            let content = currentAIResponse.value
-
-            {
-              const res = stripTaggedBlocks(content, '[TODO_ACTIONS_START]', '[TODO_ACTIONS_END]')
-              content = res.text
-
-              if (aiConfig.todoAssistant && res.inners.length > 0) {
-                const parsed = safeJsonParse(res.inners[res.inners.length - 1])
-                if (Array.isArray(parsed)) {
-                  const proposedActions: ProposedTodoChange[] = parsed.map((action: unknown) => ({
-                    ...(action as ProposedTodoChange),
-                    id: (action as ProposedTodoChange).id || generateId(),
-                  }))
-                  currentTodoActions.value = proposedActions
-                  todoStore.addProposedChanges(proposedActions)
-                }
-              }
+            if (aiConfig.todoAssistant && parsed.todoActions) {
+              const proposedActions: ProposedTodoChange[] = parsed.todoActions.map((action) => ({
+                ...action,
+                id: action.id || generateId(),
+              }))
+              currentTodoActions.value = proposedActions
+              todoStore.addProposedChanges(proposedActions)
             }
 
-            {
-              const res = stripTaggedBlocks(content, '[TEACHING_QUIZ_START]', '[TEACHING_QUIZ_END]')
-              content = res.text
-
-              if (res.inners.length > 0) {
-                const parsed = safeJsonParse(res.inners[res.inners.length - 1])
-                if (Array.isArray(parsed)) {
-                  teachingQuizzes = parsed as TeachingQuiz[]
-                } else if (parsed && typeof parsed === 'object') {
-                  const obj = parsed as { quizzes?: unknown }
-                  if (Array.isArray(obj.quizzes)) {
-                    teachingQuizzes = obj.quizzes as TeachingQuiz[]
-                  }
-                }
-              }
-            }
-
-            currentAIResponse.value = content
+            const teachingQuizzes: TeachingQuiz[] | undefined = parsed.teachingQuizzes
+            currentAIResponse.value = parsed.cleanText
+            const structuredBlockErrors = parsed.errors.length > 0 ? [...parsed.errors] : undefined
 
             const aiMessage: ChatMessage = {
               id: assistantMessageId,
@@ -447,6 +423,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
               todoActions:
                 currentTodoActions.value.length > 0 ? [...currentTodoActions.value] : undefined,
               teachingQuizzes,
+              structuredBlockErrors,
               createdAt: new Date(),
             }
             const newHistory = [...chatHistory.value, aiMessage]

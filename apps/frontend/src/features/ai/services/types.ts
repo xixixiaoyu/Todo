@@ -43,6 +43,14 @@ export type AssistantMode = 'default' | 'teaching'
 
 export type TeachingQuizKind = 'single_choice' | 'multi_choice' | 'short_answer'
 
+export type StructuredBlockKind = 'todo_actions' | 'teaching_quiz'
+
+export interface StructuredBlockError {
+  block: StructuredBlockKind
+  code: 'partial_block' | 'invalid_json' | 'invalid_shape' | 'no_valid_block'
+  raw?: string
+}
+
 export interface TeachingQuizOption {
   id: string
   text: string
@@ -72,6 +80,7 @@ export interface ChatMessage {
   todoActions?: import('@/features/todo/stores/todo').ProposedTodoChange[] // AI 建议的 Todo 变更
   todoActionsProcessed?: 'applied' | 'discarded' // AI 建议的处理状态
   teachingQuizzes?: TeachingQuiz[]
+  structuredBlockErrors?: StructuredBlockError[]
   isStreaming?: boolean
   createdAt?: Date
 }

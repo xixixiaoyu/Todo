@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref } from 'vue'
 import { injectSystemPrompts } from '@/features/ai/services/utils'
-import { safeJsonParse, stripTaggedBlocks } from '@/features/ai/services/aiService'
+import {
+  parseAssistantBlocks,
+  safeJsonParse,
+  stripTaggedBlocks,
+} from '@/features/ai/services/aiService'
 import { useTodoStore } from '@/features/todo/stores/todo'
 import { useMemory } from '@/features/ai/composables/useMemory'
 import { createPinia, setActivePinia } from 'pinia'
@@ -257,5 +261,31 @@ describe('AI Utils - tagged block protocol', () => {
     expect(res.text).toBe('a\n\nmid\n\nend')
     expect(res.inners).toHaveLength(2)
     expect(safeJsonParse(res.inners[1])).toEqual({ b: 2 })
+  })
+})
+
+describe('AI Utils - parseAssistantBlocks', () => {
+  it('should parse teaching quizzes and return clean text', () => {
+    const input =
+      'hello\n\n[TEACHING_QUIZ_START]\n{"version":1,"quizzes":[{"id":"q1","kind":"single_choice","stem":"Q?","options":[{"id":"A","text":"a"}]}]}\n[TEACHING_QUIZ_END]\n\nworld'
+    const res = parseAssistantBlocks(input, { enableTodoActions: true })
+    expect(res.cleanText).toBe('hello\n\nworld')
+    expect(res.teachingQuizzes?.[0]?.id).toBe('q1')
+  })
+
+  it('should pick last valid todo actions from multiple blocks', () => {
+    const input =
+      'x\n[TODO_ACTIONS_START]\nnot json\n[TODO_ACTIONS_END]\nmid\n[TODO_ACTIONS_START]\n[{"type":"add","data":{"title":"t"}}]\n[TODO_ACTIONS_END]\ny'
+    const res = parseAssistantBlocks(input, { enableTodoActions: true })
+    expect(res.cleanText).toBe('x\n\nmid\n\ny')
+    expect(res.todoActions?.[0]?.type).toBe('add')
+  })
+
+  it('should ignore todo actions when disabled', () => {
+    const input =
+      'x\n[TODO_ACTIONS_START]\n[{"type":"add","data":{"title":"t"}}]\n[TODO_ACTIONS_END]\ny'
+    const res = parseAssistantBlocks(input, { enableTodoActions: false })
+    expect(res.todoActions).toBeUndefined()
+    expect(res.cleanText).toBe('x\n\ny')
   })
 })
