@@ -11,6 +11,7 @@ vi.mock('lucide-vue-next', () => ({
   Check: { name: 'Check', template: '<span>Check</span>' },
   RefreshCw: { name: 'RefreshCw', template: '<span>RefreshCw</span>' },
   Pencil: { name: 'Pencil', template: '<span>Pencil</span>' },
+  Trash2: { name: 'Trash2', template: '<span>Trash2</span>' },
   Users: { name: 'Users', template: '<span>Users</span>' },
   CircleDashed: { name: 'CircleDashed', template: '<span>CircleDashed</span>' },
   CheckCircle2: { name: 'CheckCircle2', template: '<span>CheckCircle2</span>' },
@@ -199,25 +200,13 @@ describe('ChatMessage', () => {
       props: { message, isLast: true },
       global: {
         plugins: [i18n],
-        stubs: {
-          RefreshCw: true,
-        },
       },
     })
 
-    // 找到重新生成按钮
-    const regenerateBtn = wrapper.find('button.active\\:scale-95:last-child')
-    if (!regenerateBtn.exists()) {
-      // 备选方案：通过包含的图标查找
-      const allButtons = wrapper.findAll('button')
-      const btn = allButtons.find(
-        (b) => b.html().includes('RefreshCw') || b.text().includes('ai.regenerate'),
-      )
-      expect(btn?.exists()).toBe(true)
-      await btn?.trigger('click')
-    } else {
-      await regenerateBtn.trigger('click')
-    }
+    const allButtons = wrapper.findAll('button')
+    const btn = allButtons.find((b) => b.text().includes('ai.regenerate'))
+    expect(btn?.exists()).toBe(true)
+    await btn?.trigger('click')
 
     expect(wrapper.emitted('regenerate')).toBeTruthy()
   })

@@ -5,6 +5,8 @@ import { useTodoStore } from '@/features/todo/stores/todo'
 import { useMemory } from '@/features/ai/composables/useMemory'
 import { createPinia, setActivePinia } from 'pinia'
 import type { ChatMessage, ToolCall } from '@/features/ai/services/aiService'
+import { ai as zhAi } from '@/i18n/locales/zh-CN/ai'
+import { ai as enAi } from '@/i18n/locales/en-US/ai'
 
 // Mock dependencies
 vi.mock('@/features/ai/composables/useAIConfig', () => ({
@@ -195,5 +197,40 @@ describe('AI Utils - injectSystemPrompts', () => {
 
     expect(assistant?.tool_calls?.[0]?.id).toBe('tc1')
     expect(tool?.tool_call_id).toBe('tc1')
+  })
+})
+
+function extractTeachingQuizJson(prompt: string): string {
+  const startTag = '[TEACHING_QUIZ_START]'
+  const endTag = '[TEACHING_QUIZ_END]'
+  let start = prompt.indexOf(startTag)
+  while (start !== -1) {
+    const end = prompt.indexOf(endTag, start + startTag.length)
+    if (end === -1) break
+    const candidate = prompt.slice(start + startTag.length, end).trim()
+    const first = candidate[0]
+    if (first === '{' || first === '[') return candidate
+    start = prompt.indexOf(startTag, end + endTag.length)
+  }
+  throw new Error('Teaching quiz JSON block not found')
+}
+
+describe('AI i18n - teachingModeSystemPrompt', () => {
+  it('zh-CN teaching prompt contains parseable quiz JSON', () => {
+    expect(zhAi.teachingModeSystemPrompt).not.toContain("{'{'}")
+    const jsonStr = extractTeachingQuizJson(zhAi.teachingModeSystemPrompt)
+    const parsed = JSON.parse(jsonStr) as { version: number; quizzes: unknown[] }
+    expect(parsed.version).toBe(1)
+    expect(Array.isArray(parsed.quizzes)).toBe(true)
+    expect(parsed.quizzes.length).toBeGreaterThan(0)
+  })
+
+  it('en-US teaching prompt contains parseable quiz JSON', () => {
+    expect(enAi.teachingModeSystemPrompt).not.toContain("{'{'}")
+    const jsonStr = extractTeachingQuizJson(enAi.teachingModeSystemPrompt)
+    const parsed = JSON.parse(jsonStr) as { version: number; quizzes: unknown[] }
+    expect(parsed.version).toBe(1)
+    expect(Array.isArray(parsed.quizzes)).toBe(true)
+    expect(parsed.quizzes.length).toBeGreaterThan(0)
   })
 })

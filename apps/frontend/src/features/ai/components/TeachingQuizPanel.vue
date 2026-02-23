@@ -39,6 +39,20 @@ const submittingBatch = ref(false)
 watch(
   () => props.quizzes,
   (newQuizzes) => {
+    const activeIds = new Set(newQuizzes.map((q) => q.id))
+    for (const key of Object.keys(singleSelections)) {
+      if (!activeIds.has(key)) delete singleSelections[key]
+    }
+    for (const key of Object.keys(multiSelections)) {
+      if (!activeIds.has(key)) delete multiSelections[key]
+    }
+    for (const key of Object.keys(shortAnswers)) {
+      if (!activeIds.has(key)) delete shortAnswers[key]
+    }
+    for (const key of Object.keys(errors)) {
+      if (!activeIds.has(key)) delete errors[key]
+    }
+
     for (const quiz of newQuizzes) {
       if (quiz.userAnswer) {
         if (quiz.kind === 'single_choice') {
@@ -210,7 +224,7 @@ function optionKey(optionId: string): string {
               :checked="!!(multiSelections[quiz.id] && multiSelections[quiz.id][opt.id])"
               class="mt-0.5 border-border/60 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
               :disabled="disabled || isSubmitting(quiz.id)"
-              @update:checked="(val: boolean) => toggleMulti(quiz.id, opt.id, val === true)"
+              @update:checked="(val: unknown) => toggleMulti(quiz.id, opt.id, val === true)"
             />
             <div class="flex-1 space-y-0.5">
               <div class="text-sm font-medium text-foreground/90">
@@ -227,11 +241,20 @@ function optionKey(optionId: string): string {
             class="w-full resize-none rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground/40 focus:border-primary/40 focus:ring-4 focus:ring-primary/5"
             :disabled="disabled || isSubmitting(quiz.id)"
             :placeholder="quiz.answerHint || t('ai.teachingShortAnswerPlaceholder')"
+            :aria-label="quiz.stem"
+            :aria-invalid="!!errors[quiz.id]"
+            :aria-describedby="errors[quiz.id] ? `teaching-quiz-error-${quiz.id}` : undefined"
             @input="(e) => updateShortAnswer(quiz.id, (e.target as HTMLTextAreaElement).value)"
           />
         </div>
 
-        <div v-if="errors[quiz.id]" class="flex items-center gap-2 text-xs text-destructive/80">
+        <div
+          v-if="errors[quiz.id]"
+          :id="`teaching-quiz-error-${quiz.id}`"
+          class="flex items-center gap-2 text-xs text-destructive/80"
+          role="alert"
+          aria-live="polite"
+        >
           <AlertCircle :size="14" />
           <span>{{ errors[quiz.id] }}</span>
         </div>
