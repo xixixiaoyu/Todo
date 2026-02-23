@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useWindowSize, useTimeoutFn } from '@vueuse/core'
-import { AlertCircle, Copy, Check } from 'lucide-vue-next'
+import { useWindowSize } from '@vueuse/core'
 import type { ChatMessage } from '@/features/ai/composables/useChat'
 import type { TeachingQuizKind } from '@/features/ai/services/aiService'
 import ImageLoadingState from './ImageLoadingState.vue'
@@ -11,14 +10,14 @@ import ChatMessageThinking from './ChatMessageThinking.vue'
 import ChatMessageTool from './ChatMessageTool.vue'
 import ChatMessageActions from './ChatMessageActions.vue'
 import ChatMessageImagePreview from './ChatMessageImagePreview.vue'
+import ChatMessageStructuredBlockWarning from './ChatMessageStructuredBlockWarning.vue'
 import ChatVisualizerPreview from '@/features/todo/components/ChatVisualizerPreview.vue'
 import ChatMessageLoading from './ChatMessageLoading.vue'
 import ChatMessageImages from './ChatMessageImages.vue'
 import ChatMessageMarkdown from './ChatMessageMarkdown.vue'
 import ChatMessageUser from './ChatMessageUser.vue'
 import TeachingQuizPanel from './TeachingQuizPanel.vue'
-
-import { useEscClose } from '@/composables/useEscClose'
+import { useChatMessageImagePreview } from '@/features/ai/composables/useChatMessageImagePreview'
 
 const props = defineProps<{
   message: ChatMessage
@@ -46,19 +45,7 @@ const { t } = useI18n()
 const { width: windowWidth } = useWindowSize()
 const isMobile = computed(() => windowWidth.value < 640)
 
-// 图片预览
-const previewImageUrl = ref<string | null>(null)
-const isPreviewOpen = computed(() => !!previewImageUrl.value)
-
-const openImage = (url: string) => {
-  previewImageUrl.value = url
-}
-const closePreview = () => {
-  previewImageUrl.value = null
-}
-
-// 使用公共 Composable 处理图片预览的 ESC 关闭
-useEscClose(isPreviewOpen, closePreview)
+const { previewImageUrl, openImage, closePreview } = useChatMessageImagePreview()
 
 // 编辑状态
 const isEditing = ref(false)
@@ -107,38 +94,6 @@ const showStructuredBlockWarning = computed(() => {
     props.message.structuredBlockErrors.length > 0
   )
 })
-
-const diagnosticsText = computed(() => {
-  if (!props.message.structuredBlockErrors) return ''
-  return JSON.stringify(
-    {
-      messageId: props.message.id,
-      errors: props.message.structuredBlockErrors,
-    },
-    null,
-    2,
-  )
-})
-
-const diagnosticsCopied = ref(false)
-
-const { start: startResetCopied } = useTimeoutFn(
-  () => {
-    diagnosticsCopied.value = false
-  },
-  2000,
-  { immediate: false },
-)
-
-async function copyDiagnostics() {
-  try {
-    await navigator.clipboard.writeText(diagnosticsText.value)
-    diagnosticsCopied.value = true
-    startResetCopied()
-  } catch {
-    console.warn(t('common.error.requestFailed'))
-  }
-}
 
 const markdownRef = ref<InstanceType<typeof ChatMessageMarkdown>>()
 
@@ -248,52 +203,11 @@ defineExpose({
                 />
 
                 <template v-else>
-                  <div
+                  <ChatMessageStructuredBlockWarning
                     v-if="showStructuredBlockWarning"
-                    class="mb-2 rounded-xl border border-ai-message-border bg-background/40 px-3 py-2 text-foreground/90"
-                  >
-                    <div class="flex items-start gap-2">
-                      <AlertCircle :size="14" class="mt-0.5 text-amber-600" />
-                      <div class="min-w-0 flex-1">
-                        <div class="text-xs font-medium">
-                          {{ t('ai.structuredBlockWarningTitle') }}
-                        </div>
-                        <div class="mt-0.5 text-xs text-muted-foreground">
-                          {{ t('ai.structuredBlockWarningDesc') }}
-                        </div>
-                      </div>
-                      <button
-                        class="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground/80 transition-all hover:bg-primary/10 hover:text-primary active:scale-95"
-                        :title="
-                          diagnosticsCopied
-                            ? t('ai.structuredBlockDiagnosticsCopied')
-                            : t('ai.structuredBlockCopyDiagnostics')
-                        "
-                        @click="copyDiagnostics"
-                      >
-                        <Check v-if="diagnosticsCopied" :size="14" class="text-green-600" />
-                        <Copy v-else :size="14" />
-                        <span>
-                          {{
-                            diagnosticsCopied
-                              ? t('ai.structuredBlockDiagnosticsCopied')
-                              : t('ai.structuredBlockCopyDiagnostics')
-                          }}
-                        </span>
-                      </button>
-                    </div>
-
-                    <details class="mt-2">
-                      <summary class="cursor-pointer select-none text-xs text-muted-foreground">
-                        {{ t('ai.structuredBlockShowDetails') }}
-                      </summary>
-                      <pre
-                        class="mt-2 max-h-40 overflow-auto rounded-lg bg-background/60 p-2 text-[11px] leading-relaxed text-muted-foreground"
-                      >
-                        {{ diagnosticsText }}
-                      </pre>
-                    </details>
-                  </div>
+                    :message-id="message.id"
+                    :errors="message.structuredBlockErrors || []"
+                  />
 
                   <!-- AI 消息：Markdown 渲染 -->
                   <ChatMessageMarkdown
