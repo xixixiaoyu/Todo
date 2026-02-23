@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common'
+import { Injectable, UnauthorizedException, Inject } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { ConfigService } from '@nestjs/config'
 import { RedisService, CachePrefix } from '../redis/redis.service'
@@ -20,8 +20,11 @@ export class TokenService {
   private readonly refreshTokenSecret: string
 
   constructor(
+    @Inject(JwtService)
     private readonly jwtService: JwtService,
+    @Inject(ConfigService)
     private readonly configService: ConfigService,
+    @Inject(RedisService)
     private readonly redisService: RedisService,
   ) {
     const jwtSecret = this.configService.get<string>('JWT_SECRET')

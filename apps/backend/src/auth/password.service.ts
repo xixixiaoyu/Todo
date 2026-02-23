@@ -11,8 +11,11 @@ export class PasswordService {
   constructor(
     @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
+    @Inject(ConfigService)
     private readonly configService: ConfigService,
+    @Inject(MailService)
     private readonly mailService: MailService,
+    @Inject(TokenService)
     private readonly tokenService: TokenService,
   ) {}
 

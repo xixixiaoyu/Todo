@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, UseGuards, Res } from '@nestjs/common'
+import { Controller, Post, Body, Get, UseGuards, Res, Inject } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger'
 import { Throttle, SkipThrottle } from '@nestjs/throttler'
 import { AuthService } from './auth.service'
@@ -14,7 +14,7 @@ import type { FastifyReplyWithCookie } from '../common'
 @ApiTags('认证')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(@Inject(AuthService) private readonly authService: AuthService) {}
 
   /**
    * 用户登录

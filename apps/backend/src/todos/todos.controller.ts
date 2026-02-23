@@ -1,4 +1,14 @@
-import { Controller, Post, Body, UseGuards, Get, Headers, Param, Delete } from '@nestjs/common'
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Get,
+  Headers,
+  Param,
+  Delete,
+  Inject,
+} from '@nestjs/common'
 import { TodosService } from './todos.service'
 import { TodoSyncService } from './todos-sync.service'
 import { SyncMergeDto } from './todos.dto'
@@ -13,8 +23,8 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger'
 @ApiBearerAuth()
 export class TodosController {
   constructor(
-    private readonly todosService: TodosService,
-    private readonly todoSyncService: TodoSyncService,
+    @Inject(TodosService) private readonly todosService: TodosService,
+    @Inject(TodoSyncService) private readonly todoSyncService: TodoSyncService,
   ) {}
 
   @Post('sync')
