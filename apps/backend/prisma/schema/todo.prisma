@@ -18,3 +18,13 @@ model Todo {
   @@index([deletedAt])
   @@map("todos")
 }
+
+model TodoTombstone {
+  userId    Int
+  todoId    String
+  deletedAt DateTime @default(now())
+
+  @@id([userId, todoId])
+  @@index([userId, deletedAt])
+  @@map("todo_tombstones")
+}

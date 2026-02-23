@@ -43,6 +43,14 @@ export class TodoSyncService {
     if (todos && todos.length > 0) {
       await this.prisma.$transaction(async (tx) => {
         for (const todo of todos as SyncItem[]) {
+          const tombstone = await tx.todoTombstone.findUnique({
+            where: { userId_todoId: { userId, todoId: todo.id } },
+            select: { deletedAt: true },
+          })
+          if (tombstone) {
+            continue
+          }
+
           const existing = await tx.todo.findUnique({
             where: { id: todo.id },
             select: { updatedAt: true, userId: true, version: true },
@@ -116,6 +124,17 @@ export class TodoSyncService {
     // 合并客户端成功更新的项目（带有新版本号）和服务器端的其他变更
     const allChanges = [...successfullyUpdatedItems, ...otherServerChanges]
 
+    const tombstones = await this.prisma.todoTombstone.findMany({
+      where: {
+        userId,
+        deletedAt: {
+          gte: since,
+        },
+      },
+      select: { todoId: true },
+    })
+    const deletedIds = Array.from(new Set(tombstones.map((t) => t.todoId)))
+
     // 4. 通知其他在线设备进行同步
     if (successfullyUpdatedItems.length > 0) {
       this.eventsGateway.broadcastSyncNotify(userId, excludeSocketId)
@@ -123,7 +142,7 @@ export class TodoSyncService {
 
     return {
       synced: allChanges,
-      deletedIds: [], // 暂时不处理增量物理删除
+      deletedIds,
       serverTime: serverTime.toISOString(),
     }
   }

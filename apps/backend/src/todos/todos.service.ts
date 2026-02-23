@@ -87,8 +87,16 @@ export class TodosService {
 
     if (!todo) return null
 
-    await this.prisma.todo.delete({
-      where: { id },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.todoTombstone.upsert({
+        where: { userId_todoId: { userId, todoId: id } },
+        update: { deletedAt: new Date() },
+        create: { userId, todoId: id },
+      })
+
+      await tx.todo.delete({
+        where: { id },
+      })
     })
 
     this.eventsGateway.broadcastSyncNotify(userId)
@@ -99,11 +107,30 @@ export class TodosService {
    * 清空回收站
    */
   async clearTrash(userId: number) {
-    const result = await this.prisma.todo.deleteMany({
+    const trashTodos = await this.prisma.todo.findMany({
       where: {
         userId,
         deletedAt: { not: null },
       },
+      select: { id: true },
+    })
+
+    const ids = trashTodos.map((t) => t.id)
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      if (ids.length > 0) {
+        await tx.todoTombstone.createMany({
+          data: ids.map((todoId) => ({ userId, todoId, deletedAt: new Date() })),
+          skipDuplicates: true,
+        })
+      }
+
+      return tx.todo.deleteMany({
+        where: {
+          userId,
+          deletedAt: { not: null },
+        },
+      })
     })
 
     this.eventsGateway.broadcastSyncNotify(userId)

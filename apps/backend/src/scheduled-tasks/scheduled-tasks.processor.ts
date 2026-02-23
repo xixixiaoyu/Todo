@@ -62,12 +62,34 @@ export class ScheduledTasksProcessor extends WorkerHost {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
     try {
-      const deleteResult = await this.prisma.todo.deleteMany({
+      const expiredTodos = await this.prisma.todo.findMany({
         where: {
           deletedAt: {
             lt: thirtyDaysAgo,
           },
         },
+        select: { id: true, userId: true },
+      })
+
+      const deleteResult = await this.prisma.$transaction(async (tx) => {
+        if (expiredTodos.length > 0) {
+          await tx.todoTombstone.createMany({
+            data: expiredTodos.map((t) => ({
+              userId: t.userId,
+              todoId: t.id,
+              deletedAt: new Date(),
+            })),
+            skipDuplicates: true,
+          })
+        }
+
+        return tx.todo.deleteMany({
+          where: {
+            deletedAt: {
+              lt: thirtyDaysAgo,
+            },
+          },
+        })
       })
       if (deleteResult.count > 0) {
         this.logger.log(`清理了 ${deleteResult.count} 条 30 天前的逻辑删除记录`)
@@ -75,6 +97,22 @@ export class ScheduledTasksProcessor extends WorkerHost {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       this.logger.error(`清理逻辑删除记录失败: ${message}`)
+    }
+
+    const ninetyDaysAgo = new Date()
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
+
+    try {
+      await this.prisma.todoTombstone.deleteMany({
+        where: {
+          deletedAt: {
+            lt: ninetyDaysAgo,
+          },
+        },
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      this.logger.error(`清理 tombstone 记录失败: ${message}`)
     }
 
     // 可以在这里继续添加其他清理逻辑

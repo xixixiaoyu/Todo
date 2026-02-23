@@ -13,6 +13,10 @@ describe('TodoSyncService', () => {
       findMany: vi.fn(),
       findUnique: vi.fn(),
     },
+    todoTombstone: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+    },
     $transaction: vi.fn((cb) => cb(mockPrisma)),
   }
   const mockEventsGateway = {
@@ -62,6 +66,7 @@ describe('TodoSyncService', () => {
         lastSyncAt: new Date(0).toISOString(),
       }
 
+      mockPrisma.todoTombstone.findUnique.mockResolvedValue(null)
       mockPrisma.todo.findUnique.mockResolvedValue(null)
       mockPrisma.todo.upsert.mockResolvedValue({ id: '861a3556-9150-4819-b7b5-22e379434857' })
       mockPrisma.todo.findMany.mockResolvedValue([
@@ -72,6 +77,7 @@ describe('TodoSyncService', () => {
           deletedAt: null,
         },
       ])
+      mockPrisma.todoTombstone.findMany.mockResolvedValue([])
 
       const result = await service.sync(userId, syncDto)
 
@@ -102,12 +108,58 @@ describe('TodoSyncService', () => {
           deletedAt: deletedAt,
         },
       ])
+      mockPrisma.todoTombstone.findMany.mockResolvedValue([])
 
       const result = await service.sync(userId, syncDto)
 
       expect(result.synced).toHaveLength(1)
       expect(result.synced[0].id).toBe('deleted-todo')
       expect(result.synced[0].deletedAt).toBeDefined()
+    })
+
+    it('should return deletedIds from tombstones since lastSyncAt', async () => {
+      const userId = 1
+      const syncDto: SyncMergeDto = {
+        todos: [],
+        lastSyncAt: new Date(0).toISOString(),
+      }
+
+      mockPrisma.todo.findMany.mockResolvedValue([])
+      mockPrisma.todoTombstone.findMany.mockResolvedValue([{ todoId: 'deleted-uuid' }])
+
+      const result = await service.sync(userId, syncDto)
+
+      expect(result.deletedIds).toEqual(['deleted-uuid'])
+    })
+
+    it('should ignore client updates when tombstone exists', async () => {
+      const userId = 1
+      const id = '861a3556-9150-4819-b7b5-22e379434857'
+      const syncDto: SyncMergeDto = {
+        todos: [
+          {
+            id,
+            title: 'Should be ignored',
+            completed: false,
+            order: 0,
+            isPinned: false,
+            version: 0,
+            pomodoroCount: 0,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ],
+        lastSyncAt: new Date(0).toISOString(),
+      }
+
+      mockPrisma.todoTombstone.findUnique.mockResolvedValue({ deletedAt: new Date() })
+      mockPrisma.todo.findMany.mockResolvedValue([])
+      mockPrisma.todoTombstone.findMany.mockResolvedValue([{ todoId: id }])
+
+      const result = await service.sync(userId, syncDto)
+
+      expect(mockPrisma.todo.upsert).not.toHaveBeenCalled()
+      expect(result.deletedIds).toEqual([id])
     })
   })
 })
