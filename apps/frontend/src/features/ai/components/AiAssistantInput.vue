@@ -3,20 +3,11 @@ import { ref, nextTick, watch, computed, useId, onMounted, onUnmounted } from 'v
 import { useWindowSize } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import type { ChatSession } from '@/features/ai/composables/useChatHistory'
-import {
-  X,
-  AlertCircle,
-  Image as ImageIcon,
-  Square,
-  ChevronLeft,
-  Send,
-  Clover,
-  Users,
-  Lightbulb,
-  FileText,
-  Loader2,
-} from 'lucide-vue-next'
+import { AlertCircle, Image as ImageIcon, Clover, Users, Lightbulb } from 'lucide-vue-next'
 import type { ParsedFile } from '@/composables/useFileParsing'
+import AiAssistantInputAttachments from '@/features/ai/components/AiAssistantInputAttachments.vue'
+import AiAssistantInputSlashCommands from '@/features/ai/components/AiAssistantInputSlashCommands.vue'
+import AiAssistantInputActionBar from '@/features/ai/components/AiAssistantInputActionBar.vue'
 
 const props = defineProps<{
   modelValue: string
@@ -98,6 +89,9 @@ const handleSlashCommand = (index: number) => {
 
 const { width: windowWidth } = useWindowSize()
 const isMobile = computed(() => windowWidth.value < 640)
+const completedFilesCount = computed(
+  () => props.parsedFiles.filter((f) => f.status === 'completed').length,
+)
 
 const handleKeydown = (event: KeyboardEvent) => {
   if (showSlashCommands.value) {
@@ -228,61 +222,13 @@ defineExpose({
       isInputDisabled ? 'opacity-60 grayscale-[0.2]' : '',
     ]"
   >
-    <!-- 附件预览区域 (图片 + 文档) -->
-    <div
-      v-if="selectedImages.length > 0 || parsedFiles.length > 0"
-      :class="['flex flex-wrap gap-2 px-2 pt-2', isMobile ? 'max-h-32 overflow-y-auto' : '']"
-    >
-      <!-- 图片预览 -->
-      <div
-        v-for="(img, index) in selectedImages"
-        :key="`img-${index}`"
-        :class="[
-          'group relative overflow-hidden rounded-lg border border-border bg-muted',
-          isMobile ? 'h-14 w-14' : 'h-16 w-16',
-        ]"
-      >
-        <img :src="img" class="h-full w-full object-cover" />
-        <button
-          class="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100"
-          @click="emit('removeImage', index)"
-        >
-          <X :size="12" />
-        </button>
-      </div>
-
-      <!-- 文档预览 -->
-      <div
-        v-for="file in parsedFiles"
-        :key="file.id"
-        :class="[
-          'group relative flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-2 py-1.5 transition-colors hover:bg-muted',
-          isMobile ? 'h-14 w-28' : 'h-16 w-32',
-        ]"
-      >
-        <div
-          class="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-primary/10 text-primary"
-        >
-          <Loader2 v-if="file.status === 'parsing'" :size="14" class="animate-spin" />
-          <AlertCircle v-else-if="file.status === 'error'" :size="14" class="text-red-500" />
-          <FileText v-else :size="14" />
-        </div>
-        <div class="min-w-0 flex-1">
-          <p class="truncate text-[11px] font-medium leading-none">{{ file.name }}</p>
-          <p class="mt-1 text-[9px] text-muted-foreground">
-            {{
-              file.status === 'parsing' ? t('ai.parsing') : (file.size / 1024).toFixed(1) + ' KB'
-            }}
-          </p>
-        </div>
-        <button
-          class="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100"
-          @click="emit('removeFile', file.id)"
-        >
-          <X :size="12" />
-        </button>
-      </div>
-    </div>
+    <AiAssistantInputAttachments
+      :selected-images="selectedImages"
+      :parsed-files="parsedFiles"
+      :is-mobile="isMobile"
+      @remove-image="(index) => emit('removeImage', index)"
+      @remove-file="(id) => emit('removeFile', id)"
+    />
 
     <!-- 生图模式提示 -->
     <Transition
@@ -302,56 +248,12 @@ defineExpose({
       </div>
     </Transition>
 
-    <!-- 快捷指令菜单 -->
-    <Transition
-      enter-active-class="transition duration-200 ease-out"
-      enter-from-class="transform translate-y-2 opacity-0 scale-95"
-      enter-to-class="transform translate-y-0 opacity-100 scale-100"
-      leave-active-class="transition duration-150 ease-in"
-      leave-from-class="transform translate-y-0 opacity-100 scale-100"
-      leave-to-class="transform translate-y-2 opacity-0 scale-95"
-    >
-      <div
-        v-if="showSlashCommands"
-        class="slash-commands-menu absolute bottom-full left-0 z-50 mb-3 w-64 overflow-hidden rounded-2xl border border-border/40 bg-background p-1.5 shadow-2xl shadow-black/10"
-      >
-        <div class="flex flex-col gap-0.5">
-          <button
-            v-for="(cmd, index) in slashCommands"
-            :key="cmd.id"
-            class="group flex items-center justify-between rounded-lg px-3 py-2 text-left transition-all"
-            :class="[
-              selectedCommandIndex === index
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-            ]"
-            @click="handleSlashCommand(index)"
-            @mouseenter="selectedCommandIndex = index"
-          >
-            <div class="flex items-center gap-2.5">
-              <div
-                class="flex h-7 w-7 items-center justify-center rounded-md"
-                :class="[
-                  selectedCommandIndex === index
-                    ? 'bg-white/20 text-white'
-                    : cmd.active
-                      ? 'bg-primary/10 text-primary'
-                      : 'bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary',
-                ]"
-              >
-                <component :is="cmd.icon" :size="16" />
-              </div>
-              <span class="text-[13px] font-medium">{{ cmd.title }}</span>
-            </div>
-            <div
-              v-if="cmd.active"
-              class="h-1.5 w-1.5 rounded-full"
-              :class="selectedCommandIndex === index ? 'bg-white' : 'bg-primary'"
-            />
-          </button>
-        </div>
-      </div>
-    </Transition>
+    <AiAssistantInputSlashCommands
+      v-model:open="showSlashCommands"
+      v-model:selected-index="selectedCommandIndex"
+      :commands="slashCommands"
+      @select="handleSlashCommand"
+    />
 
     <label :for="textareaId" class="sr-only">{{ t('ai.placeholder') }}</label>
     <textarea
@@ -383,80 +285,32 @@ defineExpose({
       @paste="(e) => emit('paste', e)"
     />
 
-    <div :class="['flex items-center justify-between px-2.5 pt-1 pb-2', isMobile ? 'gap-1' : '']">
-      <div class="flex items-center gap-1">
-        <!-- 附件上传按钮 -->
-        <button
-          :class="[
-            'flex items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-95 disabled:cursor-not-allowed disabled:opacity-50',
-            isMobile ? 'h-8 w-8' : 'h-7 w-7',
-          ]"
-          :title="t('ai.uploadFile')"
-          :disabled="isInputDisabled || selectedImages.length + parsedFiles.length >= 10"
-          @click="emit('triggerFileUpload')"
-        >
-          <ImageIcon :size="isMobile ? 18 : 16" />
-        </button>
-        <label :for="fileInputId" class="sr-only">{{ t('ai.uploadFile') }}</label>
-        <input
-          :id="fileInputId"
-          ref="fileInputRef"
-          name="ai-file-upload"
-          type="file"
-          accept="image/*,.pdf,.docx,.xlsx,.xls,.txt,.md,.json,.csv,.ts,.js,.py"
-          multiple
-          class="hidden"
-          @change="(e) => emit('handleFileUpload', e)"
-        />
+    <AiAssistantInputActionBar
+      :is-mobile="isMobile"
+      :is-input-disabled="isInputDisabled"
+      :is-generating="isGenerating"
+      :error="error"
+      :last-active-session="lastActiveSession"
+      :model-value="modelValue"
+      :selected-images="selectedImages"
+      :parsed-files="parsedFiles"
+      :completed-files-count="completedFilesCount"
+      @trigger-file-upload="emit('triggerFileUpload')"
+      @stop="emit('stop')"
+      @navigate-previous="emit('navigatePrevious')"
+      @send="emit('send')"
+    />
 
-        <!-- 停止生成按钮 -->
-        <button
-          v-if="isGenerating && !error"
-          :class="[
-            'animate-stop-pulse flex items-center gap-1.5 rounded-lg bg-red-500 font-bold text-white transition-all hover:bg-red-600 active:scale-95',
-            isMobile ? 'h-8 px-2.5 text-[11px]' : 'px-3 py-1.5 text-[12px]',
-          ]"
-          @click="emit('stop')"
-        >
-          <Square :size="12" class="fill-current" />
-          <span>{{ t('ai.stop') }}</span>
-        </button>
-
-        <!-- 导航按钮 -->
-        <button
-          :class="[
-            'flex items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-95 disabled:cursor-not-allowed disabled:opacity-50',
-            isMobile ? 'h-8 w-8' : 'h-7 w-7',
-          ]"
-          :title="t('ai.previousSession')"
-          :disabled="isGenerating || !lastActiveSession"
-          @click="emit('navigatePrevious')"
-        >
-          <ChevronLeft :size="isMobile ? 18 : 16" />
-        </button>
-      </div>
-
-      <button
-        :class="[
-          'flex shrink-0 items-center justify-center rounded-xl text-primary-foreground transition-all shadow-sm',
-          isMobile ? 'h-8 w-8' : 'h-9 w-9',
-          isInputDisabled ||
-          (!modelValue.trim() &&
-            selectedImages.length === 0 &&
-            parsedFiles.filter((f) => f.status === 'completed').length === 0)
-            ? 'cursor-not-allowed bg-primary/20 scale-95'
-            : 'animate-button-pop bg-primary hover:bg-primary-hover hover:scale-105 active:scale-95 shadow-primary/20',
-        ]"
-        :disabled="
-          isInputDisabled ||
-          (!modelValue.trim() &&
-            selectedImages.length === 0 &&
-            parsedFiles.filter((f) => f.status === 'completed').length === 0)
-        "
-        @click="emit('send')"
-      >
-        <Send :size="isMobile ? 16 : 18" />
-      </button>
-    </div>
+    <label :for="fileInputId" class="sr-only">{{ t('ai.uploadFile') }}</label>
+    <input
+      :id="fileInputId"
+      ref="fileInputRef"
+      name="ai-file-upload"
+      type="file"
+      accept="image/*,.pdf,.docx,.xlsx,.xls,.txt,.md,.json,.csv,.ts,.js,.py"
+      multiple
+      class="hidden"
+      @change="(e) => emit('handleFileUpload', e)"
+    />
   </div>
 </template>
