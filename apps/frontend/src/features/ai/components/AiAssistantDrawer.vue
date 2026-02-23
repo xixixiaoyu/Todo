@@ -4,17 +4,17 @@ import { useWindowSize } from '@vueuse/core'
 import ResizableDrawer from '@/components/ResizableDrawer.vue'
 import ChatMessageList from '@/features/ai/components/ChatMessageList.vue'
 import AISettingsDialog from '@/features/ai/components/AISettingsDialog.vue'
-import ChatHistoryPanel from '@/features/ai/components/ChatHistoryPanel.vue'
 import AiAssistantHeader from '@/features/ai/components/AiAssistantHeader.vue'
 import AiAssistantToolbar from '@/features/ai/components/AiAssistantToolbar.vue'
 import AiAssistantInput from '@/features/ai/components/AiAssistantInput.vue'
+import AiAssistantHistoryOverlay from '@/features/ai/components/AiAssistantHistoryOverlay.vue'
 import { useChat } from '@/features/ai/composables/useChat'
 import {
   useAIConfig,
   aiThinkingMode,
   saveAIThinkingMode,
 } from '@/features/ai/composables/useAIConfig'
-import { useFileParsing } from '@/composables/useFileParsing'
+import { useAiAssistantAttachments } from '@/features/ai/composables/useAiAssistantAttachments'
 import { useChatHistory } from '@/features/ai/composables/useChatHistory'
 import { useTodoStore } from '@/features/todo/stores/todo'
 import { useI18n } from 'vue-i18n'
@@ -27,94 +27,9 @@ const modelValue = defineModel<boolean>({ required: true })
 // AI 配置与预设
 const { presets, activePreset, switchPreset, config, updateConfig } = useAIConfig()
 
-// 附件上传状态
-const selectedImages = ref<string[]>([])
-const { parsedFiles, parseFile, removeFile, clearFiles } = useFileParsing()
 const assistantInputRef = ref<InstanceType<typeof AiAssistantInput>>()
 
-const triggerFileUpload = () => {
-  assistantInputRef.value?.triggerFileUpload()
-}
-
-const processFiles = (files: FileList | File[]) => {
-  const MAX_TOTAL = 10
-  const currentTotal = selectedImages.value.length + parsedFiles.value.length
-  const remaining = MAX_TOTAL - currentTotal
-  if (remaining <= 0) return
-
-  const filesToProcess = Array.from(files).slice(0, remaining)
-
-  filesToProcess.forEach((file) => {
-    // 允许的文件类型
-    const isImage = file.type.startsWith('image/')
-    const isAllowedDoc =
-      file.type === 'application/pdf' ||
-      file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-      file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-      file.type === 'application/vnd.ms-excel' ||
-      file.type === 'text/plain' ||
-      file.type === 'text/markdown' ||
-      file.type === 'application/json' ||
-      file.type === 'text/csv' ||
-      file.name.match(/\.(ts|js|py|go|java|c|cpp|h|hpp|rs)$/i)
-
-    if (isImage) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const result = e.target?.result as string
-        if (result) {
-          selectedImages.value.push(result)
-        }
-      }
-      reader.readAsDataURL(file)
-    } else if (isAllowedDoc) {
-      // 处理文档
-      void parseFile(file)
-    }
-  })
-}
-
-const handleFileUpload = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  const files = target.files
-  if (!files) return
-
-  processFiles(files)
-
-  // 重置 input 以允许再次选择相同文件
-  target.value = ''
-}
-
-const handlePaste = (event: ClipboardEvent) => {
-  if (isInputDisabled.value) return
-
-  const items = event.clipboardData?.items
-  if (!items) return
-
-  const files: File[] = []
-  let hasFiles = false
-
-  for (const item of Array.from(items)) {
-    // 如果是文件类型（包括图片和文档）
-    if (item.kind === 'file') {
-      const file = item.getAsFile()
-      if (file) {
-        files.push(file)
-        hasFiles = true
-      }
-    }
-  }
-
-  if (hasFiles) {
-    // 如果包含文件，阻止默认行为，防止文件名被插入到输入框
-    event.preventDefault()
-    processFiles(files)
-  }
-}
-
-const removeImage = (index: number) => {
-  selectedImages.value.splice(index, 1)
-}
+const triggerFileUpload = () => assistantInputRef.value?.triggerFileUpload()
 
 // 切换思考模式
 const toggleThinkingMode = () => {
@@ -273,6 +188,20 @@ const hasHistory = computed(() => messages.value.length > 0)
 // 输入框是否禁用
 const isInputDisabled = computed(() => isGenerating.value && !error.value)
 
+const {
+  selectedImages,
+  parsedFiles,
+  removeImage,
+  removeFile,
+  clearAllAttachments,
+  handleFileUpload,
+  handlePaste,
+  triggerUpload,
+} = useAiAssistantAttachments({
+  isInputDisabled,
+  triggerFileUpload,
+})
+
 const handleSend = async () => {
   const content = chatInput.value.trim()
   const images = [...selectedImages.value]
@@ -286,8 +215,7 @@ const handleSend = async () => {
   if ((!content && images.length === 0 && documents.length === 0) || isInputDisabled.value) return
 
   chatInput.value = ''
-  selectedImages.value = []
-  clearFiles()
+  clearAllAttachments()
 
   // 发送后自动调整高度
   void nextTick(() => assistantInputRef.value?.adjustHeight())
@@ -482,7 +410,7 @@ defineOptions({
             @navigate-previous="navigateToPrevious"
             @remove-image="removeImage"
             @remove-file="removeFile"
-            @trigger-file-upload="triggerFileUpload"
+            @trigger-file-upload="triggerUpload"
             @handle-file-upload="handleFileUpload"
             @paste="handlePaste"
             @toggle-todo="toggleTodoAssistant"
@@ -496,56 +424,15 @@ defineOptions({
       <!-- 设置弹窗 -->
       <AISettingsDialog v-model="showSettings" v-model:initial-tab="lastActiveTab" />
 
-      <!-- 历史记录面板遮罩 -->
-      <Transition
-        enter-active-class="transition-opacity duration-150 ease-out"
-        leave-active-class="transition-opacity duration-150 ease-in"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
-      >
-        <div
-          v-if="showHistory"
-          class="absolute inset-0 z-10 bg-black/20 dark:bg-black/40"
-          @click="showHistory = false"
-        />
-      </Transition>
-
-      <!-- 历史记录面板 -->
-      <Transition
-        enter-active-class="transition-transform duration-250 cubic-bezier(0.16, 1, 0.3, 1)"
-        leave-active-class="transition-transform duration-200 cubic-bezier(0.16, 1, 0.3, 1)"
-        enter-from-class="-translate-x-full"
-        enter-to-class="translate-x-0"
-        leave-from-class="translate-x-0"
-        leave-to-class="-translate-x-full"
-      >
-        <div
-          v-if="showHistory"
-          class="absolute inset-y-0 left-0 z-20 flex flex-col border-r border-border/40 bg-card shadow-xl"
-          :style="{ width: isMobile ? '100%' : `${historyWidth}px` }"
-        >
-          <ChatHistoryPanel
-            @select="handleSelectSession"
-            @close="showHistory = false"
-            @new-chat="handleNewChat"
-          />
-
-          <!-- 拖拽手柄 -->
-          <div
-            v-if="!isMobile"
-            class="absolute -right-1.5 top-0 z-30 flex h-full w-3 cursor-ew-resize items-center justify-center transition-colors hover:bg-primary/10"
-            :class="{ 'bg-primary/20': isResizingHistory }"
-            @mousedown="startHistoryResize"
-          >
-            <div
-              class="h-12 w-1 rounded-full bg-border transition-colors group-hover:bg-primary/30"
-              :class="{ 'bg-primary/50': isResizingHistory }"
-            />
-          </div>
-        </div>
-      </Transition>
+      <AiAssistantHistoryOverlay
+        v-model="showHistory"
+        :is-mobile="isMobile"
+        :history-width="historyWidth"
+        :is-resizing="isResizingHistory"
+        :start-resize="startHistoryResize"
+        @select="handleSelectSession"
+        @new-chat="handleNewChat"
+      />
     </div>
   </ResizableDrawer>
 </template>
