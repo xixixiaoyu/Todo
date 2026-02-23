@@ -203,6 +203,7 @@ const {
   deleteMessage,
   editAndResendMessage,
   updateTeachingQuizAnswer,
+  getTeachingQuizSnapshot,
 } = useChat()
 
 const todoStore = useTodoStore()
@@ -353,8 +354,9 @@ const handleTeachingSubmit = async (payload: {
   if (isGenerating.value) return
   // 更新本地状态
   updateTeachingQuizAnswer(payload.quizId, payload.answer)
+  const quiz = getTeachingQuizSnapshot(payload.quizId) || undefined
   // 发送消息
-  await sendMessage(`[TEACHING_ANSWER]\n${JSON.stringify(payload)}`)
+  await sendMessage(`[TEACHING_ANSWER]\n${JSON.stringify({ ...payload, quiz })}`)
 }
 
 const handleTeachingSubmitBatch = async (
@@ -363,8 +365,12 @@ const handleTeachingSubmitBatch = async (
   if (isGenerating.value) return
   // 批量更新本地状态
   payload.forEach((p) => updateTeachingQuizAnswer(p.quizId, p.answer))
+  const enriched = payload.map((p) => ({
+    ...p,
+    quiz: getTeachingQuizSnapshot(p.quizId) || undefined,
+  }))
   // 发送消息
-  await sendMessage(`[TEACHING_ANSWERS]\n${JSON.stringify(payload)}`)
+  await sendMessage(`[TEACHING_ANSWERS]\n${JSON.stringify(enriched)}`)
 }
 
 // 打开设置

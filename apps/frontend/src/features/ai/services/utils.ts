@@ -41,6 +41,71 @@ export function generateId(): string {
   return Math.random().toString(36).substring(2, 11)
 }
 
+export interface TaggedBlock {
+  start: number
+  end: number
+  inner: string
+}
+
+export function extractTaggedBlocks(
+  content: string,
+  startTag: string,
+  endTag: string,
+): TaggedBlock[] {
+  const blocks: TaggedBlock[] = []
+  let cursor = 0
+
+  while (cursor < content.length) {
+    const start = content.indexOf(startTag, cursor)
+    if (start === -1) break
+    const end = content.indexOf(endTag, start + startTag.length)
+    if (end === -1) break
+
+    const inner = content.slice(start + startTag.length, end).trim()
+    blocks.push({ start, end: end + endTag.length, inner })
+    cursor = end + endTag.length
+  }
+
+  return blocks
+}
+
+export function stripTaggedBlocks(
+  content: string,
+  startTag: string,
+  endTag: string,
+): { text: string; inners: string[]; hasPartialStart: boolean } {
+  const blocks = extractTaggedBlocks(content, startTag, endTag)
+  if (blocks.length === 0) {
+    const partialStart = content.indexOf(startTag)
+    if (partialStart !== -1) {
+      return {
+        text: content.slice(0, partialStart).trim(),
+        inners: [],
+        hasPartialStart: true,
+      }
+    }
+    return { text: content.trim(), inners: [], hasPartialStart: false }
+  }
+
+  let text = ''
+  let last = 0
+  for (const b of blocks) {
+    text += content.slice(last, b.start)
+    last = b.end
+  }
+  text += content.slice(last)
+
+  return { text: text.trim(), inners: blocks.map((b) => b.inner), hasPartialStart: false }
+}
+
+export function safeJsonParse(input: string): unknown | undefined {
+  try {
+    return JSON.parse(input) as unknown
+  } catch {
+    return undefined
+  }
+}
+
 interface TodoWithChildren extends Todo {
   children: TodoWithChildren[]
 }

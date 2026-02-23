@@ -80,6 +80,11 @@ vi.mock('@/features/ai/composables/useChat', () => ({
     stopGenerating: vi.fn(),
     clearHistory: vi.fn(),
     regenerateLastResponse: vi.fn(),
+    regenerateMessage: vi.fn(),
+    deleteMessage: vi.fn(),
+    editAndResendMessage: vi.fn(),
+    updateTeachingQuizAnswer: vi.fn(),
+    getTeachingQuizSnapshot: vi.fn(),
   }),
 }))
 

@@ -95,6 +95,23 @@ export function useChatState() {
     }
   }
 
+  function getTeachingQuizSnapshot(quizId: string) {
+    const messages = chatHistory.value
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const msg = messages[i]
+      const quiz = msg.teachingQuizzes?.find((q) => q.id === quizId)
+      if (!quiz) continue
+      return {
+        id: quiz.id,
+        kind: quiz.kind,
+        stem: quiz.stem,
+        options: quiz.options,
+        answerHint: quiz.answerHint,
+      }
+    }
+    return null
+  }
+
   return {
     // 状态
     chatHistory,
@@ -113,5 +130,6 @@ export function useChatState() {
     resetStreamingState,
     clearError,
     updateTeachingQuizAnswer,
+    getTeachingQuizSnapshot,
   }
 }

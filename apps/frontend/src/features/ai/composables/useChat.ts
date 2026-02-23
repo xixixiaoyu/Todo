@@ -1,6 +1,7 @@
 import { computed } from 'vue'
 import type { AIRequestOptions, ChatMessage, TeachingQuiz } from '@/features/ai/services/aiService'
 import type { ProposedTodoChange } from '@/features/todo/stores/todo'
+import { safeJsonParse, stripTaggedBlocks } from '@/features/ai/services/aiService'
 import { useChatState } from './useChatState'
 import { useChatActions } from './useChatActions'
 
@@ -41,70 +42,41 @@ export function useChat(options: AIRequestOptions = {}) {
         let actions: ProposedTodoChange[] | undefined
         let teachingQuizzes: TeachingQuiz[] | undefined
 
-        // 流式过程中解析 TODO_ACTIONS
-        const startTag = '[TODO_ACTIONS_START]'
-        const endTag = '[TODO_ACTIONS_END]'
-
-        if (displayContent.includes(startTag)) {
-          const startIndex = displayContent.indexOf(startTag)
-          const contentBefore = displayContent.substring(0, startIndex)
-
-          if (displayContent.includes(endTag)) {
-            const endIndex = displayContent.indexOf(endTag)
-            const contentAfter = displayContent.substring(endIndex + endTag.length)
-            const jsonStr = displayContent.substring(startIndex + startTag.length, endIndex).trim()
-
-            try {
-              const parsedActions = JSON.parse(jsonStr)
-              if (Array.isArray(parsedActions)) {
-                actions = parsedActions.map((a: unknown) => {
-                  const action = a as ProposedTodoChange
-                  return {
-                    ...action,
-                    id: action.id || `stream-${Math.random().toString(36).slice(2, 9)}`,
-                  }
-                })
+        {
+          const { text, inners } = stripTaggedBlocks(
+            displayContent,
+            '[TODO_ACTIONS_START]',
+            '[TODO_ACTIONS_END]',
+          )
+          displayContent = text
+          const parsedActions =
+            inners.length > 0 ? safeJsonParse(inners[inners.length - 1]) : undefined
+          if (Array.isArray(parsedActions)) {
+            actions = parsedActions.map((a: unknown) => {
+              const action = a as ProposedTodoChange
+              return {
+                ...action,
+                id: action.id || `stream-${Math.random().toString(36).slice(2, 9)}`,
               }
-            } catch {
-              // 解析失败说明可能还没传输完
-            }
-            displayContent = (contentBefore + contentAfter).trim()
-          } else {
-            displayContent = contentBefore.trim()
+            })
           }
         }
 
-        const quizStartTag = '[TEACHING_QUIZ_START]'
-        const quizEndTag = '[TEACHING_QUIZ_END]'
-
-        if (displayContent.includes(quizStartTag)) {
-          const startIndex = displayContent.indexOf(quizStartTag)
-          const contentBefore = displayContent.substring(0, startIndex)
-
-          if (displayContent.includes(quizEndTag)) {
-            const endIndex = displayContent.indexOf(quizEndTag)
-            const contentAfter = displayContent.substring(endIndex + quizEndTag.length)
-            const jsonStr = displayContent
-              .substring(startIndex + quizStartTag.length, endIndex)
-              .trim()
-
-            try {
-              const parsed = JSON.parse(jsonStr) as unknown
-              if (Array.isArray(parsed)) {
-                teachingQuizzes = parsed as TeachingQuiz[]
-              } else if (parsed && typeof parsed === 'object') {
-                const obj = parsed as { quizzes?: unknown }
-                if (Array.isArray(obj.quizzes)) {
-                  teachingQuizzes = obj.quizzes as TeachingQuiz[]
-                }
-              }
-            } catch {
-              // 解析失败说明可能还没传输完
+        {
+          const { text, inners } = stripTaggedBlocks(
+            displayContent,
+            '[TEACHING_QUIZ_START]',
+            '[TEACHING_QUIZ_END]',
+          )
+          displayContent = text
+          const parsed = inners.length > 0 ? safeJsonParse(inners[inners.length - 1]) : undefined
+          if (Array.isArray(parsed)) {
+            teachingQuizzes = parsed as TeachingQuiz[]
+          } else if (parsed && typeof parsed === 'object') {
+            const obj = parsed as { quizzes?: unknown }
+            if (Array.isArray(obj.quizzes)) {
+              teachingQuizzes = obj.quizzes as TeachingQuiz[]
             }
-
-            displayContent = (contentBefore + contentAfter).trim()
-          } else {
-            displayContent = contentBefore.trim()
           }
         }
 

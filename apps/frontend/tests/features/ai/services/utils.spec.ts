@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref } from 'vue'
 import { injectSystemPrompts } from '@/features/ai/services/utils'
+import { safeJsonParse, stripTaggedBlocks } from '@/features/ai/services/aiService'
 import { useTodoStore } from '@/features/todo/stores/todo'
 import { useMemory } from '@/features/ai/composables/useMemory'
 import { createPinia, setActivePinia } from 'pinia'
@@ -232,5 +233,29 @@ describe('AI i18n - teachingModeSystemPrompt', () => {
     expect(parsed.version).toBe(1)
     expect(Array.isArray(parsed.quizzes)).toBe(true)
     expect(parsed.quizzes.length).toBeGreaterThan(0)
+  })
+})
+
+describe('AI Utils - tagged block protocol', () => {
+  it('should keep content unchanged when no tags exist', () => {
+    const res = stripTaggedBlocks(' hello ', '[X]', '[/X]')
+    expect(res.text).toBe('hello')
+    expect(res.inners).toEqual([])
+    expect(res.hasPartialStart).toBe(false)
+  })
+
+  it('should hide content after partial start tag', () => {
+    const res = stripTaggedBlocks('hi\n[X]\n{"a":1}', '[X]', '[/X]')
+    expect(res.text).toBe('hi')
+    expect(res.inners).toEqual([])
+    expect(res.hasPartialStart).toBe(true)
+  })
+
+  it('should strip multiple blocks and keep last inner parseable', () => {
+    const input = 'a\n[X]\n{"a":1}\n[/X]\nmid\n[X]\n{"b":2}\n[/X]\nend'
+    const res = stripTaggedBlocks(input, '[X]', '[/X]')
+    expect(res.text).toBe('a\n\nmid\n\nend')
+    expect(res.inners).toHaveLength(2)
+    expect(safeJsonParse(res.inners[1])).toEqual({ b: 2 })
   })
 })

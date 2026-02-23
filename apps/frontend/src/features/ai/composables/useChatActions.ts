@@ -6,6 +6,8 @@ import {
   getAIStaticResponse,
   abortCurrentRequest,
   generateId,
+  safeJsonParse,
+  stripTaggedBlocks,
   type ChatMessage,
   type TeachingQuiz,
   type AIRequestOptions,
@@ -394,67 +396,43 @@ export function useChatActions(options: AIRequestOptions = {}) {
           if (currentAIResponse.value) {
             let teachingQuizzes: TeachingQuiz[] | undefined
 
-            if (aiConfig.todoAssistant) {
-              const content = currentAIResponse.value
-              const startTag = '[TODO_ACTIONS_START]'
-              const endTag = '[TODO_ACTIONS_END]'
+            let content = currentAIResponse.value
 
-              if (content.includes(startTag) && content.includes(endTag)) {
-                const startIndex = content.indexOf(startTag) + startTag.length
-                const endIndex = content.indexOf(endTag)
-                const jsonStr = content.substring(startIndex, endIndex).trim()
+            {
+              const res = stripTaggedBlocks(content, '[TODO_ACTIONS_START]', '[TODO_ACTIONS_END]')
+              content = res.text
 
-                try {
-                  const actions = JSON.parse(jsonStr)
-                  if (Array.isArray(actions)) {
-                    const proposedActions: ProposedTodoChange[] = actions.map((action) => ({
-                      ...action,
-                      id: action.id || generateId(),
-                    }))
-                    currentTodoActions.value = proposedActions
-                    todoStore.addProposedChanges(proposedActions)
-                  }
-                } catch (e) {
-                  console.error('Failed to parse todo actions:', e)
+              if (aiConfig.todoAssistant && res.inners.length > 0) {
+                const parsed = safeJsonParse(res.inners[res.inners.length - 1])
+                if (Array.isArray(parsed)) {
+                  const proposedActions: ProposedTodoChange[] = parsed.map((action: unknown) => ({
+                    ...(action as ProposedTodoChange),
+                    id: (action as ProposedTodoChange).id || generateId(),
+                  }))
+                  currentTodoActions.value = proposedActions
+                  todoStore.addProposedChanges(proposedActions)
                 }
-
-                currentAIResponse.value = (
-                  content.substring(0, content.indexOf(startTag)) +
-                  content.substring(endIndex + endTag.length)
-                ).trim()
               }
             }
 
             {
-              const content = currentAIResponse.value
-              const startTag = '[TEACHING_QUIZ_START]'
-              const endTag = '[TEACHING_QUIZ_END]'
+              const res = stripTaggedBlocks(content, '[TEACHING_QUIZ_START]', '[TEACHING_QUIZ_END]')
+              content = res.text
 
-              if (content.includes(startTag) && content.includes(endTag)) {
-                const startIndex = content.indexOf(startTag) + startTag.length
-                const endIndex = content.indexOf(endTag)
-                const jsonStr = content.substring(startIndex, endIndex).trim()
-
-                try {
-                  const parsed = JSON.parse(jsonStr) as unknown
-                  if (Array.isArray(parsed)) {
-                    teachingQuizzes = parsed as TeachingQuiz[]
-                  } else if (parsed && typeof parsed === 'object') {
-                    const obj = parsed as { quizzes?: unknown }
-                    if (Array.isArray(obj.quizzes)) {
-                      teachingQuizzes = obj.quizzes as TeachingQuiz[]
-                    }
+              if (res.inners.length > 0) {
+                const parsed = safeJsonParse(res.inners[res.inners.length - 1])
+                if (Array.isArray(parsed)) {
+                  teachingQuizzes = parsed as TeachingQuiz[]
+                } else if (parsed && typeof parsed === 'object') {
+                  const obj = parsed as { quizzes?: unknown }
+                  if (Array.isArray(obj.quizzes)) {
+                    teachingQuizzes = obj.quizzes as TeachingQuiz[]
                   }
-                } catch (e) {
-                  console.error('Failed to parse teaching quizzes:', e)
                 }
-
-                currentAIResponse.value = (
-                  content.substring(0, content.indexOf(startTag)) +
-                  content.substring(endIndex + endTag.length)
-                ).trim()
               }
             }
+
+            currentAIResponse.value = content
 
             const aiMessage: ChatMessage = {
               id: assistantMessageId,

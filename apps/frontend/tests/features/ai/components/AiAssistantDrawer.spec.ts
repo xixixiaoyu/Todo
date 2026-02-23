@@ -49,7 +49,10 @@ vi.mock('@/components/ResizableDrawer.vue', () => ({
   },
 }))
 vi.mock('@/features/ai/components/ChatMessageList.vue', () => ({
-  default: { template: '<div>ChatMessageList</div>' },
+  default: {
+    template: `<div>ChatMessageList<button data-test="teaching-submit" @click="$emit('teaching-submit', { quizId: 'q1', kind: 'single_choice', answer: 'A' })">teach</button></div>`,
+    emits: ['teaching-submit'],
+  },
 }))
 vi.mock('@/features/ai/components/AISettingsDialog.vue', () => ({
   default: {
@@ -71,6 +74,9 @@ const mockCurrentSessionId = ref<string | null>(null)
 const mockLastActiveSession = ref<ChatSession | null>(null)
 const mockMessages = ref<ChatMessage[]>([])
 const mockIsGenerating = ref(false)
+const mockSendMessage = vi.fn()
+const mockUpdateTeachingQuizAnswer = vi.fn()
+const mockGetTeachingQuizSnapshot = vi.fn()
 
 vi.mock('@/features/ai/composables/useChatHistory', () => ({
   useChatHistory: () => ({
@@ -89,11 +95,15 @@ vi.mock('@/features/ai/composables/useChat', () => ({
     messages: mockMessages,
     isGenerating: mockIsGenerating,
     error: ref(null),
-    sendMessage: vi.fn(),
+    sendMessage: mockSendMessage,
     stopGenerating: vi.fn(),
     clearHistory: vi.fn(),
     regenerateLastResponse: vi.fn(),
+    regenerateMessage: vi.fn(),
+    deleteMessage: vi.fn(),
     editAndResendMessage: vi.fn(),
+    updateTeachingQuizAnswer: mockUpdateTeachingQuizAnswer,
+    getTeachingQuizSnapshot: mockGetTeachingQuizSnapshot,
   }),
 }))
 
@@ -247,6 +257,53 @@ describe('AiAssistantDrawer Navigation and Button States', () => {
         todoAssistant: false,
       }),
     )
+  })
+
+  it('should include quiz snapshot in teaching answer message', async () => {
+    mockMessages.value = [
+      {
+        id: 'a1',
+        role: 'assistant',
+        content: 'x',
+        teachingQuizzes: [
+          {
+            id: 'q1',
+            kind: 'single_choice',
+            stem: 'Q1?',
+            options: [
+              { id: 'A', text: 'Option A' },
+              { id: 'B', text: 'Option B' },
+            ],
+            answerHint: 'Pick one',
+          },
+        ],
+      },
+    ]
+
+    mockGetTeachingQuizSnapshot.mockReturnValue({
+      id: 'q1',
+      kind: 'single_choice',
+      stem: 'Q1?',
+      options: [
+        { id: 'A', text: 'Option A' },
+        { id: 'B', text: 'Option B' },
+      ],
+      answerHint: 'Pick one',
+    })
+
+    const wrapper = mount(AiAssistantDrawer, {
+      props: { modelValue: true },
+    })
+
+    await wrapper.find('[data-test="teaching-submit"]').trigger('click')
+
+    expect(mockUpdateTeachingQuizAnswer).toHaveBeenCalledWith('q1', 'A')
+    expect(mockSendMessage).toHaveBeenCalledTimes(1)
+    const arg = mockSendMessage.mock.calls[0][0] as string
+    expect(arg.startsWith('[TEACHING_ANSWER]\n')).toBe(true)
+    const jsonStr = arg.split('\n')[1]
+    const parsed = JSON.parse(jsonStr) as { quiz?: { stem: string } }
+    expect(parsed.quiz?.stem).toBe('Q1?')
   })
 
   describe('Hover Interactions', () => {
