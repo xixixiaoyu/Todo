@@ -1,15 +1,15 @@
 import { nextTick, onMounted, onUnmounted, ref, watch, type Ref } from 'vue'
 import gsap from 'gsap'
 
-type ScrollBehaviorOption = 'auto' | 'smooth' | 'instant'
-
-/** 滚动触发场景 */
-type ScrollTriggerContext =
-  | 'streaming' // 流式内容更新
-  | 'new-message' // 新消息到达
-  | 'content-change' // 内容变化（如图表渲染完成）
-  | 'manual' // 手动触发
-  | 'resize' // 容器尺寸变化
+import {
+  computeSmartScrollDecision,
+  createRafBatcher,
+  createRafThrottle,
+  getScrollSnapshotEl,
+  isAtBottomEl,
+  type ScrollBehaviorOption,
+  type ScrollTriggerContext,
+} from './useSmartScroll.internals'
 
 interface UseSmartScrollOptions {
   /** 滚动容器引用 */
@@ -59,8 +59,6 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
   let lastScrollHeight = 0
   let isProgrammaticScroll = false
   let programmaticScrollTimer: ReturnType<typeof setTimeout> | null = null
-  let scrollCheckRafId: number | null = null
-  let pendingScrollRequest: { context: ScrollTriggerContext; instant: boolean } | null = null
   let resizeObserver: ResizeObserver | null = null
   let mutationObserver: MutationObserver | null = null
 
@@ -70,28 +68,14 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
    * 检测是否在底部（支持自定义阈值）
    */
   const isAtBottom = (threshold = atBottomThreshold): boolean => {
-    const el = scrollContainer.value
-    if (!el) return true
-    const { scrollTop, scrollHeight, clientHeight } = el
-    // 处理内容不足以滚动的情况
-    if (scrollHeight <= clientHeight + 1) return true
-    // 增加 2px 的亚像素容错，处理浏览器缩放或渲染引擎差异
-    const offsetFromBottom = Math.ceil(scrollHeight - scrollTop - clientHeight)
-    return offsetFromBottom <= threshold + 2
+    return isAtBottomEl(scrollContainer.value, threshold)
   }
 
   /**
    * 获取当前滚动状态快照
    */
   const getScrollSnapshot = () => {
-    const el = scrollContainer.value
-    if (!el) return null
-    return {
-      scrollTop: el.scrollTop,
-      scrollHeight: el.scrollHeight,
-      clientHeight: el.clientHeight,
-      offsetFromBottom: el.scrollHeight - el.scrollTop - el.clientHeight,
-    }
+    return getScrollSnapshotEl(scrollContainer.value)
   }
 
   // === 滚动执行方法 ===
@@ -177,92 +161,37 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
 
   // === 智能滚动决策 ===
 
-  /**
-   * 根据上下文智能决定滚动行为
-   */
-  const smartScrollDecision = (
-    context: ScrollTriggerContext,
-  ): { shouldScroll: boolean; instant: boolean } => {
-    const el = scrollContainer.value
-    if (!el) return { shouldScroll: false, instant: false }
-
-    const atBottom = isAtBottom()
-    const sticking = isSticking.value
-    const autoEnabled = isAutoScrollEnabled.value
-
-    // 根据不同场景决定是否滚动
-    switch (context) {
-      case 'streaming':
-        // 流式更新：仅当用户在底部附近或启用了自动滚动时才滚动
-        return {
-          shouldScroll: (atBottom || sticking) && autoEnabled,
-          instant: streamingInstant,
-        }
-
-      case 'new-message':
-        // 新消息：如果用户在底部或启用了自动滚动，则滚动
-        return {
-          shouldScroll: atBottom || (sticking && autoEnabled),
-          instant: false,
-        }
-
-      case 'content-change':
-        // 内容变化（如图表渲染）：仅当在底部时保持位置
-        return {
-          shouldScroll: atBottom && autoEnabled,
-          instant: true,
-        }
-
-      case 'resize':
-        // 容器尺寸变化：如果之前在底部，则保持在底部
-        return {
-          shouldScroll: sticking,
-          instant: true,
-        }
-
-      case 'manual':
-        // 手动触发：强制滚动
-        return {
-          shouldScroll: true,
-          instant: false,
-        }
-
-      default:
-        return { shouldScroll: false, instant: false }
-    }
-  }
+  const scrollBatcher = createRafBatcher(
+    (req: { context: ScrollTriggerContext; instant: boolean }) => {
+      void req.context
+      if (req.instant) {
+        scrollToBottomInstant()
+      } else {
+        scrollToBottomSmooth()
+      }
+    },
+    (prev, next) => ({
+      context: next.context,
+      instant: prev.instant || next.instant,
+    }),
+  )
 
   /**
    * 执行智能滚动检查（节流版本）
    */
   const checkAndScroll = (context: ScrollTriggerContext = 'content-change') => {
-    // 合并连续的滚动请求
-    const decision = smartScrollDecision(context)
-    if (!decision.shouldScroll) return
+    const el = scrollContainer.value
+    if (!el) return
 
-    // 如果已有待处理的请求，合并它们（保留更紧急的瞬时请求）
-    if (pendingScrollRequest) {
-      pendingScrollRequest.instant = pendingScrollRequest.instant || decision.instant
-    } else {
-      pendingScrollRequest = { context, instant: decision.instant }
-    }
-
-    // 使用 rAF 批量处理
-    if (scrollCheckRafId !== null) return
-
-    scrollCheckRafId = requestAnimationFrame(() => {
-      scrollCheckRafId = null
-      const request = pendingScrollRequest
-      pendingScrollRequest = null
-
-      if (!request) return
-
-      if (request.instant) {
-        scrollToBottomInstant()
-      } else {
-        scrollToBottomSmooth()
-      }
+    const decision = computeSmartScrollDecision({
+      context,
+      atBottom: isAtBottom(),
+      sticking: isSticking.value,
+      autoEnabled: isAutoScrollEnabled.value,
+      streamingInstant,
     })
+    if (!decision.shouldScroll) return
+    scrollBatcher.schedule({ context, instant: decision.instant })
   }
 
   /**
@@ -324,17 +253,10 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
     }
   }
 
-  // 节流的滚动处理器
-  let scrollRafScheduled = false
-  const throttledScrollHandler = () => {
-    if (scrollRafScheduled) return
-    scrollRafScheduled = true
-    requestAnimationFrame(() => {
-      scrollRafScheduled = false
-      handleUserScroll()
-      updateScrollMetrics()
-    })
-  }
+  const { run: throttledScrollHandler } = createRafThrottle(() => {
+    handleUserScroll()
+    updateScrollMetrics()
+  })
 
   /**
    * 处理容器尺寸变化
@@ -439,10 +361,7 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
       mutationObserver = null
     }
 
-    if (scrollCheckRafId !== null) {
-      cancelAnimationFrame(scrollCheckRafId)
-      scrollCheckRafId = null
-    }
+    scrollBatcher.cancel()
 
     if (programmaticScrollTimer) {
       clearTimeout(programmaticScrollTimer)

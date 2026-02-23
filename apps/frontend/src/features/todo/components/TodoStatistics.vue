@@ -6,6 +6,7 @@ import VChart from 'vue-echarts'
 import { debounce } from 'lodash-es'
 import { useTodoStore } from '../stores/todo'
 import { usePomodoroStore } from '../stores/pomodoro'
+import { useTodoStatisticsOptions } from '../composables/useTodoStatisticsOptions'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useTheme } from '@/composables/useTheme'
 import {
@@ -26,15 +27,6 @@ import {
   GridComponent,
 } from 'echarts/components'
 import { LegacyGridContainLabel } from 'echarts/features'
-import {
-  getCssVar,
-  parseRgb,
-  parseHslTriplet,
-  hslToRgb,
-  rgbString,
-  rgbaString,
-  mixRgb,
-} from '@/lib/colors'
 
 use([
   CanvasRenderer,
@@ -126,298 +118,23 @@ onActivated(() => {
 
 // 概览数据
 const activeTodos = computed(() => todoStore.todos.filter((t) => !t.deletedAt))
+const pomodoroHistory = computed(() => pomodoroStore.history)
 
-const totalTasks = computed(() => activeTodos.value.length)
-const completedTasks = computed(() => activeTodos.value.filter((t) => t.completed).length)
-const pendingTasks = computed(() => totalTasks.value - completedTasks.value)
-const completionRate = computed(() =>
-  totalTasks.value > 0 ? Math.round((completedTasks.value / totalTasks.value) * 100) : 0,
-)
-
-// 每周活跃度（新增 vs 完成）
-const weeklyActivityOption = computed(() => {
-  const _themeColor = themeColor.value
-  void _themeColor
-
-  const primaryRgb =
-    parseRgb(getCssVar('--primary-rgb')) ??
-    (isDark.value ? { r: 201, g: 184, b: 150 } : { r: 129, g: 95, b: 49 })
-  const successHsl = parseHslTriplet(getCssVar('--success'))
-  const successRgb = successHsl
-    ? hslToRgb(successHsl.h, successHsl.s, successHsl.l)
-    : { r: 5, g: 150, b: 105 }
-
-  const createdColor = rgbString(primaryRgb)
-  const completedColor = rgbString(successRgb)
-
-  const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date()
-    d.setDate(d.getDate() - (6 - i))
-    return d.toLocaleDateString(locale.value, { weekday: 'short' })
-  })
-
-  // 计算过去 7 天每天新增和完成的任务数
-  const createdData = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date()
-    d.setDate(d.getDate() - (6 - i))
-    d.setHours(0, 0, 0, 0)
-    const nextD = new Date(d)
-    nextD.setDate(nextD.getDate() + 1)
-
-    return activeTodos.value.filter((t) => {
-      const createdAt = new Date(t.createdAt)
-      return createdAt >= d && createdAt < nextD
-    }).length
-  })
-
-  const completedData = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date()
-    d.setDate(d.getDate() - (6 - i))
-    d.setHours(0, 0, 0, 0)
-    const nextD = new Date(d)
-    nextD.setDate(nextD.getDate() + 1)
-
-    return activeTodos.value.filter((t) => {
-      if (!t.completed || !t.completedAt) return false
-      const completedAt = new Date(t.completedAt)
-      return completedAt >= d && completedAt < nextD
-    }).length
-  })
-
-  return {
-    backgroundColor: 'transparent',
-    legend: {
-      data: [t('statistics.createdTasks'), t('statistics.completedTasks')],
-      top: 0,
-      right: '10%',
-      textStyle: {
-        color: isDark.value ? '#94a3b8' : '#64748b',
-        fontSize: 10,
-      },
-      icon: 'circle',
-    },
-    grid: {
-      top: '15%',
-      left: '3%',
-      right: '3%',
-      bottom: '10%',
-      containLabel: true,
-    },
-    xAxis: {
-      type: 'category',
-      data: weekDays,
-      axisLine: { show: false },
-      axisTick: { show: false },
-      axisLabel: {
-        color: isDark.value ? '#94a3b8' : '#64748b',
-        fontSize: 10,
-      },
-    },
-    yAxis: {
-      type: 'value',
-      splitLine: {
-        lineStyle: {
-          color: isDark.value ? '#334155' : '#f1f5f9',
-          type: 'dashed',
-        },
-      },
-      axisLabel: { show: false },
-    },
-    tooltip: {
-      trigger: 'axis',
-      backgroundColor: isDark.value ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
-      borderColor: isDark.value ? '#334155' : '#e2e8f0',
-      textStyle: { color: isDark.value ? '#f8fafc' : '#1e293b' },
-      extraCssText: 'backdrop-filter: blur(4px); border-radius: 8px;',
-    },
-    series: [
-      {
-        name: t('statistics.createdTasks'),
-        data: createdData,
-        type: 'bar',
-        barWidth: '25%',
-        itemStyle: {
-          color: createdColor,
-          borderRadius: [4, 4, 0, 0],
-        },
-      },
-      {
-        name: t('statistics.completedTasks'),
-        data: completedData,
-        type: 'bar',
-        barWidth: '25%',
-        itemStyle: {
-          color: completedColor,
-          borderRadius: [4, 4, 0, 0],
-        },
-      },
-    ],
-  }
-})
-
-// 完成率饼图配置
-const completionChartOption = computed(() => {
-  const _themeColor = themeColor.value
-  void _themeColor
-
-  const primaryRgb =
-    parseRgb(getCssVar('--primary-rgb')) ??
-    (isDark.value ? { r: 201, g: 184, b: 150 } : { r: 129, g: 95, b: 49 })
-  const successHsl = parseHslTriplet(getCssVar('--success'))
-  const successRgb = successHsl
-    ? hslToRgb(successHsl.h, successHsl.s, successHsl.l)
-    : { r: 5, g: 150, b: 105 }
-
-  const pendingRgb = mixRgb(primaryRgb, { r: 255, g: 255, b: 255 }, isDark.value ? 0.35 : 0.65)
-
-  return {
-    backgroundColor: 'transparent',
-    tooltip: {
-      trigger: 'item',
-      formatter: '{b}: {c} ({d}%)',
-    },
-    series: [
-      {
-        name: t('statistics.completionRate'),
-        type: 'pie',
-        radius: ['60%', '85%'],
-        avoidLabelOverlap: false,
-        itemStyle: {
-          borderRadius: 10,
-          borderColor: isDark.value ? '#1e293b' : '#fff',
-          borderWidth: 2,
-        },
-        label: {
-          show: false,
-          position: 'center',
-        },
-        emphasis: {
-          label: {
-            show: true,
-            fontSize: 20,
-            fontWeight: 'bold',
-            color: isDark.value ? '#f8fafc' : '#1e293b',
-          },
-        },
-        labelLine: {
-          show: false,
-        },
-        data: [
-          {
-            value: completedTasks.value,
-            name: t('todo.completed'),
-            itemStyle: { color: rgbString(successRgb) },
-          },
-          {
-            value: pendingTasks.value,
-            name: t('todo.pending'),
-            itemStyle: { color: rgbString(pendingRgb) },
-          },
-        ],
-      },
-    ],
-  }
-})
-
-// 近 7 天专注时长趋势
-const focusDurationOption = computed(() => {
-  const _themeColor = themeColor.value
-  void _themeColor
-
-  const primaryRgb =
-    parseRgb(getCssVar('--primary-rgb')) ??
-    (isDark.value ? { r: 201, g: 184, b: 150 } : { r: 129, g: 95, b: 49 })
-  const focusColor = rgbString(primaryRgb)
-  const focusAreaStart = rgbaString(primaryRgb, isDark.value ? 0.28 : 0.22)
-  const focusAreaEnd = rgbaString(primaryRgb, 0)
-
-  const last7Days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date()
-    d.setDate(d.getDate() - (6 - i))
-    return d.toLocaleDateString(locale.value, { month: 'numeric', day: 'numeric' })
-  })
-
-  const focusData = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date()
-    d.setDate(d.getDate() - (6 - i))
-    const dateStr = d.toLocaleDateString('sv-SE')
-    const entry = pomodoroStore.history.find((h) => h.date === dateStr)
-    return entry ? entry.minutes : 0
-  })
-
-  return {
-    backgroundColor: 'transparent',
-    grid: {
-      top: '15%',
-      left: '3%',
-      right: '3%',
-      bottom: '10%',
-      containLabel: true,
-    },
-    xAxis: {
-      type: 'category',
-      boundaryGap: false,
-      data: last7Days,
-      axisLine: { show: false },
-      axisTick: { show: false },
-      axisLabel: {
-        color: isDark.value ? '#94a3b8' : '#64748b',
-        fontSize: 10,
-      },
-    },
-    yAxis: {
-      type: 'value',
-      splitLine: {
-        lineStyle: {
-          color: isDark.value ? '#334155' : '#f1f5f9',
-          type: 'dashed',
-        },
-      },
-      axisLabel: {
-        color: isDark.value ? '#94a3b8' : '#64748b',
-        fontSize: 10,
-        formatter: (value: number) => (value > 0 ? `${value}m` : value),
-      },
-    },
-    tooltip: {
-      trigger: 'axis',
-      backgroundColor: isDark.value ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
-      borderColor: isDark.value ? '#334155' : '#e2e8f0',
-      textStyle: { color: isDark.value ? '#f8fafc' : '#1e293b' },
-      formatter: (
-        params: { name: string; marker: string; seriesName: string; value: number }[],
-      ) => {
-        const item = params[0]
-        return `${item.name}<br/>${item.marker} ${item.seriesName}: <b>${item.value} ${t('common.minutes')}</b>`
-      },
-      extraCssText: 'backdrop-filter: blur(4px); border-radius: 8px;',
-    },
-    series: [
-      {
-        name: t('statistics.focusTime'),
-        data: focusData,
-        type: 'line',
-        smooth: true,
-        symbol: 'circle',
-        symbolSize: 8,
-        itemStyle: { color: focusColor },
-        lineStyle: { width: 3, color: focusColor },
-        areaStyle: {
-          color: {
-            type: 'linear',
-            x: 0,
-            y: 0,
-            x2: 0,
-            y2: 1,
-            colorStops: [
-              { offset: 0, color: focusAreaStart },
-              { offset: 1, color: focusAreaEnd },
-            ],
-          },
-        },
-      },
-    ],
-  }
+const {
+  totalTasks,
+  completedTasks,
+  pendingTasks,
+  completionRate,
+  weeklyActivityOption,
+  completionChartOption,
+  focusDurationOption,
+} = useTodoStatisticsOptions({
+  t,
+  locale,
+  isDark,
+  themeColor,
+  activeTodos,
+  pomodoroHistory,
 })
 </script>
 
