@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, nextTick, computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useWindowSize } from '@vueuse/core'
 import ResizableDrawer from '@/components/ResizableDrawer.vue'
 import ChatMessageList from '@/features/ai/components/ChatMessageList.vue'
@@ -9,17 +9,15 @@ import AiAssistantToolbar from '@/features/ai/components/AiAssistantToolbar.vue'
 import AiAssistantInput from '@/features/ai/components/AiAssistantInput.vue'
 import AiAssistantHistoryOverlay from '@/features/ai/components/AiAssistantHistoryOverlay.vue'
 import { useChat } from '@/features/ai/composables/useChat'
-import {
-  useAIConfig,
-  aiThinkingMode,
-  saveAIThinkingMode,
-} from '@/features/ai/composables/useAIConfig'
+import { useAIConfig } from '@/features/ai/composables/useAIConfig'
 import { useAiAssistantAttachments } from '@/features/ai/composables/useAiAssistantAttachments'
 import { useChatHistory } from '@/features/ai/composables/useChatHistory'
+import { useAiAssistantModes } from '@/features/ai/composables/useAiAssistantModes'
+import { useAiAssistantPanels } from '@/features/ai/composables/useAiAssistantPanels'
+import { useAiAssistantComposer } from '@/features/ai/composables/useAiAssistantComposer'
 import { useTodoStore } from '@/features/todo/stores/todo'
 import { useI18n } from 'vue-i18n'
 import { useResizable } from '@/composables/useResizable'
-import { useEscClose } from '@/composables/useEscClose'
 
 const { t } = useI18n()
 const modelValue = defineModel<boolean>({ required: true })
@@ -31,79 +29,30 @@ const assistantInputRef = ref<InstanceType<typeof AiAssistantInput>>()
 
 const triggerFileUpload = () => assistantInputRef.value?.triggerFileUpload()
 
-// 切换思考模式
-const toggleThinkingMode = () => {
-  const mode = aiThinkingMode.value === 'enabled' ? 'disabled' : 'enabled'
-  saveAIThinkingMode(mode)
-}
-
-// 思考模式是否开启
-const isThinkingEnabled = computed(() => aiThinkingMode.value === 'enabled')
-
-const toggleTeachingMode = () => {
-  const isTeaching = config.value.assistantMode === 'teaching'
-  updateConfig({
-    assistantMode: isTeaching ? 'default' : 'teaching',
-    // 互斥：开启教学模式时，关闭其他模式
-    ...(!isTeaching
-      ? { todoAssistant: false, discussionMode: false, enableImageGeneration: false }
-      : {}),
-  })
-}
-
-const isTeachingEnabled = computed(() => config.value.assistantMode === 'teaching')
-
-// 切换 Todo 助手
-const toggleTodoAssistant = () => {
-  const newValue = !config.value.todoAssistant
-  updateConfig({
-    todoAssistant: newValue,
-    // 互斥：开启 Todo 助手时，关闭其他模式
-    ...(newValue
-      ? { discussionMode: false, enableImageGeneration: false, assistantMode: 'default' }
-      : {}),
-  })
-}
-
-// Todo 助手是否开启
-const isTodoAssistantEnabled = computed(() => config.value.todoAssistant)
-
-// 切换多模型协作
-const toggleDiscussionMode = () => {
-  const newValue = !config.value.discussionMode
-  updateConfig({
-    discussionMode: newValue,
-    // 互斥：开启多模型协作时，关闭其他模式
-    ...(newValue
-      ? { todoAssistant: false, enableImageGeneration: false, assistantMode: 'default' }
-      : {}),
-  })
-}
-
-// 多模型协作是否开启
-const isDiscussionEnabled = computed(() => config.value.discussionMode)
-
-// 切换生图功能
-const toggleImageGeneration = () => {
-  const newValue = !config.value.enableImageGeneration
-  updateConfig({
-    enableImageGeneration: newValue,
-    // 互斥：开启生图模式时，关闭其他模式
-    ...(newValue ? { todoAssistant: false, discussionMode: false, assistantMode: 'default' } : {}),
-  })
-}
-
-// 生图功能是否开启
-const isImageGenerationEnabled = computed(() => config.value.enableImageGeneration)
+const {
+  isThinkingEnabled,
+  toggleThinkingMode,
+  isTeachingEnabled,
+  toggleTeachingMode,
+  isTodoAssistantEnabled,
+  toggleTodoAssistant,
+  isDiscussionEnabled,
+  toggleDiscussionMode,
+  isImageGenerationEnabled,
+  toggleImageGeneration,
+  selectPrimaryModel,
+  toggleSecondaryModel,
+} = useAiAssistantModes({
+  config,
+  updateConfig,
+})
 
 // 会话历史管理
 const { lastActiveSession, switchSession } = useChatHistory()
 
-// 切换会话
 const navigateToPrevious = () => {
-  if (lastActiveSession.value) {
-    switchSession(lastActiveSession.value.id)
-  }
+  if (!lastActiveSession.value) return
+  switchSession(lastActiveSession.value.id)
 }
 
 // 使用聊天 composable
@@ -126,16 +75,17 @@ const isMaximized = computed({
   get: () => todoStore.isMaximized,
   set: (val) => todoStore.setMaximized(val),
 })
-const chatInput = ref('')
 
-// 设置弹窗状态
-const showSettings = ref(false)
-const lastActiveTab = ref<'settings' | 'presets' | 'memory' | 'mcp' | 'contextCompression'>(
-  'settings',
-)
+const {
+  showSettings,
+  lastActiveTab,
+  openSettings,
+  showHistory,
+  openHistory,
+  showPresetDropdown,
+  showDiscussionPopover,
+} = useAiAssistantPanels({ isGenerating })
 
-// 历史记录面板状态
-const showHistory = ref(false)
 const { width: windowWidth } = useWindowSize()
 const isMobile = computed(() => windowWidth.value < 640)
 
@@ -152,35 +102,6 @@ const {
     return containerWidth * 0.8
   },
 })
-
-// 快捷操作状态
-const showPresetDropdown = ref(false)
-const showDiscussionPopover = ref(false)
-
-// 选择主模型
-const selectPrimaryModel = (presetId: string) => {
-  updateConfig({
-    discussionPrimaryModelId: presetId,
-  })
-}
-
-// 切换副模型
-const toggleSecondaryModel = (presetId: string) => {
-  const currentIds = [...config.value.discussionModelIds]
-  const index = currentIds.indexOf(presetId)
-  if (index > -1) {
-    currentIds.splice(index, 1)
-  } else {
-    currentIds.push(presetId)
-  }
-  updateConfig({
-    discussionModelIds: currentIds,
-  })
-}
-
-// 使用公共 Composable 处理 ESC 关闭
-useEscClose(showHistory, () => (showHistory.value = false))
-useEscClose(showPresetDropdown, () => (showPresetDropdown.value = false))
 
 // 是否有聊天历史
 const hasHistory = computed(() => messages.value.length > 0)
@@ -202,43 +123,6 @@ const {
   triggerFileUpload,
 })
 
-const handleSend = async () => {
-  const content = chatInput.value.trim()
-  const images = [...selectedImages.value]
-  const documents = parsedFiles.value
-    .filter((f) => f.status === 'completed')
-    .map((f) => ({
-      name: f.name,
-      content: f.content,
-    }))
-
-  if ((!content && images.length === 0 && documents.length === 0) || isInputDisabled.value) return
-
-  chatInput.value = ''
-  clearAllAttachments()
-
-  // 发送后自动调整高度
-  void nextTick(() => assistantInputRef.value?.adjustHeight())
-
-  await sendMessage(content, images, documents)
-}
-
-const handleNewChat = () => {
-  clearHistory()
-  chatInput.value = ''
-  if (config.value.todoAssistant) {
-    updateConfig({ todoAssistant: false })
-  }
-}
-
-// 打开历史记录面板
-const openHistory = () => {
-  if (!isGenerating.value) {
-    showHistory.value = true
-  }
-}
-
-// 切换会话
 const handleSelectSession = (sessionId: string) => {
   switchSession(sessionId)
   showHistory.value = false
@@ -250,65 +134,30 @@ const handleSelectPreset = (presetId: string) => {
   showPresetDropdown.value = false
 }
 
-// 处理建议点击
-const handleSelectSuggestion = async (text: string, options?: { requireTodo?: boolean }) => {
-  if (options?.requireTodo && !config.value.todoAssistant) {
-    updateConfig({
-      todoAssistant: true,
-    })
-  }
-  chatInput.value = text
-  await nextTick()
-  assistantInputRef.value?.adjustHeight()
-  await handleSend()
-}
+const {
+  chatInput: composedInput,
+  handleSend,
+  handleNewChat,
+  handleSelectSuggestion,
+  handleAskSelection,
+  handleTeachingSubmit,
+  handleTeachingSubmitBatch,
+} = useAiAssistantComposer({
+  assistantInputRef: assistantInputRef as unknown as typeof assistantInputRef,
+  config,
+  updateConfig,
+  isGenerating,
+  isInputDisabled,
+  selectedImages,
+  parsedFiles,
+  clearAllAttachments,
+  clearHistory,
+  sendMessage,
+  updateTeachingQuizAnswer,
+  getTeachingQuizSnapshot,
+})
 
-const handleAskSelection = async (prompt: string) => {
-  const text = prompt.trim()
-  if (!text) return
-
-  chatInput.value = text
-  await nextTick()
-  assistantInputRef.value?.adjustHeight()
-  if (isGenerating.value) return
-  await handleSend()
-}
-
-const handleTeachingSubmit = async (payload: {
-  quizId: string
-  kind: string
-  answer: string | string[]
-}) => {
-  if (isGenerating.value) return
-  // 更新本地状态
-  updateTeachingQuizAnswer(payload.quizId, payload.answer)
-  const quiz = getTeachingQuizSnapshot(payload.quizId) || undefined
-  // 发送消息
-  await sendMessage(`[TEACHING_ANSWER]\n${JSON.stringify({ ...payload, quiz })}`)
-}
-
-const handleTeachingSubmitBatch = async (
-  payload: Array<{ quizId: string; kind: string; answer: string | string[] }>,
-) => {
-  if (isGenerating.value) return
-  // 批量更新本地状态
-  payload.forEach((p) => updateTeachingQuizAnswer(p.quizId, p.answer))
-  const enriched = payload.map((p) => ({
-    ...p,
-    quiz: getTeachingQuizSnapshot(p.quizId) || undefined,
-  }))
-  // 发送消息
-  await sendMessage(`[TEACHING_ANSWERS]\n${JSON.stringify(enriched)}`)
-}
-
-// 打开设置
-const openSettings = (tab?: 'settings' | 'presets' | 'memory' | 'mcp' | 'contextCompression') => {
-  if (tab) {
-    lastActiveTab.value = tab
-  }
-  showSettings.value = true
-  showPresetDropdown.value = false
-}
+const chatInput = composedInput
 
 // 当前显示的预设名称
 const currentPresetName = computed(() => activePreset.value?.name ?? t('ai.custom'))
