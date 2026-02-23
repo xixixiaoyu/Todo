@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { GraduationCap, AlertCircle } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
@@ -28,10 +28,10 @@ const emit = defineEmits<{
 const { t } = useI18n()
 
 const isBatchMode = computed(() => props.quizzes.length > 1)
-const singleSelections = reactive<Record<string, string | null>>({})
-const multiSelections = reactive<Record<string, Record<string, boolean>>>({})
-const shortAnswers = reactive<Record<string, string>>({})
-const errors = reactive<Record<string, string>>({})
+const singleSelections = ref<Record<string, string | null>>({})
+const multiSelections = ref<Record<string, Record<string, boolean>>>({})
+const shortAnswers = ref<Record<string, string>>({})
+const errors = ref<Record<string, string>>({})
 const submittingIds = ref<Set<string>>(new Set())
 const submittingBatch = ref(false)
 
@@ -40,32 +40,32 @@ watch(
   () => props.quizzes,
   (newQuizzes) => {
     const activeIds = new Set(newQuizzes.map((q) => q.id))
-    for (const key of Object.keys(singleSelections)) {
-      if (!activeIds.has(key)) delete singleSelections[key]
+    for (const key of Object.keys(singleSelections.value)) {
+      if (!activeIds.has(key)) delete singleSelections.value[key]
     }
-    for (const key of Object.keys(multiSelections)) {
-      if (!activeIds.has(key)) delete multiSelections[key]
+    for (const key of Object.keys(multiSelections.value)) {
+      if (!activeIds.has(key)) delete multiSelections.value[key]
     }
-    for (const key of Object.keys(shortAnswers)) {
-      if (!activeIds.has(key)) delete shortAnswers[key]
+    for (const key of Object.keys(shortAnswers.value)) {
+      if (!activeIds.has(key)) delete shortAnswers.value[key]
     }
-    for (const key of Object.keys(errors)) {
-      if (!activeIds.has(key)) delete errors[key]
+    for (const key of Object.keys(errors.value)) {
+      if (!activeIds.has(key)) delete errors.value[key]
     }
 
     for (const quiz of newQuizzes) {
       if (quiz.userAnswer) {
         if (quiz.kind === 'single_choice') {
-          singleSelections[quiz.id] = quiz.userAnswer as string
+          singleSelections.value[quiz.id] = quiz.userAnswer as string
         } else if (quiz.kind === 'multi_choice') {
           const answers = Array.isArray(quiz.userAnswer) ? quiz.userAnswer : [quiz.userAnswer]
           const map: Record<string, boolean> = {}
           answers.forEach((ans) => {
             if (typeof ans === 'string') map[ans] = true
           })
-          multiSelections[quiz.id] = map
+          multiSelections.value[quiz.id] = map
         } else {
-          shortAnswers[quiz.id] = quiz.userAnswer as string
+          shortAnswers.value[quiz.id] = quiz.userAnswer as string
         }
       }
     }
@@ -78,33 +78,33 @@ function isSubmitting(quizId: string): boolean {
 }
 
 function selectSingle(quizId: string, optionId: string) {
-  singleSelections[quizId] = optionId
-  errors[quizId] = ''
+  singleSelections.value[quizId] = optionId
+  errors.value[quizId] = ''
 }
 
 function toggleMulti(quizId: string, optionId: string, checked: boolean) {
-  const map = (multiSelections[quizId] ||= {})
+  const map = (multiSelections.value[quizId] ||= {})
   map[optionId] = checked
-  errors[quizId] = ''
+  errors.value[quizId] = ''
 }
 
 function updateShortAnswer(quizId: string, value: string) {
-  shortAnswers[quizId] = value
-  errors[quizId] = ''
+  shortAnswers.value[quizId] = value
+  errors.value[quizId] = ''
 }
 
 function getAnswerForQuiz(quiz: TeachingQuiz): string | string[] | null {
   if (quiz.kind === 'single_choice') {
-    return singleSelections[quiz.id] ?? null
+    return singleSelections.value[quiz.id] ?? null
   }
 
   if (quiz.kind === 'multi_choice') {
-    const map = multiSelections[quiz.id] || {}
+    const map = multiSelections.value[quiz.id] || {}
     const selected = Object.keys(map).filter((k) => map[k])
     return selected.length > 0 ? selected : null
   }
 
-  const text = (shortAnswers[quiz.id] ?? '').trim()
+  const text = (shortAnswers.value[quiz.id] ?? '').trim()
   return text ? text : null
 }
 
@@ -114,7 +114,7 @@ function submitQuiz(quiz: TeachingQuiz) {
   const answer = getAnswerForQuiz(quiz)
 
   if (!answer || (Array.isArray(answer) && answer.length === 0)) {
-    errors[quiz.id] = t('ai.teachingAnswerRequired')
+    errors.value[quiz.id] = t('ai.teachingAnswerRequired')
     return
   }
 
@@ -136,7 +136,7 @@ function submitAll() {
   for (const quiz of props.quizzes) {
     const answer = getAnswerForQuiz(quiz)
     if (!answer || (Array.isArray(answer) && answer.length === 0)) {
-      errors[quiz.id] = t('ai.teachingAnswerRequired')
+      errors.value[quiz.id] = t('ai.teachingAnswerRequired')
       hasError = true
       continue
     }
