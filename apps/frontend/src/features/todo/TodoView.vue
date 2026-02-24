@@ -23,6 +23,58 @@ const cardRef = ref<HTMLElement | null>(null)
 const inputContainerRef = ref<HTMLElement | null>(null)
 const { gsap, ctx } = useGsap()
 
+// 预定义动画函数并注册到 GSAP Context，确保自动清理且高性能
+let animateTilt: (x: number, y: number) => void
+let animateReset: () => void
+
+ctx.add(() => {
+  animateTilt = (x, y) => {
+    if (!cardRef.value) return
+    gsap.to(cardRef.value, {
+      rotateX: x,
+      rotateY: y,
+      duration: 0.6,
+      ease: 'power2.out',
+      overwrite: 'auto',
+    })
+  }
+
+  animateReset = () => {
+    if (!cardRef.value) return
+    gsap.to(cardRef.value, {
+      rotateX: 0,
+      rotateY: 0,
+      duration: 1.2,
+      ease: 'elastic.out(1, 0.3)',
+      overwrite: 'auto',
+    })
+  }
+})
+
+// 鼠标位置追踪，用于背景与卡片微动
+const mousePos = ref({ x: 0, y: 0 })
+const handleMouseMove = (e: MouseEvent) => {
+  const { clientX, clientY } = e
+  const { innerWidth, innerHeight } = window
+  // 将坐标归一化到 -0.5 到 0.5 之间
+  mousePos.value = {
+    x: clientX / innerWidth - 0.5,
+    y: clientY / innerHeight - 0.5,
+  }
+
+  // 卡片倾斜效果 (Tilt Effect)
+  if (cardRef.value && !pomodoroStore.isMiniMode) {
+    const tiltX = mousePos.value.y * 6 // 增加倾斜幅度，增强 3D 感
+    const tiltY = -mousePos.value.x * 6
+    animateTilt?.(tiltX, tiltY)
+  }
+}
+
+const resetTilt = () => {
+  mousePos.value = { x: 0, y: 0 }
+  animateReset?.()
+}
+
 const isInputVisible = computed(() => todoStore.viewMode === 'list' && todoStore.filter !== 'trash')
 
 const currentViewKey = computed(() => {
@@ -176,21 +228,41 @@ function onFireworksComplete() {
   <div
     class="h-full bg-background p-0 md:p-8 flex items-center md:items-end justify-center overflow-hidden relative"
     :class="{ 'p-0 items-center': pomodoroStore.isMiniMode }"
+    @mousemove="handleMouseMove"
+    @mouseleave="resetTilt"
   >
-    <!-- 背景装饰：柔和的径向渐变增加深度感 -->
-    <div
-      class="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(251,191,36,0.03),transparent_70%)] pointer-events-none"
-    ></div>
+    <!-- 背景装饰：从单一径向渐变升级为动态 Mesh Gradient -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+      <div
+        class="absolute -inset-[10%] opacity-30 dark:opacity-20 transition-transform duration-1000 ease-out"
+        :style="{
+          background: `
+            radial-gradient(circle at 20% 30%, hsl(var(--primary) / 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 80% 70%, hsl(var(--primary) / 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 50% 50%, hsl(var(--background)) 0%, transparent 100%)
+          `,
+          transform: `translate(${mousePos.x * 20}px, ${mousePos.y * 20}px)`,
+        }"
+      ></div>
+    </div>
 
     <div
       v-if="!pomodoroStore.isMiniMode"
       ref="cardRef"
-      class="w-full max-w-4xl h-full md:h-[94vh] flex flex-col z-10"
+      class="w-full max-w-4xl h-full md:h-[94vh] flex flex-col z-10 will-change-transform"
+      style="perspective: 1200px; transform-style: preserve-3d"
     >
       <Card
-        class="flex-1 flex flex-col border-none shadow-none md:shadow-card dark:md:shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden rounded-none md:rounded-[24px] bg-card/30 md:bg-card/50 backdrop-blur-2xl"
+        class="flex-1 flex flex-col border border-white/5 dark:border-white/10 shadow-none md:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] dark:md:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)] overflow-hidden rounded-none md:rounded-[32px] bg-card/40 md:bg-card/60 backdrop-blur-[40px] relative group/card"
       >
-        <CardContent class="todo-container p-4 pt-4 md:p-8 md:pt-6 flex flex-col flex-1 min-h-0">
+        <!-- 玻璃边缘高光 (Glass Edge Highlight) -->
+        <div
+          class="absolute inset-0 rounded-[32px] pointer-events-none border border-white/10 dark:border-white/5 mask-edge"
+        ></div>
+
+        <CardContent
+          class="todo-container p-4 pt-4 md:p-8 md:pt-6 flex flex-col flex-1 min-h-0 relative z-10"
+        >
           <!-- Header -->
           <TodoHeader />
 
@@ -331,3 +403,13 @@ function onFireworksComplete() {
     <PomodoroTimer />
   </div>
 </template>
+
+<style scoped>
+.mask-edge {
+  mask-image:
+    linear-gradient(to bottom, black, transparent 15%, transparent 85%, black),
+    linear-gradient(to right, black, transparent 15%, transparent 85%, black);
+  mask-composite: intersect;
+  pointer-events: none;
+}
+</style>
