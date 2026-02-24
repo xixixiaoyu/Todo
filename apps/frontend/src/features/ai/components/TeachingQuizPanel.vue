@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { GraduationCap, AlertCircle } from 'lucide-vue-next'
+import { GraduationCap, AlertCircle, Check } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
 import type { TeachingQuiz, TeachingQuizKind } from '@/features/ai/services/aiService'
 
@@ -77,14 +76,30 @@ function isSubmitting(quizId: string): boolean {
   return submittingBatch.value || submittingIds.value.has(quizId)
 }
 
+function isOptionSelected(quiz: TeachingQuiz, optionId: string): boolean {
+  if (quiz.kind === 'single_choice') {
+    return singleSelections.value[quiz.id] === optionId
+  }
+  if (quiz.kind === 'multi_choice') {
+    return !!(multiSelections.value[quiz.id] && multiSelections.value[quiz.id][optionId])
+  }
+  return false
+}
+
 function selectSingle(quizId: string, optionId: string) {
   singleSelections.value[quizId] = optionId
+  // 强制触发响应式更新
+  singleSelections.value = { ...singleSelections.value }
   errors.value[quizId] = ''
 }
 
 function toggleMulti(quizId: string, optionId: string, checked: boolean) {
-  const map = (multiSelections.value[quizId] ||= {})
-  map[optionId] = checked
+  if (!multiSelections.value[quizId]) {
+    multiSelections.value[quizId] = {}
+  }
+  multiSelections.value[quizId][optionId] = checked
+  // 强制触发响应式更新，确保 Object.keys() 能探测到新属性
+  multiSelections.value = { ...multiSelections.value }
   errors.value[quizId] = ''
 }
 
@@ -183,7 +198,7 @@ function optionKey(optionId: string): string {
           {{ quiz.stem }}
         </div>
 
-        <div v-if="quiz.kind === 'single_choice'" class="space-y-2">
+        <div v-if="quiz.kind === 'single_choice' || quiz.kind === 'multi_choice'" class="space-y-2">
           <button
             v-for="opt in quiz.options || []"
             :key="opt.id"
@@ -191,47 +206,37 @@ function optionKey(optionId: string): string {
             class="flex w-full items-start gap-2 rounded-xl border px-3 py-2 text-left text-sm transition-all active:scale-[0.99]"
             :class="
               cn(
-                singleSelections[quiz.id] === opt.id
+                isOptionSelected(quiz, opt.id)
                   ? 'border-primary/40 bg-primary/10 text-foreground shadow-[0_0_0_1px_hsl(var(--primary)_/_0.12)]'
                   : 'border-border/60 bg-background/40 hover:bg-background/60',
               )
             "
             :disabled="disabled || isSubmitting(quiz.id)"
-            :aria-pressed="singleSelections[quiz.id] === opt.id"
-            @click="selectSingle(quiz.id, opt.id)"
+            :aria-pressed="isOptionSelected(quiz, opt.id)"
+            @click="
+              quiz.kind === 'single_choice'
+                ? selectSingle(quiz.id, opt.id)
+                : toggleMulti(quiz.id, opt.id, !multiSelections[quiz.id]?.[opt.id])
+            "
           >
             <span
-              class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[11px] font-bold"
+              class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[11px] font-bold transition-colors"
               :class="
-                singleSelections[quiz.id] === opt.id
+                isOptionSelected(quiz, opt.id)
                   ? 'border-primary/40 bg-primary/10 text-primary'
                   : 'border-border/70 text-muted-foreground/70'
               "
             >
-              {{ optionKey(opt.id) }}
+              <Check v-if="isOptionSelected(quiz, opt.id)" :size="11" stroke-width="3" />
+              <span v-else>{{ optionKey(opt.id) }}</span>
             </span>
-            <span class="flex-1 leading-relaxed">{{ opt.text }}</span>
+            <span class="flex-1 leading-relaxed">
+              <span v-if="quiz.kind === 'multi_choice'" class="mr-1 opacity-70"
+                >{{ optionKey(opt.id) }}.</span
+              >
+              {{ opt.text }}
+            </span>
           </button>
-        </div>
-
-        <div v-else-if="quiz.kind === 'multi_choice'" class="space-y-2">
-          <div
-            v-for="opt in quiz.options || []"
-            :key="opt.id"
-            class="flex items-start gap-2 rounded-xl border border-border/60 bg-background/40 px-3 py-2"
-          >
-            <Checkbox
-              :checked="!!(multiSelections[quiz.id] && multiSelections[quiz.id][opt.id])"
-              class="mt-0.5 border-border/60 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-              :disabled="disabled || isSubmitting(quiz.id)"
-              @update:checked="(val: unknown) => toggleMulti(quiz.id, opt.id, val === true)"
-            />
-            <div class="flex-1 space-y-0.5">
-              <div class="text-sm font-medium text-foreground/90">
-                {{ optionKey(opt.id) }}. {{ opt.text }}
-              </div>
-            </div>
-          </div>
         </div>
 
         <div v-else class="space-y-2">

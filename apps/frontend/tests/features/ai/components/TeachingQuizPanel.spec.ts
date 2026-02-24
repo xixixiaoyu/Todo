@@ -180,4 +180,57 @@ describe('TeachingQuizPanel', () => {
     expect(emitted).toBeTruthy()
     expect(emitted?.[0]).toEqual([{ quizId: 'q1', kind: 'single_choice', answer: 'A' }])
   })
+
+  it('should emit submit with multiple answers in multi_choice mode', async () => {
+    const wrapper = mount(TeachingQuizPanel, {
+      props: {
+        quizzes: [
+          {
+            id: 'q1',
+            kind: 'multi_choice',
+            stem: 'Q1?',
+            options: [
+              { id: 'A', text: 'Option A' },
+              { id: 'B', text: 'Option B' },
+              { id: 'C', text: 'Option C' },
+            ],
+          },
+        ],
+      },
+      global: {
+        plugins: [i18n],
+        stubs: {
+          GraduationCap: { template: '<span />' },
+          AlertCircle: { template: '<span />' },
+          Check: { template: '<span />' },
+          Button: {
+            props: ['disabled'],
+            emits: ['click'],
+            template:
+              '<button type="button" :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+          },
+        },
+      },
+    })
+
+    const optionA = wrapper.findAll('button').find((btn) => btn.text().includes('Option A'))
+    const optionC = wrapper.findAll('button').find((btn) => btn.text().includes('Option C'))
+
+    await optionA!.trigger('click')
+    await optionC!.trigger('click')
+
+    const submit = wrapper.findAll('button').find((btn) => btn.text() === '提交')
+    await submit!.trigger('click')
+
+    const emitted = wrapper.emitted('submit')
+    expect(emitted).toBeTruthy()
+    // multiSelections[q1] = { A: true, C: true }
+    // getAnswerForQuiz returns ['A', 'C']
+    const payload = emitted?.[0][0] as { quizId: string; kind: string; answer: string[] }
+    expect(payload.quizId).toBe('q1')
+    expect(payload.kind).toBe('multi_choice')
+    expect(payload.answer).toContain('A')
+    expect(payload.answer).toContain('C')
+    expect(payload.answer.length).toBe(2)
+  })
 })
