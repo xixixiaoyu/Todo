@@ -108,7 +108,7 @@ export function injectSystemPrompts(
   }
 
   if (assistantMode === 'teaching') {
-    const teachingPrompt = t('ai.teachingModeSystemPrompt')
+    const teachingPrompt = getRawLocaleMessage('ai.teachingModeSystemPrompt')
     if (teachingPrompt) {
       systemBlocks.push({ content: teachingPrompt })
     }
