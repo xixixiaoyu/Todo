@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service'
 import { SyncMergeDto } from './todos.dto'
 import type { SyncItem } from '@my-app/shared'
 import { EventsGateway } from '../events/events.gateway'
-import type { Prisma } from '../generated/client'
+import type { Prisma } from '@prisma/client'
 
 const todoSelect = {
   id: true,

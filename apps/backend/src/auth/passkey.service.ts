@@ -12,7 +12,7 @@ import type {
   AuthenticationResponseJSON,
 } from '@simplewebauthn/server'
 import { isoBase64URL } from '@simplewebauthn/server/helpers'
-import { Authenticator, Prisma } from '../generated/client'
+import { Authenticator, Prisma } from '@prisma/client'
 import { UsersService } from '../users/users.service'
 import { RedisService, CachePrefix } from '../redis/redis.service'
 import { PrismaService } from '../prisma/prisma.service'

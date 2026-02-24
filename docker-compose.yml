@@ -177,7 +177,7 @@ services:
     ports:
       - '80:80' # HTTP
       - '443:443' # HTTPS
-      - '127.0.0.1:81:81' # 管理后台
+      - '81:81' # 管理后台
     volumes:
       - lumina_npm_data:/data
       - lumina_npm_letsencrypt:/etc/letsencrypt

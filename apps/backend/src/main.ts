@@ -78,6 +78,7 @@ async function bootstrap() {
         styleSrc: ["'self'", "'unsafe-inline'"],
         scriptSrc: ["'self'"],
         imgSrc: ["'self'", 'data:', 'https:'],
+        upgradeInsecureRequests: null,
       },
     },
     crossOriginEmbedderPolicy: false,
