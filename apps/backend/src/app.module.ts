@@ -121,17 +121,17 @@ import { McpModule } from './mcp/mcp.module'
           {
             name: 'short',
             ttl: config.get('THROTTLE_SHORT_TTL', 1000), // 1秒
-            limit: config.get('THROTTLE_SHORT_LIMIT', 10), // 每秒最多10次请求 (从3次放宽)
+            limit: config.get('THROTTLE_SHORT_LIMIT', 20), // 每秒最多20次请求
           },
           {
             name: 'medium',
             ttl: config.get('THROTTLE_MEDIUM_TTL', 10000), // 10秒
-            limit: config.get('THROTTLE_MEDIUM_LIMIT', 50), // 每10秒最多50次请求 (从20次放宽)
+            limit: config.get('THROTTLE_MEDIUM_LIMIT', 100), // 每10秒最多100次请求
           },
           {
             name: 'long',
             ttl: config.get('THROTTLE_LONG_TTL', 60000), // 1分钟
-            limit: config.get('THROTTLE_LONG_LIMIT', 100), // 每分钟最多100次请求
+            limit: config.get('THROTTLE_LONG_LIMIT', 300), // 每分钟最多300次请求
           },
         ],
       }),

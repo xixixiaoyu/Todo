@@ -7,6 +7,8 @@ import i18n from '@/i18n'
 import { useToast } from '@/composables/useToast'
 import { toDate } from './todo.dates'
 
+const SYNC_COOLDOWN_MS = 2000
+
 export function createTodoCloud(deps: {
   todos: Ref<Todo[]>
   loading: Ref<boolean>
@@ -26,14 +28,23 @@ export function createTodoCloud(deps: {
   const toast = useToast()
   const { t } = i18n.global
 
+  let lastSyncCallAt = 0
+
   async function sync(retryCount = 0): Promise<void> {
     if (deps.loading.value && retryCount === 0) return
+
+    // 防止在极短时间内多次请求同步
+    const now = Date.now()
+    if (retryCount === 0 && now - lastSyncCallAt < SYNC_COOLDOWN_MS) {
+      return
+    }
 
     const authStore = (await import('@/features/auth/stores/auth')).useAuthStore()
     authStore.hydrateFromStorage()
     if (!authStore.isAuthenticated) return
 
     deps.loading.value = true
+    lastSyncCallAt = now
     try {
       const { useSocket } = await import('@/composables/useSocket')
       const { waitForConnection } = useSocket()
@@ -116,10 +127,15 @@ export function createTodoCloud(deps: {
     }
   }
 
-  const debouncedSync = debounce(() => void sync(), 1000)
+  const debouncedSync = debounce(() => void sync(), SYNC_COOLDOWN_MS)
 
   const onTodosSync = () => {
-    debouncedSync()
+    // 只有当存在待同步项，或距离上次同步已超过 SYNC_COOLDOWN_MS 时才触发同步
+    const hasPending = deps.todos.value.some((t) => t.syncStatus === 'pending')
+    const now = Date.now()
+    if (hasPending || now - lastSyncCallAt > SYNC_COOLDOWN_MS) {
+      debouncedSync()
+    }
   }
 
   const onTodosRemind = (payload: { todoId: string; remindedAt?: string }) => {
