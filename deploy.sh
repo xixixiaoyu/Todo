@@ -66,9 +66,10 @@ echo "🚀 开始部署 Lumina (简思) 项目..."
 
 # 1. 检查磁盘空间 (前置保护)
 DISK_USAGE=$(df / | tail -1 | awk '{print $5}' | sed 's/%//')
-if [ "$DISK_USAGE" -gt 90 ]; then
-    echo "⚠️ 警告：系统磁盘占用已达 ${DISK_USAGE}%，正在执行紧急清理..."
+if [ "$DISK_USAGE" -gt 80 ]; then
+    echo "⚠️ 警告：系统磁盘占用已达 ${DISK_USAGE}%，正在执行主动清理..."
     "${DOCKER[@]}" system prune -f
+    "${DOCKER[@]}" builder prune -f
     # 再次检查清理后的空间
     DISK_USAGE_AFTER=$(df / | tail -1 | awk '{print $5}' | sed 's/%//')
     echo "✨ 清理完成，当前磁盘占用：${DISK_USAGE_AFTER}%"
@@ -103,10 +104,12 @@ fi
 echo "📦 正在构建并启动容器..."
 "${DOCKER[@]}" compose up -d --build
 
-# 3. 清理过期镜像
-# 仅清理构建过程中产生的临时镜像和未使用的旧镜像，防止磁盘空间泄露
-echo "🧹 正在清理过期镜像..."
-"${DOCKER[@]}" image prune -f
+# 3. 清理过期镜像与构建缓存
+# image prune -af: 清理所有未使用的镜像（不仅仅是 dangling 镜像）
+# builder prune -f: 清理 Docker BuildKit 构建缓存，这是磁盘占用的主要来源
+echo "🧹 正在清理过期镜像与构建缓存..."
+"${DOCKER[@]}" image prune -af
+"${DOCKER[@]}" builder prune -f
 
 # 4. 执行数据库迁移
 echo "🗄️ 正在同步数据库 Schema..."
