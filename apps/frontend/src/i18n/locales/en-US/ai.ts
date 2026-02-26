@@ -192,6 +192,7 @@ export const ai = {
   finalSynthesizing: 'Synthesizing final answer...',
   primaryModel: 'Primary Model',
   secondaryModel: 'Secondary Model',
+  breakdownUndo: 'Undo Breakdown',
   noPresetsForDiscussion:
     'No presets available. Please add models for discussion in "Preset Management" first.',
   parallelSynthesisPrompt:

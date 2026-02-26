@@ -155,9 +155,9 @@ describe('useTodoStore - Actions', () => {
 
       expect(result).toHaveLength(3)
       expect(store.todos).toHaveLength(3)
-      expect(store.todos[0].title).toBe('Task 3')
+      expect(store.todos[0].title).toBe('Task 1')
       expect(store.todos[1].title).toBe('Task 2')
-      expect(store.todos[2].title).toBe('Task 1')
+      expect(store.todos[2].title).toBe('Task 3')
     })
   })
 

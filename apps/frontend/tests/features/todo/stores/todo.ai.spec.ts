@@ -26,10 +26,9 @@ describe('useTodoStore - AI Actions', () => {
 
     const subtasks = store.todos.filter((t) => t.parentId === todoId)
     expect(subtasks).toHaveLength(3)
-    // Order is reversed because of unshift
-    expect(subtasks[0].title).toBe('Subtask 3')
+    expect(subtasks[0].title).toBe('Subtask 1')
     expect(subtasks[1].title).toBe('Subtask 2')
-    expect(subtasks[2].title).toBe('Subtask 1')
+    expect(subtasks[2].title).toBe('Subtask 3')
   })
 
   it('should fallback to line splitting if JSON fails', async () => {
@@ -45,6 +44,6 @@ describe('useTodoStore - AI Actions', () => {
 
     const subtasks = store.todos.filter((t) => t.parentId === todoId)
     expect(subtasks).toHaveLength(3)
-    expect(subtasks[0].title).toBe('Line 3')
+    expect(subtasks[0].title).toBe('Line 1')
   })
 })

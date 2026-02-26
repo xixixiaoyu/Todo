@@ -22,10 +22,11 @@ export function createTodoActions(deps: {
   fetchTodos: () => Promise<void>
   addTodo: (title: string, parentId?: string | null, id?: string) => Promise<string | null>
   addTodos: (titles: string[], parentId?: string | null) => Promise<string[]>
+  removeTodos: (ids: string[]) => Promise<void>
   toggleTodo: (id: string) => Promise<void>
   togglePin: (id: string) => Promise<void>
   incrementPomodoro: (id: string) => void
-  breakdownTaskWithAI: (id: string) => Promise<void>
+  breakdownTaskWithAI: (id: string) => Promise<string[]>
   restoreTodo: (id: string) => Promise<void>
   deleteTodo: (id: string) => Promise<void>
   updateTodo: (id: string, title: string) => Promise<boolean>
@@ -192,7 +193,10 @@ export function createTodoActions(deps: {
       let minOrder =
         deps.todos.value.length > 0 ? Math.min(...deps.todos.value.map((t) => t.order ?? 0)) : 0
 
-      for (const title of titles) {
+      // 倒序处理以确保 unshift 后在 UI 上保持 AI 返回的原始顺序
+      const reversedTitles = [...titles].reverse()
+
+      for (const title of reversedTitles) {
         const trimmedTitle = title.trim()
         if (!trimmedTitle || isDuplicate(trimmedTitle, parentId)) continue
 
@@ -223,6 +227,27 @@ export function createTodoActions(deps: {
       console.error('Failed to add todos:', err)
       deps.error.value = 'todo.addError'
       return []
+    } finally {
+      deps.loading.value = false
+    }
+  }
+
+  async function removeTodos(ids: string[]): Promise<void> {
+    if (ids.length === 0) return
+
+    deps.loading.value = true
+    try {
+      // 物理删除（用于撤销 AI 拆解）
+      deps.todos.value = deps.todos.value.filter((t) => !ids.includes(t.id))
+
+      // 并不只是本地删除，还需要通知后端同步这些 ID 为已删除
+      // 这里我们可以通过 debouncedSync 处理，它会对比本地与远端
+      // 但由于是物理删除且是刚生成的，我们可以假设它们还未同步到后端，或者同步后需要删除
+      // 为了安全，我们手动调用一次同步
+      deps.debouncedSync()
+    } catch (err) {
+      console.error('Failed to remove todos:', err)
+      deps.error.value = 'todo.deleteError'
     } finally {
       deps.loading.value = false
     }
@@ -307,9 +332,9 @@ export function createTodoActions(deps: {
     }
   }
 
-  async function breakdownTaskWithAI(id: string): Promise<void> {
+  async function breakdownTaskWithAI(id: string): Promise<string[]> {
     const todo = deps.todos.value.find((t) => t.id === id)
-    if (!todo) return
+    if (!todo) return []
 
     deps.loading.value = true
     try {
@@ -352,12 +377,16 @@ export function createTodoActions(deps: {
       }
 
       if (subtasks.length > 0) {
-        await addTodos(subtasks, id)
+        const addedIds = await addTodos(subtasks, id)
         todo.expanded = true
+        return addedIds
       }
+
+      return []
     } catch (err) {
       console.error('AI breakdown failed:', err)
       deps.error.value = 'AI breakdown failed'
+      return []
     } finally {
       deps.loading.value = false
     }
@@ -516,6 +545,7 @@ export function createTodoActions(deps: {
     fetchTodos,
     addTodo,
     addTodos,
+    removeTodos,
     toggleTodo,
     togglePin,
     incrementPomodoro,

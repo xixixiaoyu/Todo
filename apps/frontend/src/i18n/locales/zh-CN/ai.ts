@@ -232,6 +232,7 @@ export const ai = {
   finalSynthesizing: '正在综合最终回答...',
   primaryModel: '主模型',
   secondaryModel: '副模型',
+  breakdownUndo: '撤销拆解',
   noPresetsForDiscussion: '暂无可用预设，请先在“预设管理”中添加参与讨论的模型',
   parallelSynthesisPrompt:
     '我邀请了多个 AI 模型对用户的问题“{originalQuery}”进行了独立回答。以下是各模型的回答内容：\n\n{discussionData}\n\n请你作为“主模型”，深度分析并综合以上所有输入，为用户提供一个最准确、专业且全面的最终答案。注意：在你的最终答案中，严禁提及“副模型”、“其他模型”、“以上回答”或任何暗示讨论过程的内容，直接呈现最完美的回答。',

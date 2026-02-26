@@ -106,9 +106,18 @@ function toggleMobileActions() {
 async function handleBreakdown() {
   isBreakingDown.value = true
   try {
-    await store.breakdownTaskWithAI(props.todo.id)
+    const addedIds = await store.breakdownTaskWithAI(props.todo.id)
     void hapticImpact(ImpactStyle.Medium)
-    showToastSuccess(t('ai.contributionReady'))
+
+    if (addedIds && addedIds.length > 0) {
+      showToastSuccess(t('ai.contributionReady'), 10000, {
+        label: t('ai.breakdownUndo'),
+        onClick: () => {
+          void store.removeTodos(addedIds)
+          void hapticImpact(ImpactStyle.Light)
+        },
+      })
+    }
   } catch (err) {
     console.error('Breakdown error:', err)
     showToastError(t('todo.addError'))

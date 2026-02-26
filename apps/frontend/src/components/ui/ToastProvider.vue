@@ -1,8 +1,15 @@
 <script setup lang="ts">
-import { useToast } from '@/composables/useToast'
+import { useToast, type Toast } from '@/composables/useToast'
 import { AlertCircle, CheckCircle2, Info, AlertTriangle, X } from 'lucide-vue-next'
 
-const { toasts, removeToast } = useToast()
+const { toasts, removeToast, pauseToast, resumeToast } = useToast()
+
+function handleAction(toast: Toast) {
+  if (toast.action) {
+    toast.action.onClick()
+    removeToast(toast.id)
+  }
+}
 
 const icons = {
   success: CheckCircle2,
@@ -35,8 +42,10 @@ const styles = {
       <div
         v-for="toast in toasts"
         :key="toast.id"
-        class="pointer-events-auto flex items-center gap-3 rounded-2xl border p-4 shadow-2xl min-w-[320px] max-w-[440px] transition-all duration-300"
+        class="pointer-events-auto flex items-center gap-3 rounded-2xl border p-4 shadow-2xl min-w-[320px] max-w-[440px] transition-all duration-300 hover:scale-[1.02] hover:shadow-primary/10"
         :class="styles[toast.type || 'info']"
+        @mouseenter="pauseToast(toast.id)"
+        @mouseleave="resumeToast(toast.id)"
       >
         <div
           class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
@@ -52,6 +61,13 @@ const styles = {
         <div class="flex-1 text-sm font-medium leading-relaxed">
           {{ toast.message }}
         </div>
+        <button
+          v-if="toast.action"
+          class="shrink-0 text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 transition-all active:scale-95 border border-primary/20"
+          @click="handleAction(toast)"
+        >
+          {{ toast.action.label }}
+        </button>
         <button
           class="shrink-0 rounded-full p-1.5 hover:bg-muted transition-colors"
           @click="removeToast(toast.id)"
