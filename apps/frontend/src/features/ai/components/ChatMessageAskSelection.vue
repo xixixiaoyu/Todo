@@ -232,15 +232,6 @@ defineExpose({ updateAskAnchor })
             {{ selectionText }}
           </div>
         </div>
-
-        <button
-          type="button"
-          class="shrink-0 rounded-lg px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
-          :aria-label="t('common.close')"
-          @click="closeAskPanel"
-        >
-          {{ t('common.close') }}
-        </button>
       </div>
 
       <div class="space-y-3 p-4">
