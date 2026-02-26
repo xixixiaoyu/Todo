@@ -148,6 +148,17 @@ describe('useTodoStore - Actions', () => {
       expect(store.todos[0].title).toBe('Second todo')
       expect(store.todos[0].completed).toBe(false)
     })
+    it('should add multiple todos successfully', async () => {
+      const titles = ['Task 1', 'Task 2', 'Task 3']
+
+      const result = await store.addTodos(titles)
+
+      expect(result).toHaveLength(3)
+      expect(store.todos).toHaveLength(3)
+      expect(store.todos[0].title).toBe('Task 3')
+      expect(store.todos[1].title).toBe('Task 2')
+      expect(store.todos[2].title).toBe('Task 1')
+    })
   })
 
   describe('toggleTodo', () => {

@@ -21,6 +21,7 @@ export function createTodoActions(deps: {
   isDuplicate: (title: string, parentId?: string | null, excludeId?: string) => boolean
   fetchTodos: () => Promise<void>
   addTodo: (title: string, parentId?: string | null, id?: string) => Promise<string | null>
+  addTodos: (titles: string[], parentId?: string | null) => Promise<string[]>
   toggleTodo: (id: string) => Promise<void>
   togglePin: (id: string) => Promise<void>
   incrementPomodoro: (id: string) => void
@@ -175,6 +176,58 @@ export function createTodoActions(deps: {
     }
   }
 
+  async function addTodos(titles: string[], parentId: string | null = null): Promise<string[]> {
+    const addedIds: string[] = []
+
+    if (parentId) {
+      const parent = deps.todos.value.find((t) => t.id === parentId)
+      if (parent?.completed) {
+        deps.error.value = 'todo.parentCompleted'
+        return []
+      }
+    }
+
+    deps.loading.value = true
+    try {
+      let minOrder =
+        deps.todos.value.length > 0 ? Math.min(...deps.todos.value.map((t) => t.order ?? 0)) : 0
+
+      for (const title of titles) {
+        const trimmedTitle = title.trim()
+        if (!trimmedTitle || isDuplicate(trimmedTitle, parentId)) continue
+
+        const newTodo: Todo = {
+          id: generateId(),
+          title: trimmedTitle,
+          completed: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          parentId,
+          order: --minOrder,
+          expanded: true,
+          version: 0,
+          syncStatus: 'pending',
+          pomodoroCount: 0,
+        }
+        deps.todos.value.unshift(newTodo)
+        addedIds.push(newTodo.id)
+      }
+
+      if (addedIds.length > 0) {
+        deps.debouncedSync()
+      }
+
+      return addedIds
+    } catch (err) {
+      console.error('Failed to add todos:', err)
+      deps.error.value = 'todo.addError'
+      return []
+    } finally {
+      deps.loading.value = false
+    }
+  }
+
   function updateParentStatus(parentId: string): void {
     const parent = deps.todos.value.find((t) => t.id === parentId)
     if (!parent) return
@@ -260,19 +313,48 @@ export function createTodoActions(deps: {
 
     deps.loading.value = true
     try {
-      const prompt = `请将以下待办任务拆解为 3-5 个具体的子任务。只需返回子任务标题列表，每行一个。任务名称：${todo.title}`
+      const prompt = `
+# Role
+你是一个极简主义的 GTD (Getting Things Done) 效率专家。擅长将宏大、模糊的任务拆解为极致清晰、可立即执行的微小动作。
+
+# Task
+请将以下任务拆解为 3-7 个具体的子任务。
+
+# Rules
+- 拆解后的子任务必须是「行动导向」的（Actionable）。
+- 表达极其精炼，不含任何废话。
+- 逻辑上需具备完备性，即完成这些子任务基本等同于完成主任务。
+- 采用 JSON 数组格式返回，不要包含任何 Markdown 代码块标签或其他多余文本。
+
+# Output Format
+["子任务 1", "子任务 2", "子任务 3"]
+
+# Target Task
+任务名称：${todo.title}
+`.trim()
+
       const response = await getAIStaticResponse([{ role: 'user', content: prompt }])
 
-      const subtasks = response.content
-        .split('\n')
-        .map((s) => s.replace(/^\d+\.\s*|[-*]\s*/, '').trim())
-        .filter((s) => s.length > 0)
-
-      for (const subtask of subtasks) {
-        await addTodo(subtask, id)
+      let subtasks: string[] = []
+      try {
+        // 尝试解析 JSON
+        const content = response.content.trim()
+        // 移除可能存在的 Markdown 代码块标记
+        const jsonStr = content.replace(/^```json\n?|```$/g, '').trim()
+        subtasks = JSON.parse(jsonStr)
+      } catch (e) {
+        // 降级：如果 JSON 解析失败，尝试按行分割
+        console.warn('AI breakdown JSON parse failed, falling back to line splitting', e)
+        subtasks = response.content
+          .split('\n')
+          .map((s) => s.replace(/^\d+\.\s*|[-*]\s*/, '').trim())
+          .filter((s) => s.length > 0 && s.length < 100)
       }
 
-      todo.expanded = true
+      if (subtasks.length > 0) {
+        await addTodos(subtasks, id)
+        todo.expanded = true
+      }
     } catch (err) {
       console.error('AI breakdown failed:', err)
       deps.error.value = 'AI breakdown failed'
@@ -433,6 +515,7 @@ export function createTodoActions(deps: {
     isDuplicate,
     fetchTodos,
     addTodo,
+    addTodos,
     toggleTodo,
     togglePin,
     incrementPomodoro,

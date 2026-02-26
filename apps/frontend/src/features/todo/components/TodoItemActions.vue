@@ -97,17 +97,24 @@ function handleApplySchedule(dueAt: Date | null, remindAt: Date | null) {
           <Button
             variant="ghost"
             size="icon"
-            class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+            class="group h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 relative overflow-hidden transition-all duration-300"
+            :class="{ 'text-primary bg-primary/10 ring-1 ring-primary/20': isBreakingDown }"
             :disabled="isBreakingDown"
             @click.stop="emit('breakdown')"
           >
-            <component
-              :is="isBreakingDown ? Loader2 : Wand2"
-              class="h-3.5 w-3.5 md:h-4 md:w-4"
-              :class="[
-                { 'animate-spin': isBreakingDown },
-                isBreakingDown ? 'lucide-loader2' : 'lucide-wand2',
-              ]"
+            <Loader2
+              v-if="isBreakingDown"
+              class="h-3.5 w-3.5 md:h-4 md:w-4 animate-spin text-primary relative z-10"
+            />
+            <Wand2
+              v-else
+              class="h-3.5 w-3.5 md:h-4 md:w-4 transition-transform group-hover:rotate-12 group-hover:scale-110 relative z-10"
+            />
+
+            <!-- Shimmer effect during loading -->
+            <div
+              v-if="isBreakingDown"
+              class="absolute inset-0 bg-gradient-to-r from-transparent via-primary/20 to-transparent animate-shimmer"
             />
           </Button>
         </TooltipTrigger>

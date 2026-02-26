@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, watch, useId } from 'vue'
+import { useI18n } from 'vue-i18n'
 import draggable from 'vuedraggable'
 import { ChevronDown, ChevronRight, GripVertical } from 'lucide-vue-next'
 import { useHaptics, ImpactStyle } from '@/composables/useHaptics'
 import { useTodoStore, type Todo } from '../stores/todo'
 import { useIsMobile } from '@/composables/useWindowSize'
+import { useToast } from '@/composables/useToast'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
 
@@ -17,6 +19,8 @@ import TodoItemAddSubtask from './TodoItemAddSubtask.vue'
 const store = useTodoStore()
 const { isMobile } = useIsMobile()
 const { hapticImpact, hapticSelectionStart } = useHaptics()
+const { success: showToastSuccess, error: showToastError } = useToast()
+const { t } = useI18n()
 
 const editInputId = useId()
 const subtaskInputId = useId()
@@ -103,7 +107,11 @@ async function handleBreakdown() {
   isBreakingDown.value = true
   try {
     await store.breakdownTaskWithAI(props.todo.id)
-    await hapticImpact(ImpactStyle.Medium)
+    void hapticImpact(ImpactStyle.Medium)
+    showToastSuccess(t('ai.contributionReady'))
+  } catch (err) {
+    console.error('Breakdown error:', err)
+    showToastError(t('todo.addError'))
   } finally {
     isBreakingDown.value = false
   }
