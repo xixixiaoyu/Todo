@@ -195,6 +195,7 @@ defineOptions({
           @edit="editAndResendMessage"
           @select-suggestion="handleSelectSuggestion"
           @ask-selection="handleAskSelection"
+          @transfer-selection="modelValue = true"
           @teaching-submit="handleTeachingSubmit"
           @teaching-submit-batch="handleTeachingSubmitBatch"
         />

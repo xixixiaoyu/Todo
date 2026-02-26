@@ -12,7 +12,8 @@ import {
 } from '@/features/ai/services/aiService'
 import ChatMessageMarkdown from '@/features/ai/components/ChatMessageMarkdown.vue'
 import ChatMessageThinking from '@/features/ai/components/ChatMessageThinking.vue'
-import { Sparkles, X, MessageSquare, LayoutTemplate, Send } from 'lucide-vue-next'
+import { Sparkles, X, MessageSquare, LayoutTemplate, Send, ExternalLink } from 'lucide-vue-next'
+import { useChat } from '@/features/ai/composables/useChat'
 
 const props = defineProps<{
   container: HTMLElement | null | undefined
@@ -20,9 +21,11 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'ask-selection', prompt: string): void
+  (e: 'transfer-selection'): void
 }>()
 
 const { t } = useI18n()
+const { messages: chatMessages, addMessagePair } = useChat()
 
 const isAskButtonVisible = ref(false)
 const isAskPanelOpen = ref(false)
@@ -31,8 +34,8 @@ const askButtonY = ref(0)
 const selectionText = ref('')
 const questionText = ref('')
 
-// 模式选择
-const askMode = ref<'chat' | 'float'>('chat')
+// 模式选择 - 最佳实践：默认使用浮窗回答，保持阅读心流
+const askMode = ref<'chat' | 'float'>('float')
 
 // 浮窗回答状态
 const isResultOpen = ref(false)
@@ -40,6 +43,7 @@ const resultContent = ref('')
 const resultThinking = ref('')
 const isGeneratingResult = ref(false)
 const resultError = ref('')
+const lastSubmittedPrompt = ref('')
 
 const resultMessage = computed<ChatMessage>(() => ({
   id: 'floating-result',
@@ -184,6 +188,7 @@ async function submitAsk() {
 
 async function submitAskFloating() {
   const prompt = buildAskPrompt(selectionText.value, questionText.value)
+  lastSubmittedPrompt.value = prompt
 
   // 记录位置以便浮窗出现在相同位置
   const initialX = panelX.value
@@ -204,8 +209,18 @@ async function submitAskFloating() {
   })
 
   try {
+    // 最佳实践：携带当前会话的历史消息作为上下文，确保 AI 理解当前语境
+    const contextMessages = [
+      ...chatMessages.value.map((msg) => ({
+        id: msg.id,
+        role: msg.role,
+        content: msg.content,
+      })),
+      { id: generateId(), role: 'user', content: prompt },
+    ] as ChatMessage[]
+
     await getAIStreamResponse(
-      [{ id: generateId(), role: 'user', content: prompt }],
+      contextMessages,
       (chunk) => {
         if (chunk === '[DONE]') {
           isGeneratingResult.value = false
@@ -223,6 +238,20 @@ async function submitAskFloating() {
     resultError.value = err instanceof Error ? err.message : String(err)
     isGeneratingResult.value = false
   }
+}
+
+function transferToChat() {
+  if (!lastSubmittedPrompt.value || !resultContent.value) return
+
+  // 最佳实践：直接转存已有回答，避免重复生成，保持会话连贯
+  addMessagePair(lastSubmittedPrompt.value, resultContent.value, resultThinking.value)
+
+  // 通知父组件打开侧边栏（如果未打开）
+  emit('transfer-selection')
+
+  closeResultPanel()
+  selectionText.value = ''
+  questionText.value = ''
 }
 
 function onDocSelectionChange() {
@@ -450,6 +479,21 @@ defineExpose({ updateAskAnchor })
         <div v-if="resultError" class="rounded-lg bg-destructive/10 p-3 text-xs text-destructive">
           {{ resultError }}
         </div>
+      </div>
+
+      <!-- 结果面板底部：转存对话 -->
+      <div
+        v-if="!isGeneratingResult && resultContent"
+        class="shrink-0 border-t border-border/20 bg-muted/5 px-4 py-3"
+      >
+        <button
+          type="button"
+          class="flex w-full items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 text-xs font-medium text-primary transition-all hover:bg-primary/10 active:scale-[0.98]"
+          @click="transferToChat"
+        >
+          <ExternalLink :size="14" />
+          {{ t('ai.askSelectionTransferToChat') }}
+        </button>
       </div>
     </div>
   </Teleport>

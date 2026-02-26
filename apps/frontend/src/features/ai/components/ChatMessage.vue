@@ -31,6 +31,7 @@ const emit = defineEmits<{
   (e: 'delete', id: string): void
   (e: 'edit', content: string): void
   (e: 'ask-selection', prompt: string): void
+  (e: 'transfer-selection'): void
   (
     e: 'teaching-submit',
     payload: { quizId: string; kind: TeachingQuizKind; answer: string | string[] },
@@ -216,6 +217,7 @@ defineExpose({
                     :is-streaming="isStreaming"
                     :is-mobile="isMobile"
                     @ask-selection="(prompt) => emit('ask-selection', prompt)"
+                    @transfer-selection="() => emit('transfer-selection')"
                   />
                 </template>
 

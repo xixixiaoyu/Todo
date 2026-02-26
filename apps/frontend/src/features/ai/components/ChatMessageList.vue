@@ -20,6 +20,7 @@ const emit = defineEmits<{
   (e: 'edit', id: string, content: string): void
   (e: 'select-suggestion', text: string, options?: { requireTodo?: boolean }): void
   (e: 'ask-selection', prompt: string): void
+  (e: 'transfer-selection'): void
   (e: 'teaching-submit', payload: { quizId: string; kind: string; answer: string | string[] }): void
   (
     e: 'teaching-submit-batch',
@@ -235,6 +236,7 @@ defineExpose({
                   @delete="(id) => emit('delete', id)"
                   @edit="(content) => emit('edit', msg.id, content)"
                   @ask-selection="(prompt) => emit('ask-selection', prompt)"
+                  @transfer-selection="() => emit('transfer-selection')"
                   @teaching-submit="(payload) => emit('teaching-submit', payload)"
                   @teaching-submit-batch="(payload) => emit('teaching-submit-batch', payload)"
                 />

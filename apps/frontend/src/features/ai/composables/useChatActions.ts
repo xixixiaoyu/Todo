@@ -427,6 +427,32 @@ export function useChatActions(options: AIRequestOptions = {}) {
     await sendMessage(newContent, imagesToUse, documentsToUse)
   }
 
+  /**
+   * 手动添加一对消息（用户和助手）到历史记录
+   */
+  function addMessagePair(
+    userContent: string,
+    assistantContent: string,
+    assistantThinking?: string,
+  ) {
+    const userMessage: ChatMessage = {
+      id: generateId(),
+      role: 'user',
+      content: userContent,
+      createdAt: new Date(),
+    }
+
+    const assistantMessage: ChatMessage = {
+      id: generateId(),
+      role: 'assistant',
+      content: assistantContent,
+      thinkingContent: assistantThinking,
+      createdAt: new Date(),
+    }
+
+    chatHistory.value = [...chatHistory.value, userMessage, assistantMessage]
+  }
+
   return {
     sendMessage,
     generateImage,
@@ -436,5 +462,6 @@ export function useChatActions(options: AIRequestOptions = {}) {
     regenerateMessage,
     regenerateLastResponse,
     editAndResendMessage,
+    addMessagePair,
   }
 }

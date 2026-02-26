@@ -11,6 +11,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'ask-selection', prompt: string): void
+  (e: 'transfer-selection'): void
 }>()
 
 const { content, isStreaming } = toRefs(props)
@@ -50,6 +51,7 @@ defineExpose({
   <ChatMessageAskSelection
     :container="containerRef"
     @ask-selection="(prompt) => emit('ask-selection', prompt)"
+    @transfer-selection="() => emit('transfer-selection')"
   />
 </template>
 

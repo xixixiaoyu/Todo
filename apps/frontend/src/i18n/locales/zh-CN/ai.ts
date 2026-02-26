@@ -40,6 +40,7 @@ export const ai = {
   askSelectionModeChat: '在聊天中发送',
   askSelectionModeFloat: '在浮窗中回答',
   askSelectionFloatingTitle: 'AI 快速解答',
+  askSelectionTransferToChat: '转存至对话',
   settings: 'AI 助手设置',
   basicSettings: '基础设置',
   presetManagement: '预设管理',
