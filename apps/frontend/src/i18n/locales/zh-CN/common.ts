@@ -59,6 +59,9 @@ export const common = {
       rose: '玫瑰',
       violet: '紫罗兰',
       graphite: '石墨',
+      celadon: '青瓷',
+      peach: '蜜桃',
+      random: '随机',
     },
   },
   fields: {

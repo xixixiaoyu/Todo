@@ -19,11 +19,14 @@ const customColor = ref(themeColor.value ?? '#b36a2e')
 
 const presets = computed<ThemePreset[]>(() => [
   { name: t('common.themeColor.presets.warmAmber'), value: '#b36a2e' },
-  { name: t('common.themeColor.presets.oceanBlue'), value: '#2563eb' },
-  { name: t('common.themeColor.presets.emerald'), value: '#10b981' },
-  { name: t('common.themeColor.presets.rose'), value: '#f43f5e' },
-  { name: t('common.themeColor.presets.violet'), value: '#8b5cf6' },
-  { name: t('common.themeColor.presets.graphite'), value: '#334155' },
+  { name: t('common.themeColor.presets.oceanBlue'), value: '#5e8bbd' },
+  { name: t('common.themeColor.presets.emerald'), value: '#53ab91' },
+  { name: t('common.themeColor.presets.rose'), value: '#cc7a8a' },
+  { name: t('common.themeColor.presets.violet'), value: '#8e81c0' },
+  { name: t('common.themeColor.presets.graphite'), value: '#6e7d8e' },
+  { name: t('common.themeColor.presets.celadon'), value: '#8da8a0' },
+  { name: t('common.themeColor.presets.peach'), value: '#d4a38d' },
+  { name: t('common.themeColor.presets.random'), value: 'random' },
 ])
 
 const selectedColor = computed(() => themeColor.value)
@@ -88,16 +91,28 @@ function reset() {
         >
           <div class="flex items-center gap-2">
             <span
+              v-if="preset.value !== 'random'"
               class="h-3.5 w-3.5 rounded-full shadow-sm"
               :style="{ background: preset.value }"
             />
+            <span
+              v-else
+              class="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-gradient-to-tr from-[#b36a2e] via-[#5e8bbd] to-[#cc7a8a] shadow-sm"
+            >
+              <div class="h-1 w-1 rounded-full bg-white/80" />
+            </span>
             <span class="text-[11px] font-semibold tracking-tight text-foreground/80">
               {{ preset.name }}
             </span>
           </div>
           <div
+            v-if="preset.value !== 'random'"
             class="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full opacity-60 blur-2xl transition-opacity group-hover:opacity-80"
             :style="{ background: preset.value }"
+          />
+          <div
+            v-else
+            class="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full bg-gradient-to-tr from-[#b36a2e] via-[#5e8bbd] to-[#cc7a8a] opacity-40 blur-2xl transition-opacity group-hover:opacity-60"
           />
         </button>
       </div>

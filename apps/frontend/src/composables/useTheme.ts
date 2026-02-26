@@ -20,11 +20,25 @@ function clamp(value: number, min: number, max: number) {
 function normalizeHex(hex: string) {
   const trimmed = hex.trim()
   if (!trimmed) return null
+  if (trimmed === 'random') return 'random'
 
   const normalized = trimmed.startsWith('#') ? trimmed : `#${trimmed}`
   if (!/^#[0-9a-fA-F]{6}$/.test(normalized)) return null
   return normalized.toLowerCase()
 }
+
+const PRESET_COLORS = [
+  '#b36a2e', // 琥珀
+  '#5e8bbd', // 海蓝
+  '#53ab91', // 翡翠
+  '#cc7a8a', // 玫瑰
+  '#8e81c0', // 紫罗兰
+  '#6e7d8e', // 石墨
+  '#8da8a0', // 青瓷
+  '#d4a38d', // 蜜桃
+]
+
+let randomTimer: ReturnType<typeof setTimeout> | null = null
 
 function hexToRgb(hex: string): Rgb {
   const normalized = normalizeHex(hex)
@@ -119,6 +133,12 @@ function applyThemeColor(hex: string | null) {
   if (typeof document === 'undefined') return
 
   const root = document.documentElement
+  if (hex === 'random') {
+    // 随机模式下，如果不手动调用，这里不直接处理
+    // 逻辑由 useTheme 里的 watch 处理
+    return
+  }
+
   const normalized = hex ? normalizeHex(hex) : null
 
   const keys = [
@@ -177,10 +197,30 @@ export function useTheme() {
 
   const themeColor = useStorage<string | null>('theme-color', null)
 
+  const applyRandomColor = () => {
+    if (themeColor.value !== 'random') return
+
+    const randomIndex = Math.floor(Math.random() * PRESET_COLORS.length)
+    applyThemeColor(PRESET_COLORS[randomIndex])
+
+    // 随机时间切换：30-60 分钟，减少对专注的干扰
+    const nextTime = Math.floor(Math.random() * (60 - 30 + 1) + 30) * 60 * 1000
+    if (randomTimer) clearTimeout(randomTimer)
+    randomTimer = setTimeout(applyRandomColor, nextTime)
+  }
+
   watch(
     themeColor,
     (hex) => {
-      applyThemeColor(hex)
+      if (hex === 'random') {
+        applyRandomColor()
+      } else {
+        if (randomTimer) {
+          clearTimeout(randomTimer)
+          randomTimer = null
+        }
+        applyThemeColor(hex)
+      }
     },
     { immediate: true },
   )
@@ -194,7 +234,11 @@ export function useTheme() {
     setThemeColor: (hex: string) => {
       const normalized = normalizeHex(hex)
       if (!normalized) return
-      themeColor.value = normalized
+      if (normalized === 'random' && themeColor.value === 'random') {
+        applyRandomColor()
+      } else {
+        themeColor.value = normalized
+      }
     },
     resetThemeColor: () => {
       themeColor.value = null

@@ -59,6 +59,9 @@ export const common = {
       rose: 'Rose',
       violet: 'Violet',
       graphite: 'Graphite',
+      celadon: 'Celadon',
+      peach: 'Peach',
+      random: 'Random',
     },
   },
   fields: {
