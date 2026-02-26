@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import type { Todo as SharedTodo } from '@my-app/shared'
 import type { ProposedTodoChange, FilterType, ViewMode, Todo } from './todo.types'
-import { applyFilterAndSort } from './todo.filtering'
+import { applyFilterAndSort, isEffectivelyCompleted } from './todo.filtering'
 import { createTodoCloud } from './todo.cloud'
 import { createTodoActions } from './todo.actions'
 import { normalizeTodoDatesInPlace } from './todo.dates'
@@ -64,11 +64,15 @@ export const useTodoStore = defineStore(
     })
 
     const pendingCount = computed(
-      () => todos.value.filter((todo) => !todo.completed && !todo.deletedAt).length,
+      () =>
+        todos.value.filter((todo) => !isEffectivelyCompleted(todo, todos.value) && !todo.deletedAt)
+          .length,
     )
 
     const completedCount = computed(
-      () => todos.value.filter((todo) => todo.completed && !todo.deletedAt).length,
+      () =>
+        todos.value.filter((todo) => isEffectivelyCompleted(todo, todos.value) && !todo.deletedAt)
+          .length,
     )
 
     const proposedChanges = computed<ProposedTodoChange[]>(() => {

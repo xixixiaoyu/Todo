@@ -242,6 +242,84 @@ describe('useTodoStore - Filtering', () => {
       expect(filtered[1].id).toBe('1') // Order 0
       expect(filtered[2].id).toBe('2') // Order 1
     })
+
+    it('should consider a child effectively pending if its parent is pending', () => {
+      const hierarchicalTodos = [
+        {
+          id: 'p1',
+          title: 'Parent',
+          completed: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          order: 0,
+          version: 0,
+          pomodoroCount: 0,
+        },
+        {
+          id: 'c1',
+          title: 'Child',
+          parentId: 'p1',
+          completed: true, // Marked as completed, but parent is pending
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          order: 0,
+          version: 0,
+          pomodoroCount: 0,
+        },
+      ]
+      store.todos = hierarchicalTodos
+      store.filter = 'pending'
+
+      // Both parent and child should be in pending list
+      expect(store.filteredTodos).toHaveLength(2)
+      const ids = store.filteredTodos.map((t) => t.id)
+      expect(ids).toContain('p1')
+      expect(ids).toContain('c1')
+
+      store.filter = 'completed'
+      expect(store.filteredTodos).toHaveLength(0)
+    })
+
+    it('should consider a child effectively completed only if all ancestors are completed', () => {
+      const hierarchicalTodos = [
+        {
+          id: 'p1',
+          title: 'Parent',
+          completed: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          order: 0,
+          version: 0,
+          pomodoroCount: 0,
+        },
+        {
+          id: 'c1',
+          title: 'Child',
+          parentId: 'p1',
+          completed: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          order: 0,
+          version: 0,
+          pomodoroCount: 0,
+        },
+      ]
+      store.todos = hierarchicalTodos
+      store.filter = 'completed'
+
+      expect(store.filteredTodos).toHaveLength(2)
+
+      // Mark parent as pending
+      store.todos[0].completed = false
+      expect(store.filteredTodos).toHaveLength(0)
+
+      store.filter = 'pending'
+      expect(store.filteredTodos).toHaveLength(2)
+    })
   })
 
   describe('counts', () => {

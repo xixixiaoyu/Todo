@@ -1,5 +1,14 @@
 import type { FilterType, Todo } from './todo.types'
 
+export function isEffectivelyCompleted(todo: Todo, allTodos: Todo[]): boolean {
+  if (!todo.completed) return false
+  if (!todo.parentId) return true
+
+  const parent = allTodos.find((t) => t.id === todo.parentId)
+  if (!parent) return true
+  return isEffectivelyCompleted(parent, allTodos)
+}
+
 export function applyFilterAndSort(
   items: Todo[],
   filter: FilterType,
@@ -17,11 +26,12 @@ export function applyFilterAndSort(
 
       if (todo.deletedAt) return false
 
+      const effectivelyCompleted = isEffectivelyCompleted(todo, items)
       const matchesFilter = ignoreTab
         ? true
         : filter === 'pending'
-          ? !todo.completed
-          : todo.completed
+          ? !effectivelyCompleted
+          : effectivelyCompleted
 
       const isProposedAction = todo.isProposed || todo.isProposedDelete
       const matchesSearch = !query || todo.title.toLowerCase().includes(query)
