@@ -4,6 +4,15 @@ import { useI18n } from 'vue-i18n'
 import { useDraggable, useWindowSize } from '@vueuse/core'
 import { useEscClose } from '@/composables/useEscClose'
 import { GlobalSelectionManager } from '@/features/ai/utils/GlobalSelectionManager'
+import {
+  getAIStreamResponse,
+  generateId,
+  abortCurrentRequest,
+  type ChatMessage,
+} from '@/features/ai/services/aiService'
+import ChatMessageMarkdown from '@/features/ai/components/ChatMessageMarkdown.vue'
+import ChatMessageThinking from '@/features/ai/components/ChatMessageThinking.vue'
+import { Sparkles, X, MessageSquare, LayoutTemplate, Send } from 'lucide-vue-next'
 
 const props = defineProps<{
   container: HTMLElement | null | undefined
@@ -22,12 +31,40 @@ const askButtonY = ref(0)
 const selectionText = ref('')
 const questionText = ref('')
 
+// 模式选择
+const askMode = ref<'chat' | 'float'>('chat')
+
+// 浮窗回答状态
+const isResultOpen = ref(false)
+const resultContent = ref('')
+const resultThinking = ref('')
+const isGeneratingResult = ref(false)
+const resultError = ref('')
+
+const resultMessage = computed<ChatMessage>(() => ({
+  id: 'floating-result',
+  role: 'assistant',
+  content: resultContent.value,
+  thinkingContent: resultThinking.value,
+}))
+
 const panelRef = ref<HTMLElement | null>(null)
 const panelHandleRef = ref<HTMLElement | null>(null)
+const resultPanelRef = ref<HTMLElement | null>(null)
+const resultPanelHandleRef = ref<HTMLElement | null>(null)
+
 const { width: windowWidth, height: windowHeight } = useWindowSize()
+const isMobile = computed(() => windowWidth.value < 640)
+
 const { x: panelX, y: panelY } = useDraggable(panelRef, {
   initialValue: { x: 0, y: 0 },
   handle: panelHandleRef,
+  preventDefault: true,
+})
+
+const { x: resultX, y: resultY } = useDraggable(resultPanelRef, {
+  initialValue: { x: 0, y: 0 },
+  handle: resultPanelHandleRef,
   preventDefault: true,
 })
 
@@ -36,18 +73,23 @@ const panelStyle = computed(() => ({
   top: `${panelY.value}px`,
 }))
 
+const resultPanelStyle = computed(() => ({
+  left: `${resultX.value}px`,
+  top: `${resultY.value}px`,
+}))
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max)
 }
 
-function clampPanelIntoViewport() {
-  const panel = panelRef.value
-  if (!panel) return
-  const rect = panel.getBoundingClientRect()
+function clampPanelIntoViewport(targetRef: typeof panelRef, x: typeof panelX, y: typeof panelY) {
+  const el = targetRef.value
+  if (!el) return
+  const rect = el.getBoundingClientRect()
   const maxX = windowWidth.value - rect.width - 12
   const maxY = windowHeight.value - rect.height - 12
-  panelX.value = clamp(panelX.value, 12, Math.max(12, maxX))
-  panelY.value = clamp(panelY.value, 12, Math.max(12, maxY))
+  x.value = clamp(x.value, 12, Math.max(12, maxX))
+  y.value = clamp(y.value, 12, Math.max(12, maxY))
 }
 
 function buildAskPrompt(selected: string, question: string) {
@@ -62,7 +104,15 @@ function closeAskPanel() {
   questionText.value = ''
 }
 
+function closeResultPanel() {
+  if (isGeneratingResult.value) {
+    abortCurrentRequest()
+  }
+  isResultOpen.value = false
+}
+
 useEscClose(isAskPanelOpen, closeAskPanel)
+useEscClose(isResultOpen, closeResultPanel)
 
 function getSelectionInContainer() {
   const root = props.container
@@ -114,17 +164,65 @@ function openAskPanel() {
   panelY.value = clamp(askButtonY.value + 8, 12, windowHeight.value - 220)
 
   void nextTick(() => {
-    clampPanelIntoViewport()
+    clampPanelIntoViewport(panelRef, panelX, panelY)
     const input = panelRef.value?.querySelector('input') as HTMLInputElement | null
     input?.focus()
   })
 }
 
-function submitAsk() {
+async function submitAsk() {
   if (!selectionText.value.trim() || !questionText.value.trim()) return
-  emit('ask-selection', buildAskPrompt(selectionText.value, questionText.value))
+
+  if (askMode.value === 'chat') {
+    emit('ask-selection', buildAskPrompt(selectionText.value, questionText.value))
+    closeAskPanel()
+    selectionText.value = ''
+  } else {
+    await submitAskFloating()
+  }
+}
+
+async function submitAskFloating() {
+  const prompt = buildAskPrompt(selectionText.value, questionText.value)
+
+  // 记录位置以便浮窗出现在相同位置
+  const initialX = panelX.value
+  const initialY = panelY.value
+
   closeAskPanel()
-  selectionText.value = ''
+  isResultOpen.value = true
+  resultContent.value = ''
+  resultThinking.value = ''
+  resultError.value = ''
+  isGeneratingResult.value = true
+
+  resultX.value = initialX
+  resultY.value = initialY
+
+  void nextTick(() => {
+    clampPanelIntoViewport(resultPanelRef, resultX, resultY)
+  })
+
+  try {
+    await getAIStreamResponse(
+      [{ id: generateId(), role: 'user', content: prompt }],
+      (chunk) => {
+        if (chunk === '[DONE]') {
+          isGeneratingResult.value = false
+        } else if (chunk === '[ABORTED]') {
+          isGeneratingResult.value = false
+        } else {
+          resultContent.value += chunk
+        }
+      },
+      (thinking) => {
+        resultThinking.value += thinking
+      },
+    )
+  } catch (err) {
+    resultError.value = err instanceof Error ? err.message : String(err)
+    isGeneratingResult.value = false
+  }
 }
 
 function onDocSelectionChange() {
@@ -186,7 +284,8 @@ watch(
 )
 
 watch([windowWidth, windowHeight], () => {
-  if (isAskPanelOpen.value) clampPanelIntoViewport()
+  if (isAskPanelOpen.value) clampPanelIntoViewport(panelRef, panelX, panelY)
+  if (isResultOpen.value) clampPanelIntoViewport(resultPanelRef, resultX, resultY)
   if (isAskButtonVisible.value) updateAskAnchor()
 })
 
@@ -215,7 +314,7 @@ defineExpose({ updateAskAnchor })
     <div
       v-if="isAskPanelOpen"
       ref="panelRef"
-      class="fixed z-[230] w-[min(360px,calc(100vw-24px))] rounded-2xl border border-border/30 bg-card/70 shadow-2xl backdrop-blur-3xl"
+      class="fixed z-[230] w-[min(400px,calc(100vw-24px))] rounded-2xl border border-border/30 bg-card/70 shadow-2xl backdrop-blur-3xl"
       :style="{ ...panelStyle, '--wails-draggable': 'no-drag' }"
       role="dialog"
       :aria-label="t('ai.askSelectionTitle')"
@@ -234,7 +333,7 @@ defineExpose({ updateAskAnchor })
         </div>
       </div>
 
-      <div class="space-y-3 p-4">
+      <div class="space-y-4 p-4">
         <input
           v-model="questionText"
           class="h-10 w-full rounded-xl border border-border/30 bg-background/40 px-3 text-sm text-foreground outline-none ring-0 placeholder:text-muted-foreground/70 focus:border-primary/40 focus:bg-background/55"
@@ -242,22 +341,114 @@ defineExpose({ updateAskAnchor })
           @keydown.enter.prevent="submitAsk"
         />
 
-        <div class="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            class="h-9 rounded-xl px-3 text-sm text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
-            @click="closeAskPanel"
-          >
-            {{ t('common.cancel') }}
-          </button>
-          <button
-            type="button"
-            class="h-9 rounded-xl bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-            :disabled="!questionText.trim()"
-            @click="submitAsk"
-          >
-            {{ t('ai.send') }}
-          </button>
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center gap-1 rounded-xl bg-muted/40 p-1 shrink-0">
+            <button
+              type="button"
+              class="flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[11px] font-medium transition-all"
+              :class="
+                askMode === 'chat'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              "
+              @click="askMode = 'chat'"
+            >
+              <MessageSquare :size="13" />
+              {{ t('ai.askSelectionModeChat') }}
+            </button>
+            <button
+              type="button"
+              class="flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[11px] font-medium transition-all"
+              :class="
+                askMode === 'float'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              "
+              @click="askMode = 'float'"
+            >
+              <LayoutTemplate :size="13" />
+              {{ t('ai.askSelectionModeFloat') }}
+            </button>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              class="h-9 whitespace-nowrap rounded-xl px-3 text-sm text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
+              @click="closeAskPanel"
+            >
+              {{ t('common.cancel') }}
+            </button>
+            <button
+              type="button"
+              class="group flex h-9 items-center gap-1.5 whitespace-nowrap rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground transition-all hover:bg-primary/90 disabled:opacity-50"
+              :disabled="!questionText.trim()"
+              @click="submitAsk"
+            >
+              <Send :size="14" class="transition-transform group-hover:translate-x-0.5" />
+              {{ t('ai.send') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 浮窗回答结果面板 -->
+    <div
+      v-if="isResultOpen"
+      ref="resultPanelRef"
+      class="fixed z-[240] flex flex-col w-[min(480px,calc(100vw-24px))] max-h-[min(600px,calc(100vh-48px))] rounded-2xl border border-border/30 bg-card/70 shadow-2xl backdrop-blur-3xl"
+      :style="{ ...resultPanelStyle, '--wails-draggable': 'no-drag' }"
+      role="dialog"
+      :aria-label="t('ai.askSelectionFloatingTitle')"
+    >
+      <div
+        ref="resultPanelHandleRef"
+        class="flex items-center justify-between gap-3 border-b border-border/20 px-4 py-3 cursor-move select-none"
+      >
+        <div class="flex items-center gap-2 min-w-0">
+          <Sparkles :size="14" class="text-primary shrink-0" />
+          <div class="truncate text-sm font-semibold text-foreground">
+            {{ t('ai.askSelectionFloatingTitle') }}
+          </div>
+        </div>
+        <button
+          type="button"
+          class="shrink-0 rounded-lg p-1 text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
+          :aria-label="t('common.close')"
+          @click="closeResultPanel"
+        >
+          <X :size="16" />
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-4 space-y-4">
+        <ChatMessageThinking
+          v-if="resultThinking"
+          :message="resultMessage"
+          :is-streaming="isGeneratingResult"
+          :has-content="!!resultContent"
+        />
+
+        <ChatMessageMarkdown
+          v-if="resultContent"
+          :content="resultContent"
+          :is-streaming="isGeneratingResult"
+          :is-mobile="isMobile"
+        />
+
+        <div
+          v-if="isGeneratingResult && !resultContent"
+          class="flex items-center gap-2 text-xs text-muted-foreground"
+        >
+          <div
+            class="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent"
+          />
+          {{ t('ai.generating') }}
+        </div>
+
+        <div v-if="resultError" class="rounded-lg bg-destructive/10 p-3 text-xs text-destructive">
+          {{ resultError }}
         </div>
       </div>
     </div>
