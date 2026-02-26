@@ -95,6 +95,8 @@ export const ai = {
   exportSuccess: 'Presets exported successfully',
   noSystemPrompt: 'No system prompt set',
   renameSession: 'Rename Session',
+  deleteSession: 'Delete Session',
+  deleteConfirm: 'Are you sure you want to delete this chat history? This action cannot be undone.',
   resetToDefault: 'Reset to Default',
   aborted: '(Aborted)',
   requestFailed: 'Request failed',

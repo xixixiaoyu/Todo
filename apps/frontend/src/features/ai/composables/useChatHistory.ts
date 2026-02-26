@@ -13,6 +13,7 @@ export interface ChatSession {
   createdAt: Date
   updatedAt: Date
   isPinned?: boolean
+  isAutoTitle?: boolean
 }
 
 const SESSIONS_STORAGE_KEY = 'ai-chat-sessions'
@@ -147,9 +148,22 @@ function saveSessions(immediate = false): void {
     } catch (e) {
       if (e instanceof Error && e.name === 'QuotaExceededError') {
         console.warn('会话历史保存失败：存储配额已满。尝试清理旧数据...')
-        // 如果空间不足，尝试只保留最近的 20 条会话
-        if (sessions.value.length > 20) {
-          sessions.value = sessions.value.slice(0, 20)
+        // 空间不足时，每次删除最旧的 5 条非置顶会话
+        const nonPinnedSessions = sessions.value
+          .filter((s) => !s.isPinned)
+          .sort((a, b) => a.updatedAt.getTime() - b.updatedAt.getTime())
+
+        if (nonPinnedSessions.length > 5) {
+          const idsToDelete = nonPinnedSessions.slice(0, 5).map((s) => s.id)
+          sessions.value = sessions.value.filter((s) => !idsToDelete.includes(s.id))
+          doSave()
+        } else if (sessions.value.length > 5) {
+          // 如果非置顶会话不足，则删除最旧的 5 条（包括置顶的）
+          const allSorted = [...sessions.value].sort(
+            (a, b) => a.updatedAt.getTime() - b.updatedAt.getTime(),
+          )
+          const idsToDelete = allSorted.slice(0, 5).map((s) => s.id)
+          sessions.value = sessions.value.filter((s) => !idsToDelete.includes(s.id))
           doSave()
         }
       } else {
@@ -254,6 +268,7 @@ export function useChatHistory() {
       messages: [],
       createdAt: new Date(),
       updatedAt: new Date(),
+      isAutoTitle: true,
     }
     sessions.value.unshift(newSession)
     currentSessionId.value = newSession.id
@@ -280,14 +295,10 @@ export function useChatHistory() {
     session.messages = messages
     session.updatedAt = new Date()
 
-    // 如果是第一条用户消息，且标题仍为默认值，则更新标题为消息内容
+    // 如果是第一条用户消息，且仍处于自动标题模式，则更新标题为消息内容
     const firstUserMsg = messages.find((m) => m.role === 'user')
-    const isDefaultTitle =
-      session.title === '新对话' ||
-      session.title === 'New Chat' ||
-      session.title === i18n.global.t('ai.newChat')
 
-    if (firstUserMsg && (isDefaultTitle || !session.title)) {
+    if (firstUserMsg && session.isAutoTitle) {
       const title = firstUserMsg.content.trim()
       if (title) {
         session.title = title.slice(0, 100) // 限制标题长度，防止极端情况
@@ -325,6 +336,7 @@ export function useChatHistory() {
     const session = sessions.value.find((s) => s.id === sessionId)
     if (session) {
       session.isPinned = !session.isPinned
+      session.updatedAt = new Date() // 更新时间，确保置顶时排在最前面
       saveSessions()
     }
   }
@@ -336,6 +348,7 @@ export function useChatHistory() {
     const session = sessions.value.find((s) => s.id === sessionId)
     if (session && newTitle.trim()) {
       session.title = newTitle.trim()
+      session.isAutoTitle = false // 手动重命名后关闭自动标题
       session.updatedAt = new Date()
     }
   }

@@ -89,6 +89,8 @@ export const ai = {
   exportSuccess: '预设已成功导出',
   noSystemPrompt: '未设置系统提示词',
   renameSession: '重命名会话',
+  deleteSession: '删除会话',
+  deleteConfirm: '确定要删除这条历史记录吗？此操作不可撤销。',
   resetToDefault: '恢复默认',
   aborted: '(已中断)',
   requestFailed: '请求失败',

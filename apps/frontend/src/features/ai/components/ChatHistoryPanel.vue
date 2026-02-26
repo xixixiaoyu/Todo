@@ -38,6 +38,8 @@ const isMobile = computed(() => windowWidth.value < 640)
 // 搜索
 const searchQuery = ref('')
 const showClearConfirm = ref(false)
+const showDeleteConfirm = ref(false)
+const sessionToDelete = ref<string | null>(null)
 
 // 过滤后的会话
 const filteredSessions = computed(() => {
@@ -104,9 +106,19 @@ function selectSession(sessionId: string): void {
   emit('close')
 }
 
-// 删除会话
+// 删除单个会话：先弹窗确认
 function handleDelete(sessionId: string): void {
-  deleteSession(sessionId)
+  sessionToDelete.value = sessionId
+  showDeleteConfirm.value = true
+}
+
+// 确认删除单个
+function handleConfirmDelete(): void {
+  if (sessionToDelete.value) {
+    deleteSession(sessionToDelete.value)
+    sessionToDelete.value = null
+  }
+  showDeleteConfirm.value = false
 }
 
 // 导出 Markdown
@@ -243,6 +255,29 @@ function handleClearConfirm(): void {
           <AlertDialogAction
             class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             @click="handleClearConfirm"
+          >
+            {{ t('common.confirm') }}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    <!-- 单个删除确认弹窗 -->
+    <AlertDialog v-model:open="showDeleteConfirm">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{{ t('ai.deleteSession') }}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {{ t('ai.deleteConfirm') }}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel @click="sessionToDelete = null">{{
+            t('common.cancel')
+          }}</AlertDialogCancel>
+          <AlertDialogAction
+            class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            @click="handleConfirmDelete"
           >
             {{ t('common.confirm') }}
           </AlertDialogAction>

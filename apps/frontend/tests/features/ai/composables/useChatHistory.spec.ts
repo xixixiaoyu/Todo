@@ -16,6 +16,7 @@ type SerializedChatSession = Omit<
   createdAt: string
   updatedAt: string
   contextSummaryUpdatedAt?: string
+  isAutoTitle?: boolean
 }
 
 // Mock i18n
@@ -158,5 +159,29 @@ describe('useChatHistory', () => {
     expect(sessions.value[0].id).toBe(s2.id)
     expect(sessions.value[1].id).toBe(s1.id)
     expect(sessions.value[2].id).toBe(s3.id)
+  })
+
+  it('should auto-generate title from first user message only when isAutoTitle is true', () => {
+    const { createSession, updateSessionMessages, renameSession } = useChatHistory()
+    const session = createSession()
+
+    expect(session.isAutoTitle).toBe(true)
+
+    // 1. 第一次更新消息，自动设置标题
+    updateSessionMessages(session.id, [{ id: '1', role: 'user', content: 'First Query' }])
+    expect(session.title).toBe('First Query')
+
+    // 2. 手动重命名
+    renameSession(session.id, 'Manual Title')
+    expect(session.title).toBe('Manual Title')
+    expect(session.isAutoTitle).toBe(false)
+
+    // 3. 再次更新消息，不应更新标题
+    updateSessionMessages(session.id, [
+      { id: '1', role: 'user', content: 'First Query' },
+      { id: '2', role: 'assistant', content: 'Answer' },
+      { id: '3', role: 'user', content: 'Second Query' },
+    ])
+    expect(session.title).toBe('Manual Title')
   })
 })
