@@ -78,16 +78,28 @@
   animation: shimmer 2s linear infinite;
 }
 
+@keyframes pulse-subtle {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
 .shimmer-text {
   font-size: 15px;
   font-weight: 500;
   color: hsl(var(--primary-color));
   opacity: 0.8;
+  animation: pulse-subtle 2s ease-in-out infinite;
 }
 
 .dark .shimmer-text {
   color: hsl(var(--primary-color));
   opacity: 0.9;
+  animation: pulse-subtle 2s ease-in-out infinite;
 }
 
 @keyframes ai-float {
