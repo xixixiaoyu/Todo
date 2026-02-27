@@ -90,8 +90,8 @@ const mockConfig = ref({
   thinkingMode: 'disabled',
   todoAssistant: false,
   enableImageGeneration: false,
-  mcpEnabled: true,
-  contextCompressionEnabled: true,
+  mcpEnabled: false,
+  contextCompressionEnabled: false,
   contextCompressionTriggerChars: 24000,
   contextCompressionModelId: null,
 })
