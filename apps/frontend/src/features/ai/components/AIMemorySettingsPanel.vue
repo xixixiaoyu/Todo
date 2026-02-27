@@ -17,6 +17,14 @@ const thresholdInputId = useId()
 
 const { isMemoryEnabled, toggleMemory, autoCompressThreshold, updateAutoCompressThreshold } =
   useMemory()
+
+function togglePreset(presetId: string) {
+  if (memoryModelId.value === presetId) {
+    memoryModelId.value = null
+    return
+  }
+  memoryModelId.value = presetId
+}
 </script>
 
 <template>
@@ -76,7 +84,7 @@ const { isMemoryEnabled, toggleMemory, autoCompressThreshold, updateAutoCompress
               ? 'border-primary bg-primary text-primary-foreground'
               : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground'
           "
-          @click="memoryModelId = preset.id"
+          @click="togglePreset(preset.id)"
         >
           <Brain v-if="memoryModelId === preset.id" :size="12" />
           <span>{{ preset.name }}</span>

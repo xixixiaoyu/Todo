@@ -273,8 +273,8 @@ defineExpose({
                   'settings',
                   'presets',
                   'memory',
-                  'mcp',
                   'contextCompression',
+                  'mcp',
                 ] as const"
                 :key="tab"
                 class="group relative py-4 text-[13px] font-bold tracking-wide transition-all"
@@ -330,9 +330,6 @@ defineExpose({
               :presets="presets"
             />
 
-            <!-- MCP 扩展 Tab -->
-            <McpSettingsManager v-else-if="activeTab === 'mcp'" />
-
             <!-- 上下文压缩 Tab -->
             <AISettingsBasic
               v-else-if="activeTab === 'contextCompression'"
@@ -340,6 +337,9 @@ defineExpose({
               :presets="presets"
               mode="contextCompression"
             />
+
+            <!-- MCP 扩展 Tab -->
+            <McpSettingsManager v-else-if="activeTab === 'mcp'" />
           </div>
 
           <!-- 底部按钮 -->

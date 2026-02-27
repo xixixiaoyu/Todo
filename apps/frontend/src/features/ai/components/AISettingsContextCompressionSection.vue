@@ -12,6 +12,14 @@ defineProps<{
 const formData = defineModel<AIConfig>({ required: true })
 
 const { t } = useI18n()
+
+function togglePreset(presetId: string) {
+  if (formData.value.contextCompressionModelId === presetId) {
+    formData.value.contextCompressionModelId = null
+    return
+  }
+  formData.value.contextCompressionModelId = presetId
+}
 </script>
 
 <template>
@@ -83,18 +91,6 @@ const { t } = useI18n()
           </div>
           <div v-else class="flex flex-wrap gap-2">
             <button
-              class="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-all"
-              :class="
-                !formData.contextCompressionModelId
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground'
-              "
-              @click="formData.contextCompressionModelId = null"
-            >
-              <Cpu v-if="!formData.contextCompressionModelId" :size="12" />
-              <span>{{ t('common.none') }}</span>
-            </button>
-            <button
               v-for="preset in presets"
               :key="'cc-' + preset.id"
               class="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-all"
@@ -103,7 +99,7 @@ const { t } = useI18n()
                   ? 'border-primary bg-primary text-primary-foreground'
                   : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground'
               "
-              @click="formData.contextCompressionModelId = preset.id"
+              @click="togglePreset(preset.id)"
             >
               <Cpu v-if="formData.contextCompressionModelId === preset.id" :size="12" />
               <span>{{ preset.name }}</span>
