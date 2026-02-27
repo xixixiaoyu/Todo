@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap');
-/* 霞鹜文楷：改为本地依赖引入，避免 jsDelivr CDN 连接不稳定的问题 */
-@import 'lxgw-wenkai-screen-webfont/style.css';
+/* 霞鹜文楷：从 CDN 引入，避免本地打包产物过大 */
+@import url('https://npm.elemecdn.com/lxgw-wenkai-screen-webfont@1.7.0/lxgwwenkaiscreen.css');
 
 @tailwind base;
 @tailwind components;
