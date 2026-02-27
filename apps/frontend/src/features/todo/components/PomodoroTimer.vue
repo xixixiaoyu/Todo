@@ -141,7 +141,7 @@ watch(
     <div
       v-if="pomodoroStore.status !== 'idle' || pomodoroStore.isMiniMode"
       ref="containerRef"
-      class="fixed z-[100] group transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]"
+      class="fixed z-[100] group transition-all duration-500 ease-out-quart"
       :style="containerStyle"
     >
       <!-- Overlay Background (Browser Only) -->
@@ -158,9 +158,7 @@ watch(
       </Transition>
 
       <!-- Main Content Container -->
-      <div
-        class="relative w-full h-full transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]"
-      >
+      <div class="relative w-full h-full transition-all duration-500 ease-out-quart">
         <!-- Card Content -->
         <div
           class="relative backdrop-blur-3xl border border-white/20 dark:border-white/5 overflow-hidden transition-all duration-700 h-full w-full glass-grain"

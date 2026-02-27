@@ -81,34 +81,13 @@
 .shimmer-text {
   font-size: 15px;
   font-weight: 500;
-  background: linear-gradient(
-    90deg,
-    hsl(var(--text-secondary-color)) 0%,
-    hsl(var(--text-secondary-color)) 40%,
-    hsl(var(--primary-color)) 50%,
-    hsl(var(--text-secondary-color)) 60%,
-    hsl(var(--text-secondary-color)) 100%
-  );
-  background-size: 200% 100%;
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: shimmer 2s linear infinite;
+  color: hsl(var(--primary-color));
+  opacity: 0.8;
 }
 
 .dark .shimmer-text {
-  background: linear-gradient(
-    90deg,
-    hsl(var(--text-secondary-color)) 0%,
-    hsl(var(--text-secondary-color)) 40%,
-    hsl(var(--primary-color)) 50%,
-    hsl(var(--text-secondary-color)) 60%,
-    hsl(var(--text-secondary-color)) 100%
-  );
-  background-size: 200% 100%;
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: hsl(var(--primary-color));
+  opacity: 0.9;
 }
 
 @keyframes ai-float {
