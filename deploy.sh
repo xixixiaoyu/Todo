@@ -102,6 +102,9 @@ fi
 
 # 2. 拉取/构建镜像并启动
 echo "📦 正在构建并启动容器..."
+IMAGE_TAG=$(git rev-parse --short HEAD 2>/dev/null || echo "latest")
+export IMAGE_TAG
+echo "🏷️ 使用镜像标签: ${IMAGE_TAG}"
 "${DOCKER[@]}" compose up -d --build
 
 # 3. 清理过期镜像与构建缓存
