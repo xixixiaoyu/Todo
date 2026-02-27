@@ -249,7 +249,7 @@ export const ai = {
   memoryCompressing: '正在压缩...',
   memoryModelPreset: '记忆管理专用预设',
   memoryModelTip:
-    '为记忆任务指定一个专用预设（如逻辑推理能力更强的模型）可显著提升提取和压缩的质量。',
+    '为记忆任务指定一个专用预设（如逻辑推理能力更强的模型）可显著提升提取和压缩的质量。留空则使用当前主配置。',
   memoryList: '记忆列表',
   memoryAutoCompressThreshold: '自动压缩阈值',
   memoryAutoCompressThresholdTip:

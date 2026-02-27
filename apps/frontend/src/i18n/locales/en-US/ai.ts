@@ -256,9 +256,9 @@ export const ai = {
   noMemories: 'No memory snippets yet',
   memoryCompress: 'Compress Memory',
   memoryCompressing: 'Compressing...',
-  memoryModelPreset: 'Memory Management Preset',
+  memoryModelPreset: 'Memory Preset',
   memoryModelTip:
-    'Specifying a dedicated preset (e.g., a model with stronger reasoning) for memory tasks can significantly improve extraction and compression quality.',
+    'Specifying a dedicated preset (e.g., a model with stronger reasoning) for memory tasks can significantly improve extraction and compression quality. Leave empty to use current main configuration.',
   memoryList: 'Memory List',
   memoryAutoCompressThreshold: 'Auto-Compression Threshold',
   memoryAutoCompressThresholdTip:
