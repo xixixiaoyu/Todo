@@ -15,6 +15,7 @@ export const useTodoStore = defineStore(
     const viewMode = ref<ViewMode>('list')
     const searchQuery = ref('')
     const loading = ref(false)
+    const isDragging = ref(false)
     const error = ref<string | null>(null)
     const isDrawerOpen = ref(false)
     const isMaximized = ref(false)
@@ -188,6 +189,7 @@ export const useTodoStore = defineStore(
       viewMode,
       searchQuery,
       loading,
+      isDragging,
       error,
       filteredTodos,
       isAllExpanded,
@@ -360,6 +362,7 @@ export const useTodoStore = defineStore(
       viewMode,
       searchQuery,
       loading,
+      isDragging,
       error,
       isDrawerOpen,
       isMaximized,

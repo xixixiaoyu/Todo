@@ -61,6 +61,6 @@ export const todo = {
   quickRemindIn15m: 'In 15m',
   quickRemindIn1h: 'In 1h',
   quickRemindIn3h: 'In 3h',
-  quickRemindBeforeDue10m: '10m before due',
-  quickRemindBeforeDue30m: '30m before due',
+  quickRemindBeforeDue10m: '10m before',
+  quickRemindBeforeDue30m: '30m before',
 } as const

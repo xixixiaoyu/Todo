@@ -9,6 +9,7 @@ export function createTodoActions(deps: {
   viewMode: Ref<ViewMode>
   searchQuery: Ref<string>
   loading: Ref<boolean>
+  isDragging: Ref<boolean>
   error: Ref<string | null>
   filteredTodos: ComputedRef<Todo[]>
   isAllExpanded: ComputedRef<boolean>
@@ -43,6 +44,7 @@ export function createTodoActions(deps: {
   toggleAllExpansion: () => void
   toggleTodoExpansion: (id: string) => void
   getTodoPath: (todoId: string) => string[]
+  setDragging: (dragging: boolean) => void
 } {
   function isDuplicate(title: string, parentId: string | null = null, excludeId?: string): boolean {
     const trimmedTitle = title.trim().toLowerCase()
@@ -566,5 +568,6 @@ export function createTodoActions(deps: {
     toggleAllExpansion,
     toggleTodoExpansion,
     getTodoPath,
+    setDragging: (dragging: boolean) => (deps.isDragging.value = dragging),
   }
 }

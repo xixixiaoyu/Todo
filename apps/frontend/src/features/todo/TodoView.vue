@@ -63,7 +63,7 @@ const handleMouseMove = (e: MouseEvent) => {
   }
 
   // 卡片倾斜效果 (Tilt Effect)
-  if (cardRef.value && !pomodoroStore.isMiniMode) {
+  if (cardRef.value && !pomodoroStore.isMiniMode && !todoStore.isDragging) {
     const tiltX = mousePos.value.y * 6 // 增加倾斜幅度，增强 3D 感
     const tiltY = -mousePos.value.x * 6
     animateTilt?.(tiltX, tiltY)
@@ -74,6 +74,15 @@ const resetTilt = () => {
   mousePos.value = { x: 0, y: 0 }
   animateReset?.()
 }
+
+watch(
+  () => todoStore.isDragging,
+  (isDragging) => {
+    if (isDragging) {
+      resetTilt()
+    }
+  },
+)
 
 const isInputVisible = computed(() => todoStore.viewMode === 'list' && todoStore.filter !== 'trash')
 

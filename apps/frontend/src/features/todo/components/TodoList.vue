@@ -3,13 +3,14 @@ import { useI18n } from 'vue-i18n'
 import { ClipboardList, CheckCircle2, SearchX, Trash2 } from 'lucide-vue-next'
 import { computed, onMounted } from 'vue'
 import draggable from 'vuedraggable'
-import type { Todo } from '../stores/todo'
+import { useTodoStore, type Todo } from '../stores/todo'
 import TodoItem from './TodoItem.vue'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useGsap } from '@/composables/useGsap'
 
 const { t } = useI18n()
 const { gsap, ctx } = useGsap()
+const store = useTodoStore()
 
 defineOptions({
   name: 'TodoList',
@@ -141,13 +142,15 @@ const displayTodos = computed(() => {
           v-model="dragList"
           item-key="id"
           handle=".drag-handle"
-          group="todos"
+          :group="{ name: 'todos', pull: true, put: true }"
           ghost-class="opacity-50"
           chosen-class="scale-[1.02]"
           drag-class="rotate-1"
-          class="space-y-3 pb-6"
-          :animation="0"
+          class="space-y-2 pb-6"
+          :animation="200"
           :disabled="!!searchQuery"
+          @start="store.setDragging(true)"
+          @end="store.setDragging(false)"
         >
           <template #item="{ element: todo }">
             <div class="todo-item-wrapper">

@@ -57,10 +57,10 @@ const isExpanded = computed(() => props.todo.expanded ?? true)
 const hasChildren = computed(() => children.value.length > 0)
 const itemClass = computed(() => {
   if (isChild.value) {
-    return 'bg-muted/20 border-border/40 py-2 px-4 hover:bg-muted/30 hover:border-border/60'
+    return 'bg-muted/10 border-border/30 py-2 px-4 hover:bg-muted/20 hover:border-border/50'
   }
 
-  return 'bg-card border-border/60 px-4 py-3 hover:border-border/80'
+  return 'bg-card border-border/60 px-4 py-3.5 hover:border-border/80'
 })
 
 const checkboxClass = computed(() => {
@@ -184,7 +184,7 @@ watch(
 </script>
 
 <template>
-  <div class="flex flex-col gap-2">
+  <div class="flex flex-col">
     <div
       class="group relative flex items-center gap-3 rounded-xl border transition-all duration-200 hover:shadow-md hover:shadow-black/5"
       :class="[
@@ -214,7 +214,6 @@ watch(
           <ChevronDown v-if="isExpanded" class="h-4 w-4" />
           <ChevronRight v-else class="h-4 w-4" />
         </Button>
-        <div v-else class="w-6" />
 
         <Checkbox
           v-if="store.filter !== 'trash'"
@@ -280,19 +279,26 @@ watch(
 
     <!-- Subtasks List (Recursive) -->
     <div
-      v-if="isExpanded && hasChildren"
-      class="flex flex-col gap-2 ml-4 md:ml-6 border-l border-primary/25 pl-4 md:pl-6"
+      v-if="isExpanded && (level || 0) < 2 && (hasChildren || store.isDragging)"
+      class="flex flex-col ml-[32px] md:ml-[32px] transition-all duration-300"
+      :class="[hasChildren ? 'mt-2 gap-2' : 'mt-1']"
     >
       <draggable
         v-model="dragChildren"
         item-key="id"
         handle=".drag-handle"
-        group="todos"
+        :group="{ name: 'todos', pull: true, put: true }"
         :animation="200"
         ghost-class="opacity-50"
         chosen-class="scale-[1.01]"
-        class="flex flex-col gap-1.5 min-h-[4px]"
-        @start="hapticSelectionStart"
+        class="w-full flex flex-col gap-1.5 min-h-[8px]"
+        @start="
+          () => {
+            hapticSelectionStart()
+            store.setDragging(true)
+          }
+        "
+        @end="store.setDragging(false)"
       >
         <template #item="{ element }">
           <TodoItem
