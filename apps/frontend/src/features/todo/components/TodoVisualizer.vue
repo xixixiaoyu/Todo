@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, nextTick, onBeforeUnmount, onActivated } from 'vue'
-import { Clover } from 'lucide-vue-next'
+import { Snowflake } from 'lucide-vue-next'
 import VChart from 'vue-echarts'
 import { useDark, useResizeObserver } from '@vueuse/core'
 import { useTodoStore, type FilterType } from '../stores/todo'
@@ -415,7 +415,7 @@ const emptyText = computed(() =>
         class="flex-1 flex flex-col items-center justify-center relative z-10"
       >
         <div class="p-8 rounded-full bg-primary/5 mb-6 animate-pulse">
-          <Clover :size="48" class="text-primary/20" />
+          <Snowflake :size="48" class="text-primary/20" />
         </div>
         <p class="text-muted-foreground/60 font-medium tracking-wide">
           {{ emptyText }}

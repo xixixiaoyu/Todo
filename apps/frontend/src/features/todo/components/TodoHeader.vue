@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import {
+  Snowflake,
   Clover,
   Languages,
   Network,
@@ -73,7 +74,7 @@ const handleRegisterPasskey = async () => {
       <div
         class="p-1.5 md:p-2 rounded-xl bg-primary/10 text-primary transition-transform group-hover:rotate-12"
       >
-        <Clover :size="20" class="md:w-6 md:h-6" />
+        <Snowflake :size="20" class="md:w-6 md:h-6" />
       </div>
       <h1
         class="hidden sm:flex items-center gap-2 cursor-default text-primary text-xl md:text-2xl font-extrabold tracking-tight transition-transform hover:scale-105"

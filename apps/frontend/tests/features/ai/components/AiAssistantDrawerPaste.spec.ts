@@ -7,6 +7,7 @@ import AiAssistantDrawer from '@/features/ai/components/AiAssistantDrawer.vue'
 // Mock Lucide icons
 vi.mock('lucide-vue-next', () => {
   const icons = [
+    'Snowflake',
     'Clover',
     'Plus',
     'X',

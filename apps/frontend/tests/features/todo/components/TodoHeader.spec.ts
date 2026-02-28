@@ -14,6 +14,7 @@ vi.mock('vue-router', () => ({
 
 // Mock lucide-vue-next components
 vi.mock('lucide-vue-next', () => ({
+  Snowflake: { template: '<span>Snowflake</span>' },
   Clover: { template: '<span>Clover</span>' },
   Languages: { template: '<span class="lucide-languages">Languages</span>' },
   Network: { template: '<span>Network</span>' },

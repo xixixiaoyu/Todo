@@ -26,7 +26,7 @@ vi.mock('vue-echarts', () => ({
 }))
 
 vi.mock('lucide-vue-next', () => ({
-  Clover: { template: '<span />' },
+  Snowflake: { template: '<span />' },
 }))
 
 vi.mock('@/composables/useTheme', () => ({
