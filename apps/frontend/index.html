@@ -12,6 +12,16 @@
     <title>简思 (Lumina)</title>
     <script>
       ;(function () {
+        // 同步设置初始标题，避免根据语言切换时的闪烁
+        const locale =
+          localStorage.getItem('locale') ||
+          (navigator.language.startsWith('zh') ? 'zh-CN' : 'en-US')
+        if (locale === 'en-US') {
+          document.title = 'Lumina (简思)'
+        } else {
+          document.title = '简思 (Lumina)'
+        }
+
         const prefersDark =
           window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
         const setting = localStorage.getItem('vueuse-color-scheme') || 'auto'

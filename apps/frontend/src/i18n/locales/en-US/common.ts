@@ -1,5 +1,6 @@
 export const common = {
   appName: 'Lumina',
+  fullAppName: 'Lumina (简思)',
   beta: 'Beta',
   appDescription: 'Simple in form, deep in thought - pure and efficient AI-powered task management',
   loading: 'Loading...',

@@ -64,7 +64,14 @@ router.beforeEach((to) => {
   const titleKey = to.meta.title as string
   const translatedTitle = titleKey ? t(titleKey) : ''
   const appName = t('common.appName')
-  document.title = translatedTitle ? `${translatedTitle} - ${appName}` : appName
+  const fullAppName = t('common.fullAppName')
+
+  if (translatedTitle) {
+    document.title = `${translatedTitle} - ${appName}`
+  } else {
+    // 如果没有特定标题，则使用完整应用名称，保持与 index.html 一致
+    document.title = fullAppName
+  }
 })
 
 export default router

@@ -32,11 +32,11 @@ describe('Router Title', () => {
     document.title = ''
   })
 
-  it('首页标题应该只显示应用名称', async () => {
+  it('首页标题应该显示完整应用名称', async () => {
     await router.push('/')
     const { t } = i18n.global
-    const appName = t('common.appName')
-    expect(document.title).toBe(appName)
+    const fullAppName = t('common.fullAppName')
+    expect(document.title).toBe(fullAppName)
   })
 
   it('登录页标题应该显示“页面标题 - 应用名称”', async () => {

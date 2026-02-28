@@ -1,5 +1,6 @@
 export const common = {
   appName: '简思',
+  fullAppName: '简思 (Lumina)',
   beta: 'Beta',
   appDescription: '简于形，深于思 — 高效纯粹的 AI 个人待办',
   loading: '加载中...',
