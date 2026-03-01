@@ -280,6 +280,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
             ...options,
             thinkingMode: getAIThinkingMode(),
             contextSummary,
+            memorySnapshot: currentSession.value?.memorySnapshot,
           },
         )
       } else {
@@ -314,6 +315,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
             thinkingMode: getAIThinkingMode(),
             tools: aiTools.length > 0 ? aiTools : undefined,
             contextSummary,
+            memorySnapshot: currentSession.value?.memorySnapshot,
           },
           (toolCall) => {
             toolCalls.push(toolCall)

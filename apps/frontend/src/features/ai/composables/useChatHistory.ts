@@ -2,6 +2,7 @@ import { ref, computed, watch } from 'vue'
 import i18n from '@/i18n'
 import { generateId } from '@/features/ai/services/aiService'
 import type { ChatMessage } from '@/features/ai/services/aiService'
+import { useMemory } from './useMemory'
 
 export interface ChatSession {
   id: string
@@ -10,6 +11,7 @@ export interface ChatSession {
   contextSummary?: string
   contextSummaryUpdatedAt?: Date
   contextSummaryUntilMessageId?: string
+  memorySnapshot?: string[] // 锁定在会话启动时的记忆快照
   createdAt: Date
   updatedAt: Date
   isPinned?: boolean
@@ -262,10 +264,13 @@ export function useChatHistory() {
    * 创建新会话
    */
   function createSession(): ChatSession {
+    const { memories, isMemoryEnabled } = useMemory()
+
     const newSession: ChatSession = {
       id: generateId(),
       title: i18n.global.t('ai.newChat'),
       messages: [],
+      memorySnapshot: isMemoryEnabled.value ? [...memories.value] : [],
       createdAt: new Date(),
       updatedAt: new Date(),
       isAutoTitle: true,

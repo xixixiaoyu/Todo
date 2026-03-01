@@ -59,6 +59,7 @@ export async function getAIStreamResponse(
     assistantMode = aiConfig.assistantMode,
     thinkingMode = aiConfig.thinkingMode,
     contextSummary,
+    memorySnapshot,
     tools,
     toolChoice,
   } = options
@@ -72,6 +73,7 @@ export async function getAIStreamResponse(
     aiConfig.todoAssistant,
     assistantMode,
     contextSummary,
+    memorySnapshot,
   )
 
   try {

@@ -96,6 +96,7 @@ export interface AIRequestOptions {
   assistantMode?: AssistantMode
   thinkingMode?: 'enabled' | 'disabled'
   contextSummary?: string
+  memorySnapshot?: string[]
   tools?: Tool[]
   toolChoice?: 'none' | 'auto' | 'required' | { type: 'function'; function: { name: string } }
 }
