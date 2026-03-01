@@ -158,22 +158,24 @@ watch(
       </Transition>
 
       <!-- Main Content Container -->
-      <div class="relative w-full h-full transition-all duration-500 ease-out-quart">
+      <div
+        class="relative w-full h-full transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]"
+      >
         <!-- Card Content -->
         <div
-          class="relative backdrop-blur-3xl border border-white/20 dark:border-white/5 overflow-hidden transition-all duration-700 h-full w-full glass-grain"
+          class="relative backdrop-blur-3xl overflow-hidden transition-all duration-700 h-full w-full group/card"
           :class="[
             pomodoroStore.isMiniMode
-              ? 'rounded-[2.5rem] bg-white/60 dark:bg-black/40 flex flex-col'
-              : 'rounded-3xl p-5 bg-card/95 shadow-2xl',
+              ? 'rounded-[3rem] bg-white/70 dark:bg-black/60 flex flex-col'
+              : 'rounded-[2.5rem] p-6 bg-white/80 dark:bg-neutral-900/80 shadow-2xl border border-white/40 dark:border-white/10',
             pomodoroStore.status === 'focus'
-              ? 'ring-1 ring-primary/5 shadow-primary/5'
-              : 'ring-1 ring-orange-500/5 shadow-orange-500/5',
+              ? 'ring-1 ring-rose-500/10'
+              : 'ring-1 ring-emerald-500/10',
           ]"
           :style="{
             boxShadow: pomodoroStore.isMiniMode
-              ? '0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 20px 50px -10px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.4)'
-              : '0 20px 50px -12px rgba(0, 0, 0, 0.5)',
+              ? '0 20px 40px -15px rgba(0, 0, 0, 0.1), 0 10px 20px -10px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.5)'
+              : '0 40px 80px -20px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.5)',
             '--wails-draggable': 'drag',
             transform: 'translateZ(0)',
           }"
@@ -181,17 +183,17 @@ watch(
           <!-- Wails Drag Area for Mini Mode -->
           <div v-if="pomodoroStore.isMiniMode && isWails()" class="absolute inset-0 z-0"></div>
 
-          <!-- Colorful Background Glows -->
+          <!-- Dynamic Background Glows (Refined) -->
           <div
-            class="absolute inset-0 overflow-hidden pointer-events-none z-0 opacity-30 dark:opacity-20"
+            class="absolute inset-0 overflow-hidden pointer-events-none z-0 opacity-40 dark:opacity-30"
           >
             <div
-              class="absolute -top-[10%] -left-[10%] w-[60%] h-[60%] rounded-full blur-[80px] animate-float-slow"
-              :class="pomodoroStore.status === 'focus' ? 'bg-rose-400/20' : 'bg-emerald-400/20'"
+              class="absolute -top-[20%] -left-[20%] w-[80%] h-[80%] rounded-full blur-[100px] animate-float-slow"
+              :class="pomodoroStore.status === 'focus' ? 'bg-rose-400/30' : 'bg-emerald-400/30'"
             ></div>
             <div
-              class="absolute -bottom-[10%] -right-[10%] w-[50%] h-[50%] rounded-full blur-[70px] animate-float-reverse"
-              :class="pomodoroStore.status === 'focus' ? 'bg-amber-400/20' : 'bg-blue-400/20'"
+              class="absolute -bottom-[20%] -right-[20%] w-[70%] h-[70%] rounded-full blur-[90px] animate-float-reverse"
+              :class="pomodoroStore.status === 'focus' ? 'bg-amber-300/20' : 'bg-blue-400/20'"
             ></div>
           </div>
 
@@ -201,9 +203,9 @@ watch(
             :class="[
               pomodoroStore.isMiniMode
                 ? isWails()
-                  ? 'pt-12 pb-2'
-                  : 'pt-10 pb-2'
-                : 'flex items-center justify-between px-1 mb-4',
+                  ? 'pt-10 pb-1'
+                  : 'pt-8 pb-1'
+                : 'flex items-center justify-between px-2 mb-6',
             ]"
             style="--wails-draggable: no-drag"
           >
@@ -211,72 +213,93 @@ watch(
             <div
               v-if="!pomodoroStore.isMiniMode"
               ref="handleRef"
-              class="flex items-center gap-2 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors"
+              class="flex items-center gap-3 cursor-grab active:cursor-grabbing group/handle"
             >
-              <GripVertical class="w-4 h-4 opacity-50" />
+              <div
+                class="w-8 h-8 rounded-xl bg-foreground/5 flex items-center justify-center transition-colors group-hover/handle:bg-foreground/10"
+              >
+                <GripVertical class="w-4 h-4 text-foreground/40" />
+              </div>
               <Badge
                 variant="secondary"
-                class="text-[10px] uppercase tracking-wider font-bold py-0.5 px-2 bg-primary/10 text-primary border-none"
+                class="text-[10px] uppercase tracking-[0.2em] font-black py-1 px-3 bg-foreground/5 text-foreground/60 border-none rounded-lg"
               >
                 {{ t(`pomodoro.status.${pomodoroStore.status}`) }}
               </Badge>
             </div>
 
-            <!-- Center: Title (Absolute Centered in Mini Mode) -->
+            <!-- Center: Title (Mini Mode) -->
             <div
               v-if="pomodoroStore.isMiniMode && pomodoroStore.activeTodo"
-              class="absolute left-1/2 -translate-x-1/2 flex flex-col items-center justify-center min-w-0 w-full max-w-[60%] animate-in fade-in duration-500"
-              :class="isWails() ? 'top-6' : 'top-4'"
+              class="absolute left-1/2 -translate-x-1/2 flex flex-col items-center justify-center min-w-0 w-full max-w-[70%] animate-in fade-in zoom-in-95 duration-500 transition-opacity"
+              :class="[isWails() ? 'top-5' : 'top-4', 'group-hover/card:opacity-0']"
             >
               <span
-                class="text-[10px] font-bold tracking-[0.15em] text-foreground/70 truncate max-w-[120px] uppercase transition-opacity duration-300 group-hover:opacity-100"
+                class="text-[9px] font-black tracking-[0.25em] text-foreground/40 truncate max-w-[140px] uppercase"
               >
                 {{ pomodoroStore.activeTodo.title }}
               </span>
             </div>
 
-            <!-- Right: Actions (Absolute in Mini Mode) -->
+            <!-- Right Side: Actions (Mini Mode Refined) -->
             <div
-              class="flex items-center gap-1"
-              :class="[
-                pomodoroStore.isMiniMode
-                  ? 'absolute right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300'
-                  : 'justify-end flex-1',
-                pomodoroStore.isMiniMode ? (isWails() ? 'top-6' : 'top-4') : '',
-              ]"
+              v-if="pomodoroStore.isMiniMode"
+              class="absolute top-4 right-4 flex items-center gap-1 opacity-0 group-hover/card:opacity-100 transition-all duration-500 -translate-y-1 group-hover/card:translate-y-0"
+              style="--wails-draggable: no-drag"
             >
-              <!-- AI Assistant Trigger (Mini Mode - Only in Browser) -->
-              <Button
-                v-if="pomodoroStore.isMiniMode && !isWails()"
-                variant="ghost"
-                size="icon"
-                class="w-7 h-7 rounded-full hover:bg-primary/10 active:scale-90 transition-all text-primary/60 hover:text-primary relative z-30"
-                style="--wails-draggable: no-drag"
-                :title="t('ai.assistant')"
-                @click.stop="toggleAiAssistant"
-              >
-                <Sparkles class="w-3.5 h-3.5" />
-              </Button>
-
-              <!-- Mini Mode Toggle -->
               <Button
                 variant="ghost"
                 size="icon"
-                class="w-7 h-7 rounded-full hover:bg-foreground/5 active:scale-90 transition-all text-foreground/30 hover:text-foreground/60"
+                class="w-6 h-6 rounded-full hover:bg-foreground/5 text-foreground/20 hover:text-foreground/50"
                 @click="toggleMiniMode"
               >
-                <Maximize2 v-if="pomodoroStore.isMiniMode" class="w-3.5 h-3.5" />
-                <Minimize2 v-else class="w-3.5 h-3.5" />
+                <Maximize2 class="w-3 h-3" />
               </Button>
-
-              <!-- Reset/Close Button -->
               <Button
                 variant="ghost"
                 size="icon"
-                class="w-7 h-7 rounded-full hover:bg-destructive/5 hover:text-destructive active:scale-90 transition-all text-foreground/30"
+                class="w-6 h-6 rounded-full hover:bg-destructive/5 hover:text-destructive text-foreground/20"
                 @click="pomodoroStore.resetTimer"
               >
-                <X class="w-3.5 h-3.5" />
+                <X class="w-3 h-3" />
+              </Button>
+            </div>
+
+            <!-- Left Side: AI (Mini Mode Refined) -->
+            <Button
+              v-if="pomodoroStore.isMiniMode && !isWails()"
+              variant="ghost"
+              size="icon"
+              class="absolute top-4 left-4 w-6 h-6 rounded-full hover:bg-primary/10 text-primary/30 hover:text-primary opacity-0 group-hover/card:opacity-100 transition-all duration-500 -translate-y-1 group-hover/card:translate-y-0"
+              style="--wails-draggable: no-drag"
+              @click.stop="toggleAiAssistant"
+            >
+              <Sparkles class="w-3 h-3" />
+            </Button>
+
+            <!-- Right Side: Actions (Full Mode Only) -->
+            <div
+              v-if="!pomodoroStore.isMiniMode"
+              class="flex items-center gap-1.5 justify-end flex-1"
+            >
+              <!-- Size Toggle -->
+              <Button
+                variant="ghost"
+                size="icon"
+                class="w-8 h-8 rounded-full hover:bg-foreground/5 active:scale-90 transition-all text-foreground/20 hover:text-foreground/50"
+                @click="toggleMiniMode"
+              >
+                <Minimize2 class="w-4 h-4" />
+              </Button>
+
+              <!-- Reset -->
+              <Button
+                variant="ghost"
+                size="icon"
+                class="w-8 h-8 rounded-full hover:bg-destructive/5 hover:text-destructive active:scale-90 transition-all text-foreground/20"
+                @click="pomodoroStore.resetTimer"
+              >
+                <X class="w-4 h-4" />
               </Button>
             </div>
           </div>
@@ -284,142 +307,224 @@ watch(
           <!-- Timer Display -->
           <div
             class="relative z-10 flex flex-col items-center justify-center w-full flex-1"
-            :class="pomodoroStore.isMiniMode ? 'pb-2' : 'py-4'"
+            :class="pomodoroStore.isMiniMode ? 'pb-4' : 'py-6'"
           >
-            <!-- Progress Ring -->
-            <div class="relative flex items-center justify-center">
+            <!-- Progress Ring (Optimized) -->
+            <div
+              class="relative flex items-center justify-center group/timer"
+              :class="pomodoroStore.isMiniMode ? 'cursor-pointer' : ''"
+              @click="
+                pomodoroStore.isMiniMode
+                  ? pomodoroStore.isRunning
+                    ? pomodoroStore.pauseTimer()
+                    : pomodoroStore.resumeTimer()
+                  : null
+              "
+            >
+              <!-- Glow Effect -->
+              <div
+                class="absolute inset-0 rounded-full blur-2xl opacity-0 group-hover/timer:opacity-20 transition-opacity duration-700"
+                :class="pomodoroStore.status === 'focus' ? 'bg-rose-500' : 'bg-emerald-500'"
+              ></div>
+
+              <!-- Play/Pause Overlay (Mini Mode Only) -->
+              <div
+                v-if="pomodoroStore.isMiniMode"
+                class="absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover/timer:opacity-100 transition-all duration-300 scale-90 group-hover/timer:scale-100"
+              >
+                <div
+                  class="w-10 h-10 rounded-full bg-foreground/10 backdrop-blur-md flex items-center justify-center text-foreground/60 shadow-lg"
+                >
+                  <component
+                    :is="pomodoroStore.isRunning ? Pause : Play"
+                    class="w-5 h-5 fill-current"
+                  />
+                </div>
+              </div>
+
               <svg
                 :class="[
-                  'transition-all duration-1000 ease-in-out drop-shadow-sm',
-                  pomodoroStore.isMiniMode ? 'w-28 h-28' : 'w-64 h-64',
+                  'transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)]',
+                  pomodoroStore.isMiniMode ? 'w-32 h-32' : 'w-72 h-72',
+                  pomodoroStore.isMiniMode
+                    ? 'group-hover/timer:opacity-20 transition-opacity duration-300'
+                    : '',
                 ]"
                 viewBox="0 0 100 100"
               >
+                <!-- Outer Shadow Ring -->
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="48"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="0.5"
+                  class="text-foreground/[0.05] dark:text-white/[0.05]"
+                />
                 <!-- Background Ring -->
                 <circle
                   cx="50"
                   cy="50"
-                  r="46"
+                  r="44"
                   fill="none"
                   stroke="currentColor"
-                  stroke-width="1.5"
+                  stroke-width="2"
                   class="text-foreground/[0.03] dark:text-white/[0.03]"
                 />
                 <!-- Progress Ring -->
                 <circle
                   cx="50"
                   cy="50"
-                  r="46"
+                  r="44"
                   fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
+                  stroke="url(#progressGradient)"
+                  stroke-width="3"
                   stroke-linecap="round"
-                  class="transition-all duration-500 ease-out"
-                  :class="pomodoroStore.status === 'focus' ? 'text-primary' : 'text-orange-500'"
+                  class="transition-all duration-700 ease-out"
                   :style="{
-                    strokeDasharray: '289',
-                    strokeDashoffset: 289 - (pomodoroStore.progress / 100) * 289,
-                    opacity: pomodoroStore.isRunning ? 0.6 : 0.2,
+                    strokeDasharray: '276.46',
+                    strokeDashoffset: 276.46 - (pomodoroStore.progress / 100) * 276.46,
                     filter: pomodoroStore.isRunning
-                      ? `drop-shadow(0 0 8px ${
+                      ? `drop-shadow(0 0 12px ${
                           pomodoroStore.status === 'focus'
-                            ? 'hsla(var(--primary), 0.3)'
-                            : 'rgba(249, 115, 22, 0.3)'
+                            ? 'rgba(244, 63, 94, 0.4)'
+                            : 'rgba(16, 185, 129, 0.4)'
                         })`
                       : 'none',
                   }"
                   transform="rotate(-90 50 50)"
                 />
+
+                <!-- Definitions for Gradient -->
+                <defs>
+                  <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop
+                      offset="0%"
+                      :stop-color="pomodoroStore.status === 'focus' ? '#fb7185' : '#34d399'"
+                    />
+                    <stop
+                      offset="100%"
+                      :stop-color="pomodoroStore.status === 'focus' ? '#f59e0b' : '#3b82f6'"
+                    />
+                  </linearGradient>
+                </defs>
               </svg>
 
-              <!-- Time Text -->
+              <!-- Time Text (Refined Typography) -->
               <div class="absolute inset-0 flex flex-col items-center justify-center">
                 <span
-                  class="font-mono font-light tracking-tight tabular-nums transition-all leading-none"
+                  class="font-mono tabular-nums transition-all duration-700 leading-none select-none"
                   :class="[
-                    pomodoroStore.isRunning ? 'text-foreground/90' : 'text-foreground/40',
-                    pomodoroStore.isMiniMode ? 'text-2xl' : 'text-7xl',
+                    pomodoroStore.isRunning
+                      ? 'text-foreground font-medium'
+                      : 'text-foreground/30 font-light',
+                    pomodoroStore.isMiniMode
+                      ? 'text-3xl tracking-tighter'
+                      : 'text-8xl tracking-[-0.05em]',
                   ]"
                   :style="{
                     fontFamily: 'JetBrains Mono, monospace',
-                    textShadow: pomodoroStore.isRunning
-                      ? `0 0 30px hsla(var(--foreground), 0.05)`
-                      : 'none',
                   }"
                 >
                   {{ pomodoroStore.formattedTime }}
                 </span>
               </div>
             </div>
+
+            <!-- Session Dots (Mini Mode - Bottom Hover) -->
+            <div
+              v-if="pomodoroStore.isMiniMode"
+              class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 opacity-0 group-hover/card:opacity-30 transition-all duration-500 translate-y-1 group-hover/card:translate-y-0"
+            >
+              <div
+                v-for="i in 4"
+                :key="i"
+                class="w-1 h-1 rounded-full transition-all duration-500"
+                :class="[
+                  i <=
+                  (pomodoroStore.completedSessions % 4 ||
+                    (pomodoroStore.completedSessions > 0 ? 4 : 0))
+                    ? pomodoroStore.status === 'focus'
+                      ? 'bg-rose-500'
+                      : 'bg-emerald-500'
+                    : 'bg-foreground/20',
+                ]"
+              ></div>
+            </div>
           </div>
 
-          <!-- Task Info (Only in Full Mode) -->
+          <!-- Task Info (Full Mode Only) -->
           <div
             v-if="!pomodoroStore.isMiniMode && pomodoroStore.activeTodo"
-            class="relative z-10 mt-2 px-4 py-4 rounded-2xl bg-muted/20 border border-border/40"
+            class="relative z-10 mt-4 px-6 py-5 rounded-[2rem] bg-foreground/[0.02] border border-foreground/[0.05] backdrop-blur-sm group/task transition-all hover:bg-foreground/[0.04]"
           >
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-5">
               <div
-                class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"
+                class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0 shadow-inner transition-transform group-hover/task:scale-110 duration-500"
               >
-                <Target class="w-5 h-5 text-primary" />
+                <Target class="w-6 h-6 text-primary" />
               </div>
               <div class="flex-1 min-w-0">
-                <div class="flex items-center justify-between mb-0.5">
-                  <p
-                    class="text-[10px] text-muted-foreground uppercase font-bold tracking-widest opacity-70"
-                  >
+                <div class="flex items-center justify-between mb-1">
+                  <p class="text-[10px] text-foreground/30 uppercase font-black tracking-[0.2em]">
                     {{ t('common.current_task') }}
                   </p>
-                  <span
-                    v-if="pomodoroStore.activeTodo.pomodoroCount"
-                    class="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full"
-                    :title="
-                      t('pomodoro.sessions', { count: pomodoroStore.activeTodo.pomodoroCount })
-                    "
-                  >
-                    {{ pomodoroStore.activeTodo.pomodoroCount }}
-                  </span>
+                  <div class="flex gap-1">
+                    <div
+                      v-for="i in 4"
+                      :key="i"
+                      class="w-1.5 h-1.5 rounded-full"
+                      :class="
+                        i <= pomodoroStore.completedSessions % 4 ? 'bg-primary' : 'bg-primary/10'
+                      "
+                    ></div>
+                  </div>
                 </div>
-                <p class="text-sm font-bold truncate text-foreground/90">
+                <p class="text-base font-bold truncate text-foreground/80 tracking-tight">
                   {{ pomodoroStore.activeTodo.title }}
                 </p>
               </div>
             </div>
           </div>
 
-          <!-- Controls (Only in Full Mode) -->
+          <!-- Controls (Full Mode Only) -->
           <div
             v-if="!pomodoroStore.isMiniMode"
-            class="relative z-10 flex items-center justify-center gap-6 mt-8 no-drag"
+            class="relative z-10 flex items-center justify-center gap-8 mt-10 no-drag"
             style="--wails-draggable: no-drag"
           >
-            <Button
-              v-if="!pomodoroStore.isRunning"
-              variant="default"
-              size="icon"
-              class="w-16 h-16 rounded-[2rem] shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all bg-primary text-primary-foreground"
-              @click="pomodoroStore.resumeTimer"
-            >
-              <Play class="w-8 h-8 fill-current translate-x-0.5" />
-            </Button>
-            <Button
-              v-else
-              variant="secondary"
-              size="icon"
-              class="w-16 h-16 rounded-[2rem] shadow-lg hover:scale-105 active:scale-95 transition-all"
-              @click="pomodoroStore.pauseTimer"
-            >
-              <Pause class="w-8 h-8 fill-current" />
-            </Button>
+            <div class="relative group/play">
+              <div
+                class="absolute inset-0 bg-primary/20 blur-2xl rounded-full opacity-0 group-hover/play:opacity-100 transition-opacity duration-500"
+              ></div>
+              <Button
+                v-if="!pomodoroStore.isRunning"
+                variant="default"
+                size="icon"
+                class="relative w-20 h-20 rounded-[2.5rem] shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all duration-500 bg-primary text-primary-foreground"
+                @click="pomodoroStore.resumeTimer"
+              >
+                <Play class="w-10 h-10 fill-current translate-x-1" />
+              </Button>
+              <Button
+                v-else
+                variant="secondary"
+                size="icon"
+                class="relative w-20 h-20 rounded-[2.5rem] shadow-xl hover:scale-105 active:scale-95 transition-all duration-500 bg-foreground/5 text-foreground hover:bg-foreground/10"
+                @click="pomodoroStore.pauseTimer"
+              >
+                <Pause class="w-10 h-10 fill-current" />
+              </Button>
+            </div>
 
             <Button
               variant="ghost"
               size="icon"
-              class="w-12 h-12 rounded-2xl hover:bg-destructive/10 hover:text-destructive transition-all opacity-60 hover:opacity-100"
+              class="w-14 h-14 rounded-[1.5rem] hover:bg-destructive/5 hover:text-destructive transition-all duration-500 opacity-30 hover:opacity-100"
               @click="pomodoroStore.resetTimer"
             >
-              <Square class="w-5 h-5 fill-current" />
+              <Square class="w-6 h-6 fill-current" />
             </Button>
           </div>
         </div>
@@ -434,29 +539,14 @@ watch(
   font-feature-settings: 'tnum';
 }
 
-/* Glassmorphism subtle glow */
-.bg-card\/95 {
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
-    0 20px 50px -12px rgba(0, 0, 0, 0.5);
+/* Sophisticated Glassmorphism */
+.backdrop-blur-3xl {
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
 }
 
-:root.dark .bg-card\/95 {
-  background-color: rgba(28, 25, 23, 0.95);
-}
-
-@keyframes pulse-subtle {
-  0%,
-  100% {
-    opacity: 1;
-    stroke-width: var(--stroke-width);
-    filter: drop-shadow(0 0 8px hsla(var(--primary), 0.4));
-  }
-  50% {
-    opacity: 0.8;
-    stroke-width: calc(var(--stroke-width) + 0.5px);
-    filter: drop-shadow(0 0 12px hsla(var(--primary), 0.6));
-  }
+.dark .bg-white\/70 {
+  background-color: rgba(0, 0, 0, 0.6);
 }
 
 @keyframes float-slow {
@@ -465,10 +555,10 @@ watch(
     transform: translate(0, 0) scale(1);
   }
   33% {
-    transform: translate(10%, 15%) scale(1.1);
+    transform: translate(5%, 8%) scale(1.05);
   }
   66% {
-    transform: translate(-5%, 10%) scale(0.95);
+    transform: translate(-3%, 5%) scale(0.98);
   }
 }
 
@@ -478,41 +568,29 @@ watch(
     transform: translate(0, 0) scale(1);
   }
   33% {
-    transform: translate(-15%, -10%) scale(0.9);
+    transform: translate(-8%, -5%) scale(0.95);
   }
   66% {
-    transform: translate(10%, -15%) scale(1.15);
+    transform: translate(5%, -8%) scale(1.08);
   }
 }
 
 .animate-float-slow {
-  animation: float-slow 15s ease-in-out infinite;
+  animation: float-slow 12s ease-in-out infinite;
 }
 
 .animate-float-reverse {
-  animation: float-reverse 18s ease-in-out infinite;
+  animation: float-reverse 15s ease-in-out infinite;
 }
 
-.animate-pulse-slow {
-  animation: pulse 8s ease-in-out infinite;
+/* Custom easing for smoother interactions */
+.ease-out-quart {
+  transition-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-.animate-pulse-subtle {
-  --stroke-width: 4px;
-  animation: pulse-subtle 4s ease-in-out infinite;
-}
-
-.isMiniMode .animate-pulse-subtle {
-  --stroke-width: 3px;
-}
-
-.glass-grain::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  border-radius: inherit;
-  background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.05), transparent 40%);
+/* Ensure font rendering is sharp */
+span {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 </style>
