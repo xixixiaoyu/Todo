@@ -3,6 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref, computed } from 'vue'
+import { createPinia, setActivePinia } from 'pinia'
 import { useChat } from '@/features/ai/composables/useChat'
 import { _resetChatState } from '@/features/ai/composables/useChatState'
 import type { ChatSession } from '@/features/ai/composables/useChatHistory'
@@ -76,6 +77,14 @@ vi.mock('@/features/todo/stores/todo', () => ({
   })),
 }))
 
+// Mock useAuthStore
+vi.mock('@/features/auth/stores/auth', () => ({
+  useAuthStore: vi.fn(() => ({
+    user: ref(null),
+    isAuthenticated: computed(() => false),
+  })),
+}))
+
 // Mock AI config
 const mockConfig = ref({
   discussionMode: false,
@@ -109,6 +118,7 @@ describe('useChat Drawing Logic', () => {
   const mockGenerateId = vi.mocked(aiService.generateId)
 
   beforeEach(() => {
+    setActivePinia(createPinia())
     vi.clearAllMocks()
     _resetChatState()
     mockConfig.value.enableImageGeneration = false

@@ -19,6 +19,15 @@ import type { ChatMessage, ToolCall } from '@/features/ai/services/aiService'
 import { getAIConfig } from '@/features/ai/composables/useAIConfig'
 import { mcpApi } from '@/features/mcp/api/mcp'
 
+// Mock useAuthStore
+const mockIsAuthenticated = ref(true)
+vi.mock('@/features/auth/stores/auth', () => ({
+  useAuthStore: vi.fn(() => ({
+    user: ref(null),
+    isAuthenticated: mockIsAuthenticated,
+  })),
+}))
+
 // Mock chat history
 const mockCurrentSession = ref<ChatSession | null>(null)
 const mockGetOrCreateCurrentSession = vi.fn<() => ChatSession>()
@@ -76,6 +85,14 @@ vi.mock('@/features/ai/composables/useMemory', () => ({
     exportMemories: vi.fn(() => '[]'),
     importMemories: vi.fn(),
   })),
+}))
+
+// Mock MCP API
+vi.mock('@/features/mcp/api/mcp', () => ({
+  mcpApi: {
+    getAllTools: vi.fn().mockResolvedValue([]),
+    callTool: vi.fn(),
+  },
 }))
 
 // Mock AI config
