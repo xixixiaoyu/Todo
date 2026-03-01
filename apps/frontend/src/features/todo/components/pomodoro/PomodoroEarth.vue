@@ -19,7 +19,10 @@ let camera: THREE.PerspectiveCamera
 let renderer: THREE.WebGLRenderer
 let earth: THREE.Mesh
 let clouds: THREE.Mesh
+let atmosphere: THREE.Mesh
 let starField: THREE.Points
+let sunLight: THREE.DirectionalLight
+let cameraLight: THREE.PointLight
 let animationFrameId: number
 
 const isWails = () => nativeService.platform === 'wails'
@@ -113,22 +116,68 @@ const initThree = () => {
   clouds = new THREE.Mesh(cloudGeometry, cloudMaterial)
   scene.add(clouds)
 
-  // Star Field
+  // Atmosphere (Glow)
+  const atmosphereGeometry = new THREE.SphereGeometry(1, 64, 64)
+  const atmosphereMaterial = new THREE.ShaderMaterial({
+    vertexShader: `
+      varying vec3 vNormal;
+      varying vec3 vPosition;
+      void main() {
+        vNormal = normalize(normalMatrix * normal);
+        vPosition = (modelViewMatrix * vec4(position, 1.0)).xyz;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      varying vec3 vNormal;
+      varying vec3 vPosition;
+      uniform vec3 glowColor;
+      void main() {
+        // Fresnel for BackSide: normals point away from camera at edges
+        // dot(vNormal, viewDir) will be near 0 at edges
+        float intensity = pow(0.7 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 4.0);
+        gl_FragColor = vec4(glowColor, 1.0) * intensity;
+      }
+    `,
+    uniforms: {
+      glowColor: {
+        value: new THREE.Color(pomodoroStore.status === 'focus' ? 0x0077ff : 0x7700ff),
+      },
+    },
+    side: THREE.BackSide,
+    blending: THREE.AdditiveBlending,
+    transparent: true,
+  })
+  atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial)
+  atmosphere.scale.set(1.15, 1.15, 1.15)
+  scene.add(atmosphere)
+
+  // Star Field - More varied and layered
   const starGeometry = new THREE.BufferGeometry()
   const starMaterial = new THREE.PointsMaterial({
-    color: 0xffffff,
-    size: 0.012, // Smaller stars
+    size: 0.015,
+    vertexColors: true,
     transparent: true,
-    opacity: 0.3,
+    opacity: 0.6,
+    blending: THREE.AdditiveBlending,
   })
+
   const starVertices = []
-  for (let i = 0; i < 6000; i++) {
-    const x = (Math.random() - 0.5) * 2000
-    const y = (Math.random() - 0.5) * 2000
-    const z = (Math.random() - 0.5) * 2000
+  const starColors = []
+  for (let i = 0; i < 8000; i++) {
+    const x = (Math.random() - 0.5) * 1500
+    const y = (Math.random() - 0.5) * 1500
+    const z = (Math.random() - 0.5) * 1500
     starVertices.push(x, y, z)
+
+    // Varied star colors (mostly white, some blueish, some warm)
+    const r = 0.8 + Math.random() * 0.2
+    const g = 0.8 + Math.random() * 0.2
+    const b = 0.9 + Math.random() * 0.1
+    starColors.push(r, g, b)
   }
   starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3))
+  starGeometry.setAttribute('color', new THREE.Float32BufferAttribute(starColors, 3))
   starField = new THREE.Points(starGeometry, starMaterial)
   scene.add(starField)
 
@@ -136,11 +185,11 @@ const initThree = () => {
   const ambientLight = new THREE.AmbientLight(0xffffff, 1.2)
   scene.add(ambientLight)
 
-  const sunLight = new THREE.DirectionalLight(0xffffff, 2.0)
+  sunLight = new THREE.DirectionalLight(0xffffff, 2.0)
   sunLight.position.set(5, 3, 5)
   scene.add(sunLight)
 
-  const cameraLight = new THREE.PointLight(0xffffff, 1.2)
+  cameraLight = new THREE.PointLight(0xffffff, 1.2)
   camera.add(cameraLight)
   scene.add(camera)
 
@@ -155,21 +204,37 @@ const animate = () => {
     earth.rotation.y += 0.0008 // Slower, more Zen rotation
 
     // Aesthetic Logic: Adjust scale and position based on mode
-    let targetScale = 0.8 + (pomodoroStore.progress / 100) * 0.4
+    let targetScale = 0.85 + (pomodoroStore.progress / 100) * 0.35
     let targetX = 0
     let targetY = 0
 
-    if (!pomodoroStore.isMiniMode) {
+    if (pomodoroStore.isMiniMode) {
+      // In mini mode, we create a "Close Orbit" feel. The earth is huge and offset.
+      targetScale *= 1.6
+      targetX = -1.8
+      targetY = -0.3
+    } else {
       // In full mode, move earth slightly to the side and make it a bit smaller to not crowd the list
       targetScale *= 0.85
-      targetX = 1.2 // Move to right
-      targetY = -0.5 // Move down
+      targetX = 1.5 // Move to right
+      targetY = -0.7 // Move down
     }
 
-    // Apply Mouse Parallax
+    // Apply Subtle Mouse Parallax & Dynamic Lighting
     if (props.mousePos) {
-      targetX += props.mousePos.x * 0.5
-      targetY -= props.mousePos.y * 0.5
+      // Physics: Extremely subtle movement for massive object feel (0.08 weight)
+      targetX += props.mousePos.x * 0.08
+      targetY -= props.mousePos.y * 0.08
+
+      // Lighting: Move sun light slightly based on mouse to create "observation" feel
+      if (sunLight) {
+        gsap.to(sunLight.position, {
+          x: 5 + props.mousePos.x * 2,
+          y: 3 - props.mousePos.y * 2,
+          duration: 1,
+          overwrite: 'auto',
+        })
+      }
     }
 
     earth.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.05)
@@ -190,6 +255,25 @@ const animate = () => {
     clouds.rotation.y += 0.001
     clouds.scale.copy(earth.scale).multiplyScalar(1.02)
     clouds.position.copy(earth.position)
+  }
+
+  if (atmosphere) {
+    atmosphere.scale.copy(earth.scale).multiplyScalar(1.15)
+    atmosphere.position.copy(earth.position)
+
+    // Dynamic glow intensity
+    if (atmosphere.material instanceof THREE.ShaderMaterial) {
+      const targetGlowColor = pomodoroStore.status === 'focus' ? 0x0077ff : 0x7700ff
+      atmosphere.material.uniforms.glowColor.value.lerp(new THREE.Color(targetGlowColor), 0.05)
+    }
+  }
+
+  if (starField) {
+    starField.rotation.y += 0.0001
+    // Twinkle effect
+    if (starField.material instanceof THREE.PointsMaterial) {
+      starField.material.opacity = 0.4 + Math.sin(Date.now() * 0.001) * 0.1
+    }
   }
 
   renderer.render(scene, camera)
@@ -228,6 +312,12 @@ onUnmounted(() => {
   renderer?.dispose()
   earth?.geometry.dispose()
   ;(earth?.material as THREE.Material)?.dispose()
+  clouds?.geometry.dispose()
+  ;(clouds?.material as THREE.Material)?.dispose()
+  atmosphere?.geometry.dispose()
+  ;(atmosphere?.material as THREE.Material)?.dispose()
+  starField?.geometry.dispose()
+  ;(starField?.material as THREE.Material)?.dispose()
   pomodoroStore.isEarthReady = false
 })
 </script>
@@ -246,7 +336,7 @@ onUnmounted(() => {
       <!-- Fallback Background (Elegant Gradient) -->
       <div
         class="absolute inset-0 transition-opacity duration-1000 ease-in-out"
-        :class="isTextureLoaded ? 'opacity-0' : 'opacity-100'"
+        :class="isTextureLoaded ? 'opacity-40' : 'opacity-100'"
         :style="{
           background:
             pomodoroStore.status === 'focus'
@@ -256,12 +346,12 @@ onUnmounted(() => {
       >
         <!-- Subtle Pulse for Fallback -->
         <div
-          class="absolute inset-0 opacity-30 animate-pulse"
+          class="absolute inset-0 opacity-20 animate-pulse"
           :style="{
             background:
               pomodoroStore.status === 'focus'
-                ? 'radial-gradient(circle at 50% 50%, rgba(0, 119, 255, 0.2) 0%, transparent 70%)'
-                : 'radial-gradient(circle at 50% 50%, rgba(119, 0, 255, 0.2) 0%, transparent 70%)',
+                ? 'radial-gradient(circle at 50% 50%, rgba(0, 119, 255, 0.1) 0%, transparent 70%)'
+                : 'radial-gradient(circle at 50% 50%, rgba(119, 0, 255, 0.1) 0%, transparent 70%)',
           }"
         ></div>
       </div>
