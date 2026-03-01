@@ -117,8 +117,8 @@ async function handleViewTools(server: McpServerResponse) {
               @click="mcpEnabled = !mcpEnabled"
             >
               <span
-                class="inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-all duration-300 ease-out"
-                :style="{ transform: mcpEnabled ? 'translateX(16px)' : 'translateX(2px)' }"
+                class="inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-all duration-300 ease-out"
+                :style="{ transform: mcpEnabled ? 'translateX(18px)' : 'translateX(2px)' }"
               />
             </button>
           </div>
