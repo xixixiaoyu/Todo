@@ -110,7 +110,7 @@ const displayTodos = computed(() => {
     <ScrollArea class="flex-1 min-h-0 w-full -mx-4 px-4">
       <!-- Empty State -->
       <div
-        v-if="todos.length === 0"
+        v-show="todos.length === 0"
         class="flex flex-col items-center justify-center py-12 md:py-24"
       >
         <div
@@ -137,7 +137,7 @@ const displayTodos = computed(() => {
         </div>
       </div>
 
-      <div v-else class="min-h-[100px]">
+      <div v-show="todos.length > 0" class="min-h-[100px]">
         <draggable
           v-model="dragList"
           item-key="id"

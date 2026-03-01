@@ -279,7 +279,8 @@ watch(
 
     <!-- Subtasks List (Recursive) -->
     <div
-      v-if="isExpanded && (level || 0) < 2 && (hasChildren || store.isDragging)"
+      v-if="isExpanded && (level || 0) < 2"
+      v-show="hasChildren || store.isDragging"
       class="flex flex-col ml-[32px] md:ml-[32px] transition-all duration-300"
       :class="[hasChildren ? 'mt-2 gap-2' : 'mt-1']"
     >
