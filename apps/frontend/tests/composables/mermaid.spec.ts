@@ -22,7 +22,7 @@ describe('mermaid rendering', () => {
       expect.objectContaining({
         securityLevel: 'strict',
         flowchart: expect.objectContaining({
-          htmlLabels: false,
+          htmlLabels: true,
         }),
       }),
     )

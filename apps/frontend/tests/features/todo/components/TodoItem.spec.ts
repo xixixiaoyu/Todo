@@ -526,8 +526,8 @@ describe('TodoItem', () => {
 
       expect(rootItem.classes()).toContain('bg-card')
       expect(rootItem.classes()).toContain('border-border/60')
-      expect(childItem.classes()).toContain('bg-muted/20')
-      expect(childItem.classes()).toContain('border-border/40')
+      expect(childItem.classes()).toContain('bg-muted/10')
+      expect(childItem.classes()).toContain('border-border/30')
 
       expect(rootWrapper.findComponent(Checkbox).classes()).toContain('border-primary/70')
       expect(childWrapper.findComponent(Checkbox).classes()).toContain('border-primary/45')

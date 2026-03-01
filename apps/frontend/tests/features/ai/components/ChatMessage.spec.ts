@@ -1,7 +1,12 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
 import i18n from '@/i18n'
 import ChatMessage from '@/features/ai/components/ChatMessage.vue'
+
+beforeEach(() => {
+  setActivePinia(createPinia())
+})
 import ChatMessageMarkdown from '@/features/ai/components/ChatMessageMarkdown.vue'
 
 // Mock Lucide icons
@@ -13,9 +18,14 @@ vi.mock('lucide-vue-next', () => ({
   Pencil: { name: 'Pencil', template: '<span>Pencil</span>' },
   Trash2: { name: 'Trash2', template: '<span>Trash2</span>' },
   Users: { name: 'Users', template: '<span>Users</span>' },
+  MessageSquare: { name: 'MessageSquare', template: '<span>MessageSquare</span>' },
+  LayoutTemplate: { name: 'LayoutTemplate', template: '<span>LayoutTemplate</span>' },
   CircleDashed: { name: 'CircleDashed', template: '<span>CircleDashed</span>' },
   CheckCircle2: { name: 'CheckCircle2', template: '<span>CheckCircle2</span>' },
   AlertCircle: { name: 'AlertCircle', template: '<span>AlertCircle</span>' },
+  Send: { name: 'Send', template: '<span>Send</span>' },
+  Sparkles: { name: 'Sparkles', template: '<span>Sparkles</span>' },
+  X: { name: 'X', template: '<span>X</span>' },
 }))
 
 // Mock composables
@@ -372,7 +382,15 @@ describe('ChatMessage', () => {
     expect(input.exists()).toBe(true)
     await input.setValue('What does this mean?')
 
-    const sendBtn = wrapper.findAll('button').find((b) => b.text().trim() === 'ai.send')
+    // 切换到对话模式以触发 ask-selection 事件
+    const chatModeBtn = wrapper
+      .findAll('button')
+      .find((b) => b.text().includes('ai.askSelectionModeChat'))
+    if (chatModeBtn) {
+      await chatModeBtn.trigger('click')
+    }
+
+    const sendBtn = wrapper.findAll('button').find((b) => b.text().includes('ai.send'))
     expect(sendBtn?.exists()).toBe(true)
     await sendBtn!.trigger('click')
 
