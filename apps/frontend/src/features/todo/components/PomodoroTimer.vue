@@ -601,27 +601,6 @@ watch(
                 </span>
               </div>
             </div>
-
-            <!-- Session Dots (Mini Mode - Bottom Hover) -->
-            <div
-              v-if="pomodoroStore.isMiniMode"
-              class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 opacity-0 group-hover/card:opacity-30 transition-all duration-500 translate-y-1 group-hover/card:translate-y-0"
-            >
-              <div
-                v-for="i in 4"
-                :key="i"
-                class="w-1 h-1 rounded-full transition-all duration-500"
-                :class="[
-                  i <=
-                  (pomodoroStore.completedSessions % 4 ||
-                    (pomodoroStore.completedSessions > 0 ? 4 : 0))
-                    ? pomodoroStore.status === 'focus'
-                      ? 'bg-rose-500'
-                      : 'bg-emerald-500'
-                    : 'bg-foreground/20',
-                ]"
-              ></div>
-            </div>
           </div>
 
           <!-- Task Info (Full Mode Only) -->
@@ -640,16 +619,6 @@ watch(
                   <p class="text-[10px] text-foreground/30 uppercase font-black tracking-[0.2em]">
                     {{ t('common.current_task') }}
                   </p>
-                  <div class="flex gap-1">
-                    <div
-                      v-for="i in 4"
-                      :key="i"
-                      class="w-1.5 h-1.5 rounded-full"
-                      :class="
-                        i <= pomodoroStore.completedSessions % 4 ? 'bg-primary' : 'bg-primary/10'
-                      "
-                    ></div>
-                  </div>
                 </div>
                 <p class="text-base font-bold truncate text-foreground/80 tracking-tight">
                   {{ pomodoroStore.activeTodo.title }}
