@@ -115,6 +115,7 @@ export const ai = {
   apiError: 'API 请求失败: {status} - {error}',
   noStream: '无法获取响应流',
   defaultSystemPrompt: '你是一个友好的 AI 助手，请用简洁明了的中文回答用户的问题。',
+  teachingMode: '教学模式',
   teachingEnabled: '教学模式已开启',
   teachingDisabled: '教学模式已关闭',
   teachingPlaceholder: '输入你想学的主题…',

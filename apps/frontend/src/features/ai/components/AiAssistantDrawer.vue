@@ -267,6 +267,7 @@ defineOptions({
             @toggle-discussion="toggleDiscussionMode"
             @toggle-image-gen="toggleImageGeneration"
             @toggle-thinking="toggleThinkingMode"
+            @toggle-teaching="toggleTeachingMode"
           />
         </template>
       </AiAssistantToolbar>

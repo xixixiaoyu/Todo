@@ -122,6 +122,7 @@ export const ai = {
   noStream: 'Unable to get response stream',
   defaultSystemPrompt:
     'You are a friendly AI assistant. Please answer user questions in clear and concise English.',
+  teachingMode: 'Teaching Mode',
   teachingEnabled: 'Teaching mode enabled',
   teachingDisabled: 'Teaching mode disabled',
   teachingPlaceholder: 'Type what you want to learn…',

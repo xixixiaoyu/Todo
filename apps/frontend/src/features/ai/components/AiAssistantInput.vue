@@ -3,7 +3,14 @@ import { ref, nextTick, watch, computed, useId, onMounted, onUnmounted } from 'v
 import { useWindowSize } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import type { ChatSession } from '@/features/ai/composables/useChatHistory'
-import { AlertCircle, Image as ImageIcon, Clover, Users, Lightbulb } from 'lucide-vue-next'
+import {
+  AlertCircle,
+  Image as ImageIcon,
+  Clover,
+  Users,
+  Lightbulb,
+  GraduationCap,
+} from 'lucide-vue-next'
 import type { ParsedFile } from '@/composables/useFileParsing'
 import AiAssistantInputAttachments from '@/features/ai/components/AiAssistantInputAttachments.vue'
 import AiAssistantInputSlashCommands from '@/features/ai/components/AiAssistantInputSlashCommands.vue'
@@ -38,6 +45,7 @@ const emit = defineEmits<{
   (e: 'toggleDiscussion'): void
   (e: 'toggleImageGen'): void
   (e: 'toggleThinking'): void
+  (e: 'toggleTeaching'): void
 }>()
 
 const { t } = useI18n()
@@ -56,6 +64,13 @@ const slashCommands = computed(() => [
     icon: Lightbulb,
     active: props.isThinkingEnabled,
     action: () => emit('toggleThinking'),
+  },
+  {
+    id: 'teaching',
+    title: t('ai.teachingMode'),
+    icon: GraduationCap,
+    active: props.isTeachingEnabled,
+    action: () => emit('toggleTeaching'),
   },
   {
     id: 'todo',
