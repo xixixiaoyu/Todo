@@ -8,6 +8,9 @@ import hljs from 'highlight.js'
 import { getLanguageDisplayName, stableHash } from './utils'
 import type { MermaidQueueItem } from './mermaid'
 
+// 注册 mermaid 为普通文本，防止 highlight.js 报错
+hljs.registerLanguage('mermaid', () => ({ contains: [] }))
+
 export interface MarkdownEnv {
   mermaidQueue?: MermaidQueueItem[]
   isStreaming?: boolean

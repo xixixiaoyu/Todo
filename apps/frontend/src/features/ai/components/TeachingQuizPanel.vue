@@ -191,24 +191,39 @@ function optionKey(optionId: string): string {
     <div
       v-for="quiz in quizzes"
       :key="quiz.id"
-      class="rounded-2xl border border-border/60 bg-card/40 px-3 py-3 shadow-sm backdrop-blur-xl"
+      class="group/quiz relative overflow-hidden rounded-2xl border border-border/40 bg-card/30 p-4 shadow-sm backdrop-blur-xl transition-all hover:border-primary/20 hover:bg-card/40"
     >
-      <div class="space-y-2">
-        <div class="text-sm font-semibold leading-relaxed text-foreground">
-          {{ quiz.stem }}
+      <!-- 背景装饰：柔和渐变 -->
+      <div
+        class="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-primary/5 blur-3xl transition-opacity group-hover/quiz:opacity-100 opacity-0"
+      />
+
+      <div class="relative space-y-4">
+        <div class="flex items-start gap-3">
+          <div
+            class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+          >
+            <span class="text-[10px] font-bold">?</span>
+          </div>
+          <div class="text-[14px] font-semibold leading-relaxed tracking-tight text-foreground/90">
+            {{ quiz.stem }}
+          </div>
         </div>
 
-        <div v-if="quiz.kind === 'single_choice' || quiz.kind === 'multi_choice'" class="space-y-2">
+        <div
+          v-if="quiz.kind === 'single_choice' || quiz.kind === 'multi_choice'"
+          class="grid gap-2"
+        >
           <button
             v-for="opt in quiz.options || []"
             :key="opt.id"
             type="button"
-            class="flex w-full items-start gap-2 rounded-xl border px-3 py-2 text-left text-sm transition-all active:scale-[0.99]"
+            class="group/opt flex w-full items-start gap-3 rounded-xl border px-3.5 py-3 text-left text-sm transition-all active:scale-[0.98]"
             :class="
               cn(
                 isOptionSelected(quiz, opt.id)
-                  ? 'border-primary/40 bg-primary/10 text-foreground shadow-[0_0_0_1px_hsl(var(--primary)_/_0.12)]'
-                  : 'border-border/60 bg-background/40 hover:bg-background/60',
+                  ? 'border-primary/30 bg-primary/10 text-foreground ring-1 ring-primary/20'
+                  : 'border-border/40 bg-background/30 hover:border-border/80 hover:bg-background/50',
               )
             "
             :disabled="disabled || isSubmitting(quiz.id)"
@@ -219,80 +234,103 @@ function optionKey(optionId: string): string {
                 : toggleMulti(quiz.id, opt.id, !multiSelections[quiz.id]?.[opt.id])
             "
           >
-            <span
-              class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[11px] font-bold transition-colors"
+            <div
+              class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-[11px] font-bold transition-all duration-300"
               :class="
                 isOptionSelected(quiz, opt.id)
-                  ? 'border-primary/40 bg-primary/10 text-primary'
-                  : 'border-border/70 text-muted-foreground/70'
+                  ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                  : 'border-border/80 bg-background/50 group-hover/opt:border-primary/40'
               "
             >
-              <Check v-if="isOptionSelected(quiz, opt.id)" :size="11" stroke-width="3" />
-              <span v-else>{{ optionKey(opt.id) }}</span>
-            </span>
-            <span class="flex-1 leading-relaxed">
-              <span v-if="quiz.kind === 'multi_choice'" class="mr-1 opacity-70"
-                >{{ optionKey(opt.id) }}.</span
-              >
+              <Check v-if="isOptionSelected(quiz, opt.id)" :size="12" stroke-width="3" />
+              <span v-else class="transition-colors group-hover/opt:text-primary">{{
+                optionKey(opt.id)
+              }}</span>
+            </div>
+            <div class="flex-1 leading-relaxed">
               {{ opt.text }}
-            </span>
+            </div>
           </button>
         </div>
 
         <div v-else class="space-y-2">
-          <textarea
-            :value="shortAnswers[quiz.id] || ''"
-            rows="3"
-            class="w-full resize-none rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground/40 focus:border-primary/40 focus:ring-4 focus:ring-primary/5"
-            :disabled="disabled || isSubmitting(quiz.id)"
-            :placeholder="quiz.answerHint || t('ai.teachingShortAnswerPlaceholder')"
-            :aria-label="quiz.stem"
-            :aria-invalid="!!errors[quiz.id]"
-            :aria-describedby="errors[quiz.id] ? `teaching-quiz-error-${quiz.id}` : undefined"
-            @input="(e) => updateShortAnswer(quiz.id, (e.target as HTMLTextAreaElement).value)"
-          />
+          <div class="relative">
+            <textarea
+              :value="shortAnswers[quiz.id] || ''"
+              rows="3"
+              class="w-full resize-none rounded-xl border border-border/40 bg-background/30 px-4 py-3 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground/30 focus:border-primary/40 focus:ring-4 focus:ring-primary/5"
+              :disabled="disabled || isSubmitting(quiz.id)"
+              :placeholder="quiz.answerHint || t('ai.teachingShortAnswerPlaceholder')"
+              :aria-label="quiz.stem"
+              :aria-invalid="!!errors[quiz.id]"
+              :aria-describedby="errors[quiz.id] ? `teaching-quiz-error-${quiz.id}` : undefined"
+              @input="(e) => updateShortAnswer(quiz.id, (e.target as HTMLTextAreaElement).value)"
+            />
+            <div
+              class="absolute bottom-2 right-3 text-[10px] text-muted-foreground/40 tabular-nums"
+            >
+              {{ (shortAnswers[quiz.id] || '').length }} chars
+            </div>
+          </div>
         </div>
 
-        <div
-          v-if="errors[quiz.id]"
-          :id="`teaching-quiz-error-${quiz.id}`"
-          class="flex items-center gap-2 text-xs text-destructive/80"
-          role="alert"
-          aria-live="polite"
+        <Transition
+          enter-active-class="transition duration-200 ease-out"
+          enter-from-class="opacity-0 -translate-y-1"
+          enter-to-class="opacity-100 translate-y-0"
+          leave-active-class="transition duration-150 ease-in"
+          leave-from-class="opacity-100 translate-y-0"
+          leave-to-class="opacity-0 -translate-y-1"
         >
-          <AlertCircle :size="14" />
-          <span>{{ errors[quiz.id] }}</span>
-        </div>
+          <div
+            v-if="errors[quiz.id]"
+            :id="`teaching-quiz-error-${quiz.id}`"
+            class="flex items-center gap-2 rounded-lg bg-destructive/5 px-2.5 py-1.5 text-[11px] font-medium text-destructive/90"
+            role="alert"
+            aria-live="polite"
+          >
+            <AlertCircle :size="13" />
+            <span>{{ errors[quiz.id] }}</span>
+          </div>
+        </Transition>
 
-        <div class="flex items-center justify-between pt-1">
-          <div class="text-[11px] text-muted-foreground/70">
+        <div class="flex items-center justify-between gap-4 pt-1">
+          <div class="text-[11px] italic text-muted-foreground/60">
             {{ quiz.answerHint || t('ai.teachingAnswerHintDefault') }}
           </div>
           <Button
             v-if="!isBatchMode"
-            variant="secondary"
+            variant="ghost"
             size="sm"
-            class="rounded-xl"
+            class="h-8 rounded-lg px-4 text-xs font-semibold hover:bg-primary/10 hover:text-primary"
             :disabled="disabled || isSubmitting(quiz.id)"
             @click="submitQuiz(quiz)"
           >
+            <span
+              v-if="isSubmitting(quiz.id)"
+              class="mr-2 h-3 w-3 animate-spin rounded-full border-2 border-primary/30 border-t-primary"
+            />
             {{ t('ai.teachingSubmitAnswer') }}
           </Button>
         </div>
       </div>
     </div>
 
-    <div v-if="isBatchMode" class="flex justify-end pt-1 px-1">
+    <div v-if="isBatchMode" class="flex justify-end px-1 pt-2">
       <Button
         size="sm"
-        class="w-full sm:w-auto rounded-xl px-6 transition-all active:scale-[0.98]"
+        class="group/submit relative h-10 w-full overflow-hidden rounded-xl bg-primary px-8 font-bold text-primary-foreground shadow-lg transition-all active:scale-[0.98] sm:w-auto"
         :disabled="disabled || submittingBatch"
         @click="submitAll"
       >
+        <div
+          class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 group-hover/submit:translate-x-full -translate-x-full"
+        />
         <span
           v-if="submittingBatch"
-          class="mr-2 h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent"
+          class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
         />
+        <Check v-else-if="!disabled" :size="16" class="mr-2 opacity-80" />
         {{ t('ai.teachingSubmitAll') }}
       </Button>
     </div>

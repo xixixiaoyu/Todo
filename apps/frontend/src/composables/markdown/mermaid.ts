@@ -64,7 +64,7 @@ export async function initializeMermaid(theme: 'default' | 'dark' = 'default') {
     fontSize: 14,
     flowchart: {
       useMaxWidth: false,
-      htmlLabels: false,
+      htmlLabels: true,
       curve: 'basis', // 使用更平滑的曲线
       padding: 15,
     },
