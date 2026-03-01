@@ -31,8 +31,8 @@ const onEnter = (el: Element, done: () => void) => {
         opacity: 1,
         x: 0,
         scale: 1,
-        duration: 0.4,
-        ease: 'power2.out',
+        duration: 0.3,
+        ease: 'power3.out',
         onComplete: done,
       },
     )
@@ -45,7 +45,7 @@ const onLeave = (el: Element, done: () => void) => {
       opacity: 0,
       x: 10,
       scale: 0.98,
-      duration: 0.3,
+      duration: 0.25,
       ease: 'power2.in',
       onComplete: done,
     })
@@ -141,7 +141,20 @@ const scrollToMessage = (id: string) => {
   if (!props.scrollContainer) return
   const element = document.getElementById(`chat-msg-${id}`)
   if (element) {
-    element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    const container = props.scrollContainer
+    const targetTop =
+      container.scrollTop +
+      element.getBoundingClientRect().top -
+      container.getBoundingClientRect().top
+
+    ctx.add(() => {
+      gsap.to(container, {
+        scrollTop: targetTop,
+        duration: 0.4,
+        ease: 'power3.out',
+        overwrite: true,
+      })
+    })
   }
 }
 
@@ -192,7 +205,7 @@ const handleMouseEnterItem = (id: string) => {
             @mouseenter="handleMouseEnterItem(anchor.id)"
           >
             <div
-              class="w-1.5 h-1.5 rounded-full shrink-0 transition-all duration-300"
+              class="w-1.5 h-1.5 rounded-full shrink-0 transition-all duration-200"
               :class="[
                 hoveredBlockId === anchor.id || (!hoveredBlockId && activeBlockId === anchor.id)
                   ? 'bg-primary scale-125'
@@ -215,7 +228,7 @@ const handleMouseEnterItem = (id: string) => {
       <div
         v-for="anchor in questionAnchors"
         :key="anchor.id"
-        class="w-3 h-0.5 rounded-full transition-all duration-300"
+        class="w-3 h-0.5 rounded-full transition-all duration-200"
         :class="[
           hoveredBlockId === anchor.id
             ? 'bg-primary w-5 shadow-[0_0_8px_rgba(var(--primary-rgb),0.5)]'
