@@ -97,6 +97,8 @@ export const ai = {
   renameSession: 'Rename Session',
   deleteSession: 'Delete Session',
   deleteConfirm: 'Are you sure you want to delete this chat history? This action cannot be undone.',
+  thinking: 'Thinking',
+  toolCalls: 'Tool Calls',
   resetToDefault: 'Reset to Default',
   aborted: '(Aborted)',
   requestFailed: 'Request failed',

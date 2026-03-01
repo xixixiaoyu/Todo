@@ -5,6 +5,7 @@ import { ArrowDown, Sparkles } from 'lucide-vue-next'
 import { useWindowSize } from '@vueuse/core'
 import ChatMessage from './ChatMessage.vue'
 import ChatSuggestions from './ChatSuggestions.vue'
+import ChatMinimap from './ChatMinimap.vue'
 import type { ChatMessage as ChatMessageType } from '@/features/ai/composables/useChat'
 import { useSmartScroll } from '@/composables/useSmartScroll'
 import { useChatHistory } from '@/features/ai/composables/useChatHistory'
@@ -156,11 +157,11 @@ defineExpose({
 </script>
 
 <template>
-  <div class="relative flex-1 overflow-hidden">
+  <div class="relative flex-1 overflow-hidden flex flex-row">
     <div
       ref="containerRef"
       :class="[
-        'h-full overflow-y-auto overscroll-contain scroll-smooth-gpu',
+        'flex-1 h-full overflow-y-auto overscroll-contain scroll-smooth-gpu',
         isMobile ? 'px-3' : 'px-4',
       ]"
       @scroll.passive="handleScroll"
@@ -247,6 +248,8 @@ defineExpose({
       </div>
     </div>
 
+    <ChatMinimap :messages="messages" :scroll-container="containerRef" />
+
     <!-- 返回底部按钮 -->
     <Transition name="fade">
       <button
@@ -262,14 +265,12 @@ defineExpose({
         <ArrowDown :size="isMobile ? 18 : 20" />
         <span
           v-if="isSticking === false && messages[messages.length - 1]?.isStreaming"
-          class="absolute -right-1 -top-1 flex h-3 w-3"
+          class="absolute -top-1 -right-1 flex h-4 w-4"
         >
           <span
-            class="absolute inline-flex h-full w-full animate-ping rounded-full bg-[hsl(var(--primary-color))] opacity-75"
+            class="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"
           ></span>
-          <span
-            class="relative inline-flex h-3 w-3 rounded-full bg-[hsl(var(--primary-color))]"
-          ></span>
+          <span class="relative inline-flex h-4 w-4 rounded-full bg-primary"></span>
         </span>
       </button>
     </Transition>
@@ -309,9 +310,7 @@ defineExpose({
 
 .fade-enter-active,
 .fade-leave-active {
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
+  transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .fade-enter-from,
@@ -320,14 +319,19 @@ defineExpose({
   transform: translateY(10px);
 }
 
-/* 隐藏滚动条但保留功能 */
+/* 极致纯净滚动条：平时隐形，滚动时极细显现 */
 .overflow-y-auto {
   scrollbar-width: thin;
-  scrollbar-color: hsl(var(--ai-message-border)) transparent;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.3s;
+}
+
+.overflow-y-auto:hover {
+  scrollbar-color: hsl(var(--muted-foreground) / 0.1) transparent;
 }
 
 .overflow-y-auto::-webkit-scrollbar {
-  width: 5px;
+  width: 4px;
 }
 
 .overflow-y-auto::-webkit-scrollbar-track {
@@ -335,15 +339,16 @@ defineExpose({
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb {
-  background-color: hsl(var(--ai-message-border));
-  border-radius: 20px;
+  background: transparent;
+  border-radius: 10px;
+  transition: background 0.3s;
 }
 
-:global(.dark) .overflow-y-auto {
-  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+.overflow-y-auto:hover::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.15);
 }
 
-:global(.dark) .overflow-y-auto::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.15);
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.3) !important;
 }
 </style>

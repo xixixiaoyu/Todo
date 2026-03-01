@@ -95,6 +95,8 @@ export const ai = {
   aborted: '(已中断)',
   requestFailed: '请求失败',
   historyTitle: '历史记录',
+  thinking: '思考',
+  toolCalls: '工具调用',
   pinned: '已置顶',
   pin: '置顶',
   unpin: '取消置顶',
