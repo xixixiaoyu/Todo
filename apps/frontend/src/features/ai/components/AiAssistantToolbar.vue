@@ -72,6 +72,7 @@ const isMobile = computed(() => windowWidth.value < 640)
             :class="[
               'toolbar-btn group flex shrink-0 items-center rounded-full border transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-30',
               isMobile ? 'h-8 px-2.5 gap-1' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
+              '!border-primary/20 !bg-primary/10 !text-primary hover:!bg-primary/20 hover:!border-primary/30',
             ]"
             :disabled="!hasHistory || isGenerating"
             :title="t('ai.newChat')"
@@ -254,14 +255,10 @@ const isMobile = computed(() => windowWidth.value < 640)
 }
 
 .toolbar-container :deep(.toolbar-btn:hover:not(:disabled)) {
-  background-color: hsl(var(--accent) / 0.5);
+  background-color: hsl(var(--accent) / 0.6);
   border-color: hsl(var(--primary) / 0.3);
   color: hsl(var(--primary));
   transform: translateY(-1px);
-  box-shadow:
-    0 4px 8px rgba(0, 0, 0, 0.04),
-    0 12px 24px rgba(0, 0, 0, 0.08),
-    inset 0 1px 1px rgba(255, 255, 255, 0.1);
 }
 
 .toolbar-container :deep(.toolbar-btn:active:not(:disabled)) {
