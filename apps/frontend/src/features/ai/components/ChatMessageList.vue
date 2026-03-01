@@ -222,7 +222,9 @@ defineExpose({
               <TransitionGroup name="message-list" tag="div" class="flex flex-col">
                 <ChatMessage
                   v-for="(msg, index) in visibleMessages"
+                  :id="`chat-msg-${msg.id}`"
                   :key="msg.id"
+                  class="scroll-mt-10"
                   :message="msg"
                   :is-last="index + windowStartIndex === messages.length - 1"
                   :is-prev-tool="
@@ -248,7 +250,9 @@ defineExpose({
       </div>
     </div>
 
-    <ChatMinimap :messages="messages" :scroll-container="containerRef" />
+    <div class="absolute top-1/2 -translate-y-1/2 right-2 z-30">
+      <ChatMinimap :messages="messages" :scroll-container="containerRef" />
+    </div>
 
     <!-- 返回底部按钮 -->
     <Transition name="fade">

@@ -2,6 +2,7 @@
 import { computed, ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useWindowSize } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
+import { useGsap } from '@/composables/useGsap'
 import type { ChatMessage } from '@/features/ai/composables/useChat'
 
 const props = defineProps<{
@@ -10,316 +11,241 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n()
-const minimapRef = ref<HTMLElement | null>(null)
 const { width: windowWidth } = useWindowSize()
+const { gsap, ctx } = useGsap()
 const isMobile = computed(() => windowWidth.value < 640)
-
-// 拖拽状态
-const isDragging = ref(false)
 
 // 悬浮状态
 const hoveredBlockId = ref<string | null>(null)
-const mousePos = ref({ x: 0, y: 0 })
+const isPanelHovered = ref(false)
+const isMatrixHovered = ref(false)
+const showPanel = computed(() => isMatrixHovered.value || isPanelHovered.value)
 
-// 获取当前悬浮的消息摘要
-const hoveredSummary = computed(() => {
-  if (!hoveredBlockId.value || isDragging.value) return null
-  const msg = props.messages.find((m) => m.id === hoveredBlockId.value)
-  if (!msg) return null
-
-  // 提取摘要
-  let summary = msg.content || ''
-  if (msg.thinkingContent) {
-    summary = `[${t('ai.thinking')}] ${summary}`
-  }
-  if (msg.tool_calls?.length) {
-    summary = `[${t('ai.toolCalls')}] ${summary}`
-  }
-
-  return summary.length > 80 ? summary.slice(0, 80) + '...' : summary
-})
-
-// 处理鼠标移动以显示摘要或拖拽滚动
-const handleMouseMove = (e: MouseEvent) => {
-  mousePos.value = { x: e.clientX, y: e.clientY }
-
-  if (isDragging.value && minimapRef.value && props.scrollContainer) {
-    const rect = minimapRef.value.getBoundingClientRect()
-    const clickY = e.clientY - rect.top
-    const percent = Math.max(0, Math.min(1, clickY / rect.height))
-    const container = props.scrollContainer
-    const targetScrollTop = percent * container.scrollHeight
-    container.scrollTop = targetScrollTop - container.clientHeight / 2
-  }
-}
-
-const handleMouseEnterBlock = (id: string) => {
-  if (!isDragging.value) {
-    hoveredBlockId.value = id
-  }
-}
-
-const handleMouseLeaveMinimap = () => {
-  hoveredBlockId.value = null
-  isDragging.value = false
-}
-
-const handleMouseDown = (e: MouseEvent) => {
-  isDragging.value = true
-  handleMouseMove(e) // 立即触发一次滚动
-
-  // 全局监听 mouseup 以停止拖拽
-  const handleGlobalMouseUp = () => {
-    isDragging.value = false
-    window.removeEventListener('mouseup', handleGlobalMouseUp)
-  }
-  window.addEventListener('mouseup', handleGlobalMouseUp)
-}
-
-// 滚动信息状态
-const scrollInfo = ref({
-  scrollTop: 0,
-  scrollHeight: 0,
-  clientHeight: 0,
-})
-
-const updateScrollInfo = () => {
-  if (!props.scrollContainer) return
-  const { scrollTop, scrollHeight, clientHeight } = props.scrollContainer
-  scrollInfo.value = { scrollTop, scrollHeight, clientHeight }
-}
-
-// 根据消息元数据计算消息块
-const messageBlocks = computed(() => {
-  if (!props.messages.length) return []
-
-  return props.messages.map((msg) => {
-    let colorClass = 'bg-primary/20'
-    let icon = null
-
-    if (msg.role === 'user') {
-      colorClass = 'bg-primary/60 dark:bg-primary/50 shadow-[0_0_8px_rgba(var(--primary-rgb),0.3)]'
-    } else if (msg.role === 'assistant') {
-      colorClass = 'bg-muted-foreground/30 dark:bg-white/10'
-    } else if (msg.role === 'tool') {
-      colorClass = 'bg-amber-500/50'
-    }
-
-    // 根据内容长度或特征估算相对高度
-    let weight = 1
-    if (msg.content) {
-      weight = Math.max(1, Math.min(15, Math.ceil(msg.content.length / 250)))
-    }
-    if (msg.thinkingContent) weight += 1.5
-    if (msg.tool_calls?.length) {
-      weight += 1
-      icon = 'tool'
-    }
-    if (msg.images?.length) {
-      weight += 2.5
-      icon = 'image'
-    }
-    if (msg.todoActions?.length) {
-      weight += 1.5
-      icon = 'todo'
-    }
-
-    return {
-      id: msg.id,
-      role: msg.role,
-      colorClass,
-      weight,
-      icon,
-    }
+// GSAP 面板动效
+const onEnter = (el: Element, done: () => void) => {
+  ctx.add(() => {
+    gsap.fromTo(
+      el,
+      { opacity: 0, x: 20, scale: 0.95 },
+      {
+        opacity: 1,
+        x: 0,
+        scale: 1,
+        duration: 0.4,
+        ease: 'power2.out',
+        onComplete: done,
+      },
+    )
   })
-})
+}
 
-// 视口高亮样式
-const viewportStyle = computed(() => {
-  const { scrollTop, scrollHeight, clientHeight } = scrollInfo.value
-  if (!scrollHeight || !minimapRef.value) return { top: '0%', height: '0%' }
+const onLeave = (el: Element, done: () => void) => {
+  ctx.add(() => {
+    gsap.to(el, {
+      opacity: 0,
+      x: 10,
+      scale: 0.98,
+      duration: 0.3,
+      ease: 'power2.in',
+      onComplete: done,
+    })
+  })
+}
 
-  const top = (scrollTop / scrollHeight) * 100
-  const height = (clientHeight / scrollHeight) * 100
+// 视口激活状态 (Scroll Spy)
+const activeBlockId = ref<string | null>(null)
+const SCROLL_THRESHOLD = 150 // 滚动激活阈值
 
-  return {
-    top: `${top}%`,
-    height: `${height}%`,
+const updateActiveBlock = () => {
+  if (!props.scrollContainer || questionAnchors.value.length === 0) return
+
+  const container = props.scrollContainer
+  const containerRect = container.getBoundingClientRect()
+  const anchors = questionAnchors.value
+
+  // 找到最后一个「在视口顶部上方」或「正在视口中」的用户提问
+  let currentActiveId = anchors[0].id
+
+  for (const anchor of anchors) {
+    const el = document.getElementById(`chat-msg-${anchor.id}`)
+    if (el) {
+      const elRect = el.getBoundingClientRect()
+      // 算法：如果元素顶部距离容器顶部的距离 <= 阈值
+      // 使用相对坐标 elRect.top - containerRect.top，不受 offsetParent 影响
+      if (elRect.top - containerRect.top <= SCROLL_THRESHOLD) {
+        currentActiveId = anchor.id
+      } else {
+        break
+      }
+    }
   }
-})
+  activeBlockId.value = currentActiveId
+}
 
-// 监听滚动容器尺寸变化
-let resizeObserver: ResizeObserver | null = null
+// 确保监听器正确挂载，解决 props 异步传递导致的失效
+watch(
+  () => props.scrollContainer,
+  (newContainer, oldContainer) => {
+    if (oldContainer) {
+      oldContainer.removeEventListener('scroll', updateActiveBlock)
+    }
+    if (newContainer) {
+      newContainer.addEventListener('scroll', updateActiveBlock, { passive: true })
+      setTimeout(updateActiveBlock, 300)
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  () => props.messages.length,
+  () => {
+    void nextTick(() => {
+      setTimeout(updateActiveBlock, 500)
+    })
+  },
+  { immediate: true },
+)
 
 onMounted(() => {
   if (props.scrollContainer) {
-    props.scrollContainer.addEventListener('scroll', updateScrollInfo, { passive: true })
-
-    resizeObserver = new ResizeObserver(() => {
-      updateScrollInfo()
-    })
-    resizeObserver.observe(props.scrollContainer)
-
-    // 同时也监听内容的尺寸变化
-    const content = props.scrollContainer.firstElementChild
-    if (content) resizeObserver.observe(content)
-
-    updateScrollInfo()
+    props.scrollContainer.addEventListener('scroll', updateActiveBlock, { passive: true })
+    setTimeout(updateActiveBlock, 300)
   }
 })
 
 onUnmounted(() => {
   if (props.scrollContainer) {
-    props.scrollContainer.removeEventListener('scroll', updateScrollInfo)
-  }
-  if (resizeObserver) {
-    resizeObserver.disconnect()
+    props.scrollContainer.removeEventListener('scroll', updateActiveBlock)
   }
 })
 
-// 消息变化时更新
-watch(
-  () => props.messages.length,
-  () => {
-    void nextTick(() => {
-      setTimeout(updateScrollInfo, 100)
+// 获取用户提问点
+const questionAnchors = computed(() => {
+  return props.messages
+    .filter((m) => m.role === 'user')
+    .map((m) => {
+      let text = m.content || ''
+      if (!text && m.images?.length) {
+        text = `[${t('ai.image')}]`
+      }
+      if (!text) {
+        text = '...'
+      }
+      return { id: m.id, text }
     })
-  },
-)
+})
 
-// 深度监听最后一条消息的内容（流式输出时）
-watch(
-  () => props.messages[props.messages.length - 1]?.content,
-  () => {
-    updateScrollInfo()
-  },
-)
+// 跳转到指定消息
+const scrollToMessage = (id: string) => {
+  if (!props.scrollContainer) return
+  const element = document.getElementById(`chat-msg-${id}`)
+  if (element) {
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+}
+
+const handleMouseEnterMatrix = () => {
+  isMatrixHovered.value = true
+}
+
+const handleMouseLeaveMatrix = () => {
+  isMatrixHovered.value = false
+  hoveredBlockId.value = null
+}
+
+const handleMouseEnterItem = (id: string) => {
+  hoveredBlockId.value = id
+}
 </script>
 
 <template>
   <div
-    v-if="!isMobile && messages.length > 1"
-    ref="minimapRef"
-    class="relative w-2.5 hover:w-4.5 h-full bg-black/[0.03] dark:bg-white/[0.03] border-l border-border/10 select-none group/minimap hover:bg-black/[0.06] dark:hover:bg-white/[0.06] transition-all duration-300 ease-in-out overflow-visible z-20 mr-1.5 rounded-r-xl"
-    :class="isDragging ? 'cursor-grabbing' : 'cursor-pointer'"
-    @mousedown="handleMouseDown"
-    @mousemove="handleMouseMove"
-    @mouseleave="handleMouseLeaveMinimap"
+    v-if="!isMobile && questionAnchors.length > 0"
+    class="flex items-center gap-2"
+    @mouseleave="handleMouseLeaveMatrix"
   >
-    <!-- 轨道背景增强 -->
-    <div
-      class="absolute inset-y-0 left-0 w-[1px] bg-gradient-to-b from-transparent via-border/30 to-transparent group-hover/minimap:via-border/50 transition-all duration-300"
-    ></div>
-
-    <!-- 消息块容器 (常驻但保持优雅的透明度) -->
-    <div
-      class="absolute inset-0 px-[1.5px] py-[4px] flex flex-col gap-[2px] opacity-40 group-hover/minimap:opacity-100 transition-opacity duration-300"
-    >
+    <!-- 悬浮提问大纲面板 -->
+    <Transition :css="false" @enter="onEnter" @leave="onLeave">
       <div
-        v-for="block in messageBlocks"
-        :key="block.id"
-        class="relative w-full rounded-[1px] transition-all duration-300"
+        v-if="showPanel"
+        class="min-w-[220px] max-w-[320px] rounded-2xl bg-card/90 backdrop-blur-2xl border border-border/40 shadow-[0_8px_32px_rgba(0,0,0,0.12)] p-2"
         :class="[
-          block.colorClass,
-          hoveredBlockId === block.id
-            ? 'opacity-100 scale-x-110 translate-x-[-1px] shadow-lg'
-            : 'opacity-80',
+          messages.length > 10
+            ? 'fixed right-12 top-1/2 -translate-y-1/2'
+            : 'absolute right-full mr-2 top-1/2 -translate-y-1/2',
         ]"
-        :style="{ flex: block.weight }"
-        @mouseenter="handleMouseEnterBlock(block.id)"
+        @mouseenter="isPanelHovered = true"
+        @mouseleave="isPanelHovered = false"
       >
-        <!-- 特殊内容标识 -->
-        <div
-          v-if="block.icon"
-          class="absolute inset-0 flex items-center justify-center opacity-0 group-hover/minimap:opacity-100 transition-opacity duration-300"
-        >
-          <div class="w-[1.5px] h-[1.5px] rounded-full bg-white/60"></div>
+        <div class="flex flex-col gap-0.5 max-h-[400px] overflow-y-auto custom-scrollbar">
+          <button
+            v-for="anchor in questionAnchors"
+            :key="anchor.id"
+            class="w-full text-left px-3 py-2 rounded-xl transition-all duration-200 group/item flex items-center gap-3"
+            :class="[
+              hoveredBlockId === anchor.id || (!hoveredBlockId && activeBlockId === anchor.id)
+                ? 'bg-primary/10 text-primary shadow-sm'
+                : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
+            ]"
+            @click="scrollToMessage(anchor.id)"
+            @mouseenter="handleMouseEnterItem(anchor.id)"
+          >
+            <div
+              class="w-1.5 h-1.5 rounded-full shrink-0 transition-all duration-300"
+              :class="[
+                hoveredBlockId === anchor.id || (!hoveredBlockId && activeBlockId === anchor.id)
+                  ? 'bg-primary scale-125'
+                  : 'bg-muted-foreground/30',
+              ]"
+            ></div>
+            <span class="text-xs font-medium line-clamp-2 leading-snug">
+              {{ anchor.text }}
+            </span>
+          </button>
         </div>
-      </div>
-    </div>
-
-    <!-- 视口高亮 (更明确的位置反馈) -->
-    <div
-      class="absolute left-[-2.5px] right-[-2.5px] z-10 pointer-events-none transition-[top,height] duration-200 ease-out"
-      :style="viewportStyle"
-    >
-      <div
-        class="h-full w-full rounded-md border border-primary/30 group-hover/minimap:border-primary/60 bg-primary/5 group-hover/minimap:bg-primary/15 backdrop-blur-[2px] transition-all duration-300 relative overflow-hidden shadow-[0_2px_8px_rgba(var(--primary-rgb),0.1)]"
-      >
-        <!-- 侧边光感指示线 (加粗并增强亮度) -->
-        <div
-          class="absolute inset-y-0 left-0 w-[2px] bg-primary/60 group-hover/minimap:w-[3px] group-hover/minimap:bg-primary rounded-l-md transition-all duration-300 shadow-[0_0_10px_rgba(var(--primary-rgb),0.4)] group-hover/minimap:shadow-[2px_0_12px_rgba(var(--primary-rgb),0.7)]"
-        ></div>
-        <!-- 中心微光线 -->
-        <div
-          class="absolute top-1/2 left-0 right-0 h-[0.5px] bg-primary/40 opacity-0 group-hover/minimap:opacity-100 transition-opacity duration-300"
-        ></div>
-      </div>
-    </div>
-
-    <!-- 浮动摘要 (高级悬浮卡片) -->
-    <Transition name="fade-fast">
-      <div
-        v-if="hoveredSummary"
-        class="absolute right-full mr-4 z-[300] pointer-events-none px-4 py-3 rounded-[20px] bg-card/98 backdrop-blur-3xl border border-border/40 shadow-[0_12px_40px_rgba(0,0,0,0.2)] text-xs text-foreground w-max max-w-[300px] break-words animate-in fade-in slide-in-from-right-2 duration-300"
-        :style="{
-          top: `${mousePos.y - (minimapRef?.getBoundingClientRect().top || 0) - 28}px`,
-        }"
-      >
-        <div class="flex flex-col gap-2">
-          <!-- 角色标签与状态 -->
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <div
-                class="w-1.5 h-1.5 rounded-full"
-                :class="
-                  hoveredBlockId && messages.find((m) => m.id === hoveredBlockId)?.role === 'user'
-                    ? 'bg-primary'
-                    : 'bg-muted-foreground/40'
-                "
-              ></div>
-              <span class="opacity-40 font-bold uppercase tracking-[0.1em] text-[9px]">
-                {{
-                  hoveredBlockId && messages.find((m) => m.id === hoveredBlockId)?.role === 'user'
-                    ? 'User'
-                    : 'Assistant'
-                }}
-              </span>
-            </div>
-            <!-- 时间或状态标记 (如果有) -->
-          </div>
-
-          <!-- 内容预览 -->
-          <div class="line-clamp-6 leading-[1.6] text-[13px] font-medium text-foreground/90">
-            {{ hoveredSummary }}
-          </div>
-        </div>
-
-        <!-- 装饰性小角 -->
-        <div
-          class="absolute right-[-5px] top-[26px] w-2.5 h-2.5 bg-card/98 border-r border-t border-border/40 rotate-45 rounded-sm"
-        ></div>
       </div>
     </Transition>
+
+    <!-- 垂直线阵 (Dash Matrix) -->
+    <div
+      class="flex flex-col gap-1.5 py-2 px-1 cursor-pointer"
+      @mouseenter="handleMouseEnterMatrix"
+    >
+      <div
+        v-for="anchor in questionAnchors"
+        :key="anchor.id"
+        class="w-3 h-0.5 rounded-full transition-all duration-300"
+        :class="[
+          hoveredBlockId === anchor.id
+            ? 'bg-primary w-5 shadow-[0_0_8px_rgba(var(--primary-rgb),0.5)]'
+            : activeBlockId === anchor.id
+              ? 'bg-primary/60 w-4'
+              : 'bg-muted-foreground/20',
+        ]"
+        @mouseenter="handleMouseEnterItem(anchor.id)"
+        @click="scrollToMessage(anchor.id)"
+      ></div>
+    </div>
   </div>
 </template>
 
 <style scoped>
-/* 确保 flex 布局正常工作 */
-.flex-col > * {
-  min-height: 2px;
+/* 自定义滚动条 */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
 }
 
-.fade-fast-enter-active,
-.fade-fast-leave-active {
-  transition:
-    opacity 0.15s ease,
-    transform 0.15s ease;
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.fade-fast-enter-from,
-.fade-fast-leave-to {
-  opacity: 0;
-  transform: translateX(10px) scale(0.95);
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(var(--primary-rgb), 0.1);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--primary-rgb), 0.2);
 }
 </style>
