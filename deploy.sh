@@ -23,9 +23,17 @@ if [ -d .git ]; then
     GIT_BRANCH=${GIT_BRANCH:-main}
 
     echo "📥 正在更新代码（${GIT_REMOTE}/${GIT_BRANCH}）..."
-    # 先进行清理并强行获取，防止引用锁定冲突 (lock ref error)
+    # 先清理锁定文件和修剪失效引用，防止 lock ref 冲突
+    find .git/refs/remotes/"$GIT_REMOTE" -name "*.lock" -delete 2>/dev/null || true
     git remote prune "$GIT_REMOTE" >/dev/null 2>&1 || true
-    git fetch "$GIT_REMOTE" --prune --tags --force
+    
+    # 尝试 fetch，如果失败则清理引用再试
+    if ! git fetch "$GIT_REMOTE" --prune --tags --force; then
+        echo "⚠️ Git fetch 失败，尝试清理远程引用并重试..."
+        # 清理所有远程引用，强制重新获取
+        rm -rf .git/refs/remotes/"$GIT_REMOTE"
+        git fetch "$GIT_REMOTE" --prune --tags --force
+    fi
 
     if ! git show-ref --verify --quiet "refs/remotes/${GIT_REMOTE}/${GIT_BRANCH}"; then
         echo "❌ 未找到远端分支：${GIT_REMOTE}/${GIT_BRANCH}"
