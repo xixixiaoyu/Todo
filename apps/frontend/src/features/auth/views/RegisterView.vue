@@ -67,7 +67,7 @@ const onSubmit = handleSubmit(async (values) => {
         :error="errors.email"
       >
         <template #icon>
-          <Mail :size="20" stroke-width="2.5" />
+          <Mail :size="20" stroke-width="2" />
         </template>
       </FormInput>
 
@@ -80,7 +80,7 @@ const onSubmit = handleSubmit(async (values) => {
         :error="errors.name"
       >
         <template #icon>
-          <User :size="20" stroke-width="2.5" />
+          <User :size="20" stroke-width="2" />
         </template>
       </FormInput>
 

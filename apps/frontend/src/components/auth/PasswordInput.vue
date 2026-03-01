@@ -69,19 +69,14 @@ const displayError = computed(() => {
 </script>
 
 <template>
-  <div class="group space-y-2">
+  <div class="group space-y-1.5">
     <label
       :for="inputId"
-      class="block text-sm font-semibold text-foreground/80 transition-colors group-focus-within:text-primary"
+      class="block text-[13px] font-bold text-foreground/70 transition-colors group-focus-within:text-primary px-1"
     >
       {{ label }}
     </label>
     <div class="relative">
-      <div
-        class="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/60 transition-colors group-focus-within:text-primary"
-      >
-        <Lock :size="20" stroke-width="2.5" />
-      </div>
       <input
         :id="inputId"
         v-model="inputValue"
@@ -90,22 +85,27 @@ const displayError = computed(() => {
         :placeholder="placeholder"
         :disabled="disabled"
         :class="[
-          'w-full px-4 py-3.5 pr-12 rounded-2xl border bg-card/50 transition-all duration-300',
-          'placeholder:text-muted-foreground/40 pl-12',
-          'focus:outline-none focus:ring-4 focus:ring-primary/10 focus:bg-card',
+          'w-full px-4 py-3.5 pr-12 rounded-2xl border bg-card/40 backdrop-blur-sm transition-all duration-300',
+          'placeholder:text-muted-foreground/30 text-sm font-medium pl-11',
+          'focus:outline-none focus:ring-4 focus:ring-primary/5 focus:bg-card/80',
           'disabled:opacity-50 disabled:cursor-not-allowed',
           error
-            ? 'border-error focus:ring-error/10'
-            : 'border-border hover:border-primary/40 focus:border-primary',
+            ? 'border-error/50 focus:border-error focus:ring-error/5'
+            : 'border-border/60 hover:border-primary/30 focus:border-primary/50',
         ]"
       />
+      <div
+        class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/80 transition-colors group-focus-within:text-primary"
+      >
+        <Lock :size="20" stroke-width="2" />
+      </div>
       <button
         type="button"
-        class="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 text-muted-foreground/40 hover:text-primary transition-colors focus:outline-none"
+        class="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 text-muted-foreground/30 hover:text-primary transition-colors focus:outline-none"
         :title="showPassword ? t('password.hide') : t('password.show')"
         @click="showPassword = !showPassword"
       >
-        <component :is="showPassword ? EyeOff : Eye" class="w-5 h-5" />
+        <component :is="showPassword ? EyeOff : Eye" class="w-5 h-5" stroke-width="2" />
       </button>
     </div>
 

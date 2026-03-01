@@ -111,7 +111,7 @@ describe('PasswordInput', () => {
     })
 
     const input = wrapper.find('input')
-    expect(input.classes()).toContain('border-error')
+    expect(input.classes()).toContain('border-error/50')
   })
 
   it('should translate validation key with params when name is provided', () => {

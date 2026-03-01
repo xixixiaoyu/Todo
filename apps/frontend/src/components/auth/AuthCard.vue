@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useGsap } from '@/composables/useGsap'
 import { useI18n } from 'vue-i18n'
-import { Home } from 'lucide-vue-next'
+import { Home, ShieldCheck } from 'lucide-vue-next'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 defineProps<{
@@ -90,17 +90,7 @@ onMounted(() => {
           class="group mb-6 flex h-16 w-16 items-center justify-center rounded-[20px] bg-gradient-to-br from-primary/20 to-primary/5 text-primary shadow-xl shadow-primary/10 border border-primary/20 transition-transform duration-500 hover:rotate-12"
         >
           <slot name="icon">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="h-8 w-8"
-            >
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
-            </svg>
+            <ShieldCheck class="h-8 w-8" stroke-width="2" />
           </slot>
         </div>
 

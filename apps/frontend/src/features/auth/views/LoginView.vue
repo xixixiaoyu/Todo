@@ -68,7 +68,7 @@ const onPasskeyLogin = async () => {
         :error="errors.email"
       >
         <template #icon>
-          <Mail :size="20" stroke-width="2.5" />
+          <Mail :size="20" stroke-width="2" />
         </template>
       </FormInput>
 

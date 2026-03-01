@@ -79,12 +79,6 @@ const displayError = computed(() => {
       {{ label }}
     </label>
     <div class="relative">
-      <div
-        v-if="$slots.icon"
-        class="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/40 transition-colors group-focus-within:text-primary"
-      >
-        <slot name="icon" />
-      </div>
       <input
         :id="inputId"
         v-model="inputValue"
@@ -93,16 +87,22 @@ const displayError = computed(() => {
         :placeholder="placeholder"
         :disabled="disabled"
         :class="[
-          'w-full px-4 py-3.5 rounded-xl border bg-card/40 backdrop-blur-sm transition-all duration-300',
+          'w-full px-4 py-3.5 rounded-2xl border bg-card/40 backdrop-blur-sm transition-all duration-300',
           'placeholder:text-muted-foreground/30 text-sm font-medium',
           'focus:outline-none focus:ring-4 focus:ring-primary/5 focus:bg-card/80',
           'disabled:opacity-50 disabled:cursor-not-allowed',
           $slots.icon ? 'pl-11' : 'px-4',
           error
-            ? 'border-error/50 focus:ring-error/5 focus:border-error'
-            : 'border-border/60 hover:border-primary/30 focus:border-primary',
+            ? 'border-error/50 focus:border-error focus:ring-error/5'
+            : 'border-border/60 hover:border-primary/30 focus:border-primary/50',
         ]"
       />
+      <div
+        v-if="$slots.icon"
+        class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/80 transition-colors group-focus-within:text-primary"
+      >
+        <slot name="icon" />
+      </div>
     </div>
     <div class="min-h-[20px] px-1">
       <Transition
