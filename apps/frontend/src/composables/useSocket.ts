@@ -27,14 +27,17 @@ export function useSocket(): UseSocketReturn {
 
     const socketURL = window.location.origin
 
+    // 建议在生产环境优先尝试 websocket，减少 polling 带来的 400 错误
     socketInstance = io(`${socketURL}/events`, {
       withCredentials: true,
-      transports: ['polling', 'websocket'],
+      transports: ['websocket', 'polling'], // 调换顺序，优先使用 websocket
       autoConnect: false,
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       randomizationFactor: 0.5,
+      // 显式指定路径，确保与 Nginx 配置一致
+      path: '/socket.io/',
       auth: {
         token: authStore.token,
       },

@@ -18,13 +18,31 @@ import { JwtService } from '@nestjs/jwt'
  */
 @WebSocketGateway({
   cors: {
-    origin: (origin: string, callback: (err: Error | null, allow?: boolean) => void) => {
-      const allowedOrigins = process.env.CORS_ORIGIN?.split(',').map((o) => o.trim()) || [
-        'http://localhost:5173',
-      ]
-      if (!origin || allowedOrigins.includes(origin) || origin === 'null') {
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
+      const corsOrigin = process.env.CORS_ORIGIN || ''
+      if (corsOrigin === '*') {
+        return callback(null, true)
+      }
+
+      const allowedOrigins = corsOrigin.split(',').map((o) => o.trim()) || ['http://localhost:5173']
+
+      // 在生产环境中，允许 origin 为空（某些 Socket.io 握手请求可能不带 Origin，或者同源请求）
+      // 同时支持精确匹配和一些常见的调试/开发环境
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        origin === 'null' ||
+        origin.startsWith('wails://') ||
+        origin.startsWith('http://wails.localhost')
+      ) {
         callback(null, true)
       } else {
+        console.warn(
+          `[Socket.io] CORS rejection: origin=${origin}, allowedOrigins=${JSON.stringify(allowedOrigins)}`,
+        )
         callback(new Error(`Not allowed by CORS: ${origin}`))
       }
     },
