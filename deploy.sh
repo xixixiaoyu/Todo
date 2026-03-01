@@ -23,7 +23,9 @@ if [ -d .git ]; then
     GIT_BRANCH=${GIT_BRANCH:-main}
 
     echo "📥 正在更新代码（${GIT_REMOTE}/${GIT_BRANCH}）..."
-    git fetch "$GIT_REMOTE" --prune
+    # 先进行清理并强行获取，防止引用锁定冲突 (lock ref error)
+    git remote prune "$GIT_REMOTE" >/dev/null 2>&1 || true
+    git fetch "$GIT_REMOTE" --prune --tags --force
 
     if ! git show-ref --verify --quiet "refs/remotes/${GIT_REMOTE}/${GIT_BRANCH}"; then
         echo "❌ 未找到远端分支：${GIT_REMOTE}/${GIT_BRANCH}"
