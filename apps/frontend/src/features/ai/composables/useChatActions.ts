@@ -16,6 +16,7 @@ import { useChatMemory } from './useChatMemory'
 import { useChatHistory } from './useChatHistory'
 import { getAIThinkingMode, getAIConfig } from './useAIConfig'
 import { useTodoStore, type ProposedTodoChange } from '@/features/todo/stores/todo'
+import { useAuthStore } from '@/features/auth/stores/auth'
 import type { McpToolResponse } from '@/features/mcp/api/mcp'
 import { createContextCompression } from './useChatActions.contextCompression'
 import { buildAiToolsFromMcpTools } from './useChatActions.mcpTools'
@@ -65,6 +66,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
   const { createSession, currentSession, updateSessionContextSummary, clearSessionContextSummary } =
     useChatHistory()
   const todoStore = useTodoStore()
+  const authStore = useAuthStore()
 
   const { buildContextCompression } = createContextCompression({
     currentSession,
@@ -289,7 +291,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
         )
         const { mcpApi } = await import('@/features/mcp/api/mcp')
         let mcpTools: McpToolResponse[] = []
-        if (aiConfig.mcpEnabled) {
+        if (aiConfig.mcpEnabled && authStore.isAuthenticated) {
           try {
             mcpTools = await mcpApi.getAllTools()
           } catch (e) {

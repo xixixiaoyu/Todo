@@ -18,7 +18,7 @@ const { config, updateConfig } = useAIConfig()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 
 const mcpEnabled = computed({
-  get: () => config.value.mcpEnabled,
+  get: () => isAuthenticated.value && config.value.mcpEnabled,
   set: (val) => {
     if (!isAuthenticated.value) return
     updateConfig({ mcpEnabled: val })
