@@ -200,20 +200,20 @@ watch(
   <div
     v-if="!isMobile && messages.length > 1"
     ref="minimapRef"
-    class="relative w-1.5 hover:w-4 h-full bg-black/[0.01] dark:bg-white/[0.01] border-l border-border/5 select-none group/minimap hover:bg-black/[0.04] dark:hover:bg-white/[0.04] transition-all duration-500 ease-in-out overflow-visible z-20 mr-1.5 rounded-r-xl"
+    class="relative w-2.5 hover:w-4.5 h-full bg-black/[0.03] dark:bg-white/[0.03] border-l border-border/10 select-none group/minimap hover:bg-black/[0.06] dark:hover:bg-white/[0.06] transition-all duration-300 ease-in-out overflow-visible z-20 mr-1.5 rounded-r-xl"
     :class="isDragging ? 'cursor-grabbing' : 'cursor-pointer'"
     @mousedown="handleMouseDown"
     @mousemove="handleMouseMove"
     @mouseleave="handleMouseLeaveMinimap"
   >
-    <!-- 轨道背景增强 (更柔和的渐变) -->
+    <!-- 轨道背景增强 -->
     <div
-      class="absolute inset-y-0 left-0 w-[1px] bg-gradient-to-b from-transparent via-border/10 to-transparent group-hover/minimap:via-border/30 transition-all duration-500"
+      class="absolute inset-y-0 left-0 w-[1px] bg-gradient-to-b from-transparent via-border/30 to-transparent group-hover/minimap:via-border/50 transition-all duration-300"
     ></div>
 
-    <!-- 消息块容器 (仅在悬浮或拖拽时显现，保护心流) -->
+    <!-- 消息块容器 (常驻但保持优雅的透明度) -->
     <div
-      class="absolute inset-0 px-[1.5px] py-[4px] flex flex-col gap-[2px] opacity-0 group-hover/minimap:opacity-100 transition-opacity duration-500"
+      class="absolute inset-0 px-[1.5px] py-[4px] flex flex-col gap-[2px] opacity-40 group-hover/minimap:opacity-100 transition-opacity duration-300"
     >
       <div
         v-for="block in messageBlocks"
@@ -223,7 +223,7 @@ watch(
           block.colorClass,
           hoveredBlockId === block.id
             ? 'opacity-100 scale-x-110 translate-x-[-1px] shadow-lg'
-            : 'opacity-60',
+            : 'opacity-80',
         ]"
         :style="{ flex: block.weight }"
         @mouseenter="handleMouseEnterBlock(block.id)"
@@ -231,28 +231,28 @@ watch(
         <!-- 特殊内容标识 -->
         <div
           v-if="block.icon"
-          class="absolute inset-0 flex items-center justify-center opacity-0 group-hover/minimap:opacity-100 transition-opacity duration-500"
+          class="absolute inset-0 flex items-center justify-center opacity-0 group-hover/minimap:opacity-100 transition-opacity duration-300"
         >
-          <div class="w-[1.5px] h-[1.5px] rounded-full bg-white/40"></div>
+          <div class="w-[1.5px] h-[1.5px] rounded-full bg-white/60"></div>
         </div>
       </div>
     </div>
 
-    <!-- 视口高亮 (作为位置指示器常驻，但极淡) -->
+    <!-- 视口高亮 (更明确的位置反馈) -->
     <div
-      class="absolute left-[-2px] right-[-2px] z-10 pointer-events-none transition-[top,height] duration-200 ease-out"
+      class="absolute left-[-2.5px] right-[-2.5px] z-10 pointer-events-none transition-[top,height] duration-200 ease-out"
       :style="viewportStyle"
     >
       <div
-        class="h-full w-full rounded-md border border-primary/20 group-hover/minimap:border-primary/50 bg-primary/[0.02] group-hover/minimap:bg-primary/10 backdrop-blur-[1px] group-hover/minimap:backdrop-blur-[3px] transition-all duration-500 relative overflow-hidden"
+        class="h-full w-full rounded-md border border-primary/30 group-hover/minimap:border-primary/60 bg-primary/5 group-hover/minimap:bg-primary/15 backdrop-blur-[2px] transition-all duration-300 relative overflow-hidden shadow-[0_2px_8px_rgba(var(--primary-rgb),0.1)]"
       >
-        <!-- 侧边光感指示线 (常驻但非常细) -->
+        <!-- 侧边光感指示线 (加粗并增强亮度) -->
         <div
-          class="absolute inset-y-0 left-0 w-[1.5px] bg-primary/40 group-hover/minimap:w-[2.5px] group-hover/minimap:bg-primary rounded-l-md transition-all duration-500 shadow-[0_0_8px_rgba(var(--primary-rgb),0.3)] group-hover/minimap:shadow-[2px_0_10px_rgba(var(--primary-rgb),0.6)]"
+          class="absolute inset-y-0 left-0 w-[2px] bg-primary/60 group-hover/minimap:w-[3px] group-hover/minimap:bg-primary rounded-l-md transition-all duration-300 shadow-[0_0_10px_rgba(var(--primary-rgb),0.4)] group-hover/minimap:shadow-[2px_0_12px_rgba(var(--primary-rgb),0.7)]"
         ></div>
-        <!-- 中心微光线 (仅悬浮显示) -->
+        <!-- 中心微光线 -->
         <div
-          class="absolute top-1/2 left-0 right-0 h-[0.5px] bg-primary/30 opacity-0 group-hover/minimap:opacity-100 transition-opacity duration-500"
+          class="absolute top-1/2 left-0 right-0 h-[0.5px] bg-primary/40 opacity-0 group-hover/minimap:opacity-100 transition-opacity duration-300"
         ></div>
       </div>
     </div>
