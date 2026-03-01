@@ -18,7 +18,7 @@ import PomodoroMiniControls from './pomodoro/PomodoroMiniControls.vue'
 
 const pomodoroStore = usePomodoroStore()
 const { t } = useI18n()
-const { gsap } = useGsap()
+const { gsap, ctx } = useGsap()
 
 const isWails = () => nativeService.platform === 'wails'
 
@@ -78,10 +78,27 @@ function toggleMiniMode() {
   }
 }
 
-// Reset draggable position when exiting mini mode
+// Animation for mode transitions
 watch(
   () => pomodoroStore.isMiniMode,
   (isMini) => {
+    if (containerRef.value) {
+      ctx.add(() => {
+        gsap.fromTo(
+          containerRef.value,
+          {
+            scale: isMini ? 1.1 : 0.9,
+            opacity: 0.8,
+          },
+          {
+            scale: 1,
+            opacity: 1,
+            duration: 0.6,
+            ease: 'power3.out',
+          },
+        )
+      })
+    }
     if (!isMini && !isWails()) {
       x.value = window.innerWidth - 320
       y.value = 60
@@ -103,12 +120,25 @@ watch(
   () => pomodoroStore.status,
   (newStatus) => {
     if (newStatus !== 'idle' && containerRef.value) {
-      gsap.from(containerRef.value, {
-        scale: 0.9,
-        opacity: 0,
-        y: '+=20',
-        duration: 0.5,
-        ease: 'elastic.out(1, 0.8)',
+      // Entry animation
+      ctx.add(() => {
+        gsap.fromTo(
+          containerRef.value,
+          {
+            scale: 0.8,
+            opacity: 0,
+            y: 40,
+            rotateX: 10,
+          },
+          {
+            scale: 1,
+            opacity: 1,
+            y: 0,
+            rotateX: 0,
+            duration: 0.8,
+            ease: 'expo.out',
+          },
+        )
       })
     }
   },
@@ -139,7 +169,7 @@ watch(
           class="relative backdrop-blur-3xl overflow-hidden transition-all duration-700 h-full w-full group/card"
           :class="[
             pomodoroStore.isMiniMode
-              ? 'rounded-[3rem] bg-white/5 dark:bg-black/20 flex flex-col border border-white/10'
+              ? 'rounded-[3rem] flex flex-col border border-white/10'
               : 'rounded-[2.5rem] p-6 bg-white/80 dark:bg-neutral-900/80 shadow-2xl border border-white/40 dark:border-white/10',
             !pomodoroStore.isMiniMode && pomodoroStore.status === 'focus'
               ? 'ring-1 ring-rose-500/10'
@@ -148,6 +178,11 @@ watch(
                 : '',
           ]"
           :style="{
+            backgroundColor: pomodoroStore.isMiniMode
+              ? pomodoroStore.isEarthReady
+                ? 'rgba(0, 0, 0, 0.2)'
+                : 'rgba(10, 25, 47, 0.6)' // More substantial blue-ish dark background when earth is not ready
+              : '',
             boxShadow: pomodoroStore.isMiniMode
               ? '0 20px 40px -15px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.1)'
               : '0 40px 80px -20px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.5)',
@@ -158,18 +193,19 @@ watch(
           <!-- Wails Drag Area for Mini Mode -->
           <div v-if="pomodoroStore.isMiniMode && isWails()" class="absolute inset-0 z-0"></div>
 
-          <!-- Dynamic Background Glows (Full Mode Only) -->
+          <!-- Dynamic Background Glows (Full Mode Only) - Simplified for Minimalism -->
           <div
             v-if="!pomodoroStore.isMiniMode"
-            class="absolute inset-0 overflow-hidden pointer-events-none z-0 opacity-60"
+            class="absolute inset-0 overflow-hidden pointer-events-none z-0"
           >
             <div
-              class="absolute -top-[20%] -left-[20%] w-[140%] h-[140%] rounded-full blur-[120px] animate-nebula-flow opacity-40"
-              :class="pomodoroStore.status === 'focus' ? 'bg-rose-600/30' : 'bg-emerald-600/30'"
-            ></div>
-            <div
-              class="absolute -bottom-[20%] -right-[20%] w-[120%] h-[120%] rounded-full blur-[100px] animate-nebula-reverse opacity-30"
-              :class="pomodoroStore.status === 'focus' ? 'bg-orange-500/20' : 'bg-blue-600/20'"
+              class="absolute inset-0 transition-all duration-1000"
+              :style="{
+                background:
+                  pomodoroStore.status === 'focus'
+                    ? 'radial-gradient(circle at 50% 50%, rgba(244, 63, 94, 0.05) 0%, transparent 70%)'
+                    : 'radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.05) 0%, transparent 70%)',
+              }"
             ></div>
           </div>
 
@@ -242,36 +278,6 @@ watch(
 
 .dark .bg-white\/70 {
   background-color: rgba(0, 0, 0, 0.6);
-}
-
-@keyframes nebula-flow {
-  0%,
-  100% {
-    transform: translate(0, 0) rotate(0deg) scale(1);
-    filter: hue-rotate(0deg);
-  }
-  50% {
-    transform: translate(5%, 5%) rotate(180deg) scale(1.1);
-    filter: hue-rotate(15deg);
-  }
-}
-
-@keyframes nebula-reverse {
-  0%,
-  100% {
-    transform: translate(0, 0) rotate(0deg) scale(1);
-  }
-  50% {
-    transform: translate(-5%, -5%) rotate(-180deg) scale(1.2);
-  }
-}
-
-.animate-nebula-flow {
-  animation: nebula-flow 25s linear infinite;
-}
-
-.animate-nebula-reverse {
-  animation: nebula-flow 35s linear infinite reverse;
 }
 
 .ease-out-quart {

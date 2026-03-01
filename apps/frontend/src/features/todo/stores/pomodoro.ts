@@ -29,6 +29,7 @@ export const usePomodoroStore = defineStore(
     const completedSessions = ref(0)
     const history = ref<PomodoroHistory[]>([])
     const isMiniMode = ref(false)
+    const isEarthReady = ref(false)
 
     // Actions
     async function syncWailsWindow() {
@@ -162,6 +163,7 @@ export const usePomodoroStore = defineStore(
       completedSessions,
       history,
       isMiniMode,
+      isEarthReady,
       isRunning: computed(() => !!timerInterval.value),
       startFocus,
       pauseTimer,

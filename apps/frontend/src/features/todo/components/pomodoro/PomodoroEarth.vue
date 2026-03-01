@@ -3,9 +3,12 @@ import * as THREE from 'three'
 import { onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
 import { usePomodoroStore } from '../../stores/pomodoro'
 import { nativeService } from '@/services/native'
+import { useGsap } from '@/composables/useGsap'
 
 const pomodoroStore = usePomodoroStore()
 const canvasRef = ref<HTMLCanvasElement | null>(null)
+const isTextureLoaded = ref(false)
+const { gsap, ctx } = useGsap()
 
 let scene: THREE.Scene
 let camera: THREE.PerspectiveCamera
@@ -23,7 +26,7 @@ const initThree = () => {
   // Scene & Camera
   scene = new THREE.Scene()
   camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
-  camera.position.z = 3.0
+  camera.position.z = 3.5 // Slightly further out initially
 
   // Renderer
   renderer = new THREE.WebGLRenderer({
@@ -45,30 +48,62 @@ const initThree = () => {
     metalness: 0.2,
     emissive: 0x002244,
     emissiveIntensity: 0.5,
+    transparent: true,
+    opacity: 0, // Start invisible
   })
+
+  // Pre-load textures with better feedback
+  let loadedCount = 0
+  const checkAllLoaded = () => {
+    loadedCount++
+    if (loadedCount >= 2) {
+      isTextureLoaded.value = true
+      pomodoroStore.isEarthReady = true
+      // Smoothly fade in the earth material
+      ctx.add(() => {
+        gsap.to(earthMaterial, {
+          opacity: 1,
+          duration: 2,
+          ease: 'power2.inOut',
+        })
+      })
+    }
+  }
 
   textureLoader.load(
     'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_atmos_2048.jpg',
     (tex) => {
       earthMaterial.map = tex
       earthMaterial.needsUpdate = true
+      checkAllLoaded()
     },
   )
 
   earth = new THREE.Mesh(geometry, earthMaterial)
+  earth.scale.set(0.1, 0.1, 0.1) // Start small
   scene.add(earth)
 
   // Clouds
   const cloudGeometry = new THREE.SphereGeometry(1.02, 64, 64)
   const cloudMaterial = new THREE.MeshStandardMaterial({
     transparent: true,
-    opacity: 0.3,
+    opacity: 0, // Start invisible
   })
   textureLoader.load(
     'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_clouds_1024.png',
     (tex) => {
       cloudMaterial.map = tex
       cloudMaterial.needsUpdate = true
+      checkAllLoaded()
+      // Smoothly fade in clouds
+      ctx.add(() => {
+        gsap.to(cloudMaterial, {
+          opacity: 0.3,
+          duration: 3,
+          delay: 0.5,
+          ease: 'power2.inOut',
+        })
+      })
     },
   )
   clouds = new THREE.Mesh(cloudGeometry, cloudMaterial)
@@ -76,7 +111,12 @@ const initThree = () => {
 
   // Star Field
   const starGeometry = new THREE.BufferGeometry()
-  const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.02, transparent: true })
+  const starMaterial = new THREE.PointsMaterial({
+    color: 0xffffff,
+    size: 0.015,
+    transparent: true,
+    opacity: 0.4,
+  })
   const starVertices = []
   for (let i = 0; i < 5000; i++) {
     const x = (Math.random() - 0.5) * 2000
@@ -139,14 +179,16 @@ const handleResize = () => {
 }
 
 watch(
-  () => pomodoroStore.isMiniMode,
-  async (isMini) => {
-    if (isMini && !isWails()) {
+  () => pomodoroStore.status,
+  async (newStatus) => {
+    if (newStatus !== 'idle' && !isWails()) {
       await nextTick()
-      initThree()
-    } else {
+      if (!renderer) initThree()
+    } else if (newStatus === 'idle') {
       if (animationFrameId) cancelAnimationFrame(animationFrameId)
       renderer?.dispose()
+      renderer = null as unknown as THREE.WebGLRenderer
+      pomodoroStore.isEarthReady = false
     }
   },
   { immediate: true },
@@ -162,6 +204,7 @@ onUnmounted(() => {
   renderer?.dispose()
   earth?.geometry.dispose()
   ;(earth?.material as THREE.Material)?.dispose()
+  pomodoroStore.isEarthReady = false
 })
 </script>
 
@@ -173,51 +216,40 @@ onUnmounted(() => {
     leave-to-class="opacity-0 scale-95"
   >
     <div
-      v-if="pomodoroStore.isMiniMode && !isWails()"
-      class="fixed inset-0 bg-[#050505] -z-10 overflow-hidden"
+      v-if="pomodoroStore.status !== 'idle' && !isWails()"
+      class="fixed inset-0 -z-10 overflow-hidden bg-black"
     >
-      <!-- 3D Earth Canvas -->
-      <canvas ref="canvasRef" class="absolute inset-0 w-full h-full"></canvas>
-
-      <!-- Shooting Stars -->
-      <div class="absolute inset-0 z-0 pointer-events-none">
+      <!-- Fallback Background (Elegant Gradient) -->
+      <div
+        class="absolute inset-0 transition-opacity duration-1000 ease-in-out"
+        :class="isTextureLoaded ? 'opacity-0' : 'opacity-100'"
+        :style="{
+          background:
+            pomodoroStore.status === 'focus'
+              ? 'radial-gradient(circle at center, #001a33 0%, #000810 100%)'
+              : 'radial-gradient(circle at center, #1a0033 0%, #080010 100%)',
+        }"
+      >
+        <!-- Subtle Pulse for Fallback -->
         <div
-          v-for="i in 3"
-          :key="'shooting-' + i"
-          class="absolute h-[1px] bg-gradient-to-r from-transparent via-white to-transparent opacity-0 animate-shooting-star"
+          class="absolute inset-0 opacity-30 animate-pulse"
           :style="{
-            width: Math.random() * 100 + 100 + 'px',
-            left: Math.random() * 100 + '%',
-            top: Math.random() * 100 + '%',
-            animationDelay: Math.random() * 20 + 5 + 's',
-            transform: 'rotate(-45deg)',
+            background:
+              pomodoroStore.status === 'focus'
+                ? 'radial-gradient(circle at 50% 50%, rgba(0, 119, 255, 0.2) 0%, transparent 70%)'
+                : 'radial-gradient(circle at 50% 50%, rgba(119, 0, 255, 0.2) 0%, transparent 70%)',
           }"
         ></div>
       </div>
+
+      <!-- 3D Earth Canvas -->
+      <canvas
+        ref="canvasRef"
+        class="absolute inset-0 w-full h-full transition-opacity duration-1000"
+        :class="isTextureLoaded ? 'opacity-100' : 'opacity-0'"
+      ></canvas>
     </div>
   </Transition>
 </template>
 
-<style scoped>
-@keyframes shooting-star {
-  0% {
-    transform: translate(0, 0) rotate(-45deg);
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  30% {
-    transform: translate(-300px, 300px) rotate(-45deg);
-    opacity: 0;
-  }
-  100% {
-    transform: translate(-300px, 300px) rotate(-45deg);
-    opacity: 0;
-  }
-}
-
-.animate-shooting-star {
-  animation: shooting-star 10s linear infinite;
-}
-</style>
+<style scoped></style>

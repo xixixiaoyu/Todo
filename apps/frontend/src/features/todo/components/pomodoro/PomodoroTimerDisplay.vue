@@ -21,28 +21,28 @@ const pomodoroStore = usePomodoroStore()
           : null
       "
     >
-      <!-- Star Core Glow -->
+      <!-- Star Core Glow - More Subtle -->
       <div
         class="absolute rounded-full transition-all duration-1000 ease-in-out"
         :class="[
           pomodoroStore.isMiniMode ? 'w-24 h-24' : 'w-56 h-56',
-          pomodoroStore.isRunning ? 'animate-stellar-pulse' : 'opacity-20 scale-90',
+          pomodoroStore.isRunning ? 'animate-stellar-pulse' : 'opacity-10 scale-90',
         ]"
         :style="{
           background:
             pomodoroStore.status === 'focus'
-              ? 'radial-gradient(circle, rgba(251, 113, 133, 0.4) 0%, rgba(244, 63, 94, 0.1) 50%, transparent 70%)'
-              : 'radial-gradient(circle, rgba(52, 211, 153, 0.4) 0%, rgba(16, 185, 129, 0.1) 50%, transparent 70%)',
+              ? 'radial-gradient(circle, rgba(251, 113, 133, 0.2) 0%, transparent 70%)'
+              : 'radial-gradient(circle, rgba(52, 211, 153, 0.2) 0%, transparent 70%)',
           boxShadow: pomodoroStore.isRunning
-            ? `0 0 100px 20px ${pomodoroStore.status === 'focus' ? 'rgba(251, 113, 133, 0.2)' : 'rgba(52, 211, 153, 0.2)'}`
+            ? `0 0 60px 10px ${pomodoroStore.status === 'focus' ? 'rgba(251, 113, 133, 0.1)' : 'rgba(52, 211, 153, 0.1)'}`
             : 'none',
         }"
       ></div>
 
-      <!-- Stellar Rings -->
+      <!-- Stellar Rings - Reduced Opacity and Slower -->
       <div
         v-if="pomodoroStore.isRunning"
-        class="absolute rounded-full border border-white/5 animate-spin-slow"
+        class="absolute rounded-full border border-white/[0.03] animate-spin-slow"
         :class="pomodoroStore.isMiniMode ? 'w-36 h-36' : 'w-80 h-80'"
       ></div>
 
@@ -153,13 +153,13 @@ const pomodoroStore = usePomodoroStore()
   0%,
   100% {
     transform: scale(1);
-    opacity: 0.4;
-    filter: blur(20px);
+    opacity: 0.2;
+    filter: blur(25px);
   }
   50% {
-    transform: scale(1.05);
-    opacity: 0.5;
-    filter: blur(25px);
+    transform: scale(1.02);
+    opacity: 0.25;
+    filter: blur(30px);
   }
 }
 
@@ -173,11 +173,11 @@ const pomodoroStore = usePomodoroStore()
 }
 
 .animate-stellar-pulse {
-  animation: stellar-pulse 4s ease-in-out infinite;
+  animation: stellar-pulse 8s ease-in-out infinite;
 }
 
 .animate-spin-slow {
-  animation: spin-slow 60s linear infinite;
+  animation: spin-slow 120s linear infinite;
 }
 
 span {
