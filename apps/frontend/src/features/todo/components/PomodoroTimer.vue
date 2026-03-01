@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge'
 import { useGsap } from '@/composables/useGsap'
 import { nativeService } from '@/services/native'
 import * as THREE from 'three'
-import { onMounted, onUnmounted, ref, watch, computed } from 'vue'
+import { onMounted, onUnmounted, ref, watch, computed, nextTick } from 'vue'
 import { useDraggable, useWindowSize } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 
@@ -34,8 +34,6 @@ let renderer: THREE.WebGLRenderer
 let earth: THREE.Mesh
 let clouds: THREE.Mesh
 let starField: THREE.Points
-let ambientLight: THREE.AmbientLight
-let sunLight: THREE.DirectionalLight
 let animationFrameId: number
 
 const initThree = () => {
@@ -44,7 +42,7 @@ const initThree = () => {
   // Scene & Camera
   scene = new THREE.Scene()
   camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
-  camera.position.z = 1.5
+  camera.position.z = 3.0 // Move further back to ensure visibility
 
   // Renderer
   renderer = new THREE.WebGLRenderer({
@@ -54,55 +52,54 @@ const initThree = () => {
   })
   renderer.setSize(window.innerWidth, window.innerHeight)
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+  renderer.setClearColor(0x000000, 0)
 
   // Earth Geometry
   const geometry = new THREE.SphereGeometry(1, 64, 64)
   const textureLoader = new THREE.TextureLoader()
 
-  // Materials with Earth Textures
-  const earthMaterial = new THREE.MeshPhongMaterial({
-    color: 0x223344, // Base color before texture loads
-    map: textureLoader.load(
-      'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_atmos_2048.jpg',
-    ),
-    specularMap: textureLoader.load(
-      'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_specular_2048.jpg',
-    ),
-    normalMap: textureLoader.load(
-      'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_normal_2048.jpg',
-    ),
-    normalScale: new THREE.Vector2(0.85, 0.85),
-    shininess: 15,
-    emissive: 0x112233,
-    emissiveIntensity: 0.2,
+  // Materials with Earth Textures (Enhanced for visibility)
+  const earthMaterial = new THREE.MeshStandardMaterial({
+    color: 0x0077ff, // Brighter base blue
+    roughness: 0.5,
+    metalness: 0.2,
+    emissive: 0x002244,
+    emissiveIntensity: 0.5,
   })
+
+  // Load textures with fallback
+  textureLoader.load(
+    'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_atmos_2048.jpg',
+    (tex) => {
+      earthMaterial.map = tex
+      earthMaterial.needsUpdate = true
+    },
+  )
+
   earth = new THREE.Mesh(geometry, earthMaterial)
   scene.add(earth)
 
   // Clouds
-  const cloudGeometry = new THREE.SphereGeometry(1.015, 64, 64)
-  const cloudMaterial = new THREE.MeshPhongMaterial({
-    map: textureLoader.load(
-      'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_clouds_1024.png',
-    ),
+  const cloudGeometry = new THREE.SphereGeometry(1.02, 64, 64)
+  const cloudMaterial = new THREE.MeshStandardMaterial({
     transparent: true,
-    opacity: 0.5,
-    depthWrite: false,
+    opacity: 0.3,
   })
+  textureLoader.load(
+    'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_clouds_1024.png',
+    (tex) => {
+      cloudMaterial.map = tex
+      cloudMaterial.needsUpdate = true
+    },
+  )
   clouds = new THREE.Mesh(cloudGeometry, cloudMaterial)
   scene.add(clouds)
 
-  // Star Field
+  // Star Field (Larger and more visible)
   const starGeometry = new THREE.BufferGeometry()
-  const starMaterial = new THREE.PointsMaterial({
-    color: 0xffffff,
-    size: 0.015, // Slightly larger stars for better visibility
-    transparent: true,
-    opacity: 0.8,
-  })
+  const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.02, transparent: true })
   const starVertices = []
-  for (let i = 0; i < 8000; i++) {
-    // More stars
+  for (let i = 0; i < 5000; i++) {
     const x = (Math.random() - 0.5) * 2000
     const y = (Math.random() - 0.5) * 2000
     const z = (Math.random() - 0.5) * 2000
@@ -112,42 +109,44 @@ const initThree = () => {
   starField = new THREE.Points(starGeometry, starMaterial)
   scene.add(starField)
 
-  // Lights
-  ambientLight = new THREE.AmbientLight(0xffffff, 0.8) // Brighter ambient light
+  // Lights (Significantly brighter)
+  const ambientLight = new THREE.AmbientLight(0xffffff, 1.5)
   scene.add(ambientLight)
 
-  sunLight = new THREE.DirectionalLight(0xffffff, 3)
-  sunLight.position.set(2, 2, 5) // More front-facing to the camera
+  const sunLight = new THREE.DirectionalLight(0xffffff, 2.5)
+  sunLight.position.set(5, 3, 5)
   scene.add(sunLight)
 
-  // Add a subtle point light near the camera for depth
-  const cameraLight = new THREE.PointLight(0x4477ff, 1, 10)
-  cameraLight.position.set(0, 0, 2)
-  scene.add(cameraLight)
+  const cameraLight = new THREE.PointLight(0xffffff, 1.5)
+  camera.add(cameraLight) // Light moves with camera
+  scene.add(camera)
 
   animate()
 }
 
 const animate = () => {
+  if (!renderer || !scene || !camera) return
   animationFrameId = requestAnimationFrame(animate)
 
-  if (earth && earth.material instanceof THREE.MeshPhongMaterial) {
+  if (earth) {
     earth.rotation.y += 0.001
-    // Scale Earth with progress
     const targetScale = 0.8 + (pomodoroStore.progress / 100) * 0.4
     earth.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.05)
 
-    // Change color/brightness with focus status
-    if (pomodoroStore.status === 'focus') {
-      earth.material.color.lerp(new THREE.Color(1, 1, 1), 0.05)
-    } else {
-      earth.material.color.lerp(new THREE.Color(0.8, 0.9, 1), 0.05)
+    if (earth.material instanceof THREE.MeshStandardMaterial) {
+      if (pomodoroStore.status === 'focus') {
+        earth.material.emissive.setHex(0x002244)
+        earth.material.emissiveIntensity = 0.5
+      } else {
+        earth.material.emissive.setHex(0x220044)
+        earth.material.emissiveIntensity = 0.8
+      }
     }
   }
 
   if (clouds) {
     clouds.rotation.y += 0.0012
-    clouds.scale.copy(earth.scale).multiplyScalar(1.015)
+    clouds.scale.copy(earth.scale).multiplyScalar(1.02)
   }
 
   renderer.render(scene, camera)
@@ -160,8 +159,22 @@ const handleResize = () => {
   renderer.setSize(window.innerWidth, window.innerHeight)
 }
 
+// Watch for mini mode to init or dispose Three.js
+watch(
+  () => pomodoroStore.isMiniMode,
+  async (isMini) => {
+    if (isMini) {
+      await nextTick()
+      initThree()
+    } else {
+      if (animationFrameId) cancelAnimationFrame(animationFrameId)
+      renderer?.dispose()
+    }
+  },
+  { immediate: true },
+)
+
 onMounted(() => {
-  initThree()
   window.addEventListener('resize', handleResize)
 })
 
@@ -170,7 +183,7 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
   renderer?.dispose()
   earth?.geometry.dispose()
-  ;(earth?.material as THREE.Material).dispose()
+  ;(earth?.material as THREE.Material)?.dispose()
 })
 
 // Toggle AI Assistant
