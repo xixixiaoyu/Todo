@@ -61,6 +61,7 @@ const initThree = () => {
 
   // Materials with Earth Textures
   const earthMaterial = new THREE.MeshPhongMaterial({
+    color: 0x223344, // Base color before texture loads
     map: textureLoader.load(
       'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_atmos_2048.jpg',
     ),
@@ -71,7 +72,9 @@ const initThree = () => {
       'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_normal_2048.jpg',
     ),
     normalScale: new THREE.Vector2(0.85, 0.85),
-    shininess: 10,
+    shininess: 15,
+    emissive: 0x112233,
+    emissiveIntensity: 0.2,
   })
   earth = new THREE.Mesh(geometry, earthMaterial)
   scene.add(earth)
@@ -83,7 +86,7 @@ const initThree = () => {
       'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_clouds_1024.png',
     ),
     transparent: true,
-    opacity: 0.4,
+    opacity: 0.5,
     depthWrite: false,
   })
   clouds = new THREE.Mesh(cloudGeometry, cloudMaterial)
@@ -91,12 +94,18 @@ const initThree = () => {
 
   // Star Field
   const starGeometry = new THREE.BufferGeometry()
-  const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.005, transparent: true })
+  const starMaterial = new THREE.PointsMaterial({
+    color: 0xffffff,
+    size: 0.015, // Slightly larger stars for better visibility
+    transparent: true,
+    opacity: 0.8,
+  })
   const starVertices = []
-  for (let i = 0; i < 5000; i++) {
+  for (let i = 0; i < 8000; i++) {
+    // More stars
     const x = (Math.random() - 0.5) * 2000
     const y = (Math.random() - 0.5) * 2000
-    const z = -Math.random() * 2000
+    const z = (Math.random() - 0.5) * 2000
     starVertices.push(x, y, z)
   }
   starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3))
@@ -104,12 +113,17 @@ const initThree = () => {
   scene.add(starField)
 
   // Lights
-  ambientLight = new THREE.AmbientLight(0x404040, 0.5)
+  ambientLight = new THREE.AmbientLight(0xffffff, 0.8) // Brighter ambient light
   scene.add(ambientLight)
 
-  sunLight = new THREE.DirectionalLight(0xffffff, 2)
-  sunLight.position.set(5, 3, 5)
+  sunLight = new THREE.DirectionalLight(0xffffff, 3)
+  sunLight.position.set(2, 2, 5) // More front-facing to the camera
   scene.add(sunLight)
+
+  // Add a subtle point light near the camera for depth
+  const cameraLight = new THREE.PointLight(0x4477ff, 1, 10)
+  cameraLight.position.set(0, 0, 2)
+  scene.add(cameraLight)
 
   animate()
 }
