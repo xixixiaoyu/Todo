@@ -19,17 +19,19 @@ import { JwtService } from '@nestjs/jwt'
 @WebSocketGateway({
   cors: {
     origin: (origin: string, callback: (err: Error | null, allow?: boolean) => void) => {
-      const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || ['http://localhost:5173']
+      const allowedOrigins = process.env.CORS_ORIGIN?.split(',').map((o) => o.trim()) || [
+        'http://localhost:5173',
+      ]
       if (!origin || allowedOrigins.includes(origin) || origin === 'null') {
         callback(null, true)
       } else {
-        callback(new Error('Not allowed by CORS'))
+        callback(new Error(`Not allowed by CORS: ${origin}`))
       }
     },
     credentials: true,
   },
   namespace: '/events',
-  transports: ['websocket'],
+  transports: ['polling', 'websocket'],
 })
 export class EventsGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect, OnModuleDestroy

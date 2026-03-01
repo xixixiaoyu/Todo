@@ -42,7 +42,7 @@ async function bootstrap() {
     origin:
       corsOrigin === '*'
         ? true
-        : corsOrigin?.split(',') || [
+        : corsOrigin?.split(',').map((o) => o.trim()) || [
             'http://localhost:5173',
             'wails://localhost',
             'http://wails.localhost',
