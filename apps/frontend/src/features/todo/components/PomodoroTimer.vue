@@ -15,15 +15,149 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useGsap } from '@/composables/useGsap'
-import { watch, ref, computed } from 'vue'
+import { nativeService } from '@/services/native'
+import * as THREE from 'three'
+import { onMounted, onUnmounted, ref, watch, computed } from 'vue'
 import { useDraggable, useWindowSize } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
-import { nativeService } from '@/services/native'
 
 const pomodoroStore = usePomodoroStore()
 const todoStore = useTodoStore()
 const { t } = useI18n()
 const { gsap } = useGsap()
+
+// Three.js Scene Setup
+const canvasRef = ref<HTMLCanvasElement | null>(null)
+let scene: THREE.Scene
+let camera: THREE.PerspectiveCamera
+let renderer: THREE.WebGLRenderer
+let earth: THREE.Mesh
+let clouds: THREE.Mesh
+let starField: THREE.Points
+let ambientLight: THREE.AmbientLight
+let sunLight: THREE.DirectionalLight
+let animationFrameId: number
+
+const initThree = () => {
+  if (!canvasRef.value) return
+
+  // Scene & Camera
+  scene = new THREE.Scene()
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
+  camera.position.z = 1.5
+
+  // Renderer
+  renderer = new THREE.WebGLRenderer({
+    canvas: canvasRef.value,
+    alpha: true,
+    antialias: true,
+  })
+  renderer.setSize(window.innerWidth, window.innerHeight)
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+  // Earth Geometry
+  const geometry = new THREE.SphereGeometry(1, 64, 64)
+  const textureLoader = new THREE.TextureLoader()
+
+  // Materials with Earth Textures
+  const earthMaterial = new THREE.MeshPhongMaterial({
+    map: textureLoader.load(
+      'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_atmos_2048.jpg',
+    ),
+    specularMap: textureLoader.load(
+      'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_specular_2048.jpg',
+    ),
+    normalMap: textureLoader.load(
+      'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_normal_2048.jpg',
+    ),
+    normalScale: new THREE.Vector2(0.85, 0.85),
+    shininess: 10,
+  })
+  earth = new THREE.Mesh(geometry, earthMaterial)
+  scene.add(earth)
+
+  // Clouds
+  const cloudGeometry = new THREE.SphereGeometry(1.015, 64, 64)
+  const cloudMaterial = new THREE.MeshPhongMaterial({
+    map: textureLoader.load(
+      'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_clouds_1024.png',
+    ),
+    transparent: true,
+    opacity: 0.4,
+    depthWrite: false,
+  })
+  clouds = new THREE.Mesh(cloudGeometry, cloudMaterial)
+  scene.add(clouds)
+
+  // Star Field
+  const starGeometry = new THREE.BufferGeometry()
+  const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.005, transparent: true })
+  const starVertices = []
+  for (let i = 0; i < 5000; i++) {
+    const x = (Math.random() - 0.5) * 2000
+    const y = (Math.random() - 0.5) * 2000
+    const z = -Math.random() * 2000
+    starVertices.push(x, y, z)
+  }
+  starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3))
+  starField = new THREE.Points(starGeometry, starMaterial)
+  scene.add(starField)
+
+  // Lights
+  ambientLight = new THREE.AmbientLight(0x404040, 0.5)
+  scene.add(ambientLight)
+
+  sunLight = new THREE.DirectionalLight(0xffffff, 2)
+  sunLight.position.set(5, 3, 5)
+  scene.add(sunLight)
+
+  animate()
+}
+
+const animate = () => {
+  animationFrameId = requestAnimationFrame(animate)
+
+  if (earth && earth.material instanceof THREE.MeshPhongMaterial) {
+    earth.rotation.y += 0.001
+    // Scale Earth with progress
+    const targetScale = 0.8 + (pomodoroStore.progress / 100) * 0.4
+    earth.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.05)
+
+    // Change color/brightness with focus status
+    if (pomodoroStore.status === 'focus') {
+      earth.material.color.lerp(new THREE.Color(1, 1, 1), 0.05)
+    } else {
+      earth.material.color.lerp(new THREE.Color(0.8, 0.9, 1), 0.05)
+    }
+  }
+
+  if (clouds) {
+    clouds.rotation.y += 0.0012
+    clouds.scale.copy(earth.scale).multiplyScalar(1.015)
+  }
+
+  renderer.render(scene, camera)
+}
+
+const handleResize = () => {
+  if (!camera || !renderer) return
+  camera.aspect = window.innerWidth / window.innerHeight
+  camera.updateProjectionMatrix()
+  renderer.setSize(window.innerWidth, window.innerHeight)
+}
+
+onMounted(() => {
+  initThree()
+  window.addEventListener('resize', handleResize)
+})
+
+onUnmounted(() => {
+  cancelAnimationFrame(animationFrameId)
+  window.removeEventListener('resize', handleResize)
+  renderer?.dispose()
+  earth?.geometry.dispose()
+  ;(earth?.material as THREE.Material).dispose()
+})
 
 // Toggle AI Assistant
 function toggleAiAssistant() {
@@ -144,17 +278,36 @@ watch(
       class="fixed z-[100] group transition-all duration-500 ease-out-quart"
       :style="containerStyle"
     >
-      <!-- Overlay Background (Browser Only) -->
+      <!-- Overlay Background (Browser Only) - Now the Grand Stellar Background -->
       <Transition
-        enter-active-class="transition-opacity duration-700"
-        leave-active-class="transition-opacity duration-300"
-        enter-from-class="opacity-0"
-        leave-to-class="opacity-0"
+        enter-active-class="transition-all duration-1000 ease-out"
+        leave-active-class="transition-all duration-500 ease-in"
+        enter-from-class="opacity-0 scale-110"
+        leave-to-class="opacity-0 scale-95"
       >
         <div
           v-if="pomodoroStore.isMiniMode && !isWails()"
-          class="fixed inset-0 bg-background/30 backdrop-blur-3xl -z-10 pointer-events-none"
-        ></div>
+          class="fixed inset-0 bg-[#050505] -z-10 overflow-hidden"
+        >
+          <!-- 3D Earth Canvas -->
+          <canvas ref="canvasRef" class="absolute inset-0 w-full h-full"></canvas>
+
+          <!-- Shooting Stars (Overlay on top of 3D) -->
+          <div class="absolute inset-0 z-0 pointer-events-none">
+            <div
+              v-for="i in 3"
+              :key="'shooting-' + i"
+              class="absolute h-[1px] bg-gradient-to-r from-transparent via-white to-transparent opacity-0 animate-shooting-star"
+              :style="{
+                width: Math.random() * 100 + 100 + 'px',
+                left: Math.random() * 100 + '%',
+                top: Math.random() * 100 + '%',
+                animationDelay: Math.random() * 20 + 5 + 's',
+                transform: 'rotate(-45deg)',
+              }"
+            ></div>
+          </div>
+        </div>
       </Transition>
 
       <!-- Main Content Container -->
@@ -166,15 +319,17 @@ watch(
           class="relative backdrop-blur-3xl overflow-hidden transition-all duration-700 h-full w-full group/card"
           :class="[
             pomodoroStore.isMiniMode
-              ? 'rounded-[3rem] bg-white/70 dark:bg-black/60 flex flex-col'
+              ? 'rounded-[3rem] bg-white/5 dark:bg-black/20 flex flex-col border border-white/10'
               : 'rounded-[2.5rem] p-6 bg-white/80 dark:bg-neutral-900/80 shadow-2xl border border-white/40 dark:border-white/10',
-            pomodoroStore.status === 'focus'
+            !pomodoroStore.isMiniMode && pomodoroStore.status === 'focus'
               ? 'ring-1 ring-rose-500/10'
-              : 'ring-1 ring-emerald-500/10',
+              : !pomodoroStore.isMiniMode
+                ? 'ring-1 ring-emerald-500/10'
+                : '',
           ]"
           :style="{
             boxShadow: pomodoroStore.isMiniMode
-              ? '0 20px 40px -15px rgba(0, 0, 0, 0.1), 0 10px 20px -10px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.5)'
+              ? '0 20px 40px -15px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.1)'
               : '0 40px 80px -20px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.5)',
             '--wails-draggable': 'drag',
             transform: 'translateZ(0)',
@@ -183,17 +338,19 @@ watch(
           <!-- Wails Drag Area for Mini Mode -->
           <div v-if="pomodoroStore.isMiniMode && isWails()" class="absolute inset-0 z-0"></div>
 
-          <!-- Dynamic Background Glows (Refined) -->
+          <!-- Dynamic Background Glows (Refined - Only for Full Mode) -->
           <div
-            class="absolute inset-0 overflow-hidden pointer-events-none z-0 opacity-40 dark:opacity-30"
+            v-if="!pomodoroStore.isMiniMode"
+            class="absolute inset-0 overflow-hidden pointer-events-none z-0 opacity-60"
           >
+            <!-- Nebula Layers -->
             <div
-              class="absolute -top-[20%] -left-[20%] w-[80%] h-[80%] rounded-full blur-[100px] animate-float-slow"
-              :class="pomodoroStore.status === 'focus' ? 'bg-rose-400/30' : 'bg-emerald-400/30'"
+              class="absolute -top-[20%] -left-[20%] w-[140%] h-[140%] rounded-full blur-[120px] animate-nebula-flow opacity-40"
+              :class="pomodoroStore.status === 'focus' ? 'bg-rose-600/30' : 'bg-emerald-600/30'"
             ></div>
             <div
-              class="absolute -bottom-[20%] -right-[20%] w-[70%] h-[70%] rounded-full blur-[90px] animate-float-reverse"
-              :class="pomodoroStore.status === 'focus' ? 'bg-amber-300/20' : 'bg-blue-400/20'"
+              class="absolute -bottom-[20%] -right-[20%] w-[120%] h-[120%] rounded-full blur-[100px] animate-nebula-reverse opacity-30"
+              :class="pomodoroStore.status === 'focus' ? 'bg-orange-500/20' : 'bg-blue-600/20'"
             ></div>
           </div>
 
@@ -321,30 +478,34 @@ watch(
                   : null
               "
             >
-              <!-- Glow Effect -->
+              <!-- Star Core Glow (The "Grand" Visual) -->
               <div
-                class="absolute inset-0 rounded-full blur-2xl opacity-0 group-hover/timer:opacity-20 transition-opacity duration-700"
-                :class="pomodoroStore.status === 'focus' ? 'bg-rose-500' : 'bg-emerald-500'"
+                class="absolute rounded-full transition-all duration-1000 ease-in-out"
+                :class="[
+                  pomodoroStore.isMiniMode ? 'w-24 h-24' : 'w-56 h-56',
+                  pomodoroStore.isRunning ? 'animate-stellar-pulse' : 'opacity-20 scale-90',
+                ]"
+                :style="{
+                  background:
+                    pomodoroStore.status === 'focus'
+                      ? 'radial-gradient(circle, rgba(251, 113, 133, 0.4) 0%, rgba(244, 63, 94, 0.1) 50%, transparent 70%)'
+                      : 'radial-gradient(circle, rgba(52, 211, 153, 0.4) 0%, rgba(16, 185, 129, 0.1) 50%, transparent 70%)',
+                  boxShadow: pomodoroStore.isRunning
+                    ? `0 0 100px 20px ${pomodoroStore.status === 'focus' ? 'rgba(251, 113, 133, 0.2)' : 'rgba(52, 211, 153, 0.2)'}`
+                    : 'none',
+                }"
               ></div>
 
-              <!-- Play/Pause Overlay (Mini Mode Only) -->
+              <!-- Stellar Rings -->
               <div
-                v-if="pomodoroStore.isMiniMode"
-                class="absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover/timer:opacity-100 transition-all duration-300 scale-90 group-hover/timer:scale-100"
-              >
-                <div
-                  class="w-10 h-10 rounded-full bg-foreground/10 backdrop-blur-md flex items-center justify-center text-foreground/60 shadow-lg"
-                >
-                  <component
-                    :is="pomodoroStore.isRunning ? Pause : Play"
-                    class="w-5 h-5 fill-current"
-                  />
-                </div>
-              </div>
+                v-if="pomodoroStore.isRunning"
+                class="absolute rounded-full border border-white/5 animate-spin-slow"
+                :class="pomodoroStore.isMiniMode ? 'w-36 h-36' : 'w-80 h-80'"
+              ></div>
 
               <svg
                 :class="[
-                  'transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)]',
+                  'relative z-10 transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)]',
                   pomodoroStore.isMiniMode ? 'w-32 h-32' : 'w-72 h-72',
                   pomodoroStore.isMiniMode
                     ? 'group-hover/timer:opacity-20 transition-opacity duration-300'
@@ -352,72 +513,78 @@ watch(
                 ]"
                 viewBox="0 0 100 100"
               >
-                <!-- Outer Shadow Ring -->
+                <!-- Outer Atmospheric Glow -->
                 <circle
                   cx="50"
                   cy="50"
-                  r="48"
+                  r="49"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="0.2"
+                  class="text-foreground/[0.05] dark:text-white/[0.05]"
+                />
+                <!-- Orbit Ring -->
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="44"
                   fill="none"
                   stroke="currentColor"
                   stroke-width="0.5"
-                  class="text-foreground/[0.05] dark:text-white/[0.05]"
+                  class="text-foreground/[0.03] dark:text-white/[0.03] animate-pulse"
                 />
-                <!-- Background Ring -->
+                <!-- Progress Arc (Grand Evolution) -->
                 <circle
                   cx="50"
                   cy="50"
                   r="44"
                   fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  class="text-foreground/[0.03] dark:text-white/[0.03]"
-                />
-                <!-- Progress Ring -->
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="44"
-                  fill="none"
-                  stroke="url(#progressGradient)"
-                  stroke-width="3"
+                  stroke="url(#stellarGradient)"
+                  stroke-width="2.5"
                   stroke-linecap="round"
                   class="transition-all duration-700 ease-out"
                   :style="{
                     strokeDasharray: '276.46',
                     strokeDashoffset: 276.46 - (pomodoroStore.progress / 100) * 276.46,
                     filter: pomodoroStore.isRunning
-                      ? `drop-shadow(0 0 12px ${
+                      ? `drop-shadow(0 0 15px ${
                           pomodoroStore.status === 'focus'
-                            ? 'rgba(244, 63, 94, 0.4)'
-                            : 'rgba(16, 185, 129, 0.4)'
+                            ? 'rgba(244, 63, 94, 0.6)'
+                            : 'rgba(16, 185, 129, 0.6)'
                         })`
                       : 'none',
                   }"
                   transform="rotate(-90 50 50)"
                 />
 
-                <!-- Definitions for Gradient -->
+                <!-- Definitions for Stellar Gradient -->
                 <defs>
-                  <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <linearGradient id="stellarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop
                       offset="0%"
                       :stop-color="pomodoroStore.status === 'focus' ? '#fb7185' : '#34d399'"
                     />
                     <stop
+                      offset="50%"
+                      :stop-color="pomodoroStore.status === 'focus' ? '#f43f5e' : '#10b981'"
+                    />
+                    <stop
                       offset="100%"
-                      :stop-color="pomodoroStore.status === 'focus' ? '#f59e0b' : '#3b82f6'"
+                      :stop-color="pomodoroStore.status === 'focus' ? '#fbbf24' : '#3b82f6'"
                     />
                   </linearGradient>
                 </defs>
               </svg>
 
-              <!-- Time Text (Refined Typography) -->
-              <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <!-- Time Text (Integrated into the Core) -->
+              <div
+                class="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none"
+              >
                 <span
                   class="font-mono tabular-nums transition-all duration-700 leading-none select-none"
                   :class="[
                     pomodoroStore.isRunning
-                      ? 'text-foreground font-medium'
+                      ? 'text-foreground font-bold'
                       : 'text-foreground/30 font-light',
                     pomodoroStore.isMiniMode
                       ? 'text-3xl tracking-tighter'
@@ -425,6 +592,9 @@ watch(
                   ]"
                   :style="{
                     fontFamily: 'JetBrains Mono, monospace',
+                    textShadow: pomodoroStore.isRunning
+                      ? `0 0 20px ${pomodoroStore.status === 'focus' ? 'rgba(251, 113, 133, 0.3)' : 'rgba(52, 211, 153, 0.3)'}`
+                      : 'none',
                   }"
                 >
                   {{ pomodoroStore.formattedTime }}
@@ -575,12 +745,129 @@ watch(
   }
 }
 
-.animate-float-slow {
-  animation: float-slow 12s ease-in-out infinite;
+@keyframes nebula-flow {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    transform: translate(5%, 5%) rotate(180deg) scale(1.1);
+    filter: hue-rotate(15deg);
+  }
 }
 
-.animate-float-reverse {
-  animation: float-reverse 15s ease-in-out infinite;
+@keyframes earth-rotate {
+  from {
+    background-position: 0% 0%;
+  }
+  to {
+    background-position: 200% 0%;
+  }
+}
+
+@keyframes clouds-flow {
+  from {
+    background-position: 0% 0%;
+  }
+  to {
+    background-position: 200% 0%;
+  }
+}
+
+@keyframes nebula-reverse {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+  50% {
+    transform: translate(-5%, -5%) rotate(-180deg) scale(1.2);
+  }
+}
+
+@keyframes stellar-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.4;
+    filter: blur(20px);
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.5;
+    filter: blur(25px);
+  }
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes shooting-star {
+  0% {
+    transform: translate(0, 0) rotate(-45deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  30% {
+    transform: translate(-300px, 300px) rotate(-45deg);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(-300px, 300px) rotate(-45deg);
+    opacity: 0;
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-nebula-flow {
+  animation: nebula-flow 25s linear infinite;
+}
+
+.animate-nebula-reverse {
+  animation: nebula-flow 35s linear infinite reverse;
+}
+
+.animate-earth-rotate {
+  animation: earth-rotate 120s linear infinite;
+}
+
+.animate-clouds-flow {
+  animation: clouds-flow 80s linear infinite;
+}
+
+.animate-stellar-pulse {
+  animation: stellar-pulse 4s ease-in-out infinite;
+}
+
+.animate-twinkle {
+  animation: twinkle 5s ease-in-out infinite;
+}
+
+.animate-shooting-star {
+  animation: shooting-star 10s linear infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 60s linear infinite;
 }
 
 /* Custom easing for smoother interactions */
