@@ -229,9 +229,10 @@ const animate = () => {
       // Lighting: Move sun light slightly based on mouse to create "observation" feel
       if (sunLight) {
         gsap.to(sunLight.position, {
-          x: 5 + props.mousePos.x * 2,
-          y: 3 - props.mousePos.y * 2,
-          duration: 1,
+          x: 5 + props.mousePos.x * 2.5, // Slightly more range
+          y: 3 - props.mousePos.y * 2.5,
+          duration: 0.8, // Slightly faster response
+          ease: 'power1.out',
           overwrite: 'auto',
         })
       }
@@ -261,18 +262,24 @@ const animate = () => {
     atmosphere.scale.copy(earth.scale).multiplyScalar(1.15)
     atmosphere.position.copy(earth.position)
 
-    // Dynamic glow intensity
+    // Dynamic glow intensity & subtle atmospheric "breathing"
     if (atmosphere.material instanceof THREE.ShaderMaterial) {
       const targetGlowColor = pomodoroStore.status === 'focus' ? 0x0077ff : 0x7700ff
-      atmosphere.material.uniforms.glowColor.value.lerp(new THREE.Color(targetGlowColor), 0.05)
+      const color = new THREE.Color(targetGlowColor)
+
+      // Apply subtle breathing pulse (±2% intensity variation)
+      const pulse = 1.0 + Math.sin(Date.now() * 0.0005) * 0.02
+      color.multiplyScalar(pulse)
+
+      atmosphere.material.uniforms.glowColor.value.lerp(color, 0.05)
     }
   }
 
   if (starField) {
     starField.rotation.y += 0.0001
-    // Twinkle effect
+    // Twinkle effect (Gentle pulse)
     if (starField.material instanceof THREE.PointsMaterial) {
-      starField.material.opacity = 0.4 + Math.sin(Date.now() * 0.001) * 0.1
+      starField.material.opacity = 0.45 + Math.sin(Date.now() * 0.0008) * 0.1
     }
   }
 
