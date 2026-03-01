@@ -55,6 +55,7 @@ async function bootstrap() {
       'X-Requested-With',
       'X-Lang',
       'Accept-Language',
+      'X-Socket-ID',
     ],
   })
 
@@ -120,7 +121,7 @@ async function bootstrap() {
         return
       }
 
-      if (req.url.includes('/api/health')) {
+      if (req.url.includes('/api/health') || req.url.includes('/socket.io')) {
         return
       }
 
