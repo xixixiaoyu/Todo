@@ -52,19 +52,33 @@ export function useSocket(): UseSocketReturn {
       socketId.value = null
     })
 
-    socketInstance.on('connect_error', async (error: Error) => {
-      console.error('[Socket] Connection Error:', error)
+    socketInstance.on(
+      'connect_error',
+      async (error: {
+        message: string
+        type?: string
+        description?: unknown
+        context?: unknown
+      }) => {
+        console.error('[Socket] Connection Error:', error)
+        console.error('[Socket] Error Details:', {
+          message: error.message,
+          type: error.type,
+          description: error.description, // Socket.io 专属错误描述
+          context: error.context,
+        })
 
-      // 如果是因为认证问题（或者是断连后 token 可能过期），尝试刷新 token 并重连
-      if (authStore.isAuthenticated) {
-        console.warn('[Socket] Attempting to refresh token and reconnect...')
-        const refreshed = await authStore.refreshAccessToken()
-        if (refreshed && socketInstance) {
-          socketInstance.auth = { token: authStore.token }
-          socketInstance.connect()
+        // 如果是因为认证问题（或者是断连后 token 可能过期），尝试刷新 token 并重连
+        if (authStore.isAuthenticated) {
+          console.warn('[Socket] Attempting to refresh token and reconnect...')
+          const refreshed = await authStore.refreshAccessToken()
+          if (refreshed && socketInstance) {
+            socketInstance.auth = { token: authStore.token }
+            socketInstance.connect()
+          }
         }
-      }
-    })
+      },
+    )
 
     return socketInstance
   }

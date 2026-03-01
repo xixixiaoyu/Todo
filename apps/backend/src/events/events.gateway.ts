@@ -29,7 +29,7 @@ import { JwtService } from '@nestjs/jwt'
     credentials: true,
   },
   namespace: '/events',
-  transports: ['websocket', 'polling'],
+  transports: ['websocket'],
 })
 export class EventsGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect, OnModuleDestroy

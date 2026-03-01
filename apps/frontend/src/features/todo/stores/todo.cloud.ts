@@ -46,7 +46,18 @@ export function createTodoCloud(deps: {
     deps.loading.value = true
     lastSyncCallAt = now
     try {
-      const { useSocket } = await import('@/composables/useSocket')
+      let useSocketModule
+      try {
+        useSocketModule = await import('@/composables/useSocket')
+      } catch (importErr) {
+        console.error('Failed to load socket module, possibly due to a new deployment:', importErr)
+        // 如果是动态导入失败，通常是因为版本更新，提示用户刷新
+        if (retryCount === 0) {
+          toast.error(t('common.versionUpdated'))
+        }
+        throw importErr
+      }
+      const { useSocket } = useSocketModule
       const { waitForConnection } = useSocket()
 
       const currentSocketId = await waitForConnection()

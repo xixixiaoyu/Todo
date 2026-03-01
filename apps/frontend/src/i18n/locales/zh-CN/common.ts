@@ -77,4 +77,5 @@ export const common = {
   },
   success: '操作成功',
   settings: '设置',
+  versionUpdated: '应用已更新，请刷新页面以加载最新版本',
 } as const

@@ -77,4 +77,5 @@ export const common = {
   },
   success: 'Success',
   settings: 'Settings',
+  versionUpdated: 'App updated. Please refresh the page to load the latest version.',
 } as const
