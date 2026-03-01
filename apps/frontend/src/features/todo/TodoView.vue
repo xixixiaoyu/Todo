@@ -12,6 +12,7 @@ import TodoList from './components/TodoList.vue'
 import TodoVisualizer from './components/TodoVisualizer.vue'
 import TodoStatistics from './components/TodoStatistics.vue'
 import PomodoroTimer from './components/PomodoroTimer.vue'
+import PomodoroEarth from './components/pomodoro/PomodoroEarth.vue'
 import Fireworks from '@/components/Fireworks.vue'
 import AiAssistantDrawer from '@/features/ai/components/AiAssistantDrawer.vue'
 import { Card, CardContent } from '@/components/ui/card'
@@ -240,8 +241,11 @@ function onFireworksComplete() {
     @mousemove="handleMouseMove"
     @mouseleave="resetTilt"
   >
+    <!-- 全屏地球背景 (番茄钟开启时显示) -->
+    <PomodoroEarth :mouse-pos="mousePos" />
+
     <!-- 背景装饰：从单一径向渐变升级为动态 Mesh Gradient -->
-    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute inset-0 overflow-hidden pointer-events-none -z-20">
       <div
         class="absolute -inset-[10%] opacity-30 dark:opacity-20 transition-transform duration-1000 ease-out"
         :style="{

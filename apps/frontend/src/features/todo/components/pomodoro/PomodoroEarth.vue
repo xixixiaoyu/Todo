@@ -5,6 +5,10 @@ import { usePomodoroStore } from '../../stores/pomodoro'
 import { nativeService } from '@/services/native'
 import { useGsap } from '@/composables/useGsap'
 
+const props = defineProps<{
+  mousePos?: { x: number; y: number }
+}>()
+
 const pomodoroStore = usePomodoroStore()
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const isTextureLoaded = ref(false)
@@ -26,7 +30,7 @@ const initThree = () => {
   // Scene & Camera
   scene = new THREE.Scene()
   camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
-  camera.position.z = 3.5 // Slightly further out initially
+  camera.position.z = 4.0 // Slightly further out for more space
 
   // Renderer
   renderer = new THREE.WebGLRenderer({
@@ -44,10 +48,10 @@ const initThree = () => {
 
   const earthMaterial = new THREE.MeshStandardMaterial({
     color: 0x0077ff,
-    roughness: 0.5,
-    metalness: 0.2,
+    roughness: 0.6,
+    metalness: 0.1,
     emissive: 0x002244,
-    emissiveIntensity: 0.5,
+    emissiveIntensity: 0.4,
     transparent: true,
     opacity: 0, // Start invisible
   })
@@ -98,7 +102,7 @@ const initThree = () => {
       // Smoothly fade in clouds
       ctx.add(() => {
         gsap.to(cloudMaterial, {
-          opacity: 0.3,
+          opacity: 0.2, // More subtle clouds
           duration: 3,
           delay: 0.5,
           ease: 'power2.inOut',
@@ -113,12 +117,12 @@ const initThree = () => {
   const starGeometry = new THREE.BufferGeometry()
   const starMaterial = new THREE.PointsMaterial({
     color: 0xffffff,
-    size: 0.015,
+    size: 0.012, // Smaller stars
     transparent: true,
-    opacity: 0.4,
+    opacity: 0.3,
   })
   const starVertices = []
-  for (let i = 0; i < 5000; i++) {
+  for (let i = 0; i < 6000; i++) {
     const x = (Math.random() - 0.5) * 2000
     const y = (Math.random() - 0.5) * 2000
     const z = (Math.random() - 0.5) * 2000
@@ -129,14 +133,14 @@ const initThree = () => {
   scene.add(starField)
 
   // Lights
-  const ambientLight = new THREE.AmbientLight(0xffffff, 1.5)
+  const ambientLight = new THREE.AmbientLight(0xffffff, 1.2)
   scene.add(ambientLight)
 
-  const sunLight = new THREE.DirectionalLight(0xffffff, 2.5)
+  const sunLight = new THREE.DirectionalLight(0xffffff, 2.0)
   sunLight.position.set(5, 3, 5)
   scene.add(sunLight)
 
-  const cameraLight = new THREE.PointLight(0xffffff, 1.5)
+  const cameraLight = new THREE.PointLight(0xffffff, 1.2)
   camera.add(cameraLight)
   scene.add(camera)
 
@@ -148,24 +152,44 @@ const animate = () => {
   animationFrameId = requestAnimationFrame(animate)
 
   if (earth) {
-    earth.rotation.y += 0.001
-    const targetScale = 0.8 + (pomodoroStore.progress / 100) * 0.4
+    earth.rotation.y += 0.0008 // Slower, more Zen rotation
+
+    // Aesthetic Logic: Adjust scale and position based on mode
+    let targetScale = 0.8 + (pomodoroStore.progress / 100) * 0.4
+    let targetX = 0
+    let targetY = 0
+
+    if (!pomodoroStore.isMiniMode) {
+      // In full mode, move earth slightly to the side and make it a bit smaller to not crowd the list
+      targetScale *= 0.85
+      targetX = 1.2 // Move to right
+      targetY = -0.5 // Move down
+    }
+
+    // Apply Mouse Parallax
+    if (props.mousePos) {
+      targetX += props.mousePos.x * 0.5
+      targetY -= props.mousePos.y * 0.5
+    }
+
     earth.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.05)
+    earth.position.lerp(new THREE.Vector3(targetX, targetY, 0), 0.05)
 
     if (earth.material instanceof THREE.MeshStandardMaterial) {
       if (pomodoroStore.status === 'focus') {
         earth.material.emissive.setHex(0x002244)
-        earth.material.emissiveIntensity = 0.5
+        earth.material.emissiveIntensity = 0.4
       } else {
         earth.material.emissive.setHex(0x220044)
-        earth.material.emissiveIntensity = 0.8
+        earth.material.emissiveIntensity = 0.7
       }
     }
   }
 
   if (clouds) {
-    clouds.rotation.y += 0.0012
+    clouds.rotation.y += 0.001
     clouds.scale.copy(earth.scale).multiplyScalar(1.02)
+    clouds.position.copy(earth.position)
   }
 
   renderer.render(scene, camera)
@@ -217,7 +241,7 @@ onUnmounted(() => {
   >
     <div
       v-if="pomodoroStore.status !== 'idle' && !isWails()"
-      class="fixed inset-0 -z-10 overflow-hidden bg-black"
+      class="fixed inset-0 z-0 overflow-hidden bg-black"
     >
       <!-- Fallback Background (Elegant Gradient) -->
       <div

@@ -10,7 +10,6 @@ import { useDraggable, useWindowSize } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 
 // Subcomponents
-import PomodoroEarth from './pomodoro/PomodoroEarth.vue'
 import PomodoroTimerDisplay from './pomodoro/PomodoroTimerDisplay.vue'
 import PomodoroTimerControls from './pomodoro/PomodoroTimerControls.vue'
 import PomodoroTaskInfo from './pomodoro/PomodoroTaskInfo.vue'
@@ -158,9 +157,6 @@ watch(
       class="fixed z-[100] group transition-all duration-500 ease-out-quart"
       :style="containerStyle"
     >
-      <!-- Background (Three.js Earth) -->
-      <PomodoroEarth />
-
       <!-- Main Content Container -->
       <div
         class="relative w-full h-full transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]"
