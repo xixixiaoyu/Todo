@@ -135,7 +135,8 @@ const initThree = () => {
       void main() {
         // Fresnel for BackSide: normals point away from camera at edges
         // dot(vNormal, viewDir) will be near 0 at edges
-        float intensity = pow(0.7 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 4.0);
+        // Increased power to 6.0 for smoother, more subtle falloff
+        float intensity = pow(0.75 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 6.0);
         gl_FragColor = vec4(glowColor, 1.0) * intensity;
       }
     `,
@@ -182,14 +183,16 @@ const initThree = () => {
   scene.add(starField)
 
   // Lights
-  const ambientLight = new THREE.AmbientLight(0xffffff, 1.2)
+  // Lower ambient light for higher contrast (cinematic deep shadows)
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.4)
   scene.add(ambientLight)
 
-  sunLight = new THREE.DirectionalLight(0xffffff, 2.0)
+  sunLight = new THREE.DirectionalLight(0xffffff, 2.5)
   sunLight.position.set(5, 3, 5)
   scene.add(sunLight)
 
-  cameraLight = new THREE.PointLight(0xffffff, 1.2)
+  // Camera light for very subtle surface visibility on the dark side
+  cameraLight = new THREE.PointLight(0xffffff, 0.3)
   camera.add(cameraLight)
   scene.add(camera)
 
@@ -210,14 +213,15 @@ const animate = () => {
 
     if (pomodoroStore.isMiniMode) {
       // In mini mode, we create a "Close Orbit" feel. The earth is huge and offset.
+      // Increased offset for more negative space on the right
       targetScale *= 1.6
-      targetX = -1.8
-      targetY = -0.3
+      targetX = -2.2
+      targetY = -0.4
     } else {
       // In full mode, move earth slightly to the side and make it a bit smaller to not crowd the list
       targetScale *= 0.85
-      targetX = 1.5 // Move to right
-      targetY = -0.7 // Move down
+      targetX = 1.6
+      targetY = -0.8
     }
 
     // Apply Subtle Mouse Parallax & Dynamic Lighting
