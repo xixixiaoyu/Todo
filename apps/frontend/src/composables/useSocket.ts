@@ -29,10 +29,10 @@ export function useSocket(): UseSocketReturn {
 
     socketInstance = io(`${socketURL}/events`, {
       withCredentials: true,
-      transports: ['polling', 'websocket'],
+      transports: ['websocket'],
       autoConnect: false,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 2000,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
       auth: {
         token: authStore.token,
       },
