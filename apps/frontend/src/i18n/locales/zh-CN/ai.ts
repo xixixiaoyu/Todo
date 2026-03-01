@@ -228,6 +228,8 @@ export const ai = {
   mcpEditServer: '编辑 MCP 服务器',
   mcpCreateServer: '创建 MCP 服务器',
   mcpUpdateServer: '更新服务器',
+  mcpLoginRequired: '需登录后配置 MCP 扩展',
+  mcpLoginRequiredDesc: 'MCP 服务器配置将安全地同步至您的账号。请登录以开启此功能。',
   discussionStatus: '正在多模型讨论...',
   contributionReady: '见解已就绪',
   modelGenerating: '模型正在生成回答...',

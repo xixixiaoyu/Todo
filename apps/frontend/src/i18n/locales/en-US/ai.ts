@@ -246,6 +246,9 @@ export const ai = {
   mcpEditServer: 'Edit MCP Server',
   mcpCreateServer: 'Create MCP Server',
   mcpUpdateServer: 'Update Server',
+  mcpLoginRequired: 'Login Required for MCP',
+  mcpLoginRequiredDesc:
+    'MCP server configurations will be securely synced to your account. Please login to enable this feature.',
   memory: 'Memory',
   memoryEnabled: 'Memory Enabled',
   memoryDisabled: 'Memory Disabled',

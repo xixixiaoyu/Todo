@@ -52,9 +52,13 @@ export const useMcpStore = defineStore('mcp', () => {
           }
         })
       }
-    } catch (err: unknown) {
+    } catch (errorOrUnknown: unknown) {
+      const err = errorOrUnknown as { response?: { status?: number }; message?: string }
       error.value = err instanceof Error ? err.message : String(err)
-      console.error('Error fetching MCP servers:', err)
+      // 只有在非 401 错误时才打印控制台错误，避免未登录/会话过期时的冗余报错
+      if (err?.response?.status !== 401 && err?.message !== 'Refresh token invalid') {
+        console.error('Error fetching MCP servers:', err)
+      }
     } finally {
       isLoading.value = false
     }
