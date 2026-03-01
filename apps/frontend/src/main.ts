@@ -44,8 +44,35 @@ use([
 
 const app = createApp(App)
 
+/**
+ * 处理动态导入失败（通常由于版本更新导致 Chunk 404）
+ */
+const handleChunkError = (err: unknown) => {
+  const message = err instanceof Error ? err.message : String(err)
+  const isChunkError =
+    message.includes('Failed to fetch dynamically imported module') ||
+    message.includes('error loading dynamically imported module') ||
+    message.includes('Importing a module script failed')
+
+  if (isChunkError) {
+    console.warn('Chunk load error detected, likely a new deployment. Refreshing page...')
+    // 限制 10 秒内只刷新一次，防止无限循环
+    const lastReload = sessionStorage.getItem('chunk_error_reload')
+    const now = Date.now()
+    if (!lastReload || now - parseInt(lastReload) > 10000) {
+      sessionStorage.setItem('chunk_error_reload', now.toString())
+      window.location.reload()
+      return true
+    }
+    console.error('Multiple chunk errors detected, manual refresh may be required.')
+  }
+  return false
+}
+
 // 全局错误处理
-app.config.errorHandler = (err, instance, info) => {
+app.config.errorHandler = (err, _instance, info) => {
+  if (handleChunkError(err)) return
+
   // 忽略 ResizeObserver 相关的良性错误
   const message = err instanceof Error ? err.message : String(err)
   if (
@@ -58,7 +85,9 @@ app.config.errorHandler = (err, instance, info) => {
   console.error('Vue Info:', info)
 }
 
-window.onerror = (message, source, lineno, colno, error) => {
+window.onerror = (message, _source, _lineno, _colno, error) => {
+  if (handleChunkError(error || message)) return
+
   // 忽略 ResizeObserver 相关的良性错误
   if (
     message === 'ResizeObserver loop limit exceeded' ||
@@ -70,6 +99,7 @@ window.onerror = (message, source, lineno, colno, error) => {
 }
 
 window.onunhandledrejection = (event) => {
+  if (handleChunkError(event.reason)) return
   console.error('Unhandled Promise Rejection:', event.reason)
 }
 

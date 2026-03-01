@@ -49,9 +49,21 @@ export function createTodoCloud(deps: {
       let useSocketModule
       try {
         useSocketModule = await import('@/composables/useSocket')
-      } catch (importErr) {
+      } catch (importErr: unknown) {
         console.error('Failed to load socket module, possibly due to a new deployment:', importErr)
-        // 如果是动态导入失败，通常是因为版本更新，提示用户刷新
+
+        const message = importErr instanceof Error ? importErr.message : String(importErr)
+        const isChunkError =
+          message.includes('Failed to fetch dynamically imported module') ||
+          message.includes('error loading dynamically imported module')
+
+        if (isChunkError) {
+          // 如果是 Chunk 错误，说明是新版本发布导致旧资源失效，不再重试，直接提示刷新
+          toast.error(t('common.versionUpdated'), 0)
+          deps.error.value = 'common.versionUpdated'
+          throw importErr
+        }
+
         if (retryCount === 0) {
           toast.error(t('common.versionUpdated'))
         }
@@ -124,8 +136,18 @@ export function createTodoCloud(deps: {
 
       deps.lastSyncAt.value = serverTime
       deps.error.value = null
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(`Sync failed (attempt ${retryCount + 1}):`, err)
+
+      const message = err instanceof Error ? err.message : String(err)
+      const isChunkError =
+        message.includes('Failed to fetch dynamically imported module') ||
+        message.includes('error loading dynamically imported module')
+
+      if (isChunkError) {
+        // Chunk 错误由内部 catch 或全局 handler 处理，不再重试
+        return
+      }
 
       if (retryCount < 3) {
         const delay = Math.pow(2, retryCount) * 1000
