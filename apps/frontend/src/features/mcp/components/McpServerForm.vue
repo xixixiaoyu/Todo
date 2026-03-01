@@ -2,12 +2,13 @@
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { McpTransportType, type CreateMcpServerDto, type McpServerResponse } from '../api/mcp'
-import { Server, Loader2, ChevronRight } from 'lucide-vue-next'
+import { Loader2 } from 'lucide-vue-next'
 import type { McpServerFormState } from './mcpServerForm.types'
 import McpServerFormBaseInfo from './McpServerFormBaseInfo.vue'
 import McpServerTransportSelector from './McpServerTransportSelector.vue'
 import McpServerStdioConfig from './McpServerStdioConfig.vue'
 import McpServerHttpConfig from './McpServerHttpConfig.vue'
+import { useGsap } from '@/composables/useGsap'
 
 const props = defineProps<{
   server?: McpServerResponse
@@ -20,19 +21,18 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const containerRef = ref<HTMLElement | null>(null)
 
-const form = ref<McpServerFormState>({
+const getDefaultForm = (): McpServerFormState => ({
   name: '',
   description: '',
   transport: McpTransportType.STDIO as McpTransportType,
   enabled: true,
   config: {
-    // Stdio Config
     command: '',
     args: [] as string[],
     env: {} as Record<string, string>,
     cwd: '',
-    // HTTP Config
     url: '',
     headers: {} as Record<string, string>,
     auth: {
@@ -43,6 +43,8 @@ const form = ref<McpServerFormState>({
     },
   },
 })
+
+const form = ref<McpServerFormState>(getDefaultForm())
 
 const stdioConfigRef = ref<InstanceType<typeof McpServerStdioConfig>>()
 
@@ -75,6 +77,19 @@ onMounted(() => {
       }
     }
   }
+
+  // 入场动画
+  const { gsap, ctx } = useGsap()
+  ctx.add(() => {
+    gsap.from('.form-section', {
+      y: 20,
+      opacity: 0,
+      duration: 0.5,
+      stagger: 0.1,
+      ease: 'power2.out',
+      delay: 0.2,
+    })
+  })
 })
 
 function handleSubmit() {
@@ -115,67 +130,49 @@ function handleSubmit() {
 </script>
 
 <template>
-  <div class="w-full max-w-2xl mx-auto">
-    <!-- 头部 -->
-    <div class="flex items-center gap-3 mb-6">
-      <div
-        class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 border border-primary/10"
-      >
-        <Server class="w-5 h-5 text-primary" />
-      </div>
-      <div>
-        <h2 class="text-base font-bold text-foreground/90 tracking-tight">
-          {{ server ? t('ai.mcpEditServer') : t('ai.mcpCreateServer') }}
-        </h2>
-        <p class="text-[11px] text-muted-foreground/60">
-          {{ server ? 'Edit your MCP server configuration' : 'Add a new MCP server' }}
-        </p>
-      </div>
-    </div>
-
+  <div ref="containerRef" class="w-full max-w-2xl mx-auto pb-6">
     <div class="space-y-6">
       <!-- 基础信息 -->
-      <McpServerFormBaseInfo v-model="form" />
+      <div class="form-section">
+        <McpServerFormBaseInfo v-model="form" />
+      </div>
 
       <!-- 分隔线 -->
-      <div class="h-px bg-border/40" />
+      <div
+        class="form-section h-px bg-gradient-to-r from-transparent via-border/60 to-transparent"
+      />
 
       <!-- Transport 选择 -->
-      <McpServerTransportSelector v-model="form.transport" />
+      <div class="form-section">
+        <McpServerTransportSelector v-model="form.transport" />
+      </div>
 
-      <!-- Stdio 配置 -->
-      <McpServerStdioConfig
-        ref="stdioConfigRef"
-        v-model="form.config"
-        :transport="form.transport"
-        :stdio-transport-value="McpTransportType.STDIO"
-      />
+      <!-- 配置部分 -->
+      <div class="form-section">
+        <!-- Stdio 配置 -->
+        <McpServerStdioConfig
+          ref="stdioConfigRef"
+          v-model="form.config"
+          :transport="form.transport"
+          :stdio-transport-value="McpTransportType.STDIO"
+        />
 
-      <!-- HTTP 配置 -->
-      <McpServerHttpConfig
-        v-model="form.config"
-        :transport="form.transport"
-        :http-transport-value="McpTransportType.HTTP"
-      />
+        <!-- HTTP 配置 -->
+        <McpServerHttpConfig
+          v-model="form.config"
+          :transport="form.transport"
+          :http-transport-value="McpTransportType.HTTP"
+        />
+      </div>
 
       <!-- 底部按钮 -->
-      <div class="flex justify-between gap-4 pt-4 border-t border-border/30">
+      <div class="form-section flex items-center justify-end pt-4 border-t border-border/30">
         <button
           :disabled="loading"
-          class="group flex h-10 items-center gap-2 rounded-xl px-5 text-sm font-medium text-muted-foreground transition-all hover:text-foreground hover:bg-muted/50 disabled:opacity-50"
-          @click="emit('cancel')"
-        >
-          <ChevronRight
-            class="w-4 h-4 rotate-180 transition-transform group-hover:-translate-x-0.5"
-          />
-          {{ t('common.cancel') }}
-        </button>
-        <button
-          :disabled="loading"
-          class="group flex h-10 items-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-[0_2px_10px_hsl(var(--primary)_/_0.25)] transition-all hover:shadow-[0_4px_14px_hsl(var(--primary)_/_0.35)] hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50"
+          class="h-9 px-5 rounded-xl text-sm font-bold text-primary-foreground bg-primary shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 flex items-center gap-2"
           @click="handleSubmit"
         >
-          <Loader2 v-if="loading" class="w-4 h-4 animate-spin" />
+          <Loader2 v-if="loading" class="w-3.5 h-3.5 animate-spin" />
           <span>{{ server ? t('ai.mcpUpdateServer') : t('ai.mcpCreateServer') }}</span>
         </button>
       </div>

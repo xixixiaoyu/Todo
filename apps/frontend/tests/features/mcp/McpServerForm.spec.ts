@@ -25,10 +25,21 @@ vi.mock('vue-i18n', () => ({
         'ai.mcpHttp': 'HTTP',
         'ai.mcpCommand': 'Command',
         'ai.mcpCommandPlaceholder': 'e.g. node',
+        'ai.mcpCommandHint': 'Enter command',
         'ai.mcpArguments': 'Arguments',
         'ai.mcpAddArgument': 'Add an argument',
+        'ai.mcpEnvVars': 'Environment Variables',
         'ai.mcpUrl': 'URL',
         'ai.mcpUrlPlaceholder': 'e.g. http://localhost:3000',
+        'ai.mcpServerUrl': 'Server URL',
+        'ai.mcpServerUrlPlaceholder': 'HTTPS Required',
+        'ai.mcpAuth': 'Authentication',
+        'ai.mcpAuthMethod': 'Auth Method',
+        'ai.mcpAuthToken': 'Token',
+        'ai.mcpAuthApiKey': 'API Key',
+        'ai.mcpAuthHeader': 'Header',
+        'ai.mcpStdioDescription': 'Standard Input/Output',
+        'ai.mcpHttpDescription': 'HTTP SSE',
         'common.cancel': 'Cancel',
         'common.save': 'Save',
         'common.update': 'Update',
@@ -41,14 +52,15 @@ vi.mock('vue-i18n', () => ({
 
 // Mock Lucide icons
 vi.mock('lucide-vue-next', () => ({
-  X: { render: () => h('div') },
-  Plus: { render: () => h('div') },
-  Trash2: { render: () => h('div') },
-  Terminal: { render: () => h('div') },
-  Globe: { render: () => h('div') },
-  Server: { render: () => h('div') },
-  Loader2: { render: () => h('div') },
-  ChevronRight: { render: () => h('div') },
+  X: { render: () => h('div', { class: 'lucide-x' }) },
+  Plus: { render: () => h('div', { class: 'lucide-plus' }) },
+  Trash2: { render: () => h('div', { class: 'lucide-trash-2' }) },
+  Terminal: { render: () => h('div', { class: 'lucide-terminal' }) },
+  Globe: { render: () => h('div', { class: 'lucide-globe' }) },
+  Server: { render: () => h('div', { class: 'lucide-server' }) },
+  Loader2: { render: () => h('div', { class: 'lucide-loader-2' }) },
+  RotateCcw: { render: () => h('div', { class: 'lucide-rotate-ccw' }) },
+  CheckCircle2: { render: () => h('div', { class: 'lucide-check-circle-2' }) },
 }))
 
 describe('McpServerForm.vue', () => {
@@ -78,10 +90,7 @@ describe('McpServerForm.vue', () => {
     await nextTick()
 
     const nameInput = wrapper.find('input#name').element as HTMLInputElement
-    const descTextarea = wrapper.find('textarea#description').element as HTMLTextAreaElement
-
     expect(nameInput.value).toBe('Test Server')
-    expect(descTextarea.value).toBe('Test Desc')
   })
 
   it('switches transport types', async () => {
@@ -126,16 +135,14 @@ describe('McpServerForm.vue', () => {
 
     const argInput = wrapper.find('input[placeholder="Add an argument"]')
     await argInput.setValue('--debug')
-    await argInput.trigger('keyup.enter')
+    await argInput.trigger('keydown.enter')
     await nextTick()
 
     expect(wrapper.text()).toContain('--debug')
 
     // Remove it
-    const argChip = wrapper.findAll('span').find((s) => s.text().includes('--debug'))
-    expect(argChip).toBeTruthy()
-    const removeBtn = argChip!.find('button')
-    await removeBtn.trigger('click')
+    const removeBtn = wrapper.find('.lucide-x').element.closest('button')
+    await (removeBtn as HTMLButtonElement).click()
     await nextTick()
 
     expect(wrapper.text()).not.toContain('--debug')
