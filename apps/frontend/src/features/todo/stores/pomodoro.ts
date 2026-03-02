@@ -26,6 +26,7 @@ export const usePomodoroStore = defineStore(
     const timeLeft = ref(FOCUS_TIME * 60)
     const activeTodoId = ref<string | null>(null)
     const timerInterval = ref<number | null>(null)
+    const targetEndTime = ref<number | null>(null)
     const completedSessions = ref(0)
     const history = ref<PomodoroHistory[]>([])
     const isMiniMode = ref(false)
@@ -83,11 +84,16 @@ export const usePomodoroStore = defineStore(
     function startTimer() {
       if (timerInterval.value) clearInterval(timerInterval.value)
 
+      // Calculate target end time for robust background operation
+      targetEndTime.value = Date.now() + timeLeft.value * 1000
+
       // Use window.setInterval to ensure browser context and cast to number
       timerInterval.value = window.setInterval(() => {
-        if (timeLeft.value > 0) {
-          timeLeft.value--
+        const now = Date.now()
+        if (targetEndTime.value && now < targetEndTime.value) {
+          timeLeft.value = Math.ceil((targetEndTime.value - now) / 1000)
         } else {
+          timeLeft.value = 0
           void handleTimerComplete()
         }
       }, 1000) as unknown as number
@@ -97,6 +103,7 @@ export const usePomodoroStore = defineStore(
       if (timerInterval.value) {
         clearInterval(timerInterval.value)
         timerInterval.value = null
+        targetEndTime.value = null
       }
     }
 

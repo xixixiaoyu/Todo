@@ -165,23 +165,23 @@ watch(
           class="relative backdrop-blur-3xl overflow-hidden transition-all duration-700 h-full w-full group/card"
           :class="[
             pomodoroStore.isMiniMode
-              ? 'rounded-[3rem] flex flex-col border border-white/10'
-              : 'rounded-[2.5rem] p-6 bg-white/80 dark:bg-neutral-900/80 shadow-2xl border border-white/40 dark:border-white/10',
+              ? 'rounded-[3rem] flex flex-col border border-white/20'
+              : 'rounded-[2.5rem] p-6 bg-white/90 dark:bg-neutral-900/90 shadow-2xl border border-white/40 dark:border-white/20',
             !pomodoroStore.isMiniMode && pomodoroStore.status === 'focus'
-              ? 'ring-1 ring-rose-500/10'
+              ? 'ring-1 ring-rose-500/20'
               : !pomodoroStore.isMiniMode
-                ? 'ring-1 ring-emerald-500/10'
+                ? 'ring-1 ring-emerald-500/20'
                 : '',
           ]"
           :style="{
             backgroundColor: pomodoroStore.isMiniMode
               ? pomodoroStore.isEarthReady
-                ? 'rgba(0, 0, 0, 0.2)'
-                : 'rgba(10, 25, 47, 0.6)' // More substantial blue-ish dark background when earth is not ready
+                ? 'rgba(0, 0, 0, 0.4)'
+                : 'rgba(15, 23, 42, 0.7)' // slightly more opaque and modern slate color
               : '',
             boxShadow: pomodoroStore.isMiniMode
-              ? '0 20px 40px -15px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.1)'
-              : '0 40px 80px -20px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.5)',
+              ? '0 20px 50px -10px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.15)'
+              : '0 40px 100px -20px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.6)',
             '--wails-draggable': 'drag',
             transform: 'translateZ(0)',
           }"
@@ -199,8 +199,8 @@ watch(
               :style="{
                 background:
                   pomodoroStore.status === 'focus'
-                    ? 'radial-gradient(circle at 50% 50%, rgba(244, 63, 94, 0.05) 0%, transparent 70%)'
-                    : 'radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.05) 0%, transparent 70%)',
+                    ? 'radial-gradient(circle at 50% 50%, rgba(244, 63, 94, 0.15) 0%, transparent 80%)'
+                    : 'radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.15) 0%, transparent 80%)',
               }"
             ></div>
           </div>

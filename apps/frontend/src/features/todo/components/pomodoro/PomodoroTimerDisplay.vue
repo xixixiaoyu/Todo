@@ -31,10 +31,10 @@ const pomodoroStore = usePomodoroStore()
         :style="{
           background:
             pomodoroStore.status === 'focus'
-              ? 'radial-gradient(circle, rgba(251, 113, 133, 0.2) 0%, transparent 70%)'
-              : 'radial-gradient(circle, rgba(52, 211, 153, 0.2) 0%, transparent 70%)',
+              ? 'radial-gradient(circle, rgba(251, 113, 133, 0.4) 0%, transparent 70%)'
+              : 'radial-gradient(circle, rgba(52, 211, 153, 0.4) 0%, transparent 70%)',
           boxShadow: pomodoroStore.isRunning
-            ? `0 0 60px 10px ${pomodoroStore.status === 'focus' ? 'rgba(251, 113, 133, 0.1)' : 'rgba(52, 211, 153, 0.1)'}`
+            ? `0 0 80px 20px ${pomodoroStore.status === 'focus' ? 'rgba(251, 113, 133, 0.2)' : 'rgba(52, 211, 153, 0.2)'}`
             : 'none',
         }"
       ></div>
@@ -42,7 +42,7 @@ const pomodoroStore = usePomodoroStore()
       <!-- Stellar Rings - Reduced Opacity and Slower -->
       <div
         v-if="pomodoroStore.isRunning"
-        class="absolute rounded-full border border-white/[0.03] animate-spin-slow"
+        class="absolute rounded-full border border-white/[0.05] animate-spin-slow"
         :class="pomodoroStore.isMiniMode ? 'w-36 h-36' : 'w-80 h-80'"
       ></div>
 
@@ -51,7 +51,7 @@ const pomodoroStore = usePomodoroStore()
           'relative z-10 transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)]',
           pomodoroStore.isMiniMode ? 'w-32 h-32' : 'w-72 h-72',
           pomodoroStore.isMiniMode
-            ? 'group-hover/timer:opacity-20 transition-opacity duration-300'
+            ? 'group-hover/timer:opacity-30 transition-opacity duration-300'
             : '',
         ]"
         viewBox="0 0 100 100"
@@ -64,7 +64,7 @@ const pomodoroStore = usePomodoroStore()
           fill="none"
           stroke="currentColor"
           stroke-width="0.2"
-          class="text-foreground/[0.05] dark:text-white/[0.05]"
+          class="text-foreground/[0.1] dark:text-white/[0.1]"
         />
         <!-- Orbit Ring -->
         <circle
@@ -74,7 +74,7 @@ const pomodoroStore = usePomodoroStore()
           fill="none"
           stroke="currentColor"
           stroke-width="0.5"
-          class="text-foreground/[0.03] dark:text-white/[0.03] animate-pulse"
+          class="text-foreground/[0.05] dark:text-white/[0.05] animate-pulse"
         />
         <!-- Progress Arc -->
         <circle
@@ -92,8 +92,8 @@ const pomodoroStore = usePomodoroStore()
             filter: pomodoroStore.isRunning
               ? `drop-shadow(0 0 15px ${
                   pomodoroStore.status === 'focus'
-                    ? 'rgba(244, 63, 94, 0.6)'
-                    : 'rgba(16, 185, 129, 0.6)'
+                    ? 'rgba(244, 63, 94, 0.8)'
+                    : 'rgba(16, 185, 129, 0.8)'
                 })`
               : 'none',
           }"
@@ -126,14 +126,16 @@ const pomodoroStore = usePomodoroStore()
         <span
           class="font-mono tabular-nums transition-all duration-700 leading-none select-none"
           :class="[
-            pomodoroStore.isRunning ? 'text-foreground font-bold' : 'text-foreground/30 font-light',
+            pomodoroStore.isRunning ? 'text-white font-bold' : 'text-white/40 font-light',
             pomodoroStore.isMiniMode ? 'text-3xl tracking-tighter' : 'text-8xl tracking-[-0.05em]',
           ]"
           :style="{
             fontFamily: 'JetBrains Mono, monospace',
-            textShadow: pomodoroStore.isRunning
-              ? `0 0 20px ${pomodoroStore.status === 'focus' ? 'rgba(251, 113, 133, 0.3)' : 'rgba(52, 211, 153, 0.3)'}`
-              : 'none',
+            textShadow: `0 0 20px ${
+              pomodoroStore.status === 'focus'
+                ? 'rgba(251, 113, 133, 0.5)'
+                : 'rgba(52, 211, 153, 0.5)'
+            }, 0 4px 12px rgba(0, 0, 0, 0.3)`,
           }"
         >
           {{ pomodoroStore.formattedTime }}

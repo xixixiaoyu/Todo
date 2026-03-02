@@ -6,7 +6,13 @@ describe('usePomodoroStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.useFakeTimers()
+    vi.setSystemTime(new Date('2024-01-01T00:00:00Z'))
   })
+
+  const advanceTime = (ms: number) => {
+    vi.advanceTimersByTime(ms)
+    vi.setSystemTime(new Date(Date.now() + ms))
+  }
 
   it('should initialize with default values', () => {
     const store = usePomodoroStore()
@@ -27,7 +33,7 @@ describe('usePomodoroStore', () => {
     const store = usePomodoroStore()
     await store.startFocus('todo-1')
 
-    vi.advanceTimersByTime(1000)
+    advanceTime(1000)
     expect(store.timeLeft).toBe(25 * 60 - 1)
   })
 
@@ -35,30 +41,29 @@ describe('usePomodoroStore', () => {
     const store = usePomodoroStore()
     await store.startFocus('todo-1')
 
-    // Fast forward to 0
-    vi.advanceTimersByTime(25 * 60 * 1000)
-    expect(store.timeLeft).toBe(0)
-    expect(store.status).toBe('focus')
+    // Fast forward to exactly the end
+    advanceTime(25 * 60 * 1000)
 
-    // One more tick to trigger completion
-    vi.advanceTimersByTime(1000)
+    // One more tick to trigger completion logic
+    advanceTime(1000)
 
     expect(store.status).toBe('short_break')
+    expect(store.timeLeft).toBe(5 * 60)
     expect(store.completedSessions).toBe(1)
   })
 
   it('should pause and resume timer', async () => {
     const store = usePomodoroStore()
     await store.startFocus('todo-1')
-    vi.advanceTimersByTime(1000)
+    advanceTime(1000)
 
     store.pauseTimer()
     const timeLeft = store.timeLeft
-    vi.advanceTimersByTime(1000)
+    advanceTime(1000)
     expect(store.timeLeft).toBe(timeLeft)
 
     store.resumeTimer()
-    vi.advanceTimersByTime(1000)
+    advanceTime(1000)
     expect(store.timeLeft).toBe(timeLeft - 1)
   })
 })
