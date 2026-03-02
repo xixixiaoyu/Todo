@@ -394,12 +394,13 @@ const handleResize = () => {
 }
 
 watch(
-  () => pomodoroStore.status,
-  async (newStatus) => {
-    if (newStatus !== 'idle' && !isWails()) {
+  () => [pomodoroStore.status, pomodoroStore.isMiniMode],
+  async ([newStatus, newMiniMode]) => {
+    const shouldBeActive = newStatus !== 'idle' || newMiniMode
+    if (shouldBeActive && !isWails()) {
       await nextTick()
       if (!renderer) initThree()
-    } else if (newStatus === 'idle') {
+    } else if (!shouldBeActive) {
       if (animationFrameId) cancelAnimationFrame(animationFrameId)
       renderer?.dispose()
       renderer = null as unknown as THREE.WebGLRenderer
@@ -441,7 +442,7 @@ onUnmounted(() => {
     leave-to-class="opacity-0 scale-95"
   >
     <div
-      v-if="pomodoroStore.status !== 'idle' && !isWails()"
+      v-if="(pomodoroStore.status !== 'idle' || pomodoroStore.isMiniMode) && !isWails()"
       class="fixed inset-0 z-0 overflow-hidden transition-colors duration-1000"
       :class="isDark ? 'bg-black' : 'bg-[#f0f4f8]'"
     >

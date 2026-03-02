@@ -14,7 +14,7 @@ const pomodoroStore = usePomodoroStore()
 const { gsap, ctx } = useGsap()
 const { theme } = useTheme()
 
-const isDark = computed(() => theme.value === 'dark')
+const isDark = computed(() => theme.value === 'dark' || pomodoroStore.isMiniMode)
 
 const isWails = () => nativeService.platform === 'wails'
 

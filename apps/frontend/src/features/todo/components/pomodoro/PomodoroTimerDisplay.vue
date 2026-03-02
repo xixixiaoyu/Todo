@@ -6,7 +6,7 @@ import { computed } from 'vue'
 const pomodoroStore = usePomodoroStore()
 const { theme } = useTheme()
 
-const isDark = computed(() => theme.value === 'dark')
+const isDark = computed(() => theme.value === 'dark' || pomodoroStore.isMiniMode)
 </script>
 
 <template>
@@ -16,15 +16,8 @@ const isDark = computed(() => theme.value === 'dark')
   >
     <!-- Progress Ring -->
     <div
-      class="relative flex items-center justify-center group/timer"
-      :class="pomodoroStore.isMiniMode ? 'cursor-pointer' : ''"
-      @click="
-        pomodoroStore.isMiniMode
-          ? pomodoroStore.isRunning
-            ? pomodoroStore.pauseTimer()
-            : pomodoroStore.resumeTimer()
-          : null
-      "
+      class="relative flex items-center justify-center group/timer cursor-pointer"
+      @click="pomodoroStore.isRunning ? pomodoroStore.pauseTimer() : pomodoroStore.resumeTimer()"
     >
       <!-- Star Core Glow - More Subtle -->
       <div
