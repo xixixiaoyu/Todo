@@ -19,6 +19,11 @@ vi.mock('lucide-vue-next', () => ({
   GripVertical: { template: '<span class="lucide-grip-vertical">GripVertical</span>' },
   Check: { template: '<span class="lucide-check">Check</span>' },
   X: { template: '<span class="lucide-x">X</span>' },
+  RotateCcw: { template: '<span class="lucide-rotate-ccw">RotateCcw</span>' },
+  Zap: { template: '<span class="lucide-zap">Zap</span>' },
+  Timer: { template: '<span class="lucide-timer">Timer</span>' },
+  Rocket: { template: '<span class="lucide-rocket">Rocket</span>' },
+  Globe: { template: '<span class="lucide-globe">Globe</span>' },
 }))
 
 import { mount } from '@vue/test-utils'
