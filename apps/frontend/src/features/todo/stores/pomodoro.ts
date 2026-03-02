@@ -8,6 +8,21 @@ import i18n from '@/i18n'
 
 export type PomodoroStatus = 'idle' | 'focus' | 'short_break' | 'long_break'
 
+export type PomodoroMode = 'classic' | 'icebreaker' | 'flow' | 'cosmos'
+
+export interface PomodoroModeConfig {
+  focus: number
+  shortBreak: number
+  longBreak: number
+}
+
+export const POMODORO_MODES: Record<PomodoroMode, PomodoroModeConfig> = {
+  classic: { focus: 25, shortBreak: 5, longBreak: 15 },
+  icebreaker: { focus: 15, shortBreak: 3, longBreak: 10 },
+  flow: { focus: 52, shortBreak: 17, longBreak: 20 },
+  cosmos: { focus: 90, shortBreak: 30, longBreak: 45 },
+}
+
 export interface PomodoroHistory {
   date: string // YYYY-MM-DD
   minutes: number
@@ -18,14 +33,10 @@ export const usePomodoroStore = defineStore(
   () => {
     const todoStore = useTodoStore()
 
-    // Configuration (minutes)
-    const FOCUS_TIME = 25
-    const SHORT_BREAK = 5
-    const LONG_BREAK = 15
-
     // State
     const status = ref<PomodoroStatus>('idle')
-    const timeLeft = ref(FOCUS_TIME * 60)
+    const currentMode = ref<PomodoroMode>('classic')
+    const timeLeft = ref(POMODORO_MODES.classic.focus * 60)
     const activeTodoId = ref<string | null>(null)
     const timerInterval = ref<number | null>(null)
     const targetEndTime = ref<number | null>(null)
@@ -33,6 +44,9 @@ export const usePomodoroStore = defineStore(
     const history = ref<PomodoroHistory[]>([])
     const isMiniMode = ref(false)
     const isEarthReady = ref(false)
+
+    // Helper to get current mode times
+    const currentModeConfig = computed(() => POMODORO_MODES[currentMode.value])
 
     // Actions
     async function syncWailsWindow() {
@@ -54,12 +68,13 @@ export const usePomodoroStore = defineStore(
     )
 
     const progress = computed(() => {
+      const config = currentModeConfig.value
       const total =
         status.value === 'focus'
-          ? FOCUS_TIME * 60
+          ? config.focus * 60
           : status.value === 'short_break'
-            ? SHORT_BREAK * 60
-            : LONG_BREAK * 60
+            ? config.shortBreak * 60
+            : config.longBreak * 60
       return ((total - timeLeft.value) / total) * 100
     })
 
@@ -70,12 +85,13 @@ export const usePomodoroStore = defineStore(
     })
 
     // Actions
-    async function startFocus(todoId: string) {
+    async function startFocus(todoId: string, mode: PomodoroMode = 'classic') {
       if (timerInterval.value) clearInterval(timerInterval.value)
 
       activeTodoId.value = todoId
+      currentMode.value = mode
       status.value = 'focus'
-      timeLeft.value = FOCUS_TIME * 60
+      timeLeft.value = POMODORO_MODES[mode].focus * 60
       isMiniMode.value = true
 
       await nativeService.haptic(ImpactStyle.Medium)
@@ -125,7 +141,7 @@ export const usePomodoroStore = defineStore(
       pauseTimer()
       status.value = 'idle'
       activeTodoId.value = null
-      timeLeft.value = FOCUS_TIME * 60
+      timeLeft.value = currentModeConfig.value.focus * 60
       isMiniMode.value = false
     }
 
@@ -133,6 +149,7 @@ export const usePomodoroStore = defineStore(
       pauseTimer()
       const toast = useToast()
       const t = i18n.global.t
+      const config = currentModeConfig.value
 
       const messages: Record<Exclude<PomodoroStatus, 'idle'>, string> = {
         focus: t('pomodoro.focusComplete'),
@@ -157,17 +174,17 @@ export const usePomodoroStore = defineStore(
         const today = new Date().toLocaleDateString('sv-SE')
         const existingEntry = history.value.find((h) => h.date === today)
         if (existingEntry) {
-          existingEntry.minutes += FOCUS_TIME
+          existingEntry.minutes += config.focus
         } else {
-          history.value.push({ date: today, minutes: FOCUS_TIME })
+          history.value.push({ date: today, minutes: config.focus })
         }
 
         if (completedSessions.value % 4 === 0) {
           status.value = 'long_break'
-          timeLeft.value = LONG_BREAK * 60
+          timeLeft.value = config.longBreak * 60
         } else {
           status.value = 'short_break'
-          timeLeft.value = SHORT_BREAK * 60
+          timeLeft.value = config.shortBreak * 60
         }
 
         // Increment pomodoro count on the active todo
@@ -176,7 +193,7 @@ export const usePomodoroStore = defineStore(
         }
       } else {
         status.value = 'idle'
-        timeLeft.value = FOCUS_TIME * 60
+        timeLeft.value = config.focus * 60
       }
 
       // Haptic feedback for completion
@@ -210,7 +227,15 @@ export const usePomodoroStore = defineStore(
     persist: {
       key: 'pomodoro',
       storage: localStorage,
-      pick: ['completedSessions', 'history', 'isMiniMode', 'status', 'timeLeft', 'activeTodoId'],
+      pick: [
+        'completedSessions',
+        'history',
+        'isMiniMode',
+        'status',
+        'timeLeft',
+        'activeTodoId',
+        'currentMode',
+      ],
     },
   },
 )

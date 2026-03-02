@@ -13,17 +13,17 @@ import {
   Plus,
 } from 'lucide-vue-next'
 import { ref } from 'vue'
-import { type Todo } from '../stores/todo'
-import { useTodoStore } from '../stores/todo'
+import { useTodoStore, type Todo } from '../stores/todo'
 import { usePomodoroStore } from '../stores/pomodoro'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import TodoSchedulePopover from './TodoSchedulePopover.vue'
+import PomodoroModeSelector from './PomodoroModeSelector.vue'
 
 const { t } = useI18n()
-const store = useTodoStore()
 const pomodoroStore = usePomodoroStore()
+const todoStore = useTodoStore()
 
 const props = defineProps<{
   todo: Todo
@@ -43,14 +43,14 @@ const emit = defineEmits<{
 const isScheduleOpen = ref(false)
 
 function handleApplySchedule(dueAt: Date | null, remindAt: Date | null) {
-  store.updateTodoSchedule(props.todo.id, dueAt, remindAt)
+  todoStore.updateTodoSchedule(props.todo.id, dueAt, remindAt)
 }
 </script>
 
 <template>
   <!-- Trash Mode Actions -->
   <div
-    v-if="store.filter === 'trash'"
+    v-if="todoStore.filter === 'trash'"
     class="absolute right-0 top-0 bottom-0 flex items-center gap-1 px-3 bg-gradient-to-l from-card via-card/95 to-transparent rounded-r-xl"
   >
     <TooltipProvider :delay-duration="0">
@@ -60,7 +60,7 @@ function handleApplySchedule(dueAt: Date | null, remindAt: Date | null) {
             variant="ghost"
             size="icon"
             class="h-8 w-8 text-primary hover:bg-primary/10"
-            @click.stop="store.restoreTodo(todo.id)"
+            @click.stop="todoStore.restoreTodo(todo.id)"
           >
             <RotateCcw class="h-4 w-4" />
           </Button>
@@ -124,15 +124,20 @@ function handleApplySchedule(dueAt: Date | null, remindAt: Date | null) {
       <!-- Focus -->
       <Tooltip v-if="!todo.completed">
         <TooltipTrigger as-child>
-          <Button
-            variant="ghost"
-            size="icon"
-            class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-            :class="{ 'text-primary bg-primary/5': pomodoroStore.activeTodoId === todo.id }"
-            @click.stop="pomodoroStore.startFocus(todo.id)"
+          <PomodoroModeSelector
+            :todo-id="todo.id"
+            @select="pomodoroStore.startFocus(todo.id, $event)"
           >
-            <Target class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-target" />
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+              :class="{ 'text-primary bg-primary/5': pomodoroStore.activeTodoId === todo.id }"
+              @click.stop
+            >
+              <Target class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-target" />
+            </Button>
+          </PomodoroModeSelector>
         </TooltipTrigger>
         <TooltipContent side="top">{{ t('todo.focus') }}</TooltipContent>
       </Tooltip>
@@ -172,7 +177,7 @@ function handleApplySchedule(dueAt: Date | null, remindAt: Date | null) {
             size="icon"
             class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
             :class="{ 'text-primary bg-primary/5': todo.isPinned }"
-            @click.stop="store.togglePin(todo.id)"
+            @click.stop="todoStore.togglePin(todo.id)"
           >
             <PinOff v-if="todo.isPinned" class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-pin-off" />
             <Pin v-else class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-pin" />

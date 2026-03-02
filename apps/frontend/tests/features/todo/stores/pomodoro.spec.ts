@@ -42,11 +42,30 @@ describe('usePomodoroStore', () => {
     expect(store.completedSessions).toBe(0)
   })
 
-  it('should start focus correctly', async () => {
+  it('should start focus with different modes correctly', async () => {
     const store = usePomodoroStore()
-    await store.startFocus('todo-1')
-    expect(store.status).toBe('focus')
-    expect(store.activeTodoId).toBe('todo-1')
+
+    await store.startFocus('todo-1', 'icebreaker')
+    expect(store.timeLeft).toBe(15 * 60)
+
+    await store.startFocus('todo-1', 'flow')
+    expect(store.timeLeft).toBe(52 * 60)
+
+    await store.startFocus('todo-1', 'cosmos')
+    expect(store.timeLeft).toBe(90 * 60)
+  })
+
+  it('should transition to long break after 4 sessions in any mode', async () => {
+    const store = usePomodoroStore()
+    store.completedSessions = 3
+    await store.startFocus('todo-1', 'flow')
+
+    // Fast forward focus time
+    advanceTime(52 * 60 * 1000 + 1000)
+
+    expect(store.status).toBe('long_break')
+    expect(store.timeLeft).toBe(20 * 60)
+    expect(store.completedSessions).toBe(4)
   })
 
   it('should count down correctly', async () => {
@@ -55,6 +74,17 @@ describe('usePomodoroStore', () => {
 
     advanceTime(1000)
     expect(store.timeLeft).toBe(25 * 60 - 1)
+  })
+
+  it('should record history with correct minutes per mode', async () => {
+    const store = usePomodoroStore()
+    await store.startFocus('todo-1', 'flow')
+
+    // Fast forward to exactly the end
+    advanceTime(52 * 60 * 1000 + 1000)
+
+    const today = new Date().toLocaleDateString('sv-SE')
+    expect(store.history).toContainEqual({ date: today, minutes: 52 })
   })
 
   it('should transition to break after focus completes', async () => {
