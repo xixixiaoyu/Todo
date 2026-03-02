@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Maximize2, X, Sparkles } from 'lucide-vue-next'
+import { X, Sparkles } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { usePomodoroStore } from '../../stores/pomodoro'
 import { useTodoStore } from '../../stores/todo'
@@ -12,15 +12,6 @@ const isWails = () => nativeService.platform === 'wails'
 
 function toggleAiAssistant() {
   todoStore.setDrawerOpen(!todoStore.isDrawerOpen)
-}
-
-function toggleMiniMode() {
-  const enteringMini = !pomodoroStore.isMiniMode
-  pomodoroStore.toggleMiniMode()
-
-  if (enteringMini && !pomodoroStore.isRunning && pomodoroStore.status !== 'idle') {
-    pomodoroStore.resumeTimer()
-  }
 }
 </script>
 
@@ -44,14 +35,6 @@ function toggleMiniMode() {
       class="absolute top-4 right-4 flex items-center gap-1 opacity-0 group-hover/card:opacity-100 transition-all duration-500 -translate-y-1 group-hover/card:translate-y-0"
       style="--wails-draggable: no-drag"
     >
-      <Button
-        variant="ghost"
-        size="icon"
-        class="w-6 h-6 rounded-full hover:bg-foreground/5 text-foreground/20 hover:text-foreground/50"
-        @click="toggleMiniMode"
-      >
-        <Maximize2 class="w-3 h-3" />
-      </Button>
       <Button
         variant="ghost"
         size="icon"

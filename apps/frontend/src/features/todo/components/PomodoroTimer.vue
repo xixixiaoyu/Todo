@@ -1,45 +1,26 @@
 <script setup lang="ts">
 import { usePomodoroStore } from '../stores/pomodoro'
-import { GripVertical, Minimize2, X } from 'lucide-vue-next'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { useGsap } from '@/composables/useGsap'
 import { useTheme } from '@/composables/useTheme'
 import { nativeService } from '@/services/native'
 import { ref, watch, computed } from 'vue'
-import { useDraggable, useWindowSize } from '@vueuse/core'
-import { useI18n } from 'vue-i18n'
+import { useWindowSize } from '@vueuse/core'
 
 // Subcomponents
 import PomodoroTimerDisplay from './pomodoro/PomodoroTimerDisplay.vue'
-import PomodoroTimerControls from './pomodoro/PomodoroTimerControls.vue'
-import PomodoroTaskInfo from './pomodoro/PomodoroTaskInfo.vue'
 import PomodoroMiniControls from './pomodoro/PomodoroMiniControls.vue'
 
 const pomodoroStore = usePomodoroStore()
-const { t } = useI18n()
 const { gsap, ctx } = useGsap()
 const { theme } = useTheme()
 
 const isDark = computed(() => theme.value === 'dark')
-const isMini = computed(() => pomodoroStore.isMiniMode)
 
 const isWails = () => nativeService.platform === 'wails'
 
 const containerRef = ref<HTMLElement | null>(null)
-const handleRef = ref<HTMLElement | null>(null)
 
 const { width: windowWidth, height: windowHeight } = useWindowSize()
-
-const { x, y } = useDraggable(containerRef, {
-  initialValue: {
-    x: window.innerWidth > 768 ? window.innerWidth - 320 : (window.innerWidth - 288) / 2,
-    y: window.innerWidth > 768 ? 60 : 20,
-  },
-  handle: handleRef,
-  preventDefault: true,
-  disabled: computed(() => pomodoroStore.isMiniMode),
-})
 
 // Calculate centered position for browser mini mode
 const miniPosition = computed(() => {
@@ -56,67 +37,13 @@ const miniPosition = computed(() => {
 })
 
 const containerStyle = computed(() => {
-  if (pomodoroStore.isMiniMode) {
-    if (isWails()) return { left: 0, top: 0, width: '100vw', height: '100vh' }
-    return {
-      left: `${miniPosition.value.x}px`,
-      top: `${miniPosition.value.y}px`,
-      width: miniPosition.value.width,
-      height: miniPosition.value.height,
-    }
-  }
+  if (isWails()) return { left: 0, top: 0, width: '100vw', height: '100vh' }
   return {
-    left: `${x.value}px`,
-    top: `${y.value}px`,
-    width: '18rem', // w-72
-    height: 'auto',
+    left: `${miniPosition.value.x}px`,
+    top: `${miniPosition.value.y}px`,
+    width: miniPosition.value.width,
+    height: miniPosition.value.height,
   }
-})
-
-function toggleMiniMode() {
-  const enteringMini = !pomodoroStore.isMiniMode
-  pomodoroStore.toggleMiniMode()
-
-  if (enteringMini && !pomodoroStore.isRunning && pomodoroStore.status !== 'idle') {
-    pomodoroStore.resumeTimer()
-  }
-}
-
-// Animation for mode transitions
-watch(
-  () => pomodoroStore.isMiniMode,
-  (isMini) => {
-    if (containerRef.value) {
-      ctx.add(() => {
-        gsap.fromTo(
-          containerRef.value,
-          {
-            scale: isMini ? 1.1 : 0.9,
-            opacity: 0.8,
-          },
-          {
-            scale: 1,
-            opacity: 1,
-            duration: 0.6,
-            ease: 'power3.out',
-          },
-        )
-      })
-    }
-    if (!isMini && !isWails()) {
-      x.value = window.innerWidth - 320
-      y.value = 60
-    }
-  },
-)
-
-// Ensure the timer stays within window bounds on resize
-watch([windowWidth, windowHeight], ([newW, newH]) => {
-  if (pomodoroStore.isMiniMode) return
-  if (x.value + 288 > newW) x.value = newW - 320
-  if (y.value + 200 > newH) y.value = newH - 240
-  if (x.value < 0) x.value = 20
-  if (y.value < 0) y.value = 20
 })
 
 // Animation for status changes
@@ -157,7 +84,7 @@ watch(
     enter-to-class="opacity-100 scale-100 translate-y-0"
   >
     <div
-      v-if="pomodoroStore.status !== 'idle' || pomodoroStore.isMiniMode"
+      v-if="pomodoroStore.isMiniMode"
       ref="containerRef"
       class="fixed z-[100] group transition-all duration-500 ease-out-quart"
       :style="containerStyle"
@@ -169,117 +96,33 @@ watch(
         <div
           class="relative backdrop-blur-3xl overflow-hidden transition-all duration-700 h-full w-full group/card"
           :class="[
-            pomodoroStore.isMiniMode
-              ? isDark
-                ? 'rounded-[3rem] flex flex-col border border-white/20'
-                : 'rounded-[3rem] flex flex-col border border-white/40 shadow-xl shadow-black/10'
-              : isDark
-                ? 'rounded-[2.5rem] p-6 bg-neutral-900/90 shadow-2xl border border-white/20'
-                : 'rounded-[2.5rem] p-6 bg-white/95 shadow-2xl border border-black/5',
-            !pomodoroStore.isMiniMode && pomodoroStore.status === 'focus'
-              ? isDark
-                ? 'ring-1 ring-rose-500/20'
-                : 'ring-1 ring-rose-500/10'
-              : !pomodoroStore.isMiniMode
-                ? isDark
-                  ? 'ring-1 ring-emerald-500/20'
-                  : 'ring-1 ring-emerald-500/10'
-                : '',
+            isDark
+              ? 'rounded-[3rem] flex flex-col border border-white/20'
+              : 'rounded-[3rem] flex flex-col border border-white/40 shadow-xl shadow-black/10',
           ]"
           :style="{
-            backgroundColor: isMini
-              ? pomodoroStore.isEarthReady
-                ? isDark
-                  ? 'rgba(0, 0, 0, 0.4)'
-                  : 'rgba(255, 255, 255, 0.25)' // 收缩模式下，浅色卡片背景保持大幅透明，因为背景始终为深色地球
-                : isDark
-                  ? 'rgba(15, 23, 42, 0.7)'
-                  : 'rgba(255, 255, 255, 0.95)'
-              : '',
-            boxShadow: isMini
+            backgroundColor: pomodoroStore.isEarthReady
               ? isDark
-                ? '0 20px 50px -10px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.15)'
-                : '0 20px 60px -15px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.3)' // 强化阴影，在黑色背景下突出卡片
+                ? 'rgba(0, 0, 0, 0.4)'
+                : 'rgba(255, 255, 255, 0.25)' // 收缩模式下，浅色卡片背景保持大幅透明，因为背景始终为深色地球
               : isDark
-                ? '0 40px 100px -20px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.2)'
-                : '0 40px 100px -20px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 1)',
+                ? 'rgba(15, 23, 42, 0.7)'
+                : 'rgba(255, 255, 255, 0.95)',
+            boxShadow: isDark
+              ? '0 20px 50px -10px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.15)'
+              : '0 20px 60px -15px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.3)', // 强化阴影，在黑色背景下突出卡片
             '--wails-draggable': 'drag',
             transform: 'translateZ(0)',
           }"
         >
           <!-- Wails Drag Area for Mini Mode -->
-          <div v-if="pomodoroStore.isMiniMode && isWails()" class="absolute inset-0 z-0"></div>
-
-          <!-- Dynamic Background Glows (Full Mode Only) - Simplified for Minimalism -->
-          <div
-            v-if="!pomodoroStore.isMiniMode"
-            class="absolute inset-0 overflow-hidden pointer-events-none z-0"
-          >
-            <div
-              class="absolute inset-0 transition-all duration-1000"
-              :style="{
-                background:
-                  pomodoroStore.status === 'focus'
-                    ? `radial-gradient(circle at 50% 50%, rgba(244, 63, 94, ${isDark ? '0.15' : '0.08'}) 0%, transparent 80%)`
-                    : `radial-gradient(circle at 50% 50%, rgba(16, 185, 129, ${isDark ? '0.15' : '0.08'}) 0%, transparent 80%)`,
-              }"
-            ></div>
-          </div>
+          <div v-if="isWails()" class="absolute inset-0 z-0"></div>
 
           <!-- Mini Mode Controls -->
-          <PomodoroMiniControls v-if="pomodoroStore.isMiniMode" />
-
-          <!-- Full Mode Header -->
-          <div
-            v-else
-            class="relative z-20 w-full flex items-center justify-between px-2 mb-6"
-            style="--wails-draggable: no-drag"
-          >
-            <div
-              ref="handleRef"
-              class="flex items-center gap-3 cursor-grab active:cursor-grabbing group/handle"
-            >
-              <div
-                class="w-8 h-8 rounded-xl bg-foreground/5 flex items-center justify-center transition-colors group-hover/handle:bg-foreground/10"
-              >
-                <GripVertical class="w-4 h-4 text-foreground/40" />
-              </div>
-              <Badge
-                variant="secondary"
-                class="text-[10px] uppercase tracking-[0.2em] font-black py-1 px-3 bg-foreground/5 text-foreground/60 border-none rounded-lg"
-              >
-                {{ t(`pomodoro.status.${pomodoroStore.status}`) }}
-              </Badge>
-            </div>
-
-            <div class="flex items-center gap-1.5 justify-end flex-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                class="w-8 h-8 rounded-full hover:bg-foreground/5 active:scale-90 transition-all text-foreground/20 hover:text-foreground/50"
-                @click="toggleMiniMode"
-              >
-                <Minimize2 class="w-4 h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                class="w-8 h-8 rounded-full hover:bg-destructive/5 hover:text-destructive active:scale-90 transition-all text-foreground/20"
-                @click="pomodoroStore.resetTimer"
-              >
-                <X class="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
+          <PomodoroMiniControls />
 
           <!-- Timer Display (Shared) -->
           <PomodoroTimerDisplay />
-
-          <!-- Full Mode Only Content -->
-          <template v-if="!pomodoroStore.isMiniMode">
-            <PomodoroTaskInfo />
-            <PomodoroTimerControls />
-          </template>
         </div>
       </div>
     </div>
