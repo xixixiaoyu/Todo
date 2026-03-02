@@ -6,7 +6,7 @@ import { useTheme } from '@/composables/useTheme'
 import { nativeService } from '@/services/native'
 import { useGsap } from '@/composables/useGsap'
 
-const props = defineProps<{
+defineProps<{
   mousePos?: { x: number; y: number }
 }>()
 
@@ -24,11 +24,15 @@ let renderer: THREE.WebGLRenderer
 let earth: THREE.Mesh
 let clouds: THREE.Mesh
 let atmosphere: THREE.Mesh
-let starField: THREE.Points
+let starField1: THREE.Points
+let starField2: THREE.Points
+let galaxyGlow: THREE.Points
 let sunLight: THREE.DirectionalLight
+let fillLight: THREE.PointLight
 let cameraLight: THREE.PointLight
 let ambientLight: THREE.AmbientLight
 let animationFrameId: number
+let orbitAngle = 0 // New: Track orbit position
 
 const isWails = () => nativeService.platform === 'wails'
 
@@ -93,6 +97,7 @@ const initThree = () => {
 
   earth = new THREE.Mesh(geometry, earthMaterial)
   earth.scale.set(0.1, 0.1, 0.1) // Start small
+  earth.rotation.z = (23.5 * Math.PI) / 180 // Axial tilt
   scene.add(earth)
 
   // Clouds
@@ -100,6 +105,7 @@ const initThree = () => {
   const cloudMaterial = new THREE.MeshStandardMaterial({
     transparent: true,
     opacity: 0, // Start invisible
+    blending: THREE.AdditiveBlending,
   })
   textureLoader.load(
     'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_clouds_1024.png',
@@ -139,16 +145,17 @@ const initThree = () => {
       uniform vec3 glowColor;
       uniform float opacity;
       void main() {
-        float intensity = pow(0.75 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 6.0);
-        gl_FragColor = vec4(glowColor, opacity) * intensity;
+        // More ethereal atmosphere with Fresnel-like falloff
+        float intensity = pow(0.65 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 6.0);
+        gl_FragColor = vec4(glowColor, opacity * intensity);
       }
     `,
     uniforms: {
       glowColor: {
-        value: new THREE.Color(pomodoroStore.status === 'focus' ? 0x0077ff : 0x7700ff),
+        value: new THREE.Color(pomodoroStore.status === 'focus' ? 0x00a2ff : 0x9d4eff),
       },
       opacity: {
-        value: isDark.value ? 1.0 : 0.6,
+        value: isDark.value ? 0.8 : 0.4,
       },
     },
     side: THREE.BackSide,
@@ -156,48 +163,91 @@ const initThree = () => {
     transparent: true,
   })
   atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial)
-  atmosphere.scale.set(1.15, 1.15, 1.15)
+  atmosphere.scale.set(1.2, 1.2, 1.2)
   scene.add(atmosphere)
 
-  // Star Field - More varied and layered
-  const starGeometry = new THREE.BufferGeometry()
-  const starMaterial = new THREE.PointsMaterial({
-    size: 0.015,
+  // Star Field 1: Far, faint stars
+  const createStarField = (count: number, size: number, opacity: number, radius: number) => {
+    const geometry = new THREE.BufferGeometry()
+    const material = new THREE.PointsMaterial({
+      size,
+      vertexColors: true,
+      transparent: true,
+      opacity,
+      blending: THREE.AdditiveBlending,
+    })
+
+    const vertices = []
+    const colors = []
+    for (let i = 0; i < count; i++) {
+      const theta = 2 * Math.PI * Math.random()
+      const phi = Math.acos(2 * Math.random() - 1)
+      const x = radius * Math.sin(phi) * Math.cos(theta)
+      const y = radius * Math.sin(phi) * Math.sin(theta)
+      const z = radius * Math.cos(phi)
+      vertices.push(x, y, z)
+
+      const r = 0.8 + Math.random() * 0.2
+      const g = 0.8 + Math.random() * 0.2
+      const b = 0.9 + Math.random() * 0.1
+      colors.push(r, g, b)
+    }
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+    geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
+    return new THREE.Points(geometry, material)
+  }
+
+  starField1 = createStarField(10000, 0.012, isDark.value ? 0.4 : 0, 800)
+  scene.add(starField1)
+
+  // Star Field 2: Nearer, brighter stars for parallax
+  starField2 = createStarField(4000, 0.018, isDark.value ? 0.6 : 0, 400)
+  scene.add(starField2)
+
+  // Galaxy Glow: Subtle nebula effect
+  const glowGeometry = new THREE.BufferGeometry()
+  const glowMaterial = new THREE.PointsMaterial({
+    size: 2.0,
     vertexColors: true,
     transparent: true,
-    opacity: isDark.value ? 0.6 : 0, // Hidden in light mode
+    opacity: isDark.value ? 0.03 : 0,
     blending: THREE.AdditiveBlending,
+    depthWrite: false,
   })
 
-  const starVertices = []
-  const starColors = []
-  for (let i = 0; i < 8000; i++) {
-    const x = (Math.random() - 0.5) * 1500
-    const y = (Math.random() - 0.5) * 1500
-    const z = (Math.random() - 0.5) * 1500
-    starVertices.push(x, y, z)
+  const glowVertices = []
+  const glowColors = []
+  for (let i = 0; i < 200; i++) {
+    const x = (Math.random() - 0.5) * 600
+    const y = (Math.random() - 0.5) * 600
+    const z = (Math.random() - 0.5) * 600
+    glowVertices.push(x, y, z)
 
-    // Varied star colors (mostly white, some blueish, some warm)
-    const r = 0.8 + Math.random() * 0.2
-    const g = 0.8 + Math.random() * 0.2
-    const b = 0.9 + Math.random() * 0.1
-    starColors.push(r, g, b)
+    const r = 0.2 + Math.random() * 0.1
+    const g = 0.3 + Math.random() * 0.1
+    const b = 0.6 + Math.random() * 0.2
+    glowColors.push(r, g, b)
   }
-  starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3))
-  starGeometry.setAttribute('color', new THREE.Float32BufferAttribute(starColors, 3))
-  starField = new THREE.Points(starGeometry, starMaterial)
-  scene.add(starField)
+  glowGeometry.setAttribute('position', new THREE.Float32BufferAttribute(glowVertices, 3))
+  glowGeometry.setAttribute('color', new THREE.Float32BufferAttribute(glowColors, 3))
+  galaxyGlow = new THREE.Points(glowGeometry, glowMaterial)
+  scene.add(galaxyGlow)
 
   // Lights
-  ambientLight = new THREE.AmbientLight(0xffffff, isDark.value ? 0.4 : 1.2)
+  ambientLight = new THREE.AmbientLight(0xffffff, isDark.value ? 0.6 : 1.2)
   scene.add(ambientLight)
 
-  sunLight = new THREE.DirectionalLight(0xffffff, isDark.value ? 2.5 : 3.5)
+  sunLight = new THREE.DirectionalLight(0xffffff, isDark.value ? 3.5 : 4.0)
   sunLight.position.set(5, 3, 5)
   scene.add(sunLight)
 
-  // Camera light for very subtle surface visibility on the dark side
-  cameraLight = new THREE.PointLight(0xffffff, isDark.value ? 0.3 : 0.6)
+  // Fill Light: Soft blue light on the dark side
+  fillLight = new THREE.PointLight(0x4488ff, isDark.value ? 0.6 : 1.0, 10)
+  fillLight.position.set(-5, -2, -5)
+  scene.add(fillLight)
+
+  // Camera light for surface visibility
+  cameraLight = new THREE.PointLight(0xffffff, isDark.value ? 0.4 : 0.8)
   camera.add(cameraLight)
   scene.add(camera)
 
@@ -211,39 +261,48 @@ const animate = () => {
   if (earth) {
     earth.rotation.y += 0.0008 // Slower, more Zen rotation
 
-    // Aesthetic Logic: Adjust scale and position based on mode
+    // Orbit Logic: Orbit around the card center
+    // Mini mode card is centered in the screen, but we offset it for composition
+    // Let's make the orbit centered on the screen or a specific target
+    orbitAngle += 0.0015 // Speed up for testing visibility
+
+    // In mini mode, the card is small and centered
+    // We want the orbit to be larger than the card
+    const orbitRadiusX = pomodoroStore.isMiniMode ? 1.8 : 2.5
+    const orbitRadiusY = pomodoroStore.isMiniMode ? 0.8 : 1.2
+
+    const orbitOffsetX = Math.cos(orbitAngle) * orbitRadiusX
+    const orbitOffsetY = Math.sin(orbitAngle) * orbitRadiusY
+    const orbitOffsetZ = Math.sin(orbitAngle) * 1.5 // Significant Z movement
+
+    // Aesthetic Logic: Base scale
     let targetScale = 0.85 + (pomodoroStore.progress / 100) * 0.35
     let targetX = 0
     let targetY = 0
 
     if (pomodoroStore.isMiniMode) {
-      targetScale *= 1.6
-      targetX = -2.2
-      targetY = -0.4
+      targetScale *= 1.2
+      // Center the orbit around the card (which is roughly at 0,0 in Three.js coordinates relative to camera)
+      targetX = orbitOffsetX
+      targetY = orbitOffsetY
     } else {
-      targetScale *= 0.85
-      targetX = 1.6
-      targetY = -0.8
+      targetScale *= 0.8
+      targetX = orbitOffsetX * 0.8 + 1.5
+      targetY = orbitOffsetY * 0.8 - 0.5
     }
 
-    // Apply Subtle Mouse Parallax & Dynamic Lighting
-    if (props.mousePos) {
-      targetX += props.mousePos.x * 0.08
-      targetY -= props.mousePos.y * 0.08
+    // Dynamic Scale & Z-index simulation
+    // When orbitOffsetZ is positive, earth is "closer" to camera
+    const finalScale = targetScale * (1 + orbitOffsetZ * 0.15)
 
-      if (sunLight) {
-        gsap.to(sunLight.position, {
-          x: 5 + props.mousePos.x * 2.5,
-          y: 3 - props.mousePos.y * 2.5,
-          duration: 0.8,
-          ease: 'power1.out',
-          overwrite: 'auto',
-        })
-      }
+    earth.scale.lerp(new THREE.Vector3(finalScale, finalScale, finalScale), 0.05)
+    earth.position.lerp(new THREE.Vector3(targetX, targetY, orbitOffsetZ), 0.05)
+
+    // Adjust light to follow earth slightly for better texture visibility
+    if (sunLight) {
+      sunLight.position.x = 5 + targetX * 0.5
+      sunLight.position.y = 3 + targetY * 0.5
     }
-
-    earth.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.05)
-    earth.position.lerp(new THREE.Vector3(targetX, targetY, 0), 0.05)
 
     if (earth.material instanceof THREE.MeshStandardMaterial) {
       if (pomodoroStore.status === 'focus') {
@@ -281,28 +340,47 @@ const animate = () => {
     }
   }
 
-  if (starField) {
-    starField.rotation.y += 0.0001
-    if (starField.material instanceof THREE.PointsMaterial) {
-      const targetOpacity = isDark.value ? 0.45 + Math.sin(Date.now() * 0.0008) * 0.1 : 0
-      starField.material.opacity = THREE.MathUtils.lerp(
-        starField.material.opacity,
+  if (starField1) {
+    starField1.rotation.y += 0.00005
+    if (starField1.material instanceof THREE.PointsMaterial) {
+      const targetOpacity = isDark.value ? 0.3 + Math.sin(Date.now() * 0.0005) * 0.05 : 0
+      starField1.material.opacity = THREE.MathUtils.lerp(
+        starField1.material.opacity,
         targetOpacity,
         0.05,
       )
     }
   }
 
+  if (starField2) {
+    starField2.rotation.y += 0.00015
+    if (starField2.material instanceof THREE.PointsMaterial) {
+      const targetOpacity = isDark.value ? 0.5 + Math.sin(Date.now() * 0.0008) * 0.1 : 0
+      starField2.material.opacity = THREE.MathUtils.lerp(
+        starField2.material.opacity,
+        targetOpacity,
+        0.05,
+      )
+    }
+  }
+
+  if (galaxyGlow) {
+    galaxyGlow.rotation.y += 0.00002
+  }
+
   // Dynamic light adjustment
   if (ambientLight) {
     ambientLight.intensity = THREE.MathUtils.lerp(
       ambientLight.intensity,
-      isDark.value ? 0.4 : 1.2,
+      isDark.value ? 0.6 : 1.2,
       0.05,
     )
   }
   if (sunLight) {
-    sunLight.intensity = THREE.MathUtils.lerp(sunLight.intensity, isDark.value ? 2.5 : 3.5, 0.05)
+    sunLight.intensity = THREE.MathUtils.lerp(sunLight.intensity, isDark.value ? 3.5 : 4.0, 0.05)
+  }
+  if (fillLight) {
+    fillLight.intensity = THREE.MathUtils.lerp(fillLight.intensity, isDark.value ? 0.6 : 0, 0.05)
   }
 
   renderer.render(scene, camera)
@@ -345,8 +423,12 @@ onUnmounted(() => {
   ;(clouds?.material as THREE.Material)?.dispose()
   atmosphere?.geometry.dispose()
   ;(atmosphere?.material as THREE.Material)?.dispose()
-  starField?.geometry.dispose()
-  ;(starField?.material as THREE.Material)?.dispose()
+  starField1?.geometry.dispose()
+  ;(starField1?.material as THREE.Material)?.dispose()
+  starField2?.geometry.dispose()
+  ;(starField2?.material as THREE.Material)?.dispose()
+  galaxyGlow?.geometry.dispose()
+  ;(galaxyGlow?.material as THREE.Material)?.dispose()
   pomodoroStore.isEarthReady = false
 })
 </script>
@@ -360,7 +442,7 @@ onUnmounted(() => {
   >
     <div
       v-if="pomodoroStore.status !== 'idle' && !isWails()"
-      class="fixed inset-0 z-0 overflow-hidden bg-black dark:bg-black transition-colors duration-1000"
+      class="fixed inset-0 z-0 overflow-hidden transition-colors duration-1000"
       :class="isDark ? 'bg-black' : 'bg-[#f0f4f8]'"
     >
       <!-- Fallback Background (Elegant Gradient) -->
@@ -370,8 +452,8 @@ onUnmounted(() => {
         :style="{
           background: isDark
             ? pomodoroStore.status === 'focus'
-              ? 'radial-gradient(circle at center, #001a33 0%, #000810 100%)'
-              : 'radial-gradient(circle at center, #1a0033 0%, #080010 100%)'
+              ? 'radial-gradient(circle at center, #001224 0%, #00050a 100%)'
+              : 'radial-gradient(circle at center, #120024 0%, #05000a 100%)'
             : pomodoroStore.status === 'focus'
               ? 'radial-gradient(circle at center, #e6f3ff 0%, #f0f4f8 100%)'
               : 'radial-gradient(circle at center, #f3e6ff 0%, #f4f0f8 100%)',
@@ -379,12 +461,12 @@ onUnmounted(() => {
       >
         <!-- Subtle Pulse for Fallback -->
         <div
-          class="absolute inset-0 opacity-20 animate-pulse"
+          class="absolute inset-0 opacity-10 animate-pulse"
           :style="{
             background:
               pomodoroStore.status === 'focus'
-                ? 'radial-gradient(circle at 50% 50%, rgba(0, 119, 255, 0.1) 0%, transparent 70%)'
-                : 'radial-gradient(circle at 50% 50%, rgba(119, 0, 255, 0.1) 0%, transparent 70%)',
+                ? 'radial-gradient(circle at 50% 50%, rgba(0, 162, 255, 0.15) 0%, transparent 80%)'
+                : 'radial-gradient(circle at 50% 50%, rgba(157, 78, 255, 0.15) 0%, transparent 80%)',
           }"
         ></div>
       </div>

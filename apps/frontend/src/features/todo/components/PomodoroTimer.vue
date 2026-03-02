@@ -94,27 +94,41 @@ watch(
         class="relative w-full h-full transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]"
       >
         <div
-          class="relative backdrop-blur-3xl overflow-hidden transition-all duration-700 h-full w-full group/card"
+          class="relative backdrop-blur-3xl overflow-hidden transition-all duration-700 h-full w-full group/card animate-float"
           :class="[
             isDark
-              ? 'rounded-[3rem] flex flex-col border border-white/20'
+              ? 'rounded-[3rem] flex flex-col border border-white/10'
               : 'rounded-[3rem] flex flex-col border border-white/40 shadow-xl shadow-black/10',
           ]"
           :style="{
             backgroundColor: pomodoroStore.isEarthReady
               ? isDark
-                ? 'rgba(0, 0, 0, 0.4)'
-                : 'rgba(255, 255, 255, 0.25)' // 收缩模式下，浅色卡片背景保持大幅透明，因为背景始终为深色地球
+                ? 'rgba(25, 25, 30, 0.55)'
+                : 'rgba(255, 255, 255, 0.3)' // 收缩模式下，浅色卡片背景保持大幅透明，因为背景始终为深色地球
               : isDark
                 ? 'rgba(15, 23, 42, 0.7)'
                 : 'rgba(255, 255, 255, 0.95)',
             boxShadow: isDark
-              ? '0 20px 50px -10px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.15)'
+              ? '0 30px 60px -12px rgba(0, 0, 0, 0.7), 0 18px 36px -18px rgba(0, 0, 0, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.12)'
               : '0 20px 60px -15px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.3)', // 强化阴影，在黑色背景下突出卡片
             '--wails-draggable': 'drag',
             transform: 'translateZ(0)',
           }"
         >
+          <!-- Subtle Rim Light Effect -->
+          <div
+            class="absolute inset-0 pointer-events-none opacity-50 transition-opacity duration-700 group-hover/card:opacity-80"
+            style="
+              background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.15) 0%,
+                transparent 40%,
+                transparent 60%,
+                rgba(255, 255, 255, 0.05) 100%
+              );
+            "
+          ></div>
+
           <!-- Wails Drag Area for Mini Mode -->
           <div v-if="isWails()" class="absolute inset-0 z-0"></div>
 
@@ -132,8 +146,22 @@ watch(
 <style scoped>
 /* Sophisticated Glassmorphism */
 .backdrop-blur-3xl {
-  backdrop-filter: blur(40px) saturate(180%);
-  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  backdrop-filter: blur(40px) saturate(180%) brightness(1.1);
+  -webkit-backdrop-filter: blur(40px) saturate(180%) brightness(1.1);
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(0.5deg);
+  }
 }
 
 .ease-out-quart {

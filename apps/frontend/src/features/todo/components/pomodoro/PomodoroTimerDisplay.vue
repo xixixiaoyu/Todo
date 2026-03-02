@@ -144,11 +144,9 @@ const isDark = computed(() => theme.value === 'dark')
         class="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none"
       >
         <span
-          class="font-mono tabular-nums transition-all duration-700 leading-none select-none"
+          class="font-mono tabular-nums transition-all duration-700 leading-none select-none text-white"
           :class="[
-            pomodoroStore.isRunning
-              ? 'text-foreground dark:text-white font-bold'
-              : 'text-foreground/30 dark:text-white/40 font-light',
+            pomodoroStore.isRunning ? 'font-bold' : 'opacity-40 font-light',
             pomodoroStore.isMiniMode ? 'text-3xl tracking-tighter' : 'text-8xl tracking-[-0.05em]',
           ]"
           :style="{
@@ -156,9 +154,9 @@ const isDark = computed(() => theme.value === 'dark')
             textShadow: isDark
               ? `0 0 20px ${
                   pomodoroStore.status === 'focus'
-                    ? 'rgba(251, 113, 133, 0.5)'
-                    : 'rgba(52, 211, 153, 0.5)'
-                }, 0 4px 12px rgba(0, 0, 0, 0.3)`
+                    ? 'rgba(251, 113, 133, 0.6)'
+                    : 'rgba(52, 211, 153, 0.6)'
+                }, 0 4px 12px rgba(0, 0, 0, 0.5)`
               : `0 0 20px ${
                   pomodoroStore.status === 'focus'
                     ? 'rgba(251, 113, 133, 0.2)'
