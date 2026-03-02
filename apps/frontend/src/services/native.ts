@@ -27,13 +27,29 @@ export const nativeService = {
       return system.info(title, message)
     }
 
-    // Web/Capacitor 降级使用 console.warn/error
+    // Web 平台尝试使用浏览器原生 Notification API
+    if (this.platform === 'web' && 'Notification' in window) {
+      // 如果文档已有焦点，通常用户正在看页面，通过 Toast 提醒即可，无需触发系统通知
+      if (document.hasFocus()) {
+        return
+      }
+
+      if (Notification.permission === 'granted') {
+        new Notification(title, { body: message })
+      } else if (Notification.permission !== 'denied') {
+        const permission = await Notification.requestPermission()
+        if (permission === 'granted') {
+          new Notification(title, { body: message })
+        }
+      }
+    }
+
+    // Capacitor 降级使用 console.warn/error 或在此处集成 Capacitor LocalNotifications
     if (type === 'error') {
       console.error(`[${type.toUpperCase()}] ${title}: ${message}`)
     } else {
       console.warn(`[${type.toUpperCase()}] ${title}: ${message}`)
     }
-    // 这里可以集成前端的 Toast 逻辑，但作为 Bridge 层，我们保持底层调用
   },
 
   /**

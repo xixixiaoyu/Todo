@@ -28,6 +28,7 @@ export const common = {
   loadMore: '加载更多',
   none: '无',
   minutes: '分钟',
+  pomodoro: '番茄钟',
   focusing: '专注中',
   paused: '已暂停',
   current_task: '当前任务',

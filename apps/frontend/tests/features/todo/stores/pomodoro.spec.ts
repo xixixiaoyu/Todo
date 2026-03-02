@@ -2,11 +2,31 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { usePomodoroStore } from '@/features/todo/stores/pomodoro'
 
+const mockToast = {
+  success: vi.fn(),
+  info: vi.fn(),
+  error: vi.fn(),
+  warning: vi.fn(),
+}
+
+vi.mock('@/composables/useToast', () => ({
+  useToast: () => mockToast,
+}))
+
+vi.mock('@/i18n', () => ({
+  default: {
+    global: {
+      t: (key: string) => key,
+    },
+  },
+}))
+
 describe('usePomodoroStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2024-01-01T00:00:00Z'))
+    vi.clearAllMocks()
   })
 
   const advanceTime = (ms: number) => {
@@ -50,6 +70,19 @@ describe('usePomodoroStore', () => {
     expect(store.status).toBe('short_break')
     expect(store.timeLeft).toBe(5 * 60)
     expect(store.completedSessions).toBe(1)
+    expect(mockToast.success).toHaveBeenCalledWith('pomodoro.focusComplete')
+  })
+
+  it('should show info toast after break completes', async () => {
+    const store = usePomodoroStore()
+    // Manual setup for break completion test
+    store.status = 'short_break'
+    store.timeLeft = 0
+    store.resumeTimer()
+    advanceTime(1000)
+
+    expect(store.status).toBe('idle')
+    expect(mockToast.info).toHaveBeenCalledWith('pomodoro.shortBreakComplete')
   })
 
   it('should pause and resume timer', async () => {

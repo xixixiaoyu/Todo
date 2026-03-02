@@ -28,6 +28,7 @@ export const common = {
   loadMore: 'Load more',
   none: 'None',
   minutes: 'Minutes',
+  pomodoro: 'Pomodoro',
   focusing: 'Focusing',
   paused: 'Paused',
   current_task: 'Current Task',

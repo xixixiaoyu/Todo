@@ -3,6 +3,8 @@ import { ref, computed, watch } from 'vue'
 import { ImpactStyle, NotificationType } from '@capacitor/haptics'
 import { useTodoStore } from './todo'
 import { nativeService } from '@/services/native'
+import { useToast } from '@/composables/useToast'
+import i18n from '@/i18n'
 
 export type PomodoroStatus = 'idle' | 'focus' | 'short_break' | 'long_break'
 
@@ -108,8 +110,14 @@ export const usePomodoroStore = defineStore(
     }
 
     function resumeTimer() {
-      if (!timerInterval.value && status.value !== 'idle') {
-        startTimer()
+      if (!timerInterval.value) {
+        if (status.value === 'idle' && activeTodoId.value) {
+          // If idle but has an active todo, restart the focus session
+          startTimer()
+          status.value = 'focus'
+        } else if (status.value !== 'idle') {
+          startTimer()
+        }
       }
     }
 
@@ -123,6 +131,24 @@ export const usePomodoroStore = defineStore(
 
     async function handleTimerComplete() {
       pauseTimer()
+      const toast = useToast()
+      const t = i18n.global.t
+
+      const messages: Record<Exclude<PomodoroStatus, 'idle'>, string> = {
+        focus: t('pomodoro.focusComplete'),
+        short_break: t('pomodoro.shortBreakComplete'),
+        long_break: t('pomodoro.longBreakComplete'),
+      }
+
+      if (status.value !== 'idle') {
+        const message = messages[status.value]
+        if (status.value === 'focus') {
+          toast.success(message)
+        } else {
+          toast.info(message)
+        }
+        void nativeService.notify(t('common.pomodoro'), message)
+      }
 
       if (status.value === 'focus') {
         completedSessions.value++
@@ -143,6 +169,7 @@ export const usePomodoroStore = defineStore(
           status.value = 'short_break'
           timeLeft.value = SHORT_BREAK * 60
         }
+
         // Increment pomodoro count on the active todo
         if (activeTodoId.value) {
           todoStore.incrementPomodoro(activeTodoId.value)
