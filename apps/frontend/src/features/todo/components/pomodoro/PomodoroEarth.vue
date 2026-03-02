@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import * as THREE from 'three'
-import { onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
+import { onMounted, onUnmounted, ref, watch, nextTick, computed } from 'vue'
 import { usePomodoroStore } from '../../stores/pomodoro'
+import { useTheme } from '@/composables/useTheme'
 import { nativeService } from '@/services/native'
 import { useGsap } from '@/composables/useGsap'
 
@@ -10,9 +11,12 @@ const props = defineProps<{
 }>()
 
 const pomodoroStore = usePomodoroStore()
+const { theme } = useTheme()
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const isTextureLoaded = ref(false)
 const { gsap, ctx } = useGsap()
+
+const isDark = computed(() => theme.value === 'dark' || pomodoroStore.isMiniMode)
 
 let scene: THREE.Scene
 let camera: THREE.PerspectiveCamera
@@ -23,6 +27,7 @@ let atmosphere: THREE.Mesh
 let starField: THREE.Points
 let sunLight: THREE.DirectionalLight
 let cameraLight: THREE.PointLight
+let ambientLight: THREE.AmbientLight
 let animationFrameId: number
 
 const isWails = () => nativeService.platform === 'wails'
@@ -50,11 +55,11 @@ const initThree = () => {
   const textureLoader = new THREE.TextureLoader()
 
   const earthMaterial = new THREE.MeshStandardMaterial({
-    color: 0x0077ff,
+    color: isDark.value ? 0x0077ff : 0x2288ff,
     roughness: 0.6,
     metalness: 0.1,
-    emissive: 0x002244,
-    emissiveIntensity: 0.4,
+    emissive: isDark.value ? 0x002244 : 0x001122,
+    emissiveIntensity: isDark.value ? 0.4 : 0.2,
     transparent: true,
     opacity: 0, // Start invisible
   })
@@ -105,7 +110,7 @@ const initThree = () => {
       // Smoothly fade in clouds
       ctx.add(() => {
         gsap.to(cloudMaterial, {
-          opacity: 0.2, // More subtle clouds
+          opacity: isDark.value ? 0.2 : 0.4, // Brighter clouds in light mode
           duration: 3,
           delay: 0.5,
           ease: 'power2.inOut',
@@ -132,17 +137,18 @@ const initThree = () => {
       varying vec3 vNormal;
       varying vec3 vPosition;
       uniform vec3 glowColor;
+      uniform float opacity;
       void main() {
-        // Fresnel for BackSide: normals point away from camera at edges
-        // dot(vNormal, viewDir) will be near 0 at edges
-        // Increased power to 6.0 for smoother, more subtle falloff
         float intensity = pow(0.75 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 6.0);
-        gl_FragColor = vec4(glowColor, 1.0) * intensity;
+        gl_FragColor = vec4(glowColor, opacity) * intensity;
       }
     `,
     uniforms: {
       glowColor: {
         value: new THREE.Color(pomodoroStore.status === 'focus' ? 0x0077ff : 0x7700ff),
+      },
+      opacity: {
+        value: isDark.value ? 1.0 : 0.6,
       },
     },
     side: THREE.BackSide,
@@ -159,7 +165,7 @@ const initThree = () => {
     size: 0.015,
     vertexColors: true,
     transparent: true,
-    opacity: 0.6,
+    opacity: isDark.value ? 0.6 : 0, // Hidden in light mode
     blending: THREE.AdditiveBlending,
   })
 
@@ -183,16 +189,15 @@ const initThree = () => {
   scene.add(starField)
 
   // Lights
-  // Lower ambient light for higher contrast (cinematic deep shadows)
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.4)
+  ambientLight = new THREE.AmbientLight(0xffffff, isDark.value ? 0.4 : 1.2)
   scene.add(ambientLight)
 
-  sunLight = new THREE.DirectionalLight(0xffffff, 2.5)
+  sunLight = new THREE.DirectionalLight(0xffffff, isDark.value ? 2.5 : 3.5)
   sunLight.position.set(5, 3, 5)
   scene.add(sunLight)
 
   // Camera light for very subtle surface visibility on the dark side
-  cameraLight = new THREE.PointLight(0xffffff, 0.3)
+  cameraLight = new THREE.PointLight(0xffffff, isDark.value ? 0.3 : 0.6)
   camera.add(cameraLight)
   scene.add(camera)
 
@@ -212,13 +217,10 @@ const animate = () => {
     let targetY = 0
 
     if (pomodoroStore.isMiniMode) {
-      // In mini mode, we create a "Close Orbit" feel. The earth is huge and offset.
-      // Increased offset for more negative space on the right
       targetScale *= 1.6
       targetX = -2.2
       targetY = -0.4
     } else {
-      // In full mode, move earth slightly to the side and make it a bit smaller to not crowd the list
       targetScale *= 0.85
       targetX = 1.6
       targetY = -0.8
@@ -226,16 +228,14 @@ const animate = () => {
 
     // Apply Subtle Mouse Parallax & Dynamic Lighting
     if (props.mousePos) {
-      // Physics: Extremely subtle movement for massive object feel (0.08 weight)
       targetX += props.mousePos.x * 0.08
       targetY -= props.mousePos.y * 0.08
 
-      // Lighting: Move sun light slightly based on mouse to create "observation" feel
       if (sunLight) {
         gsap.to(sunLight.position, {
-          x: 5 + props.mousePos.x * 2.5, // Slightly more range
+          x: 5 + props.mousePos.x * 2.5,
           y: 3 - props.mousePos.y * 2.5,
-          duration: 0.8, // Slightly faster response
+          duration: 0.8,
           ease: 'power1.out',
           overwrite: 'auto',
         })
@@ -247,11 +247,11 @@ const animate = () => {
 
     if (earth.material instanceof THREE.MeshStandardMaterial) {
       if (pomodoroStore.status === 'focus') {
-        earth.material.emissive.setHex(0x002244)
-        earth.material.emissiveIntensity = 0.4
+        earth.material.emissive.setHex(isDark.value ? 0x002244 : 0x001122)
+        earth.material.emissiveIntensity = isDark.value ? 0.4 : 0.2
       } else {
-        earth.material.emissive.setHex(0x220044)
-        earth.material.emissiveIntensity = 0.7
+        earth.material.emissive.setHex(isDark.value ? 0x220044 : 0x110022)
+        earth.material.emissiveIntensity = isDark.value ? 0.7 : 0.4
       }
     }
   }
@@ -266,25 +266,43 @@ const animate = () => {
     atmosphere.scale.copy(earth.scale).multiplyScalar(1.15)
     atmosphere.position.copy(earth.position)
 
-    // Dynamic glow intensity & subtle atmospheric "breathing"
     if (atmosphere.material instanceof THREE.ShaderMaterial) {
       const targetGlowColor = pomodoroStore.status === 'focus' ? 0x0077ff : 0x7700ff
       const color = new THREE.Color(targetGlowColor)
-
-      // Apply subtle breathing pulse (±2% intensity variation)
       const pulse = 1.0 + Math.sin(Date.now() * 0.0005) * 0.02
       color.multiplyScalar(pulse)
 
       atmosphere.material.uniforms.glowColor.value.lerp(color, 0.05)
+      atmosphere.material.uniforms.opacity.value = THREE.MathUtils.lerp(
+        atmosphere.material.uniforms.opacity.value,
+        isDark.value ? 1.0 : 0.6,
+        0.05,
+      )
     }
   }
 
   if (starField) {
     starField.rotation.y += 0.0001
-    // Twinkle effect (Gentle pulse)
     if (starField.material instanceof THREE.PointsMaterial) {
-      starField.material.opacity = 0.45 + Math.sin(Date.now() * 0.0008) * 0.1
+      const targetOpacity = isDark.value ? 0.45 + Math.sin(Date.now() * 0.0008) * 0.1 : 0
+      starField.material.opacity = THREE.MathUtils.lerp(
+        starField.material.opacity,
+        targetOpacity,
+        0.05,
+      )
     }
+  }
+
+  // Dynamic light adjustment
+  if (ambientLight) {
+    ambientLight.intensity = THREE.MathUtils.lerp(
+      ambientLight.intensity,
+      isDark.value ? 0.4 : 1.2,
+      0.05,
+    )
+  }
+  if (sunLight) {
+    sunLight.intensity = THREE.MathUtils.lerp(sunLight.intensity, isDark.value ? 2.5 : 3.5, 0.05)
   }
 
   renderer.render(scene, camera)
@@ -342,17 +360,21 @@ onUnmounted(() => {
   >
     <div
       v-if="pomodoroStore.status !== 'idle' && !isWails()"
-      class="fixed inset-0 z-0 overflow-hidden bg-black"
+      class="fixed inset-0 z-0 overflow-hidden bg-black dark:bg-black transition-colors duration-1000"
+      :class="isDark ? 'bg-black' : 'bg-[#f0f4f8]'"
     >
       <!-- Fallback Background (Elegant Gradient) -->
       <div
         class="absolute inset-0 transition-opacity duration-1000 ease-in-out"
         :class="isTextureLoaded ? 'opacity-40' : 'opacity-100'"
         :style="{
-          background:
-            pomodoroStore.status === 'focus'
+          background: isDark
+            ? pomodoroStore.status === 'focus'
               ? 'radial-gradient(circle at center, #001a33 0%, #000810 100%)'
-              : 'radial-gradient(circle at center, #1a0033 0%, #080010 100%)',
+              : 'radial-gradient(circle at center, #1a0033 0%, #080010 100%)'
+            : pomodoroStore.status === 'focus'
+              ? 'radial-gradient(circle at center, #e6f3ff 0%, #f0f4f8 100%)'
+              : 'radial-gradient(circle at center, #f3e6ff 0%, #f4f0f8 100%)',
         }"
       >
         <!-- Subtle Pulse for Fallback -->

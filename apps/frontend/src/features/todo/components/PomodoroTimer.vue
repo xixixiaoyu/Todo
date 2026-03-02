@@ -4,6 +4,7 @@ import { GripVertical, Minimize2, X } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useGsap } from '@/composables/useGsap'
+import { useTheme } from '@/composables/useTheme'
 import { nativeService } from '@/services/native'
 import { ref, watch, computed } from 'vue'
 import { useDraggable, useWindowSize } from '@vueuse/core'
@@ -18,6 +19,10 @@ import PomodoroMiniControls from './pomodoro/PomodoroMiniControls.vue'
 const pomodoroStore = usePomodoroStore()
 const { t } = useI18n()
 const { gsap, ctx } = useGsap()
+const { theme } = useTheme()
+
+const isDark = computed(() => theme.value === 'dark')
+const isMini = computed(() => pomodoroStore.isMiniMode)
 
 const isWails = () => nativeService.platform === 'wails'
 
@@ -165,23 +170,39 @@ watch(
           class="relative backdrop-blur-3xl overflow-hidden transition-all duration-700 h-full w-full group/card"
           :class="[
             pomodoroStore.isMiniMode
-              ? 'rounded-[3rem] flex flex-col border border-white/20'
-              : 'rounded-[2.5rem] p-6 bg-white/90 dark:bg-neutral-900/90 shadow-2xl border border-white/40 dark:border-white/20',
+              ? isDark
+                ? 'rounded-[3rem] flex flex-col border border-white/20'
+                : 'rounded-[3rem] flex flex-col border border-white/40 shadow-xl shadow-black/10'
+              : isDark
+                ? 'rounded-[2.5rem] p-6 bg-neutral-900/90 shadow-2xl border border-white/20'
+                : 'rounded-[2.5rem] p-6 bg-white/95 shadow-2xl border border-black/5',
             !pomodoroStore.isMiniMode && pomodoroStore.status === 'focus'
-              ? 'ring-1 ring-rose-500/20'
+              ? isDark
+                ? 'ring-1 ring-rose-500/20'
+                : 'ring-1 ring-rose-500/10'
               : !pomodoroStore.isMiniMode
-                ? 'ring-1 ring-emerald-500/20'
+                ? isDark
+                  ? 'ring-1 ring-emerald-500/20'
+                  : 'ring-1 ring-emerald-500/10'
                 : '',
           ]"
           :style="{
-            backgroundColor: pomodoroStore.isMiniMode
+            backgroundColor: isMini
               ? pomodoroStore.isEarthReady
-                ? 'rgba(0, 0, 0, 0.4)'
-                : 'rgba(15, 23, 42, 0.7)' // slightly more opaque and modern slate color
+                ? isDark
+                  ? 'rgba(0, 0, 0, 0.4)'
+                  : 'rgba(255, 255, 255, 0.25)' // 收缩模式下，浅色卡片背景保持大幅透明，因为背景始终为深色地球
+                : isDark
+                  ? 'rgba(15, 23, 42, 0.7)'
+                  : 'rgba(255, 255, 255, 0.95)'
               : '',
-            boxShadow: pomodoroStore.isMiniMode
-              ? '0 20px 50px -10px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.15)'
-              : '0 40px 100px -20px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.6)',
+            boxShadow: isMini
+              ? isDark
+                ? '0 20px 50px -10px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.15)'
+                : '0 20px 60px -15px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.3)' // 强化阴影，在黑色背景下突出卡片
+              : isDark
+                ? '0 40px 100px -20px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.2)'
+                : '0 40px 100px -20px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 1)',
             '--wails-draggable': 'drag',
             transform: 'translateZ(0)',
           }"
@@ -199,8 +220,8 @@ watch(
               :style="{
                 background:
                   pomodoroStore.status === 'focus'
-                    ? 'radial-gradient(circle at 50% 50%, rgba(244, 63, 94, 0.15) 0%, transparent 80%)'
-                    : 'radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.15) 0%, transparent 80%)',
+                    ? `radial-gradient(circle at 50% 50%, rgba(244, 63, 94, ${isDark ? '0.15' : '0.08'}) 0%, transparent 80%)`
+                    : `radial-gradient(circle at 50% 50%, rgba(16, 185, 129, ${isDark ? '0.15' : '0.08'}) 0%, transparent 80%)`,
               }"
             ></div>
           </div>
@@ -270,10 +291,6 @@ watch(
 .backdrop-blur-3xl {
   backdrop-filter: blur(40px) saturate(180%);
   -webkit-backdrop-filter: blur(40px) saturate(180%);
-}
-
-.dark .bg-white\/70 {
-  background-color: rgba(0, 0, 0, 0.6);
 }
 
 .ease-out-quart {

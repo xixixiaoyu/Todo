@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { usePomodoroStore } from '../../stores/pomodoro'
+import { useTheme } from '@/composables/useTheme'
+import { computed } from 'vue'
 
 const pomodoroStore = usePomodoroStore()
+const { theme } = useTheme()
+
+const isDark = computed(() => theme.value === 'dark')
 </script>
 
 <template>
@@ -31,10 +36,18 @@ const pomodoroStore = usePomodoroStore()
         :style="{
           background:
             pomodoroStore.status === 'focus'
-              ? 'radial-gradient(circle, rgba(251, 113, 133, 0.4) 0%, transparent 70%)'
-              : 'radial-gradient(circle, rgba(52, 211, 153, 0.4) 0%, transparent 70%)',
+              ? `radial-gradient(circle, rgba(251, 113, 133, ${isDark ? '0.4' : '0.15'}) 0%, transparent 70%)`
+              : `radial-gradient(circle, rgba(52, 211, 153, ${isDark ? '0.4' : '0.15'}) 0%, transparent 70%)`,
           boxShadow: pomodoroStore.isRunning
-            ? `0 0 80px 20px ${pomodoroStore.status === 'focus' ? 'rgba(251, 113, 133, 0.2)' : 'rgba(52, 211, 153, 0.2)'}`
+            ? `0 0 80px 20px ${
+                pomodoroStore.status === 'focus'
+                  ? isDark
+                    ? 'rgba(251, 113, 133, 0.2)'
+                    : 'rgba(251, 113, 133, 0.1)'
+                  : isDark
+                    ? 'rgba(52, 211, 153, 0.2)'
+                    : 'rgba(52, 211, 153, 0.1)'
+              }`
             : 'none',
         }"
       ></div>
@@ -42,8 +55,11 @@ const pomodoroStore = usePomodoroStore()
       <!-- Stellar Rings - Reduced Opacity and Slower -->
       <div
         v-if="pomodoroStore.isRunning"
-        class="absolute rounded-full border border-white/[0.05] animate-spin-slow"
-        :class="pomodoroStore.isMiniMode ? 'w-36 h-36' : 'w-80 h-80'"
+        class="absolute rounded-full border border-white/[0.05] dark:border-white/[0.05] animate-spin-slow"
+        :class="[
+          pomodoroStore.isMiniMode ? 'w-36 h-36' : 'w-80 h-80',
+          isDark ? 'border-white/[0.05]' : 'border-black/[0.02]',
+        ]"
       ></div>
 
       <svg
@@ -92,8 +108,12 @@ const pomodoroStore = usePomodoroStore()
             filter: pomodoroStore.isRunning
               ? `drop-shadow(0 0 15px ${
                   pomodoroStore.status === 'focus'
-                    ? 'rgba(244, 63, 94, 0.8)'
-                    : 'rgba(16, 185, 129, 0.8)'
+                    ? isDark
+                      ? 'rgba(244, 63, 94, 0.8)'
+                      : 'rgba(244, 63, 94, 0.4)'
+                    : isDark
+                      ? 'rgba(16, 185, 129, 0.8)'
+                      : 'rgba(16, 185, 129, 0.4)'
                 })`
               : 'none',
           }"
@@ -126,16 +146,24 @@ const pomodoroStore = usePomodoroStore()
         <span
           class="font-mono tabular-nums transition-all duration-700 leading-none select-none"
           :class="[
-            pomodoroStore.isRunning ? 'text-white font-bold' : 'text-white/40 font-light',
+            pomodoroStore.isRunning
+              ? 'text-foreground dark:text-white font-bold'
+              : 'text-foreground/30 dark:text-white/40 font-light',
             pomodoroStore.isMiniMode ? 'text-3xl tracking-tighter' : 'text-8xl tracking-[-0.05em]',
           ]"
           :style="{
             fontFamily: 'JetBrains Mono, monospace',
-            textShadow: `0 0 20px ${
-              pomodoroStore.status === 'focus'
-                ? 'rgba(251, 113, 133, 0.5)'
-                : 'rgba(52, 211, 153, 0.5)'
-            }, 0 4px 12px rgba(0, 0, 0, 0.3)`,
+            textShadow: isDark
+              ? `0 0 20px ${
+                  pomodoroStore.status === 'focus'
+                    ? 'rgba(251, 113, 133, 0.5)'
+                    : 'rgba(52, 211, 153, 0.5)'
+                }, 0 4px 12px rgba(0, 0, 0, 0.3)`
+              : `0 0 20px ${
+                  pomodoroStore.status === 'focus'
+                    ? 'rgba(251, 113, 133, 0.2)'
+                    : 'rgba(52, 211, 153, 0.2)'
+                }`,
           }"
         >
           {{ pomodoroStore.formattedTime }}
