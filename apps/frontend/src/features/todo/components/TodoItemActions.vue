@@ -11,19 +11,28 @@ import {
   PinOff,
   Pencil,
   Plus,
+  MoreHorizontal,
 } from 'lucide-vue-next'
 import { ref } from 'vue'
 import { useTodoStore, type Todo } from '../stores/todo'
 import { usePomodoroStore } from '../stores/pomodoro'
+import { useIsMobile } from '@/composables/useWindowSize'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import TodoSchedulePopover from './TodoSchedulePopover.vue'
 import PomodoroModeSelector from './PomodoroModeSelector.vue'
 
 const { t } = useI18n()
 const pomodoroStore = usePomodoroStore()
 const todoStore = useTodoStore()
+const { isMobile } = useIsMobile()
 
 const props = defineProps<{
   todo: Todo
@@ -90,7 +99,132 @@ function handleApplySchedule(dueAt: Date | null, remindAt: Date | null) {
     class="absolute right-0 top-0 bottom-0 flex items-center gap-0.5 opacity-0 md:group-hover:opacity-100 bg-gradient-to-l from-card via-card/95 to-transparent pl-8 md:pl-12 pr-2 md:pr-3 rounded-r-xl transition-all duration-200"
     :class="{ 'opacity-100': isMobileActionsVisible }"
   >
-    <TooltipProvider :delay-duration="0">
+    <!-- Mobile Optimized Layout -->
+    <template v-if="isMobile">
+      <div class="flex items-center gap-0.5">
+        <!-- Pin (Always visible on mobile) -->
+        <Button
+          variant="ghost"
+          size="icon"
+          class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+          :class="{ 'text-primary bg-primary/5': todo.isPinned }"
+          @click.stop="todoStore.togglePin(todo.id)"
+        >
+          <PinOff v-if="todo.isPinned" class="h-3.5 w-3.5 lucide-pin-off" />
+          <Pin v-else class="h-3.5 w-3.5 lucide-pin" />
+        </Button>
+
+        <!-- Focus (Always visible on mobile) -->
+        <PomodoroModeSelector
+          v-if="!todo.completed"
+          :todo-id="todo.id"
+          @select="pomodoroStore.startFocus(todo.id, $event)"
+        >
+          <Button
+            variant="ghost"
+            size="icon"
+            class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+            :class="{ 'text-primary bg-primary/5': pomodoroStore.activeTodoId === todo.id }"
+            @click.stop
+          >
+            <Target class="h-3.5 w-3.5 lucide-target" />
+          </Button>
+        </PomodoroModeSelector>
+
+        <!-- More Actions Dropdown -->
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <Button
+              variant="ghost"
+              size="icon"
+              class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+              @click.stop
+            >
+              <MoreHorizontal class="h-3.5 w-3.5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" class="w-48 p-1 z-[100]">
+            <!-- Edit -->
+            <DropdownMenuItem
+              v-if="!todo.completed"
+              class="flex items-center gap-2 py-2 cursor-pointer"
+              @click.stop="emit('startEdit')"
+            >
+              <Pencil class="h-4 w-4 text-muted-foreground" />
+              <span>{{ t('todo.edit') }}</span>
+            </DropdownMenuItem>
+
+            <!-- AI Breakdown -->
+            <DropdownMenuItem
+              v-if="!todo.completed && !todo.isProposedDelete"
+              class="flex items-center gap-2 py-2 cursor-pointer"
+              :disabled="isBreakingDown"
+              @click.stop="emit('breakdown')"
+            >
+              <Loader2 v-if="isBreakingDown" class="h-4 w-4 animate-spin text-primary" />
+              <Wand2 v-else class="h-4 w-4 text-muted-foreground" />
+              <span>{{ t('todo.breakdown') }}</span>
+            </DropdownMenuItem>
+
+            <!-- Schedule -->
+            <DropdownMenuItem
+              v-if="!todo.isProposedDelete"
+              class="flex items-center gap-2 py-2 cursor-pointer p-0"
+              @click.stop
+            >
+              <Popover v-model:open="isScheduleOpen">
+                <PopoverTrigger as-child>
+                  <div class="flex items-center gap-2 px-2 py-1.5 w-full h-full">
+                    <CalendarClock
+                      class="h-4 w-4 text-muted-foreground"
+                      :class="{ 'text-primary': todo.remindAt || todo.dueAt }"
+                    />
+                    <span :class="{ 'text-primary font-medium': todo.remindAt || todo.dueAt }">{{
+                      t('todo.schedule')
+                    }}</span>
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent
+                  side="bottom"
+                  :side-offset="10"
+                  align="end"
+                  class="w-[380px] p-4 z-[110]"
+                >
+                  <TodoSchedulePopover
+                    :due-at="todo.dueAt"
+                    :remind-at="todo.remindAt"
+                    @apply="handleApplySchedule"
+                    @close="isScheduleOpen = false"
+                  />
+                </PopoverContent>
+              </Popover>
+            </DropdownMenuItem>
+
+            <!-- Add Subtask -->
+            <DropdownMenuItem
+              v-if="(level || 0) < 2 && !todo.completed"
+              class="flex items-center gap-2 py-2 cursor-pointer"
+              @click.stop="emit('addSubtask')"
+            >
+              <Plus class="h-4 w-4 text-muted-foreground" />
+              <span>{{ t('todo.addSubtask') }}</span>
+            </DropdownMenuItem>
+
+            <!-- Delete -->
+            <DropdownMenuItem
+              class="flex items-center gap-2 py-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+              @click.stop="emit('delete')"
+            >
+              <Trash2 class="h-4 w-4" />
+              <span>{{ t('todo.delete') }}</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </template>
+
+    <!-- Desktop Layout (Original) -->
+    <TooltipProvider v-else :delay-duration="0">
       <!-- AI Breakdown -->
       <Tooltip v-if="!todo.completed && !todo.isProposedDelete">
         <TooltipTrigger as-child>

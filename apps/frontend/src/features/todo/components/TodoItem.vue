@@ -247,6 +247,7 @@ watch(
         :todo="todo"
         :search-query="searchQuery"
         :parent-path="parentPath"
+        :class="{ 'pr-28 md:pr-0': isMobile && isMobileActionsVisible }"
         @start-edit="emit('startEdit', todo.id, todo.title)"
         @toggle-mobile-actions="toggleMobileActions"
       />

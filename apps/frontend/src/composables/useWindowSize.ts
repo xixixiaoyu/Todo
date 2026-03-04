@@ -1,11 +1,11 @@
-import { ref, onMounted, onUnmounted, getCurrentInstance } from 'vue'
+import { ref, onMounted, onUnmounted, getCurrentInstance, computed } from 'vue'
 
 /**
  * 响应式窗口尺寸 Hook
  */
 export function useWindowSize() {
-  const width = ref(window.innerWidth)
-  const height = ref(window.innerHeight)
+  const width = ref(typeof window !== 'undefined' ? window.innerWidth : 1280)
+  const height = ref(typeof window !== 'undefined' ? window.innerHeight : 800)
 
   function update() {
     width.value = window.innerWidth
@@ -24,8 +24,10 @@ export function useWindowSize() {
       window.removeEventListener('resize', update)
     })
   } else {
-    // 非组件环境（如测试），立即添加监听器
-    window.addEventListener('resize', update)
+    // 非组件环境（如测试），仅在 window 存在时添加监听器
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', update)
+    }
   }
 
   return { width, height }
@@ -36,7 +38,7 @@ export function useWindowSize() {
  */
 export function useIsMobile() {
   const { width } = useWindowSize()
-  const isMobile = ref(width.value < 768)
+  const isMobile = computed(() => width.value < 768)
 
   return { isMobile }
 }
