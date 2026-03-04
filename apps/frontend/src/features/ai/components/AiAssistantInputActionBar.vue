@@ -37,24 +37,24 @@ const canSend = computed(() => {
 
 <template>
   <div :class="['flex items-center justify-between px-2.5 pt-1 pb-2', isMobile ? 'gap-1' : '']">
-    <div class="flex items-center gap-1">
+    <div v-if="!isMobile" class="flex items-center gap-1">
       <button
         :class="[
           'flex items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-95 disabled:cursor-not-allowed disabled:opacity-50',
-          isMobile ? 'h-8 w-8' : 'h-7 w-7',
+          'h-7 w-7',
         ]"
         :title="t('ai.uploadFile')"
         :disabled="isInputDisabled || totalAttachments >= 10"
         @click="emit('triggerFileUpload')"
       >
-        <ImageIcon :size="isMobile ? 18 : 16" />
+        <ImageIcon :size="16" />
       </button>
 
       <button
         v-if="isGenerating && !error"
         :class="[
           'animate-stop-pulse flex items-center gap-1.5 rounded-lg bg-red-500 font-bold text-white transition-all hover:bg-red-600 active:scale-95',
-          isMobile ? 'h-8 px-2.5 text-[11px]' : 'px-3 py-1.5 text-[12px]',
+          'px-3 py-1.5 text-[12px]',
         ]"
         @click="emit('stop')"
       >
@@ -65,15 +65,16 @@ const canSend = computed(() => {
       <button
         :class="[
           'flex items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-95 disabled:cursor-not-allowed disabled:opacity-50',
-          isMobile ? 'h-8 w-8' : 'h-7 w-7',
+          'h-7 w-7',
         ]"
         :title="t('ai.previousSession')"
         :disabled="isGenerating || !lastActiveSession"
         @click="emit('navigatePrevious')"
       >
-        <ChevronLeft :size="isMobile ? 18 : 16" />
+        <ChevronLeft :size="16" />
       </button>
     </div>
+    <div v-else />
 
     <button
       :class="[

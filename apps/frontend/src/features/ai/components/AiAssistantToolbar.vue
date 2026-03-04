@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useWindowSize } from '@vueuse/core'
 import type { AIPreset, AIConfig } from '@/features/ai/composables/useAIConfig'
+import type { ChatSession } from '@/features/ai/composables/useChatHistory'
 import {
   Plus,
   History,
@@ -12,6 +13,8 @@ import {
   Image as ImageIcon,
   Settings2,
   Blocks,
+  ChevronLeft,
+  Square,
 } from 'lucide-vue-next'
 import AiAssistantToolbarDiscussionMenu from '@/features/ai/components/AiAssistantToolbarDiscussionMenu.vue'
 import AiAssistantToolbarPresetMenu from '@/features/ai/components/AiAssistantToolbarPresetMenu.vue'
@@ -29,6 +32,8 @@ defineProps<{
   config: AIConfig
   activePreset: AIPreset | null
   isMaximized: boolean
+  lastActiveSession?: ChatSession | null
+  totalAttachments?: number
 }>()
 
 const showPresetDropdown = defineModel<boolean>('showPresetDropdown', { default: false })
@@ -46,6 +51,9 @@ const emit = defineEmits<{
   (e: 'toggleSecondaryModel', id: string): void
   (e: 'selectPreset', id: string): void
   (e: 'openSettings', tab?: 'settings' | 'presets' | 'memory' | 'mcp' | 'contextCompression'): void
+  (e: 'triggerFileUpload'): void
+  (e: 'navigatePrevious'): void
+  (e: 'stopGenerating'): void
 }>()
 
 const { t } = useI18n()
@@ -92,6 +100,37 @@ const isMobile = computed(() => windowWidth.value < 640)
           >
             <History :size="16" />
           </button>
+
+          <!-- 移动端：文件上传与上一个会话 -->
+          <template v-if="isMobile">
+            <button
+              class="toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+              :title="t('ai.uploadFile')"
+              :disabled="isGenerating || (totalAttachments ?? 0) >= 10"
+              @click="emit('triggerFileUpload')"
+            >
+              <ImageIcon :size="16" />
+            </button>
+
+            <!-- 停止生成按钮 (仅移动端在生成时显示) -->
+            <button
+              v-if="isGenerating"
+              class="toolbar-btn animate-stop-pulse flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10 text-red-500 transition-all active:scale-95"
+              :title="t('ai.stop')"
+              @click="emit('stopGenerating')"
+            >
+              <Square :size="10" class="fill-current" />
+            </button>
+
+            <button
+              class="toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+              :title="t('ai.previousSession')"
+              :disabled="isGenerating || !lastActiveSession"
+              @click="emit('navigatePrevious')"
+            >
+              <ChevronLeft :size="16" />
+            </button>
+          </template>
 
           <div class="h-4 w-px shrink-0 bg-border/20 mx-1" />
 

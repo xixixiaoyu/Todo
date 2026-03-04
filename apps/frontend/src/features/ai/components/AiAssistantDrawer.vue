@@ -228,6 +228,8 @@ defineOptions({
         :config="config"
         :active-preset="activePreset"
         :is-maximized="isMaximized"
+        :last-active-session="lastActiveSession"
+        :total-attachments="selectedImages.length + parsedFiles.length"
         @new-chat="handleNewChat"
         @open-history="openHistory"
         @toggle-thinking="toggleThinkingMode"
@@ -239,6 +241,9 @@ defineOptions({
         @toggle-secondary-model="toggleSecondaryModel"
         @select-preset="handleSelectPreset"
         @open-settings="openSettings"
+        @trigger-file-upload="triggerUpload"
+        @navigate-previous="navigateToPrevious"
+        @stop-generating="stopGenerating"
       >
         <template #input>
           <AiAssistantInput

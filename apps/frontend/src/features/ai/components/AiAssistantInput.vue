@@ -10,6 +10,7 @@ import {
   Users,
   Lightbulb,
   GraduationCap,
+  Send,
 } from 'lucide-vue-next'
 import type { ParsedFile } from '@/composables/useFileParsing'
 import AiAssistantInputAttachments from '@/features/ai/components/AiAssistantInputAttachments.vue'
@@ -108,6 +109,13 @@ const completedFilesCount = computed(
   () => props.parsedFiles.filter((f) => f.status === 'completed').length,
 )
 
+const canSend = computed(() => {
+  if (props.isInputDisabled) return false
+  if (props.modelValue.trim()) return true
+  if (props.selectedImages.length > 0) return true
+  return completedFilesCount.value > 0
+})
+
 const handleKeydown = (event: KeyboardEvent) => {
   if (showSlashCommands.value) {
     if (event.key === 'ArrowUp') {
@@ -140,7 +148,7 @@ const handleKeydown = (event: KeyboardEvent) => {
   }
 }
 
-const MIN_HEIGHT = 40
+const MIN_HEIGHT = computed(() => (isMobile.value ? 36 : 40))
 const MAX_HEIGHT = 160
 
 const adjustTextareaHeight = () => {
@@ -153,7 +161,7 @@ const adjustTextareaHeight = () => {
   const scrollHeight = textarea.scrollHeight
 
   // 确保高度在最小和最大值之间
-  const newHeight = Math.min(Math.max(scrollHeight, MIN_HEIGHT), MAX_HEIGHT)
+  const newHeight = Math.min(Math.max(scrollHeight, MIN_HEIGHT.value), MAX_HEIGHT)
   textarea.style.height = `${newHeight}px`
 
   // 处理滚动条显示
@@ -271,36 +279,56 @@ defineExpose({
     />
 
     <label :for="textareaId" class="sr-only">{{ t('ai.placeholder') }}</label>
-    <textarea
-      :id="textareaId"
-      ref="textareaRef"
-      name="ai-input"
-      :value="modelValue"
-      rows="1"
-      autocapitalize="off"
-      autocorrect="off"
-      spellcheck="false"
-      :placeholder="
-        isInputDisabled
-          ? t('ai.generating')
-          : isImageGenerationEnabled
-            ? t('ai.imagePromptPlaceholder')
-            : isTeachingEnabled
-              ? t('ai.teachingPlaceholder')
-              : t('ai.placeholder')
-      "
-      :class="[
-        'w-full resize-none bg-transparent text-foreground outline-none placeholder:text-muted-foreground/40 leading-relaxed transition-colors',
-        isMobile ? 'px-2.5 pt-1.5 pb-0 text-[14px]' : 'px-3 pt-2 pb-0.5 text-[15px]',
-      ]"
-      :disabled="isInputDisabled"
-      @input="(e) => emit('update:modelValue', (e.target as HTMLTextAreaElement).value)"
-      @keydown.exact="handleKeydown"
-      @keydown.enter.shift.exact="handleNewline"
-      @paste="(e) => emit('paste', e)"
-    />
+    <div class="flex items-end">
+      <textarea
+        :id="textareaId"
+        ref="textareaRef"
+        name="ai-input"
+        :value="modelValue"
+        rows="1"
+        autocapitalize="off"
+        autocorrect="off"
+        spellcheck="false"
+        :placeholder="
+          isInputDisabled
+            ? t('ai.generating')
+            : isImageGenerationEnabled
+              ? t('ai.imagePromptPlaceholder')
+              : isTeachingEnabled
+                ? t('ai.teachingPlaceholder')
+                : t('ai.placeholder')
+        "
+        :class="[
+          'flex-1 resize-none bg-transparent text-foreground outline-none placeholder:text-muted-foreground/40 leading-relaxed transition-colors',
+          isMobile ? 'px-3 py-2 text-[14px]' : 'px-3 pt-2 pb-0.5 text-[15px]',
+        ]"
+        :disabled="isInputDisabled"
+        @input="(e) => emit('update:modelValue', (e.target as HTMLTextAreaElement).value)"
+        @keydown.exact="handleKeydown"
+        @keydown.enter.shift.exact="handleNewline"
+        @paste="(e) => emit('paste', e)"
+      />
 
+      <!-- 移动端：发送按钮内联 -->
+      <div v-if="isMobile" class="p-1.5">
+        <button
+          :class="[
+            'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-primary-foreground transition-all shadow-sm',
+            !canSend
+              ? 'cursor-not-allowed bg-primary/20 scale-95'
+              : 'animate-button-pop bg-primary hover:bg-primary-hover hover:scale-105 active:scale-95 shadow-primary/20',
+          ]"
+          :disabled="!canSend"
+          @click="emit('send')"
+        >
+          <Send :size="16" />
+        </button>
+      </div>
+    </div>
+
+    <!-- 桌面端或非移动端保留原有操作栏 -->
     <AiAssistantInputActionBar
+      v-if="!isMobile"
       :is-mobile="isMobile"
       :is-input-disabled="isInputDisabled"
       :is-generating="isGenerating"
