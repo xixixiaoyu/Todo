@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, nextTick, computed } from 'vue'
+import { ref, watch, nextTick, computed, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ArrowDown, Sparkles } from 'lucide-vue-next'
 import { useWindowSize } from '@vueuse/core'
@@ -109,6 +109,13 @@ function handleSessionEntered() {
     }, 50)
   })
 }
+
+onUnmounted(() => {
+  if (switchingFallbackTimer) {
+    clearTimeout(switchingFallbackTimer)
+    switchingFallbackTimer = null
+  }
+})
 
 async function revealOlderMessages(step = WINDOW_STEP) {
   if (!containerRef.value) {
