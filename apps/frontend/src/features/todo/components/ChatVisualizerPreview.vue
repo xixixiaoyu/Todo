@@ -8,6 +8,7 @@ import { useTodoStore } from '@/features/todo/stores/todo'
 import type { TreeData } from '@/features/todo/stores/todo.types'
 import { useI18n } from 'vue-i18n'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useChatHistory } from '@/features/ai/composables/useChatHistory'
 import { useProposedTreeData } from '../composables/useProposedTreeData'
 import { debounce } from 'lodash-es'
@@ -238,16 +239,22 @@ const chartOptions = computed(() => ({
         </div>
       </div>
 
-      <button
-        type="button"
-        class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-        :aria-label="isExpanded ? t('common.collapse') : t('common.expand')"
-        :title="isExpanded ? t('common.collapse') : t('common.expand')"
-        @click="isExpanded = !isExpanded"
-      >
-        <Minimize2 v-if="isExpanded" :size="14" />
-        <Maximize2 v-else :size="14" />
-      </button>
+      <Tooltip>
+        <TooltipTrigger as-child>
+          <Button
+            variant="ghost"
+            size="icon"
+            class="h-7 w-7 rounded-md text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+            @click="isExpanded = !isExpanded"
+          >
+            <Minimize2 v-if="isExpanded" :size="14" />
+            <Maximize2 v-else :size="14" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="top">
+          {{ isExpanded ? t('common.collapse') : t('common.expand') }}
+        </TooltipContent>
+      </Tooltip>
     </div>
 
     <!-- Visualizer Area -->

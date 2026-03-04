@@ -2,6 +2,7 @@
 import { useI18n } from 'vue-i18n'
 import { Pin, Sparkles, Timer, ChevronRight, CalendarClock, Bell } from 'lucide-vue-next'
 import { computed } from 'vue'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { type Todo, useTodoStore } from '../stores/todo'
 import { highlightMatch } from '@/lib/utils'
 import { formatDate } from '@/lib/dayjs'
@@ -57,52 +58,71 @@ const isOverdue = computed(() => {
         class="h-3.5 w-3.5 text-success/70 shrink-0"
       />
       <!-- eslint-disable vue/no-v-html -->
-      <span
-        class="flex-1 cursor-pointer select-text text-foreground truncate"
-        :class="[
-          todo.completed && store.filter !== 'trash' ? 'line-through text-muted-foreground/50' : '',
-          todo.isProposedDelete ? 'line-through text-destructive/50' : '',
-          todo.isProposed && store.filter !== 'trash' ? 'text-success/90 font-medium' : '',
-        ]"
-        :title="todo.title"
-        @dblclick="store.filter !== 'trash' && emit('startEdit')"
-        v-html="highlightMatch(todo.title, searchQuery || '')"
-      >
-      </span>
+      <Tooltip>
+        <TooltipTrigger as-child>
+          <span
+            class="flex-1 cursor-pointer select-text text-foreground truncate"
+            :class="[
+              todo.completed && store.filter !== 'trash'
+                ? 'line-through text-muted-foreground/50'
+                : '',
+              todo.isProposedDelete ? 'line-through text-destructive/50' : '',
+              todo.isProposed && store.filter !== 'trash' ? 'text-success/90 font-medium' : '',
+            ]"
+            @dblclick="store.filter !== 'trash' && emit('startEdit')"
+            v-html="highlightMatch(todo.title, searchQuery || '')"
+          >
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="top" align="start" class="max-w-[300px] break-words">
+          {{ todo.title }}
+        </TooltipContent>
+      </Tooltip>
       <!-- eslint-enable vue/no-v-html -->
 
       <!-- Pomodoro Badge -->
-      <div
-        v-if="todo.pomodoroCount > 0 && store.filter !== 'trash'"
-        class="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-rose-500/10 text-rose-500 dark:text-rose-400/90 text-[10px] font-bold shrink-0 ml-1 animate-in fade-in zoom-in-95 duration-500"
-        :title="t('pomodoro.sessions', { count: todo.pomodoroCount })"
-      >
-        <Timer class="w-3 h-3" />
-        <span>{{ todo.pomodoroCount }}</span>
-      </div>
+      <Tooltip v-if="todo.pomodoroCount > 0 && store.filter !== 'trash'">
+        <TooltipTrigger as-child>
+          <div
+            class="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-rose-500/10 text-rose-500 dark:text-rose-400/90 text-[10px] font-bold shrink-0 ml-1 animate-in fade-in zoom-in-95 duration-500"
+          >
+            <Timer class="w-3 h-3" />
+            <span>{{ todo.pomodoroCount }}</span>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="top">
+          {{ t('pomodoro.sessions', { count: todo.pomodoroCount }) }}
+        </TooltipContent>
+      </Tooltip>
 
-      <div
-        v-if="todo.dueAt && store.filter !== 'trash'"
-        class="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold shrink-0 ml-1"
-        :class="
-          isOverdue
-            ? 'bg-destructive/10 text-destructive'
-            : 'bg-primary/10 text-primary dark:text-primary/90'
-        "
-        :title="t('todo.dueAt')"
-      >
-        <CalendarClock class="w-3 h-3" />
-        <span>{{ formatDate(todo.dueAt, 'MM-DD HH:mm') }}</span>
-      </div>
+      <Tooltip v-if="todo.dueAt && store.filter !== 'trash'">
+        <TooltipTrigger as-child>
+          <div
+            class="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold shrink-0 ml-1"
+            :class="
+              isOverdue
+                ? 'bg-destructive/10 text-destructive'
+                : 'bg-primary/10 text-primary dark:text-primary/90'
+            "
+          >
+            <CalendarClock class="w-3 h-3" />
+            <span>{{ formatDate(todo.dueAt!, 'MM-DD HH:mm') }}</span>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="top">{{ t('todo.dueAt') }}</TooltipContent>
+      </Tooltip>
 
-      <div
-        v-if="todo.remindAt && !todo.remindedAt && store.filter !== 'trash'"
-        class="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400/90 text-[10px] font-bold shrink-0 ml-1"
-        :title="t('todo.remindAt')"
-      >
-        <Bell class="w-3 h-3" />
-        <span>{{ formatDate(todo.remindAt, 'MM-DD HH:mm') }}</span>
-      </div>
+      <Tooltip v-if="todo.remindAt && !todo.remindedAt && store.filter !== 'trash'">
+        <TooltipTrigger as-child>
+          <div
+            class="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400/90 text-[10px] font-bold shrink-0 ml-1"
+          >
+            <Bell class="w-3 h-3" />
+            <span>{{ formatDate(todo.remindAt!, 'HH:mm') }}</span>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="top">{{ t('todo.remindAt') }}</TooltipContent>
+      </Tooltip>
     </div>
   </div>
 </template>
