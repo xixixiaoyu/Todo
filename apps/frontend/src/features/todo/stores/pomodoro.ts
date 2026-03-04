@@ -84,6 +84,91 @@ export const usePomodoroStore = defineStore(
       return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
     })
 
+    // Sync timer to document title and favicon
+    watch(
+      [formattedTime, status, progress],
+      ([newTime, newStatus, newProgress]) => {
+        const t = i18n.global.t
+        if (newStatus !== 'idle') {
+          // Minimalist approach: "(13:39) Lumina"
+          document.title = `(${newTime}) ${t('common.appName')}`
+          updateFavicon(newProgress, newStatus === 'focus' ? '#fb7185' : '#34d399')
+        } else {
+          document.title = t('common.fullAppName')
+          resetFavicon()
+        }
+      },
+      { immediate: true },
+    )
+
+    // Helper to update Favicon with a progress ring
+    let canvas: HTMLCanvasElement | null = null
+    let ctx: CanvasRenderingContext2D | null = null
+
+    function updateFavicon(progress: number, color: string) {
+      if (!canvas) {
+        canvas = document.createElement('canvas')
+        canvas.width = 32
+        canvas.height = 32
+        ctx = canvas.getContext('2d')
+      }
+      if (!ctx) return
+
+      // Clear the canvas for a fresh draw
+      ctx.clearRect(0, 0, 32, 32)
+
+      // Draw background circle
+      ctx.beginPath()
+      ctx.arc(16, 16, 14, 0, Math.PI * 2)
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)'
+      ctx.lineWidth = 4
+      ctx.stroke()
+
+      // Draw progress arc
+      ctx.beginPath()
+      ctx.arc(16, 16, 14, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * progress) / 100)
+      ctx.strokeStyle = color
+      ctx.lineWidth = 4
+      ctx.lineCap = 'round'
+      ctx.stroke()
+
+      // Use a unique ID to ensure we only have one dynamic favicon
+      const linkId = 'dynamic-favicon'
+      let link = document.getElementById(linkId) as HTMLLinkElement
+      if (!link) {
+        link = document.createElement('link')
+        link.id = linkId
+        link.rel = 'icon'
+        document.head.appendChild(link)
+      }
+      link.href = canvas.toDataURL('image/png')
+
+      // Hide the original favicon to avoid conflicts
+      const originalFavicon = document.querySelector(
+        `link[rel='icon']:not(#${linkId})`,
+      ) as HTMLLinkElement
+      if (originalFavicon && !originalFavicon.hasAttribute('data-original-href')) {
+        originalFavicon.setAttribute('data-original-href', originalFavicon.href)
+        originalFavicon.removeAttribute('href')
+      }
+    }
+
+    function resetFavicon() {
+      const linkId = 'dynamic-favicon'
+      const dynamicLink = document.getElementById(linkId)
+      if (dynamicLink) {
+        dynamicLink.remove()
+      }
+
+      // Restore the original favicon
+      const originalFavicon = document.querySelector(
+        "link[rel='icon']:not(#" + linkId + ')',
+      ) as HTMLLinkElement
+      if (originalFavicon && originalFavicon.hasAttribute('data-original-href')) {
+        originalFavicon.href = originalFavicon.getAttribute('data-original-href')!
+      }
+    }
+
     // Actions
     async function startFocus(todoId: string, mode: PomodoroMode = 'classic') {
       if (timerInterval.value) clearInterval(timerInterval.value)
