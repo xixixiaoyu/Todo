@@ -30,8 +30,22 @@ vi.mock('@/features/auth/stores/auth', () => ({
 
 // Mock chat history
 const mockCurrentSession = ref<ChatSession | null>(null)
+const mockCurrentSessionId = computed(() => mockCurrentSession.value?.id ?? null)
+const mockSessions = ref<ChatSession[]>([])
 const mockGetOrCreateCurrentSession = vi.fn<() => ChatSession>()
-const mockUpdateSessionMessages = vi.fn<(sessionId: string, messages: ChatMessage[]) => void>()
+const mockUpdateSessionMessages = vi.fn((sessionId: string, messages: ChatMessage[]) => {
+  if (mockCurrentSession.value && mockCurrentSession.value.id === sessionId) {
+    mockCurrentSession.value = { ...mockCurrentSession.value, messages }
+  }
+})
+const mockAddSessionMessage = vi.fn((sessionId: string, message: ChatMessage) => {
+  if (mockCurrentSession.value && mockCurrentSession.value.id === sessionId) {
+    mockCurrentSession.value = {
+      ...mockCurrentSession.value,
+      messages: [...mockCurrentSession.value.messages, message],
+    }
+  }
+})
 const mockCreateSession = vi.fn<() => ChatSession>()
 const mockUpdateSessionContextSummary =
   vi.fn<(sessionId: string, data: { summary: string; untilMessageId: string }) => void>()
@@ -41,8 +55,11 @@ vi.mock('@/features/ai/composables/useChatHistory', async () => {
   return {
     useChatHistory: vi.fn(() => ({
       currentSession: computed(() => mockCurrentSession.value),
+      currentSessionId: mockCurrentSessionId,
+      sessions: mockSessions,
       getOrCreateCurrentSession: mockGetOrCreateCurrentSession,
       updateSessionMessages: mockUpdateSessionMessages,
+      addSessionMessage: mockAddSessionMessage,
       createSession: mockCreateSession,
       updateSessionContextSummary: mockUpdateSessionContextSummary,
       clearSessionContextSummary: mockClearSessionContextSummary,
@@ -162,7 +179,29 @@ describe('useChat', () => {
     })
     mockUpdateSessionMessages.mockImplementation((sessionId, messages) => {
       if (mockCurrentSession.value && mockCurrentSession.value.id === sessionId) {
-        mockCurrentSession.value.messages = [...messages]
+        mockCurrentSession.value = { ...mockCurrentSession.value, messages: [...messages] }
+        // 更新 mockSessions 列表
+        const idx = mockSessions.value.findIndex((s) => s.id === sessionId)
+        if (idx !== -1) {
+          mockSessions.value[idx] = mockCurrentSession.value
+        } else {
+          mockSessions.value.push(mockCurrentSession.value)
+        }
+      }
+    })
+    mockAddSessionMessage.mockImplementation((sessionId, message) => {
+      if (mockCurrentSession.value && mockCurrentSession.value.id === sessionId) {
+        mockCurrentSession.value = {
+          ...mockCurrentSession.value,
+          messages: [...mockCurrentSession.value.messages, message],
+        }
+        // 更新 mockSessions 列表
+        const idx = mockSessions.value.findIndex((s) => s.id === sessionId)
+        if (idx !== -1) {
+          mockSessions.value[idx] = mockCurrentSession.value
+        } else {
+          mockSessions.value.push(mockCurrentSession.value)
+        }
       }
     })
     mockGetOrCreateCurrentSession.mockImplementation(() => {
@@ -175,7 +214,10 @@ describe('useChat', () => {
           updatedAt: new Date(),
         }
       }
-      return mockCurrentSession.value
+      if (!mockSessions.value.some((s) => s.id === mockCurrentSession.value!.id)) {
+        mockSessions.value.push(mockCurrentSession.value!)
+      }
+      return mockCurrentSession.value!
     })
     mockCreateSession.mockImplementation(() => {
       const newSession: ChatSession = {

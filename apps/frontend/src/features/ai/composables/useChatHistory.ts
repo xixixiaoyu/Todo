@@ -311,6 +311,17 @@ export function useChatHistory() {
     }
   }
 
+  /**
+   * 向指定会话添加单条消息
+   */
+  function addSessionMessage(sessionId: string, message: ChatMessage): void {
+    const session = sessions.value.find((s) => s.id === sessionId)
+    if (!session) return
+
+    const newMessages = [...session.messages, message]
+    updateSessionMessages(sessionId, newMessages)
+  }
+
   function updateSessionContextSummary(
     sessionId: string,
     data: { summary: string; untilMessageId: string },
@@ -415,6 +426,7 @@ export function useChatHistory() {
     createSession,
     switchSession,
     updateSessionMessages,
+    addSessionMessage,
     updateSessionContextSummary,
     clearSessionContextSummary,
     renameSession,

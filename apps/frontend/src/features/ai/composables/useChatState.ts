@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useChatHistory } from './useChatHistory'
 import type { ChatMessage, DiscussionStep } from '@/features/ai/services/aiService'
 import type { ProposedTodoChange } from '@/features/todo/stores/todo'
@@ -48,6 +48,13 @@ export function useChatState() {
       const session = getOrCreateCurrentSession()
       updateSessionMessages(session.id, messages)
     },
+  })
+
+  // 监听当前会话变化，重置流式状态
+  const { currentSessionId } = useChatHistory()
+  watch(currentSessionId, () => {
+    resetStreamingState()
+    clearError()
   })
 
   /**

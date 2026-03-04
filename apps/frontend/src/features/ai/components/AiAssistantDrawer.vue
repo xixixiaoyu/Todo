@@ -52,6 +52,9 @@ const { lastActiveSession, switchSession } = useChatHistory()
 
 const navigateToPrevious = () => {
   if (!lastActiveSession.value) return
+  if (isGenerating.value) {
+    stopGenerating()
+  }
   switchSession(lastActiveSession.value.id)
 }
 
@@ -124,6 +127,9 @@ const {
 })
 
 const handleSelectSession = (sessionId: string) => {
+  if (isGenerating.value) {
+    stopGenerating()
+  }
   switchSession(sessionId)
   showHistory.value = false
 }

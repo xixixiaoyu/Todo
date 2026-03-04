@@ -63,8 +63,16 @@ export function useChatActions(options: AIRequestOptions = {}) {
   } = useChatState()
 
   const { extractAndStoreMemories, isMemoryEnabled } = useChatMemory()
-  const { createSession, currentSession, updateSessionContextSummary, clearSessionContextSummary } =
-    useChatHistory()
+  const {
+    sessions,
+    createSession,
+    currentSession,
+    currentSessionId,
+    addSessionMessage,
+    getOrCreateCurrentSession,
+    updateSessionContextSummary,
+    clearSessionContextSummary,
+  } = useChatHistory()
   const todoStore = useTodoStore()
   const authStore = useAuthStore()
 
@@ -82,6 +90,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
 
     clearError()
     isGenerating.value = true
+    const generationSessionId = currentSessionId.value || getOrCreateCurrentSession().id // 捕获发起生成的会话 ID
 
     // 创建用户消息
     const userMessage: ChatMessage = {
@@ -91,7 +100,11 @@ export function useChatActions(options: AIRequestOptions = {}) {
       images,
       createdAt: new Date(),
     }
-    chatHistory.value = [...chatHistory.value, userMessage]
+
+    // 立即更新到指定会话
+    if (generationSessionId) {
+      addSessionMessage(generationSessionId, userMessage)
+    }
 
     currentAssistantMessageId.value = generateId()
     currentAIResponse.value = t('ai.generatingImage')
@@ -112,7 +125,11 @@ export function useChatActions(options: AIRequestOptions = {}) {
           images: imageUrls,
           createdAt: new Date(),
         }
-        chatHistory.value = [...chatHistory.value, aiMessage]
+
+        // 使用捕获的会话 ID 进行更新
+        if (generationSessionId) {
+          addSessionMessage(generationSessionId, aiMessage)
+        }
       } else {
         throw new Error(t('ai.noImageGenerated'))
       }
@@ -172,6 +189,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
 
     clearError()
     resetStreamingState()
+    const generationSessionId = currentSessionId.value || getOrCreateCurrentSession().id // 捕获发起生成的会话 ID
 
     if (!isRetry) {
       retryCount.value = 0
@@ -183,7 +201,11 @@ export function useChatActions(options: AIRequestOptions = {}) {
         documents: documents,
         createdAt: new Date(),
       }
-      chatHistory.value = [...chatHistory.value, userMessage]
+
+      // 立即更新到指定会话
+      if (generationSessionId) {
+        addSessionMessage(generationSessionId, userMessage)
+      }
     }
 
     isGenerating.value = true
@@ -230,10 +252,15 @@ export function useChatActions(options: AIRequestOptions = {}) {
               structuredBlockErrors,
               createdAt: new Date(),
             }
-            const newHistory = [...chatHistory.value, aiMessage]
-            chatHistory.value = newHistory
 
-            if (isMemoryEnabled.value) {
+            // 使用捕获的会话 ID 进行更新，防止切换会话后存错位置
+            if (generationSessionId) {
+              addSessionMessage(generationSessionId, aiMessage)
+            }
+
+            if (isMemoryEnabled.value && generationSessionId) {
+              const session = sessions.value.find((s) => s.id === generationSessionId)
+              const newHistory = session?.messages ?? []
               void extractAndStoreMemories(newHistory)
             }
           }
@@ -253,7 +280,11 @@ export function useChatActions(options: AIRequestOptions = {}) {
                   : undefined,
               createdAt: new Date(),
             }
-            chatHistory.value = [...chatHistory.value, aiMessage]
+
+            // 使用捕获的会话 ID 进行更新
+            if (generationSessionId) {
+              addSessionMessage(generationSessionId, aiMessage)
+            }
           }
           resetStreamingState()
           isGenerating.value = false
