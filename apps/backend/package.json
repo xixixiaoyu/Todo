@@ -2,6 +2,8 @@
   "name": "@my-app/backend",
   "version": "1.0.0-beta.1",
   "private": true,
+  "license": "AGPL-3.0-only",
+  "author": "牧云 (Mu Yun)",
   "scripts": {
     "build": "cross-env NODE_OPTIONS='--max-old-space-size=8192' nest build",
     "type-check": "cross-env NODE_OPTIONS='--max-old-space-size=8192' tsc --noEmit",

@@ -1,7 +1,28 @@
 {
   "name": "lumina",
   "version": "1.0.0-beta.1",
-  "private": true,
+  "description": "Lumina (简思) - An AI-driven personal todo system with extreme interactive experience and rigorous engineering practices.",
+  "license": "AGPL-3.0-only",
+  "author": "牧云 (Mu Yun)",
+  "homepage": "https://github.com/xixixiaoyu/lumina",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xixixiaoyu/lumina.git"
+  },
+  "bugs": {
+    "url": "https://github.com/xixixiaoyu/lumina/issues"
+  },
+  "keywords": [
+    "todo",
+    "ai",
+    "mcp",
+    "nestjs",
+    "vue",
+    "wails",
+    "capacitor",
+    "monorepo",
+    "productivity"
+  ],
   "packageManager": "pnpm@9.15.0",
   "engines": {
     "node": ">=20.19.0",

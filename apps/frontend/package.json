@@ -2,7 +2,8 @@
   "name": "@my-app/frontend",
   "version": "1.0.0-beta.1",
   "description": "简思 (Lumina) — 简于形，深于思的高效纯粹 AI 个人待办应用",
-  "author": "Your Name",
+  "author": "牧云 (Mu Yun)",
+  "license": "AGPL-3.0-only",
   "private": true,
   "type": "module",
   "scripts": {

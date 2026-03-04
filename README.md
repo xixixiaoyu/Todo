@@ -1,8 +1,8 @@
 # Lumina (简思)
 
-[![Engineering Status](https://img.shields.io/badge/Engineering-Production--Ready-success?style=flat-square)](https://github.com/your-repo)
-[![Tech Stack](https://img.shields.io/badge/Stack-NestJS_11_%7C_Vue_3.5_%7C_TypeScript-blue?style=flat-square)](https://github.com/your-repo)
-[![License](https://img.shields.io/badge/License-MIT-orange?style=flat-square)](LICENSE)
+[![Engineering Status](https://img.shields.io/badge/Engineering-Production--Ready-success?style=flat-square)](https://github.com/xixixiaoyu/lumina)
+[![Tech Stack](https://img.shields.io/badge/Stack-NestJS_11_%7C_Vue_3.5_%7C_TypeScript-blue?style=flat-square)](https://github.com/xixixiaoyu/lumina)
+[![License](https://img.shields.io/badge/License-AGPL--3.0-orange?style=flat-square)](LICENSE)
 
 > **简于形，深于思。** Lumina 是一款追求极致交互体验与严谨工程实践的 AI 驱动个人待办系统。
 
@@ -69,7 +69,8 @@ Lumina 并非传统的全栈应用，它采用了“轻原生壳 + 重云端大�
 ### 5 分钟部署
 ```bash
 # 1. 初始化项目
-git clone <repository-url>
+git clone https://github.com/xixixiaoyu/lumina.git
+cd lumina
 pnpm install
 
 # 2. 启动基础设施
@@ -111,4 +112,4 @@ pnpm dev
 - **提交规范**: 采用 Husky 拦截，强制执行规范化的 Git Commit Message。
 - **排版建议**: 中文与 English/Number 之间保持一个空格。
 
-&copy; 2026 Lumina Engineering Team.
+&copy; 2026 牧云 (Mu Yun). All Rights Reserved. Licensed under the [AGPL-3.0 License](LICENSE).
