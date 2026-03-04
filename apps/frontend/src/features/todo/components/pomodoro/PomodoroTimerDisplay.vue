@@ -37,7 +37,7 @@ const themeColorRgb = 'var(--primary-rgb)'
 
       <svg
         :class="[
-          'relative z-10 transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)]',
+          'relative z-10 transition-all duration-1000 ease-apple',
           pomodoroStore.isMiniMode ? 'w-32 h-32' : 'w-72 h-72',
           pomodoroStore.isMiniMode
             ? 'group-hover/timer:opacity-30 transition-opacity duration-300'

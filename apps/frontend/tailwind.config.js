@@ -236,6 +236,7 @@ export default {
       transitionTimingFunction: {
         'soft-spring': 'cubic-bezier(0.16, 1, 0.3, 1)',
         'out-quart': 'cubic-bezier(0.25, 1, 0.5, 1)',
+        apple: 'cubic-bezier(0.23, 1, 0.32, 1)',
       },
       // 关键帧动画
       keyframes: {

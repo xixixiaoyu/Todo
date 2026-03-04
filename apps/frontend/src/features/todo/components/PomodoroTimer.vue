@@ -90,9 +90,7 @@ watch(
       :style="containerStyle"
     >
       <!-- Main Content Container -->
-      <div
-        class="relative w-full h-full transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]"
-      >
+      <div class="relative w-full h-full transition-all duration-700 ease-apple">
         <div
           class="relative backdrop-blur-3xl overflow-hidden transition-all duration-700 h-full w-full group/card animate-float"
           :class="[
