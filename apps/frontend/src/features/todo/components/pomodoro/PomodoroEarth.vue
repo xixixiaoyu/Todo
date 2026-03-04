@@ -3,7 +3,6 @@ import * as THREE from 'three'
 import { onMounted, onUnmounted, ref, watch, nextTick, computed } from 'vue'
 import { usePomodoroStore } from '../../stores/pomodoro'
 import { useTheme } from '@/composables/useTheme'
-import { nativeService } from '@/services/native'
 import { useGsap } from '@/composables/useGsap'
 
 defineProps<{
@@ -33,8 +32,6 @@ let cameraLight: THREE.PointLight
 let ambientLight: THREE.AmbientLight
 let animationFrameId: number
 let orbitAngle = 0 // New: Track orbit position
-
-const isWails = () => nativeService.platform === 'wails'
 
 const initThree = () => {
   if (!canvasRef.value) return
@@ -407,7 +404,7 @@ watch(
   () => [pomodoroStore.status, pomodoroStore.isMiniMode],
   async ([newStatus, newMiniMode]) => {
     const shouldBeActive = newStatus !== 'idle' || newMiniMode
-    if (shouldBeActive && !isWails()) {
+    if (shouldBeActive) {
       await nextTick()
       // If renderer already exists, just make sure it's resizing correctly
       if (!renderer) {
@@ -422,12 +419,7 @@ watch(
 
 // Add a separate watch for canvasRef to handle cases where nextTick is not enough
 watch(canvasRef, (newCanvas) => {
-  if (
-    newCanvas &&
-    !renderer &&
-    (pomodoroStore.status !== 'idle' || pomodoroStore.isMiniMode) &&
-    !isWails()
-  ) {
+  if (newCanvas && !renderer && (pomodoroStore.status !== 'idle' || pomodoroStore.isMiniMode)) {
     initThree()
   }
 })
@@ -469,7 +461,7 @@ onUnmounted(() => {
     leave-to-class="opacity-0 scale-95"
   >
     <div
-      v-if="(pomodoroStore.status !== 'idle' || pomodoroStore.isMiniMode) && !isWails()"
+      v-if="pomodoroStore.status !== 'idle' || pomodoroStore.isMiniMode"
       class="fixed inset-0 z-0 overflow-hidden transition-colors duration-1000"
       :class="isDark ? 'bg-black' : 'bg-[#f0f4f8]'"
     >
