@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia'
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { ImpactStyle, NotificationType } from '@capacitor/haptics'
 import { useTodoStore } from './todo'
+import { useTheme } from '@/composables/useTheme'
 import { nativeService } from '@/services/native'
 import { useToast } from '@/composables/useToast'
 import i18n from '@/i18n'
@@ -32,6 +33,7 @@ export const usePomodoroStore = defineStore(
   'pomodoro',
   () => {
     const todoStore = useTodoStore()
+    const themeStore = useTheme()
 
     // State
     const status = ref<PomodoroStatus>('idle')
@@ -88,13 +90,27 @@ export const usePomodoroStore = defineStore(
 
     // Sync timer to document title and favicon
     watch(
-      [formattedTime, status, progress],
-      ([newTime, newStatus, newProgress]) => {
+      [formattedTime, status, progress, themeStore.themeColor],
+      async ([newTime, newStatus, newProgress]) => {
         const t = i18n.global.t
         if (newStatus !== 'idle') {
           // Minimalist approach: "(13:39) Lumina"
           document.title = `(${newTime}) ${t('common.appName')}`
-          updateFavicon(newProgress, newStatus === 'focus' ? '#fb7185' : '#34d399')
+
+          // Ensure DOM updated with new theme colors if changed
+          await nextTick()
+
+          // Use current theme color from computed styles
+          const primaryRgb = getComputedStyle(document.documentElement)
+            .getPropertyValue('--primary-rgb')
+            .trim()
+          const color = primaryRgb
+            ? `rgb(${primaryRgb})`
+            : newStatus === 'focus'
+              ? '#fb7185'
+              : '#34d399'
+
+          updateFavicon(newProgress, color)
         } else {
           document.title = t('common.fullAppName')
           resetFavicon()

@@ -7,6 +7,10 @@ const pomodoroStore = usePomodoroStore()
 const { theme } = useTheme()
 
 const isDark = computed(() => theme.value === 'dark' || pomodoroStore.isMiniMode)
+
+// Use global theme color for progress ring and favicon
+const themeColor = 'hsl(var(--primary))'
+const themeColorRgb = 'var(--primary-rgb)'
 </script>
 
 <template>
@@ -19,40 +23,16 @@ const isDark = computed(() => theme.value === 'dark' || pomodoroStore.isMiniMode
       class="relative flex items-center justify-center group/timer cursor-pointer"
       @click="pomodoroStore.isRunning ? pomodoroStore.pauseTimer() : pomodoroStore.resumeTimer()"
     >
-      <!-- Star Core Glow - More Subtle -->
+      <!-- Star Core Glow - Minimalist -->
       <div
         class="absolute rounded-full transition-all duration-1000 ease-in-out"
         :class="[
-          pomodoroStore.isMiniMode ? 'w-24 h-24' : 'w-56 h-56',
-          pomodoroStore.isRunning ? 'animate-stellar-pulse' : 'opacity-10 scale-90',
+          pomodoroStore.isMiniMode ? 'w-28 h-28' : 'w-64 h-64',
+          pomodoroStore.isRunning ? 'animate-stellar-pulse' : 'opacity-5 scale-90',
         ]"
         :style="{
-          background:
-            pomodoroStore.status === 'focus'
-              ? `radial-gradient(circle, rgba(251, 113, 133, ${isDark ? '0.4' : '0.15'}) 0%, transparent 70%)`
-              : `radial-gradient(circle, rgba(52, 211, 153, ${isDark ? '0.4' : '0.15'}) 0%, transparent 70%)`,
-          boxShadow: pomodoroStore.isRunning
-            ? `0 0 80px 20px ${
-                pomodoroStore.status === 'focus'
-                  ? isDark
-                    ? 'rgba(251, 113, 133, 0.2)'
-                    : 'rgba(251, 113, 133, 0.1)'
-                  : isDark
-                    ? 'rgba(52, 211, 153, 0.2)'
-                    : 'rgba(52, 211, 153, 0.1)'
-              }`
-            : 'none',
+          background: `radial-gradient(circle, rgba(${themeColorRgb}, ${isDark ? '0.2' : '0.08'}) 0%, transparent 70%)`,
         }"
-      ></div>
-
-      <!-- Stellar Rings - Reduced Opacity and Slower -->
-      <div
-        v-if="pomodoroStore.isRunning"
-        class="absolute rounded-full border border-white/[0.05] dark:border-white/[0.05] animate-spin-slow"
-        :class="[
-          pomodoroStore.isMiniMode ? 'w-36 h-36' : 'w-80 h-80',
-          isDark ? 'border-white/[0.05]' : 'border-black/[0.02]',
-        ]"
       ></div>
 
       <svg
@@ -65,26 +45,17 @@ const isDark = computed(() => theme.value === 'dark' || pomodoroStore.isMiniMode
         ]"
         viewBox="0 0 100 100"
       >
-        <!-- Outer Atmospheric Glow -->
-        <circle
-          cx="50"
-          cy="50"
-          r="49"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="0.2"
-          class="text-foreground/[0.1] dark:text-white/[0.1]"
-        />
-        <!-- Orbit Ring -->
+        <!-- Background Track (Single, Subtle) -->
         <circle
           cx="50"
           cy="50"
           r="44"
           fill="none"
           stroke="currentColor"
-          stroke-width="0.5"
-          class="text-foreground/[0.05] dark:text-white/[0.05] animate-pulse"
+          stroke-width="1.5"
+          class="text-foreground/[0.03] dark:text-white/[0.03]"
         />
+
         <!-- Progress Arc -->
         <circle
           cx="50"
@@ -99,15 +70,7 @@ const isDark = computed(() => theme.value === 'dark' || pomodoroStore.isMiniMode
             strokeDasharray: '276.46',
             strokeDashoffset: 276.46 - (pomodoroStore.progress / 100) * 276.46,
             filter: pomodoroStore.isRunning
-              ? `drop-shadow(0 0 15px ${
-                  pomodoroStore.status === 'focus'
-                    ? isDark
-                      ? 'rgba(244, 63, 94, 0.8)'
-                      : 'rgba(244, 63, 94, 0.4)'
-                    : isDark
-                      ? 'rgba(16, 185, 129, 0.8)'
-                      : 'rgba(16, 185, 129, 0.4)'
-                })`
+              ? `drop-shadow(0 0 12px rgba(${themeColorRgb}, ${isDark ? '0.6' : '0.3'}))`
               : 'none',
           }"
           transform="rotate(-90 50 50)"
@@ -116,18 +79,8 @@ const isDark = computed(() => theme.value === 'dark' || pomodoroStore.isMiniMode
         <!-- Definitions for Stellar Gradient -->
         <defs>
           <linearGradient id="stellarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop
-              offset="0%"
-              :stop-color="pomodoroStore.status === 'focus' ? '#fb7185' : '#34d399'"
-            />
-            <stop
-              offset="50%"
-              :stop-color="pomodoroStore.status === 'focus' ? '#f43f5e' : '#10b981'"
-            />
-            <stop
-              offset="100%"
-              :stop-color="pomodoroStore.status === 'focus' ? '#fbbf24' : '#3b82f6'"
-            />
+            <stop offset="0%" :stop-color="themeColor" />
+            <stop offset="100%" :stop-color="themeColor" />
           </linearGradient>
         </defs>
       </svg>
@@ -146,16 +99,8 @@ const isDark = computed(() => theme.value === 'dark' || pomodoroStore.isMiniMode
             fontFamily: 'JetBrains Mono, monospace',
             transition: 'all 0.3s linear',
             textShadow: isDark
-              ? `0 0 20px ${
-                  pomodoroStore.status === 'focus'
-                    ? 'rgba(251, 113, 133, 0.6)'
-                    : 'rgba(52, 211, 153, 0.6)'
-                }, 0 4px 12px rgba(0, 0, 0, 0.5)`
-              : `0 0 20px ${
-                  pomodoroStore.status === 'focus'
-                    ? 'rgba(251, 113, 133, 0.2)'
-                    : 'rgba(52, 211, 153, 0.2)'
-                }`,
+              ? `0 0 20px rgba(${themeColorRgb}, 0.6), 0 4px 12px rgba(0, 0, 0, 0.5)`
+              : `0 0 20px rgba(${themeColorRgb}, 0.2)`,
           }"
         >
           {{ pomodoroStore.formattedTime }}
@@ -175,31 +120,18 @@ const isDark = computed(() => theme.value === 'dark' || pomodoroStore.isMiniMode
   0%,
   100% {
     transform: scale(1);
-    opacity: 0.2;
-    filter: blur(25px);
+    opacity: 0.3;
+    filter: blur(20px);
   }
   50% {
-    transform: scale(1.02);
-    opacity: 0.25;
-    filter: blur(30px);
-  }
-}
-
-@keyframes spin-slow {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
+    transform: scale(1.05);
+    opacity: 0.4;
+    filter: blur(25px);
   }
 }
 
 .animate-stellar-pulse {
   animation: stellar-pulse 8s ease-in-out infinite;
-}
-
-.animate-spin-slow {
-  animation: spin-slow 120s linear infinite;
 }
 
 span {
