@@ -154,8 +154,9 @@ const initThree = () => {
       uniform vec3 glowColor;
       uniform float opacity;
       void main() {
-        // More ethereal atmosphere with Fresnel-like falloff
-        float intensity = pow(0.65 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 6.0);
+        // Improved Fresnel falloff for a more realistic atmosphere
+        // We use a smoother power function and adjust the bias
+        float intensity = pow(0.5 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 4.0);
         gl_FragColor = vec4(glowColor, opacity * intensity);
       }
     `,
@@ -331,19 +332,19 @@ const animate = () => {
   }
 
   if (atmosphere) {
-    atmosphere.scale.copy(earth.scale).multiplyScalar(1.15)
+    atmosphere.scale.copy(earth.scale).multiplyScalar(1.08) // Tighter atmosphere for realism
     atmosphere.position.copy(earth.position)
 
     if (atmosphere.material instanceof THREE.ShaderMaterial) {
       const targetGlowColor = pomodoroStore.status === 'focus' ? 0x0077ff : 0x7700ff
       const color = new THREE.Color(targetGlowColor)
-      const pulse = 1.0 + Math.sin(Date.now() * 0.0005) * 0.02
+      const pulse = 1.0 + Math.sin(Date.now() * 0.0005) * 0.05 // Slightly stronger pulse
       color.multiplyScalar(pulse)
 
       atmosphere.material.uniforms.glowColor.value.lerp(color, 0.05)
       atmosphere.material.uniforms.opacity.value = THREE.MathUtils.lerp(
         atmosphere.material.uniforms.opacity.value,
-        isDark.value ? 1.0 : 0.6,
+        isDark.value ? 0.9 : 0.5,
         0.05,
       )
     }
