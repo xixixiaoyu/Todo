@@ -5,7 +5,7 @@ import { usePomodoroStore } from '../../stores/pomodoro'
 import { useTheme } from '@/composables/useTheme'
 import { useGsap } from '@/composables/useGsap'
 
-defineProps<{
+const props = defineProps<{
   mousePos?: { x: number; y: number }
 }>()
 
@@ -32,6 +32,8 @@ let cameraLight: THREE.PointLight
 let ambientLight: THREE.AmbientLight
 let animationFrameId: number
 let orbitAngle = 0 // New: Track orbit position
+let smoothMouseX = 0 // Track smoothed mouse X
+let smoothMouseY = 0 // Track smoothed mouse Y
 
 const initThree = () => {
   if (!canvasRef.value) return
@@ -268,42 +270,64 @@ const animate = () => {
   if (earth) {
     earth.rotation.y += 0.0008 // Slower, more Zen rotation
 
-    // Orbit Logic: Orbit around the card center
-    // Mini mode card is centered in the screen, but we offset it for composition
-    // Let's make the orbit centered on the screen or a specific target
-    orbitAngle += 0.0015 // Speed up for testing visibility
+    // Cinematic Orbit Logic
+    // We vary the speed slightly: faster when "behind" (Z < 0), slower when "in front" (Z > 0)
+    // to simulate a more natural, gravitational feel.
+    const baseSpeed = 0.0015
+    const speedVariation = 0.5 // 50% speed variation
+    const currentSpeed = baseSpeed * (1 - Math.sin(orbitAngle) * speedVariation)
+    orbitAngle += currentSpeed
 
     // In mini mode, the card is small and centered
     // We want the orbit to be larger than the card
     const orbitRadiusX = pomodoroStore.isMiniMode ? 1.8 : 2.5
     const orbitRadiusY = pomodoroStore.isMiniMode ? 0.8 : 1.2
+    const orbitInclination = 0.25 // Radians (~14 degrees tilt)
 
-    const orbitOffsetX = Math.cos(orbitAngle) * orbitRadiusX
-    const orbitOffsetY = Math.sin(orbitAngle) * orbitRadiusY
-    const orbitOffsetZ = Math.sin(orbitAngle) * 1.5 // Significant Z movement
+    // Calculate raw orbit position
+    const rawX = Math.cos(orbitAngle) * orbitRadiusX
+    const rawY = Math.sin(orbitAngle) * orbitRadiusY
+    const rawZ = Math.sin(orbitAngle) * 1.5
 
-    // Aesthetic Logic: Base scale
+    // Apply inclination (rotate around X axis)
+    const orbitX = rawX
+    const orbitY = rawY * Math.cos(orbitInclination) - rawZ * Math.sin(orbitInclination)
+    const orbitZ = rawY * Math.sin(orbitInclination) + rawZ * Math.cos(orbitInclination)
+
+    // Aesthetic Logic: Base scale & targets
     let targetScale = 0.85 + (pomodoroStore.progress / 100) * 0.35
     let targetX = 0
     let targetY = 0
 
     if (pomodoroStore.isMiniMode) {
       targetScale *= 1.2
-      // Center the orbit around the card (which is roughly at 0,0 in Three.js coordinates relative to camera)
-      targetX = orbitOffsetX
-      targetY = orbitOffsetY
+      targetX = orbitX
+      targetY = orbitY
     } else {
       targetScale *= 0.8
-      targetX = orbitOffsetX * 0.8 + 1.5
-      targetY = orbitOffsetY * 0.8 - 0.5
+      // Offset the orbit center to frame the card nicely
+      targetX = orbitX * 0.8 + 1.5
+      targetY = orbitY * 0.8 - 0.5
     }
 
-    // Dynamic Scale & Z-index simulation
-    // When orbitOffsetZ is positive, earth is "closer" to camera
-    const finalScale = targetScale * (1 + orbitOffsetZ * 0.15)
+    // Smooth Mouse Lerp (Dampen high-frequency mouse jitter)
+    if (props.mousePos) {
+      smoothMouseX = THREE.MathUtils.lerp(smoothMouseX, props.mousePos.x, 0.04)
+      smoothMouseY = THREE.MathUtils.lerp(smoothMouseY, props.mousePos.y, 0.04)
+    }
 
-    earth.scale.lerp(new THREE.Vector3(finalScale, finalScale, finalScale), 0.05)
-    earth.position.lerp(new THREE.Vector3(targetX, targetY, orbitOffsetZ), 0.05)
+    // Interactive Parallax (Subtle Mouse Influence)
+    targetX += smoothMouseX * 0.2
+    targetY += -smoothMouseY * 0.2
+
+    // Dynamic Scale based on Z-depth (Perspective simulation)
+    const perspectiveFactor = 0.12
+    const finalScale = targetScale * (1 + orbitZ * perspectiveFactor)
+
+    // Smooth Interpolation for Final Position/Scale
+    const lerpFactor = 0.06 // Slightly faster catch-up for responsiveness
+    earth.scale.lerp(new THREE.Vector3(finalScale, finalScale, finalScale), lerpFactor)
+    earth.position.lerp(new THREE.Vector3(targetX, targetY, orbitZ), lerpFactor)
 
     // Adjust light to follow earth slightly for better texture visibility
     if (sunLight) {
@@ -329,13 +353,13 @@ const animate = () => {
   }
 
   if (atmosphere) {
-    atmosphere.scale.copy(earth.scale).multiplyScalar(1.08) // Tighter atmosphere for realism
+    atmosphere.scale.copy(earth.scale).multiplyScalar(1.08)
     atmosphere.position.copy(earth.position)
 
     if (atmosphere.material instanceof THREE.ShaderMaterial) {
       const targetGlowColor = pomodoroStore.status === 'focus' ? 0x0077ff : 0x7700ff
       const color = new THREE.Color(targetGlowColor)
-      const pulse = 1.0 + Math.sin(Date.now() * 0.0005) * 0.05 // Slightly stronger pulse
+      const pulse = 1.0 + Math.sin(Date.now() * 0.0005) * 0.05
       color.multiplyScalar(pulse)
 
       atmosphere.material.uniforms.glowColor.value.lerp(color, 0.05)
@@ -426,18 +450,8 @@ watch(canvasRef, (newCanvas) => {
 
 function cleanup() {
   if (animationFrameId) cancelAnimationFrame(animationFrameId)
-  renderer?.dispose()
-  renderer = null as unknown as THREE.WebGLRenderer
-  pomodoroStore.isEarthReady = false
-}
 
-onMounted(() => {
-  window.addEventListener('resize', handleResize)
-})
-
-onUnmounted(() => {
-  cleanup()
-  window.removeEventListener('resize', handleResize)
+  // Dispose of Three.js objects to prevent memory leaks
   earth?.geometry.dispose()
   ;(earth?.material as THREE.Material)?.dispose()
   clouds?.geometry.dispose()
@@ -450,6 +464,22 @@ onUnmounted(() => {
   ;(starField2?.material as THREE.Material)?.dispose()
   galaxyGlow?.geometry.dispose()
   ;(galaxyGlow?.material as THREE.Material)?.dispose()
+
+  renderer?.dispose()
+  renderer = null as unknown as THREE.WebGLRenderer
+  scene = null as unknown as THREE.Scene
+  camera = null as unknown as THREE.PerspectiveCamera
+
+  pomodoroStore.isEarthReady = false
+}
+
+onMounted(() => {
+  window.addEventListener('resize', handleResize)
+})
+
+onUnmounted(() => {
+  cleanup()
+  window.removeEventListener('resize', handleResize)
 })
 </script>
 
