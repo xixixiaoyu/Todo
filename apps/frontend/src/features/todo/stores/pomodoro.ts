@@ -40,6 +40,7 @@ export const usePomodoroStore = defineStore(
     const activeTodoId = ref<string | null>(null)
     const timerInterval = ref<number | null>(null)
     const targetEndTime = ref<number | null>(null)
+    const currentSessionTotal = ref(POMODORO_MODES.classic.focus * 60)
     const completedSessions = ref(0)
     const history = ref<PomodoroHistory[]>([])
     const isMiniMode = ref(false)
@@ -67,15 +68,16 @@ export const usePomodoroStore = defineStore(
       activeTodoId.value ? todoStore.todos.find((t) => t.id === activeTodoId.value) : null,
     )
 
+    // Current session total time (reactive to mode/status changes)
+    const totalTime = computed(
+      () => currentSessionTotal.value || currentModeConfig.value.focus * 60,
+    )
+
     const progress = computed(() => {
-      const config = currentModeConfig.value
-      const total =
-        status.value === 'focus'
-          ? config.focus * 60
-          : status.value === 'short_break'
-            ? config.shortBreak * 60
-            : config.longBreak * 60
-      return ((total - timeLeft.value) / total) * 100
+      const total = totalTime.value
+      if (total <= 0) return 0
+      const p = ((total - timeLeft.value) / total) * 100
+      return Math.min(Math.max(p, 0), 100)
     })
 
     const formattedTime = computed(() => {
@@ -176,7 +178,8 @@ export const usePomodoroStore = defineStore(
       activeTodoId.value = todoId
       currentMode.value = mode
       status.value = 'focus'
-      timeLeft.value = POMODORO_MODES[mode].focus * 60
+      currentSessionTotal.value = POMODORO_MODES[mode].focus * 60
+      timeLeft.value = currentSessionTotal.value
       isMiniMode.value = true
 
       await nativeService.haptic(ImpactStyle.Medium)
@@ -184,11 +187,13 @@ export const usePomodoroStore = defineStore(
       startTimer()
     }
 
-    function startTimer() {
+    function startTimer(isResumingFromPersistence = false) {
       if (timerInterval.value) clearInterval(timerInterval.value)
 
-      // Calculate target end time for robust background operation
-      targetEndTime.value = Date.now() + timeLeft.value * 1000
+      // Only set new target end time if we're not resuming from a persisted state
+      if (!isResumingFromPersistence || !targetEndTime.value) {
+        targetEndTime.value = Date.now() + timeLeft.value * 1000
+      }
 
       // Use window.setInterval to ensure browser context and cast to number
       timerInterval.value = window.setInterval(() => {
@@ -202,15 +207,36 @@ export const usePomodoroStore = defineStore(
       }, 1000) as unknown as number
     }
 
-    function pauseTimer() {
+    // Auto-resume timer after page refresh if it was running
+    // This needs to happen after Pinia state hydration
+    setTimeout(() => {
+      if (status.value !== 'idle' && timeLeft.value > 0) {
+        // Recalculate timeLeft based on targetEndTime for perfect precision
+        if (targetEndTime.value && targetEndTime.value > Date.now()) {
+          const remaining = Math.ceil((targetEndTime.value - Date.now()) / 1000)
+          // Avoid jumping backwards (only update if we've progressed)
+          if (remaining < timeLeft.value) {
+            timeLeft.value = remaining
+          }
+          startTimer(true)
+        } else if (targetEndTime.value && targetEndTime.value <= Date.now()) {
+          // Timer finished while page was closed
+          timeLeft.value = 0
+          void handleTimerComplete()
+        }
+      }
+    }, 0)
+
+    async function pauseTimer() {
       if (timerInterval.value) {
         clearInterval(timerInterval.value)
         timerInterval.value = null
         targetEndTime.value = null
+        await nativeService.haptic(ImpactStyle.Light)
       }
     }
 
-    function resumeTimer() {
+    async function resumeTimer() {
       if (!timerInterval.value) {
         if (status.value === 'idle' && activeTodoId.value) {
           // If idle but has an active todo, restart the focus session
@@ -219,19 +245,21 @@ export const usePomodoroStore = defineStore(
         } else if (status.value !== 'idle') {
           startTimer()
         }
+        await nativeService.haptic(ImpactStyle.Light)
       }
     }
 
     function resetTimer() {
-      pauseTimer()
+      void pauseTimer()
       status.value = 'idle'
       activeTodoId.value = null
-      timeLeft.value = currentModeConfig.value.focus * 60
+      currentSessionTotal.value = currentModeConfig.value.focus * 60
+      timeLeft.value = currentSessionTotal.value
       isMiniMode.value = false
     }
 
     async function handleTimerComplete() {
-      pauseTimer()
+      void pauseTimer()
       const toast = useToast()
       const t = i18n.global.t
       const config = currentModeConfig.value
@@ -266,10 +294,12 @@ export const usePomodoroStore = defineStore(
 
         if (completedSessions.value % 4 === 0) {
           status.value = 'long_break'
-          timeLeft.value = config.longBreak * 60
+          currentSessionTotal.value = config.longBreak * 60
+          timeLeft.value = currentSessionTotal.value
         } else {
           status.value = 'short_break'
-          timeLeft.value = config.shortBreak * 60
+          currentSessionTotal.value = config.shortBreak * 60
+          timeLeft.value = currentSessionTotal.value
         }
 
         // Increment pomodoro count on the active todo
@@ -278,7 +308,8 @@ export const usePomodoroStore = defineStore(
         }
       } else {
         status.value = 'idle'
-        timeLeft.value = config.focus * 60
+        currentSessionTotal.value = config.focus * 60
+        timeLeft.value = currentSessionTotal.value
       }
 
       // Haptic feedback for completion
@@ -300,6 +331,9 @@ export const usePomodoroStore = defineStore(
       history,
       isMiniMode,
       isEarthReady,
+      currentMode,
+      targetEndTime,
+      currentSessionTotal,
       isRunning: computed(() => !!timerInterval.value),
       startFocus,
       pauseTimer,
@@ -320,6 +354,8 @@ export const usePomodoroStore = defineStore(
         'timeLeft',
         'activeTodoId',
         'currentMode',
+        'targetEndTime',
+        'currentSessionTotal',
       ],
     },
   },

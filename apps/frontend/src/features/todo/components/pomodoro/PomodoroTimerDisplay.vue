@@ -94,7 +94,7 @@ const isDark = computed(() => theme.value === 'dark' || pomodoroStore.isMiniMode
           stroke="url(#stellarGradient)"
           stroke-width="2.5"
           stroke-linecap="round"
-          class="transition-all duration-700 ease-out"
+          class="transition-all duration-300 ease-linear"
           :style="{
             strokeDasharray: '276.46',
             strokeDashoffset: 276.46 - (pomodoroStore.progress / 100) * 276.46,
@@ -137,13 +137,14 @@ const isDark = computed(() => theme.value === 'dark' || pomodoroStore.isMiniMode
         class="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none"
       >
         <span
-          class="font-mono tabular-nums transition-all duration-700 leading-none select-none text-white"
+          class="font-mono tabular-nums leading-none select-none text-white"
           :class="[
             pomodoroStore.isRunning ? 'font-bold' : 'opacity-40 font-light',
             pomodoroStore.isMiniMode ? 'text-3xl tracking-tighter' : 'text-8xl tracking-[-0.05em]',
           ]"
           :style="{
             fontFamily: 'JetBrains Mono, monospace',
+            transition: 'all 0.3s linear',
             textShadow: isDark
               ? `0 0 20px ${
                   pomodoroStore.status === 'focus'
