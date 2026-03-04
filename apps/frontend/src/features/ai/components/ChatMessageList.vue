@@ -34,6 +34,7 @@ const { currentSessionId } = useChatHistory()
 
 // 是否正在切换会话（用于跳过冗余动画）
 const isSwitchingSession = ref(false)
+let switchingFallbackTimer: ReturnType<typeof setTimeout> | null = null
 
 const containerRef = ref<HTMLElement | null>(null)
 const { width: windowWidth } = useWindowSize()
@@ -77,12 +78,29 @@ watch(currentSessionId, () => {
 
   renderLimit.value = DEFAULT_WINDOW_SIZE
   // 不在这里执行滚动，交给 Transition 钩子处理，避免滚动到旧会话的底部
+
+  // 安全垫：防止 Transition 钩子失效导致状态锁死
+  if (switchingFallbackTimer) clearTimeout(switchingFallbackTimer)
+  switchingFallbackTimer = setTimeout(() => {
+    if (isSwitchingSession.value) {
+      console.warn('Session transition fallback triggered. Transition hook might have failed.')
+      handleSessionEntered()
+    }
+  }, 500)
 })
 
 /**
  * 当新会话进入完毕后，立即滚动到底部并重置标记
  */
 function handleSessionEntered() {
+  if (switchingFallbackTimer) {
+    clearTimeout(switchingFallbackTimer)
+    switchingFallbackTimer = null
+  }
+
+  // 如果已经处理过，直接返回（幂等）
+  if (!isSwitchingSession.value) return
+
   void nextTick(() => {
     scrollToBottom('instant')
     // 短暂延迟后恢复标记，确保后续的 DOM 更新不再被视为切换
