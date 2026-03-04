@@ -52,6 +52,7 @@ const hiddenCount = computed(() =>
 // 使用智能滚动 Composable
 const {
   isSticking,
+  isAutoScrollEnabled,
   isUserScrolledUp,
   isScrollable,
   scrollToBottom,
@@ -67,16 +68,29 @@ const {
 // 监听会话 ID 变化
 watch(currentSessionId, () => {
   isSwitchingSession.value = true
+
+  // 关键修复：切换会话时立即禁用 Sticking 和 AutoScroll。
+  // 否则，在 Transition 的 fade-out 期间，由于 DOM 内容或 renderLimit 变化，
+  // useSmartScroll 可能会误认为需要保持在旧会话内容的底部，从而触发滚动。
+  isSticking.value = false
+  isAutoScrollEnabled.value = false
+
   renderLimit.value = DEFAULT_WINDOW_SIZE
-  // 切换会话时，立即滚动到底部，不使用平滑滚动以提升响应感
+  // 不在这里执行滚动，交给 Transition 钩子处理，避免滚动到旧会话的底部
+})
+
+/**
+ * 当新会话进入完毕后，立即滚动到底部并重置标记
+ */
+function handleSessionEntered() {
   void nextTick(() => {
     scrollToBottom('instant')
-    // 短暂延迟后恢复动画标记
+    // 短暂延迟后恢复标记，确保后续的 DOM 更新不再被视为切换
     setTimeout(() => {
       isSwitchingSession.value = false
-    }, 100)
+    }, 50)
   })
-})
+}
 
 async function revealOlderMessages(step = WINDOW_STEP) {
   if (!containerRef.value) {
@@ -109,6 +123,8 @@ function handleScroll() {
 watch(
   () => props.messages.length,
   (newLen, oldLen) => {
+    if (isSwitchingSession.value) return
+
     const isNewMessage = newLen > (oldLen || 0)
     if (isNewMessage) {
       const lastMsg = props.messages[newLen - 1]
@@ -125,13 +141,15 @@ watch(
 watch(
   () => props.messages[props.messages.length - 1]?.isStreaming,
   (isStreaming) => {
+    if (isSwitchingSession.value) return
+
     setStreamingMode(!!isStreaming)
     if (isStreaming) {
       streamingScroll()
     } else if (props.messages.length > 0) {
       // 流式结束，确保最后一次平滑滚动
       setTimeout(() => {
-        if (isSticking.value) {
+        if (isSticking.value && !isSwitchingSession.value) {
           scrollToBottom('smooth')
         }
       }, 100)
@@ -143,6 +161,8 @@ watch(
 watch(
   () => props.messages[props.messages.length - 1]?.content,
   (newContent, oldContent) => {
+    if (isSwitchingSession.value) return
+
     const lastMsg = props.messages[props.messages.length - 1]
     if (lastMsg?.isStreaming && newContent !== oldContent) {
       streamingScroll()
@@ -207,7 +227,7 @@ defineExpose({
 
         <!-- 消息列表 -->
         <div v-else :class="[isMobile ? 'py-2' : 'pt-6 pb-4']">
-          <Transition name="session-fade" mode="out-in">
+          <Transition name="session-fade" mode="out-in" @after-enter="handleSessionEntered">
             <div :key="currentSessionId || 'empty'">
               <div v-if="hiddenCount > 0" class="flex justify-center pb-2">
                 <button
