@@ -26,6 +26,20 @@ vi.mock('lucide-vue-next', () => ({
   Globe: { template: '<span class="lucide-globe">Globe</span>' },
 }))
 
+// Mock reka-ui components
+vi.mock('reka-ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('reka-ui')>()
+  return {
+    ...actual,
+    TooltipProvider: { template: '<div><slot /></div>' },
+    TooltipRoot: { template: '<div><slot /></div>' },
+    TooltipTrigger: { template: '<div><slot /></div>' },
+    TooltipContent: { template: '<div><slot /></div>' },
+    TooltipPortal: { template: '<div><slot /></div>' },
+    TooltipArrow: { template: '<div><slot /></div>' },
+  }
+})
+
 import { mount } from '@vue/test-utils'
 import { createI18n } from 'vue-i18n'
 import { createPinia, setActivePinia } from 'pinia'

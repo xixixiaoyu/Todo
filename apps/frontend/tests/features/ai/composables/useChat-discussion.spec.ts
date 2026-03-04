@@ -15,6 +15,7 @@ import type { ChatMessage, DiscussionStep } from '@/features/ai/services/aiServi
 const mockCurrentSession = ref<ChatSession | null>(null)
 const mockGetOrCreateCurrentSession = vi.fn()
 const mockUpdateSessionMessages = vi.fn()
+const mockAddSessionMessage = vi.fn()
 const mockCreateSession = vi.fn()
 const mockUpdateSessionContextSummary = vi.fn()
 const mockClearSessionContextSummary = vi.fn()
@@ -22,8 +23,10 @@ const mockClearSessionContextSummary = vi.fn()
 vi.mock('@/features/ai/composables/useChatHistory', () => ({
   useChatHistory: vi.fn(() => ({
     currentSession: computed(() => mockCurrentSession.value),
+    currentSessionId: computed(() => mockCurrentSession.value?.id || null),
     getOrCreateCurrentSession: mockGetOrCreateCurrentSession,
     updateSessionMessages: mockUpdateSessionMessages,
+    addSessionMessage: mockAddSessionMessage,
     createSession: mockCreateSession,
     updateSessionContextSummary: mockUpdateSessionContextSummary,
     clearSessionContextSummary: mockClearSessionContextSummary,

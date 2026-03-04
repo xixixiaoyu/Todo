@@ -13,6 +13,7 @@ import * as aiService from '@/features/ai/services/aiService'
 const mockCurrentSession = ref<ChatSession | null>(null)
 const mockGetOrCreateCurrentSession = vi.fn<() => ChatSession>()
 const mockUpdateSessionMessages = vi.fn<(sessionId: string, messages: ChatMessage[]) => void>()
+const mockAddSessionMessage = vi.fn<(sessionId: string, message: ChatMessage) => void>()
 const mockCreateSession = vi.fn<() => ChatSession>()
 const mockUpdateSessionContextSummary =
   vi.fn<(sessionId: string, data: { summary: string; untilMessageId: string }) => void>()
@@ -22,8 +23,10 @@ vi.mock('@/features/ai/composables/useChatHistory', async () => {
   return {
     useChatHistory: vi.fn(() => ({
       currentSession: computed(() => mockCurrentSession.value),
+      currentSessionId: computed(() => mockCurrentSession.value?.id || null),
       getOrCreateCurrentSession: mockGetOrCreateCurrentSession,
       updateSessionMessages: mockUpdateSessionMessages,
+      addSessionMessage: mockAddSessionMessage,
       createSession: mockCreateSession,
       updateSessionContextSummary: mockUpdateSessionContextSummary,
       clearSessionContextSummary: mockClearSessionContextSummary,
