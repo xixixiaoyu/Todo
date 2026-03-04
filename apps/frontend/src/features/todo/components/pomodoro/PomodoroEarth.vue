@@ -86,6 +86,11 @@ const initThree = () => {
     }
   }
 
+  const handleTextureError = (url: string) => {
+    console.warn(`Failed to load texture: ${url}`)
+    checkAllLoaded() // Still count as "processed" to allow rendering
+  }
+
   textureLoader.load(
     'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_atmos_2048.jpg',
     (tex) => {
@@ -93,6 +98,8 @@ const initThree = () => {
       earthMaterial.needsUpdate = true
       checkAllLoaded()
     },
+    undefined,
+    () => handleTextureError('earth_atmos'),
   )
 
   earth = new THREE.Mesh(geometry, earthMaterial)
@@ -123,6 +130,8 @@ const initThree = () => {
         })
       })
     },
+    undefined,
+    () => handleTextureError('earth_clouds'),
   )
   clouds = new THREE.Mesh(cloudGeometry, cloudMaterial)
   scene.add(clouds)
@@ -399,25 +408,43 @@ watch(
     const shouldBeActive = newStatus !== 'idle' || newMiniMode
     if (shouldBeActive && !isWails()) {
       await nextTick()
-      if (!renderer) initThree()
+      // If renderer already exists, just make sure it's resizing correctly
+      if (!renderer) {
+        initThree()
+      }
     } else if (!shouldBeActive) {
-      if (animationFrameId) cancelAnimationFrame(animationFrameId)
-      renderer?.dispose()
-      renderer = null as unknown as THREE.WebGLRenderer
-      pomodoroStore.isEarthReady = false
+      cleanup()
     }
   },
   { immediate: true },
 )
+
+// Add a separate watch for canvasRef to handle cases where nextTick is not enough
+watch(canvasRef, (newCanvas) => {
+  if (
+    newCanvas &&
+    !renderer &&
+    (pomodoroStore.status !== 'idle' || pomodoroStore.isMiniMode) &&
+    !isWails()
+  ) {
+    initThree()
+  }
+})
+
+function cleanup() {
+  if (animationFrameId) cancelAnimationFrame(animationFrameId)
+  renderer?.dispose()
+  renderer = null as unknown as THREE.WebGLRenderer
+  pomodoroStore.isEarthReady = false
+}
 
 onMounted(() => {
   window.addEventListener('resize', handleResize)
 })
 
 onUnmounted(() => {
-  cancelAnimationFrame(animationFrameId)
+  cleanup()
   window.removeEventListener('resize', handleResize)
-  renderer?.dispose()
   earth?.geometry.dispose()
   ;(earth?.material as THREE.Material)?.dispose()
   clouds?.geometry.dispose()
@@ -430,7 +457,6 @@ onUnmounted(() => {
   ;(starField2?.material as THREE.Material)?.dispose()
   galaxyGlow?.geometry.dispose()
   ;(galaxyGlow?.material as THREE.Material)?.dispose()
-  pomodoroStore.isEarthReady = false
 })
 </script>
 
