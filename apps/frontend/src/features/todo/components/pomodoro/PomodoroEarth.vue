@@ -31,12 +31,16 @@ let fillLight: THREE.PointLight
 let cameraLight: THREE.PointLight
 let ambientLight: THREE.AmbientLight
 let animationFrameId: number
+let clock: THREE.Clock
 let orbitAngle = 0 // New: Track orbit position
 let smoothMouseX = 0 // Track smoothed mouse X
 let smoothMouseY = 0 // Track smoothed mouse Y
 
 const initThree = () => {
   if (!canvasRef.value) return
+
+  // Clock for smooth animations
+  clock = new THREE.Clock()
 
   // Scene & Camera
   scene = new THREE.Scene()
@@ -175,7 +179,7 @@ const initThree = () => {
   atmosphere.scale.set(1.2, 1.2, 1.2)
   scene.add(atmosphere)
 
-  // Star Field 1: Far, faint stars
+  // Star Field 1: Far, faint stars with color variation
   const createStarField = (count: number, size: number, opacity: number, radius: number) => {
     const geometry = new THREE.BufferGeometry()
     const material = new THREE.PointsMaterial({
@@ -184,6 +188,7 @@ const initThree = () => {
       transparent: true,
       opacity,
       blending: THREE.AdditiveBlending,
+      sizeAttenuation: true,
     })
 
     const vertices = []
@@ -196,9 +201,25 @@ const initThree = () => {
       const z = radius * Math.cos(phi)
       vertices.push(x, y, z)
 
-      const r = 0.8 + Math.random() * 0.2
-      const g = 0.8 + Math.random() * 0.2
-      const b = 0.9 + Math.random() * 0.1
+      // Color variation: White, Blue-ish, Yellow-ish
+      const colorType = Math.random()
+      let r = 1,
+        g = 1,
+        b = 1
+      if (colorType < 0.2) {
+        // Blue-white
+        r = 0.8 + Math.random() * 0.1
+        g = 0.9 + Math.random() * 0.1
+        b = 1.0
+      } else if (colorType < 0.3) {
+        // Pale yellow
+        r = 1.0
+        g = 0.95 + Math.random() * 0.05
+        b = 0.8 + Math.random() * 0.1
+      } else {
+        // Pure white
+        r = g = b = 0.9 + Math.random() * 0.1
+      }
       colors.push(r, g, b)
     }
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
@@ -206,11 +227,11 @@ const initThree = () => {
     return new THREE.Points(geometry, material)
   }
 
-  starField1 = createStarField(10000, 0.012, isDark.value ? 0.4 : 0, 800)
+  starField1 = createStarField(12000, 0.05, 0, 800)
   scene.add(starField1)
 
-  // Star Field 2: Nearer, brighter stars for parallax
-  starField2 = createStarField(4000, 0.018, isDark.value ? 0.6 : 0, 400)
+  // Star Field 2: Nearer, brighter stars
+  starField2 = createStarField(6000, 0.08, 0, 450)
   scene.add(starField2)
 
   // Galaxy Glow: Subtle nebula effect
@@ -264,8 +285,10 @@ const initThree = () => {
 }
 
 const animate = () => {
-  if (!renderer || !scene || !camera) return
+  if (!renderer || !scene || !camera || !clock) return
   animationFrameId = requestAnimationFrame(animate)
+
+  const time = clock.getElapsedTime()
 
   if (earth) {
     earth.rotation.y += 0.0008 // Slower, more Zen rotation
@@ -359,7 +382,7 @@ const animate = () => {
     if (atmosphere.material instanceof THREE.ShaderMaterial) {
       const targetGlowColor = pomodoroStore.status === 'focus' ? 0x0077ff : 0x7700ff
       const color = new THREE.Color(targetGlowColor)
-      const pulse = 1.0 + Math.sin(Date.now() * 0.0005) * 0.05
+      const pulse = 1.0 + Math.sin(time * 0.5) * 0.05
       color.multiplyScalar(pulse)
 
       atmosphere.material.uniforms.glowColor.value.lerp(color, 0.05)
@@ -372,25 +395,29 @@ const animate = () => {
   }
 
   if (starField1) {
-    starField1.rotation.y += 0.00005
+    starField1.rotation.y += 0.00004
     if (starField1.material instanceof THREE.PointsMaterial) {
-      const targetOpacity = isDark.value ? 0.3 + Math.sin(Date.now() * 0.0005) * 0.05 : 0
+      // Star twinkling effect
+      const twinkle = 0.3 + Math.sin(time * 0.6) * 0.15
+      const targetOpacity = isDark.value ? twinkle : 0
       starField1.material.opacity = THREE.MathUtils.lerp(
         starField1.material.opacity,
         targetOpacity,
-        0.05,
+        0.02,
       )
     }
   }
 
   if (starField2) {
-    starField2.rotation.y += 0.00015
+    starField2.rotation.y += 0.00012
     if (starField2.material instanceof THREE.PointsMaterial) {
-      const targetOpacity = isDark.value ? 0.5 + Math.sin(Date.now() * 0.0008) * 0.1 : 0
+      // Faster twinkling for nearer stars
+      const twinkle = 0.5 + Math.sin(time * 1.2) * 0.2
+      const targetOpacity = isDark.value ? twinkle : 0
       starField2.material.opacity = THREE.MathUtils.lerp(
         starField2.material.opacity,
         targetOpacity,
-        0.05,
+        0.02,
       )
     }
   }
