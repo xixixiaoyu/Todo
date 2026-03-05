@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/License-AGPL--3.0-orange?style=flat-square)](LICENSE)
 [![Stack](https://img.shields.io/badge/Stack-NestJS_11_%7C_Vue_3.5_%7C_TypeScript-blue?style=flat-square)](#-engineering-stack)
-[![Status](https://img.shields.io/badge/Status-Beta-success?style=flat-square)](#)
+[![Status](https://img.shields.io/badge/Status-Production--Ready-brightgreen?style=flat-square)](#-engineering-excellence)
 
 > **简于形，深于思。**  
 > Lumina 是一款追求极致交互体验与严谨工程实践的 AI 驱动个人待办系统。它不仅仅是一个任务清单，更是一个具备“大脑”的效率中枢。
