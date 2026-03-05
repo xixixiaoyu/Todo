@@ -112,11 +112,20 @@ watch([() => props.message.thinkingContent, () => props.message.reasoning_detail
 
 <template>
   <div
-    class="thinking-content group/thinking mb-2 overflow-hidden rounded-xl border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] transition-all duration-300 shadow-sm"
-    :class="{ 'is-collapsed': !isExpanded, 'ring-1 ring-primary/10': isExpanded }"
+    class="thinking-content group/thinking mb-2 overflow-hidden transition-all duration-300"
+    :class="[
+      isMobile
+        ? 'rounded-[1.25rem] border-none bg-muted/20 backdrop-blur-sm'
+        : 'rounded-xl border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] shadow-sm',
+      isExpanded
+        ? isMobile
+          ? 'ring-1 ring-primary/10 bg-muted/30'
+          : 'ring-1 ring-primary/10'
+        : '',
+    ]"
   >
     <div
-      class="thinking-header flex items-center justify-between px-3 py-2.5 cursor-pointer select-none transition-colors hover:bg-primary/5"
+      class="thinking-header flex items-center justify-between px-4 py-2.5 cursor-pointer select-none transition-colors hover:bg-primary/5 sm:px-3"
       :class="{ 'shimmer-thinking': isStreaming && !hasContent }"
       @click="isExpanded = !isExpanded"
     >
@@ -154,8 +163,8 @@ watch([() => props.message.thinkingContent, () => props.message.reasoning_detail
           :class="[
             isStreaming && !hasContent
               ? 'shimmer-text'
-              : 'text-muted-foreground/60 group-hover/thinking:text-primary/70',
-            isMobile ? 'text-[13px]' : 'text-[12.5px]',
+              : 'text-muted-foreground/50 group-hover/thinking:text-primary/70',
+            isMobile ? 'text-[13px]' : 'text-[12px]',
           ]"
         >
           {{ thinkingStatus }}
@@ -168,7 +177,7 @@ watch([() => props.message.thinkingContent, () => props.message.reasoning_detail
         >
           <ChevronUp
             :size="14"
-            class="text-muted-foreground/60 transition-transform duration-300"
+            class="text-muted-foreground/40 transition-transform duration-300"
             :class="{ 'rotate-180': !isExpanded }"
           />
         </button>
@@ -178,20 +187,24 @@ watch([() => props.message.thinkingContent, () => props.message.reasoning_detail
       class="thinking-body transition-all duration-500 ease-soft-spring overflow-hidden"
       :style="{ maxHeight: thinkingHeight }"
     >
-      <div class="px-4 pb-3 pt-1">
-        <div ref="thinkingContentRef" class="thinking-text border-l-2 border-primary/10 pl-3.5">
+      <div class="px-4 pb-3 pt-1 sm:px-4 sm:pb-3 sm:pt-1">
+        <div
+          ref="thinkingContentRef"
+          class="thinking-text border-l-2 border-primary/10 pl-3.5"
+          :class="{ 'border-primary/20': isMobile }"
+        >
           <!-- eslint-disable vue/no-v-html -->
           <div
             v-if="renderedThinkingHtml"
-            class="markdown-content thinking-markdown break-words text-muted-foreground/70 leading-relaxed"
-            :class="[isMobile ? 'text-[14px]' : 'text-[13.5px]']"
+            class="markdown-content thinking-markdown break-words text-muted-foreground/60 leading-relaxed"
+            :class="[isMobile ? 'text-[13.5px]' : 'text-[12.5px]']"
             v-html="renderedThinkingHtml"
           />
           <!-- eslint-enable vue/no-v-html -->
           <div
             v-else
-            class="selectable select-text break-words whitespace-pre-wrap text-muted-foreground/70 leading-relaxed"
-            :class="[isMobile ? 'text-[14px]' : 'text-[13.5px]']"
+            class="selectable select-text break-words whitespace-pre-wrap text-muted-foreground/60 leading-relaxed"
+            :class="[isMobile ? 'text-[13.5px]' : 'text-[12.5px]']"
           >
             {{ message.thinkingContent }}
           </div>

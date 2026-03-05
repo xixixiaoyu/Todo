@@ -365,3 +365,57 @@
 .thinking-markdown h1::before {
   @apply h-4 w-0.5;
 }
+
+/* 响应式适配 */
+@media (max-width: 640px) {
+  .markdown-content {
+    @apply text-[14px] leading-[1.6];
+  }
+
+  .markdown-content h1 {
+    @apply mt-6 mb-3 text-xl;
+  }
+
+  .markdown-content h2 {
+    @apply mt-5 mb-3 text-lg;
+  }
+
+  .markdown-content h3 {
+    @apply mt-4 mb-2 text-base;
+  }
+
+  .markdown-content ul,
+  .markdown-content ol {
+    @apply pl-5 my-3;
+  }
+
+  .code-block-container {
+    @apply my-4 rounded-lg;
+  }
+
+  .code-content {
+    @apply p-3;
+  }
+
+  .code-content code {
+    @apply text-[12px];
+  }
+
+  .markdown-blockquote,
+  .markdown-content blockquote {
+    @apply my-4 pl-4 py-2.5;
+  }
+
+  .table-container {
+    @apply my-4 rounded-lg;
+  }
+
+  .markdown-table {
+    @apply text-[12px];
+  }
+
+  .markdown-table th,
+  .markdown-table td {
+    @apply px-3 py-2;
+  }
+}

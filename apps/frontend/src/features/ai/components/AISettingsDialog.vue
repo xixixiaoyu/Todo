@@ -228,7 +228,7 @@ defineExpose({
       <Transition name="scale">
         <div
           v-if="modelValue"
-          class="flex max-h-[90%] w-full max-w-lg flex-col rounded-2xl border border-border/50 bg-background shadow-2xl"
+          class="flex w-full flex-col bg-background shadow-2xl transition-all duration-300 sm:max-h-[90%] sm:max-w-lg sm:rounded-2xl sm:border sm:border-border/50 h-full sm:h-auto rounded-none"
         >
           <!-- 顶部区域：艺术化 Header -->
           <div class="relative flex shrink-0 flex-col overflow-hidden">
@@ -240,7 +240,9 @@ defineExpose({
             <div class="absolute top-0 left-1/4 h-24 w-1/2 bg-primary/5 blur-[40px]" />
 
             <!-- 标题内容层 -->
-            <div class="relative flex items-center justify-between px-8 pt-7 pb-3">
+            <div
+              class="relative flex items-center justify-between px-6 pt-6 pb-2 sm:px-8 sm:pt-7 sm:pb-3"
+            >
               <div class="flex items-center gap-3">
                 <div class="relative flex h-7 w-7 items-center justify-center">
                   <div
@@ -267,7 +269,7 @@ defineExpose({
             </div>
 
             <!-- 导航层 -->
-            <div class="relative flex gap-8 px-9">
+            <div class="no-scrollbar relative flex gap-6 overflow-x-auto px-6 sm:gap-8 sm:px-9">
               <button
                 v-for="tab in [
                   'settings',
@@ -277,7 +279,7 @@ defineExpose({
                   'mcp',
                 ] as const"
                 :key="tab"
-                class="group relative py-4 text-[13px] font-bold tracking-wide transition-all"
+                class="group relative shrink-0 py-4 text-[13px] font-bold tracking-wide transition-all"
                 :class="
                   activeTab === tab ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
                 "
@@ -312,7 +314,7 @@ defineExpose({
           </div>
 
           <!-- 内容区域 -->
-          <div class="flex-1 overflow-y-auto">
+          <div class="flex-1 overflow-y-auto custom-scrollbar">
             <!-- 基础设置 Tab -->
             <AISettingsBasic
               v-if="activeTab === 'settings'"
@@ -344,7 +346,7 @@ defineExpose({
 
           <!-- 底部按钮 -->
           <div
-            class="flex shrink-0 items-center justify-between border-t border-border px-8 py-5 bg-muted/5"
+            class="flex shrink-0 flex-col gap-4 border-t border-border bg-muted/5 px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-5"
           >
             <div class="flex items-center gap-4">
               <button
@@ -358,14 +360,14 @@ defineExpose({
             <div class="flex items-center gap-3">
               <button
                 v-if="activeTab === 'settings' && !formData.discussionMode"
-                class="rounded-xl border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-bold tracking-tight text-primary transition-all hover:border-primary/50 hover:bg-primary/20 disabled:cursor-not-allowed disabled:border-border disabled:bg-muted/50 disabled:text-muted-foreground/50"
+                class="flex-1 rounded-xl border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-bold tracking-tight text-primary transition-all hover:border-primary/50 hover:bg-primary/20 disabled:cursor-not-allowed disabled:border-border disabled:bg-muted/50 disabled:text-muted-foreground/50 sm:flex-none"
                 :disabled="isDuplicatePreset"
                 @click="handleSaveAsPreset"
               >
                 {{ t('ai.saveAsPreset') }}
               </button>
               <button
-                class="relative overflow-hidden rounded-xl bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground shadow-[0_4px_12px_hsl(var(--primary)_/_0.3)] transition-all hover:bg-primary-hover hover:shadow-[0_6px_20px_hsl(var(--primary)_/_0.4)] active:scale-[0.98]"
+                class="relative flex-1 overflow-hidden rounded-xl bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground shadow-[0_4px_12px_hsl(var(--primary)_/_0.3)] transition-all hover:bg-primary-hover hover:shadow-[0_6px_20px_hsl(var(--primary)_/_0.4)] active:scale-[0.98] sm:flex-none"
                 @click="handleClose"
               >
                 <div class="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent" />
@@ -437,5 +439,39 @@ defineExpose({
 .scale-leave-to {
   opacity: 0;
   transform: scale(0.95);
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 2px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.3);
+}
+
+:global(.dark) .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+:global(.dark) .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
 }
 </style>

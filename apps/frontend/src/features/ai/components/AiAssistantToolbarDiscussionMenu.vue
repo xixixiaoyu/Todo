@@ -34,7 +34,7 @@ const hover = useHoverPopover({ open })
       <DropdownMenuTrigger as-child>
         <button
           :class="[
-            'toolbar-btn flex items-center transition-all active:scale-95 rounded-full border',
+            'toolbar-btn flex items-center active:scale-95 rounded-full border',
             isMobile ? 'h-8 w-8 justify-center' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
             isDiscussionEnabled
               ? 'border-primary/30 bg-primary/15 text-primary shadow-[0_0_12px_hsl(var(--primary)_/_0.1)]'

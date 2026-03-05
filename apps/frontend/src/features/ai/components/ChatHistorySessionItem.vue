@@ -41,16 +41,16 @@ watch(
 
 const actionContainerClass = computed(() => {
   if (props.isMobile) {
-    return 'left-0 bottom-0 top-auto right-auto flex opacity-100 bg-transparent py-0 mt-2'
+    return 'flex items-center gap-4 mt-3 opacity-100'
   }
-  return 'right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 bg-gradient-to-l from-accent/90 via-accent/80 to-transparent pl-8 py-1 rounded-r-xl'
+  return 'absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 bg-gradient-to-l from-accent/90 via-accent/80 to-transparent pl-8 py-1 rounded-r-xl transition-all'
 })
 </script>
 
 <template>
   <div
     class="group relative cursor-pointer rounded-xl p-3 transition-all hover:bg-accent/50 active:scale-[0.99]"
-    :class="{ 'bg-primary/5 ring-1 ring-primary/20': isActive }"
+    :class="{ 'bg-primary/10 ring-1 ring-primary/20': isActive }"
     @click="emit('select', session.id)"
   >
     <div v-if="isEditing" class="flex items-center gap-2" @click.stop>
@@ -81,14 +81,8 @@ const actionContainerClass = computed(() => {
     </div>
 
     <template v-else>
-      <div class="relative">
-        <div
-          class="min-w-0 transition-all"
-          :class="[
-            isMobile ? 'pr-0' : 'pr-2 group-hover:pr-24',
-            isMobile && isActive ? 'mb-8' : '',
-          ]"
-        >
+      <div class="flex flex-col">
+        <div class="min-w-0 transition-all" :class="[!isMobile ? 'pr-2 group-hover:pr-24' : '']">
           <div class="flex items-center gap-1.5">
             <p
               class="truncate text-sm font-medium transition-colors"
@@ -104,45 +98,41 @@ const actionContainerClass = computed(() => {
           </div>
         </div>
 
-        <div
-          class="absolute transition-all"
-          :class="[actionContainerClass, isMobile && !isActive ? 'hidden' : '']"
-          @click.stop
-        >
+        <div v-if="!isMobile || isActive" :class="actionContainerClass" @click.stop>
           <button
             class="rounded-md p-1 transition-colors hover:bg-background/80"
             :class="[
               session.isPinned ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
-              isMobile ? 'scale-110 px-2' : '',
+              isMobile ? 'p-2 bg-muted/30' : '',
             ]"
             :title="session.isPinned ? t('ai.unpin') : t('ai.pin')"
             @click="emit('toggle-pin', session.id)"
           >
-            <Pin :size="14" :class="{ 'fill-primary/20': session.isPinned }" />
+            <Pin :size="isMobile ? 16 : 14" :class="{ 'fill-primary/20': session.isPinned }" />
           </button>
           <button
             class="rounded-md p-1 text-muted-foreground transition-colors hover:bg-background/80 hover:text-foreground"
-            :class="isMobile ? 'scale-110 px-2' : ''"
+            :class="isMobile ? 'p-2 bg-muted/30' : ''"
             :title="t('ai.editTitle')"
             @click="emit('start-edit', session)"
           >
-            <Edit3 :size="14" />
+            <Edit3 :size="isMobile ? 16 : 14" />
           </button>
           <button
             class="rounded-md p-1 text-muted-foreground transition-colors hover:bg-background/80 hover:text-foreground"
-            :class="isMobile ? 'scale-110 px-2' : ''"
+            :class="isMobile ? 'p-2 bg-muted/30' : ''"
             :title="t('ai.exportMarkdown')"
             @click="emit('export', session)"
           >
-            <FileDown :size="14" />
+            <FileDown :size="isMobile ? 16 : 14" />
           </button>
           <button
             class="rounded-md p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-            :class="isMobile ? 'scale-110 px-2' : ''"
+            :class="isMobile ? 'p-2 bg-muted/30' : ''"
             :title="t('ai.delete')"
             @click="emit('delete', session.id)"
           >
-            <Trash2 :size="14" />
+            <Trash2 :size="isMobile ? 16 : 14" />
           </button>
         </div>
       </div>

@@ -65,7 +65,7 @@ const isMobile = computed(() => windowWidth.value < 640)
 <template>
   <div
     :class="[
-      'toolbar-container shrink-0 bg-[hsl(var(--ai-glass-bg))] transition-all duration-300',
+      'toolbar-container shrink-0 bg-[hsl(var(--ai-glass-bg))]',
       isMobile ? 'p-2' : 'px-4 pt-2 pb-4',
     ]"
   >
@@ -74,11 +74,13 @@ const isMobile = computed(() => windowWidth.value < 640)
       :style="{ gap: isMobile ? '6px' : '8px' }"
     >
       <!-- 快捷操作按钮 -->
-      <div :class="['flex items-center text-sm', isMobile ? 'gap-1' : 'gap-2']">
-        <div class="no-scrollbar flex flex-1 items-center gap-2 overflow-x-auto py-1">
+      <div :class="['flex items-center text-sm', isMobile ? 'gap-1.5' : 'gap-2']">
+        <div
+          class="no-scrollbar scroll-mask flex flex-1 items-center gap-2 overflow-x-auto py-1 px-0.5"
+        >
           <button
             :class="[
-              'toolbar-btn group flex shrink-0 items-center rounded-full border transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-30',
+              'toolbar-btn group flex shrink-0 items-center rounded-full border active:scale-95 disabled:cursor-not-allowed disabled:opacity-30',
               isMobile ? 'h-8 px-2.5 gap-1' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
               '!border-primary/20 !bg-primary/10 !text-primary hover:!bg-primary/20 hover:!border-primary/30',
             ]"
@@ -92,7 +94,7 @@ const isMobile = computed(() => windowWidth.value < 640)
 
           <!-- 历史记录按钮 -->
           <button
-            class="toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all active:scale-95"
+            class="toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border active:scale-95"
             :title="t('ai.history')"
             :class="{ 'cursor-not-allowed opacity-50': isGenerating }"
             :disabled="isGenerating"
@@ -104,7 +106,7 @@ const isMobile = computed(() => windowWidth.value < 640)
           <!-- 移动端：文件上传与上一个会话 -->
           <template v-if="isMobile">
             <button
-              class="toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+              class="toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
               :title="t('ai.uploadFile')"
               :disabled="isGenerating || (totalAttachments ?? 0) >= 10"
               @click="emit('triggerFileUpload')"
@@ -115,7 +117,7 @@ const isMobile = computed(() => windowWidth.value < 640)
             <!-- 停止生成按钮 (仅移动端在生成时显示) -->
             <button
               v-if="isGenerating"
-              class="toolbar-btn animate-stop-pulse flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10 text-red-500 transition-all active:scale-95"
+              class="toolbar-btn animate-stop-pulse flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10 text-red-500 active:scale-95"
               :title="t('ai.stop')"
               @click="emit('stopGenerating')"
             >
@@ -123,7 +125,7 @@ const isMobile = computed(() => windowWidth.value < 640)
             </button>
 
             <button
-              class="toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+              class="toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
               :title="t('ai.previousSession')"
               :disabled="isGenerating || !lastActiveSession"
               @click="emit('navigatePrevious')"
@@ -136,7 +138,7 @@ const isMobile = computed(() => windowWidth.value < 640)
 
           <!-- AI 思考模式开关 -->
           <button
-            class="toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all active:scale-95"
+            class="toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border active:scale-95"
             :class="
               isThinkingEnabled
                 ? 'border-primary/30 bg-primary/15 text-primary shadow-[0_0_12px_hsl(var(--primary)_/_0.1)]'
@@ -155,7 +157,7 @@ const isMobile = computed(() => windowWidth.value < 640)
           </button>
 
           <button
-            class="toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all active:scale-95"
+            class="toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border active:scale-95"
             :class="
               isTeachingEnabled
                 ? 'border-primary/30 bg-primary/15 text-primary shadow-[0_0_12px_hsl(var(--primary)_/_0.1)]'
@@ -176,7 +178,7 @@ const isMobile = computed(() => windowWidth.value < 640)
           <!-- Todo 助手 -->
           <button
             :class="[
-              'toolbar-btn flex shrink-0 items-center transition-all active:scale-95 rounded-full border',
+              'toolbar-btn flex shrink-0 items-center active:scale-95 rounded-full border',
               isMobile ? 'h-8 w-8 justify-center' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
               isTodoAssistantEnabled
                 ? 'border-primary/30 bg-primary/15 text-primary shadow-[0_0_12px_hsl(var(--primary)_/_0.1)]'
@@ -214,7 +216,7 @@ const isMobile = computed(() => windowWidth.value < 640)
           <!-- 生图功能开关 -->
           <button
             :class="[
-              'toolbar-btn flex shrink-0 items-center transition-all active:scale-95 rounded-full border',
+              'toolbar-btn flex shrink-0 items-center active:scale-95 rounded-full border',
               isMobile ? 'h-8 w-8 justify-center' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
               isImageGenerationEnabled
                 ? 'border-primary/30 bg-primary/15 text-primary shadow-[0_0_12px_hsl(var(--primary)_/_0.1)]'
@@ -238,7 +240,7 @@ const isMobile = computed(() => windowWidth.value < 640)
           <!-- MCP 工具 -->
           <button
             :class="[
-              'toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all active:scale-95 border-transparent text-muted-foreground',
+              'toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-muted-foreground active:scale-95',
             ]"
             :title="t('ai.mcp')"
             @click="emit('openSettings', 'mcp')"
@@ -261,11 +263,11 @@ const isMobile = computed(() => windowWidth.value < 640)
         </div>
 
         <!-- 设置 -->
-        <div class="flex shrink-0 items-center gap-2">
+        <div class="flex shrink-0 items-center gap-2 pl-0.5">
           <button
             :class="[
-              'toolbar-btn flex items-center justify-center rounded-full border border-transparent text-muted-foreground transition-all active:scale-95',
-              isMobile ? 'h-8 w-8' : 'h-8 w-8',
+              'toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-muted-foreground active:scale-95',
+              'group',
             ]"
             :title="t('ai.settings')"
             @click="emit('openSettings')"
@@ -290,7 +292,12 @@ const isMobile = computed(() => windowWidth.value < 640)
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.02),
     0 4px 12px rgba(0, 0, 0, 0.03);
-  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  transition:
+    background-color 0.4s,
+    border-color 0.4s,
+    color 0.4s,
+    box-shadow 0.4s,
+    transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .toolbar-container :deep(.toolbar-btn:hover:not(:disabled)) {
@@ -312,6 +319,16 @@ const isMobile = computed(() => windowWidth.value < 640)
 
 .no-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+.scroll-mask {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 12px,
+    black calc(100% - 12px),
+    transparent
+  );
 }
 
 @container (max-width: 520px) {
