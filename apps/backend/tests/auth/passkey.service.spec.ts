@@ -6,7 +6,7 @@ import { RedisService } from '../../src/redis/redis.service'
 import { PrismaService } from '../../src/prisma/prisma.service'
 import * as simplewebauthn from '@simplewebauthn/server'
 import { BadRequestException } from '@nestjs/common'
-import type { User } from '@my-app/shared'
+import type { User } from '@lumina/shared'
 import type { RegistrationResponseJSON, AuthenticationResponseJSON } from '@simplewebauthn/server'
 
 vi.mock('@simplewebauthn/server', () => ({

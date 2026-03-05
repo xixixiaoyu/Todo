@@ -6,7 +6,7 @@ import { PasswordService } from '../../src/auth/password.service'
 import { UnauthorizedException } from '@nestjs/common'
 import { UsersService } from '../../src/users/users.service'
 import * as bcrypt from 'bcryptjs'
-import type { User } from '@my-app/shared'
+import type { User } from '@lumina/shared'
 
 // Mock dependencies
 const mockUsersService = {

@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger'
 import { UsersService } from './users.service'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { RegisterDto } from '../auth/auth.dto'
-import type { User } from '@my-app/shared'
+import type { User } from '@lumina/shared'
 
 /**
  * 用户控制器

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2024-2025 Mu Yun (牧云) <https://github.com/xixixiaoyu/lumina>
+ * Copyright (C) 2024-2026 Mu Yun (牧云) <https://github.com/xixixiaoyu/lumina>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -42,6 +42,9 @@ async function bootstrap() {
   const logger = app.get(Logger)
   app.useLogger(logger)
   app.flushLogs()
+
+  // 获取应用版本（从 package.json）
+  const version = process.env.npm_package_version || '1.0.0'
 
   const fastify = app.getHttpAdapter().getInstance()
   const register = (
@@ -170,14 +173,12 @@ async function bootstrap() {
   const swaggerConfig = new DocumentBuilder()
     .setTitle('简思 (Lumina) API')
     .setDescription('简思 (Lumina) — 简于形，深于思的高效纯粹 AI 个人待办应用 API 接口文档')
-    .setVersion('1.0')
+    .setVersion(version)
     .addBearerAuth()
     .build()
   const document = SwaggerModule.createDocument(app, swaggerConfig)
   // 使用 cleanupOpenApiDoc 处理 Zod Schema 生成的 OpenAPI 文档
   SwaggerModule.setup('api/docs', app, cleanupOpenApiDoc(document))
-  logger.log('🔒 安全中间件已启用: Helmet, 速率限制, XSS 防护, Gzip 压缩', 'Bootstrap')
-  logger.log(`📚 Swagger 文档: http://localhost:${process.env.PORT || 3000}/api/docs`, 'Bootstrap')
 
   const port = process.env.PORT || 3000
   // 启用优雅退出钩子，处理 SIGINT/SIGTERM 等信号
@@ -187,9 +188,11 @@ async function bootstrap() {
   await app.listen(port, '0.0.0.0')
 
   const baseUrl = `http://localhost:${port}`
-  logger.log(`🚀 服务已启动: ${baseUrl}`, 'Bootstrap')
+  logger.log(`✨ Lumina v${version} 启动成功`, 'Bootstrap')
+  logger.log(`🚀 服务运行于: ${baseUrl}`, 'Bootstrap')
   logger.log(`📚 Swagger 文档: ${baseUrl}/api/docs`, 'Bootstrap')
-  logger.log(`🏥 健康检查 (Liveness): ${baseUrl}/api/health/liveness`, 'Bootstrap')
+  logger.log(`🏥 健康检查: ${baseUrl}/api/health/liveness`, 'Bootstrap')
+  logger.log('🔒 安全中间件已就绪: Helmet, CSRF 防护, XSS 清理, Gzip 压缩', 'Bootstrap')
 }
 
 bootstrap().catch((err) => {

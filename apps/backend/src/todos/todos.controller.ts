@@ -14,7 +14,7 @@ import { TodoSyncService } from './todos-sync.service'
 import { SyncMergeDto } from './todos.dto'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { CurrentUser } from '../auth/current-user.decorator'
-import type { User } from '@my-app/shared'
+import type { User } from '@lumina/shared'
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger'
 
 @ApiTags('Todos')

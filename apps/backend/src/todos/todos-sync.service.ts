@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import { SyncMergeDto } from './todos.dto'
-import type { SyncItem } from '@my-app/shared'
+import type { SyncItem } from '@lumina/shared'
 import { EventsGateway } from '../events/events.gateway'
 import type { Prisma } from '@prisma/client'
 

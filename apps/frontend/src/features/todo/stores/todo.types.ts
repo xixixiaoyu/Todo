@@ -1,4 +1,4 @@
-import type { Todo as SharedTodo } from '@my-app/shared'
+import type { Todo as SharedTodo } from '@lumina/shared'
 
 export interface Todo extends SharedTodo {
   completedAt?: Date

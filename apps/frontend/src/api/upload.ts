@@ -1,5 +1,5 @@
 import { httpClient } from './index'
-import type { ApiResponse } from '@my-app/shared'
+import type { ApiResponse } from '@lumina/shared'
 
 export interface ParseFileResult {
   content: string

@@ -1,5 +1,5 @@
 import { httpClient } from '@/api'
-import type { User, ApiResponse, AuthResponse, RegisterInput, LoginInput } from '@my-app/shared'
+import type { User, ApiResponse, AuthResponse, RegisterInput, LoginInput } from '@lumina/shared'
 import type {
   PublicKeyCredentialCreationOptionsJSON,
   RegistrationResponseJSON,

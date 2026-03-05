@@ -5,7 +5,7 @@ import { AuthService } from './auth.service'
 import { JwtAuthGuard } from './jwt-auth.guard'
 import { CurrentUser } from './current-user.decorator'
 import { LoginDto, RegisterDto, RefreshTokenDto, LogoutDto } from './auth.dto'
-import type { User, AuthResponse } from '@my-app/shared'
+import type { User, AuthResponse } from '@lumina/shared'
 import type { FastifyReplyWithCookie } from '../common'
 
 /**

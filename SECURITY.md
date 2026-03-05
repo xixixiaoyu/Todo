@@ -26,9 +26,9 @@ We will acknowledge your report within 48 hours and work with you to resolve the
 ## Scope
 
 This security policy applies to all components in the Lumina monorepo:
-- `@my-app/backend`
-- `@my-app/frontend`
-- `@my-app/shared`
+- `@lumina/backend`
+- `@lumina/frontend`
+- `@lumina/shared`
 - Wails / Capacitor wrappers
 
 ## Security Best Practices

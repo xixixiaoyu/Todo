@@ -37,8 +37,8 @@ COPY apps/frontend ./apps/frontend
 COPY tsconfig.base.json ./
 
 # 构建共享包和前端应用
-RUN pnpm --filter @my-app/shared build
-RUN pnpm --filter @my-app/frontend build
+RUN pnpm --filter @lumina/shared build
+RUN pnpm --filter @lumina/frontend build
 
 # ============================================
 # Stage 3: Production image with Nginx

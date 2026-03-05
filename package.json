@@ -41,10 +41,10 @@
     "format:check": "prettier --check .",
     "security-audit": "node scripts/security-audit.js",
     "clean": "turbo run clean",
-    "db:generate": "pnpm --filter @my-app/backend prisma:generate",
-    "db:push": "pnpm --filter @my-app/backend prisma:push",
-    "db:migrate": "pnpm --filter @my-app/backend prisma:migrate",
-    "db:studio": "pnpm --filter @my-app/backend prisma:studio",
+    "db:generate": "pnpm --filter @lumina/backend prisma:generate",
+    "db:push": "pnpm --filter @lumina/backend prisma:push",
+    "db:migrate": "pnpm --filter @lumina/backend prisma:migrate",
+    "db:studio": "pnpm --filter @lumina/backend prisma:studio",
     "prepare": "husky",
     "docker:build": "docker compose build",
     "docker:up": "docker compose up -d",
@@ -64,7 +64,7 @@
     "wails:install": "./scripts/deploy-app.sh",
     "wails:deploy": "pnpm wails:kill && pnpm wails:build && pnpm wails:install",
     "tag:refresh": "./scripts/refresh-tag.sh",
-    "pm2:backend": "pnpm --filter @my-app/backend pm2:start"
+    "pm2:backend": "pnpm --filter @lumina/backend pm2:start"
   },
   "devDependencies": {
     "@eslint/js": "9.39.2",

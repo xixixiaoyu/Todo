@@ -9,7 +9,7 @@ import {
   McpTransportType,
   type StdioConfig,
   type HttpConfig,
-} from '@my-app/shared'
+} from '@lumina/shared'
 
 /**
  * Re-export McpTransportType for convenience in backend

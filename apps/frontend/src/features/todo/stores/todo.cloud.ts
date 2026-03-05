@@ -1,6 +1,6 @@
 import { debounce } from 'lodash-es'
 import type { Ref } from 'vue'
-import type { Todo as SharedTodo } from '@my-app/shared'
+import type { Todo as SharedTodo } from '@lumina/shared'
 import { todoApi } from '../api'
 import type { Todo } from './todo.types'
 import i18n from '@/i18n'

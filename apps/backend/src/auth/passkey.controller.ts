@@ -4,7 +4,7 @@ import type { RegistrationResponseJSON, AuthenticationResponseJSON } from '@simp
 import { AuthService } from './auth.service'
 import { JwtAuthGuard } from './jwt-auth.guard'
 import { CurrentUser } from './current-user.decorator'
-import type { User } from '@my-app/shared'
+import type { User } from '@lumina/shared'
 
 /**
  * Passkey 认证控制器

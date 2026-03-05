@@ -16,7 +16,7 @@ import { Authenticator, Prisma } from '@prisma/client'
 import { UsersService } from '../users/users.service'
 import { RedisService, CachePrefix } from '../redis/redis.service'
 import { PrismaService } from '../prisma/prisma.service'
-import type { User } from '@my-app/shared'
+import type { User } from '@lumina/shared'
 
 @Injectable()
 export class PasskeyService {

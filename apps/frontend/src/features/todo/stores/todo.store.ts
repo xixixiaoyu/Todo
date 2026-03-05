@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
-import type { Todo as SharedTodo } from '@my-app/shared'
+import type { Todo as SharedTodo } from '@lumina/shared'
 import type { ProposedTodoChange, FilterType, ViewMode, Todo } from './todo.types'
 import { applyFilterAndSort, isEffectivelyCompleted } from './todo.filtering'
 import { createTodoCloud } from './todo.cloud'

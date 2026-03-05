@@ -1,5 +1,5 @@
 import { z as zLocal } from 'zod'
-import { z as zShared } from '@my-app/shared'
+import { z as zShared } from '@lumina/shared'
 import i18n from '@/i18n'
 
 type ZodErrorMap = zLocal.ZodErrorMap

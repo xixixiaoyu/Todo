@@ -1,4 +1,4 @@
-package com.myapp.app;
+package com.lumina.todo;
 
 import com.getcapacitor.BridgeActivity;
 

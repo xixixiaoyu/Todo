@@ -1,5 +1,5 @@
 import { httpClient } from '@/api'
-import type { SyncMergeRequest, SyncResponse, Todo, ApiResponse } from '@my-app/shared'
+import type { SyncMergeRequest, SyncResponse, Todo, ApiResponse } from '@lumina/shared'
 
 export const todoApi = {
   /**

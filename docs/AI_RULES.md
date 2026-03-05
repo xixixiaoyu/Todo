@@ -19,7 +19,7 @@ Lumina（简思）是基于 **NestJS 11（Fastify） + Vue 3.5（Vite） + Three
 - 代码风格遵循项目约定：2 空格、单引号、无分号，TypeScript 严格类型，禁止 `any`
 - 只在必要时新增文件；优先复用既有模块与模式，保持改动面最小
 - 依赖版本必须使用精确版本（移除 `^`/`~`），workspace 依赖保留 `workspace:*`
-- 修改 `packages/shared` 后必须先执行 `pnpm --filter @my-app/shared build` 再验证下游
+- 修改 `packages/shared` 后必须先执行 `pnpm --filter @lumina/shared build` 再验证下游
 - 不引入会泄露密钥/隐私的日志与代码；不在仓库内写入任何密钥
 - 变更完成后必须通过：`pnpm lint`、`pnpm test`、`pnpm type-check`
 - 破坏性清理命令仅在明确要求时执行（如 `pnpm docker:prune`）
@@ -73,7 +73,7 @@ packages/shared/  # 共享包（Zod Schemas, DTOs, Utils）
 - 导入约定
 
 ```ts
-import { xxx } from '@my-app/shared'
+import { xxx } from '@lumina/shared'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 ```
@@ -107,7 +107,7 @@ type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse
 - 成功响应由后端 `TransformInterceptor` 统一包装：`{ success: true, data, timestamp }`
 - 错误响应由后端 `AllExceptionsFilter` 统一包装：`{ success: false, data: null, message, errors?, statusCode, timestamp }`
 - 安全前置拦截（如缺失 `X-Requested-With`）可能返回最小错误体：至少包含 `success/message/timestamp`
-- `@my-app/shared` 当前导出的 `ApiResponse<T>` 为兼容类型（`success/data/message?/timestamp`），可视为上述响应的子集/超集使用
+- `@lumina/shared` 当前导出的 `ApiResponse<T>` 为兼容类型（`success/data/message?/timestamp`），可视为上述响应的子集/超集使用
 
 ## 国际化（i18n）
 
@@ -157,7 +157,7 @@ type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse
 - 运行单个文件：
   - 使用 `pnpm --filter <package> test -- <relative_path>`
   - 注意：路径需相对于包目录（如 `tests/features/foo.spec.ts`），**不要包含** `apps/frontend/` 等前缀
-  - 示例：`pnpm --filter @my-app/frontend test -- tests/features/ai/services/aiServiceParams.spec.ts`
+  - 示例：`pnpm --filter @lumina/frontend test -- tests/features/ai/services/aiServiceParams.spec.ts`
 
 ## 服务端入口
 
@@ -193,18 +193,18 @@ pnpm docker:clean                     # Docker 生产编排：清理（谨慎）
 pnpm db:push                          # 推送 Schema 到数据库
 
 # 单独校验命令（按需执行）
-pnpm --filter @my-app/frontend lint
-pnpm --filter @my-app/frontend test
-pnpm --filter @my-app/frontend type-check
+pnpm --filter @lumina/frontend lint
+pnpm --filter @lumina/frontend test
+pnpm --filter @lumina/frontend type-check
 
-pnpm --filter @my-app/backend lint
-pnpm --filter @my-app/backend test
-pnpm --filter @my-app/backend type-check
+pnpm --filter @lumina/backend lint
+pnpm --filter @lumina/backend test
+pnpm --filter @lumina/backend type-check
 
-pnpm --filter @my-app/shared build
-pnpm --filter @my-app/shared lint
-pnpm --filter @my-app/shared test
-pnpm --filter @my-app/shared type-check
+pnpm --filter @lumina/shared build
+pnpm --filter @lumina/shared lint
+pnpm --filter @lumina/shared test
+pnpm --filter @lumina/shared type-check
 
 pnpm wails:dev
 pnpm wails:build
@@ -221,7 +221,7 @@ pnpm docker:build
 
 - 开发默认在 `pnpm docker:dev` 下运行，命令执行需考虑容器网络与端口映射
 - 依赖版本必须使用精确版本（移除 `^`/`~`），workspace 依赖保留 `workspace:*`
-- 共享包修改后需先构建：`pnpm --filter @my-app/shared build`
+- 共享包修改后需先构建：`pnpm --filter @lumina/shared build`
 - 前端 `zod` 需显式声明
 - 若容器状态异常：优先 `pnpm docker:dev:restart`，仍异常再 `pnpm docker:dev:clean`
 - 后端接口统一 `/api` 前缀；Swagger：`http://localhost:3000/api/docs`

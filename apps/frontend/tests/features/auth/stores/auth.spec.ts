@@ -8,7 +8,7 @@ import type {
   RegistrationResponseJSON,
   AuthenticationResponseJSON,
 } from '@simplewebauthn/server'
-import type { User, LoginInput, RegisterInput } from '@my-app/shared'
+import type { User, LoginInput, RegisterInput } from '@lumina/shared'
 
 // Mock authApi
 vi.mock('@/features/auth/api', () => ({

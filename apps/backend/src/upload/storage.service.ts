@@ -40,7 +40,7 @@ export class StorageService implements OnModuleInit {
   constructor(private readonly config: ConfigService) {}
 
   onModuleInit() {
-    this.bucket = this.config.get('S3_BUCKET', 'my-app-uploads')
+    this.bucket = this.config.get('S3_BUCKET', 'lumina-uploads')
     this.region = this.config.get('S3_REGION', 'us-east-1')
     this.endpoint = this.config.get('S3_ENDPOINT') // 可选，用于 OSS/MinIO
 

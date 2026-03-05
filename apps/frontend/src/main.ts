@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2024-2025 Mu Yun (牧云) <https://github.com/xixixiaoyu/lumina>
+ * Copyright (C) 2024-2026 Mu Yun (牧云) <https://github.com/xixixiaoyu/lumina>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as

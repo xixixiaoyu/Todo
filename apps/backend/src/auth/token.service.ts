@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException, Inject } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { ConfigService } from '@nestjs/config'
 import { RedisService, CachePrefix } from '../redis/redis.service'
-import type { User, AuthResponse } from '@my-app/shared'
+import type { User, AuthResponse } from '@lumina/shared'
 
 export interface JwtPayload {
   sub: number

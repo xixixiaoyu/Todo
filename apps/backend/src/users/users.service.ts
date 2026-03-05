@@ -2,8 +2,8 @@ import { Injectable, NotFoundException, ConflictException, Inject } from '@nestj
 import * as bcrypt from 'bcryptjs'
 import { PrismaService } from '../prisma/prisma.service'
 import { Prisma } from '@prisma/client'
-import type { User, RegisterInput, PrismaUser } from '@my-app/shared'
-import { formatUser, formatUsers } from '@my-app/shared'
+import type { User, RegisterInput, PrismaUser } from '@lumina/shared'
+import { formatUser, formatUsers } from '@lumina/shared'
 
 /**
  * 用户服务

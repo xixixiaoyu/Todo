@@ -4,7 +4,7 @@ import { JwtService } from '@nestjs/jwt'
 import { ConfigService } from '@nestjs/config'
 import { RedisService } from '../../src/redis/redis.service'
 import { UnauthorizedException } from '@nestjs/common'
-import type { User } from '@my-app/shared'
+import type { User } from '@lumina/shared'
 
 describe('TokenService', () => {
   let service: TokenService

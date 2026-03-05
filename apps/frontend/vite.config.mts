@@ -90,7 +90,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
     resolve: {
       alias: {
         '@': resolve(__dirname, './src'),
-        '@my-app/shared': resolve(__dirname, '../../packages/shared/src/index.ts'),
+        '@lumina/shared': resolve(__dirname, '../../packages/shared/src/index.ts'),
       },
     },
     server: {

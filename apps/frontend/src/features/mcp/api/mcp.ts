@@ -1,5 +1,5 @@
 import httpClient from '@/api'
-export * from '@my-app/shared'
+export * from '@lumina/shared'
 import {
   type McpServerResponse,
   type CreateMcpServerDto,
@@ -7,7 +7,7 @@ import {
   type McpToolResponse,
   type ToolCallResult,
   type ApiResponse,
-} from '@my-app/shared'
+} from '@lumina/shared'
 
 /**
  * MCP API 服务
