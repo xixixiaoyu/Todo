@@ -95,7 +95,7 @@ watch(currentSessionId, () => {
       console.warn('Session transition fallback triggered. Transition hook might have failed.')
       handleSessionEntered()
     }
-  }, 500)
+  }, 800)
 })
 
 /**
@@ -115,7 +115,7 @@ function handleSessionEntered() {
     // 短暂延迟后恢复标记，确保后续的 DOM 更新不再被视为切换
     setTimeout(() => {
       isSwitchingSession.value = false
-    }, 500)
+    }, 800)
   })
 }
 
