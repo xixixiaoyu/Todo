@@ -76,7 +76,7 @@ const isMobile = computed(() => windowWidth.value < 640)
       <!-- 快捷操作按钮 -->
       <div :class="['flex items-center text-sm', isMobile ? 'gap-1.5' : 'gap-2']">
         <div
-          class="no-scrollbar scroll-mask flex flex-1 items-center gap-2 overflow-x-auto py-1 px-0.5"
+          class="no-scrollbar scroll-mask flex flex-1 items-center gap-2 overflow-x-auto py-1 px-3"
         >
           <button
             :class="[
@@ -329,6 +329,12 @@ const isMobile = computed(() => windowWidth.value < 640)
     black calc(100% - 12px),
     transparent
   );
+}
+
+/* 抵消外层 padding，使滚动区域撑满容器 */
+.toolbar-container .scroll-mask {
+  margin-left: -0.75rem;
+  margin-right: -0.75rem;
 }
 
 @container (max-width: 520px) {

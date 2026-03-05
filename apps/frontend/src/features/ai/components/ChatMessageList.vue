@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, nextTick, computed, onUnmounted } from 'vue'
+import { ref, watch, nextTick, computed, onUnmounted, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ArrowDown, Sparkles } from 'lucide-vue-next'
 import { useWindowSize } from '@vueuse/core'
@@ -32,9 +32,18 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const { currentSessionId } = useChatHistory()
 
-// 是否正在切换会话（用于跳过冗余动画）
-const isSwitchingSession = ref(false)
+// 是否正在切换会话（用于跳过冗余动画，或触发初始加载动画）
+const isSwitchingSession = ref(true)
 let switchingFallbackTimer: ReturnType<typeof setTimeout> | null = null
+
+onMounted(() => {
+  // 初始加载时也触发一次切换逻辑，确保出现动画与滚动到底部同步
+  if (props.messages.length > 0) {
+    handleSessionEntered()
+  } else {
+    isSwitchingSession.value = false
+  }
+})
 
 const containerRef = ref<HTMLElement | null>(null)
 const { width: windowWidth } = useWindowSize()
@@ -106,7 +115,7 @@ function handleSessionEntered() {
     // 短暂延迟后恢复标记，确保后续的 DOM 更新不再被视为切换
     setTimeout(() => {
       isSwitchingSession.value = false
-    }, 50)
+    }, 500)
   })
 }
 
@@ -252,7 +261,7 @@ defineExpose({
 
         <!-- 消息列表 -->
         <div v-else :class="[isMobile ? 'py-2' : 'pt-6 pb-4']">
-          <Transition name="session-fade" mode="out-in" @after-enter="handleSessionEntered">
+          <Transition name="session-fade" mode="out-in" appear @after-enter="handleSessionEntered">
             <div :key="currentSessionId || 'empty'">
               <div v-if="hiddenCount > 0" class="flex justify-center pb-2">
                 <button
@@ -264,7 +273,7 @@ defineExpose({
                   {{ t('common.loadMore') }}
                 </button>
               </div>
-              <TransitionGroup name="message-list" tag="div" class="flex flex-col">
+              <TransitionGroup name="message-list" tag="div" class="flex flex-col" appear>
                 <ChatMessage
                   v-for="(msg, index) in visibleMessages"
                   :id="`chat-msg-${msg.id}`"
@@ -280,6 +289,10 @@ defineExpose({
                     index + windowStartIndex < messages.length - 1 &&
                     messages[index + windowStartIndex + 1].role === 'tool'
                   "
+                  :style="{
+                    '--index': index,
+                    transitionDelay: isSwitchingSession ? `${Math.min(index, 10) * 0.05}s` : '0s',
+                  }"
                   @regenerate="(id) => emit('regenerate', id)"
                   @delete="(id) => emit('delete', id)"
                   @edit="(content) => emit('edit', msg.id, content)"
@@ -345,16 +358,21 @@ defineExpose({
 
 /* 会话切换时的整体淡入淡出 */
 .session-fade-enter-active {
-  transition: opacity 0.2s ease-out;
+  transition:
+    opacity 0.6s ease-out,
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .session-fade-leave-active {
-  transition: opacity 0.1s ease-in;
+  transition:
+    opacity 0.2s ease-in,
+    transform 0.2s ease-in;
 }
 
 .session-fade-enter-from,
 .session-fade-leave-to {
   opacity: 0;
+  transform: translateY(10px);
 }
 
 .fade-enter-active,
