@@ -81,6 +81,14 @@ pnpm docker:dev
 
 ---
 
+## 🤖 AI 开发辅助
+
+为了提升 AI 在本仓库内的开发质量与上下文理解，建议将以下文件作为**前置上下文 (Context)**：
+
+- **[AI_RULES.md](file:///Users/yunmu/Desktop/Todo/docs/AI_RULES.md)**: 包含项目概览、技术栈规范、架构原则及必须遵守的开发门禁（Lint/Test/Type-check）。
+
+---
+
 ## 🛡️ 开源治理
 
 - **协议**: [AGPL-3.0](LICENSE) (保护核心代码，回馈社区)。
