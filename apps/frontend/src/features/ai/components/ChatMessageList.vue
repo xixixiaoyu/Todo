@@ -95,11 +95,20 @@ watch(currentSessionId, () => {
       console.warn('Session transition fallback triggered. Transition hook might have failed.')
       handleSessionEntered()
     }
-  }, 800)
+  }, 400)
 })
 
 /**
- * 当新会话进入完毕后，立即滚动到底部并重置标记
+ * 当新会话开始进入时，立即在下一帧执行滚动，确保淡入时已经在底部
+ */
+function handleSessionEntering() {
+  void nextTick(() => {
+    scrollToBottom('instant')
+  })
+}
+
+/**
+ * 当新会话进入完毕后，重置标记
  */
 function handleSessionEntered() {
   if (switchingFallbackTimer) {
@@ -110,13 +119,10 @@ function handleSessionEntered() {
   // 如果已经处理过，直接返回（幂等）
   if (!isSwitchingSession.value) return
 
-  void nextTick(() => {
-    scrollToBottom('instant')
-    // 短暂延迟后恢复标记，确保后续的 DOM 更新不再被视为切换
-    setTimeout(() => {
-      isSwitchingSession.value = false
-    }, 800)
-  })
+  // 短暂延迟后恢复标记，确保后续的 DOM 更新不再被视为切换
+  setTimeout(() => {
+    isSwitchingSession.value = false
+  }, 400)
 }
 
 onUnmounted(() => {
@@ -261,7 +267,13 @@ defineExpose({
 
         <!-- 消息列表 -->
         <div v-else :class="[isMobile ? 'py-2' : 'pt-6 pb-4']">
-          <Transition name="session-fade" mode="out-in" appear @after-enter="handleSessionEntered">
+          <Transition
+            name="session-fade"
+            mode="out-in"
+            appear
+            @enter="handleSessionEntering"
+            @after-enter="handleSessionEntered"
+          >
             <div :key="currentSessionId || 'empty'">
               <div v-if="hiddenCount > 0" class="flex justify-center pb-2">
                 <button
@@ -359,14 +371,14 @@ defineExpose({
 /* 会话切换时的整体淡入淡出 */
 .session-fade-enter-active {
   transition:
-    opacity 0.6s ease-out,
-    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity 0.3s ease-out,
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .session-fade-leave-active {
   transition:
-    opacity 0.2s ease-in,
-    transform 0.2s ease-in;
+    opacity 0.15s ease-in,
+    transform 0.15s ease-in;
 }
 
 .session-fade-enter-from,
