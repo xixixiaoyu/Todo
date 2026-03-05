@@ -46,7 +46,7 @@ function onSave() {
       <div
         :class="[
           'break-words whitespace-pre-wrap leading-relaxed',
-          isMobile ? 'text-[14px]' : 'text-[15px]',
+          isMobile ? 'text-[15px]' : 'text-[15px]',
         ]"
       >
         {{ content }}

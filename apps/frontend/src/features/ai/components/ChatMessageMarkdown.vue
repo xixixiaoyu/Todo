@@ -41,7 +41,7 @@ defineExpose({
       v-else-if="content"
       :class="[
         'relative selectable select-text break-words leading-relaxed',
-        isMobile ? 'text-[14px]' : 'text-[15px]',
+        isMobile ? 'text-[15px]' : 'text-[15px]',
       ]"
     >
       {{ content }}

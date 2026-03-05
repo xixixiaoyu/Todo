@@ -369,7 +369,7 @@
 /* 响应式适配 */
 @media (max-width: 640px) {
   .markdown-content {
-    @apply text-[14px] leading-[1.6];
+    @apply text-[15px] leading-[1.6];
   }
 
   .markdown-content h1 {
@@ -398,7 +398,7 @@
   }
 
   .code-content code {
-    @apply text-[12px];
+    @apply text-[13px];
   }
 
   .markdown-blockquote,
@@ -411,7 +411,7 @@
   }
 
   .markdown-table {
-    @apply text-[12px];
+    @apply text-[13px];
   }
 
   .markdown-table th,

@@ -24,10 +24,10 @@ const isMobile = computed(() => windowWidth.value < 640)
       class="flex items-center gap-2 border-b border-[hsl(var(--ai-message-border))]"
       :class="[isMobile ? 'pb-1.5' : 'pb-2']"
     >
-      <Users :size="isMobile ? 13 : 14" class="text-primary" />
+      <Users :size="isMobile ? 14 : 14" class="text-primary" />
       <span
         class="font-medium text-muted-foreground"
-        :class="[isMobile ? 'text-[11px]' : 'text-xs']"
+        :class="[isMobile ? 'text-[12px]' : 'text-xs']"
         >{{ t('ai.discussionStatus') }}</span
       >
     </div>
@@ -36,7 +36,7 @@ const isMobile = computed(() => windowWidth.value < 640)
         v-for="step in steps"
         :key="step.modelId"
         class="flex items-start gap-2"
-        :class="[isMobile ? 'text-[11.5px]' : 'text-xs']"
+        :class="[isMobile ? 'text-[12.5px]' : 'text-xs']"
       >
         <div class="mt-0.5 shrink-0">
           <CircleDashed

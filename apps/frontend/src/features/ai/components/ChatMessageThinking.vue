@@ -164,7 +164,7 @@ watch([() => props.message.thinkingContent, () => props.message.reasoning_detail
             isStreaming && !hasContent
               ? 'shimmer-text'
               : 'text-muted-foreground/50 group-hover/thinking:text-primary/70',
-            isMobile ? 'text-[13px]' : 'text-[12px]',
+            isMobile ? 'text-[14px]' : 'text-[12px]',
           ]"
         >
           {{ thinkingStatus }}
@@ -197,14 +197,14 @@ watch([() => props.message.thinkingContent, () => props.message.reasoning_detail
           <div
             v-if="renderedThinkingHtml"
             class="markdown-content thinking-markdown break-words text-muted-foreground/60 leading-relaxed"
-            :class="[isMobile ? 'text-[13.5px]' : 'text-[12.5px]']"
+            :class="[isMobile ? 'text-[14.5px]' : 'text-[12.5px]']"
             v-html="renderedThinkingHtml"
           />
           <!-- eslint-enable vue/no-v-html -->
           <div
             v-else
             class="selectable select-text break-words whitespace-pre-wrap text-muted-foreground/60 leading-relaxed"
-            :class="[isMobile ? 'text-[13.5px]' : 'text-[12.5px]']"
+            :class="[isMobile ? 'text-[14.5px]' : 'text-[12.5px]']"
           >
             {{ message.thinkingContent }}
           </div>

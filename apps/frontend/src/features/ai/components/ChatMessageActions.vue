@@ -51,7 +51,7 @@ async function copyContent() {
     <button
       :class="[
         'flex items-center gap-1.5 rounded-lg font-medium text-muted-foreground/80 transition-all hover:bg-primary/10 hover:text-primary active:scale-95',
-        isMobile ? 'flex-1 justify-center py-2 text-[13px]' : 'px-2.5 py-1.5 text-[12px]',
+        isMobile ? 'flex-1 justify-center py-2 text-[14px]' : 'px-2.5 py-1.5 text-[12px]',
       ]"
       :title="isCopied ? t('ai.copied') : t('ai.copy')"
       @click="copyContent"
@@ -63,7 +63,7 @@ async function copyContent() {
     <button
       :class="[
         'flex items-center gap-1.5 rounded-lg font-medium text-muted-foreground/80 transition-all hover:bg-primary/10 hover:text-primary active:scale-95',
-        isMobile ? 'flex-1 justify-center py-2 text-[13px]' : 'px-2.5 py-1.5 text-[12px]',
+        isMobile ? 'flex-1 justify-center py-2 text-[14px]' : 'px-2.5 py-1.5 text-[12px]',
       ]"
       @click="emit('regenerate')"
     >
@@ -73,7 +73,7 @@ async function copyContent() {
     <button
       :class="[
         'flex items-center gap-1.5 rounded-lg font-medium text-muted-foreground/80 transition-all hover:bg-red-500/10 hover:text-red-600 active:scale-95',
-        isMobile ? 'flex-1 justify-center py-2 text-[13px]' : 'px-2.5 py-1.5 text-[12px]',
+        isMobile ? 'flex-1 justify-center py-2 text-[14px]' : 'px-2.5 py-1.5 text-[12px]',
       ]"
       @click="emit('delete')"
     >

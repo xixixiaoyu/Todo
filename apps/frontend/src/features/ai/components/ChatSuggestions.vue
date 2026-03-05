@@ -48,10 +48,12 @@ const suggestions = computed(() => [
         </div>
       </div>
 
-      <h3 class="mb-1 text-sm font-bold text-foreground transition-colors group-hover:text-primary">
+      <h3
+        class="mb-1 text-[14.5px] font-bold text-foreground transition-colors group-hover:text-primary"
+      >
         {{ item.title }}
       </h3>
-      <p class="text-[11px] leading-snug text-muted-foreground/70 line-clamp-2">
+      <p class="text-[12px] leading-snug text-muted-foreground/70 line-clamp-2">
         {{ item.desc }}
       </p>
     </button>

@@ -300,7 +300,7 @@ defineExpose({
         "
         :class="[
           'flex-1 resize-none bg-transparent text-foreground outline-none placeholder:text-muted-foreground/40 leading-relaxed transition-colors',
-          isMobile ? 'px-3 py-2 text-[14px]' : 'px-3 pt-2 pb-0.5 text-[15px]',
+          isMobile ? 'px-3 py-2 text-[15px]' : 'px-3 pt-2 pb-0.5 text-[15px]',
         ]"
         :disabled="isInputDisabled"
         @input="(e) => emit('update:modelValue', (e.target as HTMLTextAreaElement).value)"

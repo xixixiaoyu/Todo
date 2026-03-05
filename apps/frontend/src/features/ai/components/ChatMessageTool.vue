@@ -118,13 +118,13 @@ const onLeave = (el: Element) => {
         <div class="flex flex-col gap-0 overflow-hidden">
           <div class="flex items-center gap-2">
             <span
-              class="truncate text-[12px] font-medium tracking-tight text-foreground/70 leading-tight"
+              class="truncate text-[13px] font-medium tracking-tight text-foreground/70 leading-tight"
             >
               {{ message.toolName || t('ai.mcpToolResult') }}
             </span>
           </div>
           <span
-            class="text-[9px] font-semibold tracking-wider text-muted-foreground/40 uppercase leading-none"
+            class="text-[10px] font-semibold tracking-wider text-muted-foreground/40 uppercase leading-none"
           >
             {{ isError ? t('ai.mcpToolError') : 'Success' }}
           </span>
@@ -160,7 +160,7 @@ const onLeave = (el: Element) => {
               </button>
 
               <!-- Code Content -->
-              <div class="max-h-[300px] overflow-auto p-3 font-mono text-[11px] leading-relaxed">
+              <div class="max-h-[300px] overflow-auto p-3 font-mono text-[12.5px] leading-relaxed">
                 <pre
                   class="text-foreground/50 selection:bg-primary/10"
                 ><code>{{ formattedContent }}</code></pre>
