@@ -13,22 +13,36 @@
 
 Lumina 采用了“轻原生壳 + 重云端大脑”的模式，在保持跨端灵活性的同时，确保核心逻辑的深度与一致性。
 
-- **云端大脑 (NestJS 11)**: 处理核心领域逻辑、多端同步、AI 模型集成及可靠任务调度 (PostgreSQL + Redis + BullMQ)。
-- **交互界面 (Vue 3.5)**: 承载高度响应式的 UI 与流畅的 GSAP 动效，注入“呼吸感”与“通透感”。
-- **原生容器 (Wails / Capacitor)**: 作为系统底层的桥梁，提供托盘图标、全局快捷键及原生 API 访问能力。
+- **云端大脑 (NestJS 11)**: 驱动核心领域逻辑、多端同步与 AI 模型集成。
+- **交互界面 (Vue 3.5)**: 承载高度响应式的 UI 与丝滑的 GSAP 动效，注入“呼吸感”与“通透感”。
+- **原生容器 (Wails / Capacitor)**: 作为系统底层的桥梁，提供托盘图标、全局快捷键等原生能力。
+
+## 📂 目录结构
+
+```text
+.
+├── apps/
+│   ├── backend/    # NestJS 核心 (Business Brain)
+│   ├── frontend/   # Vue 3.5 Web (User Interface)
+│   └── wails/      # Go + Wails (Desktop Shell)
+├── packages/
+│   └── shared/     # 共享 Zod Schemas & 类型定义
+└── turbo.json      # 任务编排
+```
 
 ---
 
-## � 核心特性
+## ✨ 核心特性
 
 - **🧠 AI 深度集成**: 
-  - 支持 **MCP (Model Context Protocol)**，让 AI 能够调用外部工具与服务。
-  - 具备 **AI Memory (长期记忆)** 与上下文压缩能力，越用越懂你。
-  - 内置 Slash Commands (/) 与文件附件支持，沟通无界。
-- **📊 数据可视化**: 利用 ECharts 动态生成任务树与统计图表，让进度一目了然。
-- **⏳ 沉浸式番茄钟**: 独特的 `Pomodoro Earth` 视觉动效，配合任务流引导深度工作。
-- **� 严格的类型安全**: 基于 Zod 实现从数据库 Schema 到后端 DTO 再到前端校验的全链路类型推断。
-- **🎨 视觉美学**: 遵循 8px 网格系统，利用 `backdrop-blur` 与细腻阴影营造现代感，支持动态主题切换。
+  - 支持 **MCP (Model Context Protocol)**，可灵活接入自定义工具与服务。
+  - 具备 **AI Memory (长期记忆)** 与上下文压缩，越用越懂你。
+  - 内置 Slash Commands (/) 与文件附件支持。
+- **📊 数据可视化**: 动态任务树与统计图表，让进度一目了然。
+- **⏳ 沉浸式番茄钟**: `Pomodoro Earth` 视觉动效，引导深度工作。
+- **🌍 全栈国际化**: 前后端资源分离，支持多语言动态切换。
+- **🔒 类型安全**: 全链路 Zod 类型推断，从 DB 到 UI 始终如一。
+- **🎨 视觉美学**: 8px 网格系统、毛玻璃效果与动态主题。
 
 ---
 
@@ -45,24 +59,33 @@ Lumina 采用了“轻原生壳 + 重云端大脑”的模式，在保持跨端�
 
 ## 🚀 快速启动
 
-### 环境准备
-- **Node.js**: >= 20.19.0
-- **pnpm**: >= 9.15.0
-- **Docker**: 用于运行 PostgreSQL 与 Redis
+### 1. 环境准备
+- **Node.js**: >= 20.19.0 (推荐使用 corepack)
+- **pnpm**: 9.15.0 (仓库锁定)
+- **Docker**: 用于运行基础容器
 
-### 启动步骤
+### 2. 启动方式
+
+#### 方案 A：容器化全栈 (推荐)
+```bash
+pnpm install
+pnpm docker:dev
+```
+*一键启动全栈服务（含 DB、Redis、Backend、Frontend）。*
+
+#### 方案 B：本地混合开发
 1. **安装依赖**: `pnpm install`
 2. **基础环境**: `docker compose up -d`
-3. **数据库同步**: `pnpm db:push`
-4. **开发模式**: `pnpm dev`
+3. **初始化库**: `pnpm db:push`
+4. **启动服务**: `pnpm dev`
 
 ---
 
-## �️ 开源治理
+## 🛡️ 开源治理
 
-- **协议**: [AGPL-3.0](LICENSE) (保护核心代码，回馈开源社区)。
-- **规范**: 遵循 [CONTRIBUTING.md](CONTRIBUTING.md) 中的工程标准与代码风格。
-- **反馈**: 遇到安全漏洞请查阅 [SECURITY.md](SECURITY.md)，或发送邮件至 `yunmucoder@163.com`。
+- **协议**: [AGPL-3.0](LICENSE) (保护核心代码，回馈社区)。
+- **规范**: 遵循 [CONTRIBUTING.md](CONTRIBUTING.md) 的工程标准。
+- **反馈**: 遇到漏洞请查阅 [SECURITY.md](SECURITY.md)，或联系 `yunmucoder@163.com`。
 
 ---
 
