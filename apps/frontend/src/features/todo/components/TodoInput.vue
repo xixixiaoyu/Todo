@@ -82,8 +82,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="relative mb-6">
-    <div class="flex items-center gap-3">
+  <div class="relative mb-4 md:mb-6">
+    <div class="flex items-center gap-2 md:gap-3">
       <div class="relative flex-1 group">
         <TooltipProvider :delay-duration="0">
           <Tooltip :open="showTooltip">
@@ -97,7 +97,7 @@ onMounted(() => {
                   :model-value="modelValue"
                   type="text"
                   :placeholder="t('todo.inputPlaceholder')"
-                  class="h-12 px-5 text-base rounded-xl border-border bg-card shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all focus-visible:ring-primary/20 group-hover:border-primary/30 group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]"
+                  class="h-10 md:h-12 px-4 md:px-5 text-sm md:text-base rounded-xl border-border bg-card shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all focus-visible:ring-primary/20 group-hover:border-primary/30 group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]"
                   :class="{ 'border-destructive focus-visible:ring-destructive/20': errorMessage }"
                   @update:model-value="emit('update:modelValue', $event as string)"
                   @keydown="emit('keydown', $event)"
@@ -139,10 +139,10 @@ onMounted(() => {
         </TooltipProvider>
       </div>
       <Button
-        class="h-12 px-4 md:px-6 rounded-xl text-base font-semibold shadow-[0_8px_20px_-4px_hsl(var(--primary)_/_0.3)] transition-all active:scale-95 hover:shadow-[0_12px_25px_-4px_hsl(var(--primary)_/_0.4)]"
+        class="h-10 md:h-12 px-3 md:px-6 rounded-xl text-sm md:text-base font-semibold shadow-[0_8px_20px_-4px_hsl(var(--primary)_/_0.3)] transition-all active:scale-95 hover:shadow-[0_12px_25px_-4px_hsl(var(--primary)_/_0.4)]"
         @click="emit('add')"
       >
-        <Plus class="h-5 w-5" :class="{ 'mr-1.5': !isMobile }" />
+        <Plus class="h-4 w-4 md:h-5 md:w-5" :class="{ 'mr-1.5': !isMobile }" />
         <span v-if="!isMobile">{{ t('todo.add') }}</span>
       </Button>
     </div>

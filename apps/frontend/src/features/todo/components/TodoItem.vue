@@ -57,10 +57,10 @@ const isExpanded = computed(() => props.todo.expanded ?? true)
 const hasChildren = computed(() => children.value.length > 0)
 const itemClass = computed(() => {
   if (isChild.value) {
-    return 'bg-muted/10 border-border/30 py-2 px-4 hover:bg-muted/20 hover:border-border/50'
+    return 'bg-muted/10 border-border/30 py-1.5 md:py-2 px-3 md:px-4 hover:bg-muted/20 hover:border-border/50'
   }
 
-  return 'bg-card border-border/60 px-4 py-3.5 hover:border-border/80'
+  return 'bg-card border-border/60 px-3 md:px-4 py-2.5 md:py-3.5 hover:border-border/80'
 })
 
 const checkboxClass = computed(() => {
@@ -186,7 +186,7 @@ watch(
 <template>
   <div class="flex flex-col">
     <div
-      class="group relative flex items-center gap-3 rounded-xl border transition-all duration-200 hover:shadow-md hover:shadow-black/5"
+      class="group relative flex items-center gap-2 md:gap-3 rounded-xl border transition-all duration-200 hover:shadow-md hover:shadow-black/5"
       :class="[
         itemClass,
         { 'border-primary/30 bg-primary/[0.03] shadow-sm shadow-primary/5': todo.isPinned },
@@ -198,21 +198,25 @@ watch(
       ]"
     >
       <!-- Left: Drag & Expand & Checkbox -->
-      <div class="flex items-center gap-2">
-        <GripVertical
+      <div class="flex items-center gap-1 md:gap-2">
+        <div
           v-if="store.filter !== 'trash'"
-          class="drag-handle h-4 w-4 cursor-grab text-muted-foreground/30 hover:text-muted-foreground transition-colors active:cursor-grabbing"
+          class="drag-handle flex items-center justify-center h-8 w-5 -ml-1 cursor-grab active:cursor-grabbing group/drag"
           @touchstart="hapticSelectionStart"
-        />
+        >
+          <GripVertical
+            class="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground/30 group-hover/drag:text-muted-foreground transition-colors"
+          />
+        </div>
         <Button
           v-if="(level || 0) < 2 && hasChildren"
           variant="ghost"
           size="icon"
-          class="h-6 w-6 text-muted-foreground transition-opacity"
+          class="h-8 w-8 md:h-6 md:w-6 text-muted-foreground transition-opacity"
           @click="toggleExpand"
         >
-          <ChevronDown v-if="isExpanded" class="h-4 w-4" />
-          <ChevronRight v-else class="h-4 w-4" />
+          <ChevronDown v-if="isExpanded" class="h-3.5 w-3.5 md:h-4 md:w-4" />
+          <ChevronRight v-else class="h-3.5 w-3.5 md:h-4 md:w-4" />
         </Button>
 
         <Checkbox
@@ -220,6 +224,7 @@ watch(
           :model-value="todo.completed"
           :disabled="todo.isProposedDelete"
           :class="checkboxClass"
+          class="h-6 w-6 md:h-5 md:w-5"
           @update:model-value="
             () => {
               void hapticImpact(ImpactStyle.Light)

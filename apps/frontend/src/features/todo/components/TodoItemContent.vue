@@ -48,20 +48,20 @@ const isOverdue = computed(() => {
     </div>
 
     <!-- Todo Title & Badges -->
-    <div class="flex items-center gap-1.5 min-w-0">
+    <div class="flex items-center gap-1 md:gap-1.5 min-w-0">
       <Pin
         v-if="todo.isPinned && store.filter !== 'trash'"
-        class="h-3.5 w-3.5 text-primary/70 shrink-0 group-hover:hidden"
+        class="h-3 w-3 md:h-3.5 md:w-3.5 text-primary/70 shrink-0 group-hover:hidden"
       />
       <Sparkles
         v-if="todo.isProposed && store.filter !== 'trash'"
-        class="h-3.5 w-3.5 text-success/70 shrink-0"
+        class="h-3 w-3 md:h-3.5 md:w-3.5 text-success/70 shrink-0"
       />
       <!-- eslint-disable vue/no-v-html -->
       <Tooltip>
         <TooltipTrigger as-child>
           <span
-            class="flex-1 cursor-pointer select-text text-foreground truncate"
+            class="flex-1 cursor-pointer select-text text-sm md:text-base text-foreground truncate"
             :class="[
               todo.completed && store.filter !== 'trash'
                 ? 'line-through text-muted-foreground/50'
@@ -84,9 +84,9 @@ const isOverdue = computed(() => {
       <Tooltip v-if="todo.pomodoroCount > 0 && store.filter !== 'trash'">
         <TooltipTrigger as-child>
           <div
-            class="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-rose-500/10 text-rose-500 dark:text-rose-400/90 text-[10px] font-bold shrink-0 ml-1 animate-in fade-in zoom-in-95 duration-500"
+            class="flex items-center gap-0.5 md:gap-1 px-1 md:px-1.5 py-0.5 rounded-md bg-rose-500/10 text-rose-500 dark:text-rose-400/90 text-[9px] md:text-[10px] font-bold shrink-0 ml-0.5 md:ml-1 animate-in fade-in zoom-in-95 duration-500"
           >
-            <Timer class="w-3 h-3" />
+            <Timer class="w-2.5 h-2.5 md:w-3 md:h-3" />
             <span>{{ todo.pomodoroCount }}</span>
           </div>
         </TooltipTrigger>

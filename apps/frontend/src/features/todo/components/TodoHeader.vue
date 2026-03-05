@@ -66,15 +66,15 @@ const handleRegisterPasskey = async () => {
 
 <template>
   <header
-    class="mb-2 md:mb-4 flex items-center justify-between transition-all duration-300 select-none"
+    class="mb-1 md:mb-4 flex items-center justify-between transition-all duration-300 select-none"
     style="--wails-draggable: drag"
     @dblclick="handleDblClick"
   >
-    <div class="flex items-center gap-2 md:gap-3 group">
+    <div class="flex items-center gap-1.5 md:gap-3 group">
       <div
         class="p-1.5 md:p-2 rounded-xl bg-primary/10 text-primary transition-transform group-hover:rotate-12"
       >
-        <Snowflake :size="20" class="md:w-6 md:h-6" />
+        <Snowflake :size="18" class="md:w-6 md:h-6" />
       </div>
       <h1
         class="hidden sm:flex items-center gap-2 cursor-default text-primary text-xl md:text-2xl font-extrabold tracking-tight transition-transform hover:scale-105"
@@ -88,12 +88,12 @@ const handleRegisterPasskey = async () => {
         </Badge>
       </h1>
     </div>
-    <div class="flex items-center gap-1.5 md:gap-2">
+    <div class="flex items-center gap-1 md:gap-2">
       <!-- AI Assistant - Highlight Feature -->
       <Button
         variant="ghost"
         size="sm"
-        class="h-9 px-2 md:px-3 rounded-xl bg-primary/10 text-primary hover:bg-primary/15 transition-all duration-300 gap-1.5 md:gap-2 font-bold border border-primary/20 group/ai"
+        class="h-9 md:h-9 px-2.5 md:px-3 rounded-xl bg-primary/10 text-primary hover:bg-primary/15 transition-all duration-300 gap-1 md:gap-2 font-bold border border-primary/20 group/ai"
         @click="todoStore.setDrawerOpen(true)"
       >
         <Clover
