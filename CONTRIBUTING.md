@@ -4,7 +4,11 @@ First off, thank you for considering contributing to Lumina! It's people like yo
 
 ## 🌈 Code of Conduct
 
-By participating in this project, you agree to abide by our Code of Conduct. Please be respectful and professional in all interactions.
+By participating in this project, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md). Please be respectful and professional in all interactions.
+
+## 🛡️ Security
+
+If you discover a security vulnerability, please follow our [Security Policy](SECURITY.md) to report it.
 
 ## 🛠️ Development Setup
 
