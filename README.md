@@ -1,7 +1,7 @@
 # Lumina (简思)
 
 [![License](https://img.shields.io/badge/License-AGPL--3.0-orange?style=flat-square)](LICENSE)
-[![Stack](https://img.shields.io/badge/Stack-NestJS_11_%7C_Vue_3.5_%7C_TypeScript-blue?style=flat-square)](#-engineering-stack)
+[![Stack](https://img.shields.io/badge/Stack-NestJS_11_%7C_Vue_3.5_%7C_Three.js-blue?style=flat-square)](#-engineering-stack)
 [![Status](https://img.shields.io/badge/Status-Production--Ready-brightgreen?style=flat-square)](#-engineering-excellence)
 
 > **简于形，深于思。**  
@@ -51,7 +51,7 @@ Lumina 采用了“轻原生壳 + 重云端大脑”的模式，在保持跨端�
 | 维度 | 技术选型 |
 | :--- | :--- |
 | **后端** | NestJS 11, Prisma 7, PostgreSQL, Redis, BullMQ |
-| **前端** | Vue 3.5, Vite 7, Pinia, Tailwind 3.4, GSAP 3.14 |
+| **前端** | Vue 3.5, Vite 7, Pinia, Tailwind 3.4, GSAP, Three.js |
 | **跨端** | Wails (Desktop), Capacitor 8 (Mobile) |
 | **质量** | Vitest, ESLint, Prettier, Turborepo |
 

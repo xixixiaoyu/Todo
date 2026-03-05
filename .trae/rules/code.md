@@ -4,7 +4,7 @@
 
 ## 项目概览
 
-Lumina（简思）是基于 **NestJS 11（Fastify） + Vue 3.5（Vite）** 的全栈 Todo 应用，采用 **pnpm Monorepo + Turborepo** 组织与编排任务。开发环境默认使用 `pnpm docker:dev` 启动全栈 Docker 容器。
+Lumina（简思）是基于 **NestJS 11（Fastify） + Vue 3.5（Vite） + Three.js** 的全栈 Todo 应用，采用 **pnpm Monorepo + Turborepo** 组织与编排任务。开发环境默认使用 `pnpm docker:dev` 启动全栈 Docker 容器。
 
 ## 工具链与版本
 
@@ -125,11 +125,12 @@ type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse
 - **数据请求**：优先 TanStack Query 管理缓存与并发；Axios 只做传输层封装
 - **组件约定**：`<script setup lang="ts">` → `<template>` → `<style>`，Composition API 优先
 
-## UI 与交互规范（Tailwind 3.4 + Reka UI + GSAP）
+## UI 与交互规范（Tailwind 3.4 + Reka UI + GSAP + Three.js）
 
 - **布局**：Mobile First；优先 Flex/Grid，避免硬编码尺寸；关键容器使用 `mx-auto` + `max-w-*`
 - **视觉**：留白与呼吸感优先；圆角设计遵循 `--radius: 0.75rem`
 - **动效**：必须使用 `useGsap`，并将动画包裹在 `ctx.add(() => { ... })` 内确保自动清理
+- **3D 交互**：利用 Three.js 实现高性能 3D 动效（如 Pomodoro Earth），确保渲染性能与电力效率
 - **Tailwind**：原子化优先；动态 class 通过 `cn()` 合并
 - **A11y**：交互控件需可键盘操作、可聚焦、可读 label；状态变化需有可感知反馈
 
