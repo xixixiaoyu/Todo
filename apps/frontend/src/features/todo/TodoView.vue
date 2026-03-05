@@ -4,6 +4,7 @@ import { useTodoStore, type FilterType } from './stores/todo'
 import { usePomodoroStore } from './stores/pomodoro'
 import { useTodo } from './composables/useTodo'
 import { useGsap } from '@/composables/useGsap'
+import { useIsMobile } from '@/composables/useWindowSize'
 import TodoHeader from './components/TodoHeader.vue'
 import TodoInput from './components/TodoInput.vue'
 import TodoFilter from './components/TodoFilter.vue'
@@ -23,6 +24,7 @@ const pomodoroStore = usePomodoroStore()
 const cardRef = ref<HTMLElement | null>(null)
 const inputContainerRef = ref<HTMLElement | null>(null)
 const { gsap, ctx } = useGsap()
+const { isMobile } = useIsMobile()
 
 // 预定义动画函数并注册到 GSAP Context，确保自动清理且高性能
 let animateTilt: (x: number, y: number) => void
@@ -125,8 +127,8 @@ watch(
 
     ctx.add(() => {
       gsap.to(inputContainerRef.value, {
-        height: visible ? 52 : 0,
-        marginBottom: visible ? 24 : 0,
+        height: visible ? (isMobile.value ? 56 : 52) : 0,
+        marginBottom: visible ? (isMobile.value ? 4 : 24) : 0,
         opacity: visible ? 1 : 0,
         duration: 0.5,
         ease: 'expo.out',
@@ -144,8 +146,8 @@ onMounted(() => {
     // 初始化输入框状态，避免首屏闪烁
     if (inputContainerRef.value) {
       gsap.set(inputContainerRef.value, {
-        height: isInputVisible.value ? 52 : 0,
-        marginBottom: isInputVisible.value ? 24 : 0,
+        height: isInputVisible.value ? (isMobile.value ? 56 : 52) : 0,
+        marginBottom: isInputVisible.value ? (isMobile.value ? 4 : 24) : 0,
         opacity: isInputVisible.value ? 1 : 0,
       })
     }
@@ -274,7 +276,7 @@ function onFireworksComplete() {
         ></div>
 
         <CardContent
-          class="todo-container p-3 pt-3 md:p-8 md:pt-6 flex flex-col flex-1 min-h-0 relative z-10"
+          class="todo-container p-4 pt-6 md:p-8 md:pt-6 flex flex-col flex-1 min-h-0 relative z-10 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))]"
         >
           <!-- Header -->
           <TodoHeader />
@@ -308,7 +310,7 @@ function onFireworksComplete() {
             v-model:is-drawer-open="isDrawerOpen"
             v-model:show-search="showSearch"
             :show-trash="todoStore.viewMode !== 'visual'"
-            class="mb-6"
+            class="mb-3 md:mb-6"
           />
 
           <!-- Search Bar (Collapsible) - Keep near tabs -->
