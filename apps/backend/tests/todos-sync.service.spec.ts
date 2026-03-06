@@ -92,6 +92,37 @@ describe('TodoSyncService', () => {
       expect(result.serverTime).toBeDefined()
     })
 
+    it('should exclude deleted items when since is 0', async () => {
+      const userId = 1
+      const syncDto: SyncMergeDto = {
+        todos: [],
+        lastSyncAt: undefined, // since will be new Date(0)
+      }
+
+      mockPrisma.todo.findMany.mockResolvedValue([
+        {
+          id: 'active-todo',
+          title: 'Active Todo',
+          updatedAt: new Date(),
+          deletedAt: null,
+        },
+        // We don't need to mock the "deleted" one being filtered out by findMany,
+        // we just verify findMany was called with correct arguments
+      ])
+      mockPrisma.todoTombstone.findMany.mockResolvedValue([])
+
+      await service.sync(userId, syncDto)
+
+      expect(mockPrisma.todo.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            userId,
+            deletedAt: null, // This is the key part for since === 0
+          }),
+        }),
+      )
+    })
+
     it('should return logically deleted items in synced list', async () => {
       const userId = 1
       const syncDto: SyncMergeDto = {

@@ -132,6 +132,8 @@ export class TodoSyncService {
         updatedAt: {
           gte: since, // 改为 gte，配合前端过滤，确保不漏掉同一毫秒的更新
         },
+        // 如果是初次同步（since 为 0），则排除回收站内容，后续按需加载
+        ...(since.getTime() === 0 ? { deletedAt: null } : {}),
       },
       select: todoSelect,
     })

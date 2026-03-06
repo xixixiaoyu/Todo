@@ -20,6 +20,7 @@ export const useTodoStore = defineStore(
     const isDrawerOpen = ref(false)
     const isMaximized = ref(false)
     const isSilencingToast = ref(false)
+    const isTrashLoaded = ref(false)
     const proposedChangeSets = ref<Record<string, ProposedTodoChange[]>>({})
     const proposedChangeSetOrder = ref<string[]>([])
     const activeProposedChangeSetId = ref<string | null>(null)
@@ -181,6 +182,7 @@ export const useTodoStore = defineStore(
       error,
       lastSyncAt,
       toSharedTodo,
+      isTrashLoaded,
     })
 
     const actions = createTodoActions({
@@ -198,6 +200,7 @@ export const useTodoStore = defineStore(
       isDrawerOpen,
       isMaximized,
       isSilencingToast,
+      isTrashLoaded,
     })
 
     function setActiveProposedChangeSet(setId: string | null): void {
@@ -367,6 +370,7 @@ export const useTodoStore = defineStore(
       isDrawerOpen,
       isMaximized,
       isSilencingToast,
+      isTrashLoaded,
       isAllExpanded,
       proposedChanges,
       activeProposedChangeSetId,

@@ -15,6 +15,7 @@ export function createTodoCloud(deps: {
   error: Ref<string | null>
   lastSyncAt: Ref<string | null>
   toSharedTodo: (todo: Todo) => SharedTodo
+  isTrashLoaded: Ref<boolean>
 }): {
   sync: (retryCount?: number) => Promise<void>
   debouncedSync: () => void
@@ -209,6 +210,7 @@ export function createTodoCloud(deps: {
 
   async function mergeOnLogin(): Promise<void> {
     deps.lastSyncAt.value = null
+    deps.isTrashLoaded.value = false
 
     deps.todos.value.forEach((t) => {
       if (!t.syncStatus) t.syncStatus = 'pending'
@@ -219,6 +221,7 @@ export function createTodoCloud(deps: {
 
   function resetSyncStatus(): void {
     deps.lastSyncAt.value = null
+    deps.isTrashLoaded.value = false
     deps.todos.value.forEach((t) => {
       t.syncStatus = undefined
     })

@@ -2,6 +2,7 @@ import type { ComputedRef, Ref } from 'vue'
 import { getAIStaticResponse } from '@/features/ai/services'
 import type { FilterType, Todo, ViewMode } from './todo.types'
 import { toDate } from './todo.dates'
+import { todoApi } from '../api'
 
 export function createTodoActions(deps: {
   todos: Ref<Todo[]>
@@ -18,9 +19,11 @@ export function createTodoActions(deps: {
   isDrawerOpen: Ref<boolean>
   isMaximized: Ref<boolean>
   isSilencingToast: Ref<boolean>
+  isTrashLoaded: Ref<boolean>
 }): {
   isDuplicate: (title: string, parentId?: string | null, excludeId?: string) => boolean
   fetchTodos: () => Promise<void>
+  fetchTrash: () => Promise<void>
   addTodo: (title: string, parentId?: string | null, id?: string) => Promise<string | null>
   addTodos: (titles: string[], parentId?: string | null) => Promise<string[]>
   removeTodos: (ids: string[]) => Promise<void>
@@ -69,6 +72,54 @@ export function createTodoActions(deps: {
     const authStore = useAuthStore()
     if (authStore.isAuthenticated) {
       await deps.sync()
+    }
+  }
+
+  async function fetchTrash(): Promise<void> {
+    if (deps.isTrashLoaded.value) return
+
+    const { useAuthStore } = await import('@/features/auth/stores/auth')
+    const authStore = useAuthStore()
+    if (!authStore.isAuthenticated) return
+
+    deps.loading.value = true
+    try {
+      const response = await todoApi.findTrash()
+      if (response.success && Array.isArray(response.data)) {
+        response.data.forEach((serverTodo) => {
+          const index = deps.todos.value.findIndex((t) => t.id === serverTodo.id)
+          const todoData: Todo = {
+            id: serverTodo.id,
+            title: serverTodo.title,
+            completed: serverTodo.completed,
+            order: serverTodo.order,
+            isPinned: serverTodo.isPinned,
+            parentId: serverTodo.parentId,
+            version: serverTodo.version,
+            pomodoroCount: serverTodo.pomodoroCount,
+            dueAt: serverTodo.dueAt ? new Date(serverTodo.dueAt) : undefined,
+            remindAt: serverTodo.remindAt ? new Date(serverTodo.remindAt) : undefined,
+            remindedAt: serverTodo.remindedAt ? new Date(serverTodo.remindedAt) : undefined,
+            createdAt: new Date(serverTodo.createdAt),
+            updatedAt: new Date(serverTodo.updatedAt),
+            completedAt: serverTodo.completedAt ? new Date(serverTodo.completedAt) : undefined,
+            deletedAt: serverTodo.deletedAt ? new Date(serverTodo.deletedAt) : undefined,
+            syncStatus: 'synced' as const,
+          }
+
+          if (index !== -1) {
+            deps.todos.value[index] = { ...deps.todos.value[index], ...todoData }
+          } else {
+            deps.todos.value.push(todoData)
+          }
+        })
+        deps.isTrashLoaded.value = true
+      }
+    } catch (err) {
+      console.error('Failed to fetch trash:', err)
+      deps.error.value = 'todo.syncFailed'
+    } finally {
+      deps.loading.value = false
     }
   }
 
@@ -495,6 +546,9 @@ export function createTodoActions(deps: {
 
   function setFilter(newFilter: FilterType): void {
     deps.filter.value = newFilter
+    if (newFilter === 'trash') {
+      void fetchTrash()
+    }
   }
 
   function setSearchQuery(query: string): void {
@@ -545,6 +599,7 @@ export function createTodoActions(deps: {
   return {
     isDuplicate,
     fetchTodos,
+    fetchTrash,
     addTodo,
     addTodos,
     removeTodos,
