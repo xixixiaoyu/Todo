@@ -88,6 +88,13 @@ watch(currentSessionId, () => {
   renderLimit.value = DEFAULT_WINDOW_SIZE
   // 不在这里执行滚动，交给 Transition 钩子处理，避免滚动到旧会话的底部
 
+  // 如果新会话本身就没有消息，Transition 钩子不会触发（因为 v-else 没被渲染）
+  // 此时直接调用 handleSessionEntered
+  if (props.messages.length === 0) {
+    handleSessionEntered()
+    return
+  }
+
   // 安全垫：防止 Transition 钩子失效导致状态锁死
   if (switchingFallbackTimer) clearTimeout(switchingFallbackTimer)
   switchingFallbackTimer = setTimeout(() => {

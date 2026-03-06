@@ -20,7 +20,6 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'
 import { ZodValidationPipe, cleanupOpenApiDoc } from 'nestjs-zod'
 import { Logger } from 'nestjs-pino'
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify'
-import fastifyCors from '@fastify/cors'
 import fastifyCookie from '@fastify/cookie'
 import fastifyHelmet from '@fastify/helmet'
 import fastifyCompress from '@fastify/compress'
@@ -46,16 +45,9 @@ async function bootstrap() {
   // 获取应用版本（从 package.json）
   const version = process.env.npm_package_version || '1.0.0'
 
-  const fastify = app.getHttpAdapter().getInstance()
-  const register = (
-    fastify as unknown as { register: (plugin: unknown, opts?: unknown) => Promise<unknown> }
-  ).register.bind(
-    fastify as unknown as { register: (plugin: unknown, opts?: unknown) => Promise<unknown> },
-  )
-
-  // 1. 启用 CORS (必须尽早调用，确保错误响应也能包含 CORS 头)
+  // 1. 启用 CORS (使用 NestJS 标准方式，确保与异常过滤器集成)
   const corsOrigin = process.env.CORS_ORIGIN
-  await register(fastifyCors, {
+  app.enableCors({
     origin:
       corsOrigin === '*'
         ? true
@@ -66,15 +58,16 @@ async function bootstrap() {
           ],
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: [
-      'Content-Type',
-      'Authorization',
-      'X-Requested-With',
-      'X-Lang',
-      'Accept-Language',
-      'X-Socket-ID',
-    ],
+    allowedHeaders:
+      'Content-Type, Authorization, authorization, X-Requested-With, X-Lang, x-lang, Accept-Language, X-Socket-ID', // 显式列出所有标头，避免通配符警告
   })
+
+  const fastify = app.getHttpAdapter().getInstance()
+  const register = (
+    fastify as unknown as { register: (plugin: unknown, opts?: unknown) => Promise<unknown> }
+  ).register.bind(
+    fastify as unknown as { register: (plugin: unknown, opts?: unknown) => Promise<unknown> },
+  )
 
   const staticRoot = join(__dirname, '..', 'public')
   if (existsSync(staticRoot)) {
