@@ -31,7 +31,7 @@ let fillLight: THREE.PointLight
 let cameraLight: THREE.PointLight
 let ambientLight: THREE.AmbientLight
 let animationFrameId: number
-let clock: { update?: () => void; getElapsedTime: () => number }
+let clock: { update?: () => void; getElapsedTime?: () => number; getElapsed?: () => number }
 let orbitAngle = 0 // New: Track orbit position
 let smoothMouseX = 0 // Track smoothed mouse X
 let smoothMouseY = 0 // Track smoothed mouse Y
@@ -40,9 +40,14 @@ const initThree = () => {
   if (!canvasRef.value) return
 
   // Timer for smooth animations (replacing deprecated Clock)
+  // Use Clock as default fallback for broader compatibility
   try {
     const TimerConstructor = (THREE as unknown as { Timer: new () => typeof clock }).Timer
-    clock = new TimerConstructor()
+    if (TimerConstructor) {
+      clock = new TimerConstructor()
+    } else {
+      clock = new THREE.Clock()
+    }
   } catch {
     clock = new THREE.Clock()
   }
@@ -294,8 +299,15 @@ const animate = () => {
   animationFrameId = requestAnimationFrame(animate)
 
   // Update clock/timer
-  if (clock.update) clock.update()
-  const time = clock.getElapsedTime()
+  if (clock.update) {
+    ;(clock as { update: () => void }).update()
+  }
+  const time =
+    typeof clock.getElapsedTime === 'function'
+      ? (clock as { getElapsedTime: () => number }).getElapsedTime()
+      : typeof clock.getElapsed === 'function'
+        ? (clock as { getElapsed: () => number }).getElapsed()
+        : 0
 
   if (earth) {
     earth.rotation.y += 0.0008 // Slower, more Zen rotation
