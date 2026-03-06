@@ -47,6 +47,14 @@ import { JwtService } from '@nestjs/jwt'
       }
     },
     credentials: true,
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'X-Lang',
+      'Accept-Language',
+      'X-Socket-ID',
+    ],
   },
   namespace: '/events',
   transports: ['polling', 'websocket'],
