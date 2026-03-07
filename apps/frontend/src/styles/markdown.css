@@ -155,7 +155,7 @@
 
 /* Markdown 内容样式 */
 .markdown-content {
-  @apply text-[15px] leading-[1.75] text-[#3a3a3a] antialiased;
+  @apply text-[15px] leading-[1.75] text-[#3a3a3a] antialiased font-medium;
 }
 
 .dark .markdown-content {
