@@ -103,36 +103,34 @@ const isMobile = computed(() => windowWidth.value < 640)
             <History :size="16" />
           </button>
 
-          <!-- 移动端：文件上传与上一个会话 -->
-          <template v-if="isMobile">
-            <button
-              class="toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-              :title="t('ai.uploadFile')"
-              :disabled="isGenerating || (totalAttachments ?? 0) >= 10"
-              @click="emit('triggerFileUpload')"
-            >
-              <ImageIcon :size="16" />
-            </button>
+          <!-- 文件上传与上一个会话 -->
+          <button
+            class="toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+            :title="t('ai.uploadFile')"
+            :disabled="isGenerating || (totalAttachments ?? 0) >= 10"
+            @click="emit('triggerFileUpload')"
+          >
+            <ImageIcon :size="16" />
+          </button>
 
-            <!-- 停止生成按钮 (仅移动端在生成时显示) -->
-            <button
-              v-if="isGenerating"
-              class="toolbar-btn animate-stop-pulse flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10 text-red-500 active:scale-95"
-              :title="t('ai.stop')"
-              @click="emit('stopGenerating')"
-            >
-              <Square :size="10" class="fill-current" />
-            </button>
+          <!-- 停止生成按钮 (仅移动端在生成时显示) -->
+          <button
+            v-if="isMobile && isGenerating"
+            class="toolbar-btn animate-stop-pulse flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10 text-red-500 active:scale-95"
+            :title="t('ai.stop')"
+            @click="emit('stopGenerating')"
+          >
+            <Square :size="10" class="fill-current" />
+          </button>
 
-            <button
-              class="toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-              :title="t('ai.previousSession')"
-              :disabled="isGenerating || !lastActiveSession"
-              @click="emit('navigatePrevious')"
-            >
-              <ChevronLeft :size="16" />
-            </button>
-          </template>
+          <button
+            class="toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+            :title="t('ai.previousSession')"
+            :disabled="isGenerating || !lastActiveSession"
+            @click="emit('navigatePrevious')"
+          >
+            <ChevronLeft :size="16" />
+          </button>
 
           <div class="h-4 w-px shrink-0 bg-border/20 mx-1" />
 

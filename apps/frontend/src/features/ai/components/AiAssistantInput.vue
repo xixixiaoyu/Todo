@@ -2,7 +2,6 @@
 import { ref, nextTick, watch, computed, useId, onMounted, onUnmounted } from 'vue'
 import { useWindowSize } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
-import type { ChatSession } from '@/features/ai/composables/useChatHistory'
 import {
   AlertCircle,
   Image as ImageIcon,
@@ -11,11 +10,11 @@ import {
   Lightbulb,
   GraduationCap,
   Send,
+  Square,
 } from 'lucide-vue-next'
 import type { ParsedFile } from '@/composables/useFileParsing'
 import AiAssistantInputAttachments from '@/features/ai/components/AiAssistantInputAttachments.vue'
 import AiAssistantInputSlashCommands from '@/features/ai/components/AiAssistantInputSlashCommands.vue'
-import AiAssistantInputActionBar from '@/features/ai/components/AiAssistantInputActionBar.vue'
 
 const props = defineProps<{
   modelValue: string
@@ -29,14 +28,12 @@ const props = defineProps<{
   parsedFiles: ParsedFile[]
   isGenerating: boolean
   error: string | null
-  lastActiveSession: ChatSession | null
 }>()
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void
   (e: 'send'): void
   (e: 'stop'): void
-  (e: 'navigatePrevious'): void
   (e: 'removeImage', index: number): void
   (e: 'removeFile', id: string): void
   (e: 'triggerFileUpload'): void
@@ -279,7 +276,7 @@ defineExpose({
     />
 
     <label :for="textareaId" class="sr-only">{{ t('ai.placeholder') }}</label>
-    <div class="flex items-end">
+    <div class="flex items-end px-2 py-1.5">
       <textarea
         :id="textareaId"
         ref="textareaRef"
@@ -300,7 +297,7 @@ defineExpose({
         "
         :class="[
           'flex-1 resize-none bg-transparent text-foreground outline-none placeholder:text-muted-foreground/40 leading-relaxed transition-colors',
-          isMobile ? 'px-3 py-2 text-[15px]' : 'px-3 pt-2 pb-0.5 text-[15px]',
+          isMobile ? 'px-2 py-1 text-[15px]' : 'px-2 py-1.5 text-[15px]',
         ]"
         :disabled="isInputDisabled"
         @input="(e) => emit('update:modelValue', (e.target as HTMLTextAreaElement).value)"
@@ -309,11 +306,22 @@ defineExpose({
         @paste="(e) => emit('paste', e)"
       />
 
-      <!-- 移动端：发送按钮内联 -->
-      <div v-if="isMobile" class="p-1.5">
+      <!-- 发送按钮内联 (全平台统一) -->
+      <div class="flex items-center gap-2 pb-1 pr-1">
+        <!-- 停止按钮 (桌面端) -->
+        <button
+          v-if="!isMobile && isGenerating"
+          class="animate-stop-pulse flex h-8 items-center gap-1.5 rounded-xl bg-red-500/10 px-3 text-[12px] font-bold text-red-500 transition-all hover:bg-red-500/20 active:scale-95"
+          @click="emit('stop')"
+        >
+          <Square :size="12" class="fill-current" />
+          <span>{{ t('ai.stop') }}</span>
+        </button>
+
         <button
           :class="[
-            'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-primary-foreground transition-all shadow-sm',
+            'flex shrink-0 items-center justify-center rounded-xl text-primary-foreground transition-all shadow-sm',
+            isMobile ? 'h-8 w-8' : 'h-8 w-8',
             !canSend
               ? 'cursor-not-allowed bg-primary/20 scale-95'
               : 'animate-button-pop bg-primary hover:bg-primary-hover hover:scale-105 active:scale-95 shadow-primary/20',
@@ -321,28 +329,10 @@ defineExpose({
           :disabled="!canSend"
           @click="emit('send')"
         >
-          <Send :size="16" />
+          <Send :size="isMobile ? 16 : 18" />
         </button>
       </div>
     </div>
-
-    <!-- 桌面端或非移动端保留原有操作栏 -->
-    <AiAssistantInputActionBar
-      v-if="!isMobile"
-      :is-mobile="isMobile"
-      :is-input-disabled="isInputDisabled"
-      :is-generating="isGenerating"
-      :error="error"
-      :last-active-session="lastActiveSession"
-      :model-value="modelValue"
-      :selected-images="selectedImages"
-      :parsed-files="parsedFiles"
-      :completed-files-count="completedFilesCount"
-      @trigger-file-upload="emit('triggerFileUpload')"
-      @stop="emit('stop')"
-      @navigate-previous="emit('navigatePrevious')"
-      @send="emit('send')"
-    />
 
     <label :for="fileInputId" class="sr-only">{{ t('ai.uploadFile') }}</label>
     <input
