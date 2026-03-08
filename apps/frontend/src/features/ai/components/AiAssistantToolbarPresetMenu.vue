@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import type { AIPreset } from '@/features/ai/composables/useAIConfig'
-import { ChevronDown, Settings2, Check, Sparkles } from 'lucide-vue-next'
+import { ChevronDown, Settings2, Check } from 'lucide-vue-next'
+import AiLuminaIcon from './AiLuminaIcon.vue'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,7 +43,7 @@ const hover = useHoverPopover({ open })
           :title="t('ai.managePresets')"
           @mouseenter="hover.clear"
         >
-          <Sparkles
+          <AiLuminaIcon
             :size="14"
             class="toolbar-icon-only text-primary/70"
             :class="{ hidden: !isMobile }"

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { Users, Check, Sparkles } from 'lucide-vue-next'
+import { Users, Check } from 'lucide-vue-next'
+import AiLuminaIcon from './AiLuminaIcon.vue'
 import { type AIConfig, type AIPreset } from '@/features/ai/composables/useAIConfig'
 
 defineProps<{
@@ -47,7 +48,7 @@ function toggleSecondaryModel(presetId: string) {
         <div
           class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-inner transition-transform duration-500 group-hover/card:scale-110"
         >
-          <Sparkles v-if="formData.discussionMode" :size="20" class="animate-sparkle" />
+          <AiLuminaIcon v-if="formData.discussionMode" :size="20" class="animate-sparkle" />
           <Users v-else :size="20" />
         </div>
         <div>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { GraduationCap, Clover, Sparkles, LayoutGrid, Check, ChevronDown } from 'lucide-vue-next'
+import { GraduationCap, Clover, LayoutGrid, Check, ChevronDown } from 'lucide-vue-next'
+import AiLuminaIcon from './AiLuminaIcon.vue'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -109,7 +110,10 @@ const activeModesCount = computed(() => {
             @click.stop="emit('toggleImageGen')"
           >
             <div class="flex items-center gap-2">
-              <Sparkles :size="14" :class="{ 'animate-pulse-slow': isImageGenerationEnabled }" />
+              <AiLuminaIcon
+                :size="14"
+                :class="{ 'animate-pulse-slow': isImageGenerationEnabled }"
+              />
               <span>{{ t('ai.enableImageGeneration') }}</span>
             </div>
             <Check v-if="isImageGenerationEnabled" :size="12" class="text-primary" />

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { Pin, Sparkles, Timer, ChevronRight, CalendarClock, Bell } from 'lucide-vue-next'
+import { Pin, Timer, ChevronRight, CalendarClock, Bell } from 'lucide-vue-next'
+import AiLuminaIcon from '@/features/ai/components/AiLuminaIcon.vue'
 import { computed } from 'vue'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { type Todo, useTodoStore } from '../stores/todo'
@@ -53,7 +54,7 @@ const isOverdue = computed(() => {
         v-if="todo.isPinned && store.filter !== 'trash'"
         class="h-3 w-3 md:h-3.5 md:w-3.5 text-primary/70 shrink-0 group-hover:hidden"
       />
-      <Sparkles
+      <AiLuminaIcon
         v-if="todo.isProposed && store.filter !== 'trash'"
         class="h-3 w-3 md:h-3.5 md:w-3.5 text-success/70 shrink-0"
       />

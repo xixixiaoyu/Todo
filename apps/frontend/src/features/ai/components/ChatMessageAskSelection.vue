@@ -12,7 +12,8 @@ import {
 } from '@/features/ai/services/aiService'
 import ChatMessageMarkdown from '@/features/ai/components/ChatMessageMarkdown.vue'
 import ChatMessageThinking from '@/features/ai/components/ChatMessageThinking.vue'
-import { Sparkles, X, MessageSquare, LayoutTemplate, Send, ExternalLink } from 'lucide-vue-next'
+import { X, MessageSquare, LayoutTemplate, Send, ExternalLink } from 'lucide-vue-next'
+import AiLuminaIcon from './AiLuminaIcon.vue'
 import { useChat } from '@/features/ai/composables/useChat'
 
 const props = defineProps<{
@@ -436,7 +437,7 @@ defineExpose({ updateAskAnchor })
         class="flex items-center justify-between gap-3 border-b border-border/20 px-4 py-3 cursor-move select-none"
       >
         <div class="flex items-center gap-2 min-w-0">
-          <Sparkles :size="14" class="text-primary shrink-0" />
+          <AiLuminaIcon :size="14" class="text-primary shrink-0" />
           <div class="truncate text-sm font-semibold text-foreground">
             {{ t('ai.askSelectionFloatingTitle') }}
           </div>

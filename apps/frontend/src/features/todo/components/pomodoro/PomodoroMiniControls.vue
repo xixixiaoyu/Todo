@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { X, Sparkles } from 'lucide-vue-next'
+import { X } from 'lucide-vue-next'
+import AiLuminaIcon from '@/features/ai/components/AiLuminaIcon.vue'
 import { Button } from '@/components/ui/button'
 import { usePomodoroStore } from '../../stores/pomodoro'
 import { useTodoStore } from '../../stores/todo'
@@ -57,7 +58,7 @@ function toggleAiAssistant() {
       style="--wails-draggable: no-drag"
       @click.stop="toggleAiAssistant"
     >
-      <Sparkles class="w-4 h-4" />
+      <AiLuminaIcon class="w-4 h-4" />
     </Button>
   </div>
 </template>

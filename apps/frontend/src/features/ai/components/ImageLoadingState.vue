@@ -2,7 +2,8 @@
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useGsap } from '@/composables/useGsap'
-import { Sparkles, Palette, Wand2 } from 'lucide-vue-next'
+import { Palette, Wand2 } from 'lucide-vue-next'
+import AiLuminaIcon from './AiLuminaIcon.vue'
 
 const { t } = useI18n()
 const { gsap, ctx } = useGsap()
@@ -97,7 +98,7 @@ onMounted(() => {
             marginTop: `${i % 2 === 0 ? 10 : -10}px`,
           }"
         >
-          <Sparkles :size="12 + i" />
+          <AiLuminaIcon :size="12 + i" />
         </div>
       </div>
 

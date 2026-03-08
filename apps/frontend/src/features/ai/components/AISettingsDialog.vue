@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, watch, computed, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { X, RotateCcw, Sparkles } from 'lucide-vue-next'
+import { X, RotateCcw } from 'lucide-vue-next'
+import AiLuminaIcon from './AiLuminaIcon.vue'
 import { isEqual } from 'lodash-es'
 import { useAIConfig, type AIConfig, type AIPreset } from '@/features/ai/composables/useAIConfig'
 import { useEscClose } from '@/composables/useEscClose'
@@ -248,7 +249,7 @@ defineExpose({
                   <div
                     class="absolute inset-0 rotate-12 rounded-lg bg-primary/10 transition-transform group-hover:rotate-0"
                   />
-                  <Sparkles :size="15" class="relative text-primary" />
+                  <AiLuminaIcon :size="15" class="relative text-primary" />
                 </div>
                 <div class="flex flex-col">
                   <h2 class="text-[15px] font-bold tracking-tight text-foreground/90">

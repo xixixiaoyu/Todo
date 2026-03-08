@@ -2,6 +2,7 @@
 import { ref, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ChevronUp } from 'lucide-vue-next'
+import AiLuminaIcon from './AiLuminaIcon.vue'
 import { useWindowSize } from '@vueuse/core'
 import type { ChatMessage } from '@/features/ai/composables/useChat'
 import { useMarkdown } from '@/composables/useMarkdown'
@@ -131,35 +132,13 @@ watch([() => props.message.thinkingContent, () => props.message.reasoning_detail
     >
       <h4 class="flex items-center gap-2">
         <div
-          class="ai-icon translate-y-[1.5px] text-primary/60 transition-transform duration-500 group-hover/thinking:scale-110"
-          :class="{ 'animate-pulse-custom': isStreaming && !hasContent }"
+          class="flex items-center justify-center text-primary/80"
+          :class="{ 'animate-ai-float': isStreaming && !hasContent }"
         >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"
-              fill="currentColor"
-              class="ai-star"
-            />
-            <path
-              d="M19 15L19.5 17L21.5 17.5L19.5 18L19 20L18.5 18L16.5 17.5L18.5 17L19 15Z"
-              fill="currentColor"
-              class="ai-sparkle animate-sparkle"
-            />
-            <path
-              d="M5 6L5.5 7.5L7 8L5.5 8.5L5 10L4.5 8.5L3 8L4.5 7.5L5 6Z"
-              fill="currentColor"
-              class="ai-sparkle animate-sparkle [animation-delay:0.6s]"
-            />
-          </svg>
+          <AiLuminaIcon :size="14" />
         </div>
         <span
-          class="font-medium tracking-wide transition-all duration-300"
+          class="font-medium tracking-wide transition-all duration-300 leading-none"
           :class="[
             isStreaming && !hasContent
               ? 'shimmer-text'

@@ -1,18 +1,8 @@
 <script setup lang="ts">
 import { ref, nextTick, useId, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import {
-  Info,
-  Plus,
-  Loader2,
-  Sparkles,
-  Trash,
-  Check,
-  X,
-  Edit3,
-  Download,
-  Upload,
-} from 'lucide-vue-next'
+import { Info, Plus, Loader2, Trash, Check, X, Edit3, Download, Upload } from 'lucide-vue-next'
+import AiLuminaIcon from './AiLuminaIcon.vue'
 import { useMemory } from '@/features/ai/composables/useMemory'
 import { useToast } from '@/composables/useToast'
 import {
@@ -209,7 +199,7 @@ function handleClearConfirm() {
           @click="handleCompressMemories"
         >
           <component
-            :is="isCompressing ? Loader2 : Sparkles"
+            :is="isCompressing ? Loader2 : AiLuminaIcon"
             :size="12"
             :class="{ 'animate-spin': isCompressing }"
           />

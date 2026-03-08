@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, computed, onUnmounted, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ArrowDown, Sparkles } from 'lucide-vue-next'
+import { ArrowDown } from 'lucide-vue-next'
 import { useWindowSize } from '@vueuse/core'
+import AiLuminaIcon from './AiLuminaIcon.vue'
 import ChatMessage from './ChatMessage.vue'
 import ChatSuggestions from './ChatSuggestions.vue'
 import ChatMinimap from './ChatMinimap.vue'
@@ -246,14 +247,37 @@ defineExpose({
           ]"
         >
           <div :class="['relative', isMobile ? 'mb-4' : 'mb-8']">
-            <div class="absolute -inset-4 animate-pulse rounded-full bg-primary/5 blur-2xl"></div>
+            <!-- 背景光效 -->
+            <div
+              class="absolute -inset-8 animate-[pulse_4s_ease-in-out_infinite] rounded-full bg-primary/10 blur-3xl"
+            ></div>
+            <div
+              class="absolute -inset-4 animate-[pulse_6s_ease-in-out_infinite] rounded-full bg-primary/5 blur-2xl"
+            ></div>
+
+            <!-- 图标容器 -->
             <div
               :class="[
-                'relative flex items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 shadow-inner',
-                isMobile ? 'h-16 w-16' : 'h-20 w-20',
+                'relative flex items-center justify-center rounded-3xl bg-gradient-to-br from-primary/20 via-primary/5 to-transparent p-[1px] shadow-2xl shadow-primary/10',
+                isMobile ? 'h-20 w-20' : 'h-24 w-24',
               ]"
             >
-              <Sparkles :class="[isMobile ? 'h-8 w-8' : 'h-10 w-10', 'text-primary']" />
+              <div
+                class="flex h-full w-full items-center justify-center rounded-[23px] bg-card/40 backdrop-blur-xl"
+              >
+                <!-- 自定义 Lumina AI 图标 (优雅的 4 尖星) -->
+                <AiLuminaIcon :size="isMobile ? 40 : 48" class="text-primary drop-shadow-sm" />
+              </div>
+
+              <!-- 装饰性光点 -->
+              <div
+                class="absolute -top-1 -right-1 h-3 w-3 animate-bounce rounded-full bg-primary/30 blur-[2px]"
+                style="animation-duration: 3s"
+              ></div>
+              <div
+                class="absolute -bottom-2 -left-2 h-4 w-4 animate-pulse rounded-full bg-primary/20 blur-[3px]"
+                style="animation-duration: 5s"
+              ></div>
             </div>
           </div>
 

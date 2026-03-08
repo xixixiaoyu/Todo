@@ -2,7 +2,8 @@
 import { computed, ref, watch, onMounted, nextTick, toRef, onBeforeUnmount } from 'vue'
 import VChart from 'vue-echarts'
 import { useDark, useResizeObserver } from '@vueuse/core'
-import { Sparkles, Check, X, Maximize2, Minimize2, Move } from 'lucide-vue-next'
+import { Check, X, Maximize2, Minimize2, Move } from 'lucide-vue-next'
+import AiLuminaIcon from '@/features/ai/components/AiLuminaIcon.vue'
 import type { ProposedTodoChange } from '@/features/todo/stores/todo'
 import { useTodoStore } from '@/features/todo/stores/todo'
 import type { TreeData } from '@/features/todo/stores/todo.types'
@@ -213,7 +214,7 @@ const chartOptions = computed(() => ({
     >
       <div class="flex items-center gap-3">
         <div class="flex h-6 w-6 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <Sparkles :size="14" class="animate-pulse" />
+          <AiLuminaIcon :size="14" class="animate-pulse" />
         </div>
         <div class="flex flex-col">
           <span class="text-[10px] font-bold uppercase tracking-wider text-primary/70">{{
@@ -304,7 +305,7 @@ const chartOptions = computed(() => ({
           }}</span>
         </div>
         <div v-else class="flex flex-col items-center gap-2 text-muted-foreground/40">
-          <Sparkles :size="32" stroke-width="1" />
+          <AiLuminaIcon :size="32" />
           <span class="text-xs">{{ t('ai.noChangesProposed') }}</span>
         </div>
       </div>
