@@ -80,6 +80,15 @@ const hasContent = computed(() => !!props.message.content)
 const hasDiscussion = computed(
   () => !isUser.value && props.message.discussionSteps && props.message.discussionSteps.length > 0,
 )
+const showLoading = computed(
+  () =>
+    !isUser.value &&
+    !hasContent.value &&
+    isStreaming.value &&
+    !hasThinking.value &&
+    !hasDiscussion.value,
+)
+const showMessageBubble = computed(() => isUser.value || hasContent.value)
 
 // 是否正在生成图片
 const isImageGenerating = computed(() => {
@@ -138,116 +147,108 @@ defineExpose({
       />
 
       <!-- 主消息气泡 / 加载状态 -->
+      <ChatMessageLoading v-if="showLoading" :is-image-generating="isImageGenerating" />
+
       <Transition
         enter-active-class="transition duration-200 cubic-bezier(0.2, 0, 0, 1)"
         enter-from-class="transform translate-y-1.5 opacity-0"
         enter-to-class="transform translate-y-0 opacity-100"
       >
-        <template v-if="isUser || hasContent || (isStreaming && !hasThinking)">
-          <!-- 加载状态 -->
-          <ChatMessageLoading
-            v-if="!isUser && !hasContent && isStreaming && !hasThinking && !hasDiscussion"
-            :is-image-generating="isImageGenerating"
-          />
+        <!-- 正文气泡：用户消息或已有内容的 AI 消息 -->
+        <div
+          v-if="showMessageBubble"
+          class="selectable relative select-text break-words transition-all duration-300"
+          :class="[
+            isUser || message.role !== 'tool' ? 'rounded-[1.25rem] px-4 py-3' : 'rounded-none p-0',
+            isUser
+              ? 'bg-gradient-to-br from-primary/95 via-primary to-primary/90 text-primary-foreground shadow-[0_4px_12px_hsl(var(--primary)_/_0.15)]'
+              : message.role === 'tool'
+                ? 'border-none bg-transparent shadow-none'
+                : 'border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] text-foreground shadow-sm',
+            isEditing
+              ? 'w-full !bg-card !text-foreground ring-2 ring-primary/20 border-primary'
+              : '',
+            isImageGenerating ? 'p-0 border-none bg-transparent shadow-none' : '',
+          ]"
+        >
+          <!-- 正在生成图片时显示精致加载状态 -->
+          <ImageLoadingState v-if="isImageGenerating" />
 
-          <!-- 正文气泡：用户消息或已有内容的 AI 消息 -->
-          <div
-            v-else-if="isUser || hasContent"
-            class="selectable relative select-text break-words transition-all duration-300"
-            :class="[
-              isUser || message.role !== 'tool'
-                ? 'rounded-[1.25rem] px-4 py-3'
-                : 'rounded-none p-0',
-              isUser
-                ? 'bg-gradient-to-br from-primary/95 via-primary to-primary/90 text-primary-foreground shadow-[0_4px_12px_hsl(var(--primary)_/_0.15)]'
-                : message.role === 'tool'
-                  ? 'border-none bg-transparent shadow-none'
-                  : 'border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] text-foreground shadow-sm',
-              isEditing
-                ? 'w-full !bg-card !text-foreground ring-2 ring-primary/20 border-primary'
-                : '',
-              isImageGenerating ? 'p-0 border-none bg-transparent shadow-none' : '',
-            ]"
-          >
-            <!-- 正在生成图片时显示精致加载状态 -->
-            <ImageLoadingState v-if="isImageGenerating" />
+          <template v-else>
+            <!-- 图片内容 -->
+            <ChatMessageImages
+              v-if="message.images && message.images.length > 0"
+              :images="message.images"
+              :is-user="isUser"
+              :is-mobile="isMobile"
+              @open-image="openImage"
+            />
 
+            <!-- 用户消息 -->
+            <ChatMessageUser
+              v-if="isUser"
+              :content="message.content"
+              :is-editing="isEditing"
+              :is-mobile="isMobile"
+              @save="saveEdit"
+              @cancel="cancelEdit"
+              @start-edit="startEdit"
+            />
+
+            <!-- AI 消息内容 -->
             <template v-else>
-              <!-- 图片内容 -->
-              <ChatMessageImages
-                v-if="message.images && message.images.length > 0"
-                :images="message.images"
-                :is-user="isUser"
-                :is-mobile="isMobile"
-                @open-image="openImage"
+              <!-- MCP Tool Result -->
+              <ChatMessageTool
+                v-if="message.role === 'tool'"
+                :message="message"
+                :is-prev-tool="isPrevTool"
+                :is-next-tool="isNextTool"
               />
 
-              <!-- 用户消息 -->
-              <ChatMessageUser
-                v-if="isUser"
-                :content="message.content"
-                :is-editing="isEditing"
-                :is-mobile="isMobile"
-                @save="saveEdit"
-                @cancel="cancelEdit"
-                @start-edit="startEdit"
-              />
-
-              <!-- AI 消息内容 -->
               <template v-else>
-                <!-- MCP Tool Result -->
-                <ChatMessageTool
-                  v-if="message.role === 'tool'"
-                  :message="message"
-                  :is-prev-tool="isPrevTool"
-                  :is-next-tool="isNextTool"
-                />
-
-                <template v-else>
-                  <ChatMessageStructuredBlockWarning
-                    v-if="showStructuredBlockWarning"
-                    :message-id="message.id"
-                    :errors="message.structuredBlockErrors || []"
-                  />
-
-                  <!-- AI 消息：Markdown 渲染 -->
-                  <ChatMessageMarkdown
-                    ref="markdownRef"
-                    :content="message.content"
-                    :is-streaming="isStreaming"
-                    :is-mobile="isMobile"
-                    @ask-selection="(prompt) => emit('ask-selection', prompt)"
-                    @transfer-selection="() => emit('transfer-selection')"
-                  />
-                </template>
-
-                <TeachingQuizPanel
-                  v-if="message.teachingQuizzes && message.teachingQuizzes.length > 0"
-                  :quizzes="message.teachingQuizzes"
-                  :disabled="isStreaming"
-                  @submit="(payload) => emit('teaching-submit', payload)"
-                  @submit-batch="(payload) => emit('teaching-submit-batch', payload)"
-                />
-
-                <!-- AI 建议的思维导图预览 -->
-                <ChatVisualizerPreview
-                  v-if="message.todoActions && message.todoActions.length > 0"
-                  :actions="message.todoActions"
+                <ChatMessageStructuredBlockWarning
+                  v-if="showStructuredBlockWarning"
                   :message-id="message.id"
-                  :processed-status="message.todoActionsProcessed"
+                  :errors="message.structuredBlockErrors || []"
+                />
+
+                <!-- AI 消息：Markdown 渲染 -->
+                <ChatMessageMarkdown
+                  ref="markdownRef"
+                  :content="message.content"
+                  :is-streaming="isStreaming"
+                  :is-mobile="isMobile"
+                  @ask-selection="(prompt) => emit('ask-selection', prompt)"
+                  @transfer-selection="() => emit('transfer-selection')"
                 />
               </template>
 
-              <!-- 操作按钮（AI 消息内部） -->
-              <ChatMessageActions
-                v-if="!isUser && !isStreaming && hasContent && message.role !== 'tool'"
-                :content="message.content"
-                @regenerate="emit('regenerate', message.id)"
-                @delete="emit('delete', message.id)"
+              <TeachingQuizPanel
+                v-if="message.teachingQuizzes && message.teachingQuizzes.length > 0"
+                :quizzes="message.teachingQuizzes"
+                :disabled="isStreaming"
+                @submit="(payload) => emit('teaching-submit', payload)"
+                @submit-batch="(payload) => emit('teaching-submit-batch', payload)"
+              />
+
+              <!-- AI 建议的思维导图预览 -->
+              <ChatVisualizerPreview
+                v-if="message.todoActions && message.todoActions.length > 0"
+                :actions="message.todoActions"
+                :message-id="message.id"
+                :processed-status="message.todoActionsProcessed"
               />
             </template>
-          </div>
-        </template>
+
+            <!-- 操作按钮（AI 消息内部） -->
+            <ChatMessageActions
+              v-if="!isUser && !isStreaming && hasContent && message.role !== 'tool'"
+              :content="message.content"
+              @regenerate="emit('regenerate', message.id)"
+              @delete="emit('delete', message.id)"
+            />
+          </template>
+        </div>
       </Transition>
     </div>
 
