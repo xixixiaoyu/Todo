@@ -14,12 +14,13 @@ export function createTodoCloud(deps: {
   loading: Ref<boolean>
   error: Ref<string | null>
   lastSyncAt: Ref<string | null>
+  syncOwnerId: Ref<number | null>
   toSharedTodo: (todo: Todo) => SharedTodo
   isTrashLoaded: Ref<boolean>
 }): {
   sync: (retryCount?: number) => Promise<void>
   debouncedSync: () => void
-  mergeOnLogin: () => Promise<void>
+  mergeOnLogin: (userId: number) => Promise<void>
   resetSyncStatus: () => void
   initSocketListener: () => Promise<void>
   deleteTodoPermanently: (id: string) => Promise<void>
@@ -208,7 +209,12 @@ export function createTodoCloud(deps: {
     }
   })()
 
-  async function mergeOnLogin(): Promise<void> {
+  async function mergeOnLogin(userId: number): Promise<void> {
+    if (deps.syncOwnerId.value !== null && deps.syncOwnerId.value !== userId) {
+      deps.todos.value = []
+    }
+
+    deps.syncOwnerId.value = userId
     deps.lastSyncAt.value = null
     deps.isTrashLoaded.value = false
 

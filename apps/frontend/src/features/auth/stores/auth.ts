@@ -102,7 +102,7 @@ export const useAuthStore = defineStore(
         // 登录成功后触发数据合并同步
         const { useTodoStore } = await import('@/features/todo/stores/todo')
         const todoStore = useTodoStore()
-        await todoStore.mergeOnLogin()
+        await todoStore.mergeOnLogin(response.data.user.id)
 
         return true
       } catch (e: unknown) {
@@ -132,7 +132,7 @@ export const useAuthStore = defineStore(
         // 注册成功后触发数据同步
         const { useTodoStore } = await import('@/features/todo/stores/todo')
         const todoStore = useTodoStore()
-        await todoStore.mergeOnLogin()
+        await todoStore.mergeOnLogin(response.data.user.id)
 
         return true
       } catch (e: unknown) {
@@ -225,7 +225,7 @@ export const useAuthStore = defineStore(
         // 登录成功后触发数据同步
         const { useTodoStore } = await import('@/features/todo/stores/todo')
         const todoStore = useTodoStore()
-        await todoStore.mergeOnLogin()
+        await todoStore.mergeOnLogin(response.data.user.id)
 
         return true
       } catch (e: unknown) {
@@ -266,7 +266,7 @@ export const useAuthStore = defineStore(
         // 登录成功后触发数据合并同步
         const { useTodoStore } = await import('@/features/todo/stores/todo')
         const todoStore = useTodoStore()
-        await todoStore.mergeOnLogin()
+        await todoStore.mergeOnLogin(response.data.user.id)
 
         return true
       } catch (e: unknown) {

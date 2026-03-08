@@ -126,12 +126,62 @@ describe('Todo Store Sync', () => {
       mockResponse as unknown as Awaited<ReturnType<typeof todoApi.sync>>,
     )
 
-    await store.mergeOnLogin()
+    await store.mergeOnLogin(1)
 
     // Should have called sync
     expect(todoApi.sync).toHaveBeenCalled()
     // Local todos should be marked as synced after successful sync
     expect(store.todos.every((t) => t.syncStatus === 'synced')).toBe(true)
+  })
+
+  it('should clear local todos when login user changes', async () => {
+    const store = useTodoStore()
+
+    store.syncOwnerId = 1
+    store.todos = [
+      {
+        id: 'local-old-user',
+        title: 'Local Old User Todo',
+        completed: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        syncStatus: 'pending',
+        order: 0,
+        isPinned: false,
+        version: 0,
+        pomodoroCount: 0,
+      },
+    ]
+
+    const mockResponse = {
+      data: {
+        synced: [
+          {
+            id: 'server-new-user',
+            title: 'Server New User Todo',
+            completed: false,
+            order: 0,
+            isPinned: false,
+            version: 1,
+            pomodoroCount: 0,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        ],
+        deletedIds: [],
+        serverTime: new Date().toISOString(),
+      } as SyncResponse,
+    }
+
+    vi.mocked(todoApi.sync).mockResolvedValue(
+      mockResponse as unknown as Awaited<ReturnType<typeof todoApi.sync>>,
+    )
+
+    await store.mergeOnLogin(2)
+
+    expect(store.syncOwnerId).toBe(2)
+    expect(store.todos.some((t) => t.id === 'local-old-user')).toBe(false)
+    expect(store.todos.some((t) => t.id === 'server-new-user')).toBe(true)
   })
 
   it('should handle deletedIds from server', async () => {

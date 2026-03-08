@@ -25,6 +25,7 @@ export const useTodoStore = defineStore(
     const proposedChangeSetOrder = ref<string[]>([])
     const activeProposedChangeSetId = ref<string | null>(null)
     const lastSyncAt = ref<string | null>(null)
+    const syncOwnerId = ref<number | null>(null)
 
     const filteredTodos = computed(() =>
       applyFilterAndSort(todos.value, filter.value, searchQuery.value),
@@ -182,6 +183,7 @@ export const useTodoStore = defineStore(
       loading,
       error,
       lastSyncAt,
+      syncOwnerId,
       toSharedTodo,
       isTrashLoaded,
     })
@@ -386,6 +388,7 @@ export const useTodoStore = defineStore(
       proposedChanges,
       activeProposedChangeSetId,
       lastSyncAt,
+      syncOwnerId,
       filteredTodos,
       pendingCount,
       completedCount,
@@ -411,7 +414,15 @@ export const useTodoStore = defineStore(
     persist: {
       key: 'todos',
       storage: localStorage,
-      pick: ['todos', 'filter', 'viewMode', 'lastSyncAt', 'isDrawerOpen', 'isMaximized'],
+      pick: [
+        'todos',
+        'filter',
+        'viewMode',
+        'lastSyncAt',
+        'syncOwnerId',
+        'isDrawerOpen',
+        'isMaximized',
+      ],
     },
   },
 )

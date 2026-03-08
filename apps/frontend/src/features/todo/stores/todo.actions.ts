@@ -290,14 +290,9 @@ export function createTodoActions(deps: {
 
     deps.loading.value = true
     try {
-      // 物理删除（用于撤销 AI 拆解）
-      deps.todos.value = deps.todos.value.filter((t) => !ids.includes(t.id))
-
-      // 并不只是本地删除，还需要通知后端同步这些 ID 为已删除
-      // 这里我们可以通过 debouncedSync 处理，它会对比本地与远端
-      // 但由于是物理删除且是刚生成的，我们可以假设它们还未同步到后端，或者同步后需要删除
-      // 为了安全，我们手动调用一次同步
-      deps.debouncedSync()
+      for (const id of ids) {
+        await deleteTodo(id)
+      }
     } catch (err) {
       console.error('Failed to remove todos:', err)
       deps.error.value = 'todo.deleteError'

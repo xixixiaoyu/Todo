@@ -355,6 +355,30 @@ describe('useTodoStore - Actions', () => {
     })
   })
 
+  describe('removeTodos', () => {
+    it('should mark existing synced todo as logically deleted', async () => {
+      store.todos = [
+        {
+          id: 'synced-todo',
+          title: 'Synced Todo',
+          completed: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          order: 0,
+          version: 2,
+          syncStatus: 'synced',
+          pomodoroCount: 0,
+        },
+      ]
+
+      await store.removeTodos(['synced-todo'])
+
+      expect(store.todos[0].deletedAt).toBeDefined()
+      expect(store.todos[0].syncStatus).toBe('pending')
+    })
+  })
+
   describe('updateTodo', () => {
     it('should update todo title successfully', async () => {
       store.todos = [{ ...mockTodos[0] }]
