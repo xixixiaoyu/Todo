@@ -16,6 +16,43 @@ get_disk_usage() {
   df -P / | awk 'NR==2 {gsub("%", "", $5); print $5}'
 }
 
+is_valid_percent() {
+  local value=$1
+  [[ "$value" =~ ^[0-9]+$ ]] && [ "$value" -ge 1 ] && [ "$value" -le 99 ]
+}
+
+validate_thresholds() {
+  local threshold_name
+  for threshold_name in DISK_WARN_THRESHOLD DISK_CRITICAL_THRESHOLD DISK_ABORT_THRESHOLD ALERT_WARN_THRESHOLD ALERT_CRITICAL_THRESHOLD; do
+    local threshold_value=${!threshold_name}
+    if ! is_valid_percent "$threshold_value"; then
+      echo "❌ ${threshold_name} 必须是 1-99 的整数，当前值：${threshold_value}"
+      exit 1
+    fi
+  done
+
+  if [ "$DISK_WARN_THRESHOLD" -ge "$DISK_CRITICAL_THRESHOLD" ] || [ "$DISK_CRITICAL_THRESHOLD" -ge "$DISK_ABORT_THRESHOLD" ]; then
+    echo "❌ 阈值关系错误：需满足 DISK_WARN_THRESHOLD < DISK_CRITICAL_THRESHOLD < DISK_ABORT_THRESHOLD"
+    exit 1
+  fi
+
+  if [ "$ALERT_WARN_THRESHOLD" -ge "$ALERT_CRITICAL_THRESHOLD" ]; then
+    echo "❌ 阈值关系错误：需满足 ALERT_WARN_THRESHOLD < ALERT_CRITICAL_THRESHOLD"
+    exit 1
+  fi
+}
+
+report_disk_health() {
+  local usage=$1
+  if [ "$usage" -ge "$ALERT_CRITICAL_THRESHOLD" ]; then
+    echo "🚨 磁盘健康状态：CRITICAL（${usage}%）"
+  elif [ "$usage" -ge "$ALERT_WARN_THRESHOLD" ]; then
+    echo "⚠️ 磁盘健康状态：WARNING（${usage}%）"
+  else
+    echo "✅ 磁盘健康状态：OK（${usage}%）"
+  fi
+}
+
 load_env_file() {
   local env_file=$1
   while IFS= read -r raw_line || [ -n "$raw_line" ]; do
@@ -111,9 +148,13 @@ echo "🚀 开始部署 Lumina (简思) 项目..."
 
 DISK_WARN_THRESHOLD=${DISK_WARN_THRESHOLD:-80}
 DISK_CRITICAL_THRESHOLD=${DISK_CRITICAL_THRESHOLD:-90}
+DISK_ABORT_THRESHOLD=${DISK_ABORT_THRESHOLD:-95}
+ALERT_WARN_THRESHOLD=${ALERT_WARN_THRESHOLD:-85}
+ALERT_CRITICAL_THRESHOLD=${ALERT_CRITICAL_THRESHOLD:-90}
 IMAGE_PRUNE_UNTIL=${IMAGE_PRUNE_UNTIL:-240h}
 BUILDER_PRUNE_UNTIL=${BUILDER_PRUNE_UNTIL:-168h}
 ENABLE_AGGRESSIVE_PRUNE=${ENABLE_AGGRESSIVE_PRUNE:-false}
+validate_thresholds
 
 DISK_USAGE=$(get_disk_usage)
 if [ "$DISK_USAGE" -ge "$DISK_WARN_THRESHOLD" ]; then
@@ -171,6 +212,11 @@ if [ "$DISK_USAGE_AFTER" -ge "$DISK_CRITICAL_THRESHOLD" ]; then
   fi
 fi
 
+if [ "$DISK_USAGE_AFTER" -ge "$DISK_ABORT_THRESHOLD" ]; then
+  echo "❌ 磁盘占用 ${DISK_USAGE_AFTER}% 超过中止阈值 ${DISK_ABORT_THRESHOLD}% ，为避免部署失败风险已终止"
+  exit 1
+fi
+
 echo "🗄️ 正在同步数据库 Schema..."
 echo "⏳ 等待 PostgreSQL 就绪..."
 for i in {1..60}; do
@@ -203,6 +249,8 @@ if [ -d apps/backend/prisma/migrations ] && [ "$(ls -A apps/backend/prisma/migra
 else
   "${DOCKER[@]}" compose exec -T backend ./node_modules/.bin/prisma db push
 fi
+
+report_disk_health "$DISK_USAGE_AFTER"
 
 echo "✅ 部署完成！"
 echo "🌐 前端访问地址: http://服务器IP"
