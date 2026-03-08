@@ -140,22 +140,37 @@ const newChatTitle = computed(() => `${t('ai.newChat')} (${shortcutHint})`)
 
           <!-- AI 思考模式开关 (移回工具栏外层) -->
           <button
-            class="toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border active:scale-95"
-            :class="
+            class="toolbar-btn relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border active:scale-95 transition-all duration-700"
+            :class="[
               isThinkingEnabled
-                ? 'border-primary/30 bg-primary/15 text-primary shadow-[0_0_12px_hsl(var(--primary)_/_0.1)]'
-                : 'border-transparent'
-            "
+                ? '!border-primary/40 bg-gradient-to-br from-primary/10 to-primary/5 text-primary shadow-[0_4px_12px_rgba(var(--primary-rgb),0.12)]'
+                : 'border-transparent',
+            ]"
             :title="isThinkingEnabled ? t('ai.thinkingEnabled') : t('ai.thinkingDisabled')"
             @click="emit('toggleThinking')"
           >
+            <!-- 激活状态下的外层扩散光圈 (极简设计) -->
+            <div
+              v-if="isThinkingEnabled"
+              class="absolute inset-0 rounded-full animate-ping-slow bg-primary/20"
+            ></div>
+
             <Lightbulb
               :size="16"
               :class="[
-                'transition-all duration-300',
-                isThinkingEnabled ? 'fill-primary/20 scale-110' : 'text-muted-foreground',
+                'relative z-10 transition-all duration-700 ease-soft-spring',
+                isThinkingEnabled
+                  ? 'text-primary scale-110 filter drop-shadow-[0_0_5px_rgba(var(--primary-rgb),0.4)]'
+                  : 'text-muted-foreground opacity-60',
               ]"
+              :stroke-width="isThinkingEnabled ? 2.5 : 2"
             />
+
+            <!-- 极简激活指示点 -->
+            <div
+              v-if="isThinkingEnabled"
+              class="absolute bottom-1.5 right-1.5 h-1 w-1 rounded-full bg-primary shadow-[0_0_4px_rgba(var(--primary-rgb),0.8)]"
+            ></div>
           </button>
 
           <!-- 模式切换功能 -->
@@ -279,6 +294,21 @@ const newChatTitle = computed(() => `${t('ai.newChat')} (${shortcutHint})`)
 .toolbar-container .scroll-mask {
   margin-left: -0.75rem;
   margin-right: -0.75rem;
+}
+
+@keyframes ping-slow {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+.animate-ping-slow {
+  animation: ping-slow 3s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 
 @container (max-width: 520px) {
