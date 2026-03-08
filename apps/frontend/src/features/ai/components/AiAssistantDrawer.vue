@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useWindowSize } from '@vueuse/core'
+import { ref, computed, watch, nextTick } from 'vue'
+import { useWindowSize, onKeyStroke } from '@vueuse/core'
 import ResizableDrawer from '@/components/ResizableDrawer.vue'
 import ChatMessageList from '@/features/ai/components/ChatMessageList.vue'
 import AISettingsDialog from '@/features/ai/components/AISettingsDialog.vue'
@@ -159,6 +159,30 @@ const {
 })
 
 const chatInput = composedInput
+
+// 快捷键监听: Command + J / Ctrl + J 开启新对话
+onKeyStroke(['j', 'J'], (e) => {
+  if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey) {
+    // 如果正在生成中，不处理
+    if (isGenerating.value) return
+
+    e.preventDefault()
+    // 如果已经有对话内容才重置，或者当前抽屉未打开，则强制打开
+    if (hasHistory.value || !modelValue.value) {
+      handleNewChat()
+    }
+    modelValue.value = true
+  }
+})
+
+// 监听抽屉打开，自动聚焦输入框
+watch(modelValue, (isOpen) => {
+  if (isOpen) {
+    void nextTick(() => {
+      assistantInputRef.value?.focus()
+    })
+  }
+})
 
 // 当前显示的预设名称
 const currentPresetName = computed(() => activePreset.value?.name ?? t('ai.custom'))

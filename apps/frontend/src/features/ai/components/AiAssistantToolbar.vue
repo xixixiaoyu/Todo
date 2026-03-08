@@ -60,6 +60,10 @@ const { t } = useI18n()
 
 const { width: windowWidth } = useWindowSize()
 const isMobile = computed(() => windowWidth.value < 640)
+
+const isMac = typeof window !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform)
+const shortcutHint = isMac ? '⌘J' : 'Ctrl+J'
+const newChatTitle = computed(() => `${t('ai.newChat')} (${shortcutHint})`)
 </script>
 
 <template>
@@ -85,7 +89,7 @@ const isMobile = computed(() => windowWidth.value < 640)
               '!border-primary/20 !bg-primary/10 !text-primary hover:!bg-primary/20 hover:!border-primary/30',
             ]"
             :disabled="!hasHistory || isGenerating"
-            :title="t('ai.newChat')"
+            :title="newChatTitle"
             @click="emit('newChat')"
           >
             <Plus :size="isMobile ? 14 : 14" class="transition-transform group-hover:rotate-90" />
