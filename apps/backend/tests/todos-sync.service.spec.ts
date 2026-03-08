@@ -88,6 +88,8 @@ describe('TodoSyncService', () => {
       expect(result.synced).toEqual(
         expect.arrayContaining([expect.objectContaining({ id: 'server-uuid' })]),
       )
+      expect(result.acceptedIds).toEqual(['861a3556-9150-4819-b7b5-22e379434857'])
+      expect(result.conflicts).toEqual([])
       expect(result.deletedIds).toHaveLength(0)
       expect(result.serverTime).toBeDefined()
     })
@@ -191,6 +193,68 @@ describe('TodoSyncService', () => {
 
       expect(mockPrisma.todo.upsert).not.toHaveBeenCalled()
       expect(result.deletedIds).toEqual([id])
+      expect(result.acceptedIds).toEqual([])
+      expect(result.conflicts).toEqual([{ id, reason: 'TOMBSTONED' }])
+    })
+
+    it('should reject update when client version does not match server version', async () => {
+      const userId = 1
+      const id = '861a3556-9150-4819-b7b5-22e379434857'
+      const syncDto: SyncMergeDto = {
+        todos: [
+          {
+            id,
+            title: 'Outdated client change',
+            completed: false,
+            order: 0,
+            isPinned: false,
+            version: 3,
+            pomodoroCount: 0,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ],
+        lastSyncAt: new Date(0).toISOString(),
+      }
+
+      mockPrisma.todoTombstone.findUnique.mockResolvedValue(null)
+      mockPrisma.todo.findUnique.mockResolvedValue({
+        userId,
+        version: 5,
+        remindAt: null,
+        remindedAt: null,
+      })
+      mockPrisma.todo.findMany.mockResolvedValue([
+        {
+          id,
+          title: 'Server Latest',
+          completed: false,
+          order: 0,
+          isPinned: false,
+          version: 5,
+          dueAt: null,
+          remindAt: null,
+          remindedAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          completedAt: null,
+          deletedAt: null,
+          pomodoroCount: 0,
+        },
+      ])
+      mockPrisma.todoTombstone.findMany.mockResolvedValue([])
+
+      const result = await service.sync(userId, syncDto)
+
+      expect(mockPrisma.todo.upsert).not.toHaveBeenCalled()
+      expect(result.acceptedIds).toEqual([])
+      expect(result.conflicts).toEqual([
+        {
+          id,
+          reason: 'VERSION_CONFLICT',
+          serverVersion: 5,
+        },
+      ])
     })
   })
 })

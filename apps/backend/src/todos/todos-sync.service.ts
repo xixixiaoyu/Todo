@@ -24,6 +24,13 @@ const todoSelect = {
 } as const
 
 type TodoPublic = Prisma.TodoGetPayload<{ select: typeof todoSelect }>
+type SyncConflictReason = 'TOMBSTONED' | 'OWNER_MISMATCH' | 'VERSION_CONFLICT'
+
+interface SyncConflict {
+  id: string
+  reason: SyncConflictReason
+  serverVersion?: number
+}
 
 @Injectable()
 export class TodoSyncService {
@@ -43,6 +50,8 @@ export class TodoSyncService {
 
     // 1. 处理客户端推送的变更 (使用事务保证原子性)
     const successfullyUpdatedItems: TodoPublic[] = []
+    const acceptedIds: string[] = []
+    const conflicts: SyncConflict[] = []
     if (todos && todos.length > 0) {
       await this.prisma.$transaction(async (tx) => {
         for (const todo of todos as SyncItem[]) {
@@ -51,13 +60,13 @@ export class TodoSyncService {
             select: { deletedAt: true },
           })
           if (tombstone) {
+            conflicts.push({ id: todo.id, reason: 'TOMBSTONED' })
             continue
           }
 
           const existing = await tx.todo.findUnique({
             where: { id: todo.id },
             select: {
-              updatedAt: true,
               userId: true,
               version: true,
               remindAt: true,
@@ -65,23 +74,23 @@ export class TodoSyncService {
             },
           })
 
-          const clientUpdatedAt = new Date(todo.updatedAt)
           const clientVersion = todo.version ?? 0
           const clientRemindAt = todo.remindAt ? new Date(todo.remindAt) : null
 
           if (existing && existing.userId !== userId) {
+            conflicts.push({ id: todo.id, reason: 'OWNER_MISMATCH' })
             continue
           }
 
-          // 冲突检测逻辑：版本号优先，时间戳作为最后的兜底
+          // 冲突检测逻辑：严格版本匹配，避免客户端时钟漂移影响
           if (existing) {
             const serverVersion = existing.version ?? 0
-            if (clientVersion < serverVersion) {
-              // 服务器版本更高，跳过更新
-              continue
-            }
-            if (clientVersion === serverVersion && existing.updatedAt > clientUpdatedAt) {
-              // 版本号相同但服务器时间戳更新，跳过
+            if (clientVersion !== serverVersion) {
+              conflicts.push({
+                id: todo.id,
+                reason: 'VERSION_CONFLICT',
+                serverVersion,
+              })
               continue
             }
           }
@@ -104,9 +113,9 @@ export class TodoSyncService {
             remindedAt: keepRemindedAt ? existing!.remindedAt : null,
             completedAt: todo.completedAt ? new Date(todo.completedAt) : null,
             deletedAt: todo.deletedAt ? new Date(todo.deletedAt) : null,
-            updatedAt: clientUpdatedAt,
+            updatedAt: serverTime,
             userId,
-            version: clientVersion + 1, // 成功更新后版本号 +1
+            version: existing ? (existing.version ?? 0) + 1 : 1,
           }
 
           const updated = await tx.todo.upsert({
@@ -121,6 +130,7 @@ export class TodoSyncService {
           })
 
           successfullyUpdatedItems.push(updated)
+          acceptedIds.push(todo.id)
         }
       })
     }
@@ -164,6 +174,8 @@ export class TodoSyncService {
     return {
       synced: allChanges,
       deletedIds,
+      acceptedIds,
+      conflicts,
       serverTime: serverTime.toISOString(),
     }
   }

@@ -221,6 +221,49 @@ describe('Todo Store Sync', () => {
     expect(store.todos.find((t) => t.id === 'to-be-deleted')).toBeUndefined()
   })
 
+  it('should mark todo as error when server reports conflict', async () => {
+    const store = useTodoStore()
+
+    store.todos = [
+      {
+        id: 'conflict-todo',
+        title: 'Conflict Todo',
+        completed: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        syncStatus: 'pending',
+        order: 0,
+        isPinned: false,
+        version: 3,
+        pomodoroCount: 0,
+      },
+    ]
+
+    const mockResponse = {
+      data: {
+        synced: [],
+        deletedIds: [],
+        acceptedIds: [],
+        conflicts: [
+          {
+            id: 'conflict-todo',
+            reason: 'VERSION_CONFLICT',
+            serverVersion: 4,
+          },
+        ],
+        serverTime: new Date().toISOString(),
+      } as SyncResponse,
+    }
+
+    vi.mocked(todoApi.sync).mockResolvedValue(
+      mockResponse as unknown as Awaited<ReturnType<typeof todoApi.sync>>,
+    )
+
+    await store.sync()
+
+    expect(store.todos[0].syncStatus).toBe('error')
+  })
+
   it('should purge logically deleted items after successful sync', async () => {
     const store = useTodoStore()
 

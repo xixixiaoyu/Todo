@@ -90,12 +90,21 @@ export function createTodoCloud(deps: {
         currentSocketId,
       )
 
-      const { synced, deletedIds, serverTime } = response.data
+      const { synced, deletedIds, acceptedIds, conflicts, serverTime } = response.data
+      const acceptedIdSet = new Set(acceptedIds ?? [])
+      const conflictIdSet = new Set((conflicts ?? []).map((item) => item.id))
+      const shouldFallbackMarkSynced =
+        acceptedIds === undefined && conflicts === undefined && conflictIdSet.size === 0
 
       pendingTodos.forEach((t) => {
         const snapshotTime = syncSnapshots.get(t.id)
-        if (snapshotTime === new Date(t.updatedAt).getTime()) {
+        if (snapshotTime !== new Date(t.updatedAt).getTime()) return
+        if (acceptedIdSet.has(t.id) || shouldFallbackMarkSynced) {
           t.syncStatus = 'synced'
+          return
+        }
+        if (conflictIdSet.has(t.id)) {
+          t.syncStatus = 'error'
         }
       })
 
@@ -226,11 +235,7 @@ export function createTodoCloud(deps: {
   }
 
   function resetSyncStatus(): void {
-    deps.lastSyncAt.value = null
     deps.isTrashLoaded.value = false
-    deps.todos.value.forEach((t) => {
-      t.syncStatus = undefined
-    })
   }
 
   async function initSocketListener(): Promise<void> {

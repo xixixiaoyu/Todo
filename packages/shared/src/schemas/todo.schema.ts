@@ -36,16 +36,25 @@ export const SyncMergeRequestSchema = z.object({
   lastSyncAt: z.date().or(z.string()).optional(),
 })
 
+export const SyncConflictSchema = z.object({
+  id: z.string().uuid(),
+  reason: z.enum(['TOMBSTONED', 'OWNER_MISMATCH', 'VERSION_CONFLICT']),
+  serverVersion: z.number().int().optional(),
+})
+
 /**
  * 同步响应 Schema
  */
 export const SyncResponseSchema = z.object({
   synced: z.array(TodoSchema),
   deletedIds: z.array(z.string()),
+  acceptedIds: z.array(z.string().uuid()).optional(),
+  conflicts: z.array(SyncConflictSchema).optional(),
   serverTime: z.string(),
 })
 
 export type Todo = z.infer<typeof TodoSchema>
 export type SyncItem = z.infer<typeof SyncItemSchema>
 export type SyncMergeRequest = z.infer<typeof SyncMergeRequestSchema>
+export type SyncConflict = z.infer<typeof SyncConflictSchema>
 export type SyncResponse = z.infer<typeof SyncResponseSchema>
