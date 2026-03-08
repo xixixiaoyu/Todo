@@ -16,17 +16,17 @@ const { t } = useI18n()
 const { themeColor, setThemeColor, resetThemeColor } = useTheme()
 
 const inputId = useId()
-const customColor = ref(themeColor.value ?? '#8da8a0')
+const customColor = ref(themeColor.value ?? '#7f9f97')
 
 const presets = computed<ThemePreset[]>(() => [
-  { name: t('common.themeColor.presets.celadon'), value: '#8da8a0' },
-  { name: t('common.themeColor.presets.twilightAmber'), value: '#a68d7a' },
-  { name: t('common.themeColor.presets.mistBlue'), value: '#7b92a6' },
-  { name: t('common.themeColor.presets.mossGreen'), value: '#849c8d' },
-  { name: t('common.themeColor.presets.sunsetRose'), value: '#b89098' },
-  { name: t('common.themeColor.presets.lilacGray'), value: '#9a92a6' },
-  { name: t('common.themeColor.presets.graphite'), value: '#6e7d8e' },
-  { name: t('common.themeColor.presets.indigo'), value: '#5a6a8a' },
+  { name: t('common.themeColor.presets.celadon'), value: '#7f9f97' },
+  { name: t('common.themeColor.presets.twilightAmber'), value: '#9b8574' },
+  { name: t('common.themeColor.presets.mistBlue'), value: '#728ba1' },
+  { name: t('common.themeColor.presets.mossGreen'), value: '#7c9585' },
+  { name: t('common.themeColor.presets.sunsetRose'), value: '#ae8792' },
+  { name: t('common.themeColor.presets.lilacGray'), value: '#918aa1' },
+  { name: t('common.themeColor.presets.graphite'), value: '#647587' },
+  { name: t('common.themeColor.presets.indigo'), value: '#4f6284' },
   { name: t('common.themeColor.presets.random'), value: 'random' },
 ])
 
@@ -108,7 +108,7 @@ function reset() {
                 </span>
                 <span
                   v-else
-                  class="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-gradient-to-tr from-[#8da8a0] via-[#a68d7a] to-[#7b92a6] shadow-sm"
+                  class="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-gradient-to-tr from-[#7f9f97] via-[#9b8574] to-[#728ba1] shadow-sm"
                 >
                   <div class="h-1 w-1 rounded-full bg-white/80" />
                 </span>
@@ -123,7 +123,7 @@ function reset() {
               />
               <div
                 v-else
-                class="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full bg-gradient-to-tr from-[#8da8a0] via-[#a68d7a] to-[#7b92a6] opacity-40 blur-2xl transition-opacity group-hover:opacity-60"
+                class="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full bg-gradient-to-tr from-[#7f9f97] via-[#9b8574] to-[#728ba1] opacity-40 blur-2xl transition-opacity group-hover:opacity-60"
               />
             </button>
           </div>
