@@ -113,20 +113,21 @@ const isMobile = computed(() => windowWidth.value < 640)
             <ImageIcon :size="16" />
           </button>
 
-          <!-- 停止生成按钮 (仅移动端在生成时显示) -->
+          <!-- 停止生成 / 上一个会话 (生成中显示停止按钮，否则显示返回按钮) -->
           <button
-            v-if="isMobile && isGenerating"
+            v-if="isGenerating"
             class="toolbar-btn animate-stop-pulse flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10 text-red-500 active:scale-95"
             :title="t('ai.stop')"
             @click="emit('stopGenerating')"
           >
-            <Square :size="10" class="fill-current" />
+            <Square :size="11" class="fill-current" />
           </button>
 
           <button
+            v-else
             class="toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
             :title="t('ai.previousSession')"
-            :disabled="isGenerating || !lastActiveSession"
+            :disabled="!lastActiveSession"
             @click="emit('navigatePrevious')"
           >
             <ChevronLeft :size="16" />

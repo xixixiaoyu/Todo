@@ -10,7 +10,6 @@ import {
   Lightbulb,
   GraduationCap,
   Send,
-  Square,
 } from 'lucide-vue-next'
 import type { ParsedFile } from '@/composables/useFileParsing'
 import AiAssistantInputAttachments from '@/features/ai/components/AiAssistantInputAttachments.vue'
@@ -32,7 +31,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void
   (e: 'send'): void
-  (e: 'stop'): void
   (e: 'removeImage', index: number): void
   (e: 'removeFile', id: string): void
   (e: 'triggerFileUpload'): void
@@ -305,16 +303,6 @@ defineExpose({
 
       <!-- 发送按钮内联 (全平台统一) -->
       <div class="flex items-center gap-2 pb-1 pr-1">
-        <!-- 停止按钮 (桌面端) -->
-        <button
-          v-if="!isMobile && isGenerating"
-          class="animate-stop-pulse flex h-8 items-center gap-1.5 rounded-xl bg-red-500/10 px-3 text-[12px] font-bold text-red-500 transition-all hover:bg-red-500/20 active:scale-95"
-          @click="emit('stop')"
-        >
-          <Square :size="12" class="fill-current" />
-          <span>{{ t('ai.stop') }}</span>
-        </button>
-
         <button
           :class="[
             'flex shrink-0 items-center justify-center rounded-xl text-primary-foreground transition-all shadow-sm',

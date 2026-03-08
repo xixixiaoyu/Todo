@@ -260,7 +260,6 @@ defineOptions({
             :is-generating="isGenerating"
             :error="error"
             @send="handleSend"
-            @stop="stopGenerating"
             @remove-image="removeImage"
             @remove-file="removeFile"
             @trigger-file-upload="triggerUpload"
