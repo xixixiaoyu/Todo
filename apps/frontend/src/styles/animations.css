@@ -142,26 +142,6 @@
   animation: button-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-@keyframes stop-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.2);
-    border-color: rgba(239, 68, 68, 0.2);
-    background-color: rgba(239, 68, 68, 0.03);
-  }
-  50% {
-    box-shadow:
-      0 0 0 6px rgba(239, 68, 68, 0),
-      0 0 8px rgba(239, 68, 68, 0.2);
-    border-color: rgba(239, 68, 68, 0.4);
-    background-color: rgba(239, 68, 68, 0.1);
-  }
-}
-
-.animate-stop-pulse {
-  animation: stop-pulse 2.5s ease-in-out infinite;
-}
-
 /* 思考过程流式效果 */
 @keyframes shimmer-thinking {
   0% {
