@@ -169,7 +169,8 @@ function normalizeTodoActions(parsed: unknown): ProposedTodoChange[] | null {
     data: z
       .object({
         id: todoId,
-        title: trimmedNonEmpty,
+        title: trimmedNonEmpty.optional(),
+        parentId: z.union([todoId, z.null()]).optional(),
       })
       .passthrough(),
   })
@@ -216,7 +217,7 @@ function normalizeTodoActions(parsed: unknown): ProposedTodoChange[] | null {
     const id = isNonEmptyString(action.id) ? action.id : `temp-${i + 1}`
 
     const parentId =
-      action.type === 'add'
+      action.type === 'add' || action.type === 'update'
         ? typeof action.data.parentId === 'string'
           ? action.data.parentId
           : (action.data.parentId ?? undefined)
@@ -227,7 +228,7 @@ function normalizeTodoActions(parsed: unknown): ProposedTodoChange[] | null {
       type: action.type,
       data: {
         ...action.data,
-        ...(action.type === 'add' ? { parentId } : {}),
+        ...(action.type === 'add' || action.type === 'update' ? { parentId } : {}),
       } as ProposedTodoChange['data'],
     })
   }

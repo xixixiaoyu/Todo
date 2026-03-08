@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ListTree, Pin } from 'lucide-vue-next'
+import { ListTree, LayoutGrid } from 'lucide-vue-next'
 
 const emit = defineEmits<{
   (e: 'select', text: string, options?: { requireTodo?: boolean }): void
@@ -19,11 +19,11 @@ const suggestions = computed(() => [
     requireTodo: true,
   },
   {
-    icon: Pin,
+    icon: LayoutGrid,
     title: t('ai.suggestion2Title'),
     desc: t('ai.suggestion2Desc'),
-    color: 'text-amber-500',
-    bg: 'bg-amber-500/10',
+    color: 'text-blue-500',
+    bg: 'bg-blue-500/10',
     requireTodo: true,
   },
 ])

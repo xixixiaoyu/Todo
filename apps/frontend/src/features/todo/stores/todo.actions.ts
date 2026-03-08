@@ -33,7 +33,7 @@ export function createTodoActions(deps: {
   breakdownTaskWithAI: (id: string) => Promise<string[]>
   restoreTodo: (id: string) => Promise<void>
   deleteTodo: (id: string) => Promise<void>
-  updateTodo: (id: string, title: string) => Promise<boolean>
+  updateTodo: (id: string, title?: string, parentId?: string | null) => Promise<boolean>
   updateTodoSchedule: (id: string, dueAt: Date | null, remindAt: Date | null) => boolean
   reorderTodos: (orderedIds: string[], parentId?: string | null) => void
   setDrawerOpen: (open: boolean) => void
@@ -389,26 +389,31 @@ export function createTodoActions(deps: {
     const todo = deps.todos.value.find((t) => t.id === id)
     if (!todo) return []
 
+    const path = getTodoPath(id)
+    const contextStr = path.length > 0 ? `[上下文路径：${path.join(' > ')}]` : ''
+
     deps.loading.value = true
     try {
       const prompt = `
 # Role
-你是一个极简主义的 GTD (Getting Things Done) 效率专家。擅长将宏大、模糊的任务拆解为极致清晰、可立即执行的微小动作。
+你是一个奉行“奥卡姆剃刀”原则的资深工程效率专家。你不仅拆解任务，更是在通过任务结构重塑用户的执行思维。
 
 # Task
-请将以下任务拆解为 3-7 个具体的子任务。
+请将以下任务拆解为 3-7 个可立即执行的“原子动作”。
 
 # Rules
-- 拆解后的子任务必须是「行动导向」的（Actionable）。
-- 表达极其精炼，不含任何废话。
-- 逻辑上需具备完备性，即完成这些子任务基本等同于完成主任务。
-- 采用 JSON 数组格式返回，不要包含任何 Markdown 代码块标签或其他多余文本。
-
-# Output Format
-["子任务 1", "子任务 2", "子任务 3"]
+1. **SMART 原则**：每个子任务必须具体、可衡量、具备明确的行动动词（如：编写、调研、配置、部署）。
+2. **拒绝冗余**：剔除“开始...”、“进行...”、“思考...”等模糊表述。
+3. **逻辑完备**：确保这组原子动作能覆盖主任务的核心路径。
+4. **上下文敏感**：结合任务所在的层级路径进行拆解。
+5. **极简输出**：严格返回 JSON 数组格式，不要包含任何 Markdown 代码块标签或其他解释性文字。
 
 # Target Task
+${contextStr}
 任务名称：${todo.title}
+
+# Output Example
+["编写数据库迁移脚本", "配置 Redis 缓存实例", "执行压力测试并记录瓶颈"]
 `.trim()
 
       const response = await getAIStaticResponse([{ role: 'user', content: prompt }])
@@ -485,19 +490,34 @@ export function createTodoActions(deps: {
     deps.debouncedSync()
   }
 
-  async function updateTodo(id: string, title: string): Promise<boolean> {
-    const trimmedTitle = title.trim()
-    if (!trimmedTitle) return false
-
+  async function updateTodo(
+    id: string,
+    title?: string,
+    parentId?: string | null,
+  ): Promise<boolean> {
     const todo = deps.todos.value.find((t) => t.id === id)
-    if (!todo || todo.title === trimmedTitle) return !!todo
+    if (!todo) return false
 
-    if (isDuplicate(trimmedTitle, todo.parentId ?? null, id)) {
+    const trimmedTitle = title?.trim()
+    const targetTitle = trimmedTitle || todo.title
+    const targetParentId = parentId !== undefined ? parentId : todo.parentId
+
+    // 如果没有实质性变更且标题不为空，直接返回 true
+    if (targetTitle === todo.title && targetParentId === todo.parentId) return true
+
+    // 检查在目标层级下是否有同名任务
+    if (isDuplicate(targetTitle, targetParentId, id)) {
       deps.error.value = 'todo.duplicate'
       return false
     }
 
-    todo.title = trimmedTitle
+    if (title !== undefined) {
+      todo.title = targetTitle
+    }
+    if (parentId !== undefined) {
+      todo.parentId = parentId
+    }
+
     todo.updatedAt = new Date()
     todo.syncStatus = 'pending'
     deps.debouncedSync()

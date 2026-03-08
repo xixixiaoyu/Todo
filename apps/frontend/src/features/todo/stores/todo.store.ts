@@ -110,6 +110,7 @@ export const useTodoStore = defineStore(
           const todo = result.find((t) => t.id === change.data.id)
           if (todo) {
             if (change.data.title) todo.title = change.data.title
+            if (change.data.parentId !== undefined) todo.parentId = change.data.parentId
             todo.isProposed = true
           }
         } else if (change.type === 'delete') {
@@ -334,8 +335,18 @@ export const useTodoStore = defineStore(
         switch (change.type) {
           case 'update': {
             const rawTitle = change.data.title
-            const title = typeof rawTitle === 'string' ? rawTitle.trim() : ''
-            if (targetTodoId && title) await actions.updateTodo(targetTodoId, title)
+            const title = typeof rawTitle === 'string' ? rawTitle.trim() : undefined
+            const rawParentId = change.data.parentId
+            const parentId =
+              rawParentId === null
+                ? null
+                : typeof rawParentId === 'string'
+                  ? (idMap.get(rawParentId) ?? rawParentId)
+                  : undefined
+
+            if (targetTodoId) {
+              await actions.updateTodo(targetTodoId, title, parentId)
+            }
             break
           }
           case 'delete':
