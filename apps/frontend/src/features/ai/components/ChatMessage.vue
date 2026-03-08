@@ -80,14 +80,12 @@ const hasContent = computed(() => !!props.message.content)
 const hasDiscussion = computed(
   () => !isUser.value && props.message.discussionSteps && props.message.discussionSteps.length > 0,
 )
-const showLoading = computed(
-  () =>
-    !isUser.value &&
-    !hasContent.value &&
-    isStreaming.value &&
-    !hasThinking.value &&
-    !hasDiscussion.value,
-)
+const auxiliaryPanelStage = computed<'none' | 'loading' | 'thinking'>(() => {
+  if (isUser.value) return 'none'
+  if (hasThinking.value) return 'thinking'
+  if (!hasContent.value && isStreaming.value && !hasDiscussion.value) return 'loading'
+  return 'none'
+})
 const showMessageBubble = computed(() => isUser.value || hasContent.value)
 
 // 是否正在生成图片
@@ -138,16 +136,27 @@ defineExpose({
       <!-- 多模型讨论过程 -->
       <ChatMessageDiscussion v-if="hasDiscussion" :steps="message.discussionSteps" />
 
-      <!-- 思考过程（AI 消息） -->
-      <ChatMessageThinking
-        v-if="hasThinking && !isUser"
-        :message="message"
-        :is-streaming="isStreaming"
-        :has-content="hasContent"
-      />
-
-      <!-- 主消息气泡 / 加载状态 -->
-      <ChatMessageLoading v-if="showLoading" :is-image-generating="isImageGenerating" />
+      <Transition
+        mode="out-in"
+        enter-active-class="transition duration-180 ease-out"
+        enter-from-class="transform translate-y-1 opacity-0"
+        enter-to-class="transform translate-y-0 opacity-100"
+        leave-active-class="transition duration-140 ease-in"
+        leave-from-class="transform translate-y-0 opacity-100"
+        leave-to-class="transform -translate-y-1 opacity-0"
+      >
+        <!-- 思考过程（AI 消息） -->
+        <ChatMessageThinking
+          v-if="auxiliaryPanelStage === 'thinking'"
+          :message="message"
+          :is-streaming="isStreaming"
+          :has-content="hasContent"
+        />
+        <ChatMessageLoading
+          v-else-if="auxiliaryPanelStage === 'loading'"
+          :is-image-generating="isImageGenerating"
+        />
+      </Transition>
 
       <Transition
         enter-active-class="transition duration-200 cubic-bezier(0.2, 0, 0, 1)"

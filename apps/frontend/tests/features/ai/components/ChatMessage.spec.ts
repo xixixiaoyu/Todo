@@ -174,6 +174,36 @@ describe('ChatMessage', () => {
     expect(wrapper.find('.animate-pulse').exists()).toBe(true)
   })
 
+  it('should switch from loading to thinking panel without overlap', async () => {
+    const message = {
+      id: '1',
+      role: 'assistant' as const,
+      content: '',
+      isStreaming: true,
+    }
+
+    const wrapper = mount(ChatMessage, {
+      props: { message },
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    expect(wrapper.find('.loading-container').exists()).toBe(true)
+    expect(wrapper.find('.thinking-content').exists()).toBe(false)
+
+    await wrapper.setProps({
+      message: {
+        ...message,
+        thinkingContent: '正在分析...',
+      },
+    })
+    await flushPromises()
+
+    expect(wrapper.find('.loading-container').exists()).toBe(false)
+    expect(wrapper.find('.thinking-content').exists()).toBe(true)
+  })
+
   it('should toggle thinking content when clicked', async () => {
     const message = {
       id: '1',
