@@ -109,9 +109,6 @@ const {
 // 是否有聊天历史
 const hasHistory = computed(() => messages.value.length > 0)
 
-// 输入框是否禁用
-const isInputDisabled = computed(() => isGenerating.value && !error.value)
-
 const {
   selectedImages,
   parsedFiles,
@@ -122,7 +119,6 @@ const {
   handlePaste,
   triggerUpload,
 } = useAiAssistantAttachments({
-  isInputDisabled,
   triggerFileUpload,
 })
 
@@ -153,7 +149,6 @@ const {
   config,
   updateConfig,
   isGenerating,
-  isInputDisabled,
   selectedImages,
   parsedFiles,
   clearAllAttachments,
@@ -255,7 +250,6 @@ defineOptions({
           <AiAssistantInput
             ref="assistantInputRef"
             v-model="chatInput"
-            :is-input-disabled="isInputDisabled"
             :is-image-generation-enabled="isImageGenerationEnabled"
             :is-todo-assistant-enabled="isTodoAssistantEnabled"
             :is-discussion-enabled="isDiscussionEnabled"

@@ -1,4 +1,4 @@
-import { nextTick, ref, type Ref, type ComputedRef } from 'vue'
+import { nextTick, ref, type Ref } from 'vue'
 import type { ParsedFile } from '@/composables/useFileParsing'
 import type { AIConfig } from '@/features/ai/composables/useAIConfig'
 
@@ -13,7 +13,6 @@ export function useAiAssistantComposer(params: {
   config: Ref<AIConfig>
   updateConfig: (patch: Partial<AIConfig>) => void
   isGenerating: Ref<boolean>
-  isInputDisabled: ComputedRef<boolean>
   selectedImages: Ref<string[]>
   parsedFiles: Ref<ParsedFile[]>
   clearAllAttachments: () => void
@@ -39,8 +38,8 @@ export function useAiAssistantComposer(params: {
         content: f.content,
       }))
 
-    if ((!content && images.length === 0 && documents.length === 0) || params.isInputDisabled.value)
-      return
+    if (!content && images.length === 0 && documents.length === 0) return
+    if (params.isGenerating.value) return
 
     chatInput.value = ''
     params.clearAllAttachments()

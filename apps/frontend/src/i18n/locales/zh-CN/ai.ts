@@ -8,6 +8,7 @@ export const ai = {
   todoAssistantEnabled: '简思助手已开启',
   todoAssistantDisabled: '简思助手已关闭',
   placeholder: '询问 AI 助手... 输入 / 唤起快捷菜单 (按 Shift + Enter 换行，Enter 发送)',
+  typeNextMessage: '输入下一条指令...',
   generating: 'AI 正在回复...',
   managePresets: '管理预设...',
   custom: '自定义',

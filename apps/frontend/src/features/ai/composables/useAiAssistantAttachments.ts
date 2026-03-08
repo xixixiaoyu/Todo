@@ -1,4 +1,4 @@
-import { ref, type ComputedRef } from 'vue'
+import { ref } from 'vue'
 import { useFileParsing } from '@/composables/useFileParsing'
 
 const MAX_TOTAL_ATTACHMENTS = 10
@@ -17,10 +17,7 @@ function isAllowedDocument(file: File): boolean {
   )
 }
 
-export function useAiAssistantAttachments(params: {
-  isInputDisabled: ComputedRef<boolean>
-  triggerFileUpload: () => void
-}) {
+export function useAiAssistantAttachments(params: { triggerFileUpload: () => void }) {
   const selectedImages = ref<string[]>([])
   const { parsedFiles, parseFile, removeFile, clearFiles } = useFileParsing()
 
@@ -63,8 +60,6 @@ export function useAiAssistantAttachments(params: {
   }
 
   const handlePaste = (event: ClipboardEvent) => {
-    if (params.isInputDisabled.value) return
-
     const items = event.clipboardData?.items
     if (!items) return
 

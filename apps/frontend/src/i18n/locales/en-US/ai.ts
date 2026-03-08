@@ -9,6 +9,7 @@ export const ai = {
   todoAssistantDisabled: 'Lumina Assistant Disabled',
   placeholder:
     'Ask AI Assistant... Type / for shortcut menu (Shift + Enter for newline, Enter to send)',
+  typeNextMessage: 'Type your next message...',
   generating: 'AI is replying...',
   parsing: 'Parsing...',
   loginRequiredForParsing: 'Login required to parse this file type',

@@ -18,7 +18,6 @@ import AiAssistantInputSlashCommands from '@/features/ai/components/AiAssistantI
 
 const props = defineProps<{
   modelValue: string
-  isInputDisabled: boolean
   isImageGenerationEnabled: boolean
   isTodoAssistantEnabled: boolean
   isDiscussionEnabled: boolean
@@ -107,7 +106,7 @@ const completedFilesCount = computed(
 )
 
 const canSend = computed(() => {
-  if (props.isInputDisabled) return false
+  if (props.isGenerating) return false
   if (props.modelValue.trim()) return true
   if (props.selectedImages.length > 0) return true
   return completedFilesCount.value > 0
@@ -134,14 +133,14 @@ const handleKeydown = (event: KeyboardEvent) => {
     return
   }
 
-  if (event.key === '/' && !props.modelValue && !props.isInputDisabled) {
+  if (event.key === '/' && !props.modelValue) {
     showSlashCommands.value = true
     selectedCommandIndex.value = 0
   }
 
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault()
-    emit('send')
+    if (canSend.value) emit('send')
   }
 }
 
@@ -239,7 +238,6 @@ defineExpose({
     :class="[
       'input-container-refined relative flex flex-col rounded-[1.25rem] border border-[hsl(var(--ai-glass-border))] bg-[hsl(var(--ai-glass-bg))] shadow-[0_4px_20px_rgba(0,0,0,0.04)] transition-all duration-500 focus-within:border-primary/40 focus-within:shadow-[0_8px_32px_rgba(0,0,0,0.06)]',
       isMobile ? 'p-1 gap-0' : 'p-1 gap-0',
-      isInputDisabled ? 'opacity-60 grayscale-[0.2]' : '',
     ]"
   >
     <AiAssistantInputAttachments
@@ -287,8 +285,8 @@ defineExpose({
         autocorrect="off"
         spellcheck="false"
         :placeholder="
-          isInputDisabled
-            ? t('ai.generating')
+          isGenerating
+            ? t('ai.typeNextMessage')
             : isImageGenerationEnabled
               ? t('ai.imagePromptPlaceholder')
               : isTeachingEnabled
@@ -299,7 +297,6 @@ defineExpose({
           'flex-1 resize-none bg-transparent text-foreground outline-none placeholder:text-muted-foreground/40 leading-relaxed transition-colors',
           isMobile ? 'px-2 py-1 text-[15px]' : 'px-2 py-1.5 text-[15px]',
         ]"
-        :disabled="isInputDisabled"
         @input="(e) => emit('update:modelValue', (e.target as HTMLTextAreaElement).value)"
         @keydown.exact="handleKeydown"
         @keydown.enter.shift.exact="handleNewline"
