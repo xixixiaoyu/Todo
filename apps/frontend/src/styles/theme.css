@@ -3,34 +3,34 @@
     --font-sans: 'LXGW WenKai Screen', 'LXGW WenKai', system-ui, -apple-system, sans-serif;
 
     /* 基础颜色 */
-    --background: 40 25% 97%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
+    --background: 40 18% 96%; /* 温润米白，降低视觉疲劳 */
+    --foreground: 32 10% 20%; /* 暖调深灰，柔和对比度 */
+    --card: 40 15% 98%; /* 微黄纸张感，告别纯白刺眼 */
+    --card-foreground: 32 10% 20%;
+    --popover: 40 15% 98%;
+    --popover-foreground: 32 10% 20%;
 
     /* 主题色 */
     --primary: var(--user-primary, 32 45% 45%);
     --primary-hover: var(--user-primary-hover, 32 45% 40%);
-    --primary-foreground: var(--user-primary-foreground, 0 0% 100%);
+    --primary-foreground: var(--user-primary-foreground, 40 15% 98%);
     --primary-rgb: var(--user-primary-rgb, 129, 95, 49);
 
     /* 次要色 */
-    --secondary: 32 15% 95%;
+    --secondary: 32 12% 94%;
     --secondary-foreground: 32 10% 23%;
-    --muted: 32 15% 95%;
+    --muted: 32 12% 94%;
     --muted-foreground: 32 5% 45%;
-    --accent: 32 15% 95%;
+    --accent: 32 12% 94%;
     --accent-foreground: 32 10% 23%;
 
     /* 警告/错误色 */
     --destructive: 15 65% 55%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 40 15% 98%;
 
     /* 边框和输入 */
-    --border: 32 15% 88%;
-    --input: 32 15% 88%;
+    --border: 32 10% 90%;
+    --input: 32 10% 90%;
     --ring: var(--primary);
 
     /* 圆角 */
