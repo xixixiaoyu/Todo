@@ -7,10 +7,8 @@ import type { ChatSession } from '@/features/ai/composables/useChatHistory'
 import {
   Plus,
   History,
+  Paperclip,
   Lightbulb,
-  GraduationCap,
-  Clover,
-  Image as ImageIcon,
   Settings2,
   Blocks,
   ChevronLeft,
@@ -18,6 +16,7 @@ import {
 } from 'lucide-vue-next'
 import AiAssistantToolbarDiscussionMenu from '@/features/ai/components/AiAssistantToolbarDiscussionMenu.vue'
 import AiAssistantToolbarPresetMenu from '@/features/ai/components/AiAssistantToolbarPresetMenu.vue'
+import AiAssistantToolbarModesMenu from '@/features/ai/components/AiAssistantToolbarModesMenu.vue'
 
 defineProps<{
   hasHistory: boolean
@@ -114,7 +113,7 @@ const newChatTitle = computed(() => `${t('ai.newChat')} (${shortcutHint})`)
             :disabled="isGenerating || (totalAttachments ?? 0) >= 10"
             @click="emit('triggerFileUpload')"
           >
-            <ImageIcon :size="16" />
+            <Paperclip :size="16" />
           </button>
 
           <!-- 停止生成 / 上一个会话 (生成中显示停止按钮，否则显示返回按钮) -->
@@ -139,7 +138,7 @@ const newChatTitle = computed(() => `${t('ai.newChat')} (${shortcutHint})`)
 
           <div class="h-4 w-px shrink-0 bg-border/20 mx-1" />
 
-          <!-- AI 思考模式开关 -->
+          <!-- AI 思考模式开关 (移回工具栏外层) -->
           <button
             class="toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border active:scale-95"
             :class="
@@ -159,50 +158,16 @@ const newChatTitle = computed(() => `${t('ai.newChat')} (${shortcutHint})`)
             />
           </button>
 
-          <button
-            class="toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border active:scale-95"
-            :class="
-              isTeachingEnabled
-                ? 'border-primary/30 bg-primary/15 text-primary shadow-[0_0_12px_hsl(var(--primary)_/_0.1)]'
-                : 'border-transparent'
-            "
-            :title="isTeachingEnabled ? t('ai.teachingEnabled') : t('ai.teachingDisabled')"
-            @click="emit('toggleTeaching')"
-          >
-            <GraduationCap
-              :size="16"
-              :class="[
-                'transition-all duration-300',
-                isTeachingEnabled ? 'scale-110 text-primary' : 'text-muted-foreground',
-              ]"
-            />
-          </button>
-
-          <!-- Todo 助手 -->
-          <button
-            :class="[
-              'toolbar-btn flex shrink-0 items-center active:scale-95 rounded-full border',
-              isMobile ? 'h-8 w-8 justify-center' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
-              isTodoAssistantEnabled
-                ? 'border-primary/30 bg-primary/15 text-primary shadow-[0_0_12px_hsl(var(--primary)_/_0.1)]'
-                : 'border-transparent text-muted-foreground',
-            ]"
-            :title="
-              isTodoAssistantEnabled ? t('ai.todoAssistantEnabled') : t('ai.todoAssistantDisabled')
-            "
-            @click="emit('toggleTodo')"
-          >
-            <Clover
-              :size="14"
-              :class="[
-                'transition-all duration-500',
-                isTodoAssistantEnabled ? 'animate-spin-slow scale-110' : '',
-              ]"
-            />
-            <span v-if="!isMobile" class="toolbar-text font-medium">{{
-              t('ai.todoAssistant')
-            }}</span>
-          </button>
+          <!-- 模式切换功能 -->
+          <AiAssistantToolbarModesMenu
+            :is-mobile="isMobile"
+            :is-teaching-enabled="isTeachingEnabled"
+            :is-todo-assistant-enabled="isTodoAssistantEnabled"
+            :is-image-generation-enabled="isImageGenerationEnabled"
+            @toggle-teaching="emit('toggleTeaching')"
+            @toggle-todo="emit('toggleTodo')"
+            @toggle-image-gen="emit('toggleImageGen')"
+          />
 
           <!-- 多模型协同讨论 -->
           <AiAssistantToolbarDiscussionMenu
@@ -215,30 +180,6 @@ const newChatTitle = computed(() => `${t('ai.newChat')} (${shortcutHint})`)
             @select-primary-model="(id) => emit('selectPrimaryModel', id)"
             @toggle-secondary-model="(id) => emit('toggleSecondaryModel', id)"
           />
-
-          <!-- 生图功能开关 -->
-          <button
-            :class="[
-              'toolbar-btn flex shrink-0 items-center active:scale-95 rounded-full border',
-              isMobile ? 'h-8 w-8 justify-center' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
-              isImageGenerationEnabled
-                ? 'border-primary/30 bg-primary/15 text-primary shadow-[0_0_12px_hsl(var(--primary)_/_0.1)]'
-                : 'border-transparent text-muted-foreground',
-            ]"
-            :title="t('ai.enableImageGeneration')"
-            @click="emit('toggleImageGen')"
-          >
-            <ImageIcon
-              :size="14"
-              :class="[
-                'transition-all duration-300',
-                isImageGenerationEnabled ? 'animate-pulse-slow scale-110' : '',
-              ]"
-            />
-            <span v-if="!isMobile" class="toolbar-text font-medium">{{
-              t('ai.enableImageGeneration')
-            }}</span>
-          </button>
 
           <!-- MCP 工具 -->
           <button

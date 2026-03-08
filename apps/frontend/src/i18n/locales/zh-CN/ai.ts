@@ -4,6 +4,7 @@ export const ai = {
   stop: '停止',
   previousSession: '返回上一个会话',
   history: '历史记录',
+  modes: '模式切换',
   todoAssistant: '简思助手',
   todoAssistantEnabled: '简思助手已开启',
   todoAssistantDisabled: '简思助手已关闭',

@@ -4,6 +4,7 @@ export const ai = {
   stop: 'Stop',
   previousSession: 'Previous Session',
   history: 'History',
+  modes: 'Modes',
   todoAssistant: 'Lumina Assistant',
   todoAssistantEnabled: 'Lumina Assistant Enabled',
   todoAssistantDisabled: 'Lumina Assistant Disabled',

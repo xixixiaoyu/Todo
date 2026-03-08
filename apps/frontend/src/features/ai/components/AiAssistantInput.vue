@@ -7,7 +7,6 @@ import {
   Image as ImageIcon,
   Clover,
   Users,
-  Lightbulb,
   GraduationCap,
   Send,
 } from 'lucide-vue-next'
@@ -54,11 +53,11 @@ const showSlashCommands = ref(false)
 const selectedCommandIndex = ref(0)
 const slashCommands = computed(() => [
   {
-    id: 'thinking',
-    title: t('ai.thinkingMode'),
-    icon: Lightbulb,
-    active: props.isThinkingEnabled,
-    action: () => emit('toggleThinking'),
+    id: 'todo',
+    title: t('ai.todoAssistant'),
+    icon: Clover,
+    active: props.isTodoAssistantEnabled,
+    action: () => emit('toggleTodo'),
   },
   {
     id: 'teaching',
@@ -68,11 +67,11 @@ const slashCommands = computed(() => [
     action: () => emit('toggleTeaching'),
   },
   {
-    id: 'todo',
-    title: t('ai.todoAssistant'),
-    icon: Clover,
-    active: props.isTodoAssistantEnabled,
-    action: () => emit('toggleTodo'),
+    id: 'draw',
+    title: t('ai.enableImageGeneration'),
+    icon: ImageIcon,
+    active: props.isImageGenerationEnabled,
+    action: () => emit('toggleImageGen'),
   },
   {
     id: 'discuss',
@@ -80,13 +79,6 @@ const slashCommands = computed(() => [
     icon: Users,
     active: props.isDiscussionEnabled,
     action: () => emit('toggleDiscussion'),
-  },
-  {
-    id: 'draw',
-    title: t('ai.enableImageGeneration'),
-    icon: ImageIcon,
-    active: props.isImageGenerationEnabled,
-    action: () => emit('toggleImageGen'),
   },
 ])
 
