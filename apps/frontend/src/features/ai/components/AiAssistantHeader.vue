@@ -24,7 +24,7 @@ const isMobile = computed(() => !isDesktop.value && windowWidth.value < 640)
 
 <template>
   <header
-    class="flex h-14 shrink-0 items-center justify-between border-b border-border/10 bg-transparent px-6 z-10"
+    class="flex h-14 shrink-0 items-center justify-between border-b border-primary/10 bg-primary/5 backdrop-blur-md px-6 z-10 shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
     :class="[isDesktop ? 'select-none cursor-default' : '']"
     style="--wails-draggable: drag"
     data-wails-drag
@@ -39,7 +39,7 @@ const isMobile = computed(() => !isDesktop.value && windowWidth.value < 640)
         <Clover :size="18" class="animate-pulse-slow" />
       </div>
       <span
-        class="text-[14px] font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent"
+        class="text-[14px] font-bold tracking-tight bg-gradient-to-br from-primary via-foreground/90 to-foreground/70 bg-clip-text text-transparent"
         >{{ t('ai.assistant') }}</span
       >
     </div>
