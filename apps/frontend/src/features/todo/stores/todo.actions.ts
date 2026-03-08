@@ -499,6 +499,10 @@ ${contextStr}
     if (!todo) return false
 
     const trimmedTitle = title?.trim()
+    if (trimmedTitle === '') {
+      deps.error.value = 'todo.titleEmpty'
+      return false
+    }
     const targetTitle = trimmedTitle || todo.title
     const targetParentId = parentId !== undefined ? parentId : todo.parentId
 

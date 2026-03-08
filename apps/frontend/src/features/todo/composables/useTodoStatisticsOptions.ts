@@ -32,7 +32,7 @@ export function useTodoStatisticsOptions(params: {
 
     const primaryRgb =
       parseRgb(getCssVar('--primary-rgb')) ??
-      (params.isDark.value ? { r: 201, g: 184, b: 150 } : { r: 129, g: 95, b: 49 })
+      (params.isDark.value ? { r: 175, g: 208, b: 197 } : { r: 111, g: 169, b: 151 })
     const successHsl = parseHslTriplet(getCssVar('--success'))
     const successRgb = successHsl
       ? hslToRgb(successHsl.h, successHsl.s, successHsl.l)

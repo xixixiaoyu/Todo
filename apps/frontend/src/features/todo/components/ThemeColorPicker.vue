@@ -16,17 +16,17 @@ const { t } = useI18n()
 const { themeColor, setThemeColor, resetThemeColor } = useTheme()
 
 const inputId = useId()
-const customColor = ref(themeColor.value ?? '#b36a2e')
+const customColor = ref(themeColor.value ?? '#8da8a0')
 
 const presets = computed<ThemePreset[]>(() => [
-  { name: t('common.themeColor.presets.warmAmber'), value: '#b36a2e' },
-  { name: t('common.themeColor.presets.oceanBlue'), value: '#5e8bbd' },
-  { name: t('common.themeColor.presets.emerald'), value: '#53ab91' },
-  { name: t('common.themeColor.presets.rose'), value: '#cc7a8a' },
-  { name: t('common.themeColor.presets.violet'), value: '#8e81c0' },
-  { name: t('common.themeColor.presets.graphite'), value: '#6e7d8e' },
   { name: t('common.themeColor.presets.celadon'), value: '#8da8a0' },
-  { name: t('common.themeColor.presets.peach'), value: '#d4a38d' },
+  { name: t('common.themeColor.presets.twilightAmber'), value: '#a68d7a' },
+  { name: t('common.themeColor.presets.mistBlue'), value: '#7b92a6' },
+  { name: t('common.themeColor.presets.mossGreen'), value: '#849c8d' },
+  { name: t('common.themeColor.presets.sunsetRose'), value: '#b89098' },
+  { name: t('common.themeColor.presets.lilacGray'), value: '#9a92a6' },
+  { name: t('common.themeColor.presets.graphite'), value: '#6e7d8e' },
+  { name: t('common.themeColor.presets.indigo'), value: '#5a6a8a' },
   { name: t('common.themeColor.presets.random'), value: 'random' },
 ])
 
@@ -88,20 +88,27 @@ function reset() {
               :key="preset.value"
               type="button"
               class="group relative overflow-hidden rounded-2xl border border-border/60 bg-background/40 px-3 py-2 text-left transition-all active:scale-[0.98] hover:border-primary/40 hover:bg-background"
-              :class="
-                selectedColor === preset.value ? 'ring-2 ring-primary/30 border-primary/40' : ''
-              "
+              :class="{
+                'ring-2 ring-primary/30 border-primary/40': selectedColor === preset.value,
+              }"
+              :title="preset.name"
               @click="selectPreset(preset.value)"
             >
               <div class="flex items-center gap-2">
                 <span
                   v-if="preset.value !== 'random'"
-                  class="h-3.5 w-3.5 rounded-full shadow-sm"
+                  class="relative h-3.5 w-3.5 rounded-full shadow-sm"
                   :style="{ background: preset.value }"
-                />
+                >
+                  <!-- 内部微光 -->
+                  <div
+                    v-if="selectedColor === preset.value"
+                    class="absolute inset-0 rounded-full bg-white/10 ring-1 ring-inset ring-white/20"
+                  />
+                </span>
                 <span
                   v-else
-                  class="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-gradient-to-tr from-[#b36a2e] via-[#5e8bbd] to-[#cc7a8a] shadow-sm"
+                  class="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-gradient-to-tr from-[#8da8a0] via-[#a68d7a] to-[#7b92a6] shadow-sm"
                 >
                   <div class="h-1 w-1 rounded-full bg-white/80" />
                 </span>
@@ -116,7 +123,7 @@ function reset() {
               />
               <div
                 v-else
-                class="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full bg-gradient-to-tr from-[#b36a2e] via-[#5e8bbd] to-[#cc7a8a] opacity-40 blur-2xl transition-opacity group-hover:opacity-60"
+                class="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full bg-gradient-to-tr from-[#8da8a0] via-[#a68d7a] to-[#7b92a6] opacity-40 blur-2xl transition-opacity group-hover:opacity-60"
               />
             </button>
           </div>

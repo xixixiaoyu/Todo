@@ -11,10 +11,13 @@
     --popover-foreground: 32 10% 20%;
 
     /* 主题色 */
-    --primary: var(--user-primary, 32 45% 45%);
-    --primary-hover: var(--user-primary-hover, 32 45% 40%);
+    --primary: var(--user-primary, 162 25% 55%);
+    --primary-hover: var(--user-primary-hover, 162 25% 50%);
     --primary-foreground: var(--user-primary-foreground, 40 15% 98%);
-    --primary-rgb: var(--user-primary-rgb, 129, 95, 49);
+    --primary-rgb: var(--user-primary-rgb, 111, 169, 151);
+
+    /* 丝滑过渡配置 */
+    --theme-transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 
     /* 次要色 */
     --secondary: 32 12% 94%;
@@ -73,10 +76,10 @@
     --popover-foreground: 240 5% 90%;
 
     /* 主题色 - 保持活力但更沉稳，避免荧光感刺眼 */
-    --primary: var(--user-primary-dark, 32 85% 60%);
-    --primary-hover: var(--user-primary-hover-dark, 32 85% 55%);
-    --primary-foreground: var(--user-primary-foreground-dark, 32 10% 10%);
-    --primary-rgb: var(--user-primary-rgb-dark, 245, 158, 11);
+    --primary: var(--user-primary-dark, 162 25% 75%);
+    --primary-hover: var(--user-primary-hover-dark, 162 25% 80%);
+    --primary-foreground: var(--user-primary-foreground-dark, 162 10% 10%);
+    --primary-rgb: var(--user-primary-rgb-dark, 175, 208, 197);
 
     /* 次要色 - 融入背景，低调优雅 */
     --secondary: 240 4% 16%;
@@ -119,5 +122,24 @@
     transform: translateZ(0);
     will-change: transform;
     perspective: 1000;
+  }
+
+  /* 丝滑过渡动效 */
+  * {
+    transition:
+      color var(--theme-transition),
+      background-color var(--theme-transition),
+      border-color var(--theme-transition),
+      text-decoration-color var(--theme-transition),
+      fill var(--theme-transition),
+      stroke var(--theme-transition);
+  }
+
+  /* 排除一些不需要全局渐变的元素，如进度条、图表、3D 场景 */
+  .no-transition,
+  .no-transition *,
+  canvas,
+  .echarts-container * {
+    transition: none !important;
   }
 }

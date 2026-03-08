@@ -74,10 +74,10 @@ export async function initializeMermaid(theme: 'default' | 'dark' = 'default') {
     },
     themeVariables: isDark
       ? {
-          primaryColor: '#c9b896',
+          primaryColor: '#8da8a0',
           primaryTextColor: '#f0f0f0',
-          primaryBorderColor: '#8b8680',
-          lineColor: '#c9b896',
+          primaryBorderColor: '#6e8a82',
+          lineColor: '#8da8a0',
           secondaryColor: '#3a3a3a',
           tertiaryColor: '#2a2a2a',
           mainBkg: '#1e1e1e',
@@ -90,10 +90,10 @@ export async function initializeMermaid(theme: 'default' | 'dark' = 'default') {
           nodeTextColor: '#f0f0f0',
         }
       : {
-          primaryColor: '#c9b896',
+          primaryColor: '#8da8a0',
           primaryTextColor: '#3a3a3a',
-          primaryBorderColor: '#c9b896',
-          lineColor: '#8b8680',
+          primaryBorderColor: '#8da8a0',
+          lineColor: '#6e8a82',
           secondaryColor: '#faf8f4',
           tertiaryColor: '#f5f3ed',
           mainBkg: '#ffffff',

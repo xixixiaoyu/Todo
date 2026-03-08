@@ -28,14 +28,14 @@ function normalizeHex(hex: string) {
 }
 
 const PRESET_COLORS = [
-  '#b36a2e', // 琥珀
-  '#5e8bbd', // 海蓝
-  '#53ab91', // 翡翠
-  '#cc7a8a', // 玫瑰
-  '#8e81c0', // 紫罗兰
-  '#6e7d8e', // 石墨
-  '#8da8a0', // 青瓷
-  '#d4a38d', // 蜜桃
+  '#8da8a0', // 青瓷 (Celadon) - 原有，非常出色
+  '#a68d7a', // 暮色 (Twilight Amber) - 极低饱和度的暖木色
+  '#7b92a6', // 薄雾 (Mist Blue) - 沉静的灰蓝色
+  '#849c8d', // 苔青 (Moss Green) - 柔和的森林色
+  '#b89098', // 晚霞 (Sunset Rose) - 低饱和度的粉紫色
+  '#9a92a6', // 丁香 (Lilac Gray) - 典雅的紫灰色
+  '#6e7d8e', // 石墨 (Graphite) - 原有，非常出色
+  '#5a6a8a', // 靛青 (Indigo) - 优化后的深邃蓝
 ]
 
 let randomTimer: ReturnType<typeof setTimeout> | null = null
@@ -161,8 +161,8 @@ function applyThemeColor(hex: string | null) {
   const baseHsl = rgbToHsl(baseRgb)
 
   const h = baseHsl.h
-  const s = clamp(baseHsl.s, 25, 85)
-  const lightL = clamp(baseHsl.l, 28, 55)
+  const s = clamp(baseHsl.s, 12, 85) // 放宽饱和度下限，从 25% 降至 12%
+  const lightL = clamp(baseHsl.l, 35, 65) // 提升亮度下限，从 28% 升至 35%，降低「沉重感」
   const darkL = clamp(lightL + 20, 55, 78)
 
   const lightHoverL = clamp(lightL - 5, 20, 60)

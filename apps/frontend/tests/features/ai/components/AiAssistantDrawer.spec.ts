@@ -226,7 +226,7 @@ describe('AiAssistantDrawer Navigation and Button States', () => {
     expect(prevBtn.attributes('disabled')).toBeUndefined()
   })
 
-  it('should disable "Previous Session" button when generating even if last active session exists', async () => {
+  it('should not render "Previous Session" button when generating', async () => {
     mockSessions.value = [
       { id: '2', title: 'Session 2', messages: [], createdAt: new Date(), updatedAt: new Date() },
       { id: '1', title: 'Session 1', messages: [], createdAt: new Date(), updatedAt: new Date() },
@@ -240,7 +240,10 @@ describe('AiAssistantDrawer Navigation and Button States', () => {
     })
 
     const prevBtn = wrapper.find('button[title="ai.previousSession"]')
-    expect(prevBtn.attributes('disabled')).toBeDefined()
+    expect(prevBtn.exists()).toBe(false)
+
+    const stopBtn = wrapper.find('button[title="ai.stop"]')
+    expect(stopBtn.exists()).toBe(true)
   })
 
   it('should reset todo assistant when "New Chat" button is clicked', async () => {
