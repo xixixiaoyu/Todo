@@ -14,6 +14,17 @@ export interface Todo extends SharedTodo {
   pomodoroCount: number
 }
 
+export type SyncConflictReason = 'TOMBSTONED' | 'OWNER_MISMATCH' | 'VERSION_CONFLICT'
+
+export interface TodoSyncConflict {
+  id: string
+  reason: SyncConflictReason
+  serverVersion?: number
+  localDraft?: Todo
+  serverSnapshot?: Todo
+  occurredAt: Date
+}
+
 export interface ProposedTodoChange {
   id: string
   type: 'add' | 'update' | 'delete' | 'toggle' | 'pin'

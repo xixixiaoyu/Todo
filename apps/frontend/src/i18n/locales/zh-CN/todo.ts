@@ -63,4 +63,12 @@ export const todo = {
   quickRemindIn3h: '3 小时后',
   quickRemindBeforeDue10m: '提前 10 分钟',
   quickRemindBeforeDue30m: '提前 30 分钟',
+  syncConflictBanner: '检测到 {count} 项同步冲突，请选择处理方式',
+  syncConflictDismissAll: '暂不处理',
+  syncConflictAcceptServer: '接受云端',
+  syncConflictRetryLocal: '重提本地',
+  syncConflictReasonVersion: '版本冲突：云端已更新，请决定保留哪一侧',
+  syncConflictReasonTombstoned: '该任务已在云端永久删除',
+  syncConflictReasonOwnerMismatch: '任务归属不一致，已拒绝写入',
+  syncConflictUnknownTitle: '未命名任务',
 } as const

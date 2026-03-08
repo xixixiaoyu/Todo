@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import type { Todo as SharedTodo } from '@lumina/shared'
-import type { ProposedTodoChange, FilterType, ViewMode, Todo } from './todo.types'
+import type { ProposedTodoChange, FilterType, ViewMode, Todo, TodoSyncConflict } from './todo.types'
 import { applyFilterAndSort, isEffectivelyCompleted } from './todo.filtering'
 import { createTodoCloud } from './todo.cloud'
 import { createTodoActions } from './todo.actions'
@@ -26,6 +26,7 @@ export const useTodoStore = defineStore(
     const activeProposedChangeSetId = ref<string | null>(null)
     const lastSyncAt = ref<string | null>(null)
     const syncOwnerId = ref<number | null>(null)
+    const syncConflicts = ref<TodoSyncConflict[]>([])
 
     const filteredTodos = computed(() =>
       applyFilterAndSort(todos.value, filter.value, searchQuery.value),
@@ -175,6 +176,9 @@ export const useTodoStore = defineStore(
       debouncedSync,
       mergeOnLogin,
       resetSyncStatus,
+      acceptSyncConflict,
+      retrySyncConflict,
+      clearSyncConflicts,
       initSocketListener,
       deleteTodoPermanently,
       clearTrash,
@@ -184,6 +188,7 @@ export const useTodoStore = defineStore(
       error,
       lastSyncAt,
       syncOwnerId,
+      syncConflicts,
       toSharedTodo,
       isTrashLoaded,
     })
@@ -389,6 +394,7 @@ export const useTodoStore = defineStore(
       activeProposedChangeSetId,
       lastSyncAt,
       syncOwnerId,
+      syncConflicts,
       filteredTodos,
       pendingCount,
       completedCount,
@@ -401,6 +407,9 @@ export const useTodoStore = defineStore(
       sync,
       mergeOnLogin,
       resetSyncStatus,
+      acceptSyncConflict,
+      retrySyncConflict,
+      clearSyncConflicts,
       addProposedChanges,
       setProposedChanges,
       setActiveProposedChangeSet,

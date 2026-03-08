@@ -1,8 +1,8 @@
 import { debounce } from 'lodash-es'
 import type { Ref } from 'vue'
-import type { Todo as SharedTodo } from '@lumina/shared'
+import type { Todo as SharedTodo, SyncConflict as SharedSyncConflict } from '@lumina/shared'
 import { todoApi } from '../api'
-import type { Todo } from './todo.types'
+import type { Todo, TodoSyncConflict } from './todo.types'
 import i18n from '@/i18n'
 import { useToast } from '@/composables/useToast'
 import { toDate } from './todo.dates'
@@ -15,6 +15,7 @@ export function createTodoCloud(deps: {
   error: Ref<string | null>
   lastSyncAt: Ref<string | null>
   syncOwnerId: Ref<number | null>
+  syncConflicts: Ref<TodoSyncConflict[]>
   toSharedTodo: (todo: Todo) => SharedTodo
   isTrashLoaded: Ref<boolean>
 }): {
@@ -22,6 +23,9 @@ export function createTodoCloud(deps: {
   debouncedSync: () => void
   mergeOnLogin: (userId: number) => Promise<void>
   resetSyncStatus: () => void
+  acceptSyncConflict: (id: string) => void
+  retrySyncConflict: (id: string) => void
+  clearSyncConflicts: () => void
   initSocketListener: () => Promise<void>
   deleteTodoPermanently: (id: string) => Promise<void>
   clearTrash: () => Promise<void>
@@ -31,6 +35,36 @@ export function createTodoCloud(deps: {
   const { t } = i18n.global
 
   let lastSyncCallAt = 0
+
+  const cloneTodo = (todo: Todo): Todo => ({
+    ...todo,
+    dueAt: todo.dueAt ? new Date(todo.dueAt) : undefined,
+    remindAt: todo.remindAt ? new Date(todo.remindAt) : undefined,
+    remindedAt: todo.remindedAt ? new Date(todo.remindedAt) : undefined,
+    createdAt: new Date(todo.createdAt),
+    updatedAt: new Date(todo.updatedAt),
+    completedAt: todo.completedAt ? new Date(todo.completedAt) : undefined,
+    deletedAt: todo.deletedAt ? new Date(todo.deletedAt) : undefined,
+  })
+
+  const toLocalTodo = (serverTodo: SharedTodo): Todo => ({
+    id: serverTodo.id,
+    title: serverTodo.title,
+    completed: serverTodo.completed,
+    order: serverTodo.order,
+    isPinned: serverTodo.isPinned,
+    parentId: serverTodo.parentId,
+    version: serverTodo.version,
+    pomodoroCount: serverTodo.pomodoroCount,
+    dueAt: serverTodo.dueAt ? new Date(serverTodo.dueAt) : undefined,
+    remindAt: serverTodo.remindAt ? new Date(serverTodo.remindAt) : undefined,
+    remindedAt: serverTodo.remindedAt ? new Date(serverTodo.remindedAt) : undefined,
+    createdAt: new Date(serverTodo.createdAt),
+    updatedAt: new Date(serverTodo.updatedAt),
+    completedAt: serverTodo.completedAt ? new Date(serverTodo.completedAt) : undefined,
+    deletedAt: serverTodo.deletedAt ? new Date(serverTodo.deletedAt) : undefined,
+    syncStatus: 'synced' as const,
+  })
 
   async function sync(retryCount = 0): Promise<void> {
     if (deps.loading.value && retryCount === 0) return
@@ -95,6 +129,8 @@ export function createTodoCloud(deps: {
       const conflictIdSet = new Set((conflicts ?? []).map((item) => item.id))
       const shouldFallbackMarkSynced =
         acceptedIds === undefined && conflicts === undefined && conflictIdSet.size === 0
+      const serverTodoMap = new Map<string, Todo>()
+      const nextSyncConflicts = [...deps.syncConflicts.value]
 
       pendingTodos.forEach((t) => {
         const snapshotTime = syncSnapshots.get(t.id)
@@ -110,25 +146,12 @@ export function createTodoCloud(deps: {
 
       if (synced && Array.isArray(synced)) {
         synced.forEach((serverTodo: SharedTodo) => {
-          const index = deps.todos.value.findIndex((t) => t.id === serverTodo.id)
-          const todoData: Todo = {
-            id: serverTodo.id,
-            title: serverTodo.title,
-            completed: serverTodo.completed,
-            order: serverTodo.order,
-            isPinned: serverTodo.isPinned,
-            parentId: serverTodo.parentId,
-            version: serverTodo.version,
-            pomodoroCount: serverTodo.pomodoroCount,
-            dueAt: serverTodo.dueAt ? new Date(serverTodo.dueAt) : undefined,
-            remindAt: serverTodo.remindAt ? new Date(serverTodo.remindAt) : undefined,
-            remindedAt: serverTodo.remindedAt ? new Date(serverTodo.remindedAt) : undefined,
-            createdAt: new Date(serverTodo.createdAt),
-            updatedAt: new Date(serverTodo.updatedAt),
-            completedAt: serverTodo.completedAt ? new Date(serverTodo.completedAt) : undefined,
-            deletedAt: serverTodo.deletedAt ? new Date(serverTodo.deletedAt) : undefined,
-            syncStatus: 'synced' as const,
+          const todoData = toLocalTodo(serverTodo)
+          serverTodoMap.set(serverTodo.id, todoData)
+          if (conflictIdSet.has(serverTodo.id)) {
+            return
           }
+          const index = deps.todos.value.findIndex((t) => t.id === serverTodo.id)
 
           if (index !== -1) {
             deps.todos.value[index] = { ...deps.todos.value[index], ...todoData }
@@ -140,9 +163,36 @@ export function createTodoCloud(deps: {
         deps.todos.value = [...deps.todos.value]
       }
 
+      ;(conflicts ?? []).forEach((conflict: SharedSyncConflict) => {
+        const index = deps.todos.value.findIndex((x) => x.id === conflict.id)
+        const localDraft = index !== -1 ? cloneTodo(deps.todos.value[index]) : undefined
+        const serverSnapshot = serverTodoMap.get(conflict.id)
+        const existingIndex = nextSyncConflicts.findIndex((x) => x.id === conflict.id)
+        const conflictItem: TodoSyncConflict = {
+          id: conflict.id,
+          reason: conflict.reason,
+          serverVersion: conflict.serverVersion,
+          localDraft,
+          serverSnapshot,
+          occurredAt: new Date(),
+        }
+        if (existingIndex !== -1) {
+          nextSyncConflicts[existingIndex] = conflictItem
+        } else {
+          nextSyncConflicts.push(conflictItem)
+        }
+      })
+
+      deps.syncConflicts.value = nextSyncConflicts.filter((item) =>
+        deps.todos.value.some((todo) => todo.id === item.id),
+      )
+
       if (deletedIds && deletedIds.length > 0) {
         const deletedSet = new Set(deletedIds)
         deps.todos.value = deps.todos.value.filter((t) => !deletedSet.has(t.id))
+        deps.syncConflicts.value = deps.syncConflicts.value.filter(
+          (item) => !deletedSet.has(item.id),
+        )
       }
 
       deps.lastSyncAt.value = serverTime
@@ -238,6 +288,64 @@ export function createTodoCloud(deps: {
     deps.isTrashLoaded.value = false
   }
 
+  function clearSyncConflicts(): void {
+    deps.syncConflicts.value = []
+  }
+
+  function acceptSyncConflict(id: string): void {
+    const conflict = deps.syncConflicts.value.find((item) => item.id === id)
+    if (!conflict) return
+
+    if (conflict.reason === 'TOMBSTONED' || conflict.reason === 'OWNER_MISMATCH') {
+      deps.todos.value = deps.todos.value.filter((todo) => todo.id !== id)
+      deps.syncConflicts.value = deps.syncConflicts.value.filter((item) => item.id !== id)
+      return
+    }
+
+    if (conflict.serverSnapshot) {
+      const index = deps.todos.value.findIndex((todo) => todo.id === id)
+      if (index !== -1) {
+        deps.todos.value[index] = cloneTodo(conflict.serverSnapshot)
+      } else {
+        deps.todos.value.push(cloneTodo(conflict.serverSnapshot))
+      }
+    } else {
+      const todo = deps.todos.value.find((item) => item.id === id)
+      if (todo) {
+        todo.syncStatus = 'synced'
+      }
+    }
+
+    deps.syncConflicts.value = deps.syncConflicts.value.filter((item) => item.id !== id)
+  }
+
+  function retrySyncConflict(id: string): void {
+    const conflict = deps.syncConflicts.value.find((item) => item.id === id)
+    if (!conflict) return
+
+    if (conflict.reason !== 'VERSION_CONFLICT') return
+
+    const localDraft = conflict.localDraft
+    if (!localDraft) return
+
+    const index = deps.todos.value.findIndex((todo) => todo.id === id)
+    const nextTodo = cloneTodo(localDraft)
+    if (typeof conflict.serverVersion === 'number') {
+      nextTodo.version = conflict.serverVersion
+    }
+    nextTodo.updatedAt = new Date()
+    nextTodo.syncStatus = 'pending'
+
+    if (index !== -1) {
+      deps.todos.value[index] = nextTodo
+    } else {
+      deps.todos.value.push(nextTodo)
+    }
+
+    deps.syncConflicts.value = deps.syncConflicts.value.filter((item) => item.id !== id)
+    debouncedSync()
+  }
+
   async function initSocketListener(): Promise<void> {
     if (isSocketInitialized) return
 
@@ -311,6 +419,9 @@ export function createTodoCloud(deps: {
     debouncedSync,
     mergeOnLogin,
     resetSyncStatus,
+    acceptSyncConflict,
+    retrySyncConflict,
+    clearSyncConflicts,
     initSocketListener,
     deleteTodoPermanently,
     clearTrash,

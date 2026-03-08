@@ -63,4 +63,13 @@ export const todo = {
   quickRemindIn3h: 'In 3h',
   quickRemindBeforeDue10m: '10m before',
   quickRemindBeforeDue30m: '30m before',
+  syncConflictBanner: 'Detected {count} sync conflicts. Choose how to resolve them.',
+  syncConflictDismissAll: 'Dismiss',
+  syncConflictAcceptServer: 'Accept Server',
+  syncConflictRetryLocal: 'Retry Local',
+  syncConflictReasonVersion:
+    'Version conflict: the server has newer changes. Choose which side to keep.',
+  syncConflictReasonTombstoned: 'This task has been permanently deleted on the server.',
+  syncConflictReasonOwnerMismatch: 'Ownership mismatch. The server rejected this write.',
+  syncConflictUnknownTitle: 'Untitled task',
 } as const

@@ -262,6 +262,133 @@ describe('Todo Store Sync', () => {
     await store.sync()
 
     expect(store.todos[0].syncStatus).toBe('error')
+    expect(store.syncConflicts).toHaveLength(1)
+    expect(store.syncConflicts[0].id).toBe('conflict-todo')
+    expect(store.syncConflicts[0].reason).toBe('VERSION_CONFLICT')
+  })
+
+  it('should keep local draft on conflict and accept server snapshot manually', async () => {
+    const store = useTodoStore()
+
+    store.todos = [
+      {
+        id: 'conflict-todo',
+        title: 'Local Draft',
+        completed: false,
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-01T00:00:01.000Z'),
+        syncStatus: 'pending',
+        order: 0,
+        isPinned: false,
+        version: 3,
+        pomodoroCount: 0,
+      },
+    ]
+
+    const mockResponse = {
+      data: {
+        synced: [
+          {
+            id: 'conflict-todo',
+            title: 'Server Latest',
+            completed: true,
+            order: 2,
+            isPinned: true,
+            version: 4,
+            pomodoroCount: 3,
+            createdAt: new Date('2026-01-01T00:00:00.000Z').toISOString(),
+            updatedAt: new Date('2026-01-01T00:00:05.000Z').toISOString(),
+          },
+        ],
+        deletedIds: [],
+        acceptedIds: [],
+        conflicts: [
+          {
+            id: 'conflict-todo',
+            reason: 'VERSION_CONFLICT',
+            serverVersion: 4,
+          },
+        ],
+        serverTime: new Date().toISOString(),
+      } as SyncResponse,
+    }
+
+    vi.mocked(todoApi.sync).mockResolvedValue(
+      mockResponse as unknown as Awaited<ReturnType<typeof todoApi.sync>>,
+    )
+
+    await store.sync()
+
+    expect(store.todos[0].title).toBe('Local Draft')
+    expect(store.todos[0].syncStatus).toBe('error')
+
+    store.acceptSyncConflict('conflict-todo')
+
+    expect(store.syncConflicts).toHaveLength(0)
+    expect(store.todos[0].title).toBe('Server Latest')
+    expect(store.todos[0].syncStatus).toBe('synced')
+  })
+
+  it('should retry local conflict with server version baseline', async () => {
+    const store = useTodoStore()
+
+    store.todos = [
+      {
+        id: 'conflict-todo',
+        title: 'Local Draft',
+        completed: false,
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-01T00:00:01.000Z'),
+        syncStatus: 'pending',
+        order: 0,
+        isPinned: false,
+        version: 3,
+        pomodoroCount: 0,
+      },
+    ]
+
+    const firstSyncResponse = {
+      data: {
+        synced: [],
+        deletedIds: [],
+        acceptedIds: [],
+        conflicts: [
+          {
+            id: 'conflict-todo',
+            reason: 'VERSION_CONFLICT',
+            serverVersion: 4,
+          },
+        ],
+        serverTime: new Date().toISOString(),
+      } as SyncResponse,
+    }
+
+    const secondSyncResponse = {
+      data: {
+        synced: [],
+        deletedIds: [],
+        acceptedIds: ['conflict-todo'],
+        conflicts: [],
+        serverTime: new Date().toISOString(),
+      } as SyncResponse,
+    }
+
+    vi.mocked(todoApi.sync)
+      .mockResolvedValueOnce(
+        firstSyncResponse as unknown as Awaited<ReturnType<typeof todoApi.sync>>,
+      )
+      .mockResolvedValueOnce(
+        secondSyncResponse as unknown as Awaited<ReturnType<typeof todoApi.sync>>,
+      )
+
+    await store.sync(1)
+    store.retrySyncConflict('conflict-todo')
+    await store.sync(1)
+
+    const retriedTodo = store.todos.find((t) => t.id === 'conflict-todo')
+    expect(retriedTodo?.version).toBe(4)
+    expect(retriedTodo?.syncStatus).toBe('synced')
+    expect(store.syncConflicts).toHaveLength(0)
   })
 
   it('should purge logically deleted items after successful sync', async () => {

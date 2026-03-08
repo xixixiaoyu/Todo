@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { AlertTriangle, ChevronDown, ChevronUp } from 'lucide-vue-next'
 import { useTodoStore, type FilterType } from './stores/todo'
 import { usePomodoroStore } from './stores/pomodoro'
 import { useTodo } from './composables/useTodo'
@@ -17,9 +19,11 @@ import PomodoroEarth from './components/pomodoro/PomodoroEarth.vue'
 import Fireworks from '@/components/Fireworks.vue'
 import AiAssistantDrawer from '@/features/ai/components/AiAssistantDrawer.vue'
 import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 
 const todoStore = useTodoStore()
 const pomodoroStore = usePomodoroStore()
+const { t } = useI18n()
 
 const cardRef = ref<HTMLElement | null>(null)
 const inputContainerRef = ref<HTMLElement | null>(null)
@@ -231,6 +235,28 @@ const currentViewListeners = computed(() => {
   }
 })
 
+const isConflictPanelOpen = ref(false)
+const syncConflicts = computed(() => todoStore.syncConflicts)
+
+const conflictReasonLabel = (reason: 'TOMBSTONED' | 'OWNER_MISMATCH' | 'VERSION_CONFLICT') => {
+  if (reason === 'TOMBSTONED') return t('todo.syncConflictReasonTombstoned')
+  if (reason === 'OWNER_MISMATCH') return t('todo.syncConflictReasonOwnerMismatch')
+  return t('todo.syncConflictReasonVersion')
+}
+
+const getConflictTitle = (id: string) => {
+  const conflict = syncConflicts.value.find((item) => item.id === id)
+  return (
+    conflict?.localDraft?.title ||
+    conflict?.serverSnapshot?.title ||
+    todoStore.todos.find((todo) => todo.id === id)?.title ||
+    t('todo.syncConflictUnknownTitle')
+  )
+}
+
+const canRetryConflict = (reason: 'TOMBSTONED' | 'OWNER_MISMATCH' | 'VERSION_CONFLICT') =>
+  reason === 'VERSION_CONFLICT'
+
 function onFireworksComplete() {
   showFireworks.value = false
 }
@@ -280,6 +306,77 @@ function onFireworksComplete() {
         >
           <!-- Header -->
           <TodoHeader />
+
+          <div
+            v-if="syncConflicts.length > 0"
+            class="mb-3 md:mb-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-3 py-3 md:px-4 md:py-3"
+          >
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2 text-amber-700 dark:text-amber-300">
+                <AlertTriangle class="h-4 w-4 md:h-5 md:w-5" />
+                <p class="text-xs md:text-sm font-semibold">
+                  {{ t('todo.syncConflictBanner', { count: syncConflicts.length }) }}
+                </p>
+              </div>
+              <div class="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  class="h-8 rounded-lg px-2 text-[11px] md:text-xs hover:bg-amber-500/10"
+                  @click="todoStore.clearSyncConflicts()"
+                >
+                  {{ t('todo.syncConflictDismissAll') }}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-8 w-8 rounded-lg hover:bg-amber-500/10"
+                  @click="isConflictPanelOpen = !isConflictPanelOpen"
+                >
+                  <ChevronUp v-if="isConflictPanelOpen" class="h-4 w-4" />
+                  <ChevronDown v-else class="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div v-if="isConflictPanelOpen" class="mt-3 space-y-2">
+              <div
+                v-for="conflict in syncConflicts"
+                :key="conflict.id"
+                class="rounded-xl border border-amber-500/25 bg-background/60 px-3 py-2"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="truncate text-xs md:text-sm font-semibold text-foreground">
+                      {{ getConflictTitle(conflict.id) }}
+                    </p>
+                    <p class="text-[11px] md:text-xs text-muted-foreground mt-0.5">
+                      {{ conflictReasonLabel(conflict.reason) }}
+                    </p>
+                  </div>
+                  <div class="flex items-center gap-1.5 shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      class="h-7 rounded-lg px-2 text-[11px]"
+                      @click="todoStore.acceptSyncConflict(conflict.id)"
+                    >
+                      {{ t('todo.syncConflictAcceptServer') }}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      class="h-7 rounded-lg px-2 text-[11px]"
+                      :disabled="!canRetryConflict(conflict.reason)"
+                      @click="todoStore.retrySyncConflict(conflict.id)"
+                    >
+                      {{ t('todo.syncConflictRetryLocal') }}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <!-- Input Area - Creation First -->
           <div ref="inputContainerRef" class="relative overflow-hidden">
