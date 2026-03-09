@@ -62,13 +62,24 @@ load_env_file() {
     fi
     if [[ "$line" =~ ^[[:space:]]*(export[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*)=(.*)$ ]]; then
       local key=${BASH_REMATCH[2]}
-      local value=${BASH_REMATCH[3]}
-      value="${value#"${value%%[![:space:]]*}"}"
-      if [[ "$value" =~ ^\"(.*)\"$ ]]; then
-        value=${BASH_REMATCH[1]}
-      elif [[ "$value" =~ ^\'(.*)\'$ ]]; then
-        value=${BASH_REMATCH[1]}
+      local val_raw=${BASH_REMATCH[3]}
+      local value=""
+
+      # 去除前导空格
+      val_raw="${val_raw#"${val_raw%%[![:space:]]*}"}"
+
+      # 分情况解析：双引号、单引号或未加引号（支持行内注释且不破坏引号内的 #）
+      if [[ "$val_raw" =~ ^\"(.*)\"([[:space:]]*#.*)?$ ]]; then
+        value="${BASH_REMATCH[1]}"
+      elif [[ "$val_raw" =~ ^\'(.*)\'([[:space:]]*#.*)?$ ]]; then
+        value="${BASH_REMATCH[1]}"
+      else
+        # 未加引号时，截断到第一个 # 之前
+        value="${val_raw%%#*}"
+        # 去除末尾空格
+        value="${value%"${value##*[![:space:]]}"}"
       fi
+
       export "$key=$value"
     fi
   done < "$env_file"
