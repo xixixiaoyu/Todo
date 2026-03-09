@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Cpu, Info } from 'lucide-vue-next'
 import { type AIConfig, type AIPreset } from '@/features/ai/composables/useAIConfig'
 
-defineProps<{
+const { presets, contextCompressionEnabledId, contextCompressionTriggerId } = defineProps<{
   presets: AIPreset[]
   contextCompressionEnabledId: string
   contextCompressionTriggerId: string
@@ -12,6 +13,16 @@ defineProps<{
 const formData = defineModel<AIConfig>({ required: true })
 
 const { t } = useI18n()
+
+const effectiveModelName = computed(() => {
+  if (formData.value.contextCompressionModelId) {
+    const selectedPreset = presets.find(
+      (preset) => preset.id === formData.value.contextCompressionModelId,
+    )
+    return selectedPreset?.name || '-'
+  }
+  return formData.value.model || '-'
+})
 
 function togglePreset(presetId: string) {
   if (formData.value.contextCompressionModelId === presetId) {
@@ -82,7 +93,6 @@ function togglePreset(presetId: string) {
               </div>
             </div>
           </div>
-
           <div
             v-if="presets.length === 0"
             class="py-2 text-center text-xs text-muted-foreground/50"
@@ -105,6 +115,13 @@ function togglePreset(presetId: string) {
               <span>{{ preset.name }}</span>
             </button>
           </div>
+          <p class="text-[11px] leading-relaxed text-muted-foreground/70">
+            {{
+              formData.contextCompressionModelId
+                ? t('ai.effectiveModelFromDedicated', { model: effectiveModelName })
+                : t('ai.effectiveModelFromMain', { model: effectiveModelName })
+            }}
+          </p>
         </div>
 
         <div class="space-y-2">

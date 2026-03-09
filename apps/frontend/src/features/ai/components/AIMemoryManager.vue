@@ -12,7 +12,11 @@ const formData = defineModel<AIConfig>({ required: true })
 
 <template>
   <div class="space-y-5 px-6 py-5">
-    <AIMemorySettingsPanel v-model:memory-model-id="formData.memoryModelId" :presets="presets" />
+    <AIMemorySettingsPanel
+      v-model:memory-model-id="formData.memoryModelId"
+      :presets="presets"
+      :current-main-model="formData.model"
+    />
     <AIMemoryListPanel />
   </div>
 </template>

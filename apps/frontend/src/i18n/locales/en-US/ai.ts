@@ -73,6 +73,10 @@ export const ai = {
   contextCompressionModelPreset: 'Compression Preset',
   contextCompressionModelTip:
     'Use a dedicated preset for context compression to improve summary quality and stability. Leave empty to use current main configuration.',
+  dedicatedModelFallbackHint:
+    'If no dedicated preset is selected, the current main model will be used: {model}',
+  effectiveModelFromMain: 'Effective: main configuration model {model}',
+  effectiveModelFromDedicated: 'Effective: dedicated preset model {model}',
   createPreset: 'Create Preset',
   editPreset: 'Edit Preset',
   copyPreset: 'Copy Preset',

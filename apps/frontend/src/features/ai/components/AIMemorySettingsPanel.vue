@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { useId } from 'vue'
+import { useId, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Brain, Info } from 'lucide-vue-next'
 import { useMemory } from '@/features/ai/composables/useMemory'
 import type { AIPreset } from '@/features/ai/composables/useAIConfig'
 
-defineProps<{
+const { presets, currentMainModel } = defineProps<{
   presets: AIPreset[]
+  currentMainModel: string
 }>()
 
 const memoryModelId = defineModel<string | null>('memoryModelId', { required: true })
@@ -17,6 +18,14 @@ const thresholdInputId = useId()
 
 const { isMemoryEnabled, toggleMemory, autoCompressThreshold, updateAutoCompressThreshold } =
   useMemory()
+
+const effectiveModelName = computed(() => {
+  if (memoryModelId.value) {
+    const selectedPreset = presets.find((preset) => preset.id === memoryModelId.value)
+    return selectedPreset?.name || '-'
+  }
+  return currentMainModel || '-'
+})
 
 function togglePreset(presetId: string) {
   if (memoryModelId.value === presetId) {
@@ -70,7 +79,6 @@ function togglePreset(presetId: string) {
           </div>
         </div>
       </div>
-
       <div v-if="presets.length === 0" class="py-2 text-center text-xs text-muted-foreground/50">
         {{ t('ai.noPresetsForDiscussion') }}
       </div>
@@ -90,6 +98,13 @@ function togglePreset(presetId: string) {
           <span>{{ preset.name }}</span>
         </button>
       </div>
+      <p class="text-[11px] leading-relaxed text-muted-foreground/70">
+        {{
+          memoryModelId
+            ? t('ai.effectiveModelFromDedicated', { model: effectiveModelName })
+            : t('ai.effectiveModelFromMain', { model: effectiveModelName })
+        }}
+      </p>
 
       <div class="space-y-3 border-t border-border pt-3">
         <div class="flex items-center justify-between">

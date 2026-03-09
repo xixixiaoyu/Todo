@@ -67,6 +67,9 @@ export const ai = {
   contextCompressionModelPreset: '压缩专用预设',
   contextCompressionModelTip:
     '为上下文压缩指定一个专用预设（如更擅长摘要与信息抽取的模型）可提升压缩质量与稳定性。留空则使用当前主配置。',
+  dedicatedModelFallbackHint: '未选择专用预设时，将使用当前主配置模型：{model}',
+  effectiveModelFromMain: '当前生效：主配置模型 {model}',
+  effectiveModelFromDedicated: '当前生效：专用预设模型 {model}',
   createPreset: '创建预设',
   editPreset: '编辑预设',
   copyPreset: '复制预设',
