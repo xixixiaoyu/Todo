@@ -83,6 +83,71 @@ describe('aiService - Request Parameters', () => {
 
       expect(requestBody).toHaveProperty('top_p', 0.8)
     })
+
+    it('should include reasoning effort when thinkingMode is enabled', async () => {
+      const onChunk = vi.fn()
+      const encoder = new TextEncoder()
+
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        body: {
+          getReader: () => ({
+            read: vi
+              .fn()
+              .mockResolvedValueOnce({
+                value: encoder.encode('data: [DONE]\n\n'),
+                done: false,
+              })
+              .mockResolvedValueOnce({
+                value: null,
+                done: true,
+              }),
+          }),
+        },
+      } as unknown as Response)
+
+      await getAIStreamResponse([], onChunk, undefined, undefined, { thinkingMode: 'enabled' })
+
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+      const callArgs = fetchMock.mock.calls[0]
+      const requestBody = JSON.parse(callArgs[1]?.body as string)
+
+      expect(requestBody.reasoning).toEqual({ enabled: true, effort: 'high' })
+    })
+
+    it('should allow overriding reasoning effort', async () => {
+      const onChunk = vi.fn()
+      const encoder = new TextEncoder()
+
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        body: {
+          getReader: () => ({
+            read: vi
+              .fn()
+              .mockResolvedValueOnce({
+                value: encoder.encode('data: [DONE]\n\n'),
+                done: false,
+              })
+              .mockResolvedValueOnce({
+                value: null,
+                done: true,
+              }),
+          }),
+        },
+      } as unknown as Response)
+
+      await getAIStreamResponse([], onChunk, undefined, undefined, {
+        thinkingMode: 'enabled',
+        thinkingEffort: 'low',
+      })
+
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+      const callArgs = fetchMock.mock.calls[0]
+      const requestBody = JSON.parse(callArgs[1]?.body as string)
+
+      expect(requestBody.reasoning).toEqual({ enabled: true, effort: 'low' })
+    })
   })
 
   describe('getAIStaticResponse', () => {

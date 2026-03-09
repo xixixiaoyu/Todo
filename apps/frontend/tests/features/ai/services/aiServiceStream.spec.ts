@@ -144,4 +144,74 @@ describe('aiService - Stream Parsing', () => {
     expect(onChunk).toHaveBeenCalledWith('End')
     expect(onChunk).toHaveBeenCalledWith('[DONE]')
   })
+
+  it('should prefer reasoning details over reasoning content when both exist', async () => {
+    const onChunk = vi.fn()
+    const onThinking = vi.fn()
+    const onReasoningDetails = vi.fn()
+    const encoder = new TextEncoder()
+
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      body: {
+        getReader: () => ({
+          read: vi
+            .fn()
+            .mockResolvedValueOnce({
+              value: encoder.encode(
+                'data: {"choices":[{"delta":{"reasoning_content":"generic","reasoning_details":[{"type":"reasoning.summary","summary":[{"text":"detailed summary"}]}]}}]}\n\n',
+              ),
+              done: false,
+            })
+            .mockResolvedValueOnce({
+              value: encoder.encode('data: [DONE]\n\n'),
+              done: false,
+            })
+            .mockResolvedValueOnce({
+              value: null,
+              done: true,
+            }),
+        }),
+      },
+    } as unknown as Response)
+
+    await getAIStreamResponse([], onChunk, onThinking, onReasoningDetails)
+
+    expect(onReasoningDetails).toHaveBeenCalledWith('detailed summary')
+    expect(onThinking).not.toHaveBeenCalled()
+  })
+
+  it('should fallback to reasoning text when reasoning_details is encrypted', async () => {
+    const onChunk = vi.fn()
+    const onReasoningDetails = vi.fn()
+    const encoder = new TextEncoder()
+
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      body: {
+        getReader: () => ({
+          read: vi
+            .fn()
+            .mockResolvedValueOnce({
+              value: encoder.encode(
+                'data: {"choices":[{"delta":{"reasoning":"visible summary","reasoning_details":[{"type":"reasoning.encrypted","data":"abc"}]}}]}\n\n',
+              ),
+              done: false,
+            })
+            .mockResolvedValueOnce({
+              value: encoder.encode('data: [DONE]\n\n'),
+              done: false,
+            })
+            .mockResolvedValueOnce({
+              value: null,
+              done: true,
+            }),
+        }),
+      },
+    } as unknown as Response)
+
+    await getAIStreamResponse([], onChunk, undefined, onReasoningDetails)
+
+    expect(onReasoningDetails).toHaveBeenCalledWith('visible summary')
+  })
 })

@@ -54,7 +54,7 @@ const updateContentHeight = () => {
 let autoCollapseTimer: ReturnType<typeof setTimeout> | null = null
 
 async function updateRenderedContent() {
-  const effectiveThinking = props.message.thinkingContent || props.message.reasoning_details
+  const effectiveThinking = props.message.reasoning_details || props.message.thinkingContent
   if (effectiveThinking) {
     const isThinkingStreaming = props.isStreaming && !props.hasContent
     renderedThinkingHtml.value = await renderMarkdown(effectiveThinking, isThinkingStreaming)
@@ -78,8 +78,8 @@ watch(
       // 场景 A: AI 开始输出正文内容 -> 立即折叠
       const hasStartedResponding = hasContent && !oldHasContent
       // 场景 B: 只有思考内容，且流式结束 -> 触发 3s 延迟折叠
-      const effectiveThinking = thinking || reasoning
-      const oldEffectiveThinking = (oldThinking as string) || (oldReasoning as string)
+      const effectiveThinking = reasoning || thinking
+      const oldEffectiveThinking = (oldReasoning as string) || (oldThinking as string)
       const hasFinishedThinkingOnly = !streaming && oldStreaming && effectiveThinking && !hasContent
       // 场景 C: 思考内容稳定（非流式状态下的重复触发）
       const isThinkingStable =

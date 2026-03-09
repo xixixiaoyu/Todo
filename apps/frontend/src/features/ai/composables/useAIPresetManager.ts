@@ -53,6 +53,7 @@ export function useAIPresetManager(): {
     model: '',
     systemPrompt: '',
     temperature: 0.3,
+    thinkingEffort: 'high',
     todoAssistant: false,
   })
 
@@ -94,6 +95,7 @@ export function useAIPresetManager(): {
       model: preset.model,
       systemPrompt: preset.systemPrompt,
       temperature: preset.temperature,
+      thinkingEffort: preset.thinkingEffort || 'high',
       todoAssistant: preset.todoAssistant,
     }
   }

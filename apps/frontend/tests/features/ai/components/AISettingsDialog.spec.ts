@@ -41,6 +41,7 @@ const mockConfig = ref<AIConfig>({
   systemPrompt: 'test-prompt',
   temperature: 0.7,
   thinkingMode: 'disabled',
+  thinkingEffort: 'high',
   todoAssistant: false,
   discussionMode: false,
   discussionModelIds: [],
@@ -122,6 +123,7 @@ const getPresetDefaults = vi.fn(() => ({
   model: 'test-model',
   systemPrompt: 'test-prompt',
   temperature: 0.7,
+  thinkingEffort: 'high',
   todoAssistant: false,
 }))
 
@@ -172,6 +174,7 @@ describe('AISettingsDialog', () => {
       systemPrompt: 'test-prompt',
       temperature: 0.7,
       thinkingMode: 'disabled',
+      thinkingEffort: 'high',
       todoAssistant: false,
       discussionMode: false,
       discussionModelIds: [],

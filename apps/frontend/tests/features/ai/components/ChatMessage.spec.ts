@@ -204,6 +204,29 @@ describe('ChatMessage', () => {
     expect(wrapper.find('.thinking-content').exists()).toBe(true)
   })
 
+  it('should prioritize reasoning details over thinking content in thinking panel', async () => {
+    const message = {
+      id: '1',
+      role: 'assistant' as const,
+      content: '',
+      thinkingContent: 'generic thinking',
+      reasoning_details: 'provider reasoning summary',
+      isStreaming: true,
+    }
+
+    const wrapper = mount(ChatMessage, {
+      props: { message },
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('provider reasoning summary')
+    expect(wrapper.text()).not.toContain('generic thinking')
+  })
+
   it('should toggle thinking content when clicked', async () => {
     const message = {
       id: '1',

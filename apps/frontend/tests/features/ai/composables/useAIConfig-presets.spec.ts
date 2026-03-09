@@ -253,6 +253,7 @@ describe('useAIConfig - Presets', () => {
         model: 'defaults-model',
         temperature: 0.9,
         systemPrompt: 'Defaults prompt',
+        thinkingEffort: 'high',
         todoAssistant: true,
       })
     })

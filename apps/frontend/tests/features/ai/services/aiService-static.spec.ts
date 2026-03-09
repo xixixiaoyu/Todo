@@ -70,4 +70,58 @@ describe('aiService - Static Response', () => {
 
     expect(result.reasoning_details).toBe('Step 1. Step 2.')
   })
+
+  it('should normalize summary objects in reasoning array', async () => {
+    const messages = [{ role: 'user' as const, content: 'hello' }]
+
+    fetchMock.mockImplementation(async () => {
+      return {
+        ok: true,
+        json: async () => ({
+          choices: [
+            {
+              message: {
+                content: 'Hello world',
+                reasoning_details: [
+                  {
+                    type: 'reasoning.summary',
+                    summary: [{ text: 'Answering multiple trick puzzles' }],
+                  },
+                ],
+              },
+            },
+          ],
+        }),
+      } as unknown as Response
+    })
+
+    const result = await getAIStaticResponse(messages)
+
+    expect(result.reasoning_details).toBe('Answering multiple trick puzzles')
+  })
+
+  it('should fallback to reasoning when reasoning_details is encrypted', async () => {
+    const messages = [{ role: 'user' as const, content: 'hello' }]
+
+    fetchMock.mockImplementation(async () => {
+      return {
+        ok: true,
+        json: async () => ({
+          choices: [
+            {
+              message: {
+                content: 'Hello world',
+                reasoning: 'visible summary',
+                reasoning_details: [{ type: 'reasoning.encrypted', data: 'encrypted' }],
+              },
+            },
+          ],
+        }),
+      } as unknown as Response
+    })
+
+    const result = await getAIStaticResponse(messages)
+
+    expect(result.reasoning_details).toBe('visible summary')
+  })
 })

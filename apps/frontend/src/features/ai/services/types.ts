@@ -5,6 +5,7 @@
 export interface ReasoningDetailItem {
   type?: string
   text?: string
+  summary?: string
   [key: string]: unknown
 }
 
@@ -95,6 +96,7 @@ export interface AIRequestOptions {
   systemPrompt?: string
   assistantMode?: AssistantMode
   thinkingMode?: 'enabled' | 'disabled'
+  thinkingEffort?: 'low' | 'medium' | 'high'
   contextSummary?: string
   memorySnapshot?: string[]
   tools?: Tool[]

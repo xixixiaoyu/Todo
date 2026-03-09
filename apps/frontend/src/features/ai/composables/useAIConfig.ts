@@ -13,6 +13,7 @@ export interface AIConfig {
   temperature: number
   systemPrompt: string
   thinkingMode: ThinkingMode
+  thinkingEffort: 'low' | 'medium' | 'high'
   todoAssistant: boolean
   discussionMode: boolean
   discussionModelIds: readonly string[]
@@ -33,6 +34,7 @@ export interface AIPreset {
   model: string
   systemPrompt: string
   temperature: number
+  thinkingEffort?: 'low' | 'medium' | 'high'
   todoAssistant: boolean
 }
 
@@ -71,6 +73,7 @@ const DEFAULT_CONFIG: AIConfig = {
   temperature: 0.3,
   systemPrompt: i18n.global.t('ai.defaultSystemPrompt'),
   thinkingMode: aiThinkingMode.value, // 使用初始值
+  thinkingEffort: 'high',
   todoAssistant: false,
   discussionMode: false,
   discussionModelIds: [],
@@ -185,7 +188,8 @@ function isConfigMatchPreset(cfg: AIConfig, preset: AIPreset): boolean {
     preset.apiKey === cfg.apiKey &&
     preset.model === cfg.model &&
     preset.systemPrompt === cfg.systemPrompt &&
-    Math.abs(preset.temperature - cfg.temperature) < 0.001
+    Math.abs(preset.temperature - cfg.temperature) < 0.001 &&
+    (preset.thinkingEffort || 'high') === cfg.thinkingEffort
   )
 }
 
@@ -278,6 +282,7 @@ export function useAIConfig() {
       model: preset.model,
       systemPrompt: preset.systemPrompt,
       temperature: preset.temperature,
+      thinkingEffort: preset.thinkingEffort || 'high',
       todoAssistant: preset.todoAssistant,
     }
   }
@@ -313,6 +318,7 @@ export function useAIConfig() {
           model: updatedPreset.model,
           systemPrompt: updatedPreset.systemPrompt,
           temperature: updatedPreset.temperature,
+          thinkingEffort: updatedPreset.thinkingEffort || 'high',
           todoAssistant: updatedPreset.todoAssistant,
         }
       }
@@ -358,6 +364,7 @@ export function useAIConfig() {
       model: config.value.model,
       systemPrompt: config.value.systemPrompt,
       temperature: config.value.temperature,
+      thinkingEffort: config.value.thinkingEffort,
       todoAssistant: config.value.todoAssistant,
     }
   }

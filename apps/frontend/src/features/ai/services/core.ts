@@ -18,6 +18,78 @@ const t = i18n.global.t
 // 当前请求的 AbortController
 let abortController: AbortController | null = null
 
+function asReasoningText(value: unknown): string {
+  if (typeof value === 'string') {
+    return value
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => asReasoningText(item)).join('')
+  }
+
+  if (value && typeof value === 'object') {
+    const obj = value as Record<string, unknown>
+    const text =
+      asReasoningText(obj.text) || asReasoningText(obj.output_text) || asReasoningText(obj.content)
+    if (text) {
+      return text
+    }
+    return asReasoningText(obj.summary)
+  }
+
+  return ''
+}
+
+function normalizeReasoningDetails(reasoning: unknown): string | undefined {
+  if (typeof reasoning === 'string') {
+    return reasoning
+  }
+
+  if (Array.isArray(reasoning)) {
+    const items = reasoning as ReasoningDetailItem[]
+    const detailText = items
+      .filter(
+        (item) => item.type === 'reasoning.text' || item.text || item.content || item.output_text,
+      )
+      .map((item) => asReasoningText(item.text ?? item.content ?? item.output_text))
+      .join('')
+
+    if (detailText) {
+      return detailText
+    }
+
+    const summaryText = items
+      .filter((item) => item.type === 'reasoning.summary' || item.summary)
+      .map((item) => asReasoningText(item.summary))
+      .join('')
+
+    return summaryText || undefined
+  }
+
+  if (reasoning && typeof reasoning === 'object') {
+    const obj = reasoning as Record<string, unknown>
+    const text =
+      asReasoningText(obj.text) || asReasoningText(obj.output_text) || asReasoningText(obj.content)
+    if (text) {
+      return text
+    }
+    const summary = asReasoningText(obj.summary)
+    return summary || undefined
+  }
+
+  return undefined
+}
+
+function resolveReasoningDetails(...candidates: unknown[]): string | undefined {
+  for (const candidate of candidates) {
+    const normalized = normalizeReasoningDetails(candidate)
+    if (normalized) {
+      return normalized
+    }
+  }
+  return undefined
+}
+
 /**
  * 获取当前请求的 AbortSignal，如果没有则创建新的
  */
@@ -58,6 +130,7 @@ export async function getAIStreamResponse(
     systemPrompt = aiConfig.systemPrompt,
     assistantMode = aiConfig.assistantMode,
     thinkingMode = aiConfig.thinkingMode,
+    thinkingEffort = aiConfig.thinkingEffort,
     contextSummary,
     memorySnapshot,
     tools,
@@ -94,7 +167,10 @@ export async function getAIStreamResponse(
 
     // 适配 OpenRouter 的推理参数
     if (thinkingMode === 'enabled') {
-      requestBody.reasoning = { enabled: true }
+      requestBody.reasoning = {
+        enabled: true,
+        effort: options.thinkingEffort || thinkingEffort || 'high',
+      }
     }
 
     // 兼容 DeepSeek 等模型的 thinking 参数
@@ -187,29 +263,20 @@ export async function getAIStreamResponse(
             }
           }
 
-          // 处理思考过程（如 DeepSeek-R1 模型）
-          const reasoningContent = delta?.reasoning_content
-          if (reasoningContent && onThinking) {
-            onThinking(reasoningContent)
-          }
-
-          // 处理 OpenRouter 的 reasoning_details (支持字符串或数组)
-          let reasoningDetails =
-            delta?.reasoning_details ||
-            delta?.reasoning ||
-            parsedData.choices?.[0]?.message?.reasoning_details ||
-            parsedData.choices?.[0]?.message?.reasoning
-
-          // 如果是数组格式（例如 Gemini 模型的响应），提取其中的 text 部分
-          if (Array.isArray(reasoningDetails)) {
-            reasoningDetails = (reasoningDetails as ReasoningDetailItem[])
-              .filter((item) => item.type === 'reasoning.text' || item.text)
-              .map((item) => item.text || '')
-              .join('')
-          }
+          const reasoningDetails = resolveReasoningDetails(
+            delta?.reasoning_details,
+            delta?.reasoning,
+            parsedData.choices?.[0]?.message?.reasoning_details,
+            parsedData.choices?.[0]?.message?.reasoning,
+          )
 
           if (reasoningDetails && onReasoningDetails) {
             onReasoningDetails(reasoningDetails)
+          }
+
+          const reasoningContent = delta?.reasoning_content
+          if (!reasoningDetails && reasoningContent && onThinking) {
+            onThinking(reasoningContent)
           }
         } catch {
           console.warn('Failed to parse AI stream chunk')
@@ -263,7 +330,14 @@ export async function getAIStreamResponse(
  * 发送非流式 AI 请求的通用工具函数
  */
 export async function fetchNonStreamResponse(
-  config: { baseUrl: string; apiKey: string; model: string; temperature?: number; top_p?: number },
+  config: {
+    baseUrl: string
+    apiKey: string
+    model: string
+    temperature?: number
+    top_p?: number
+    thinkingEffort?: 'low' | 'medium' | 'high'
+  },
   messages: AIChatCompletionMessage[],
   thinkingMode?: string,
   signal?: AbortSignal,
@@ -277,7 +351,10 @@ export async function fetchNonStreamResponse(
   }
 
   if (thinkingMode === 'enabled') {
-    requestBody.reasoning = { enabled: true }
+    requestBody.reasoning = {
+      enabled: true,
+      effort: config.thinkingEffort || 'high',
+    }
   }
 
   if (thinkingMode) {
@@ -298,20 +375,15 @@ export async function fetchNonStreamResponse(
   const data = await response.json()
   const message = data.choices[0]?.message
 
-  // 归一化提取思考内容
-  let reasoning = message?.reasoning_details || message?.reasoning || message?.reasoning_content
-
-  // 如果是数组格式（部分 provider 的格式），提取其中的 text 部分
-  if (Array.isArray(reasoning)) {
-    reasoning = (reasoning as ReasoningDetailItem[])
-      .filter((item) => item.type === 'reasoning.text' || item.text)
-      .map((item) => item.text || '')
-      .join('')
-  }
+  const reasoning = resolveReasoningDetails(
+    message?.reasoning_details,
+    message?.reasoning,
+    message?.reasoning_content,
+  )
 
   return {
     content: message?.content || '',
-    reasoning_details: typeof reasoning === 'string' ? reasoning : undefined,
+    reasoning_details: reasoning,
   }
 }
 
@@ -329,10 +401,11 @@ export async function getAIStaticResponse(
     apiKey = aiConfig.apiKey,
     temperature = 0.3,
     top_p = 0.95,
+    thinkingEffort = aiConfig.thinkingEffort,
   } = options
 
   return fetchNonStreamResponse(
-    { baseUrl, apiKey, model, temperature, top_p },
+    { baseUrl, apiKey, model, temperature, top_p, thinkingEffort },
     messages,
     aiConfig.thinkingMode,
   )
