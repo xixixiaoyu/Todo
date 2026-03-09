@@ -39,8 +39,16 @@ const modelValue = defineModel<boolean>({ required: true })
 const { t } = useI18n()
 const presetNameInputId = useId()
 
-const { config, updateConfig, DEFAULT_CONFIG, presets, addPreset, activePresetId, switchPreset } =
-  useAIConfig()
+const {
+  config,
+  updateConfig,
+  DEFAULT_CONFIG,
+  presets,
+  addPreset,
+  activePresetId,
+  switchPreset,
+  syncConfigToPreset,
+} = useAIConfig()
 
 // 子组件引用
 const presetManagerRef = ref<InstanceType<typeof AIPresetManager> | null>(null)
@@ -82,6 +90,12 @@ const isDuplicatePreset = computed(() => {
 // 预设相关状态 (保留在父组件以便处理 "保存为预设" 逻辑)
 const showSaveAsPresetConfirm = ref(false)
 const saveAsPresetName = ref('')
+const syncTargetPresetId = ref<string | null>(activePresetId.value)
+const canSyncToPreset = computed(() => {
+  if (activeTab.value !== 'settings' || formData.value.discussionMode) return false
+  if (!syncTargetPresetId.value) return false
+  return presets.value.some((preset) => preset.id === syncTargetPresetId.value)
+})
 
 // 监听弹窗打开，或者初始 Tab 变化时，设置当前 Tab 以及重置内部状态
 watch(
@@ -145,7 +159,7 @@ function handleSaveAsPreset() {
 function confirmSaveAsPreset() {
   if (!saveAsPresetName.value.trim()) return
 
-  addPreset({
+  const newPreset = addPreset({
     name: saveAsPresetName.value.trim(),
     baseUrl: formData.value.baseUrl,
     apiKey: formData.value.apiKey,
@@ -155,8 +169,14 @@ function confirmSaveAsPreset() {
     todoAssistant: formData.value.todoAssistant,
   })
 
+  syncTargetPresetId.value = newPreset.id
   showSaveAsPresetConfirm.value = false
   activeTab.value = 'presets'
+}
+
+function handleSyncToPreset() {
+  if (!canSyncToPreset.value) return
+  syncConfigToPreset(syncTargetPresetId.value)
 }
 
 /**
@@ -191,6 +211,10 @@ useEscClose(modelValue, handleClose)
 
 // 监听切换预设，更新本地表单
 watch(activePresetId, () => {
+  if (activePresetId.value) {
+    syncTargetPresetId.value = activePresetId.value
+  }
+
   if (activeTab.value === 'presets') {
     formData.value = {
       ...config.value,
@@ -359,6 +383,14 @@ defineExpose({
               </button>
             </div>
             <div class="flex items-center gap-3">
+              <button
+                v-if="activeTab === 'settings' && !formData.discussionMode"
+                class="flex-1 rounded-xl border border-border bg-muted/30 px-4 py-2 text-sm font-bold tracking-tight text-foreground transition-all hover:border-primary/40 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+                :disabled="!canSyncToPreset"
+                @click="handleSyncToPreset"
+              >
+                {{ t('ai.syncToActivePreset') }}
+              </button>
               <button
                 v-if="activeTab === 'settings' && !formData.discussionMode"
                 class="flex-1 rounded-xl border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-bold tracking-tight text-primary transition-all hover:border-primary/50 hover:bg-primary/20 disabled:cursor-not-allowed disabled:border-border disabled:bg-muted/50 disabled:text-muted-foreground/50 sm:flex-none"

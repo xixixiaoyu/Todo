@@ -326,6 +326,29 @@ export function useAIConfig() {
   }
 
   /**
+   * 将当前配置同步到指定预设（默认同步到当前激活预设）
+   */
+  function syncConfigToPreset(presetId: string | null = activePresetId.value): boolean {
+    if (!presetId) return false
+
+    const preset = presets.value.find((p) => p.id === presetId)
+    if (!preset) return false
+
+    updatePreset(presetId, {
+      baseUrl: config.value.baseUrl,
+      apiKey: config.value.apiKey,
+      model: config.value.model,
+      systemPrompt: config.value.systemPrompt,
+      temperature: config.value.temperature,
+      thinkingEffort: config.value.thinkingEffort,
+      todoAssistant: config.value.todoAssistant,
+    })
+
+    activePresetId.value = presetId
+    return true
+  }
+
+  /**
    * 删除预设
    */
   function deletePreset(presetId: string): void {
@@ -436,6 +459,7 @@ export function useAIConfig() {
     updatePreset,
     deletePreset,
     duplicatePreset,
+    syncConfigToPreset,
     getPresetDefaults,
     exportPresets,
     importPresets,

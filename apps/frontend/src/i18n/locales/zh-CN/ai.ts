@@ -77,6 +77,7 @@ export const ai = {
   cancel: '取消',
   save: '保存',
   saveAsPreset: '保存为预设',
+  syncToActivePreset: '同步到当前预设',
   presetAlreadyExists: '当前配置已存在于预设中',
   presetNameDuplicate: '预设名称已存在，请使用其他名称',
   saveAsPresetTitle: '保存为预设',

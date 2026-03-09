@@ -84,6 +84,7 @@ export const ai = {
   cancel: 'Cancel',
   save: 'Save',
   saveAsPreset: 'Save as Preset',
+  syncToActivePreset: 'Sync to Active Preset',
   presetAlreadyExists: 'Current configuration already exists in presets',
   presetNameDuplicate: 'Preset name already exists, please use another name',
   saveAsPresetTitle: 'Save as Preset',

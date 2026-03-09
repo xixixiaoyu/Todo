@@ -117,6 +117,8 @@ const deletePreset = vi.fn((id) => {
   }
 })
 
+const syncConfigToPreset = vi.fn(() => true)
+
 const getPresetDefaults = vi.fn(() => ({
   baseUrl: 'https://api.example.com',
   apiKey: 'test-key',
@@ -137,6 +139,7 @@ vi.mock('@/features/ai/composables/useAIConfig', () => ({
     addPreset,
     updatePreset,
     deletePreset,
+    syncConfigToPreset,
     getPresetDefaults,
     activePreset: { value: null },
   }),
@@ -284,6 +287,47 @@ describe('AISettingsDialog', () => {
 
     expect(wrapper.text()).toContain('ai.presetManagement')
     expect(wrapper.findComponent({ name: 'AIPresetManager' }).exists()).toBe(true)
+  })
+
+  it('syncs current settings to active preset from settings tab', async () => {
+    mockPresets.value = [
+      {
+        id: 'active-preset-id',
+        name: 'Active Preset',
+        baseUrl: 'https://api.example.com',
+        apiKey: 'test-key',
+        model: 'test-model',
+        systemPrompt: 'test-prompt',
+        temperature: 0.7,
+        todoAssistant: false,
+      },
+    ]
+    mockActivePresetId.value = 'active-preset-id'
+
+    const wrapper = mount(AISettingsDialog, {
+      props: {
+        modelValue: true,
+      },
+      global: {
+        stubs: {
+          teleport: true,
+          'transition-root': {
+            template: '<div><slot /></div>',
+          },
+          'transition-child': {
+            template: '<div><slot /></div>',
+          },
+        },
+      },
+    })
+
+    const syncButton = wrapper
+      .findAll('button')
+      .find((button) => button.text() === 'ai.syncToActivePreset')
+    expect(syncButton).toBeTruthy()
+
+    await syncButton!.trigger('click')
+    expect(syncConfigToPreset).toHaveBeenCalledWith('active-preset-id')
   })
 
   it('auto-saves preset when closing in edit mode', async () => {

@@ -141,6 +141,47 @@ describe('useAIConfig - Presets', () => {
       expect(activePresetId.value).toBe(preset.id)
     })
 
+    it('should sync current config to active preset', async () => {
+      const { addPreset, switchPreset, updateConfig, syncConfigToPreset, presets, activePresetId } =
+        useAIConfig()
+
+      const preset = addPreset({
+        name: 'Sync Target',
+        baseUrl: 'https://sync-api.com',
+        apiKey: 'sync-key',
+        model: 'sync-model',
+        systemPrompt: 'Sync prompt',
+        temperature: 0.5,
+        todoAssistant: false,
+      })
+
+      switchPreset(preset.id)
+      updateConfig({
+        model: 'sync-model-v2',
+        systemPrompt: 'Sync prompt v2',
+        temperature: 0.7,
+      })
+      await nextTick()
+      expect(activePresetId.value).toBeNull()
+
+      const synced = syncConfigToPreset(preset.id)
+      await nextTick()
+
+      expect(synced).toBe(true)
+      const updatedPreset = presets.value.find((item) => item.id === preset.id)
+      expect(updatedPreset?.model).toBe('sync-model-v2')
+      expect(updatedPreset?.systemPrompt).toBe('Sync prompt v2')
+      expect(updatedPreset?.temperature).toBe(0.7)
+      expect(activePresetId.value).toBe(preset.id)
+    })
+
+    it('should return false when syncing without available preset target', () => {
+      const { syncConfigToPreset } = useAIConfig()
+
+      expect(syncConfigToPreset()).toBe(false)
+      expect(syncConfigToPreset('not-exists')).toBe(false)
+    })
+
     it('should automatically switch to a matching preset when config is updated', async () => {
       const { updateConfig, addPreset, activePresetId } = useAIConfig()
 
