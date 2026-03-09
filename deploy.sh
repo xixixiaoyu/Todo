@@ -170,6 +170,9 @@ validate_thresholds
 DISK_USAGE=$(get_disk_usage)
 if [ "$DISK_USAGE" -ge "$DISK_WARN_THRESHOLD" ]; then
   echo "⚠️ 磁盘占用 ${DISK_USAGE}%（阈值 ${DISK_WARN_THRESHOLD}%），执行温和清理..."
+  # 优先清理虚悬镜像
+  "${DOCKER[@]}" image prune -f
+  # 按照时间策略清理缓存和旧镜像
   "${DOCKER[@]}" builder prune -f --filter "until=${BUILDER_PRUNE_UNTIL}"
   "${DOCKER[@]}" image prune -a -f --filter "until=${IMAGE_PRUNE_UNTIL}"
 fi
@@ -206,7 +209,11 @@ export IMAGE_TAG
 echo "🏷️ 使用镜像标签: ${IMAGE_TAG}"
 "${DOCKER[@]}" compose up -d --build --remove-orphans
 
-echo "🧹 正在清理过期镜像与构建缓存..."
+echo "🧹 正在执行即时清理..."
+# 1. 立即删除所有虚悬镜像 (dangling images) - 这些是刚才构建产生的旧版本
+"${DOCKER[@]}" image prune -f
+
+# 2. 按照时间策略清理不使用的镜像和缓存 (保留最近的)
 "${DOCKER[@]}" builder prune -f --filter "until=${BUILDER_PRUNE_UNTIL}"
 "${DOCKER[@]}" image prune -a -f --filter "until=${IMAGE_PRUNE_UNTIL}"
 
