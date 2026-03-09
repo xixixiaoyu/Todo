@@ -24,6 +24,15 @@ export const useMcpStore = defineStore('mcp', () => {
   // 错误信息 (serverId -> errorMessage)
   const serverErrors = ref<Record<string, string | null>>({})
 
+  function hasRuntimeConfigChanged(
+    previous: McpServerResponse | undefined,
+    next: McpServerResponse,
+  ): boolean {
+    if (!previous) return false
+    if (previous.transport !== next.transport) return true
+    return JSON.stringify(previous.config) !== JSON.stringify(next.config)
+  }
+
   /**
    * 加载所有 MCP 服务器配置
    */
@@ -97,11 +106,32 @@ export const useMcpStore = defineStore('mcp', () => {
   async function updateServer(id: string, dto: UpdateMcpServerDto) {
     isLoading.value = true
     try {
+      const previousServer = servers.value.find((s) => s.id === id)
+      const wasConnected = !!connectionStates.value[id]
       const updatedServer = await mcpApi.updateServer(id, dto)
       const index = servers.value.findIndex((s) => s.id === id)
       if (index !== -1) {
         servers.value[index] = updatedServer
       }
+
+      if (!updatedServer.enabled) {
+        if (wasConnected) {
+          await disconnectServer(id)
+        }
+        return updatedServer
+      }
+
+      const runtimeChanged = hasRuntimeConfigChanged(previousServer, updatedServer)
+      if (wasConnected && runtimeChanged) {
+        await disconnectServer(id)
+        await connectServer(id)
+        return updatedServer
+      }
+
+      if (!wasConnected && previousServer && !previousServer.enabled && updatedServer.enabled) {
+        await connectServer(id)
+      }
+
       return updatedServer
     } catch (err: unknown) {
       error.value = err instanceof Error ? err.message : String(err)

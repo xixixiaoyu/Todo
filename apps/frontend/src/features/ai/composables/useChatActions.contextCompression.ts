@@ -3,6 +3,7 @@ import { getAIConfig, getAIPresets, type AIConfig } from './useAIConfig'
 import type { ChatSession } from './useChatHistory'
 
 const compressingSessionIds = new Set<string>()
+const compressingTasks = new Map<string, Promise<void>>()
 
 const DEFAULT_CONTEXT_COMPRESSION_TRIGGER_CHARS = 24000
 const SUMMARY_MAX_CHARS = 2400
@@ -185,13 +186,31 @@ export function createContextCompression(deps: {
     const segment = segmentEnd > segmentStart ? messages.slice(segmentStart, segmentEnd) : []
 
     if (compressingSessionIds.has(session.id)) {
-      return { messagesForRequest: normalizeMessagesForRequest(messages) }
+      const runningTask = compressingTasks.get(session.id)
+      if (runningTask) {
+        try {
+          await runningTask
+        } catch {
+          // noop
+        }
+      }
+
+      const refreshedSession = deps.currentSession.value
+      const refreshedSummary =
+        refreshedSession?.id === session.id
+          ? refreshedSession.contextSummary?.trim() || ''
+          : summary
+
+      return {
+        messagesForRequest: normalizeMessagesForRequest(keepMessages),
+        contextSummary: refreshedSummary || undefined,
+      }
     }
 
     if (segment.length > 0) {
       compressingSessionIds.add(session.id)
 
-      void compressInBackground(
+      const task = compressInBackground(
         session,
         segment,
         summary,
@@ -199,7 +218,10 @@ export function createContextCompression(deps: {
         deps.updateSessionContextSummary,
       ).finally(() => {
         compressingSessionIds.delete(session.id)
+        compressingTasks.delete(session.id)
       })
+
+      compressingTasks.set(session.id, task)
     }
 
     return {

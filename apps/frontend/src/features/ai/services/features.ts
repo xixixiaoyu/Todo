@@ -203,6 +203,13 @@ export async function getMultiModelDiscussionStream(
     .map((s) => `【${s.modelName} 的回答】：\n${s.content}`)
     .join('\n\n')
 
+  if (!discussionSummary.trim()) {
+    return getAIStreamResponse(messages, onFinalChunk, onThinking, onReasoningDetails, {
+      ...options,
+      ...primaryConfig,
+    })
+  }
+
   const synthesisPrompt = t('ai.parallelSynthesisPrompt', {
     originalQuery: userQuery,
     discussionData: discussionSummary,

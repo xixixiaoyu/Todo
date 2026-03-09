@@ -186,7 +186,7 @@ describe('aiService - Multi-model Discussion', () => {
     expect(onFinalChunk).toHaveBeenCalledWith('Final synthesis')
   })
 
-  it('should continue with synthesis even if all secondary models fail', async () => {
+  it('should fallback to primary direct answer when all discussion models fail', async () => {
     const messages: ChatMessage[] = [{ id: '1', role: 'user', content: 'What is 1+1?' }]
     const onStepUpdate = vi.fn()
     const onFinalChunk = vi.fn()
@@ -226,31 +226,30 @@ describe('aiService - Multi-model Discussion', () => {
 
     fetchMock.mockImplementation(async (_input: string | URL | Request, init?: RequestInit) => {
       const body = init?.body ? JSON.parse(init.body as string) : {}
-      // 流式请求 (synthesis)
+      // 流式请求 (fallback to primary direct answer)
       if (body.stream === true) {
-        // 检查 synthesisPrompt 是否包含了空讨论数据
-        const lastMsg = body.messages[body.messages.length - 1].content
-        if (lastMsg.includes('Synthesis: What is 1+1? - ')) {
-          return {
-            ok: true,
-            body: {
-              getReader: () => ({
-                read: vi
-                  .fn()
-                  .mockResolvedValueOnce({
-                    value: new TextEncoder().encode(
-                      'data: {"choices":[{"delta":{"content":"Synthesis without discussion"}}]}\n\n',
-                    ),
-                    done: false,
-                  })
-                  .mockResolvedValueOnce({
-                    value: new TextEncoder().encode('data: [DONE]\n\n'),
-                    done: true,
-                  }),
-              }),
-            },
-          } as unknown as Response
-        }
+        const lastMsg = body.messages[body.messages.length - 1]?.content || ''
+        expect(lastMsg).toBe('What is 1+1?')
+        expect(lastMsg).not.toContain('Synthesis:')
+        return {
+          ok: true,
+          body: {
+            getReader: () => ({
+              read: vi
+                .fn()
+                .mockResolvedValueOnce({
+                  value: new TextEncoder().encode(
+                    'data: {"choices":[{"delta":{"content":"Primary fallback answer"}}]}\n\n',
+                  ),
+                  done: false,
+                })
+                .mockResolvedValueOnce({
+                  value: new TextEncoder().encode('data: [DONE]\n\n'),
+                  done: true,
+                }),
+            }),
+          },
+        } as unknown as Response
       }
 
       // 并行请求失败
@@ -270,7 +269,7 @@ describe('aiService - Multi-model Discussion', () => {
     expect(lastSteps[1].status).toBe('error')
     expect(lastSteps[1].content).toContain('500')
 
-    expect(onFinalChunk).toHaveBeenCalledWith('Synthesis without discussion')
+    expect(onFinalChunk).toHaveBeenCalledWith('Primary fallback answer')
   })
 
   it('should handle model errors gracefully', async () => {
