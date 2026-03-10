@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useWindowSize } from '@vueuse/core'
 import { X } from 'lucide-vue-next'
 import AiLuminaIcon from '@/features/ai/components/AiLuminaIcon.vue'
 import { Button } from '@/components/ui/button'
@@ -8,11 +10,14 @@ import { nativeService } from '@/services/native'
 
 const pomodoroStore = usePomodoroStore()
 const todoStore = useTodoStore()
+const { width } = useWindowSize()
+const isMobile = computed(() => width.value < 640)
 
 const isWails = () => nativeService.platform === 'wails'
 
-function toggleAiAssistant() {
-  todoStore.setDrawerOpen(!todoStore.isDrawerOpen)
+function openAiAssistant() {
+  if (todoStore.isDrawerOpen) return
+  todoStore.setDrawerOpen(true)
 }
 </script>
 
@@ -54,9 +59,14 @@ function toggleAiAssistant() {
       v-if="!isWails()"
       variant="ghost"
       size="icon"
-      class="absolute top-3 left-3 w-7 h-7 rounded-full hover:bg-primary/20 text-primary/60 hover:text-primary opacity-0 group-hover/card:opacity-100 transition-all duration-500 -translate-y-1 group-hover/card:translate-y-0 bg-white/5"
+      :class="[
+        'absolute top-3 left-3 w-7 h-7 rounded-full hover:bg-primary/20 text-primary/60 hover:text-primary transition-all duration-500 bg-white/5 touch-manipulation',
+        isMobile
+          ? 'opacity-100 translate-y-0'
+          : 'opacity-0 group-hover/card:opacity-100 -translate-y-1 group-hover/card:translate-y-0',
+      ]"
       style="--wails-draggable: no-drag"
-      @click.stop="toggleAiAssistant"
+      @click.stop="openAiAssistant"
     >
       <AiLuminaIcon class="w-4 h-4" />
     </Button>
