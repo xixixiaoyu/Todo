@@ -5,7 +5,7 @@ import { todoApi } from '../api'
 import type { Todo, TodoSyncConflict } from './todo.types'
 import i18n from '@/i18n'
 import { useToast } from '@/composables/useToast'
-import { toDate } from './todo.dates'
+import { toDate, cloneTodo } from './todo.dates'
 
 const SYNC_COOLDOWN_MS = 2000
 
@@ -36,17 +36,6 @@ export function createTodoCloud(deps: {
   const { t } = i18n.global
 
   let lastSyncCallAt = 0
-
-  const cloneTodo = (todo: Todo): Todo => ({
-    ...todo,
-    dueAt: todo.dueAt ? new Date(todo.dueAt) : undefined,
-    remindAt: todo.remindAt ? new Date(todo.remindAt) : undefined,
-    remindedAt: todo.remindedAt ? new Date(todo.remindedAt) : undefined,
-    createdAt: new Date(todo.createdAt),
-    updatedAt: new Date(todo.updatedAt),
-    completedAt: todo.completedAt ? new Date(todo.completedAt) : undefined,
-    deletedAt: todo.deletedAt ? new Date(todo.deletedAt) : undefined,
-  })
 
   const toLocalTodo = (serverTodo: SharedTodo): Todo => ({
     id: serverTodo.id,

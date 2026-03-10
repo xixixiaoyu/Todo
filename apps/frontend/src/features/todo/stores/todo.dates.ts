@@ -32,3 +32,20 @@ export function normalizeTodoDatesInPlace(todo: Todo): void {
   const remindedAt = toDate(todo.remindedAt)
   if (remindedAt) todo.remindedAt = remindedAt
 }
+
+export function cloneTodo(todo: Todo): Todo {
+  return {
+    ...todo,
+    dueAt: todo.dueAt ? new Date(todo.dueAt) : undefined,
+    remindAt: todo.remindAt ? new Date(todo.remindAt) : undefined,
+    remindedAt: todo.remindedAt ? new Date(todo.remindedAt) : undefined,
+    createdAt: new Date(todo.createdAt),
+    updatedAt: new Date(todo.updatedAt),
+    completedAt: todo.completedAt ? new Date(todo.completedAt) : undefined,
+    deletedAt: todo.deletedAt ? new Date(todo.deletedAt) : undefined,
+  }
+}
+
+export function snapshotTodos(items: Todo[]): Todo[] {
+  return items.map(cloneTodo)
+}

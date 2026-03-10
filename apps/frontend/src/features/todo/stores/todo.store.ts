@@ -12,7 +12,7 @@ import type {
 import { applyFilterAndSort, isEffectivelyCompleted } from './todo.filtering'
 import { createTodoCloud } from './todo.cloud'
 import { createTodoActions } from './todo.actions'
-import { normalizeTodoDatesInPlace } from './todo.dates'
+import { normalizeTodoDatesInPlace, snapshotTodos } from './todo.dates'
 
 export const useTodoStore = defineStore(
   'todo',
@@ -50,19 +50,6 @@ export const useTodoStore = defineStore(
       if (currentParentTodos.length === 0) return false
       return currentParentTodos.some((t) => (t.expanded ?? true) !== false)
     })
-
-    const cloneTodo = (todo: Todo): Todo => ({
-      ...todo,
-      dueAt: todo.dueAt ? new Date(todo.dueAt) : undefined,
-      remindAt: todo.remindAt ? new Date(todo.remindAt) : undefined,
-      remindedAt: todo.remindedAt ? new Date(todo.remindedAt) : undefined,
-      createdAt: new Date(todo.createdAt),
-      updatedAt: new Date(todo.updatedAt),
-      completedAt: todo.completedAt ? new Date(todo.completedAt) : undefined,
-      deletedAt: todo.deletedAt ? new Date(todo.deletedAt) : undefined,
-    })
-
-    const snapshotTodos = (items: Todo[]): Todo[] => items.map(cloneTodo)
 
     const normalizeAllTodos = () => {
       todos.value.forEach(normalizeTodoDatesInPlace)
@@ -529,7 +516,6 @@ export const useTodoStore = defineStore(
       key: 'todos',
       storage: localStorage,
       pick: [
-        'todos',
         'todoSource',
         'localTodos',
         'remoteTodos',
