@@ -17,11 +17,13 @@ const waitForConnectionMock = vi.fn().mockResolvedValue('mock-socket-id')
 let authStoreMock: {
   isAuthenticated: boolean
   token: string | null
+  user?: { id: number }
   hydrateFromStorage: () => void
   $subscribe?: (cb: (mutation: unknown, state: { token?: string | null }) => void) => void
 } = {
   isAuthenticated: true,
   token: 'mock-token',
+  user: { id: 1 },
   hydrateFromStorage: vi.fn(),
   $subscribe: vi.fn(),
 }
@@ -59,13 +61,20 @@ describe('Todo Store Sync', () => {
     authStoreMock = {
       isAuthenticated: true,
       token: 'mock-token',
+      user: { id: 1 },
       hydrateFromStorage: vi.fn(),
       $subscribe: vi.fn(),
     }
   })
 
-  it('should sync pending todos and update lastSyncAt', async () => {
+  function createRemoteStore() {
     const store = useTodoStore()
+    store.todoSource = 'remote'
+    return store
+  }
+
+  it('should sync pending todos and update lastSyncAt', async () => {
+    const store = createRemoteStore()
 
     // Add a pending todo
     await store.addTodo('Test Todo')
@@ -109,7 +118,7 @@ describe('Todo Store Sync', () => {
   })
 
   it('should merge data on login', async () => {
-    const store = useTodoStore()
+    const store = createRemoteStore()
 
     // Add some local data
     await store.addTodo('Local Todo 1')
@@ -135,7 +144,7 @@ describe('Todo Store Sync', () => {
   })
 
   it('should clear local todos when login user changes', async () => {
-    const store = useTodoStore()
+    const store = createRemoteStore()
 
     store.syncOwnerId = 1
     store.todos = [
@@ -185,7 +194,7 @@ describe('Todo Store Sync', () => {
   })
 
   it('should handle deletedIds from server', async () => {
-    const store = useTodoStore()
+    const store = createRemoteStore()
 
     // Add a todo that exists locally
     store.todos = [
@@ -222,7 +231,7 @@ describe('Todo Store Sync', () => {
   })
 
   it('should mark todo as error when server reports conflict', async () => {
-    const store = useTodoStore()
+    const store = createRemoteStore()
 
     store.todos = [
       {
@@ -268,7 +277,7 @@ describe('Todo Store Sync', () => {
   })
 
   it('should keep local draft on conflict and accept server snapshot manually', async () => {
-    const store = useTodoStore()
+    const store = createRemoteStore()
 
     store.todos = [
       {
@@ -330,7 +339,7 @@ describe('Todo Store Sync', () => {
   })
 
   it('should retry local conflict with server version baseline', async () => {
-    const store = useTodoStore()
+    const store = createRemoteStore()
 
     store.todos = [
       {
@@ -392,7 +401,7 @@ describe('Todo Store Sync', () => {
   })
 
   it('should purge logically deleted items after successful sync', async () => {
-    const store = useTodoStore()
+    const store = createRemoteStore()
 
     // Add a todo and then delete it locally
     const id = await store.addTodo('Delete Me')
@@ -421,6 +430,71 @@ describe('Todo Store Sync', () => {
     expect(store.todos.find((t) => t.id === id)?.deletedAt).toBeDefined()
   })
 
+  it('should keep local and remote todos isolated when switching source', async () => {
+    const store = useTodoStore()
+    await store.addTodo('Local Only')
+
+    const mockResponse = {
+      data: {
+        synced: [
+          {
+            id: 'remote-1',
+            title: 'Remote Only',
+            completed: false,
+            order: 0,
+            isPinned: false,
+            version: 1,
+            pomodoroCount: 0,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        ],
+        deletedIds: [],
+        serverTime: new Date().toISOString(),
+      } as SyncResponse,
+    }
+
+    vi.mocked(todoApi.sync).mockResolvedValue(
+      mockResponse as unknown as Awaited<ReturnType<typeof todoApi.sync>>,
+    )
+
+    await store.switchTodoSource('remote')
+    expect(store.todos.some((t) => t.id === 'remote-1')).toBe(true)
+    expect(store.todos.some((t) => t.title === 'Local Only')).toBe(false)
+
+    await store.switchTodoSource('local')
+    expect(store.todos.some((t) => t.title === 'Local Only')).toBe(true)
+    expect(store.todos.some((t) => t.id === 'remote-1')).toBe(false)
+  })
+
+  it('should clear remote todos on logout reset', async () => {
+    const store = createRemoteStore()
+    store.remoteTodos = [
+      {
+        id: 'remote-1',
+        title: 'Remote Todo',
+        completed: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        syncStatus: 'synced',
+        order: 0,
+        isPinned: false,
+        version: 1,
+        pomodoroCount: 0,
+      },
+    ]
+    store.todos = [...store.remoteTodos]
+    store.syncOwnerId = 1
+    store.lastSyncAt = new Date().toISOString()
+
+    store.clearRemoteOnLogout()
+
+    expect(store.todoSource).toBe('local')
+    expect(store.remoteTodos).toHaveLength(0)
+    expect(store.syncOwnerId).toBeNull()
+    expect(store.lastSyncAt).toBeNull()
+  })
+
   it('should attach todos:sync listener after login when initially unauthenticated', async () => {
     const subscribers: Array<(mutation: unknown, state: { token?: string | null }) => void> = []
 
@@ -430,7 +504,7 @@ describe('Todo Store Sync', () => {
       subscribers.push(cb)
     })
 
-    const store = useTodoStore()
+    const store = createRemoteStore()
 
     await store.initSocketListener()
     expect(connectMock).not.toHaveBeenCalled()

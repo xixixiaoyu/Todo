@@ -339,10 +339,10 @@ export const useAuthStore = defineStore(
         }
       }
 
-      // 登出时重置同步状态
+      // 登出时清理远程待办数据并回退到本地视图
       const { useTodoStore } = await import('@/features/todo/stores/todo')
       const todoStore = useTodoStore()
-      todoStore.resetSyncStatus()
+      todoStore.clearRemoteOnLogout()
     }
 
     /**

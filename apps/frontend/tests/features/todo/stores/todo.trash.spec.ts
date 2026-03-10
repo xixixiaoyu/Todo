@@ -23,8 +23,14 @@ describe('Todo Store Trash', () => {
     vi.clearAllMocks()
   })
 
-  it('should fetch trash and update store when filter is set to trash', async () => {
+  function createRemoteStore() {
     const store = useTodoStore()
+    store.todoSource = 'remote'
+    return store
+  }
+
+  it('should fetch trash and update store when filter is set to trash', async () => {
+    const store = createRemoteStore()
     const mockTrashTodos = [
       {
         id: 'trash-1',
@@ -61,7 +67,7 @@ describe('Todo Store Trash', () => {
   })
 
   it('should not fetch trash again if already loaded', async () => {
-    const store = useTodoStore()
+    const store = createRemoteStore()
     store.isTrashLoaded = true
 
     await store.fetchTrash()
@@ -70,7 +76,7 @@ describe('Todo Store Trash', () => {
   })
 
   it('should merge trash items with existing items in store', async () => {
-    const store = useTodoStore()
+    const store = createRemoteStore()
     store.todos = [
       {
         id: 'trash-1',

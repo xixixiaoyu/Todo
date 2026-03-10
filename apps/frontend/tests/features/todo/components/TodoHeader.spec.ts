@@ -28,6 +28,8 @@ vi.mock('lucide-vue-next', () => ({
   Fingerprint: { template: '<span>Fingerprint</span>' },
   BarChart3: { template: '<span>BarChart3</span>' },
   MoreHorizontal: { template: '<span>MoreHorizontal</span>' },
+  HardDrive: { template: '<span>HardDrive</span>' },
+  Cloud: { template: '<span>Cloud</span>' },
 }))
 
 // Mock vue-i18n
@@ -43,6 +45,10 @@ const i18n = createI18n({
         visualMode: '可视化视图',
         listMode: '列表视图',
         statsMode: '统计视图',
+        localSource: '本地',
+        remoteSource: '云端',
+        localSourceHint: '本地提示',
+        remoteSourceHint: '云端提示',
       },
       common: {
         appName: '简思',
@@ -72,6 +78,10 @@ const i18n = createI18n({
         visualMode: 'Visual Mode',
         listMode: 'List Mode',
         statsMode: 'Statistics',
+        localSource: 'Local',
+        remoteSource: 'Cloud',
+        localSourceHint: 'Local hint',
+        remoteSourceHint: 'Cloud hint',
       },
       common: {
         appName: 'Lumina',

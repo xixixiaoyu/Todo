@@ -20,6 +20,7 @@ export function createTodoActions(deps: {
   isMaximized: Ref<boolean>
   isSilencingToast: Ref<boolean>
   isTrashLoaded: Ref<boolean>
+  isRemoteSource: Ref<boolean>
 }): {
   isDuplicate: (title: string, parentId?: string | null, excludeId?: string) => boolean
   fetchTodos: () => Promise<void>
@@ -70,7 +71,7 @@ export function createTodoActions(deps: {
 
     const { useAuthStore } = await import('@/features/auth/stores/auth')
     const authStore = useAuthStore()
-    if (authStore.isAuthenticated) {
+    if (authStore.isAuthenticated && deps.isRemoteSource.value) {
       await deps.sync()
     }
   }
@@ -80,7 +81,7 @@ export function createTodoActions(deps: {
 
     const { useAuthStore } = await import('@/features/auth/stores/auth')
     const authStore = useAuthStore()
-    if (!authStore.isAuthenticated) return
+    if (!authStore.isAuthenticated || !deps.isRemoteSource.value) return
 
     deps.loading.value = true
     try {

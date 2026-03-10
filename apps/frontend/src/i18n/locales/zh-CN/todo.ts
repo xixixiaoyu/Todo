@@ -71,4 +71,8 @@ export const todo = {
   syncConflictReasonTombstoned: '该任务已在云端永久删除',
   syncConflictReasonOwnerMismatch: '任务归属不一致，已拒绝写入',
   syncConflictUnknownTitle: '未命名任务',
+  localSource: '本地',
+  remoteSource: '云端',
+  localSourceHint: '仅展示本机待办，不触发云同步',
+  remoteSourceHint: '展示当前账号待办，并保持云同步',
 } as const

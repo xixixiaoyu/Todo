@@ -1,7 +1,14 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import type { Todo as SharedTodo } from '@lumina/shared'
-import type { ProposedTodoChange, FilterType, ViewMode, Todo, TodoSyncConflict } from './todo.types'
+import type {
+  ProposedTodoChange,
+  FilterType,
+  ViewMode,
+  Todo,
+  TodoSyncConflict,
+  TodoDataSource,
+} from './todo.types'
 import { applyFilterAndSort, isEffectivelyCompleted } from './todo.filtering'
 import { createTodoCloud } from './todo.cloud'
 import { createTodoActions } from './todo.actions'
@@ -27,6 +34,9 @@ export const useTodoStore = defineStore(
     const lastSyncAt = ref<string | null>(null)
     const syncOwnerId = ref<number | null>(null)
     const syncConflicts = ref<TodoSyncConflict[]>([])
+    const todoSource = ref<TodoDataSource>('local')
+    const localTodos = ref<Todo[]>([])
+    const remoteTodos = ref<Todo[]>([])
 
     const filteredTodos = computed(() =>
       applyFilterAndSort(todos.value, filter.value, searchQuery.value),
@@ -41,16 +51,66 @@ export const useTodoStore = defineStore(
       return currentParentTodos.some((t) => (t.expanded ?? true) !== false)
     })
 
+    const cloneTodo = (todo: Todo): Todo => ({
+      ...todo,
+      dueAt: todo.dueAt ? new Date(todo.dueAt) : undefined,
+      remindAt: todo.remindAt ? new Date(todo.remindAt) : undefined,
+      remindedAt: todo.remindedAt ? new Date(todo.remindedAt) : undefined,
+      createdAt: new Date(todo.createdAt),
+      updatedAt: new Date(todo.updatedAt),
+      completedAt: todo.completedAt ? new Date(todo.completedAt) : undefined,
+      deletedAt: todo.deletedAt ? new Date(todo.deletedAt) : undefined,
+    })
+
+    const snapshotTodos = (items: Todo[]): Todo[] => items.map(cloneTodo)
+
     const normalizeAllTodos = () => {
       todos.value.forEach(normalizeTodoDatesInPlace)
+    }
+
+    const persistActiveSourceTodos = () => {
+      if (todoSource.value === 'local') {
+        localTodos.value = snapshotTodos(todos.value)
+        return
+      }
+      remoteTodos.value = snapshotTodos(todos.value)
+    }
+
+    const applyTodoSource = (source: TodoDataSource) => {
+      if (source === todoSource.value) return
+      persistActiveSourceTodos()
+      todoSource.value = source
+      const targetTodos = source === 'local' ? localTodos.value : remoteTodos.value
+      todos.value = snapshotTodos(targetTodos)
+      syncConflicts.value = []
+      isTrashLoaded.value = false
+      if (source === 'remote') {
+        todos.value.forEach((item) => {
+          if (!item.syncStatus) item.syncStatus = 'pending'
+        })
+      }
+    }
+
+    if (localTodos.value.length === 0 && remoteTodos.value.length === 0 && todos.value.length > 0) {
+      localTodos.value = snapshotTodos(todos.value)
+    }
+
+    if (todoSource.value === 'remote') {
+      if (remoteTodos.value.length === 0 && todos.value.length > 0) {
+        remoteTodos.value = snapshotTodos(todos.value)
+      }
+      todos.value = snapshotTodos(remoteTodos.value)
+    } else {
+      todos.value = snapshotTodos(localTodos.value)
     }
 
     watch(
       todos,
       () => {
         normalizeAllTodos()
+        persistActiveSourceTodos()
       },
-      { immediate: true },
+      { immediate: true, deep: true },
     )
 
     watch(searchQuery, (newQuery) => {
@@ -150,6 +210,7 @@ export const useTodoStore = defineStore(
     const visualTodos = computed(() =>
       applyFilterAndSort(basePreviewTodos.value, filter.value, searchQuery.value, false),
     )
+    const isRemoteSource = computed(() => todoSource.value === 'remote')
 
     function toSharedTodo(todo: Todo): SharedTodo {
       return {
@@ -191,6 +252,7 @@ export const useTodoStore = defineStore(
       syncConflicts,
       toSharedTodo,
       isTrashLoaded,
+      isRemoteSource,
     })
 
     const actions = createTodoActions({
@@ -209,7 +271,44 @@ export const useTodoStore = defineStore(
       isMaximized,
       isSilencingToast,
       isTrashLoaded,
+      isRemoteSource,
     })
+
+    async function mergeOnLoginWithRemote(userId: number): Promise<void> {
+      if (todoSource.value !== 'remote') {
+        applyTodoSource('remote')
+      }
+      await mergeOnLogin(userId)
+    }
+
+    async function switchTodoSource(source: TodoDataSource): Promise<void> {
+      if (source === todoSource.value) return
+      if (source === 'local') {
+        applyTodoSource('local')
+        return
+      }
+
+      const { useAuthStore } = await import('@/features/auth/stores/auth')
+      const authStore = useAuthStore()
+      authStore.hydrateFromStorage()
+
+      if (!authStore.isAuthenticated || !authStore.user) {
+        return
+      }
+
+      await mergeOnLoginWithRemote(authStore.user.id)
+    }
+
+    function clearRemoteOnLogout(): void {
+      if (todoSource.value === 'remote') {
+        applyTodoSource('local')
+      }
+      remoteTodos.value = []
+      syncOwnerId.value = null
+      lastSyncAt.value = null
+      syncConflicts.value = []
+      resetSyncStatus()
+    }
 
     function setActiveProposedChangeSet(setId: string | null): void {
       activeProposedChangeSetId.value = setId
@@ -395,17 +494,23 @@ export const useTodoStore = defineStore(
       lastSyncAt,
       syncOwnerId,
       syncConflicts,
+      todoSource,
+      localTodos,
+      remoteTodos,
+      isRemoteSource,
       filteredTodos,
       pendingCount,
       completedCount,
       hasProposedChanges,
       previewTodos,
       visualTodos,
+      switchTodoSource,
       ...actions,
       deleteTodoPermanently,
       clearTrash,
       sync,
-      mergeOnLogin,
+      mergeOnLogin: mergeOnLoginWithRemote,
+      clearRemoteOnLogout,
       resetSyncStatus,
       acceptSyncConflict,
       retrySyncConflict,
@@ -425,6 +530,9 @@ export const useTodoStore = defineStore(
       storage: localStorage,
       pick: [
         'todos',
+        'todoSource',
+        'localTodos',
+        'remoteTodos',
         'filter',
         'viewMode',
         'lastSyncAt',

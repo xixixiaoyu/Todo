@@ -11,6 +11,8 @@ import {
   Fingerprint,
   BarChart3,
   MoreHorizontal,
+  HardDrive,
+  Cloud,
 } from 'lucide-vue-next'
 import ThemeToggle from './ThemeToggle.vue'
 import ThemeColorPicker from './ThemeColorPicker.vue'
@@ -235,6 +237,49 @@ const handleRegisterPasskey = async () => {
       </div>
 
       <div class="mx-0.5 md:mx-1 h-6 w-px bg-border/40"></div>
+
+      <div
+        class="hidden md:flex items-center gap-1 p-1 bg-muted/50 rounded-2xl border border-border/50"
+      >
+        <Tooltip>
+          <TooltipTrigger as-child>
+            <Button
+              variant="ghost"
+              size="sm"
+              class="h-8 px-2.5 rounded-xl gap-1.5 transition-all"
+              :class="
+                todoStore.todoSource === 'local'
+                  ? 'bg-background text-primary shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+              "
+              @click="void todoStore.switchTodoSource('local')"
+            >
+              <HardDrive :size="14" />
+              <span class="text-xs">{{ t('todo.localSource') }}</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{{ t('todo.localSourceHint') }}</TooltipContent>
+        </Tooltip>
+        <Tooltip v-if="authStore.isAuthenticated">
+          <TooltipTrigger as-child>
+            <Button
+              variant="ghost"
+              size="sm"
+              class="h-8 px-2.5 rounded-xl gap-1.5 transition-all"
+              :class="
+                todoStore.todoSource === 'remote'
+                  ? 'bg-background text-primary shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+              "
+              @click="void todoStore.switchTodoSource('remote')"
+            >
+              <Cloud :size="14" />
+              <span class="text-xs">{{ t('todo.remoteSource') }}</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{{ t('todo.remoteSourceHint') }}</TooltipContent>
+        </Tooltip>
+      </div>
 
       <!-- Auth Section -->
       <DropdownMenu v-if="authStore.isAuthenticated">

@@ -72,4 +72,8 @@ export const todo = {
   syncConflictReasonTombstoned: 'This task has been permanently deleted on the server.',
   syncConflictReasonOwnerMismatch: 'Ownership mismatch. The server rejected this write.',
   syncConflictUnknownTitle: 'Untitled task',
+  localSource: 'Local',
+  remoteSource: 'Cloud',
+  localSourceHint: 'Show only device todos without cloud sync',
+  remoteSourceHint: 'Show account todos with cloud synchronization',
 } as const

@@ -37,7 +37,7 @@ vi.mock('@simplewebauthn/browser', () => ({
 vi.mock('@/features/todo/stores/todo', () => ({
   useTodoStore: vi.fn(() => ({
     mergeOnLogin: vi.fn().mockResolvedValue(undefined),
-    resetSyncStatus: vi.fn(),
+    clearRemoteOnLogout: vi.fn(),
   })),
 }))
 

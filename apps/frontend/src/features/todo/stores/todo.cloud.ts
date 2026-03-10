@@ -18,6 +18,7 @@ export function createTodoCloud(deps: {
   syncConflicts: Ref<TodoSyncConflict[]>
   toSharedTodo: (todo: Todo) => SharedTodo
   isTrashLoaded: Ref<boolean>
+  isRemoteSource: Ref<boolean>
 }): {
   sync: (retryCount?: number) => Promise<void>
   debouncedSync: () => void
@@ -67,6 +68,7 @@ export function createTodoCloud(deps: {
   })
 
   async function sync(retryCount = 0): Promise<void> {
+    if (!deps.isRemoteSource.value) return
     if (deps.loading.value && retryCount === 0) return
 
     // 防止在极短时间内多次请求同步
@@ -224,6 +226,7 @@ export function createTodoCloud(deps: {
   const debouncedSync = debounce(() => void sync(), SYNC_COOLDOWN_MS)
 
   const onTodosSync = () => {
+    if (!deps.isRemoteSource.value) return
     // 只有当存在待同步项，或距离上次同步已超过 SYNC_COOLDOWN_MS 时才触发同步
     const hasPending = deps.todos.value.some((t) => t.syncStatus === 'pending')
     const now = Date.now()
@@ -233,6 +236,7 @@ export function createTodoCloud(deps: {
   }
 
   const onTodosRemind = (payload: { todoId: string; remindedAt?: string }) => {
+    if (!deps.isRemoteSource.value) return
     const todo = deps.todos.value.find((x) => x.id === payload.todoId)
     if (!todo || todo.deletedAt || todo.completed) return
 
@@ -269,6 +273,7 @@ export function createTodoCloud(deps: {
   })()
 
   async function mergeOnLogin(userId: number): Promise<void> {
+    if (!deps.isRemoteSource.value) return
     if (deps.syncOwnerId.value !== null && deps.syncOwnerId.value !== userId) {
       deps.todos.value = []
     }
@@ -392,7 +397,7 @@ export function createTodoCloud(deps: {
     deps.todos.value.splice(index, 1)
 
     const authStore = (await import('@/features/auth/stores/auth')).useAuthStore()
-    if (authStore.isAuthenticated) {
+    if (authStore.isAuthenticated && deps.isRemoteSource.value) {
       try {
         await todoApi.deletePermanently(id)
       } catch (err) {
@@ -405,7 +410,7 @@ export function createTodoCloud(deps: {
     deps.todos.value = deps.todos.value.filter((t) => !t.deletedAt)
 
     const authStore = (await import('@/features/auth/stores/auth')).useAuthStore()
-    if (authStore.isAuthenticated) {
+    if (authStore.isAuthenticated && deps.isRemoteSource.value) {
       try {
         await todoApi.clearTrash()
       } catch (err) {
