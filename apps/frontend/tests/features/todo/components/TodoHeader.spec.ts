@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import { createI18n } from 'vue-i18n'
 import { createPinia, setActivePinia } from 'pinia'
 import TodoHeader from '@/features/todo/components/TodoHeader.vue'
+import { useTodoStore } from '@/features/todo/stores/todo'
 
 // Mock vue-router
 const mockPush = vi.fn()
@@ -200,5 +201,36 @@ describe('TodoHeader', () => {
     const buttons = wrapper.findAll('button')
     const langButton = buttons.find((b) => b.text().includes('Languages'))
     expect(langButton?.exists()).toBe(true)
+  })
+
+  it('点击 AI 助手按钮应立即打开抽屉', async () => {
+    const wrapper = mount(TodoHeader, {
+      global: {
+        plugins: [i18n],
+        stubs: {
+          TooltipProvider: true,
+          Tooltip: { template: '<div><slot /></div>' },
+          TooltipTrigger: { template: '<div><slot /></div>' },
+          TooltipContent: { template: '<div><slot /></div>' },
+          DropdownMenu: true,
+          DropdownMenuTrigger: true,
+          DropdownMenuContent: true,
+          DropdownMenuItem: true,
+          DropdownMenuLabel: true,
+          DropdownMenuSeparator: true,
+          ThemeColorPicker: { template: '<div />' },
+        },
+      },
+    })
+
+    const todoStore = useTodoStore()
+    expect(todoStore.isDrawerOpen).toBe(false)
+
+    const buttons = wrapper.findAll('button')
+    const aiButton = buttons.find((b) => b.text().includes('AI 助手'))
+    expect(aiButton).toBeDefined()
+
+    await aiButton?.trigger('click')
+    expect(todoStore.isDrawerOpen).toBe(true)
   })
 })

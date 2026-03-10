@@ -53,6 +53,11 @@ const handleDblClick = () => {
   }
 }
 
+const openAiAssistant = () => {
+  if (todoStore.isDrawerOpen) return
+  todoStore.setDrawerOpen(true)
+}
+
 const handleRegisterPasskey = async () => {
   const name = window.prompt(t('passkey.enterName'), 'My Device')
   if (name === null) return // 用户取消
@@ -95,8 +100,8 @@ const handleRegisterPasskey = async () => {
       <Button
         variant="ghost"
         size="sm"
-        class="h-9 md:h-9 px-2.5 md:px-3 rounded-xl bg-primary/10 text-primary hover:bg-primary/15 transition-all duration-300 gap-1 md:gap-2 font-bold border border-primary/20 group/ai"
-        @click="todoStore.setDrawerOpen(true)"
+        class="h-9 md:h-9 px-2.5 md:px-3 rounded-xl bg-primary/10 text-primary hover:bg-primary/15 transition-all duration-300 gap-1 md:gap-2 font-bold border border-primary/20 group/ai touch-manipulation"
+        @click.stop="openAiAssistant"
       >
         <Clover
           :size="14"
