@@ -41,7 +41,12 @@ function openAiAssistant() {
 
     <!-- Right Side: Actions -->
     <div
-      class="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover/card:opacity-100 transition-all duration-500 -translate-y-1 group-hover/card:translate-y-0"
+      :class="[
+        'absolute top-3 right-3 flex items-center gap-1 transition-all duration-500',
+        isMobile
+          ? 'opacity-100 translate-y-0'
+          : 'opacity-0 group-hover/card:opacity-100 -translate-y-1 group-hover/card:translate-y-0',
+      ]"
       style="--wails-draggable: no-drag"
     >
       <Button
