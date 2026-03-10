@@ -166,6 +166,7 @@ watch(
   -webkit-backdrop-filter: blur(20px);
   border-right: 1px solid hsl(var(--border) / 0.4);
   box-shadow: 10px 0 30px -15px rgba(0, 0, 0, 0.05);
+  will-change: transform;
 }
 
 :root.dark .drawer {
@@ -221,16 +222,38 @@ watch(
 }
 
 .slide-enter-active {
-  transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  transition: transform 0.24s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .slide-leave-active {
-  transition: transform 0.25s cubic-bezier(0.23, 1, 0.32, 1);
+  transition: transform 0.2s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .slide-enter-from,
 .slide-leave-to {
   transform: translateX(-100%);
+}
+
+@media (max-width: 639px) {
+  .drawer-overlay {
+    background: rgba(0, 0, 0, 0.28);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .drawer {
+    background: hsl(var(--background) / 0.96);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .slide-enter-active {
+    transition-duration: 0.16s;
+  }
+
+  .slide-leave-active {
+    transition-duration: 0.14s;
+  }
 }
 
 /* 拖拽手柄 */

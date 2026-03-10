@@ -89,6 +89,12 @@ const {
   showDiscussionPopover,
 } = useAiAssistantPanels({ isGenerating })
 
+const hasOpenedSettings = ref(false)
+const hasOpenedHistory = ref(false)
+
+const shouldMountSettings = computed(() => showSettings.value || hasOpenedSettings.value)
+const shouldMountHistory = computed(() => showHistory.value || hasOpenedHistory.value)
+
 const { width: windowWidth } = useWindowSize()
 const isMobile = computed(() => windowWidth.value < 640)
 
@@ -181,6 +187,18 @@ watch(modelValue, (isOpen) => {
     void nextTick(() => {
       assistantInputRef.value?.focus()
     })
+  }
+})
+
+watch(showSettings, (isOpen) => {
+  if (isOpen) {
+    hasOpenedSettings.value = true
+  }
+})
+
+watch(showHistory, (isOpen) => {
+  if (isOpen) {
+    hasOpenedHistory.value = true
   }
 })
 
@@ -299,9 +317,14 @@ defineOptions({
       </AiAssistantToolbar>
 
       <!-- 设置弹窗 -->
-      <AISettingsDialog v-model="showSettings" v-model:initial-tab="lastActiveTab" />
+      <AISettingsDialog
+        v-if="shouldMountSettings"
+        v-model="showSettings"
+        v-model:initial-tab="lastActiveTab"
+      />
 
       <AiAssistantHistoryOverlay
+        v-if="shouldMountHistory"
         v-model="showHistory"
         :is-mobile="isMobile"
         :history-width="historyWidth"
