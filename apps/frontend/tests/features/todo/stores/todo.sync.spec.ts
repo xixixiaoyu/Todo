@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
+import { nextTick } from 'vue'
 import { useTodoStore } from '@/features/todo/stores/todo'
 import { todoApi } from '@/features/todo/api'
 import type { SyncResponse } from '@lumina/shared'
@@ -67,14 +68,15 @@ describe('Todo Store Sync', () => {
     }
   })
 
-  function createRemoteStore() {
+  async function createRemoteStore() {
     const store = useTodoStore()
     store.todoSource = 'remote'
+    await nextTick()
     return store
   }
 
   it('should sync pending todos and update lastSyncAt', async () => {
-    const store = createRemoteStore()
+    const store = await createRemoteStore()
 
     // Add a pending todo
     await store.addTodo('Test Todo')
@@ -118,7 +120,7 @@ describe('Todo Store Sync', () => {
   })
 
   it('should merge data on login', async () => {
-    const store = createRemoteStore()
+    const store = await createRemoteStore()
 
     // Add some local data
     await store.addTodo('Local Todo 1')
@@ -144,7 +146,7 @@ describe('Todo Store Sync', () => {
   })
 
   it('should clear local todos when login user changes', async () => {
-    const store = createRemoteStore()
+    const store = await createRemoteStore()
 
     store.syncOwnerId = 1
     store.todos = [
@@ -194,7 +196,7 @@ describe('Todo Store Sync', () => {
   })
 
   it('should handle deletedIds from server', async () => {
-    const store = createRemoteStore()
+    const store = await createRemoteStore()
 
     // Add a todo that exists locally
     store.todos = [
@@ -231,7 +233,7 @@ describe('Todo Store Sync', () => {
   })
 
   it('should mark todo as error when server reports conflict', async () => {
-    const store = createRemoteStore()
+    const store = await createRemoteStore()
 
     store.todos = [
       {
@@ -277,7 +279,7 @@ describe('Todo Store Sync', () => {
   })
 
   it('should keep local draft on conflict and accept server snapshot manually', async () => {
-    const store = createRemoteStore()
+    const store = await createRemoteStore()
 
     store.todos = [
       {
@@ -339,7 +341,7 @@ describe('Todo Store Sync', () => {
   })
 
   it('should retry local conflict with server version baseline', async () => {
-    const store = createRemoteStore()
+    const store = await createRemoteStore()
 
     store.todos = [
       {
@@ -401,7 +403,7 @@ describe('Todo Store Sync', () => {
   })
 
   it('should purge logically deleted items after successful sync', async () => {
-    const store = createRemoteStore()
+    const store = await createRemoteStore()
 
     // Add a todo and then delete it locally
     const id = await store.addTodo('Delete Me')
@@ -468,7 +470,7 @@ describe('Todo Store Sync', () => {
   })
 
   it('should clear remote todos on logout reset', async () => {
-    const store = createRemoteStore()
+    const store = await createRemoteStore()
     store.remoteTodos = [
       {
         id: 'remote-1',
@@ -504,7 +506,7 @@ describe('Todo Store Sync', () => {
       subscribers.push(cb)
     })
 
-    const store = createRemoteStore()
+    const store = await createRemoteStore()
 
     await store.initSocketListener()
     expect(connectMock).not.toHaveBeenCalled()

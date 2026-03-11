@@ -37,6 +37,7 @@ export const useTodoStore = defineStore(
     const todoSource = ref<TodoDataSource>('local')
     const localTodos = ref<Todo[]>([])
     const remoteTodos = ref<Todo[]>([])
+    let isApplyingSourceSnapshot = false
 
     const filteredTodos = computed(() =>
       applyFilterAndSort(todos.value, filter.value, searchQuery.value),
@@ -55,12 +56,58 @@ export const useTodoStore = defineStore(
       todos.value.forEach(normalizeTodoDatesInPlace)
     }
 
-    const persistActiveSourceTodos = () => {
-      if (todoSource.value === 'local') {
-        localTodos.value = snapshotTodos(todos.value)
+    const isSameTodoList = (left: Todo[], right: Todo[]) => {
+      if (left.length !== right.length) return false
+
+      for (let i = 0; i < left.length; i += 1) {
+        const a = left[i]
+        const b = right[i]
+        if (
+          a.id !== b.id ||
+          a.title !== b.title ||
+          a.completed !== b.completed ||
+          a.order !== b.order ||
+          a.isPinned !== b.isPinned ||
+          a.parentId !== b.parentId ||
+          a.version !== b.version ||
+          a.syncStatus !== b.syncStatus ||
+          (a.createdAt ? new Date(a.createdAt).getTime() : 0) !==
+            (b.createdAt ? new Date(b.createdAt).getTime() : 0) ||
+          (a.updatedAt ? new Date(a.updatedAt).getTime() : 0) !==
+            (b.updatedAt ? new Date(b.updatedAt).getTime() : 0) ||
+          (a.completedAt ? new Date(a.completedAt).getTime() : 0) !==
+            (b.completedAt ? new Date(b.completedAt).getTime() : 0) ||
+          (a.deletedAt ? new Date(a.deletedAt).getTime() : 0) !==
+            (b.deletedAt ? new Date(b.deletedAt).getTime() : 0)
+        ) {
+          return false
+        }
+      }
+
+      return true
+    }
+
+    const applyTodosSnapshot = (items: Todo[]) => {
+      const next = snapshotTodos(items)
+      if (isSameTodoList(todos.value, next)) return
+      isApplyingSourceSnapshot = true
+      todos.value = next
+      isApplyingSourceSnapshot = false
+    }
+
+    const setSourceTodos = (source: TodoDataSource, items: Todo[]) => {
+      const next = snapshotTodos(items)
+      if (source === 'local') {
+        if (isSameTodoList(localTodos.value, next)) return
+        localTodos.value = next
         return
       }
-      remoteTodos.value = snapshotTodos(todos.value)
+      if (isSameTodoList(remoteTodos.value, next)) return
+      remoteTodos.value = next
+    }
+
+    const persistActiveSourceTodos = () => {
+      setSourceTodos(todoSource.value, todos.value)
     }
 
     const applyTodoSource = (source: TodoDataSource) => {
@@ -68,7 +115,7 @@ export const useTodoStore = defineStore(
       persistActiveSourceTodos()
       todoSource.value = source
       const targetTodos = source === 'local' ? localTodos.value : remoteTodos.value
-      todos.value = snapshotTodos(targetTodos)
+      applyTodosSnapshot(targetTodos)
       syncConflicts.value = []
       isTrashLoaded.value = false
       if (source === 'remote') {
@@ -78,24 +125,21 @@ export const useTodoStore = defineStore(
       }
     }
 
-    if (localTodos.value.length === 0 && remoteTodos.value.length === 0 && todos.value.length > 0) {
-      localTodos.value = snapshotTodos(todos.value)
-    }
-
-    if (todoSource.value === 'remote') {
-      if (remoteTodos.value.length === 0 && todos.value.length > 0) {
-        remoteTodos.value = snapshotTodos(todos.value)
-      }
-      todos.value = snapshotTodos(remoteTodos.value)
-    } else {
-      todos.value = snapshotTodos(localTodos.value)
-    }
-
     watch(
       todos,
       () => {
         normalizeAllTodos()
+        if (isApplyingSourceSnapshot) return
         persistActiveSourceTodos()
+      },
+      { immediate: true, deep: true },
+    )
+
+    watch(
+      [todoSource, localTodos, remoteTodos],
+      () => {
+        const targetTodos = todoSource.value === 'local' ? localTodos.value : remoteTodos.value
+        applyTodosSnapshot(targetTodos)
       },
       { immediate: true, deep: true },
     )
