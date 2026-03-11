@@ -5,9 +5,7 @@ export const ai = {
   previousSession: 'Previous Session',
   history: 'History',
   modes: 'Modes',
-  todoAssistant: 'Lumina Assistant',
-  todoAssistantEnabled: 'Lumina Assistant Enabled',
-  todoAssistantDisabled: 'Lumina Assistant Disabled',
+  todoAssistant: 'Todo Assistant',
   placeholder:
     'Ask AI Assistant... Type / for shortcut menu (Shift + Enter for newline, Enter to send)',
   typeNextMessage: 'Type your next message...',
@@ -126,14 +124,12 @@ export const ai = {
   clearAll: 'Clear All History',
   clearAllConfirm: 'Are you sure you want to clear all chat history? This action cannot be undone.',
   todoAssistantPrompt:
-    '[Lumina Assistant Context]\nUser currently has {count} pending tasks (pinned tasks are marked with 📌):\n{todoList}\n\nHierarchies are supported:\n- Daily Focus: Analyze task importance, urgency, and context to identify 1-3 critical actions for the day. Recommend pinning them via `pin` and provide justifications.\n- Atomic Breakdown: When the user asks to break down a task, follow SMART principles to generate 3-7 specific, action-oriented subtasks and assign them as children (parentId) of that task.\n- Categorization: When the user asks to organize, actively create logical categories (e.g. "Work", "Life") using `add`, and move scattered tasks into them via `parentId` using `update`.\n- Create a subtask: set add.data.parentId to the parent task ID.\n- Create parent + children in one go: assign a unique temporary ID (e.g. "temp-1") to the new parent via add.id, then reference it from child parentId.\n\nIf you suggest any task changes (add/delete/rename/toggle/move/pin), append a JSON block at the end of your reply (do not wrap it in Markdown code fences), formatted as follows:\n\n[TODO_ACTIONS_START]\n[\n  { "type": "add", "id": "temp-1", "data": { "title": "Category/Task Title", "parentId": null } },\n  { "type": "add", "id": "temp-2", "data": { "title": "Child Task Title", "parentId": "temp-1" } },\n  { "type": "update", "data": { "id": "Existing Task ID", "title": "New Title", "parentId": "Parent ID or null" } },\n  { "type": "delete", "data": { "id": "Existing Task ID" } },\n  { "type": "toggle", "data": { "id": "Existing Task ID" } },\n  { "type": "pin", "data": { "id": "Existing Task ID" } }\n]\n[TODO_ACTIONS_END]\n\nRules:\n1. If you propose any task change, you must output this JSON.\n2. For existing tasks, always use the real IDs provided in context.\n3. For new tasks, add.id is only used for parent/child linking and must be unique.\n4. Do not output any IDs/UUIDs/temp IDs in the prose; use them only inside the JSON block.\n5. No comments, Markdown, or trailing commas inside the JSON block.',
+    '[Todo Assistant Context]\nUser currently has {count} pending tasks (pinned tasks are marked with 📌):\n{todoList}\n\nHierarchies are supported:\n- Daily Focus: Analyze task importance, urgency, and context to identify 1-3 critical actions for the day. Recommend pinning them via `pin` and provide justifications.\n- Atomic Breakdown: When the user asks to break down a task, follow SMART principles to generate 3-7 specific, action-oriented subtasks and assign them as children (parentId) of that task.\n- Categorization: When the user asks to organize, actively create logical categories (e.g. "Work", "Life") using `add`, and move scattered tasks into them via `parentId` using `update`.\n- Create a subtask: set add.data.parentId to the parent task ID.\n- Create parent + children in one go: assign a unique temporary ID (e.g. "temp-1") to the new parent via add.id, then reference it from child parentId.\n\nIf you suggest any task changes (add/delete/rename/toggle/move/pin), append a JSON block at the end of your reply (do not wrap it in Markdown code fences), formatted as follows:\n\n[TODO_ACTIONS_START]\n[\n  { "type": "add", "id": "temp-1", "data": { "title": "Category/Task Title", "parentId": null } },\n  { "type": "add", "id": "temp-2", "data": { "title": "Child Task Title", "parentId": "temp-1" } },\n  { "type": "update", "data": { "id": "Existing Task ID", "title": "New Title", "parentId": "Parent ID or null" } },\n  { "type": "delete", "data": { "id": "Existing Task ID" } },\n  { "type": "toggle", "data": { "id": "Existing Task ID" } },\n  { "type": "pin", "data": { "id": "Existing Task ID" } }\n]\n[TODO_ACTIONS_END]\n\nRules:\n1. If you propose any task change, you must output this JSON.\n2. For existing tasks, always use the real IDs provided in context.\n3. For new tasks, add.id is only used for parent/child linking and must be unique.\n4. Do not output any IDs/UUIDs/temp IDs in the prose; use them only inside the JSON block.\n5. No comments, Markdown, or trailing commas are allowed inside the JSON block.',
   apiError: 'API Request failed: {status} - {error}',
   noStream: 'Unable to get response stream',
   defaultSystemPrompt:
     'You are a friendly AI assistant. Please answer user questions in clear and concise English.',
   teachingMode: 'Teaching Mode',
-  teachingEnabled: 'Teaching mode enabled',
-  teachingDisabled: 'Teaching mode disabled',
   teachingPlaceholder: 'Type what you want to learn…',
   teachingQuizTitle: 'Interactive Q&A',
   teachingQuizHint: 'Please answer the following questions to help me assist you better.',
