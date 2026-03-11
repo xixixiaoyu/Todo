@@ -228,7 +228,8 @@ describe('ChatMessage', () => {
     expect(todoLoading.exists()).toBe(true)
     expect(teachingLoading.classes()).toContain('backdrop-blur-md')
     expect(todoLoading.classes()).toContain('backdrop-blur-md')
-    expect(wrapper.findAll('.animate-shimmer').length).toBeGreaterThanOrEqual(2)
+    expect(wrapper.findAll('.structured-skeleton-sheen').length).toBeGreaterThanOrEqual(2)
+    expect(wrapper.findAll('.structured-skeleton-line').length).toBeGreaterThanOrEqual(4)
   })
 
   it('should prioritize reasoning details over thinking content in thinking panel', async () => {

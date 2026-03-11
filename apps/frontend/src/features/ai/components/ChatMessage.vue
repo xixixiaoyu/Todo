@@ -256,12 +256,12 @@ defineExpose({
                 class="group relative mt-3 overflow-hidden rounded-2xl border border-ai-message-border/80 bg-gradient-to-br from-background/50 via-ai-message-bg/70 to-ai-message-bg/60 p-3 text-xs text-muted-foreground backdrop-blur-md"
               >
                 <div
-                  class="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent [background-size:200%_100%] animate-shimmer"
+                  class="structured-skeleton-sheen pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent [background-size:200%_100%]"
                 ></div>
                 <div class="relative flex items-center gap-2.5">
                   <span class="relative flex h-2 w-2">
                     <span
-                      class="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/35"
+                      class="structured-skeleton-dot-halo absolute inline-flex h-full w-full rounded-full bg-primary/35"
                     ></span>
                     <span class="relative inline-flex h-2 w-2 rounded-full bg-primary/80"></span>
                   </span>
@@ -270,8 +270,12 @@ defineExpose({
                   }}</span>
                 </div>
                 <div class="relative mt-2.5 space-y-2">
-                  <div class="h-2 w-[82%] animate-pulse rounded-full bg-foreground/10"></div>
-                  <div class="h-2 w-[66%] animate-pulse rounded-full bg-foreground/10"></div>
+                  <div
+                    class="structured-skeleton-line h-2 w-[82%] rounded-full bg-foreground/10"
+                  ></div>
+                  <div
+                    class="structured-skeleton-line structured-skeleton-line-alt h-2 w-[66%] rounded-full bg-foreground/10"
+                  ></div>
                 </div>
               </div>
 
@@ -288,12 +292,12 @@ defineExpose({
                 class="group relative mt-3 overflow-hidden rounded-2xl border border-ai-message-border/80 bg-gradient-to-br from-background/50 via-ai-message-bg/70 to-ai-message-bg/60 p-3 text-xs text-muted-foreground backdrop-blur-md"
               >
                 <div
-                  class="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent [background-size:200%_100%] animate-shimmer"
+                  class="structured-skeleton-sheen pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent [background-size:200%_100%]"
                 ></div>
                 <div class="relative flex items-center gap-2.5">
                   <span class="relative flex h-2 w-2">
                     <span
-                      class="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/35"
+                      class="structured-skeleton-dot-halo absolute inline-flex h-full w-full rounded-full bg-primary/35"
                     ></span>
                     <span class="relative inline-flex h-2 w-2 rounded-full bg-primary/80"></span>
                   </span>
@@ -302,8 +306,12 @@ defineExpose({
                   }}</span>
                 </div>
                 <div class="relative mt-2.5 space-y-2">
-                  <div class="h-2 w-[84%] animate-pulse rounded-full bg-foreground/10"></div>
-                  <div class="h-2 w-[58%] animate-pulse rounded-full bg-foreground/10"></div>
+                  <div
+                    class="structured-skeleton-line h-2 w-[84%] rounded-full bg-foreground/10"
+                  ></div>
+                  <div
+                    class="structured-skeleton-line structured-skeleton-line-alt h-2 w-[58%] rounded-full bg-foreground/10"
+                  ></div>
                 </div>
               </div>
             </template>
@@ -324,3 +332,54 @@ defineExpose({
     <ChatMessageImagePreview :url="previewImageUrl" @close="closePreview" />
   </div>
 </template>
+
+<style scoped>
+.structured-skeleton-sheen {
+  animation: structured-skeleton-sheen 2.2s cubic-bezier(0.55, 0.08, 0.92, 0.28) infinite;
+}
+
+.structured-skeleton-dot-halo {
+  animation: structured-skeleton-dot-halo 1.8s cubic-bezier(0.5, 0.02, 0.88, 0.32) infinite;
+}
+
+.structured-skeleton-line {
+  animation: structured-skeleton-line 1.9s cubic-bezier(0.5, 0.02, 0.88, 0.32) infinite;
+}
+
+.structured-skeleton-line-alt {
+  animation-delay: 0.16s;
+}
+
+@keyframes structured-skeleton-sheen {
+  0% {
+    background-position: 120% 0;
+    opacity: 0.22;
+  }
+  100% {
+    background-position: -120% 0;
+    opacity: 0.06;
+  }
+}
+
+@keyframes structured-skeleton-dot-halo {
+  0% {
+    transform: scale(0.72);
+    opacity: 0.72;
+  }
+  100% {
+    transform: scale(1.75);
+    opacity: 0;
+  }
+}
+
+@keyframes structured-skeleton-line {
+  0% {
+    opacity: 0.7;
+    transform: scaleX(0.985);
+  }
+  100% {
+    opacity: 0.28;
+    transform: scaleX(1);
+  }
+}
+</style>
