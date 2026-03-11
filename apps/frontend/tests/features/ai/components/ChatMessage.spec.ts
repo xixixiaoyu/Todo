@@ -221,8 +221,14 @@ describe('ChatMessage', () => {
       },
     })
 
-    expect(wrapper.find('[data-test="teaching-quiz-loading"]').exists()).toBe(true)
-    expect(wrapper.find('[data-test="todo-actions-loading"]').exists()).toBe(true)
+    const teachingLoading = wrapper.find('[data-test="teaching-quiz-loading"]')
+    const todoLoading = wrapper.find('[data-test="todo-actions-loading"]')
+
+    expect(teachingLoading.exists()).toBe(true)
+    expect(todoLoading.exists()).toBe(true)
+    expect(teachingLoading.classes()).toContain('backdrop-blur-md')
+    expect(todoLoading.classes()).toContain('backdrop-blur-md')
+    expect(wrapper.findAll('.animate-shimmer').length).toBeGreaterThanOrEqual(2)
   })
 
   it('should prioritize reasoning details over thinking content in thinking panel', async () => {

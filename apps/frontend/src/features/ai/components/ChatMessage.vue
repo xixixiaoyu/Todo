@@ -253,12 +253,26 @@ defineExpose({
               <div
                 v-else-if="isTeachingQuizPending"
                 data-test="teaching-quiz-loading"
-                class="mt-3 flex items-center gap-2 rounded-xl border border-ai-message-border/80 bg-ai-message-bg/60 px-3 py-2 text-xs text-muted-foreground"
+                class="group relative mt-3 overflow-hidden rounded-2xl border border-ai-message-border/80 bg-gradient-to-br from-background/50 via-ai-message-bg/70 to-ai-message-bg/60 p-3 text-xs text-muted-foreground backdrop-blur-md"
               >
-                <span
-                  class="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-primary/80"
-                ></span>
-                <span>{{ t('ai.teachingQuizGenerating') }}</span>
+                <div
+                  class="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent [background-size:200%_100%] animate-shimmer"
+                ></div>
+                <div class="relative flex items-center gap-2.5">
+                  <span class="relative flex h-2 w-2">
+                    <span
+                      class="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/35"
+                    ></span>
+                    <span class="relative inline-flex h-2 w-2 rounded-full bg-primary/80"></span>
+                  </span>
+                  <span class="font-medium text-foreground/80">{{
+                    t('ai.teachingQuizGenerating')
+                  }}</span>
+                </div>
+                <div class="relative mt-2.5 space-y-2">
+                  <div class="h-2 w-[82%] animate-pulse rounded-full bg-foreground/10"></div>
+                  <div class="h-2 w-[66%] animate-pulse rounded-full bg-foreground/10"></div>
+                </div>
               </div>
 
               <!-- AI 建议的思维导图预览 -->
@@ -271,12 +285,26 @@ defineExpose({
               <div
                 v-else-if="isTodoActionsPending"
                 data-test="todo-actions-loading"
-                class="mt-3 flex items-center gap-2 rounded-xl border border-ai-message-border/80 bg-ai-message-bg/60 px-3 py-2 text-xs text-muted-foreground"
+                class="group relative mt-3 overflow-hidden rounded-2xl border border-ai-message-border/80 bg-gradient-to-br from-background/50 via-ai-message-bg/70 to-ai-message-bg/60 p-3 text-xs text-muted-foreground backdrop-blur-md"
               >
-                <span
-                  class="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-primary/80"
-                ></span>
-                <span>{{ t('ai.todoVisualizationGenerating') }}</span>
+                <div
+                  class="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent [background-size:200%_100%] animate-shimmer"
+                ></div>
+                <div class="relative flex items-center gap-2.5">
+                  <span class="relative flex h-2 w-2">
+                    <span
+                      class="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/35"
+                    ></span>
+                    <span class="relative inline-flex h-2 w-2 rounded-full bg-primary/80"></span>
+                  </span>
+                  <span class="font-medium text-foreground/80">{{
+                    t('ai.todoVisualizationGenerating')
+                  }}</span>
+                </div>
+                <div class="relative mt-2.5 space-y-2">
+                  <div class="h-2 w-[84%] animate-pulse rounded-full bg-foreground/10"></div>
+                  <div class="h-2 w-[58%] animate-pulse rounded-full bg-foreground/10"></div>
+                </div>
               </div>
             </template>
 
