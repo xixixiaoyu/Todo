@@ -1,5 +1,14 @@
 import { beforeEach, vi } from 'vitest'
 
+const originalWarn = console.warn.bind(console)
+console.warn = (...args: unknown[]) => {
+  const [firstArg] = args
+  if (typeof firstArg === 'string' && firstArg.includes("KaTeX doesn't work in quirks mode")) {
+    return
+  }
+  originalWarn(...args)
+}
+
 function createLocalStorageMock() {
   let store: Record<string, string> = {}
 
@@ -34,6 +43,11 @@ vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
 vi.stubGlobal('cancelAnimationFrame', (id: number) => {
   window.clearTimeout(id)
 })
+
+if (!document.doctype) {
+  const doctype = document.implementation.createDocumentType('html', '', '')
+  document.insertBefore(doctype, document.documentElement)
+}
 
 beforeEach(() => {
   localStorageMock.getItem.mockClear()

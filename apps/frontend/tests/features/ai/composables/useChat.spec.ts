@@ -18,6 +18,7 @@ import {
 import type { ChatMessage, ToolCall } from '@/features/ai/services/aiService'
 import { getAIConfig } from '@/features/ai/composables/useAIConfig'
 import { mcpApi } from '@/features/mcp/api/mcp'
+import { useTodoStore } from '@/features/todo/stores/todo'
 
 // Mock useAuthStore
 const mockIsAuthenticated = ref(true)
@@ -543,6 +544,60 @@ describe('useChat', () => {
         untilMessageId: 'a1',
       })
     })
+
+    it('should not parse streaming todo actions when todo assistant is disabled', async () => {
+      vi.mocked(getAIConfig).mockReturnValue({
+        assistantMode: 'default',
+        discussionMode: false,
+        discussionModelIds: [],
+        discussionPrimaryModelId: null,
+        memoryModelId: null,
+        baseUrl: '',
+        apiKey: '',
+        model: '',
+        systemPrompt: '',
+        temperature: 0.7,
+        thinkingMode: 'disabled',
+        thinkingEffort: 'high',
+        todoAssistant: false,
+        enableImageGeneration: false,
+        mcpEnabled: false,
+        contextCompressionEnabled: false,
+        contextCompressionTriggerChars: 24000,
+        contextCompressionModelId: null,
+      })
+
+      mockGetAIStreamResponse.mockImplementation(
+        async (_messages: ChatMessage[], onChunk: OnChunk) => {
+          onChunk(
+            'planning...\n[TODO_ACTIONS_START]\n[{"type":"add","data":{"title":"Task A"}}]\n[TODO_ACTIONS_END]',
+          )
+        },
+      )
+
+      const { sendMessage, messages } = useChat()
+      await sendMessage('test message')
+
+      const streamingMessage = messages.value[messages.value.length - 1]
+      expect(streamingMessage?.isStreaming).toBe(true)
+      expect(streamingMessage?.todoActions).toBeUndefined()
+    })
+
+    it('should persist pending structured blocks into final assistant message', async () => {
+      mockGetAIStreamResponse.mockImplementation(
+        async (_messages: ChatMessage[], onChunk: OnChunk) => {
+          onChunk('start\n[TEACHING_QUIZ_START]\n{"version":1')
+          onChunk('[DONE]')
+        },
+      )
+
+      const { sendMessage, messages } = useChat()
+      await sendMessage('test message')
+
+      const assistantMessage = messages.value.find((m) => m.role === 'assistant')
+      expect(assistantMessage).toBeDefined()
+      expect(assistantMessage?.pendingStructuredBlocks).toContain('teaching_quiz')
+    })
   })
 
   describe('stopGenerating', () => {
@@ -556,6 +611,10 @@ describe('useChat', () => {
   describe('clearHistory', () => {
     it('should create new session and reset state', () => {
       const { clearHistory, currentAIResponse, currentThinkingContent, error } = useChat()
+      const todoStore = useTodoStore()
+      todoStore.setProposedChanges('assistant-1', [
+        { id: 'temp-1', type: 'add', data: { title: 'A' } },
+      ])
       currentAIResponse.value = 'test'
       currentThinkingContent.value = 'test'
       error.value = 'test'
@@ -566,6 +625,8 @@ describe('useChat', () => {
       expect(currentAIResponse.value).toBe('')
       expect(currentThinkingContent.value).toBe('')
       expect(error.value).toBeNull()
+      expect(todoStore.activeProposedChangeSetId).toBeNull()
+      expect(todoStore.proposedChanges).toEqual([])
     })
   })
 
@@ -581,6 +642,28 @@ describe('useChat', () => {
       const { deleteMessage, messages } = useChat()
       deleteMessage('m1')
       expect(messages.value).toHaveLength(0)
+    })
+
+    it('should clear proposed changes when deleting assistant message', () => {
+      const todoStore = useTodoStore()
+      todoStore.setProposedChanges('m2', [{ id: 'temp-1', type: 'add', data: { title: 'A' } }])
+
+      mockCurrentSession.value = {
+        id: 's1',
+        title: 'T1',
+        messages: [
+          { id: 'm1', role: 'user', content: 'h' },
+          { id: 'm2', role: 'assistant', content: 'ok' },
+        ],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+
+      const { deleteMessage, messages } = useChat()
+      deleteMessage('m2')
+      expect(messages.value).toHaveLength(0)
+      expect(todoStore.activeProposedChangeSetId).toBeNull()
+      expect(todoStore.proposedChanges).toEqual([])
     })
   })
 

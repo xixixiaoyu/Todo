@@ -118,29 +118,39 @@ const hasChanges = computed(
 )
 
 async function handleApply() {
+  if (isApplying.value || isDiscarding.value) return
   isApplying.value = true
-  if (props.messageId) {
-    todoStore.setProposedChanges(props.messageId, props.actions)
-    await todoStore.applyProposedChanges(props.messageId)
-  } else {
-    await todoStore.applyProposedChanges()
+  try {
+    if (props.messageId) {
+      todoStore.setProposedChanges(props.messageId, props.actions)
+      await todoStore.applyProposedChanges(props.messageId)
+    } else {
+      await todoStore.applyProposedChanges()
+    }
+    isApplied.value = true
+    updateMessageStatus('applied')
+  } catch (err) {
+    console.error('Failed to apply proposed changes:', err)
+  } finally {
+    isApplying.value = false
   }
-  isApplying.value = false
-  isApplied.value = true
-  updateMessageStatus('applied')
 }
 
 function handleDiscard() {
+  if (isApplying.value || isDiscarding.value) return
   isDiscarding.value = true
-  if (props.messageId) {
-    todoStore.setProposedChanges(props.messageId, props.actions)
-    todoStore.discardProposedChanges(props.messageId)
-  } else {
-    todoStore.discardProposedChanges()
+  try {
+    if (props.messageId) {
+      todoStore.setProposedChanges(props.messageId, props.actions)
+      todoStore.discardProposedChanges(props.messageId)
+    } else {
+      todoStore.discardProposedChanges()
+    }
+    isDiscarded.value = true
+    updateMessageStatus('discarded')
+  } finally {
+    isDiscarding.value = false
   }
-  isDiscarding.value = false
-  isDiscarded.value = true
-  updateMessageStatus('discarded')
 }
 
 const chartOptions = computed(() => ({

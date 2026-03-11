@@ -86,7 +86,8 @@ export function useChatState() {
     const messages = [...chatHistory.value]
     let updated = false
 
-    for (const msg of messages) {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const msg = messages[i]
       if (msg.teachingQuizzes) {
         const quiz = msg.teachingQuizzes.find((q) => q.id === quizId)
         if (quiz) {

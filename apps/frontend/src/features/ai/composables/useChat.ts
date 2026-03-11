@@ -2,6 +2,8 @@ import { computed } from 'vue'
 import type { AIRequestOptions, ChatMessage, TeachingQuiz } from '@/features/ai/services/aiService'
 import type { ProposedTodoChange } from '@/features/todo/stores/todo'
 import { parseAssistantBlocks } from '@/features/ai/services/aiService'
+import { getAIConfig } from '@/features/ai/composables/useAIConfig'
+import { useTodoStore } from '@/features/todo/stores/todo'
 import { useChatState } from './useChatState'
 import { useChatActions } from './useChatActions'
 
@@ -14,6 +16,7 @@ export type { ChatMessage }
 export function useChat(options: AIRequestOptions = {}) {
   const state = useChatState()
   const actions = useChatActions(options)
+  const todoStore = useTodoStore()
 
   const {
     chatHistory,
@@ -38,7 +41,10 @@ export function useChat(options: AIRequestOptions = {}) {
 
       // 避免在流式结束瞬间产生重复
       if (!lastMessage || lastMessage.id !== streamingId) {
-        const parsed = parseAssistantBlocks(currentAIResponse.value, { enableTodoActions: true })
+        const aiConfig = getAIConfig()
+        const parsed = parseAssistantBlocks(currentAIResponse.value, {
+          enableTodoActions: aiConfig.todoAssistant,
+        })
         const displayContent = parsed.cleanText
         const actions: ProposedTodoChange[] | undefined = parsed.todoActions
         const teachingQuizzes: TeachingQuiz[] | undefined = parsed.teachingQuizzes
@@ -56,9 +62,10 @@ export function useChat(options: AIRequestOptions = {}) {
           reasoning_details: currentReasoningDetails.value || undefined,
           discussionSteps:
             currentDiscussionSteps.value.length > 0 ? [...currentDiscussionSteps.value] : undefined,
-          todoActions:
-            actions ||
-            (currentTodoActions.value.length > 0 ? [...currentTodoActions.value] : undefined),
+          todoActions: aiConfig.todoAssistant
+            ? actions ||
+              (currentTodoActions.value.length > 0 ? [...currentTodoActions.value] : undefined)
+            : undefined,
           teachingQuizzes,
           structuredBlockErrors,
           pendingStructuredBlocks,
@@ -77,6 +84,7 @@ export function useChat(options: AIRequestOptions = {}) {
 
     // 如果是 AI 消息，尝试删除它前面的用户消息
     if (history[index].role === 'assistant') {
+      todoStore.clearProposedChanges(id)
       if (index > 0 && history[index - 1].role === 'user') {
         // 删除用户消息和 AI 消息
         history.splice(index - 1, 2)

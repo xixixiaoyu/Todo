@@ -1,4 +1,4 @@
-import { ref, watch, nextTick, onUnmounted, type Ref } from 'vue'
+import { ref, watch, nextTick, onUnmounted, getCurrentInstance, type Ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useMarkdown } from '@/composables/useMarkdown'
 
@@ -151,11 +151,13 @@ export function useChatMessageMarkdownRender(params: {
 
   let renderTimer: ReturnType<typeof setTimeout> | null = null
 
-  onUnmounted(() => {
-    if (!renderTimer) return
-    clearTimeout(renderTimer)
-    renderTimer = null
-  })
+  if (getCurrentInstance()) {
+    onUnmounted(() => {
+      if (!renderTimer) return
+      clearTimeout(renderTimer)
+      renderTimer = null
+    })
+  }
 
   async function updateRenderedContent(immediate = false) {
     const content = params.content.value

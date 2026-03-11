@@ -235,6 +235,10 @@ export function useChatActions(options: AIRequestOptions = {}) {
               currentAIResponse.value = stripTodoIdsFromText(currentAIResponse.value)
             }
             const structuredBlockErrors = parsed.errors.length > 0 ? [...parsed.errors] : undefined
+            const pendingStructuredBlocks =
+              parsed.pendingStructuredBlocks.length > 0
+                ? [...parsed.pendingStructuredBlocks]
+                : undefined
 
             const aiMessage: ChatMessage = {
               id: assistantMessageId,
@@ -250,6 +254,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
                 currentTodoActions.value.length > 0 ? [...currentTodoActions.value] : undefined,
               teachingQuizzes,
               structuredBlockErrors,
+              pendingStructuredBlocks,
               createdAt: new Date(),
             }
 
@@ -389,6 +394,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
 
   function clearHistory(): void {
     createSession()
+    todoStore.clearProposedChanges()
     resetStreamingState()
     clearError()
   }

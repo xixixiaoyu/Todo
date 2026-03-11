@@ -16,6 +16,7 @@ const i18n = createI18n({
         teachingShortAnswerPlaceholder: '用大白话写出你的答案…',
         teachingAnswerHintDefault: '你也可以直接在对话里回答。',
         teachingAnswerRequired: '请先选择或填写答案。',
+        teachingCharsCount: '{count} 字符',
       },
     },
   },

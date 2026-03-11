@@ -269,7 +269,7 @@ function optionKey(optionId: string): string {
             <div
               class="absolute bottom-2 right-3 text-[10px] text-muted-foreground/40 tabular-nums"
             >
-              {{ (shortAnswers[quiz.id] || '').length }} chars
+              {{ t('ai.teachingCharsCount', { count: (shortAnswers[quiz.id] || '').length }) }}
             </div>
           </div>
         </div>
