@@ -67,9 +67,18 @@ export function useMarkdown() {
           const cacheKey = `${currentTheme}:${stableHash(item.code)}`
           const cachedSvg = mermaidCodeCache.get(cacheKey)
           if (cachedSvg) {
-            // 使用非贪婪匹配，确保只替换当前 ID 的容器
-            const placeholderRegex = new RegExp(`<div id="${item.id}"[^>]*>[\\s\\S]*?<\\/div>`, 'g')
-            html = html.replace(placeholderRegex, cachedSvg)
+            const wrapper = document.createElement('div')
+            wrapper.innerHTML = html
+            const placeholder = wrapper.querySelector(`#${item.id}`)
+            if (!placeholder) return
+
+            const cachedWrapper = document.createElement('div')
+            cachedWrapper.innerHTML = cachedSvg
+            const cachedElement = cachedWrapper.firstElementChild
+            if (!cachedElement) return
+
+            placeholder.replaceWith(cachedElement.cloneNode(true))
+            html = wrapper.innerHTML
           }
         })
 

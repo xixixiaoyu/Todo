@@ -57,17 +57,26 @@ function initMermaidInteractions(container: HTMLElement) {
     const btn = (e.target as HTMLElement).closest('.mermaid-zoom-btn') as HTMLButtonElement
     if (!btn) return
 
-    const type = btn.dataset.type
+    const action = btn.dataset.action
     const step = 0.15
 
-    if (type === 'in') {
+    if (action === 'copy') {
+      const rawCode = container.dataset.raw
+      if (!rawCode) return
+      void navigator.clipboard.writeText(decodeURIComponent(rawCode))
+      return
+    }
+
+    if (action === 'in') {
       scale = Math.min(scale + step, 3)
-    } else if (type === 'out') {
+    } else if (action === 'out') {
       scale = Math.max(scale - step, 0.3)
-    } else if (type === 'reset') {
+    } else if (action === 'reset') {
       scale = 1
       translateX = 0
       translateY = 0
+    } else {
+      return
     }
 
     updateTransform()
