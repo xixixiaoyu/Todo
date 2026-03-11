@@ -5,6 +5,11 @@ import { useTodoStore } from '@/features/todo/stores/todo'
 import { todoApi } from '@/features/todo/api'
 import type { SyncResponse } from '@lumina/shared'
 
+const REMINDER_LOOP_TIMER_KEY = '__luminaTodoReminderLoopTimer__' as const
+type ReminderRuntime = typeof globalThis & {
+  [REMINDER_LOOP_TIMER_KEY]?: ReturnType<typeof setInterval>
+}
+
 const mockSocket = {
   on: vi.fn(),
   off: vi.fn(),
@@ -55,6 +60,13 @@ vi.mock('@/composables/useSocket', () => ({
 
 describe('Todo Store Sync', () => {
   beforeEach(() => {
+    const runtime = globalThis as ReminderRuntime
+    const reminderTimer = runtime[REMINDER_LOOP_TIMER_KEY]
+    if (reminderTimer) {
+      clearInterval(reminderTimer)
+      delete runtime[REMINDER_LOOP_TIMER_KEY]
+    }
+
     setActivePinia(createPinia())
     vi.clearAllMocks()
     localStorage.clear()
@@ -520,5 +532,19 @@ describe('Todo Store Sync', () => {
     expect(connectMock).toHaveBeenCalled()
     expect(mockSocket.off).toHaveBeenCalledWith('todos:sync', expect.any(Function))
     expect(mockSocket.on).toHaveBeenCalledWith('todos:sync', expect.any(Function))
+  })
+
+  it('should keep local reminder loop singleton across store instances', async () => {
+    const intervalSpy = vi.spyOn(globalThis, 'setInterval')
+
+    const store1 = await createRemoteStore()
+    await store1.initSocketListener()
+
+    setActivePinia(createPinia())
+    const store2 = await createRemoteStore()
+    await store2.initSocketListener()
+
+    expect(intervalSpy).toHaveBeenCalledTimes(1)
+    intervalSpy.mockRestore()
   })
 })

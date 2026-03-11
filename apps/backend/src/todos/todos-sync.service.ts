@@ -46,7 +46,12 @@ export class TodoSyncService {
   async sync(userId: number, syncDto: SyncMergeDto, excludeSocketId?: string) {
     const { todos, lastSyncAt } = syncDto
     const serverTime = new Date()
-    const since = lastSyncAt ? new Date(lastSyncAt) : new Date(0)
+    const rawSince = lastSyncAt ? new Date(lastSyncAt) : new Date(0)
+    const since = Number.isNaN(rawSince.getTime())
+      ? new Date(0)
+      : rawSince.getTime() > serverTime.getTime()
+        ? serverTime
+        : rawSince
 
     // 1. 处理客户端推送的变更 (使用事务保证原子性)
     const successfullyUpdatedItems: TodoPublic[] = []

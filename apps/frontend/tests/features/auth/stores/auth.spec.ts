@@ -109,6 +109,11 @@ describe('useAuthStore', () => {
       expect(store.loading).toBe(false)
       expect(store.error).toBeNull()
       expect(authApi.login).toHaveBeenCalledWith(credentials)
+      expect(JSON.parse(localStorage.getItem('auth') || '{}')).toEqual({
+        token: 'access-token',
+        refreshToken: 'refresh-token',
+        user: mockUser,
+      })
     })
 
     it('should handle login failure', async () => {
@@ -227,6 +232,11 @@ describe('useAuthStore', () => {
       expect(authApi.getPasskeyLoginOptions).toHaveBeenCalledWith(email)
       expect(startAuthentication).toHaveBeenCalledWith({ optionsJSON: options })
       expect(authApi.verifyPasskeyLogin).toHaveBeenCalledWith(email, authResponse)
+      expect(JSON.parse(localStorage.getItem('auth') || '{}')).toEqual({
+        token: 'access-token',
+        refreshToken: 'refresh-token',
+        user: mockUser,
+      })
     })
   })
 
@@ -251,6 +261,11 @@ describe('useAuthStore', () => {
       expect(store.refreshToken).toBe('refresh-token')
       expect(store.user).toEqual(mockUser)
       expect(authApi.register).toHaveBeenCalledWith(userData)
+      expect(JSON.parse(localStorage.getItem('auth') || '{}')).toEqual({
+        token: 'access-token',
+        refreshToken: 'refresh-token',
+        user: mockUser,
+      })
     })
 
     it('should handle register failure', async () => {
@@ -402,6 +417,11 @@ describe('useAuthStore', () => {
       expect(store.token).toBe('access-token')
       expect(store.refreshToken).toBe('refresh-token')
       expect(store.user).toEqual(mockUser)
+      expect(JSON.parse(localStorage.getItem('auth') || '{}')).toEqual({
+        token: 'access-token',
+        refreshToken: 'refresh-token',
+        user: mockUser,
+      })
     })
 
     it('should return false when no refresh token', async () => {
@@ -474,6 +494,7 @@ describe('useAuthStore', () => {
       expect(store.user).toBeNull()
       expect(store.error).toBeNull()
       expect(authApi.logout).toHaveBeenCalledWith('refresh-token')
+      expect(localStorage.getItem('auth')).toBeNull()
     })
 
     it('should clear state even if logout API fails', async () => {

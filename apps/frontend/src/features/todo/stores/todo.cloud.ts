@@ -8,6 +8,11 @@ import { useToast } from '@/composables/useToast'
 import { toDate, cloneTodo } from './todo.dates'
 
 const SYNC_COOLDOWN_MS = 2000
+const REMINDER_LOOP_TIMER_KEY = '__luminaTodoReminderLoopTimer__' as const
+
+type ReminderRuntime = typeof globalThis & {
+  [REMINDER_LOOP_TIMER_KEY]?: ReturnType<typeof setInterval>
+}
 
 export function createTodoCloud(deps: {
   todos: Ref<Todo[]>
@@ -237,29 +242,26 @@ export function createTodoCloud(deps: {
     todo.syncStatus = 'synced'
   }
 
-  const startLocalReminderLoop = (() => {
-    let started = false
-    return () => {
-      if (started) return
-      started = true
-      setInterval(() => {
-        const now = Date.now()
-        for (const todo of deps.todos.value) {
-          if (todo.deletedAt || todo.completed) continue
-          if (!todo.remindAt || todo.remindedAt) continue
-          const remindAt = toDate(todo.remindAt)
-          if (!remindAt) continue
-          if (remindAt.getTime() > now) continue
+  const startLocalReminderLoop = () => {
+    const runtime = globalThis as ReminderRuntime
+    if (runtime[REMINDER_LOOP_TIMER_KEY]) return
+    runtime[REMINDER_LOOP_TIMER_KEY] = setInterval(() => {
+      const now = Date.now()
+      for (const todo of deps.todos.value) {
+        if (todo.deletedAt || todo.completed) continue
+        if (!todo.remindAt || todo.remindedAt) continue
+        const remindAt = toDate(todo.remindAt)
+        if (!remindAt) continue
+        if (remindAt.getTime() > now) continue
 
-          toast.info(t('todo.reminderToast', { title: todo.title }))
-          todo.remindedAt = new Date()
-          todo.updatedAt = new Date()
-          todo.syncStatus = 'pending'
-          debouncedSync()
-        }
-      }, 15_000)
-    }
-  })()
+        toast.info(t('todo.reminderToast', { title: todo.title }))
+        todo.remindedAt = new Date()
+        todo.updatedAt = new Date()
+        todo.syncStatus = 'pending'
+        debouncedSync()
+      }
+    }, 15_000)
+  }
 
   async function mergeOnLogin(userId: number): Promise<void> {
     if (!deps.isRemoteSource.value) return

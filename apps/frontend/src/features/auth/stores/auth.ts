@@ -39,6 +39,21 @@ export const useAuthStore = defineStore(
       fieldErrors.value = err.response?.data?.errors || {}
     }
 
+    function persistAuthState(): void {
+      localStorage.setItem(
+        'auth',
+        JSON.stringify({
+          token: token.value,
+          refreshToken: refreshToken.value,
+          user: user.value,
+        }),
+      )
+    }
+
+    function clearPersistedAuth(): void {
+      localStorage.removeItem('auth')
+    }
+
     function hydrateFromStorage(): void {
       if (token.value && refreshToken.value && user.value) return
 
@@ -90,14 +105,7 @@ export const useAuthStore = defineStore(
         setToken(token.value)
 
         // 立即手动触发一次持久化同步，确保跨页面或刷新后能恢复
-        localStorage.setItem(
-          'auth',
-          JSON.stringify({
-            token: token.value,
-            refreshToken: refreshToken.value,
-            user: user.value,
-          }),
-        )
+        persistAuthState()
 
         // 登录成功后触发数据合并同步
         const { useTodoStore } = await import('@/features/todo/stores/todo')
@@ -128,6 +136,7 @@ export const useAuthStore = defineStore(
         user.value = response.data.user
 
         setToken(token.value)
+        persistAuthState()
 
         // 注册成功后触发数据同步
         const { useTodoStore } = await import('@/features/todo/stores/todo')
@@ -221,6 +230,7 @@ export const useAuthStore = defineStore(
         user.value = response.data.user
 
         setToken(token.value)
+        persistAuthState()
 
         // 登录成功后触发数据同步
         const { useTodoStore } = await import('@/features/todo/stores/todo')
@@ -262,6 +272,7 @@ export const useAuthStore = defineStore(
         user.value = response.data.user
 
         setToken(token.value)
+        persistAuthState()
 
         // 登录成功后触发数据合并同步
         const { useTodoStore } = await import('@/features/todo/stores/todo')
@@ -308,6 +319,7 @@ export const useAuthStore = defineStore(
         refreshToken.value = response.data.refreshToken
         user.value = response.data.user
         setToken(token.value)
+        persistAuthState()
         return true
       } catch {
         void logout()
@@ -328,6 +340,7 @@ export const useAuthStore = defineStore(
       user.value = null
       error.value = null
       setToken(null)
+      clearPersistedAuth()
 
       // 通知后端注销令牌（仅当本地曾有令牌时）
       if (currentRefreshToken && currentToken) {

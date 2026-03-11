@@ -33,7 +33,15 @@ export const SyncItemSchema = TodoSchema.extend({
  */
 export const SyncMergeRequestSchema = z.object({
   todos: z.array(SyncItemSchema),
-  lastSyncAt: z.date().or(z.string()).optional(),
+  lastSyncAt: z
+    .date()
+    .or(
+      z
+        .string()
+        .min(1)
+        .refine((value) => !Number.isNaN(new Date(value).getTime())),
+    )
+    .optional(),
 })
 
 export const SyncConflictSchema = z.object({

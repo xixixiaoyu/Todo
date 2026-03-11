@@ -125,6 +125,29 @@ describe('TodoSyncService', () => {
       )
     })
 
+    it('should fallback to epoch when lastSyncAt is invalid', async () => {
+      const userId = 1
+      const syncDto = {
+        todos: [],
+        lastSyncAt: 'invalid-date-value',
+      } as unknown as SyncMergeDto
+
+      mockPrisma.todo.findMany.mockResolvedValue([])
+      mockPrisma.todoTombstone.findMany.mockResolvedValue([])
+
+      await service.sync(userId, syncDto)
+
+      expect(mockPrisma.todo.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            userId,
+            deletedAt: null,
+            updatedAt: { gte: new Date(0) },
+          }),
+        }),
+      )
+    })
+
     it('should return logically deleted items in synced list', async () => {
       const userId = 1
       const syncDto: SyncMergeDto = {
