@@ -137,11 +137,13 @@ export const ai = {
   teachingPlaceholder: 'Type what you want to learn…',
   teachingQuizTitle: 'Interactive Q&A',
   teachingQuizHint: 'Please answer the following questions to help me assist you better.',
+  teachingQuizGenerating: 'Interactive Q&A is being prepared…',
   teachingSubmitAnswer: 'Submit',
   teachingSubmitAll: 'Submit all',
   teachingShortAnswerPlaceholder: 'Explain in plain words…',
   teachingAnswerHintDefault: 'You can also answer directly in chat.',
   teachingAnswerRequired: 'Please select or write an answer first.',
+  todoVisualizationGenerating: 'Task visualization is being prepared…',
   teachingModeSystemPrompt: [
     '[Teaching Mode]',
     '# Role',

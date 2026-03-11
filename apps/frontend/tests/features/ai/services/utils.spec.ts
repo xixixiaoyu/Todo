@@ -283,6 +283,7 @@ describe('AI Utils - parseAssistantBlocks', () => {
     const res = parseAssistantBlocks(input, { enableTodoActions: true })
     expect(res.cleanText).toBe('hello\n\nworld')
     expect(res.teachingQuizzes?.[0]?.id).toBe('q1')
+    expect(res.pendingStructuredBlocks).toEqual([])
   })
 
   it('should pick last valid todo actions from multiple blocks', () => {
@@ -291,6 +292,7 @@ describe('AI Utils - parseAssistantBlocks', () => {
     const res = parseAssistantBlocks(input, { enableTodoActions: true })
     expect(res.cleanText).toBe('x\n\nmid\n\ny')
     expect(res.todoActions?.[0]?.type).toBe('add')
+    expect(res.pendingStructuredBlocks).toEqual([])
   })
 
   it('should ignore todo actions when disabled', () => {
@@ -299,6 +301,7 @@ describe('AI Utils - parseAssistantBlocks', () => {
     const res = parseAssistantBlocks(input, { enableTodoActions: false })
     expect(res.todoActions).toBeUndefined()
     expect(res.cleanText).toBe('x\n\ny')
+    expect(res.pendingStructuredBlocks).toEqual([])
   })
 
   it('should validate todo actions strictly and ignore invalid items', () => {
@@ -307,5 +310,15 @@ describe('AI Utils - parseAssistantBlocks', () => {
     const res = parseAssistantBlocks(input, { enableTodoActions: true })
     expect(res.todoActions?.map((a) => a.type)).toEqual(['add', 'pin'])
     expect(res.todoActions?.[0]?.data.title).toBe('ok')
+    expect(res.pendingStructuredBlocks).toEqual([])
+  })
+
+  it('should mark pending structured blocks when tags are incomplete', () => {
+    const input = 'start\n[TEACHING_QUIZ_START]\n{"version":1'
+    const res = parseAssistantBlocks(input, { enableTodoActions: true })
+    expect(res.pendingStructuredBlocks).toContain('teaching_quiz')
+    expect(res.errors).toEqual(
+      expect.arrayContaining([{ block: 'teaching_quiz', code: 'partial_block' }]),
+    )
   })
 })

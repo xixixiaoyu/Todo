@@ -43,6 +43,10 @@ export function useChat(options: AIRequestOptions = {}) {
         const actions: ProposedTodoChange[] | undefined = parsed.todoActions
         const teachingQuizzes: TeachingQuiz[] | undefined = parsed.teachingQuizzes
         const structuredBlockErrors = parsed.errors.length > 0 ? [...parsed.errors] : undefined
+        const pendingStructuredBlocks =
+          parsed.pendingStructuredBlocks.length > 0
+            ? [...parsed.pendingStructuredBlocks]
+            : undefined
 
         allMessages.push({
           id: streamingId,
@@ -57,6 +61,7 @@ export function useChat(options: AIRequestOptions = {}) {
             (currentTodoActions.value.length > 0 ? [...currentTodoActions.value] : undefined),
           teachingQuizzes,
           structuredBlockErrors,
+          pendingStructuredBlocks,
           isStreaming: true,
         })
       }

@@ -129,11 +129,13 @@ export const ai = {
   teachingPlaceholder: '输入你想学的主题…',
   teachingQuizTitle: '互动问答',
   teachingQuizHint: '请选择或填写以下内容，以便我更好地辅助你。',
+  teachingQuizGenerating: '互动问答正在生成中…',
   teachingSubmitAnswer: '提交',
   teachingSubmitAll: '统一提交',
   teachingShortAnswerPlaceholder: '用大白话写出你的答案…',
   teachingAnswerHintDefault: '你也可以直接在对话里回答。',
   teachingAnswerRequired: '请先选择或填写答案。',
+  todoVisualizationGenerating: '思维导图正在生成中…',
   teachingModeSystemPrompt: [
     '[教学模式]',
     '# Role',

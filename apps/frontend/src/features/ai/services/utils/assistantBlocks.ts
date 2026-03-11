@@ -77,6 +77,7 @@ export interface ParsedAssistantBlocks {
   todoActions?: ProposedTodoChange[]
   teachingQuizzes?: TeachingQuiz[]
   errors: StructuredBlockError[]
+  pendingStructuredBlocks: StructuredBlockKind[]
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -262,10 +263,14 @@ export function parseAssistantBlocks(
   options?: { enableTodoActions?: boolean },
 ): ParsedAssistantBlocks {
   const errors: StructuredBlockError[] = []
+  const pendingStructuredBlocks = new Set<StructuredBlockKind>()
   const normalizeText = (input: string) => input.replace(/\n{3,}/g, '\n\n').trim()
 
   const todoRes = stripTaggedBlocks(content, '[TODO_ACTIONS_START]', '[TODO_ACTIONS_END]')
-  if (todoRes.hasPartialStart) errors.push({ block: 'todo_actions', code: 'partial_block' })
+  if (todoRes.hasPartialStart) {
+    errors.push({ block: 'todo_actions', code: 'partial_block' })
+    pendingStructuredBlocks.add('todo_actions')
+  }
   const todoActions =
     options?.enableTodoActions && todoRes.inners.length > 0
       ? parseLastValidJsonBlock(todoRes.inners, normalizeTodoActions, 'todo_actions', errors) ||
@@ -277,7 +282,10 @@ export function parseAssistantBlocks(
     '[TEACHING_QUIZ_START]',
     '[TEACHING_QUIZ_END]',
   )
-  if (teachingRes.hasPartialStart) errors.push({ block: 'teaching_quiz', code: 'partial_block' })
+  if (teachingRes.hasPartialStart) {
+    errors.push({ block: 'teaching_quiz', code: 'partial_block' })
+    pendingStructuredBlocks.add('teaching_quiz')
+  }
   const teachingQuizzes =
     teachingRes.inners.length > 0
       ? parseLastValidJsonBlock(
@@ -293,5 +301,6 @@ export function parseAssistantBlocks(
     ...(todoActions ? { todoActions } : {}),
     ...(teachingQuizzes ? { teachingQuizzes } : {}),
     errors,
+    pendingStructuredBlocks: Array.from(pendingStructuredBlocks),
   }
 }

@@ -82,6 +82,7 @@ export interface ChatMessage {
   todoActionsProcessed?: 'applied' | 'discarded' // AI 建议的处理状态
   teachingQuizzes?: TeachingQuiz[]
   structuredBlockErrors?: StructuredBlockError[]
+  pendingStructuredBlocks?: StructuredBlockKind[]
   isStreaming?: boolean
   createdAt?: Date
 }

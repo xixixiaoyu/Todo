@@ -102,6 +102,17 @@ const showStructuredBlockWarning = computed(() => {
     props.message.structuredBlockErrors.length > 0
   )
 })
+const pendingStructuredBlocks = computed(() => props.message.pendingStructuredBlocks || [])
+const isTeachingQuizPending = computed(() => {
+  if (!isStreaming.value) return false
+  if (props.message.teachingQuizzes && props.message.teachingQuizzes.length > 0) return false
+  return pendingStructuredBlocks.value.includes('teaching_quiz')
+})
+const isTodoActionsPending = computed(() => {
+  if (!isStreaming.value) return false
+  if (props.message.todoActions && props.message.todoActions.length > 0) return false
+  return pendingStructuredBlocks.value.includes('todo_actions')
+})
 
 const markdownRef = ref<InstanceType<typeof ChatMessageMarkdown>>()
 
@@ -239,6 +250,16 @@ defineExpose({
                 @submit="(payload) => emit('teaching-submit', payload)"
                 @submit-batch="(payload) => emit('teaching-submit-batch', payload)"
               />
+              <div
+                v-else-if="isTeachingQuizPending"
+                data-test="teaching-quiz-loading"
+                class="mt-3 flex items-center gap-2 rounded-xl border border-ai-message-border/80 bg-ai-message-bg/60 px-3 py-2 text-xs text-muted-foreground"
+              >
+                <span
+                  class="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-primary/80"
+                ></span>
+                <span>{{ t('ai.teachingQuizGenerating') }}</span>
+              </div>
 
               <!-- AI 建议的思维导图预览 -->
               <ChatVisualizerPreview
@@ -247,6 +268,16 @@ defineExpose({
                 :message-id="message.id"
                 :processed-status="message.todoActionsProcessed"
               />
+              <div
+                v-else-if="isTodoActionsPending"
+                data-test="todo-actions-loading"
+                class="mt-3 flex items-center gap-2 rounded-xl border border-ai-message-border/80 bg-ai-message-bg/60 px-3 py-2 text-xs text-muted-foreground"
+              >
+                <span
+                  class="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-primary/80"
+                ></span>
+                <span>{{ t('ai.todoVisualizationGenerating') }}</span>
+              </div>
             </template>
 
             <!-- 操作按钮（AI 消息内部） -->

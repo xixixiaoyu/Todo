@@ -3,6 +3,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import i18n from '@/i18n'
 import ChatMessage from '@/features/ai/components/ChatMessage.vue'
+import type { ChatMessage as ChatMessageType } from '@/features/ai/composables/useChat'
 
 beforeEach(() => {
   setActivePinia(createPinia())
@@ -202,6 +203,26 @@ describe('ChatMessage', () => {
 
     expect(wrapper.find('.loading-container').exists()).toBe(false)
     expect(wrapper.find('.thinking-content').exists()).toBe(true)
+  })
+
+  it('should show structured block loading states while streaming', () => {
+    const message: ChatMessageType = {
+      id: '1',
+      role: 'assistant' as const,
+      content: '已收到你的需求，正在准备结构化内容',
+      isStreaming: true,
+      pendingStructuredBlocks: ['teaching_quiz', 'todo_actions'],
+    }
+
+    const wrapper = mount(ChatMessage, {
+      props: { message },
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    expect(wrapper.find('[data-test="teaching-quiz-loading"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="todo-actions-loading"]').exists()).toBe(true)
   })
 
   it('should prioritize reasoning details over thinking content in thinking panel', async () => {
