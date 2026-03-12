@@ -55,10 +55,26 @@ export async function initializeMermaid(theme: 'default' | 'dark' = 'default') {
 
   const fontStack = '"LXGW WenKai Screen", "LXGW WenKai", system-ui, -apple-system, sans-serif'
   const isDark = theme === 'dark'
+  const darkThemeCss = `
+    .label,
+    .edgeLabel,
+    .cluster-label {
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.72), 0 0 1px rgba(0, 0, 0, 0.9);
+      font-weight: 600;
+    }
+
+    svg text {
+      paint-order: stroke;
+      stroke: rgba(12, 12, 12, 0.78);
+      stroke-width: 1.1px;
+      stroke-linejoin: round;
+    }
+  `
 
   mermaidInstance.initialize({
     startOnLoad: false,
     theme: isDark ? 'dark' : 'default',
+    themeCSS: isDark ? darkThemeCss : '',
     securityLevel: 'strict',
     fontFamily: fontStack,
     fontSize: 14,

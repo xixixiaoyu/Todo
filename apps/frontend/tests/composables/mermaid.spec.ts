@@ -49,4 +49,25 @@ describe('mermaid rendering', () => {
     expect(html).not.toContain('<script>')
     expect(html).toContain('mermaid-container')
   })
+
+  it('should inject contrast-enhanced theme css in dark mode', async () => {
+    const initialize = vi.fn()
+
+    vi.doMock('mermaid', () => ({
+      default: {
+        initialize,
+        render: vi.fn(),
+      },
+    }))
+
+    const { initializeMermaid } = await import('@/composables/markdown/mermaid')
+    await initializeMermaid('dark')
+
+    expect(initialize).toHaveBeenCalledWith(
+      expect.objectContaining({
+        theme: 'dark',
+        themeCSS: expect.stringContaining('paint-order: stroke'),
+      }),
+    )
+  })
 })
