@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+    <link rel="icon" type="image/png" href="./logo.png" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon-180x180.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="description" content="简思 (Lumina) - 简于形，深于思 — 高效纯粹的 AI 个人待办" />
+    <title>简思 (Lumina)</title>
+    <script>
+      ;(function () {
+        // 同步设置初始标题，避免根据语言切换时的闪烁
+        const locale =
+          localStorage.getItem('locale') ||
+          (navigator.language.startsWith('zh') ? 'zh-CN' : 'en-US')
+        if (locale === 'en-US') {
+          document.title = 'Lumina (简思)'
+        } else {
+          document.title = '简思 (Lumina)'
+        }
+
+        const prefersDark =
+          window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        const setting = localStorage.getItem('vueuse-color-scheme') || 'auto'
+        if (setting === 'dark' || (setting === 'auto' && prefersDark)) {
+          document.documentElement.classList.add('dark')
+        }
+      })()
+    </script>
+    <script type="module" crossorigin src="/assets/index-EjmZuvpW.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vue-vendor-BhjQ3G46.js">
+    <link rel="modulepreload" crossorigin href="/assets/chart-vendor-DibsEQ-4.js">
+    <link rel="modulepreload" crossorigin href="/assets/markdown-vendor-DwkRGqvJ.js">
+    <link rel="modulepreload" crossorigin href="/assets/utils-vendor-BLyG6cs3.js">
+    <link rel="modulepreload" crossorigin href="/assets/ui-vendor-CGXDSN8q.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-zn2uVNLI.css">
+  <link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
+  <body>
+    <div id="app"></div>
+  </body>
+</html>
