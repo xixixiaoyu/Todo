@@ -7,6 +7,7 @@ import {
   generateId,
   parseAssistantBlocks,
   type ChatMessage,
+  type TeachingAssessment,
   type TeachingQuiz,
   type AIRequestOptions,
   type ToolCall,
@@ -40,6 +41,26 @@ function stripTodoIdsFromText(input: string): string {
   out = out.replace(new RegExp(`\\b(?:ID|Id|id)\\s*[:：]\\s*(?:${uuid}|${tempId})\\b`, 'g'), '')
   out = out.replace(/\n{3,}/g, '\n\n').trim()
   return out
+}
+
+function buildTeachingFallbackQuiz(
+  content: string,
+  messageId: string,
+  t: (key: string, params?: Record<string, unknown>) => string,
+): TeachingQuiz[] {
+  const normalized = content.replace(/\s+/g, ' ').trim()
+  const summary =
+    normalized.length > 0
+      ? normalized.slice(0, 120)
+      : (t('ai.teachingFallbackSummaryDefault') as string)
+  return [
+    {
+      id: `${messageId}-fallback-understand`,
+      kind: 'short_answer',
+      stem: t('ai.teachingFallbackQuestion', { summary }) as string,
+      answerHint: t('ai.teachingFallbackHint') as string,
+    },
+  ]
 }
 
 /**
@@ -229,7 +250,12 @@ export function useChatActions(options: AIRequestOptions = {}) {
               todoStore.setProposedChanges(assistantMessageId, proposedActions)
             }
 
-            const teachingQuizzes: TeachingQuiz[] | undefined = parsed.teachingQuizzes
+            const teachingQuizzes: TeachingQuiz[] | undefined =
+              parsed.teachingQuizzes ||
+              (aiConfig.assistantMode === 'teaching'
+                ? buildTeachingFallbackQuiz(parsed.cleanText, assistantMessageId, t)
+                : undefined)
+            const teachingAssessments: TeachingAssessment[] | undefined = parsed.teachingAssessments
             currentAIResponse.value = parsed.cleanText
             if (aiConfig.todoAssistant && currentAIResponse.value) {
               currentAIResponse.value = stripTodoIdsFromText(currentAIResponse.value)
@@ -253,6 +279,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
               todoActions:
                 currentTodoActions.value.length > 0 ? [...currentTodoActions.value] : undefined,
               teachingQuizzes,
+              teachingAssessments,
               structuredBlockErrors,
               pendingStructuredBlocks,
               createdAt: new Date(),

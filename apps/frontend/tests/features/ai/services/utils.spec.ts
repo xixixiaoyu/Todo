@@ -321,4 +321,27 @@ describe('AI Utils - parseAssistantBlocks', () => {
       expect.arrayContaining([{ block: 'teaching_quiz', code: 'partial_block' }]),
     )
   })
+
+  it('should parse teaching assessments and keep clean text', () => {
+    const input =
+      'feedback\n\n[TEACHING_ASSESSMENT_START]\n{"version":1,"assessments":[{"quizId":"q1","result":"partial","mastery":"developing","feedback":"good attempt","nextFocus":"explain edge case"}]}\n[TEACHING_ASSESSMENT_END]'
+    const res = parseAssistantBlocks(input, { enableTodoActions: true })
+    expect(res.cleanText).toBe('feedback')
+    expect(res.teachingAssessments?.[0]).toEqual({
+      quizId: 'q1',
+      result: 'partial',
+      mastery: 'developing',
+      feedback: 'good attempt',
+      nextFocus: 'explain edge case',
+    })
+  })
+
+  it('should mark pending teaching_assessment block when end tag is missing', () => {
+    const input = 'feedback\n[TEACHING_ASSESSMENT_START]\n{"version":1'
+    const res = parseAssistantBlocks(input, { enableTodoActions: true })
+    expect(res.pendingStructuredBlocks).toContain('teaching_assessment')
+    expect(res.errors).toEqual(
+      expect.arrayContaining([{ block: 'teaching_assessment', code: 'partial_block' }]),
+    )
+  })
 })

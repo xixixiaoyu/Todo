@@ -17,6 +17,7 @@ import ChatMessageImages from './ChatMessageImages.vue'
 import ChatMessageMarkdown from './ChatMessageMarkdown.vue'
 import ChatMessageUser from './ChatMessageUser.vue'
 import TeachingQuizPanel from './TeachingQuizPanel.vue'
+import TeachingLearningReport from './TeachingLearningReport.vue'
 import { useChatMessageImagePreview } from '@/features/ai/composables/useChatMessageImagePreview'
 
 const props = defineProps<{
@@ -250,8 +251,15 @@ defineExpose({
                 @submit="(payload) => emit('teaching-submit', payload)"
                 @submit-batch="(payload) => emit('teaching-submit-batch', payload)"
               />
+              <TeachingLearningReport
+                v-if="message.teachingAssessments && message.teachingAssessments.length > 0"
+                :assessments="message.teachingAssessments"
+              />
               <div
-                v-else-if="isTeachingQuizPending"
+                v-if="
+                  (!message.teachingQuizzes || message.teachingQuizzes.length === 0) &&
+                  isTeachingQuizPending
+                "
                 data-test="teaching-quiz-loading"
                 class="group relative mt-3 overflow-hidden rounded-2xl border border-ai-message-border/80 bg-gradient-to-br from-background/50 via-ai-message-bg/70 to-ai-message-bg/60 p-3 text-xs text-muted-foreground backdrop-blur-md"
               >

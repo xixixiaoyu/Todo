@@ -46,6 +46,152 @@ function formatTemplate(template: string, params: Record<string, string | number
   return out
 }
 
+type TeachingProgressItem = {
+  quizId: string
+  stem: string
+  attempts: number
+  lastAnswer?: string
+  lastResult?: string
+  mastery?: string
+  nextFocus?: string
+}
+
+function parseTeachingSubmission(
+  content: string,
+): Array<{ quizId: string; answer: string | string[] }> | null {
+  const trimmed = content.trim()
+  if (!trimmed) return null
+
+  if (trimmed.startsWith('[TEACHING_ANSWER]')) {
+    const json = trimmed.slice('[TEACHING_ANSWER]'.length).trim()
+    if (!json) return null
+    try {
+      const parsed = JSON.parse(json) as unknown
+      if (!parsed || typeof parsed !== 'object') return null
+      const quizId = (parsed as { quizId?: unknown }).quizId
+      const answer = (parsed as { answer?: unknown }).answer
+      if (typeof quizId !== 'string') return null
+      if (
+        typeof answer !== 'string' &&
+        !(Array.isArray(answer) && answer.every((v) => typeof v === 'string'))
+      ) {
+        return null
+      }
+      return [{ quizId, answer }]
+    } catch {
+      return null
+    }
+  }
+
+  if (trimmed.startsWith('[TEACHING_ANSWERS]')) {
+    const json = trimmed.slice('[TEACHING_ANSWERS]'.length).trim()
+    if (!json) return null
+    try {
+      const parsed = JSON.parse(json) as unknown
+      if (!Array.isArray(parsed)) return null
+      const normalized = parsed
+        .map((item) => {
+          if (!item || typeof item !== 'object') return null
+          const quizId = (item as { quizId?: unknown }).quizId
+          const answer = (item as { answer?: unknown }).answer
+          if (typeof quizId !== 'string') return null
+          if (
+            typeof answer !== 'string' &&
+            !(Array.isArray(answer) && answer.every((v) => typeof v === 'string'))
+          ) {
+            return null
+          }
+          return { quizId, answer }
+        })
+        .filter((item): item is { quizId: string; answer: string | string[] } => !!item)
+      return normalized.length > 0 ? normalized : null
+    } catch {
+      return null
+    }
+  }
+
+  return null
+}
+
+function formatAnswer(answer: string | string[]): string {
+  if (Array.isArray(answer)) return answer.join(', ')
+  return answer.trim()
+}
+
+function buildTeachingProgressSummary(messages: ChatMessage[]): string {
+  const map = new Map<string, TeachingProgressItem>()
+
+  for (const msg of messages) {
+    if (msg.teachingQuizzes) {
+      for (const quiz of msg.teachingQuizzes) {
+        const prev = map.get(quiz.id)
+        map.set(quiz.id, {
+          quizId: quiz.id,
+          stem: quiz.stem,
+          attempts: prev?.attempts ?? 0,
+          ...(prev?.lastAnswer ? { lastAnswer: prev.lastAnswer } : {}),
+          ...(prev?.lastResult ? { lastResult: prev.lastResult } : {}),
+          ...(prev?.mastery ? { mastery: prev.mastery } : {}),
+          ...(prev?.nextFocus ? { nextFocus: prev.nextFocus } : {}),
+        })
+      }
+    }
+
+    if (msg.role === 'user') {
+      const submissions = parseTeachingSubmission(msg.content)
+      if (submissions) {
+        for (const submission of submissions) {
+          const prev = map.get(submission.quizId)
+          map.set(submission.quizId, {
+            quizId: submission.quizId,
+            stem: prev?.stem || submission.quizId,
+            attempts: (prev?.attempts ?? 0) + 1,
+            lastAnswer: formatAnswer(submission.answer),
+            ...(prev?.lastResult ? { lastResult: prev.lastResult } : {}),
+            ...(prev?.mastery ? { mastery: prev.mastery } : {}),
+            ...(prev?.nextFocus ? { nextFocus: prev.nextFocus } : {}),
+          })
+        }
+      }
+    }
+
+    if (msg.teachingAssessments) {
+      for (const assessment of msg.teachingAssessments) {
+        const prev = map.get(assessment.quizId)
+        map.set(assessment.quizId, {
+          quizId: assessment.quizId,
+          stem: prev?.stem || assessment.quizId,
+          attempts: prev?.attempts ?? 0,
+          ...(prev?.lastAnswer ? { lastAnswer: prev.lastAnswer } : {}),
+          lastResult: assessment.result,
+          mastery: assessment.mastery,
+          ...(assessment.nextFocus ? { nextFocus: assessment.nextFocus } : {}),
+        })
+      }
+    }
+  }
+
+  const rows = Array.from(map.values())
+    .filter((item) => item.attempts > 0 || item.lastResult || item.mastery)
+    .slice(-8)
+
+  if (rows.length === 0) return ''
+
+  return rows
+    .map((item) => {
+      const sections = [
+        `quizId=${item.quizId}`,
+        `attempts=${item.attempts}`,
+        item.mastery ? `mastery=${item.mastery}` : null,
+        item.lastResult ? `result=${item.lastResult}` : null,
+        item.lastAnswer ? `lastAnswer=${item.lastAnswer}` : null,
+        item.nextFocus ? `nextFocus=${item.nextFocus}` : null,
+      ].filter(Boolean)
+      return `- ${item.stem}\n  ${sections.join(' | ')}`
+    })
+    .join('\n')
+}
+
 interface TodoWithChildren extends Todo {
   children: TodoWithChildren[]
 }
@@ -112,6 +258,15 @@ export function injectSystemPrompts(
     const teachingPrompt = getRawLocaleMessage('ai.teachingModeSystemPrompt')
     if (teachingPrompt) {
       systemBlocks.push({ content: teachingPrompt })
+    }
+
+    const progress = buildTeachingProgressSummary(messages)
+    if (progress) {
+      const progressTemplate = getRawLocaleMessage('ai.teachingProgressPrompt')
+      const content = progressTemplate
+        ? formatTemplate(progressTemplate, { progress })
+        : `[Teaching Progress]\n${progress}`
+      systemBlocks.push({ content })
     }
   }
 

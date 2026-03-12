@@ -1,5 +1,10 @@
 import { computed } from 'vue'
-import type { AIRequestOptions, ChatMessage, TeachingQuiz } from '@/features/ai/services/aiService'
+import type {
+  AIRequestOptions,
+  ChatMessage,
+  TeachingAssessment,
+  TeachingQuiz,
+} from '@/features/ai/services/aiService'
 import type { ProposedTodoChange } from '@/features/todo/stores/todo'
 import { parseAssistantBlocks } from '@/features/ai/services/aiService'
 import { getAIConfig } from '@/features/ai/composables/useAIConfig'
@@ -48,6 +53,7 @@ export function useChat(options: AIRequestOptions = {}) {
         const displayContent = parsed.cleanText
         const actions: ProposedTodoChange[] | undefined = parsed.todoActions
         const teachingQuizzes: TeachingQuiz[] | undefined = parsed.teachingQuizzes
+        const teachingAssessments: TeachingAssessment[] | undefined = parsed.teachingAssessments
         const structuredBlockErrors = parsed.errors.length > 0 ? [...parsed.errors] : undefined
         const pendingStructuredBlocks =
           parsed.pendingStructuredBlocks.length > 0
@@ -67,6 +73,7 @@ export function useChat(options: AIRequestOptions = {}) {
               (currentTodoActions.value.length > 0 ? [...currentTodoActions.value] : undefined)
             : undefined,
           teachingQuizzes,
+          teachingAssessments,
           structuredBlockErrors,
           pendingStructuredBlocks,
           isStreaming: true,

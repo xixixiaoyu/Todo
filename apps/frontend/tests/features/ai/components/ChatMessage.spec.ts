@@ -27,6 +27,8 @@ vi.mock('lucide-vue-next', () => ({
   Send: { name: 'Send', template: '<span>Send</span>' },
   Sparkles: { name: 'Sparkles', template: '<span>Sparkles</span>' },
   X: { name: 'X', template: '<span>X</span>' },
+  BookCheck: { name: 'BookCheck', template: '<span>BookCheck</span>' },
+  Target: { name: 'Target', template: '<span>Target</span>' },
 }))
 
 // Mock composables
@@ -423,6 +425,31 @@ describe('ChatMessage', () => {
     const arg = mockWriteText.mock.calls[0][0] as string
     expect(arg).toContain('"messageId": "1"')
     expect(arg).toContain('"block": "todo_actions"')
+  })
+
+  it('should render teaching learning report when assessments exist', () => {
+    const message: ChatMessageType = {
+      id: '1',
+      role: 'assistant',
+      content: '反馈如下',
+      teachingAssessments: [
+        {
+          quizId: 'q1',
+          result: 'incorrect',
+          mastery: 'novice',
+          feedback: '你已经抓住一半概念',
+          nextFocus: '先解释输入输出关系',
+        },
+      ],
+    }
+
+    const wrapper = mount(ChatMessage, {
+      props: { message },
+    })
+
+    expect(wrapper.text()).toContain('ai.teachingReportTitle')
+    expect(wrapper.text()).toContain('q1')
+    expect(wrapper.text()).toContain('ai.teachingReportNextFocus')
   })
 
   it('should emit ask-selection when asking about selected text', async () => {

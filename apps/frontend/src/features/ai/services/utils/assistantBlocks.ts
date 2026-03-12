@@ -1,6 +1,9 @@
 import { z } from 'zod'
 import type { ProposedTodoChange } from '@/features/todo/stores/todo'
 import type {
+  TeachingAssessment,
+  TeachingAssessmentResult,
+  TeachingMasteryLevel,
   TeachingQuiz,
   TeachingQuizKind,
   StructuredBlockError,
@@ -76,6 +79,7 @@ export interface ParsedAssistantBlocks {
   cleanText: string
   todoActions?: ProposedTodoChange[]
   teachingQuizzes?: TeachingQuiz[]
+  teachingAssessments?: TeachingAssessment[]
   errors: StructuredBlockError[]
   pendingStructuredBlocks: StructuredBlockKind[]
 }
@@ -141,6 +145,49 @@ function normalizeTeachingQuizzes(parsed: unknown): TeachingQuiz[] | null {
   if (!quizzes) return null
 
   const normalized = quizzes.map(normalizeTeachingQuiz).filter((x): x is TeachingQuiz => !!x)
+  if (normalized.length === 0) return null
+  return normalized
+}
+
+function normalizeTeachingAssessmentResult(value: unknown): TeachingAssessmentResult | null {
+  if (value === 'correct' || value === 'partial' || value === 'incorrect') return value
+  return null
+}
+
+function normalizeTeachingMasteryLevel(value: unknown): TeachingMasteryLevel | null {
+  if (value === 'novice' || value === 'developing' || value === 'proficient') return value
+  return null
+}
+
+function normalizeTeachingAssessment(value: unknown): TeachingAssessment | null {
+  if (!isRecord(value)) return null
+  const quizId = value.quizId
+  const result = normalizeTeachingAssessmentResult(value.result)
+  const mastery = normalizeTeachingMasteryLevel(value.mastery)
+  const feedback = value.feedback
+  if (!isNonEmptyString(quizId) || !result || !mastery || !isNonEmptyString(feedback)) return null
+
+  const nextFocus = isNonEmptyString(value.nextFocus) ? value.nextFocus : undefined
+  return {
+    quizId,
+    result,
+    mastery,
+    feedback,
+    ...(nextFocus ? { nextFocus } : {}),
+  }
+}
+
+function normalizeTeachingAssessments(parsed: unknown): TeachingAssessment[] | null {
+  const assessments = (() => {
+    if (Array.isArray(parsed)) return parsed
+    if (isRecord(parsed) && Array.isArray(parsed.assessments)) return parsed.assessments
+    return null
+  })()
+  if (!assessments) return null
+
+  const normalized = assessments
+    .map(normalizeTeachingAssessment)
+    .filter((x): x is TeachingAssessment => !!x)
   if (normalized.length === 0) return null
   return normalized
 }
@@ -296,10 +343,30 @@ export function parseAssistantBlocks(
         ) || undefined
       : undefined
 
+  const teachingAssessmentRes = stripTaggedBlocks(
+    teachingRes.text,
+    '[TEACHING_ASSESSMENT_START]',
+    '[TEACHING_ASSESSMENT_END]',
+  )
+  if (teachingAssessmentRes.hasPartialStart) {
+    errors.push({ block: 'teaching_assessment', code: 'partial_block' })
+    pendingStructuredBlocks.add('teaching_assessment')
+  }
+  const teachingAssessments =
+    teachingAssessmentRes.inners.length > 0
+      ? parseLastValidJsonBlock(
+          teachingAssessmentRes.inners,
+          normalizeTeachingAssessments,
+          'teaching_assessment',
+          errors,
+        ) || undefined
+      : undefined
+
   return {
-    cleanText: normalizeText(teachingRes.text),
+    cleanText: normalizeText(teachingAssessmentRes.text),
     ...(todoActions ? { todoActions } : {}),
     ...(teachingQuizzes ? { teachingQuizzes } : {}),
+    ...(teachingAssessments ? { teachingAssessments } : {}),
     errors,
     pendingStructuredBlocks: Array.from(pendingStructuredBlocks),
   }

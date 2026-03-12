@@ -44,7 +44,11 @@ export type AssistantMode = 'default' | 'teaching'
 
 export type TeachingQuizKind = 'single_choice' | 'multi_choice' | 'short_answer'
 
-export type StructuredBlockKind = 'todo_actions' | 'teaching_quiz'
+export type TeachingAssessmentResult = 'correct' | 'partial' | 'incorrect'
+
+export type TeachingMasteryLevel = 'novice' | 'developing' | 'proficient'
+
+export type StructuredBlockKind = 'todo_actions' | 'teaching_quiz' | 'teaching_assessment'
 
 export interface StructuredBlockError {
   block: StructuredBlockKind
@@ -66,6 +70,14 @@ export interface TeachingQuiz {
   userAnswer?: string | string[]
 }
 
+export interface TeachingAssessment {
+  quizId: string
+  result: TeachingAssessmentResult
+  mastery: TeachingMasteryLevel
+  feedback: string
+  nextFocus?: string
+}
+
 export interface ChatMessage {
   id: string
   role: 'user' | 'assistant' | 'system' | 'tool'
@@ -81,6 +93,7 @@ export interface ChatMessage {
   todoActions?: import('@/features/todo/stores/todo').ProposedTodoChange[] // AI 建议的 Todo 变更
   todoActionsProcessed?: 'applied' | 'discarded' // AI 建议的处理状态
   teachingQuizzes?: TeachingQuiz[]
+  teachingAssessments?: TeachingAssessment[]
   structuredBlockErrors?: StructuredBlockError[]
   pendingStructuredBlocks?: StructuredBlockKind[]
   isStreaming?: boolean
