@@ -1,0 +1,216 @@
+name: Desktop Installers
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '20.x'
+  PNPM_VERSION: '9.15.0'
+
+concurrency:
+  group: desktop-installers-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build ${{ matrix.platform }} installer
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+            artifact: Lumina-windows-installer.exe
+          - os: macos-latest
+            platform: macos
+            artifact: Lumina-macos-installer.dmg
+          - os: ubuntu-latest
+            platform: linux
+            artifact: Lumina-linux-amd64.tar.gz
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: 设置 Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/wails/go.mod
+          cache-dependency-path: apps/wails/go.sum
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 安装 Linux 构建依赖
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          webkit_package='libwebkit2gtk-4.1-dev'
+          if ! apt-cache show "$webkit_package" >/dev/null 2>&1; then
+            webkit_package='libwebkit2gtk-4.0-dev'
+          fi
+          sudo apt-get install -y build-essential pkg-config libgtk-3-dev "$webkit_package" libayatana-appindicator3-dev
+
+      - name: 安装 NSIS
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: choco install nsis --no-progress -y
+
+      - name: 安装 Wails CLI (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          go install github.com/wailsapp/wails/v2/cmd/wails@v2.11.0
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: 安装 Wails CLI (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          go install github.com/wailsapp/wails/v2/cmd/wails@v2.11.0
+          "$([System.IO.Path]::Combine((go env GOPATH), 'bin'))" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: 构建 Windows 安装器
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          wails build -trimpath -clean -ldflags "-s -w" -nsis
+
+      - name: 构建 macOS 应用
+        if: runner.os == 'macOS'
+        run: pnpm wails:build
+
+      - name: 构建 Linux 应用
+        if: runner.os == 'Linux'
+        run: pnpm wails:build
+
+      - name: 签名 macOS 应用
+        if: runner.os == 'macOS' && secrets.MACOS_SIGN_CERT_BASE64 != '' && secrets.MACOS_SIGN_CERT_PASSWORD != '' && secrets.MACOS_SIGN_IDENTITY != ''
+        env:
+          MACOS_SIGN_CERT_BASE64: ${{ secrets.MACOS_SIGN_CERT_BASE64 }}
+          MACOS_SIGN_CERT_PASSWORD: ${{ secrets.MACOS_SIGN_CERT_PASSWORD }}
+          MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/certs"
+          echo "$MACOS_SIGN_CERT_BASE64" | base64 -D > "$RUNNER_TEMP/certs/macos-signing.p12"
+          security create-keychain -p '' build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p '' build.keychain
+          security set-keychain-settings -lut 21600 build.keychain
+          security import "$RUNNER_TEMP/certs/macos-signing.p12" -k build.keychain -P "$MACOS_SIGN_CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k '' build.keychain
+          codesign --force --deep --options runtime --timestamp --sign "$MACOS_SIGN_IDENTITY" apps/wails/build/bin/Lumina.app
+
+      - name: 归档 Windows 安装器
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path artifacts -Force | Out-Null
+          $installer = Get-ChildItem -Path 'apps/wails/build/bin' -Filter '*installer*.exe' -File -Recurse | Select-Object -First 1
+          if ($null -eq $installer) { throw 'Missing NSIS installer (*.exe) in apps/wails/build/bin' }
+          Copy-Item -Path $installer.FullName -Destination 'artifacts/Lumina-windows-installer.exe' -Force
+
+      - name: 签名 Windows 安装器
+        if: runner.os == 'Windows' && secrets.WINDOWS_SIGN_CERT_BASE64 != '' && secrets.WINDOWS_SIGN_CERT_PASSWORD != ''
+        shell: pwsh
+        env:
+          WINDOWS_SIGN_CERT_BASE64: ${{ secrets.WINDOWS_SIGN_CERT_BASE64 }}
+          WINDOWS_SIGN_CERT_PASSWORD: ${{ secrets.WINDOWS_SIGN_CERT_PASSWORD }}
+        run: |
+          $pfxPath = Join-Path $env:RUNNER_TEMP 'windows-signing.pfx'
+          [System.IO.File]::WriteAllBytes($pfxPath, [System.Convert]::FromBase64String($env:WINDOWS_SIGN_CERT_BASE64))
+          signtool sign /fd SHA256 /f $pfxPath /p "$env:WINDOWS_SIGN_CERT_PASSWORD" /tr "http://timestamp.digicert.com" /td SHA256 "artifacts/Lumina-windows-installer.exe"
+
+      - name: 生成 macOS DMG 安装器
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p artifacts
+          test -d apps/wails/build/bin/Lumina.app
+          hdiutil create -volname Lumina -srcfolder apps/wails/build/bin/Lumina.app -ov -format UDZO artifacts/Lumina-macos-installer.dmg
+
+      - name: 归档 Linux 构建产物
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p artifacts
+          test -f apps/wails/build/bin/Lumina
+          tar -C apps/wails/build/bin -czf artifacts/Lumina-linux-amd64.tar.gz Lumina
+
+      - name: 签名 macOS DMG 安装器
+        if: runner.os == 'macOS' && secrets.MACOS_SIGN_CERT_BASE64 != '' && secrets.MACOS_SIGN_CERT_PASSWORD != '' && secrets.MACOS_SIGN_IDENTITY != ''
+        env:
+          MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+        run: |
+          codesign --force --timestamp --sign "$MACOS_SIGN_IDENTITY" artifacts/Lumina-macos-installer.dmg
+
+      - name: 公证 macOS DMG 安装器
+        if: runner.os == 'macOS' && secrets.MACOS_SIGN_CERT_BASE64 != '' && secrets.MACOS_SIGN_CERT_PASSWORD != '' && secrets.MACOS_SIGN_IDENTITY != '' && secrets.APPLE_ID != '' && secrets.APPLE_TEAM_ID != '' && secrets.APPLE_APP_PASSWORD != ''
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          xcrun notarytool submit artifacts/Lumina-macos-installer.dmg --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_APP_PASSWORD" --wait
+          xcrun stapler staple artifacts/Lumina-macos-installer.dmg
+
+      - name: 生成 SHA256 校验文件 (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          shasum -a 256 "artifacts/${{ matrix.artifact }}" > "artifacts/${{ matrix.artifact }}.sha256"
+
+      - name: 生成 SHA256 校验文件 (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $hash = (Get-FileHash -Path "artifacts/${{ matrix.artifact }}" -Algorithm SHA256).Hash.ToLower()
+          "$hash  ${{ matrix.artifact }}" | Out-File -FilePath "artifacts/${{ matrix.artifact }}.sha256" -Encoding utf8 -NoNewline
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: lumina-${{ matrix.platform }}
+          path: artifacts/*
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    runs-on: ubuntu-latest
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - name: 下载全部构建产物
+        uses: actions/download-artifact@v4
+        with:
+          pattern: lumina-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: 发布 Release 并上传资源
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/*
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}

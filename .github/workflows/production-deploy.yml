@@ -2,12 +2,23 @@ name: Production Deployment
 
 on:
   push:
-    branches: [main] # 当 main 分支有推送时触发
-  workflow_dispatch: # 允许手动触发
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
     steps:
       - name: Deploy to Tencent Cloud
         uses: appleboy/ssh-action@v1.0.3
@@ -16,13 +27,12 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
+          command_timeout: 30m
           script: |
-            # 进入项目目录（请确保该目录已存在并已 git clone）
+            set -euo pipefail
             cd /home/ubuntu/Todo
-
-            # 拉取最新代码
-            git pull origin main
-
-            # 执行自动化部署脚本
+            git fetch origin main --prune
+            git checkout main
+            git reset --hard origin/main
             chmod +x deploy.sh
             ./deploy.sh

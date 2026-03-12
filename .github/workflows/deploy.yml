@@ -6,12 +6,23 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
+
+env:
+  NODE_VERSION: '20.x'
+  PNPM_VERSION: '9.15.0'
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
-    name: Build and Deploy
+  build:
+    name: Build Pages Artifact
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: 检出代码
@@ -20,23 +31,27 @@ jobs:
       - name: 安装 pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9.15.0
+          version: ${{ env.PNPM_VERSION }}
 
       - name: 设置 Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
       - name: 安装依赖
         run: pnpm install --frozen-lockfile
 
+      - name: 配置 Pages
+        uses: actions/configure-pages@v5
+
       - name: 配置 Turbo 缓存
         uses: actions/cache@v4
         with:
           path: .turbo
-          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          key: ${{ runner.os }}-turbo-${{ hashFiles('pnpm-lock.yaml', 'turbo.json') }}-${{ github.ref_name }}
           restore-keys: |
+            ${{ runner.os }}-turbo-${{ hashFiles('pnpm-lock.yaml', 'turbo.json') }}-
             ${{ runner.os }}-turbo-
 
       - name: 构建前端项目
@@ -47,12 +62,20 @@ jobs:
       - name: 添加 .nojekyll 文件
         run: touch apps/frontend/dist/.nojekyll
 
-      - name: 部署到 GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: 上传 Pages 制品
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./apps/frontend/dist
-          publish_branch: gh-pages
-          force_orphan: true
-          user_name: 'github-actions[bot]'
-          user_email: 'github-actions[bot]@users.noreply.github.com'
+          path: apps/frontend/dist
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 发布到 Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
