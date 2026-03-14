@@ -19,23 +19,27 @@ jobs:
     if: github.ref == 'refs/heads/main'
     environment:
       name: production
+    env:
+      DEPLOY_HOST: ${{ secrets.SERVER_HOST || secrets.HOST || vars.SERVER_HOST || vars.HOST }}
+      DEPLOY_USER: ${{ secrets.SERVER_USER || secrets.SSH_USER || secrets.USERNAME || vars.SERVER_USER || vars.SSH_USER || vars.USERNAME }}
+      DEPLOY_KEY: ${{ secrets.SSH_PRIVATE_KEY || secrets.SERVER_SSH_KEY || secrets.SSH_KEY || vars.SSH_PRIVATE_KEY || vars.SERVER_SSH_KEY || vars.SSH_KEY }}
     steps:
       - name: Validate deployment secrets
         run: |
           missing=0
 
-          if [ -z "${{ secrets.SERVER_HOST }}" ]; then
-            echo '::error::Missing secret SERVER_HOST (check repository secrets or environment "production" secrets).'
+          if [ -z "${DEPLOY_HOST}" ]; then
+            echo '::error::Missing deploy host. Checked: secrets.SERVER_HOST, secrets.HOST, vars.SERVER_HOST, vars.HOST (repository + environment "production").'
             missing=1
           fi
 
-          if [ -z "${{ secrets.SERVER_USER }}" ]; then
-            echo '::error::Missing secret SERVER_USER (check repository secrets or environment "production" secrets).'
+          if [ -z "${DEPLOY_USER}" ]; then
+            echo '::error::Missing deploy user. Checked: secrets.SERVER_USER, secrets.SSH_USER, secrets.USERNAME, vars.SERVER_USER, vars.SSH_USER, vars.USERNAME.'
             missing=1
           fi
 
-          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
-            echo '::error::Missing secret SSH_PRIVATE_KEY (check repository secrets or environment "production" secrets).'
+          if [ -z "${DEPLOY_KEY}" ]; then
+            echo '::error::Missing SSH private key. Checked: secrets.SSH_PRIVATE_KEY, secrets.SERVER_SSH_KEY, secrets.SSH_KEY, vars.SSH_PRIVATE_KEY, vars.SERVER_SSH_KEY, vars.SSH_KEY.'
             missing=1
           fi
 
@@ -46,9 +50,9 @@ jobs:
       - name: Deploy to Tencent Cloud
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          host: ${{ env.DEPLOY_HOST }}
+          username: ${{ env.DEPLOY_USER }}
+          key: ${{ env.DEPLOY_KEY }}
           port: 22
           command_timeout: 30m
           script: |
