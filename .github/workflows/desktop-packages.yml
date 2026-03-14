@@ -116,12 +116,16 @@ jobs:
         run: pnpm wails:build
 
       - name: 签名 macOS 应用
-        if: runner.os == 'macOS' && secrets.MACOS_SIGN_CERT_BASE64 != '' && secrets.MACOS_SIGN_CERT_PASSWORD != '' && secrets.MACOS_SIGN_IDENTITY != ''
+        if: runner.os == 'macOS'
         env:
           MACOS_SIGN_CERT_BASE64: ${{ secrets.MACOS_SIGN_CERT_BASE64 }}
           MACOS_SIGN_CERT_PASSWORD: ${{ secrets.MACOS_SIGN_CERT_PASSWORD }}
           MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
         run: |
+          if [ -z "$MACOS_SIGN_CERT_BASE64" ] || [ -z "$MACOS_SIGN_CERT_PASSWORD" ] || [ -z "$MACOS_SIGN_IDENTITY" ]; then
+            echo 'Skipping macOS app signing: signing secrets are not configured.'
+            exit 0
+          fi
           mkdir -p "$RUNNER_TEMP/certs"
           echo "$MACOS_SIGN_CERT_BASE64" | base64 -D > "$RUNNER_TEMP/certs/macos-signing.p12"
           security create-keychain -p '' build.keychain
@@ -142,12 +146,16 @@ jobs:
           Copy-Item -Path $installer.FullName -Destination 'artifacts/Lumina-windows-installer.exe' -Force
 
       - name: 签名 Windows 安装器
-        if: runner.os == 'Windows' && secrets.WINDOWS_SIGN_CERT_BASE64 != '' && secrets.WINDOWS_SIGN_CERT_PASSWORD != ''
+        if: runner.os == 'Windows'
         shell: pwsh
         env:
           WINDOWS_SIGN_CERT_BASE64: ${{ secrets.WINDOWS_SIGN_CERT_BASE64 }}
           WINDOWS_SIGN_CERT_PASSWORD: ${{ secrets.WINDOWS_SIGN_CERT_PASSWORD }}
         run: |
+          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_SIGN_CERT_BASE64) -or [string]::IsNullOrWhiteSpace($env:WINDOWS_SIGN_CERT_PASSWORD)) {
+            Write-Host 'Skipping Windows installer signing: signing secrets are not configured.'
+            exit 0
+          }
           $pfxPath = Join-Path $env:RUNNER_TEMP 'windows-signing.pfx'
           [System.IO.File]::WriteAllBytes($pfxPath, [System.Convert]::FromBase64String($env:WINDOWS_SIGN_CERT_BASE64))
           signtool sign /fd SHA256 /f $pfxPath /p "$env:WINDOWS_SIGN_CERT_PASSWORD" /tr "http://timestamp.digicert.com" /td SHA256 "artifacts/Lumina-windows-installer.exe"
@@ -167,19 +175,30 @@ jobs:
           tar -C apps/wails/build/bin -czf artifacts/Lumina-linux-amd64.tar.gz Lumina
 
       - name: 签名 macOS DMG 安装器
-        if: runner.os == 'macOS' && secrets.MACOS_SIGN_CERT_BASE64 != '' && secrets.MACOS_SIGN_CERT_PASSWORD != '' && secrets.MACOS_SIGN_IDENTITY != ''
+        if: runner.os == 'macOS'
         env:
           MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
         run: |
+          if [ -z "$MACOS_SIGN_IDENTITY" ]; then
+            echo 'Skipping macOS DMG signing: signing identity is not configured.'
+            exit 0
+          fi
           codesign --force --timestamp --sign "$MACOS_SIGN_IDENTITY" artifacts/Lumina-macos-installer.dmg
 
       - name: 公证 macOS DMG 安装器
-        if: runner.os == 'macOS' && secrets.MACOS_SIGN_CERT_BASE64 != '' && secrets.MACOS_SIGN_CERT_PASSWORD != '' && secrets.MACOS_SIGN_IDENTITY != '' && secrets.APPLE_ID != '' && secrets.APPLE_TEAM_ID != '' && secrets.APPLE_APP_PASSWORD != ''
+        if: runner.os == 'macOS'
         env:
+          MACOS_SIGN_CERT_BASE64: ${{ secrets.MACOS_SIGN_CERT_BASE64 }}
+          MACOS_SIGN_CERT_PASSWORD: ${{ secrets.MACOS_SIGN_CERT_PASSWORD }}
+          MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
         run: |
+          if [ -z "$MACOS_SIGN_CERT_BASE64" ] || [ -z "$MACOS_SIGN_CERT_PASSWORD" ] || [ -z "$MACOS_SIGN_IDENTITY" ] || [ -z "$APPLE_ID" ] || [ -z "$APPLE_TEAM_ID" ] || [ -z "$APPLE_APP_PASSWORD" ]; then
+            echo 'Skipping macOS notarization: notarization/signing secrets are not fully configured.'
+            exit 0
+          fi
           xcrun notarytool submit artifacts/Lumina-macos-installer.dmg --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_APP_PASSWORD" --wait
           xcrun stapler staple artifacts/Lumina-macos-installer.dmg
 
