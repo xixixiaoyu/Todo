@@ -35,7 +35,7 @@
     "dev:all": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run dev",
     "build": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run build",
     "build:ci": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run build --concurrency=50%",
-    "type-check": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run type-check",
+    "type-check": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run type-check --concurrency=2",
     "type-check:watch": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run type-check:watch --filter=@lumina/shared --filter=@lumina/backend --filter=@lumina/frontend",
     "lint": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run lint",
     "lint:fix": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run lint -- --fix --cache",
