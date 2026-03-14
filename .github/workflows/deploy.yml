@@ -23,29 +23,53 @@ jobs:
     name: Build Pages Artifact
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    outputs:
+      pages_enabled: ${{ steps.detect-pages.outputs.pages_enabled }}
 
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
 
+      - name: 检测 Pages 配置
+        id: detect-pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          status_code=$(curl -sS -o /tmp/pages.json -w '%{http_code}' \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H 'Accept: application/vnd.github+json' \
+            "https://api.github.com/repos/${{ github.repository }}/pages")
+
+          if [ "${status_code}" = '200' ]; then
+            echo 'pages_enabled=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'pages_enabled=false' >> "$GITHUB_OUTPUT"
+            echo "::warning::GitHub Pages 未启用（或未配置为 GitHub Actions Source），已跳过 Pages 部署。请在仓库 Settings > Pages 中启用后重试。"
+          fi
+
       - name: 安装 pnpm
+        if: steps.detect-pages.outputs.pages_enabled == 'true'
         uses: pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
 
       - name: 设置 Node.js
+        if: steps.detect-pages.outputs.pages_enabled == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
       - name: 安装依赖
+        if: steps.detect-pages.outputs.pages_enabled == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: 配置 Pages
+        if: steps.detect-pages.outputs.pages_enabled == 'true'
         uses: actions/configure-pages@v5
 
       - name: 配置 Turbo 缓存
+        if: steps.detect-pages.outputs.pages_enabled == 'true'
         uses: actions/cache@v4
         with:
           path: .turbo
@@ -55,14 +79,17 @@ jobs:
             ${{ runner.os }}-turbo-
 
       - name: 构建前端项目
+        if: steps.detect-pages.outputs.pages_enabled == 'true'
         run: pnpm --filter @lumina/frontend build
         env:
           NODE_ENV: production
 
       - name: 添加 .nojekyll 文件
+        if: steps.detect-pages.outputs.pages_enabled == 'true'
         run: touch apps/frontend/dist/.nojekyll
 
       - name: 上传 Pages 制品
+        if: steps.detect-pages.outputs.pages_enabled == 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: apps/frontend/dist
@@ -70,6 +97,7 @@ jobs:
   deploy:
     name: Deploy to GitHub Pages
     needs: build
+    if: needs.build.outputs.pages_enabled == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment:
