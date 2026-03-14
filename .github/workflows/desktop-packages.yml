@@ -165,7 +165,11 @@ jobs:
         run: |
           mkdir -p artifacts
           test -d apps/wails/build/bin/Lumina.app
-          hdiutil create -volname Lumina -srcfolder apps/wails/build/bin/Lumina.app -ov -format UDZO artifacts/Lumina-macos-installer.dmg
+          rm -rf artifacts/dmg-root
+          mkdir -p artifacts/dmg-root
+          cp -R apps/wails/build/bin/Lumina.app artifacts/dmg-root/Lumina.app
+          ln -s /Applications artifacts/dmg-root/Applications
+          hdiutil create -volname Lumina -srcfolder artifacts/dmg-root -ov -format UDZO artifacts/Lumina-macos-installer.dmg
 
       - name: 归档 Linux 构建产物
         if: runner.os == 'Linux'
