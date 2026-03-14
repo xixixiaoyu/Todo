@@ -10,7 +10,7 @@
 ## 📦 下载客户端
 
 - **Release 列表**: [查看全部版本与资产](https://github.com/xixixiaoyu/lumina/releases)
-- **当前最新预发布**: [v1.0.0-beta.5](https://github.com/xixixiaoyu/lumina/releases/tag/v1.0.0-beta.5)
+- **最新预发布**: [查看预发布版本（Pre-release）](https://github.com/xixixiaoyu/lumina/releases)
 - **开发构建（Actions Artifacts）**: [Desktop Installers 工作流](https://github.com/xixixiaoyu/lumina/actions/workflows/desktop-packages.yml)
 
 ---
