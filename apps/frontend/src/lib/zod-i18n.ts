@@ -3,12 +3,20 @@ import { z as zShared } from '@lumina/shared'
 import i18n from '@/i18n'
 
 type ZodErrorMap = zLocal.ZodErrorMap
+type I18nTranslator = (key: string, params?: Record<string, unknown>) => string
+
+type IssueWithBounds = zLocal.ZodIssueOptionalMessage & {
+  minimum?: number
+  maximum?: number
+  min?: number
+  max?: number
+}
 
 /**
  * 自定义 Zod 错误映射，支持国际化
  */
 export const zodErrorMap: ZodErrorMap = (issue, ctx) => {
-  const { t } = i18n.global as any // eslint-disable-line @typescript-eslint/no-explicit-any
+  const t = i18n.global.t as I18nTranslator
 
   // 获取属性翻译
   const getProperty = (path: (string | number)[]) => {
@@ -20,7 +28,7 @@ export const zodErrorMap: ZodErrorMap = (issue, ctx) => {
 
   // 1. 优先处理显式提供的 i18n 键名 (来自 shared schema)
   if (issue.message && issue.message.includes('.') && !issue.message.includes(' ')) {
-    const anyIssue = issue as any // eslint-disable-line @typescript-eslint/no-explicit-any
+    const anyIssue = issue as IssueWithBounds
     const minimum = anyIssue.minimum ?? anyIssue.min
     const maximum = anyIssue.maximum ?? anyIssue.max
 
@@ -50,12 +58,12 @@ export const zodErrorMap: ZodErrorMap = (issue, ctx) => {
         }),
       }
     case zLocal.ZodIssueCode.too_small: {
-      const min = (issue as any).minimum // eslint-disable-line @typescript-eslint/no-explicit-any
+      const min = (issue as IssueWithBounds).minimum
       const minKey = issue.type === 'string' ? 'validation.MIN_LENGTH' : 'validation.MIN_VALUE'
       return { message: t(minKey, { property: getProperty(issue.path), min, minimum: min }) }
     }
     case zLocal.ZodIssueCode.too_big: {
-      const max = (issue as any).maximum // eslint-disable-line @typescript-eslint/no-explicit-any
+      const max = (issue as IssueWithBounds).maximum
       const maxKey = issue.type === 'string' ? 'validation.MAX_LENGTH' : 'validation.MAX_VALUE'
       return { message: t(maxKey, { property: getProperty(issue.path), max, maximum: max }) }
     }

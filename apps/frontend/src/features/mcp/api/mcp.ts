@@ -7,6 +7,7 @@ import {
   type McpToolResponse,
   type ToolCallResult,
   type ApiResponse,
+  unwrapApiResponse,
 } from '@lumina/shared'
 
 /**
@@ -18,7 +19,7 @@ export const mcpApi = {
    */
   async getServers(): Promise<McpServerResponse[]> {
     const { data } = await httpClient.get<ApiResponse<McpServerResponse[]>>('/mcp/servers')
-    return data.data
+    return unwrapApiResponse(data)
   },
 
   /**
@@ -26,7 +27,7 @@ export const mcpApi = {
    */
   async getServer(id: string): Promise<McpServerResponse> {
     const { data } = await httpClient.get<ApiResponse<McpServerResponse>>(`/mcp/servers/${id}`)
-    return data.data
+    return unwrapApiResponse(data)
   },
 
   /**
@@ -34,7 +35,7 @@ export const mcpApi = {
    */
   async createServer(dto: CreateMcpServerDto): Promise<McpServerResponse> {
     const { data } = await httpClient.post<ApiResponse<McpServerResponse>>('/mcp/servers', dto)
-    return data.data
+    return unwrapApiResponse(data)
   },
 
   /**
@@ -42,7 +43,7 @@ export const mcpApi = {
    */
   async updateServer(id: string, dto: UpdateMcpServerDto): Promise<McpServerResponse> {
     const { data } = await httpClient.put<ApiResponse<McpServerResponse>>(`/mcp/servers/${id}`, dto)
-    return data.data
+    return unwrapApiResponse(data)
   },
 
   /**
@@ -60,7 +61,7 @@ export const mcpApi = {
       `/mcp/servers/${id}/tools`,
       { timeout: 30000 }, // 可能会触发连接，设置 30s 超时
     )
-    return data.data
+    return unwrapApiResponse(data)
   },
 
   /**
@@ -79,7 +80,7 @@ export const mcpApi = {
       },
       { timeout: 60000 }, // 工具执行可能较慢，设置 60s 超时
     )
-    return data.data
+    return unwrapApiResponse(data)
   },
 
   /**
@@ -101,6 +102,6 @@ export const mcpApi = {
    */
   async getAllTools(): Promise<McpToolResponse[]> {
     const { data } = await httpClient.get<ApiResponse<McpToolResponse[]>>('/mcp/tools')
-    return data.data
+    return unwrapApiResponse(data)
   },
 }

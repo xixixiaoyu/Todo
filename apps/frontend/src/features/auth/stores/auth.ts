@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { authApi } from '../api'
 import { setToken } from '@/api'
-import type { User, LoginInput, RegisterInput } from '@lumina/shared'
+import { unwrapApiResponse, type User, type LoginInput, type RegisterInput } from '@lumina/shared'
 import { startRegistration, startAuthentication } from '@simplewebauthn/browser'
 
 const AUTH_REFRESH_RETRY_DELAY_MS = Number(import.meta.env.VITE_AUTH_REFRESH_RETRY_DELAY_MS ?? 300)
@@ -155,9 +155,10 @@ export const useAuthStore = defineStore(
 
       try {
         const response = await authApi.login(credentials)
-        token.value = response.data.accessToken
-        refreshToken.value = response.data.refreshToken || null
-        user.value = response.data.user
+        const payload = unwrapApiResponse(response)
+        token.value = payload.accessToken
+        refreshToken.value = payload.refreshToken || null
+        user.value = payload.user
 
         // 立即同步到拦截器内存，确保后续请求能拿到最新的 Token
         setToken(token.value)
@@ -168,7 +169,7 @@ export const useAuthStore = defineStore(
         // 登录成功后触发数据合并同步
         const { useTodoStore } = await import('@/features/todo/stores/todo')
         const todoStore = useTodoStore()
-        await todoStore.mergeOnLogin(response.data.user.id)
+        await todoStore.mergeOnLogin(payload.user.id)
 
         return true
       } catch (e: unknown) {
@@ -189,9 +190,10 @@ export const useAuthStore = defineStore(
 
       try {
         const response = await authApi.register(userData)
-        token.value = response.data.accessToken
-        refreshToken.value = response.data.refreshToken || null
-        user.value = response.data.user
+        const payload = unwrapApiResponse(response)
+        token.value = payload.accessToken
+        refreshToken.value = payload.refreshToken || null
+        user.value = payload.user
 
         setToken(token.value)
         persistAuthState()
@@ -199,7 +201,7 @@ export const useAuthStore = defineStore(
         // 注册成功后触发数据同步
         const { useTodoStore } = await import('@/features/todo/stores/todo')
         const todoStore = useTodoStore()
-        await todoStore.mergeOnLogin(response.data.user.id)
+        await todoStore.mergeOnLogin(payload.user.id)
 
         return true
       } catch (e: unknown) {
@@ -282,10 +284,11 @@ export const useAuthStore = defineStore(
         const options = await authApi.getPasskeyLoginOptions(email)
         const asseResp = await startAuthentication({ optionsJSON: options })
         const response = await authApi.verifyPasskeyLogin(email, asseResp)
+        const payload = unwrapApiResponse(response)
 
-        token.value = response.data.accessToken
-        refreshToken.value = response.data.refreshToken || null
-        user.value = response.data.user
+        token.value = payload.accessToken
+        refreshToken.value = payload.refreshToken || null
+        user.value = payload.user
 
         setToken(token.value)
         persistAuthState()
@@ -293,7 +296,7 @@ export const useAuthStore = defineStore(
         // 登录成功后触发数据同步
         const { useTodoStore } = await import('@/features/todo/stores/todo')
         const todoStore = useTodoStore()
-        await todoStore.mergeOnLogin(response.data.user.id)
+        await todoStore.mergeOnLogin(payload.user.id)
 
         return true
       } catch (e: unknown) {
@@ -325,9 +328,10 @@ export const useAuthStore = defineStore(
 
       try {
         const response = await authApi.oauthLogin()
-        token.value = response.data.accessToken
-        refreshToken.value = response.data.refreshToken || null
-        user.value = response.data.user
+        const payload = unwrapApiResponse(response)
+        token.value = payload.accessToken
+        refreshToken.value = payload.refreshToken || null
+        user.value = payload.user
 
         setToken(token.value)
         persistAuthState()
@@ -335,7 +339,7 @@ export const useAuthStore = defineStore(
         // 登录成功后触发数据合并同步
         const { useTodoStore } = await import('@/features/todo/stores/todo')
         const todoStore = useTodoStore()
-        await todoStore.mergeOnLogin(response.data.user.id)
+        await todoStore.mergeOnLogin(payload.user.id)
 
         return true
       } catch (e: unknown) {
@@ -355,7 +359,7 @@ export const useAuthStore = defineStore(
 
       try {
         const response = await authApi.getMe()
-        user.value = response.data
+        user.value = unwrapApiResponse(response)
       } catch (e: unknown) {
         if (isUnauthorizedError(e)) {
           reportAuthEvent('fetch_me_failed_unauthorized')
@@ -383,9 +387,10 @@ export const useAuthStore = defineStore(
       for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
         try {
           const response = await authApi.refreshToken(refreshToken.value)
-          token.value = response.data.accessToken
-          refreshToken.value = response.data.refreshToken
-          user.value = response.data.user
+          const payload = unwrapApiResponse(response)
+          token.value = payload.accessToken
+          refreshToken.value = payload.refreshToken
+          user.value = payload.user
           setToken(token.value)
           persistAuthState()
           return true

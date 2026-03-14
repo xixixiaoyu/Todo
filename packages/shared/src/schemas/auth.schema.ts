@@ -88,6 +88,15 @@ export const RefreshTokenSchema = z.object({
 })
 
 /**
+ * 登出请求 Schema
+ */
+export const LogoutSchema = z.object({
+  refreshToken: z
+    .string({ required_error: ValidationKeys.REQUIRED })
+    .min(1, ValidationKeys.REQUIRED),
+})
+
+/**
  * 找回密码请求 Schema
  */
 export const ForgotPasswordSchema = z.object({
@@ -108,5 +117,6 @@ export type UpdateUserInput = z.infer<typeof UpdateUserSchema>
 export type User = z.infer<typeof UserSchema>
 export type AuthResponse = z.infer<typeof AuthResponseSchema>
 export type RefreshTokenInput = z.infer<typeof RefreshTokenSchema>
+export type LogoutInput = z.infer<typeof LogoutSchema>
 export type ForgotPasswordInput = z.infer<typeof ForgotPasswordSchema>
 export type ResetPasswordInput = z.infer<typeof ResetPasswordSchema>

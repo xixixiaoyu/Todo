@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { parseFileApi } from '@/api/upload'
+import { unwrapApiResponse } from '@lumina/shared'
 import { useAuthStore } from '@/features/auth/stores/auth'
 import { useToast } from './useToast'
 import i18n from '@/i18n'
@@ -70,7 +71,7 @@ export function useFileParsing() {
           throw new Error(t('ai.loginRequiredForParsing'))
         }
         const response = await parseFileApi(file)
-        content = response.data.content
+        content = unwrapApiResponse(response).content
       }
 
       // 更新状态

@@ -1,6 +1,10 @@
 import { debounce } from 'lodash-es'
 import type { Ref } from 'vue'
-import type { Todo as SharedTodo, SyncConflict as SharedSyncConflict } from '@lumina/shared'
+import {
+  unwrapApiResponse,
+  type Todo as SharedTodo,
+  type SyncConflict as SharedSyncConflict,
+} from '@lumina/shared'
 import { todoApi } from '../api'
 import type { Todo, TodoSyncConflict } from './todo.types'
 import i18n from '@/i18n'
@@ -120,7 +124,7 @@ export function createTodoCloud(deps: {
         currentSocketId,
       )
 
-      const { synced, deletedIds, acceptedIds, conflicts, serverTime } = response.data
+      const { synced, deletedIds, acceptedIds, conflicts, serverTime } = unwrapApiResponse(response)
       const acceptedIdSet = new Set(acceptedIds ?? [])
       const conflictIdSet = new Set((conflicts ?? []).map((item) => item.id))
       const shouldFallbackMarkSynced =

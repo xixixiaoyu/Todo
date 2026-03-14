@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import type { NestFastifyApplication } from '@nestjs/platform-fastify'
-import type { ApiResponse, AuthResponse, User } from '@lumina/shared'
+import { unwrapApiResponse, type ApiResponse, type AuthResponse, type User } from '@lumina/shared'
 import { createE2eApp } from './test-app'
 
 const ajaxHeaders = {
@@ -54,7 +54,7 @@ describe('Auth e2e', () => {
 
     expect(registerRes.statusCode).toBe(201)
     expect((registerRes.body as ApiResponse<AuthResponse>).success).toBe(true)
-    const registerData = (registerRes.body as ApiResponse<AuthResponse>).data
+    const registerData = unwrapApiResponse(registerRes.body as ApiResponse<AuthResponse>)
     expect(registerData.accessToken).toBeTypeOf('string')
     expect(registerData.refreshToken).toBeTypeOf('string')
     expect(registerData.user.email).toBe('test@example.com')
@@ -69,7 +69,7 @@ describe('Auth e2e', () => {
 
     expect(meRes.statusCode).toBe(200)
     expect((meRes.body as ApiResponse<User>).success).toBe(true)
-    expect((meRes.body as ApiResponse<User>).data.email).toBe('test@example.com')
+    expect(unwrapApiResponse(meRes.body as ApiResponse<User>).email).toBe('test@example.com')
 
     const invalidLoginRes = await inject({
       method: 'POST',
@@ -92,7 +92,7 @@ describe('Auth e2e', () => {
     })
 
     expect(loginRes.statusCode).toBe(201)
-    const loginData = (loginRes.body as ApiResponse<AuthResponse>).data
+    const loginData = unwrapApiResponse(loginRes.body as ApiResponse<AuthResponse>)
     expect(loginData.accessToken).toBeTypeOf('string')
     expect(loginData.refreshToken).toBeTypeOf('string')
 
@@ -117,7 +117,7 @@ describe('Auth e2e', () => {
     })
 
     expect(logoutRes.statusCode).toBe(201)
-    expect((logoutRes.body as ApiResponse<{ message: string }>).data).toEqual({
+    expect(unwrapApiResponse(logoutRes.body as ApiResponse<{ message: string }>)).toEqual({
       message: '登出成功',
     })
 

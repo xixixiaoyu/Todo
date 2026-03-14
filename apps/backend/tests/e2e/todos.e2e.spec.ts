@@ -1,7 +1,13 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { randomUUID } from 'crypto'
 import type { NestFastifyApplication } from '@nestjs/platform-fastify'
-import type { ApiResponse, AuthResponse, SyncResponse, Todo } from '@lumina/shared'
+import {
+  unwrapApiResponse,
+  type ApiResponse,
+  type AuthResponse,
+  type SyncResponse,
+  type Todo,
+} from '@lumina/shared'
 import { createE2eApp } from './test-app'
 
 const ajaxHeaders = {
@@ -36,7 +42,7 @@ describe('Todos e2e', () => {
       payload: { email: 'todo@example.com', name: 'Todo User', password: 'password123' },
     })
 
-    const { accessToken } = (registerRes.body as ApiResponse<AuthResponse>).data
+    const { accessToken } = unwrapApiResponse(registerRes.body as ApiResponse<AuthResponse>)
     const authHeadersWithBody = {
       ...ajaxHeaders,
       authorization: `Bearer ${accessToken}`,
@@ -78,7 +84,7 @@ describe('Todos e2e', () => {
     })
 
     expect(createRes.statusCode).toBe(201)
-    const synced1 = (createRes.body as ApiResponse<SyncResponse>).data.synced
+    const synced1 = unwrapApiResponse(createRes.body as ApiResponse<SyncResponse>).synced
     expect(synced1).toHaveLength(1)
     expect(synced1[0].id).toBe(id)
     expect(synced1[0].version).toBe(1)
@@ -90,7 +96,7 @@ describe('Todos e2e', () => {
     })
 
     expect(listRes.statusCode).toBe(200)
-    expect((listRes.body as ApiResponse<Todo[]>).data).toHaveLength(1)
+    expect(unwrapApiResponse(listRes.body as ApiResponse<Todo[]>)).toHaveLength(1)
 
     const updatedAt2 = new Date('2026-01-01T00:00:02.000Z').toISOString()
     const deletedAt = new Date('2026-01-01T00:00:03.000Z').toISOString()
@@ -119,14 +125,14 @@ describe('Todos e2e', () => {
       url: '/api/todos',
       headers: { authorization: `Bearer ${accessToken}` },
     })
-    expect((listAfterTrashRes.body as ApiResponse<Todo[]>).data).toHaveLength(0)
+    expect(unwrapApiResponse(listAfterTrashRes.body as ApiResponse<Todo[]>)).toHaveLength(0)
 
     const trashListRes = await inject<Todo[]>({
       method: 'GET',
       url: '/api/todos/trash',
       headers: { authorization: `Bearer ${accessToken}` },
     })
-    expect((trashListRes.body as ApiResponse<Todo[]>).data).toHaveLength(1)
+    expect(unwrapApiResponse(trashListRes.body as ApiResponse<Todo[]>)).toHaveLength(1)
 
     const restoreRes = await inject<Todo | null>({
       method: 'POST',
@@ -135,7 +141,7 @@ describe('Todos e2e', () => {
     })
 
     expect(restoreRes.statusCode).toBe(201)
-    const restored = (restoreRes.body as ApiResponse<Todo | null>).data
+    const restored = unwrapApiResponse(restoreRes.body as ApiResponse<Todo | null>)
     expect(restored && restored.deletedAt).toBeNull()
 
     const listAfterRestoreRes = await inject<Todo[]>({
@@ -143,7 +149,7 @@ describe('Todos e2e', () => {
       url: '/api/todos',
       headers: { authorization: `Bearer ${accessToken}` },
     })
-    expect((listAfterRestoreRes.body as ApiResponse<Todo[]>).data).toHaveLength(1)
+    expect(unwrapApiResponse(listAfterRestoreRes.body as ApiResponse<Todo[]>)).toHaveLength(1)
 
     const updatedAt3 = new Date('2026-01-01T00:00:04.000Z').toISOString()
     const deletedAt2 = new Date('2026-01-01T00:00:05.000Z').toISOString()
@@ -174,7 +180,9 @@ describe('Todos e2e', () => {
     })
 
     expect(permanentRes.statusCode).toBe(200)
-    expect((permanentRes.body as ApiResponse<{ id: string } | null>).data).toEqual({ id })
+    expect(unwrapApiResponse(permanentRes.body as ApiResponse<{ id: string } | null>)).toEqual({
+      id,
+    })
 
     const syncAfterPermanentRes = await inject<SyncResponse>({
       method: 'POST',
@@ -186,7 +194,9 @@ describe('Todos e2e', () => {
       },
     })
 
-    const { deletedIds } = (syncAfterPermanentRes.body as ApiResponse<SyncResponse>).data
+    const { deletedIds } = unwrapApiResponse(
+      syncAfterPermanentRes.body as ApiResponse<SyncResponse>,
+    )
     expect(deletedIds).toContain(id)
   })
 })

@@ -135,6 +135,18 @@ function getStatusStyle(server: McpServerResponse) {
     label: t('ai.mcpDisconnected'),
   }
 }
+
+function getServerCommand(server: McpServerResponse): string {
+  if (server.transport !== McpTransportType.STDIO) return ''
+  const config = server.config
+  return 'command' in config ? config.command : ''
+}
+
+function getServerUrl(server: McpServerResponse): string {
+  if (server.transport !== McpTransportType.HTTP) return ''
+  const config = server.config
+  return 'url' in config ? config.url : ''
+}
 </script>
 
 <template>
@@ -221,13 +233,13 @@ function getStatusStyle(server: McpServerResponse) {
             <code
               class="text-[10px] bg-muted/30 px-1.5 py-0.5 rounded font-mono truncate max-w-[120px]"
             >
-              {{ (server?.config as any)?.command }}
+              {{ getServerCommand(server) }}
             </code>
           </div>
           <div v-else class="flex items-center gap-1.5 text-muted-foreground/50">
             <Globe class="w-3 h-3" />
             <span class="text-[10px] truncate max-w-[140px] font-mono">
-              {{ (server?.config as any)?.url }}
+              {{ getServerUrl(server) }}
             </span>
           </div>
         </div>

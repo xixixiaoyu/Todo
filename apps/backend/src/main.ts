@@ -143,7 +143,9 @@ async function bootstrap() {
         )
         reply.code(403).send({
           success: false,
+          data: null,
           message: 'Security check failed: X-Requested-With header is missing',
+          statusCode: 403,
           timestamp: new Date().toISOString(),
         })
       }

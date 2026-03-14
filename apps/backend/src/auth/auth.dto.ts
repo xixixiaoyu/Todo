@@ -1,9 +1,9 @@
 import { createZodDto } from 'nestjs-zod'
-import { z } from 'zod'
 import {
   LoginSchema,
   RegisterSchema,
   RefreshTokenSchema,
+  LogoutSchema,
   ForgotPasswordSchema,
   ResetPasswordSchema,
 } from '@lumina/shared'
@@ -37,8 +37,4 @@ export class ResetPasswordDto extends createZodDto(ResetPasswordSchema) {}
 /**
  * 登出请求 DTO
  */
-const LogoutSchema = z.object({
-  refreshToken: z.string().min(1, '刷新令牌不能为空'),
-})
-
 export class LogoutDto extends createZodDto(LogoutSchema) {}
