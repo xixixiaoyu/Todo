@@ -12,21 +12,10 @@ export const login = {
   failed: 'Login failed',
   INVALID_CREDENTIALS: 'Invalid email or password',
   orContinueWith: 'Or continue with',
-  emailRequiredForPasskey: 'Please enter your email before using Passkey login',
 } as const
 
 export const auth = {
   INVALID_CREDENTIALS: 'Invalid email or password',
-} as const
-
-export const passkey = {
-  registrationFailed: 'Passkey registration failed',
-  registrationSuccess: 'Passkey registration successful',
-  loginFailed: 'Passkey login failed',
-  register: 'Register Passkey',
-  registered: 'Passkey Registered',
-  manage: 'Manage Passkeys',
-  enterName: 'Give this Passkey a name (e.g., My MacBook)',
 } as const
 
 export const register = {

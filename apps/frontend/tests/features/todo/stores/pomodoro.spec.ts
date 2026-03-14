@@ -108,7 +108,7 @@ describe('usePomodoroStore', () => {
     // Manual setup for break completion test
     store.status = 'short_break'
     store.timeLeft = 0
-    store.resumeTimer()
+    await store.resumeTimer()
     advanceTime(1000)
 
     expect(store.status).toBe('idle')
@@ -120,12 +120,12 @@ describe('usePomodoroStore', () => {
     await store.startFocus('todo-1')
     advanceTime(1000)
 
-    store.pauseTimer()
+    await store.pauseTimer()
     const timeLeft = store.timeLeft
     advanceTime(1000)
     expect(store.timeLeft).toBe(timeLeft)
 
-    store.resumeTimer()
+    await store.resumeTimer()
     advanceTime(1000)
     expect(store.timeLeft).toBe(timeLeft - 1)
   })

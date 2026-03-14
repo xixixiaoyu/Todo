@@ -11,7 +11,6 @@ describe('user.utils', () => {
     googleId: null,
     createdAt: mockDate,
     updatedAt: mockDate,
-    authenticators: [],
   }
 
   describe('formatUser', () => {
@@ -23,19 +22,9 @@ describe('user.utils', () => {
         name: 'Test User',
         avatar: 'https://example.com/avatar.png',
         googleId: null,
-        hasPasskey: false,
         createdAt: '2024-01-21T00:00:00.000Z',
         updatedAt: '2024-01-21T00:00:00.000Z',
       })
-    })
-
-    it('should correctly identify if user has passkey', () => {
-      const userWithPasskey: PrismaUser = {
-        ...mockPrismaUser,
-        authenticators: [{ id: 'auth1' }],
-      }
-      const result = formatUser(userWithPasskey)
-      expect(result.hasPasskey).toBe(true)
     })
 
     it('should handle null avatar and googleId', () => {
@@ -49,20 +38,8 @@ describe('user.utils', () => {
       expect(result.googleId).toBeNull()
     })
 
-    it('should treat missing authenticators as no passkey', () => {
-      const userWithoutAuthenticators: PrismaUser = {
-        ...mockPrismaUser,
-        authenticators: undefined,
-      }
-      const result = formatUser(userWithoutAuthenticators)
-      expect(result.hasPasskey).toBe(false)
-    })
-
     it('should not mutate the input user object', () => {
-      const user: PrismaUser = {
-        ...mockPrismaUser,
-        authenticators: [{ id: 'auth1' }],
-      }
+      const user: PrismaUser = { ...mockPrismaUser }
       const original = structuredClone(user)
       formatUser(user)
       expect(user).toEqual(original)

@@ -3,7 +3,6 @@ import { ref, computed } from 'vue'
 import { authApi } from '../api'
 import { setToken } from '@/api'
 import { unwrapApiResponse, type User, type LoginInput, type RegisterInput } from '@lumina/shared'
-import { startRegistration, startAuthentication } from '@simplewebauthn/browser'
 
 const AUTH_REFRESH_RETRY_DELAY_MS = Number(import.meta.env.VITE_AUTH_REFRESH_RETRY_DELAY_MS ?? 300)
 const AUTH_REFRESH_MAX_ATTEMPTS = Number(import.meta.env.VITE_AUTH_REFRESH_MAX_ATTEMPTS ?? 2)
@@ -251,64 +250,6 @@ export const useAuthStore = defineStore(
     }
 
     /**
-     * 注册 Passkey
-     */
-    async function registerPasskey(name?: string): Promise<boolean> {
-      loading.value = true
-      error.value = null
-      fieldErrors.value = {}
-
-      try {
-        const options = await authApi.getPasskeyRegistrationOptions()
-        const attResp = await startRegistration({ optionsJSON: options })
-        await authApi.verifyPasskeyRegistration(attResp, name)
-        return true
-      } catch (e: unknown) {
-        console.error('Passkey registration error:', e)
-        handleApiError(e, 'passkey.registrationFailed')
-        return false
-      } finally {
-        loading.value = false
-      }
-    }
-
-    /**
-     * 使用 Passkey 登录
-     */
-    async function loginWithPasskey(email: string): Promise<boolean> {
-      loading.value = true
-      error.value = null
-      fieldErrors.value = {}
-
-      try {
-        const options = await authApi.getPasskeyLoginOptions(email)
-        const asseResp = await startAuthentication({ optionsJSON: options })
-        const response = await authApi.verifyPasskeyLogin(email, asseResp)
-        const payload = unwrapApiResponse(response)
-
-        token.value = payload.accessToken
-        refreshToken.value = payload.refreshToken || null
-        user.value = payload.user
-
-        setToken(token.value)
-        persistAuthState()
-
-        // 登录成功后触发数据同步
-        const { useTodoStore } = await import('@/features/todo/stores/todo')
-        const todoStore = useTodoStore()
-        await todoStore.mergeOnLogin(payload.user.id)
-
-        return true
-      } catch (e: unknown) {
-        console.error('Passkey login error:', e)
-        handleApiError(e, 'passkey.loginFailed')
-        return false
-      } finally {
-        loading.value = false
-      }
-    }
-
-    /**
      * Google 登录
      */
     function loginWithGoogle() {
@@ -476,8 +417,6 @@ export const useAuthStore = defineStore(
       register,
       forgotPassword,
       resetPassword,
-      registerPasskey,
-      loginWithPasskey,
       loginWithGoogle,
       handleOAuthLogin,
       logout,

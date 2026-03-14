@@ -71,7 +71,6 @@ import { McpModule } from './mcp/mcp.module'
               req: (req) => ({
                 method: req.method,
                 url: req.url,
-                query: req.query,
                 params: req.params,
               }),
               res: (res) => ({

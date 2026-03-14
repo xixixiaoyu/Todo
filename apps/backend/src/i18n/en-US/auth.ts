@@ -11,9 +11,5 @@ export default {
     INVALID_TOKEN: 'Invalid token',
     INVALID_USER_ID: 'Invalid user ID',
     INVALID_RESET_TOKEN: 'Invalid or expired reset token',
-    CHALLENGE_EXPIRED: 'Challenge expired, please try again',
-    REGISTRATION_FAILED: 'Passkey registration failed',
-    AUTHENTICATOR_NOT_FOUND: 'Authenticator not found',
-    AUTHENTICATION_FAILED: 'Authentication failed',
   },
 } as const

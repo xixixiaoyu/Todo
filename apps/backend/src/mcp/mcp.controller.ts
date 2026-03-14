@@ -95,6 +95,8 @@ export class McpController {
     @CurrentUser() user: User,
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<void> {
+    await this.configService.findOne(user.id, id)
+    await this.clientService.disconnect(id)
     return this.configService.delete(user.id, id)
   }
 

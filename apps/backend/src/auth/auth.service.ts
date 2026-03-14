@@ -1,10 +1,8 @@
 import { Injectable, UnauthorizedException, Inject, forwardRef } from '@nestjs/common'
-import type { RegistrationResponseJSON, AuthenticationResponseJSON } from '@simplewebauthn/server'
 import { UsersService } from '../users/users.service'
 import type { LoginInput, RegisterInput, User, AuthResponse, PrismaUser } from '@lumina/shared'
 import { formatUser } from '@lumina/shared'
 import { TokenService, JwtPayload } from './token.service'
-import { PasskeyService } from './passkey.service'
 import { PasswordService } from './password.service'
 
 export interface GoogleProfile {
@@ -16,7 +14,7 @@ export interface GoogleProfile {
 
 /**
  * 认证服务 (Facade)
- * 整合 TokenService, PasskeyService, PasswordService 提供统一接口
+ * 整合 TokenService, PasswordService 提供统一接口
  */
 @Injectable()
 export class AuthService {
@@ -25,31 +23,9 @@ export class AuthService {
     private readonly usersService: UsersService,
     @Inject(TokenService)
     private readonly tokenService: TokenService,
-    @Inject(PasskeyService)
-    private readonly passkeyService: PasskeyService,
     @Inject(PasswordService)
     private readonly passwordService: PasswordService,
   ) {}
-
-  /**
-   * Passkey 相关
-   */
-  async generatePasskeyRegistrationOptions(user: User) {
-    return this.passkeyService.generateRegistrationOptions(user)
-  }
-
-  async verifyPasskeyRegistration(user: User, body: RegistrationResponseJSON, name?: string) {
-    return this.passkeyService.verifyRegistration(user, body, name)
-  }
-
-  async generatePasskeyAuthenticationOptions(email: string) {
-    return this.passkeyService.generateAuthenticationOptions(email)
-  }
-
-  async verifyPasskeyAuthentication(email: string, body: AuthenticationResponseJSON) {
-    const result = await this.passkeyService.verifyAuthentication(email, body)
-    return this.tokenService.buildAuthResponse(formatUser(result.user))
-  }
 
   /**
    * Google OAuth 相关

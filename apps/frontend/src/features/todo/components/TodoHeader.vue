@@ -8,7 +8,6 @@ import {
   List,
   LogOut,
   LogIn,
-  Fingerprint,
   BarChart3,
   MoreHorizontal,
   HardDrive,
@@ -31,13 +30,11 @@ import { useTodoStore } from '../stores/todo'
 import { useAuthStore } from '../../auth/stores/auth'
 import { useRouter } from 'vue-router'
 import { nativeService } from '@/services/native'
-import { useToast } from '@/composables/useToast'
 
 const { t, locale } = useI18n()
 const todoStore = useTodoStore()
 const authStore = useAuthStore()
 const router = useRouter()
-const toast = useToast()
 
 const isWails = () => nativeService.platform === 'wails'
 
@@ -56,18 +53,6 @@ const handleDblClick = () => {
 const openAiAssistant = () => {
   if (todoStore.isDrawerOpen) return
   todoStore.setDrawerOpen(true)
-}
-
-const handleRegisterPasskey = async () => {
-  const name = window.prompt(t('passkey.enterName'), 'My Device')
-  if (name === null) return // 用户取消
-  const success = await authStore.registerPasskey(name)
-  if (success) {
-    toast.success(t('passkey.registrationSuccess'))
-    await authStore.fetchCurrentUser()
-  } else if (authStore.error) {
-    toast.error(t(authStore.error))
-  }
 }
 </script>
 
@@ -321,18 +306,6 @@ const handleRegisterPasskey = async () => {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <!-- 暂时隐藏 Passkey 菜单项 -->
-          <DropdownMenuItem
-            v-if="false"
-            class="rounded-lg cursor-pointer focus:bg-accent"
-            :disabled="authStore.loading"
-            @click="handleRegisterPasskey"
-          >
-            <Fingerprint class="mr-2 h-4 w-4" />
-            <span>{{
-              authStore.user?.hasPasskey ? t('passkey.manage') : t('passkey.register')
-            }}</span>
-          </DropdownMenuItem>
           <DropdownMenuItem
             class="rounded-lg cursor-pointer text-error focus:text-error focus:bg-error/10"
             @click="void authStore.logout()"

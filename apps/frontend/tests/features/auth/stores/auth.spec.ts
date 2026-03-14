@@ -2,12 +2,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useAuthStore } from '@/features/auth/stores/auth'
 import { authApi } from '@/features/auth/api'
-import type {
-  PublicKeyCredentialCreationOptionsJSON,
-  PublicKeyCredentialRequestOptionsJSON,
-  RegistrationResponseJSON,
-  AuthenticationResponseJSON,
-} from '@simplewebauthn/server'
 import type { User, LoginInput, RegisterInput } from '@lumina/shared'
 
 // Mock authApi
@@ -20,17 +14,7 @@ vi.mock('@/features/auth/api', () => ({
     getMe: vi.fn(),
     refreshToken: vi.fn(),
     logout: vi.fn(),
-    getPasskeyRegistrationOptions: vi.fn(),
-    verifyPasskeyRegistration: vi.fn(),
-    getPasskeyLoginOptions: vi.fn(),
-    verifyPasskeyLogin: vi.fn(),
   },
-}))
-
-// Mock @simplewebauthn/browser
-vi.mock('@simplewebauthn/browser', () => ({
-  startRegistration: vi.fn(),
-  startAuthentication: vi.fn(),
 }))
 
 // Mock @/features/todo/stores/todo to avoid issues with dynamic imports and side effects
@@ -40,8 +24,6 @@ vi.mock('@/features/todo/stores/todo', () => ({
     clearRemoteOnLogout: vi.fn(),
   })),
 }))
-
-import { startRegistration, startAuthentication } from '@simplewebauthn/browser'
 
 describe('useAuthStore', () => {
   let store: ReturnType<typeof useAuthStore>
@@ -154,89 +136,6 @@ describe('useAuthStore', () => {
 
       expect(result).toBe(false)
       expect(store.error).toBe('login.failed')
-    })
-  })
-
-  describe('Passkeys', () => {
-    it('should register a passkey successfully', async () => {
-      const options = { challenge: 'test-challenge' }
-      const registrationResponse = { id: 'cred-id' }
-
-      vi.mocked(authApi.getPasskeyRegistrationOptions).mockResolvedValue(
-        options as unknown as PublicKeyCredentialCreationOptionsJSON,
-      )
-      vi.mocked(startRegistration).mockResolvedValue(
-        registrationResponse as unknown as RegistrationResponseJSON,
-      )
-      vi.mocked(authApi.verifyPasskeyRegistration).mockResolvedValue({
-        success: true,
-        data: { success: true },
-        timestamp: '',
-      })
-
-      const result = await store.registerPasskey()
-
-      expect(result).toBe(true)
-      expect(authApi.getPasskeyRegistrationOptions).toHaveBeenCalled()
-      expect(startRegistration).toHaveBeenCalledWith({ optionsJSON: options })
-      expect(authApi.verifyPasskeyRegistration).toHaveBeenCalledWith(
-        registrationResponse,
-        undefined,
-      )
-    })
-
-    it('should register a passkey with name successfully', async () => {
-      const options = { challenge: 'test-challenge' }
-      const registrationResponse = { id: 'cred-id' }
-      const name = 'My Device'
-
-      vi.mocked(authApi.getPasskeyRegistrationOptions).mockResolvedValue(
-        options as unknown as PublicKeyCredentialCreationOptionsJSON,
-      )
-      vi.mocked(startRegistration).mockResolvedValue(
-        registrationResponse as unknown as RegistrationResponseJSON,
-      )
-      vi.mocked(authApi.verifyPasskeyRegistration).mockResolvedValue({
-        success: true,
-        data: { success: true },
-        timestamp: '',
-      })
-
-      const result = await store.registerPasskey(name)
-
-      expect(result).toBe(true)
-      expect(authApi.verifyPasskeyRegistration).toHaveBeenCalledWith(registrationResponse, name)
-    })
-
-    it('should login with passkey successfully', async () => {
-      const email = 'test@example.com'
-      const options = { challenge: 'test-challenge' }
-      const authResponse = { id: 'cred-id' }
-
-      vi.mocked(authApi.getPasskeyLoginOptions).mockResolvedValue(
-        options as unknown as PublicKeyCredentialRequestOptionsJSON,
-      )
-      vi.mocked(startAuthentication).mockResolvedValue(
-        authResponse as unknown as AuthenticationResponseJSON,
-      )
-      vi.mocked(authApi.verifyPasskeyLogin).mockResolvedValue({
-        success: true,
-        data: mockAuthResponse,
-        timestamp: '',
-      })
-
-      const result = await store.loginWithPasskey(email)
-
-      expect(result).toBe(true)
-      expect(store.user).toEqual(mockUser)
-      expect(authApi.getPasskeyLoginOptions).toHaveBeenCalledWith(email)
-      expect(startAuthentication).toHaveBeenCalledWith({ optionsJSON: options })
-      expect(authApi.verifyPasskeyLogin).toHaveBeenCalledWith(email, authResponse)
-      expect(JSON.parse(localStorage.getItem('auth') || '{}')).toEqual({
-        token: 'access-token',
-        refreshToken: 'refresh-token',
-        user: mockUser,
-      })
     })
   })
 

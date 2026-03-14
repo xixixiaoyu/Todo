@@ -2,7 +2,7 @@ import { Injectable, Logger, BadRequestException } from '@nestjs/common'
 import { extname } from 'path'
 import { PDFParse } from 'pdf-parse'
 import * as mammoth from 'mammoth'
-import * as XLSX from 'xlsx'
+import { Workbook, type CellValue } from 'exceljs'
 import type { UploadedFile } from './storage.service'
 import { MAX_PARSED_CONTENT_CHARS, PARSABLE_TEXT_EXTENSIONS } from './upload.constants'
 
@@ -88,16 +88,47 @@ export class FileParsingService {
     return result.value
   }
 
-  private parseExcel(buffer: Buffer): Promise<string> {
-    const workbook = XLSX.read(buffer, { type: 'buffer' })
+  private async parseExcel(buffer: Buffer): Promise<string> {
+    const workbook = new Workbook()
+    const excelBuffer = buffer as unknown as Parameters<Workbook['xlsx']['load']>[0]
+    await workbook.xlsx.load(excelBuffer)
+
     let text = ''
-    workbook.SheetNames.forEach((sheetName) => {
-      const worksheet = workbook.Sheets[sheetName]
+    workbook.worksheets.forEach((worksheet) => {
+      const sheetName = worksheet.name
       text += `Sheet: ${sheetName}\n`
-      text += XLSX.utils.sheet_to_csv(worksheet)
+      worksheet.eachRow({ includeEmpty: true }, (row) => {
+        const rowValues = (row.values as CellValue[]).slice(1)
+        const csvLine = rowValues.map((cell) => this.stringifyExcelCell(cell)).join(',')
+        text += `${csvLine}\n`
+      })
       text += '\n'
     })
-    return Promise.resolve(text)
+    return text
+  }
+
+  private stringifyExcelCell(cell: CellValue): string {
+    if (cell === null || cell === undefined) {
+      return ''
+    }
+
+    if (typeof cell === 'object') {
+      if ('text' in cell && typeof cell.text === 'string') {
+        return cell.text
+      }
+
+      if ('result' in cell && typeof cell.result === 'string') {
+        return cell.result
+      }
+
+      if ('result' in cell && typeof cell.result === 'number') {
+        return String(cell.result)
+      }
+
+      return JSON.stringify(cell)
+    }
+
+    return String(cell)
   }
 
   private truncateContent(content: string): string {

@@ -17,9 +17,7 @@ export class UsersService {
    * 获取所有用户
    */
   async findAll(): Promise<User[]> {
-    const users = await this.prisma.user.findMany({
-      include: { authenticators: true },
-    })
+    const users = await this.prisma.user.findMany()
     return formatUsers(users as unknown as PrismaUser[])
   }
 
@@ -31,10 +29,7 @@ export class UsersService {
       throw new NotFoundException('auth.INVALID_USER_ID')
     }
 
-    const user = await this.prisma.user.findUnique({
-      where: { id },
-      include: { authenticators: true },
-    })
+    const user = await this.prisma.user.findUnique({ where: { id } })
 
     if (!user) {
       throw new NotFoundException('auth.USER_ID_NOT_FOUND')
@@ -47,10 +42,7 @@ export class UsersService {
    * 根据邮箱获取单个用户
    */
   async findByEmail(email: string): Promise<User | null> {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-      include: { authenticators: true },
-    })
+    const user = await this.prisma.user.findUnique({ where: { email } })
 
     if (!user) return null
 
@@ -61,10 +53,7 @@ export class UsersService {
    * 根据邮箱获取单个用户（内部使用，包含密码）
    */
   async findInternalByEmail(email: string) {
-    return this.prisma.user.findUnique({
-      where: { email },
-      include: { authenticators: true },
-    })
+    return this.prisma.user.findUnique({ where: { email } })
   }
 
   /**
@@ -83,7 +72,6 @@ export class UsersService {
         googleId: data.googleId,
         avatar: data.avatar,
       },
-      include: { authenticators: true },
     })
     return formatUser(user as unknown as PrismaUser)
   }
@@ -92,10 +80,7 @@ export class UsersService {
    * 根据 ID 获取单个用户（内部使用，包含密码）
    */
   async findInternalById(id: number) {
-    return this.prisma.user.findUnique({
-      where: { id },
-      include: { authenticators: true },
-    })
+    return this.prisma.user.findUnique({ where: { id } })
   }
 
   /**
@@ -105,7 +90,6 @@ export class UsersService {
     return this.prisma.user.update({
       where: { id },
       data,
-      include: { authenticators: true },
     })
   }
 
@@ -138,7 +122,6 @@ export class UsersService {
         name: createUserDto.name,
         password: hashedPassword,
       },
-      include: { authenticators: true },
     })
 
     return formatUser(user as unknown as PrismaUser)

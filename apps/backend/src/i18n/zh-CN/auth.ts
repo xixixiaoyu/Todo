@@ -11,9 +11,5 @@ export default {
     INVALID_TOKEN: '令牌无效',
     INVALID_USER_ID: '无效的用户 ID',
     INVALID_RESET_TOKEN: '重置链接无效或已过期',
-    CHALLENGE_EXPIRED: '挑战已过期，请重试',
-    REGISTRATION_FAILED: 'Passkey 注册失败',
-    AUTHENTICATOR_NOT_FOUND: '未找到认证器',
-    AUTHENTICATION_FAILED: '认证失败',
   },
 } as const

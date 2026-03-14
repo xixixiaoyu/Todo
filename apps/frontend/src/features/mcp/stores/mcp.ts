@@ -147,6 +147,7 @@ export const useMcpStore = defineStore('mcp', () => {
   async function deleteServer(id: string) {
     isLoading.value = true
     try {
+      await disconnectServer(id)
       await mcpApi.deleteServer(id)
       servers.value = servers.value.filter((s) => s.id !== id)
       delete connectionStates.value[id]

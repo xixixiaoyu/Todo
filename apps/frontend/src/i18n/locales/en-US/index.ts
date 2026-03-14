@@ -1,6 +1,6 @@
 import { common } from './common'
 import { home } from './home'
-import { login, auth, passkey, register, forgotPassword, resetPassword } from './auth'
+import { login, auth, register, forgotPassword, resetPassword } from './auth'
 import { password } from './password'
 import { validation } from './validation'
 import { notFound } from './not-found'
@@ -14,7 +14,6 @@ export default {
   home,
   login,
   auth,
-  passkey,
   register,
   forgotPassword,
   resetPassword,

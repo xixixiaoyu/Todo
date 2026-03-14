@@ -35,7 +35,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
       exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR
 
     // 记录错误日志
-    const url = request.raw?.url || request.url || ''
+    const rawUrl = request.raw?.url || request.url || ''
+    const url = rawUrl.split('?')[0]
     this.logger.error(
       `${request.method} ${url} - ${status} - ${
         exception instanceof Error ? exception.message : 'Unknown error'

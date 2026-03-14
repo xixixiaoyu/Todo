@@ -10,7 +10,6 @@ import { AllExceptionsFilter, SanitizeInterceptor, TransformInterceptor } from '
 import { AuthController } from '@/auth/auth.controller'
 import { AuthService } from '@/auth/auth.service'
 import { JwtStrategy } from '@/auth/jwt.strategy'
-import { PasskeyService } from '@/auth/passkey.service'
 import { PasswordService } from '@/auth/password.service'
 import { TokenService } from '@/auth/token.service'
 import { UsersService } from '@/users/users.service'
@@ -33,7 +32,6 @@ type InMemoryUser = {
   resetPasswordExpires: Date | null
   createdAt: Date
   updatedAt: Date
-  authenticators: unknown[]
 }
 
 type InMemoryTodo = {
@@ -63,10 +61,7 @@ type InMemoryTombstone = {
 
 type InMemoryPrismaClient = {
   user: {
-    findUnique: (args: {
-      where: { id?: number; email?: string }
-      include?: { authenticators?: boolean }
-    }) => Promise<InMemoryUser | null>
+    findUnique: (args: { where: { id?: number; email?: string } }) => Promise<InMemoryUser | null>
     findFirst: (args: { where: Record<string, unknown> }) => Promise<InMemoryUser | null>
     findMany: () => Promise<InMemoryUser[]>
     create: (args: {
@@ -152,10 +147,7 @@ function createInMemoryPrisma() {
 
   const prisma: InMemoryPrismaClient = {
     user: {
-      findUnique: async (args: {
-        where: { id?: number; email?: string }
-        include?: { authenticators?: boolean }
-      }) => {
+      findUnique: async (args: { where: { id?: number; email?: string } }) => {
         if (typeof args.where.id === 'number') {
           const user = usersById.get(args.where.id)
           return user ? { ...user } : null
@@ -198,7 +190,6 @@ function createInMemoryPrisma() {
           resetPasswordExpires: null,
           createdAt: now,
           updatedAt: now,
-          authenticators: [],
         }
         usersById.set(user.id, user)
         usersByEmail.set(user.email, user)
@@ -486,15 +477,6 @@ export async function createE2eApp() {
       { provide: ConfigService, useValue: config },
       { provide: MailService, useValue: mail },
       { provide: EventsGateway, useValue: events },
-      {
-        provide: PasskeyService,
-        useValue: {
-          generateRegistrationOptions: async () => ({}),
-          verifyRegistration: async () => ({ success: true }),
-          generateAuthenticationOptions: async () => ({}),
-          verifyAuthentication: async () => ({ user: null }),
-        },
-      },
     ],
   }).compile()
 

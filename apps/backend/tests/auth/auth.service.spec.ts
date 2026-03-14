@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { AuthService } from '../../src/auth/auth.service'
 import { TokenService } from '../../src/auth/token.service'
-import { PasskeyService } from '../../src/auth/passkey.service'
 import { PasswordService } from '../../src/auth/password.service'
 import { UnauthorizedException } from '@nestjs/common'
 import { UsersService } from '../../src/users/users.service'
@@ -26,13 +25,6 @@ const mockTokenService = {
   isUserSessionInvalidated: vi.fn(),
 }
 
-const mockPasskeyService = {
-  generateRegistrationOptions: vi.fn(),
-  verifyRegistration: vi.fn(),
-  generateAuthenticationOptions: vi.fn(),
-  verifyAuthentication: vi.fn(),
-}
-
 const mockPasswordService = {
   hash: vi.fn(),
   compare: vi.fn(),
@@ -48,7 +40,6 @@ describe('AuthService', () => {
     service = new AuthService(
       mockUsersService as unknown as UsersService,
       mockTokenService as unknown as TokenService,
-      mockPasskeyService as unknown as PasskeyService,
       mockPasswordService as unknown as PasswordService,
     )
   })
@@ -169,28 +160,6 @@ describe('AuthService', () => {
 
       expect(result.id).toBe(2)
       expect(mockUsersService.createWithGoogle).toHaveBeenCalled()
-    })
-  })
-
-  describe('Passkeys', () => {
-    const mockUser: User = {
-      id: 1,
-      email: 'test@example.com',
-      name: 'Test',
-      avatar: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-
-    it('should generate registration options', async () => {
-      mockPasskeyService.generateRegistrationOptions.mockResolvedValue({
-        challenge: 'mock-challenge',
-      })
-
-      const options = await service.generatePasskeyRegistrationOptions(mockUser)
-
-      expect(options.challenge).toBe('mock-challenge')
-      expect(mockPasskeyService.generateRegistrationOptions).toHaveBeenCalledWith(mockUser)
     })
   })
 
