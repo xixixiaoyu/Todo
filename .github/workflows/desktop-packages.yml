@@ -139,7 +139,10 @@ jobs:
         run: |
           New-Item -ItemType Directory -Path artifacts -Force | Out-Null
           $installer = Get-ChildItem -Path 'apps/wails/build/bin' -Filter '*installer*.exe' -File -Recurse | Select-Object -First 1
-          if ($null -eq $installer) { throw 'Missing NSIS installer (*.exe) in apps/wails/build/bin' }
+          if ($null -eq $installer) {
+            $installer = Get-ChildItem -Path 'apps/wails/build/bin' -Filter '*.exe' -File -Recurse | Select-Object -First 1
+          }
+          if ($null -eq $installer) { throw 'Missing Windows executable (*.exe) in apps/wails/build/bin' }
           Copy-Item -Path $installer.FullName -Destination 'artifacts/Lumina-windows-installer.exe' -Force
 
       - name: 签名 Windows 安装器
