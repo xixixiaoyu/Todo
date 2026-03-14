@@ -28,7 +28,7 @@ jobs:
 
     steps:
       - name: 检出代码
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 检测 Pages 配置
         id: detect-pages
@@ -55,7 +55,7 @@ jobs:
 
       - name: 设置 Node.js
         if: steps.detect-pages.outputs.pages_enabled == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
@@ -90,7 +90,7 @@ jobs:
 
       - name: 上传 Pages 制品
         if: steps.detect-pages.outputs.pages_enabled == 'true'
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: apps/frontend/dist
 

@@ -46,7 +46,7 @@ jobs:
 
     steps:
       - name: 检出代码
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 1
 
@@ -56,13 +56,13 @@ jobs:
           version: ${{ env.PNPM_VERSION }}
 
       - name: 设置 Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
       - name: 设置 Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: apps/wails/go.mod
           cache-dependency-path: apps/wails/go.sum
@@ -279,7 +279,7 @@ jobs:
           xcrun stapler staple "artifacts/$PACKAGE_NAME"
 
       - name: 上传构建产物
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: lumina-${{ matrix.platform }}
           path: artifacts/*
@@ -295,7 +295,7 @@ jobs:
       contents: write
     steps:
       - name: 下载全部构建产物
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           pattern: lumina-*
           path: release-assets
