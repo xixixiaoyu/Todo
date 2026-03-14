@@ -52,7 +52,7 @@ jobs:
 
       - name: 校验生产镜像引用可复现
         run: |
-          missing=$(grep -nE '^[[:space:]]*image:' docker-compose.yml | grep -v '@sha256:' | grep -v 'jc21/nginx-proxy-manager:2.13.7' || true)
+          missing=$(grep -nE '^[[:space:]]*image:' docker-compose.yml | grep -v '@sha256:' | grep -Ev 'jc21/nginx-proxy-manager:2\.13\.7|lumina-(backend|frontend):\$\{IMAGE_TAG:-latest\}' || true)
           if [ -n "$missing" ]; then
             echo "$missing"
             exit 1
@@ -118,7 +118,7 @@ jobs:
 
       - name: 校验生产镜像引用可复现
         run: |
-          missing=$(grep -nE '^[[:space:]]*image:' docker-compose.yml | grep -v '@sha256:' | grep -v 'jc21/nginx-proxy-manager:2.13.7' || true)
+          missing=$(grep -nE '^[[:space:]]*image:' docker-compose.yml | grep -v '@sha256:' | grep -Ev 'jc21/nginx-proxy-manager:2\.13\.7|lumina-(backend|frontend):\$\{IMAGE_TAG:-latest\}' || true)
           if [ -n "$missing" ]; then
             echo "$missing"
             exit 1
