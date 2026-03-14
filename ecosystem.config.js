@@ -6,7 +6,7 @@ module.exports = {
   apps: [
     {
       name: 'todo-backend',
-      script: 'dist/src/main.js',
+      script: 'dist/apps/backend/src/main.js',
       // 在 Docker 中，目录是扁平的，cwd 为当前目录 (/app)
       // 在本地开发中，cwd 指向 apps/backend
       cwd: isDocker ? './' : path.join(__dirname, 'apps/backend'),

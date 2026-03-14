@@ -71,9 +71,8 @@ WORKDIR /app
 # 1. 复制 pruner 阶段生成的隔离部署目录 (包含 package.json 和生产 node_modules)
 COPY --from=pruner /out ./
 
-# 2. 从 builder 复制编译产物到对应位置
+# 2. 从 builder 复制完整编译产物，保留 monorepo 输出目录结构
 COPY --from=builder /app/apps/backend/dist ./dist
-COPY --from=builder /app/apps/backend/src/i18n ./dist/src/i18n
 COPY --from=builder /app/apps/backend/prisma ./prisma
 
 # 3. 重新生成 Prisma Client 以确保在生产环境 node_modules 中可用
@@ -97,5 +96,5 @@ ENV IS_DOCKER=true
 HEALTHCHECK --interval=15s --timeout=5s --start-period=60s --retries=5 \
     CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/health/liveness || exit 1
 
-# 启动应用 - 容器由编排层负责拉起/重启，进程保持单实例以保证 WebSocket 会话一致性
-CMD ["node", "dist/src/main.js"]
+# 启动应用 - 保持 Nest monorepo 构建输出的真实入口路径
+CMD ["node", "dist/apps/backend/src/main.js"]
