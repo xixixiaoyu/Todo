@@ -5,6 +5,23 @@ import { setToken } from '@/api'
 import type { User, LoginInput, RegisterInput } from '@lumina/shared'
 import { startRegistration, startAuthentication } from '@simplewebauthn/browser'
 
+const AUTH_REFRESH_RETRY_DELAY_MS = Number(import.meta.env.VITE_AUTH_REFRESH_RETRY_DELAY_MS ?? 300)
+const AUTH_REFRESH_MAX_ATTEMPTS = Number(import.meta.env.VITE_AUTH_REFRESH_MAX_ATTEMPTS ?? 2)
+
+function normalizePositiveInt(value: number, fallback: number): number {
+  return Number.isInteger(value) && value > 0 ? value : fallback
+}
+
+const refreshRetryDelayMs = normalizePositiveInt(AUTH_REFRESH_RETRY_DELAY_MS, 300)
+const refreshMaxAttempts = normalizePositiveInt(AUTH_REFRESH_MAX_ATTEMPTS, 2)
+
+type AuthTelemetryEvent =
+  | 'refresh_retry'
+  | 'refresh_failed_transient'
+  | 'refresh_failed_unauthorized'
+  | 'fetch_me_failed_transient'
+  | 'fetch_me_failed_unauthorized'
+
 /**
  * 认证状态管理
  * 使用 pinia-plugin-persistedstate 持久化 token
@@ -84,6 +101,15 @@ export const useAuthStore = defineStore(
 
     function sleep(ms: number): Promise<void> {
       return new Promise((resolve) => setTimeout(resolve, ms))
+    }
+
+    function reportAuthEvent(event: AuthTelemetryEvent, extra?: Record<string, unknown>): void {
+      const detail = {
+        event,
+        ts: Date.now(),
+        ...extra,
+      }
+      window.dispatchEvent(new CustomEvent('auth:telemetry', { detail }))
     }
 
     function hydrateFromStorage(): void {
@@ -332,8 +358,10 @@ export const useAuthStore = defineStore(
         user.value = response.data
       } catch (e: unknown) {
         if (isUnauthorizedError(e)) {
+          reportAuthEvent('fetch_me_failed_unauthorized')
           void logout()
         } else {
+          reportAuthEvent('fetch_me_failed_transient')
           console.warn('Fetch current user failed (transient):', e)
         }
       }
@@ -349,7 +377,7 @@ export const useAuthStore = defineStore(
 
       if (!refreshToken.value) return false
 
-      const maxAttempts = 2
+      const maxAttempts = refreshMaxAttempts
       let lastError: unknown = null
 
       for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
@@ -365,21 +393,25 @@ export const useAuthStore = defineStore(
           lastError = e
 
           if (isUnauthorizedError(e)) {
+            reportAuthEvent('refresh_failed_unauthorized')
             void logout()
             return false
           }
 
           const shouldRetry = attempt < maxAttempts && isTransientError(e)
           if (shouldRetry) {
-            await sleep(300)
+            reportAuthEvent('refresh_retry', { attempt, maxAttempts })
+            await sleep(refreshRetryDelayMs)
             continue
           }
 
+          reportAuthEvent('refresh_failed_transient')
           console.warn('Refresh access token failed (transient):', e)
           return false
         }
       }
 
+      reportAuthEvent('refresh_failed_transient')
       console.warn('Refresh access token failed (transient):', lastError)
       return false
     }
