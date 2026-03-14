@@ -178,8 +178,9 @@ jobs:
           done
 
           if [ -n "$missing" ]; then
-            echo "::error::Tag 发布缺少 macOS 签名/公证 secrets:${missing}"
-            exit 1
+            echo "::warning::Tag 发布缺少 macOS 签名/公证 secrets:${missing}"
+            echo '将继续生成未签名、未公证的 macOS 安装包。'
+            exit 0
           fi
 
       - name: 签名 macOS 应用
@@ -329,7 +330,7 @@ jobs:
           - **Linux:** 下载 \`.tar.gz\` 后解压运行。
 
           ### 🧩 macOS 启动排障（临时）
-          若 macOS 提示“已损坏/无法打开”，可执行：
+          若 macOS 提示“已损坏/无法打开”，通常不是 App 真坏了，而是当前版本未经过 Apple Developer 签名 / 公证流程。说白一点，就是我还没给苹果交那笔开发者年费。可执行：
           \`\`\`bash
           xattr -dr com.apple.quarantine /Applications/Lumina.app
           \`\`\`
