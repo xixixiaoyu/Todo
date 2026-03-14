@@ -39,13 +39,10 @@ jobs:
         include:
           - os: windows-latest
             platform: windows
-            artifact: Lumina-windows-installer.exe
           - os: macos-latest
             platform: macos
-            artifact: Lumina-macos-installer.dmg
           - os: ubuntu-22.04
             platform: linux
-            artifact: Lumina-linux-amd64.tar.gz
 
     steps:
       - name: 检出代码
@@ -72,6 +69,57 @@ jobs:
 
       - name: 安装依赖
         run: pnpm install --frozen-lockfile
+
+      - name: 生成构建元数据 (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = 'tag' ]; then
+            version="${GITHUB_REF_NAME#v}"
+          else
+            version="dev-${GITHUB_SHA::7}"
+          fi
+
+          case "${RUNNER_OS}" in
+            Linux)
+              platform='linux'
+              arch='amd64'
+              ext='tar.gz'
+              ;;
+            macOS)
+              platform='macos'
+              machine_arch="$(uname -m)"
+              case "${machine_arch}" in
+                arm64|aarch64) arch='arm64' ;;
+                x86_64|amd64) arch='x64' ;;
+                *) arch="${machine_arch}" ;;
+              esac
+              ext='dmg'
+              ;;
+            *)
+              echo "Unsupported runner OS: ${RUNNER_OS}"
+              exit 1
+              ;;
+          esac
+
+          package_name="Lumina-${version}-${platform}-${arch}.${ext}"
+          echo "RELEASE_VERSION=${version}" >> "$GITHUB_ENV"
+          echo "PACKAGE_NAME=${package_name}" >> "$GITHUB_ENV"
+          echo "PACKAGE_NAME=${package_name}"
+
+      - name: 生成构建元数据 (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF_TYPE -eq 'tag') {
+            $version = $env:GITHUB_REF_NAME.TrimStart('v')
+          } else {
+            $version = "dev-$($env:GITHUB_SHA.Substring(0, 7))"
+          }
+
+          $packageName = "Lumina-$version-windows-x64.exe"
+          "RELEASE_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "PACKAGE_NAME=$packageName" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host "PACKAGE_NAME=$packageName"
 
       - name: 安装 Linux 构建依赖
         if: runner.os == 'Linux'
@@ -143,7 +191,7 @@ jobs:
             $installer = Get-ChildItem -Path 'apps/wails/build/bin' -Filter '*.exe' -File -Recurse | Select-Object -First 1
           }
           if ($null -eq $installer) { throw 'Missing Windows executable (*.exe) in apps/wails/build/bin' }
-          Copy-Item -Path $installer.FullName -Destination 'artifacts/Lumina-windows-installer.exe' -Force
+          Copy-Item -Path $installer.FullName -Destination "artifacts/$env:PACKAGE_NAME" -Force
 
       - name: 签名 Windows 安装器
         if: runner.os == 'Windows'
@@ -158,25 +206,26 @@ jobs:
           }
           $pfxPath = Join-Path $env:RUNNER_TEMP 'windows-signing.pfx'
           [System.IO.File]::WriteAllBytes($pfxPath, [System.Convert]::FromBase64String($env:WINDOWS_SIGN_CERT_BASE64))
-          signtool sign /fd SHA256 /f $pfxPath /p "$env:WINDOWS_SIGN_CERT_PASSWORD" /tr "http://timestamp.digicert.com" /td SHA256 "artifacts/Lumina-windows-installer.exe"
+          signtool sign /fd SHA256 /f $pfxPath /p "$env:WINDOWS_SIGN_CERT_PASSWORD" /tr "http://timestamp.digicert.com" /td SHA256 "artifacts/$env:PACKAGE_NAME"
 
       - name: 生成 macOS DMG 安装器
         if: runner.os == 'macOS'
         run: |
           mkdir -p artifacts
           test -d apps/wails/build/bin/Lumina.app
-          rm -rf artifacts/dmg-root
-          mkdir -p artifacts/dmg-root
-          cp -R apps/wails/build/bin/Lumina.app artifacts/dmg-root/Lumina.app
-          ln -s /Applications artifacts/dmg-root/Applications
-          hdiutil create -volname Lumina -srcfolder artifacts/dmg-root -ov -format UDZO artifacts/Lumina-macos-installer.dmg
+          dmg_root="$RUNNER_TEMP/dmg-root"
+          rm -rf "$dmg_root"
+          mkdir -p "$dmg_root"
+          cp -R apps/wails/build/bin/Lumina.app "$dmg_root/Lumina.app"
+          ln -s /Applications "$dmg_root/Applications"
+          hdiutil create -volname Lumina -srcfolder "$dmg_root" -ov -format UDZO "artifacts/$PACKAGE_NAME"
 
       - name: 归档 Linux 构建产物
         if: runner.os == 'Linux'
         run: |
           mkdir -p artifacts
           test -f apps/wails/build/bin/Lumina
-          tar -C apps/wails/build/bin -czf artifacts/Lumina-linux-amd64.tar.gz Lumina
+          tar -C apps/wails/build/bin -czf "artifacts/$PACKAGE_NAME" Lumina
 
       - name: 签名 macOS DMG 安装器
         if: runner.os == 'macOS'
@@ -187,7 +236,7 @@ jobs:
             echo 'Skipping macOS DMG signing: signing identity is not configured.'
             exit 0
           fi
-          codesign --force --timestamp --sign "$MACOS_SIGN_IDENTITY" artifacts/Lumina-macos-installer.dmg
+          codesign --force --timestamp --sign "$MACOS_SIGN_IDENTITY" "artifacts/$PACKAGE_NAME"
 
       - name: 公证 macOS DMG 安装器
         if: runner.os == 'macOS'
@@ -203,20 +252,8 @@ jobs:
             echo 'Skipping macOS notarization: notarization/signing secrets are not fully configured.'
             exit 0
           fi
-          xcrun notarytool submit artifacts/Lumina-macos-installer.dmg --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_APP_PASSWORD" --wait
-          xcrun stapler staple artifacts/Lumina-macos-installer.dmg
-
-      - name: 生成 SHA256 校验文件 (Unix)
-        if: runner.os != 'Windows'
-        run: |
-          shasum -a 256 "artifacts/${{ matrix.artifact }}" > "artifacts/${{ matrix.artifact }}.sha256"
-
-      - name: 生成 SHA256 校验文件 (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $hash = (Get-FileHash -Path "artifacts/${{ matrix.artifact }}" -Algorithm SHA256).Hash.ToLower()
-          "$hash  ${{ matrix.artifact }}" | Out-File -FilePath "artifacts/${{ matrix.artifact }}.sha256" -Encoding utf8 -NoNewline
+          xcrun notarytool submit "artifacts/$PACKAGE_NAME" --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_APP_PASSWORD" --wait
+          xcrun stapler staple "artifacts/$PACKAGE_NAME"
 
       - name: 上传构建产物
         uses: actions/upload-artifact@v4
@@ -241,10 +278,47 @@ jobs:
           path: release-assets
           merge-multiple: true
 
+      - name: 生成校验清单
+        run: |
+          cd release-assets
+          shasum -a 256 Lumina-* > checksums.txt
+
+      - name: 生成发布说明
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          cat > release-assets/RELEASE_NOTES.md <<EOF
+          ## v${version} 🚀
+
+          本次发布提供 Windows / macOS / Linux 三端安装包，统一采用 \`Lumina-版本-系统-架构\` 命名规范。
+
+          ### ✨ 亮点
+          - 统一发布资产命名，下载前即可识别版本、系统与架构。
+          - macOS DMG 采用拖拽到 Applications 的标准安装布局。
+          - 提供单一 \`checksums.txt\` 校验清单，降低资产噪音。
+
+          ### 🛠 变更日志
+          - **New:** 发布资产命名升级为标准格式。
+          - **Improved:** 合并 SHA256 到单文件 \`checksums.txt\`。
+          - **Improved:** Release 自动生成结构化说明与安装指引。
+
+          ### 📦 安装指引
+          - **Windows:** 下载 \`.exe\` 直接安装。
+          - **macOS:** 下载 \`.dmg\`，将 App 拖入 Applications。
+          - **Linux:** 下载 \`.tar.gz\` 后解压运行。
+
+          ### 🔐 校验
+          使用 \`checksums.txt\` 校验下载文件完整性：
+          \`\`\`bash
+          shasum -a 256 -c checksums.txt
+          \`\`\`
+          EOF
+
       - name: 发布 Release 并上传资源
         uses: softprops/action-gh-release@v2
         with:
-          files: release-assets/*
+          files: |
+            release-assets/Lumina-*
+            release-assets/checksums.txt
           fail_on_unmatched_files: true
-          generate_release_notes: true
+          body_path: release-assets/RELEASE_NOTES.md
           prerelease: ${{ contains(github.ref_name, '-') }}
