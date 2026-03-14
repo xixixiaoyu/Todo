@@ -329,13 +329,17 @@ if [ "$DISK_USAGE_BEFORE" -ge "$DISK_WARN_THRESHOLD" ]; then
   echo "📊 部署前清理后磁盘占用：${DISK_USAGE}%"
 else
   DISK_USAGE=$DISK_USAGE_BEFORE
-  echo "✅ 当前磁盘占用 ${DISK_USAGE}% 低于阈值 ${DISK_WARN_THRESHOLD}% ，跳过部署前清理以保留构建缓存"
+  echo "🧹 当前磁盘占用 ${DISK_USAGE}% 低于阈值 ${DISK_WARN_THRESHOLD}% ，按配置直接执行全量清理..."
+  "${DOCKER[@]}" system prune -af
+  report_docker_storage '部署前全量清理后'
+  DISK_USAGE=$(get_disk_usage)
+  echo "📊 部署前全量清理后磁盘占用：${DISK_USAGE}%"
 fi
 
 if [ "$DISK_USAGE" -ge "$DISK_CRITICAL_THRESHOLD" ]; then
   if [ "$ENABLE_AGGRESSIVE_PRUNE" = "true" ]; then
     echo "⚠️ 磁盘占用 ${DISK_USAGE}%（临界 ${DISK_CRITICAL_THRESHOLD}%），部署前执行激进清理..."
-    "${DOCKER[@]}" system prune -f
+    "${DOCKER[@]}" system prune -af
     DISK_USAGE=$(get_disk_usage)
     echo "✨ 部署前激进清理后磁盘占用：${DISK_USAGE}%"
   else
@@ -409,14 +413,16 @@ if [ "$DISK_USAGE_AFTER_BUILD" -ge "$DISK_WARN_THRESHOLD" ]; then
   "${DOCKER[@]}" image prune -a -f --filter "until=${IMAGE_PRUNE_UNTIL}"
   report_docker_storage '部署后即时清理后'
 else
-  echo "✅ 部署后磁盘占用 ${DISK_USAGE_AFTER_BUILD}% 低于阈值 ${DISK_WARN_THRESHOLD}% ，跳过即时清理"
+  echo "🧹 部署后磁盘占用 ${DISK_USAGE_AFTER_BUILD}% 低于阈值 ${DISK_WARN_THRESHOLD}% ，按配置直接执行全量清理..."
+  "${DOCKER[@]}" system prune -af
+  report_docker_storage '部署后全量清理后'
 fi
 
 DISK_USAGE_AFTER=$(get_disk_usage)
 if [ "$DISK_USAGE_AFTER" -ge "$DISK_CRITICAL_THRESHOLD" ]; then
   if [ "$ENABLE_AGGRESSIVE_PRUNE" = "true" ]; then
     echo "⚠️ 磁盘占用 ${DISK_USAGE_AFTER}%（临界 ${DISK_CRITICAL_THRESHOLD}%），执行激进清理..."
-    "${DOCKER[@]}" system prune -f
+    "${DOCKER[@]}" system prune -af
     DISK_USAGE_AFTER=$(get_disk_usage)
     echo "✨ 激进清理后磁盘占用：${DISK_USAGE_AFTER}%"
   else
