@@ -15,11 +15,9 @@
       "persistent": true
     },
     "lint": {
-      "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$"]
     },
     "type-check": {
-      "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$"]
     },
     "type-check:watch": {
