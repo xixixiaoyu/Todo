@@ -1,34 +1,40 @@
 import { ref } from 'vue'
 import { useFileParsing } from '@/composables/useFileParsing'
-
-const MAX_TOTAL_ATTACHMENTS = 10
-
-function isAllowedDocument(file: File): boolean {
-  return (
-    file.type === 'application/pdf' ||
-    file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-    file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-    file.type === 'application/vnd.ms-excel' ||
-    file.type === 'text/plain' ||
-    file.type === 'text/markdown' ||
-    file.type === 'application/json' ||
-    file.type === 'text/csv' ||
-    /\.(ts|js|py|go|java|c|cpp|h|hpp|rs)$/i.test(file.name)
-  )
-}
+import { useToast } from '@/composables/useToast'
+import i18n from '@/i18n'
+import {
+  MAX_ATTACHMENT_FILE_SIZE_BYTES,
+  MAX_TOTAL_ATTACHMENTS,
+  isAllowedDocument,
+} from '@/features/ai/constants/attachments'
 
 export function useAiAssistantAttachments(params: { triggerFileUpload: () => void }) {
+  const { t } = i18n.global
+  const { error: toastError, warning: toastWarning } = useToast()
   const selectedImages = ref<string[]>([])
   const { parsedFiles, parseFile, removeFile, clearFiles } = useFileParsing()
 
   const processFiles = (files: FileList | File[]) => {
     const currentTotal = selectedImages.value.length + parsedFiles.value.length
     const remaining = MAX_TOTAL_ATTACHMENTS - currentTotal
-    if (remaining <= 0) return
+    if (remaining <= 0) {
+      toastWarning(t('ai.maxAttachmentsReached', { count: MAX_TOTAL_ATTACHMENTS }))
+      return
+    }
 
     const filesToProcess = Array.from(files).slice(0, remaining)
 
     filesToProcess.forEach((file) => {
+      if (file.size > MAX_ATTACHMENT_FILE_SIZE_BYTES) {
+        toastError(
+          t('ai.attachmentFileTooLarge', {
+            name: file.name,
+            maxSizeMb: Math.floor(MAX_ATTACHMENT_FILE_SIZE_BYTES / (1024 * 1024)),
+          }),
+        )
+        return
+      }
+
       const isImage = file.type.startsWith('image/')
       const isAllowedDoc = isAllowedDocument(file)
 
@@ -46,7 +52,10 @@ export function useAiAssistantAttachments(params: { triggerFileUpload: () => voi
 
       if (isAllowedDoc) {
         void parseFile(file)
+        return
       }
+
+      toastError(t('ai.unsupportedAttachmentType', { name: file.name }))
     })
   }
 

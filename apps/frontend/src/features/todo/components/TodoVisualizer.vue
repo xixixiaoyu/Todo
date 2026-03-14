@@ -279,6 +279,14 @@ const chartOptions = computed(() => {
   const _themeColor = themeColor.value
   void _themeColor
 
+  const escapeHtml = (value: string) =>
+    value
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;')
+
   return {
     backgroundColor: 'transparent',
     tooltip: {
@@ -286,16 +294,18 @@ const chartOptions = computed(() => {
       triggerOn: 'mousemove',
       formatter: (params: { data: TreeData }) => {
         const data = params.data
-        if (!data.id) return data.name
+        if (!data.id) return escapeHtml(data.name)
         let status = t('todo.pending')
         if (data.isProposed) status = `✨ ${t('common.confirm')}`
         if (data.isProposedDelete) status = `🗑️ ${t('common.delete')}`
         if (data.completed) status = `✅ ${t('todo.completed')}`
+        const safeName = escapeHtml(data.name)
+        const safeStatus = escapeHtml(status)
         return `<div class="px-3 py-2">
-        <div class="font-bold text-sm">${data.name}</div>
+        <div class="font-bold text-sm">${safeName}</div>
         <div class="text-[10px] opacity-60 mt-1 flex items-center gap-1">
           <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${data.itemStyle?.color}"></span>
-          ${status}
+          ${safeStatus}
         </div>
       </div>`
       },

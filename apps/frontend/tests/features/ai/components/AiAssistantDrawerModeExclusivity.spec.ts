@@ -99,11 +99,15 @@ vi.mock('@/features/ai/composables/useAIConfig', () => ({
   saveAIThinkingMode: vi.fn(),
 }))
 
-vi.mock('vue-i18n', () => ({
-  useI18n: () => ({
-    t: (key: string) => key,
-  }),
-}))
+vi.mock('vue-i18n', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('vue-i18n')>()
+  return {
+    ...actual,
+    useI18n: () => ({
+      t: (key: string) => key,
+    }),
+  }
+})
 
 vi.mock('@/composables/useFileParsing', () => ({
   useFileParsing: () => ({

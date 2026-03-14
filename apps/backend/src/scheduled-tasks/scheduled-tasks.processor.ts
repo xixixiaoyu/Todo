@@ -10,6 +10,25 @@ interface ScheduledJobData {
   [key: string]: unknown
 }
 
+interface DailyStatsUserSummary {
+  userId: number
+  active: number
+  completed: number
+}
+
+interface DailyStatsSummary {
+  periodStart: string
+  periodEnd: string
+  totals: {
+    active: number
+    completed: number
+    created: number
+    completedToday: number
+    deleted: number
+  }
+  users: DailyStatsUserSummary[]
+}
+
 /**
  * 定时任务处理器
  * 处理 BullMQ 队列中的定时任务
@@ -175,8 +194,87 @@ export class ScheduledTasksProcessor extends WorkerHost {
    */
   private async handleDailyStats(job: Job): Promise<void> {
     this.logger.log(`[${job.id}] 执行每日数据统计...`)
-    // 在这里添加统计逻辑
-    // 例如：生成每日报表、发送统计邮件等
+
+    // 统计前一天自然日数据，避免凌晨执行时当日样本不完整
+    const periodEnd = new Date()
+    periodEnd.setHours(0, 0, 0, 0)
+    const periodStart = new Date(periodEnd)
+    periodStart.setDate(periodStart.getDate() - 1)
+
+    try {
+      const [active, completed, created, completedToday, deleted, activeByUser, completedByUser] =
+        await Promise.all([
+          this.prisma.todo.count({
+            where: { deletedAt: null },
+          }),
+          this.prisma.todo.count({
+            where: { deletedAt: null, completed: true },
+          }),
+          this.prisma.todo.count({
+            where: {
+              createdAt: {
+                gte: periodStart,
+                lt: periodEnd,
+              },
+            },
+          }),
+          this.prisma.todo.count({
+            where: {
+              completedAt: {
+                gte: periodStart,
+                lt: periodEnd,
+              },
+            },
+          }),
+          this.prisma.todo.count({
+            where: {
+              deletedAt: {
+                gte: periodStart,
+                lt: periodEnd,
+              },
+            },
+          }),
+          this.prisma.todo.groupBy({
+            by: ['userId'],
+            where: { deletedAt: null },
+            _count: { _all: true },
+          }),
+          this.prisma.todo.groupBy({
+            by: ['userId'],
+            where: { deletedAt: null, completed: true },
+            _count: { _all: true },
+          }),
+        ])
+
+      const completedMap = new Map<number, number>()
+      completedByUser.forEach((item) => {
+        completedMap.set(item.userId, item._count._all)
+      })
+
+      const users: DailyStatsUserSummary[] = activeByUser.map((item) => ({
+        userId: item.userId,
+        active: item._count._all,
+        completed: completedMap.get(item.userId) ?? 0,
+      }))
+
+      const summary: DailyStatsSummary = {
+        periodStart: periodStart.toISOString(),
+        periodEnd: periodEnd.toISOString(),
+        totals: {
+          active,
+          completed,
+          created,
+          completedToday,
+          deleted,
+        },
+        users,
+      }
+
+      this.logger.log(`[${job.id}] 每日统计结果: ${JSON.stringify(summary)}`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      this.logger.error(`每日统计任务失败: ${message}`)
+    }
   }
 
   @OnWorkerEvent('completed')

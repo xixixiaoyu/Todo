@@ -87,10 +87,23 @@ export const CreateMcpServerSchema = McpServerBaseSchema.refine(validateTranspor
 /**
  * 更新 MCP Server 配置 Schema
  */
-export const UpdateMcpServerSchema = McpServerBaseSchema.partial().refine(validateTransportConfig, {
-  message: 'Config must match the transport type',
-  path: ['config'],
-})
+export const UpdateMcpServerSchema = McpServerBaseSchema.partial()
+  .refine(validateTransportConfig, {
+    message: 'Config must match the transport type',
+    path: ['config'],
+  })
+  .superRefine((data, ctx) => {
+    const hasTransport = data.transport !== undefined
+    const hasConfig = data.config !== undefined
+
+    if (hasTransport !== hasConfig) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['config'],
+        message: 'transport and config must be provided together when updating runtime config',
+      })
+    }
+  })
 
 /**
  * 调用工具 Schema

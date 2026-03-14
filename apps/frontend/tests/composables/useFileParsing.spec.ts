@@ -17,6 +17,7 @@ vi.mock('@/composables/useToast', () => ({
   useToast: vi.fn(() => ({
     error: vi.fn(),
     success: vi.fn(),
+    warning: vi.fn(),
   })),
 }))
 

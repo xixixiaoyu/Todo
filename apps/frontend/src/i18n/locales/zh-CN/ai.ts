@@ -360,4 +360,8 @@ export const ai = {
   parsing: '正在解析...',
   loginRequiredForParsing: '此文件类型需要登录后才能解析',
   parseError: '文件解析失败',
+  unsupportedAttachmentType: '不支持的文件类型: {name}',
+  attachmentFileTooLarge: '文件过大: {name}，单文件上限 {maxSizeMb} MB',
+  attachmentContentTruncated: '{name} 内容过长，已截断至 {maxChars} 字符',
+  maxAttachmentsReached: '附件数量已达上限 {count}',
 } as const

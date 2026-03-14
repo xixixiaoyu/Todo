@@ -29,6 +29,14 @@ const currentSessionId = ref<string | null>(null)
 const lastActiveSessionId = ref<string | null>(null)
 let saveTimer: ReturnType<typeof setTimeout> | null = null
 
+function compareSessionsByPriority(a: ChatSession, b: ChatSession): number {
+  // 优先置顶
+  if (a.isPinned && !b.isPinned) return -1
+  if (!a.isPinned && b.isPinned) return 1
+  // 其次按更新时间倒序
+  return b.updatedAt.getTime() - a.updatedAt.getTime()
+}
+
 /**
  * 保存当前会话 ID 到 localStorage
  */
@@ -247,15 +255,7 @@ export function useChatHistory() {
   )
 
   // 会话列表（优先置顶，其次按更新时间倒序）
-  const sortedSessions = computed(() =>
-    [...sessions.value].sort((a, b) => {
-      // 优先置顶
-      if (a.isPinned && !b.isPinned) return -1
-      if (!a.isPinned && b.isPinned) return 1
-      // 其次按更新时间倒序
-      return b.updatedAt.getTime() - a.updatedAt.getTime()
-    }),
-  )
+  const sortedSessions = computed(() => [...sessions.value].sort(compareSessionsByPriority))
 
   // 是否有会话
   const hasSession = computed(() => sessions.value.length > 0)
@@ -380,7 +380,18 @@ export function useChatHistory() {
 
     // 如果删除的是当前会话，切换到下一个
     if (currentSessionId.value === sessionId) {
-      currentSessionId.value = sessions.value.length > 0 ? sessions.value[0].id : null
+      if (sessions.value.length === 0) {
+        currentSessionId.value = null
+      } else if (
+        lastActiveSessionId.value &&
+        lastActiveSessionId.value !== sessionId &&
+        sessions.value.some((s) => s.id === lastActiveSessionId.value)
+      ) {
+        currentSessionId.value = lastActiveSessionId.value
+      } else {
+        const fallbackSession = [...sessions.value].sort(compareSessionsByPriority)[0]
+        currentSessionId.value = fallbackSession?.id ?? null
+      }
     }
 
     // 如果删除的是上一个激活的会话，重置它

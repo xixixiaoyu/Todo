@@ -11,6 +11,7 @@ import { ApiTags, ApiOperation, ApiConsumes, ApiBody, ApiBearerAuth } from '@nes
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { StorageService, type UploadResult, type UploadedFile } from './storage.service'
 import { FileParsingService } from './file-parsing.service'
+import { ALLOWED_UPLOAD_EXTENSIONS, ALLOWED_UPLOAD_MIME_TYPES } from './upload.constants'
 import type { FastifyRequestWithMultipart, MultipartFile } from '../common'
 
 /**
@@ -48,31 +49,18 @@ export class UploadController {
    * 检查文件类型是否允许
    */
   private ensureAllowedFile(originalname: string, mimetype: string) {
-    const allowedMimes = [
-      'image/jpeg',
-      'image/png',
-      'image/gif',
-      'image/webp',
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.ms-excel',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'text/plain',
-      'text/markdown',
-      'application/json',
-      'text/csv',
-    ]
+    const fileName = originalname.trim().toLowerCase()
+    const hasAllowedExt = ALLOWED_UPLOAD_EXTENSIONS.some((ext) => fileName.endsWith(`.${ext}`))
 
     if (
-      allowedMimes.includes(mimetype) ||
+      ALLOWED_UPLOAD_MIME_TYPES.includes(mimetype as (typeof ALLOWED_UPLOAD_MIME_TYPES)[number]) ||
       mimetype.startsWith('text/') ||
-      originalname.match(/\.(ts|js|py|go|java|c|cpp|h|hpp|rs|json|md|txt)$/i)
+      hasAllowedExt
     ) {
       return
     }
 
-    throw new BadRequestException(`不支持的文件类型: ${mimetype}`)
+    throw new BadRequestException('upload.UNSUPPORTED_FILE_TYPE')
   }
 
   /**

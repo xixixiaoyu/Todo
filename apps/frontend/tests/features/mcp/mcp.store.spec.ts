@@ -110,4 +110,28 @@ describe('useMcpStore', () => {
     expect(mcpApi.connect).toHaveBeenCalledTimes(1)
     expect(store.connectionStates.s1).toBe(true)
   })
+
+  it('toggleActive should not duplicate connect/disconnect calls', async () => {
+    const disabledServer = {
+      ...baseServer,
+      enabled: false,
+    }
+    vi.mocked(mcpApi.getServers).mockResolvedValue([disabledServer])
+    vi.mocked(mcpApi.connect).mockResolvedValue()
+    vi.mocked(mcpApi.disconnect).mockResolvedValue()
+    vi.mocked(mcpApi.updateServer).mockResolvedValue({
+      ...disabledServer,
+      enabled: true,
+    })
+
+    const store = useMcpStore()
+    await store.fetchServers()
+    vi.mocked(mcpApi.connect).mockClear()
+
+    await store.toggleActive('s1')
+
+    expect(mcpApi.updateServer).toHaveBeenCalledWith('s1', { enabled: true })
+    expect(mcpApi.connect).toHaveBeenCalledTimes(1)
+    expect(mcpApi.disconnect).not.toHaveBeenCalled()
+  })
 })

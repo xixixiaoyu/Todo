@@ -13,6 +13,7 @@ import {
 import type { ParsedFile } from '@/composables/useFileParsing'
 import AiAssistantInputAttachments from '@/features/ai/components/AiAssistantInputAttachments.vue'
 import AiAssistantInputSlashCommands from '@/features/ai/components/AiAssistantInputSlashCommands.vue'
+import { AI_UPLOAD_ACCEPT } from '@/features/ai/constants/attachments'
 
 const props = defineProps<{
   modelValue: string
@@ -317,7 +318,7 @@ defineExpose({
       ref="fileInputRef"
       name="ai-file-upload"
       type="file"
-      accept="image/*,.pdf,.docx,.xlsx,.xls,.txt,.md,.json,.csv,.ts,.js,.py"
+      :accept="AI_UPLOAD_ACCEPT"
       multiple
       class="hidden"
       @change="(e) => emit('handleFileUpload', e)"

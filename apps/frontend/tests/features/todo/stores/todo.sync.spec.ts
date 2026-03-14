@@ -157,6 +157,37 @@ describe('Todo Store Sync', () => {
     expect(store.todos.every((t) => t.syncStatus === 'synced')).toBe(true)
   })
 
+  it('should carry local drafts to remote sync queue when logging in from local source', async () => {
+    const store = useTodoStore()
+
+    await store.addTodo('Local Draft 1')
+    await store.addTodo('Local Draft 2')
+
+    const syncSpy = vi.mocked(todoApi.sync).mockImplementation(async (payload) => ({
+      success: true,
+      data: {
+        synced: payload.todos.map((todo) => ({
+          ...todo,
+          version: 1,
+          updatedAt: new Date().toISOString(),
+        })),
+        deletedIds: [],
+        acceptedIds: payload.todos.map((todo) => todo.id),
+        conflicts: [],
+        serverTime: new Date().toISOString(),
+      },
+      timestamp: new Date().toISOString(),
+    }))
+
+    await store.mergeOnLogin(1)
+
+    expect(store.todoSource).toBe('remote')
+    expect(syncSpy).toHaveBeenCalledTimes(1)
+    const syncedTitles = syncSpy.mock.calls[0][0].todos.map((todo) => todo.title)
+    expect(syncedTitles).toEqual(expect.arrayContaining(['Local Draft 1', 'Local Draft 2']))
+    expect(store.todos.every((todo) => todo.syncStatus === 'synced')).toBe(true)
+  })
+
   it('should clear local todos when login user changes', async () => {
     const store = await createRemoteStore()
 
@@ -444,7 +475,7 @@ describe('Todo Store Sync', () => {
     expect(store.todos.find((t) => t.id === id)?.deletedAt).toBeDefined()
   })
 
-  it('should keep local and remote todos isolated when switching source', async () => {
+  it('should keep local snapshot available after switching source', async () => {
     const store = useTodoStore()
     await store.addTodo('Local Only')
 
@@ -474,7 +505,7 @@ describe('Todo Store Sync', () => {
 
     await store.switchTodoSource('remote')
     expect(store.todos.some((t) => t.id === 'remote-1')).toBe(true)
-    expect(store.todos.some((t) => t.title === 'Local Only')).toBe(false)
+    expect(store.todos.some((t) => t.title === 'Local Only')).toBe(true)
 
     await store.switchTodoSource('local')
     expect(store.todos.some((t) => t.title === 'Local Only')).toBe(true)

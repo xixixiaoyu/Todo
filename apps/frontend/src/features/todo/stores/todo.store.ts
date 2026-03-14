@@ -199,9 +199,33 @@ export const useTodoStore = defineStore(
     })
 
     async function mergeOnLoginWithRemote(userId: number): Promise<void> {
+      const shouldCarryLocalDrafts = todoSource.value === 'local'
+      const localDrafts = shouldCarryLocalDrafts ? snapshotTodos(todos.value) : []
+
       if (todoSource.value !== 'remote') {
         sourceManager.applyTodoSource('remote')
       }
+
+      if (syncOwnerId.value !== null && syncOwnerId.value !== userId) {
+        remoteTodos.value = []
+        todos.value = []
+        syncOwnerId.value = null
+        lastSyncAt.value = null
+        syncConflicts.value = []
+        resetSyncStatus()
+      }
+
+      if (shouldCarryLocalDrafts && localDrafts.length > 0) {
+        const existingIds = new Set(todos.value.map((todo) => todo.id))
+        localDrafts.forEach((draft) => {
+          if (existingIds.has(draft.id)) return
+          draft.syncStatus = 'pending'
+          todos.value.push(draft)
+          existingIds.add(draft.id)
+        })
+        remoteTodos.value = snapshotTodos(todos.value)
+      }
+
       await mergeOnLogin(userId)
     }
 

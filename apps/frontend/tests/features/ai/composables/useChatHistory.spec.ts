@@ -152,10 +152,7 @@ describe('useChatHistory', () => {
     // 置顶 s2
     togglePin(s2.id)
     // 排序：s2 (最新置顶), s1 (置顶), s3
-    // 注意：s2 的 updatedAt 会因为 togglePin 而更新吗？
-    // 在我的实现中，togglePin 并没有显式更新 updatedAt。
-    // 但是 sortedSessions 的排序逻辑是：优先 isPinned，然后是 updatedAt。
-    // 如果 s2 和 s1 都置顶了，那么 s2 的 updatedAt (更晚) 会让它排在 s1 前面。
+    // togglePin 会更新时间，因此在同为置顶时，后置顶的会话会排在更前面。
     expect(sessions.value[0].id).toBe(s2.id)
     expect(sessions.value[1].id).toBe(s1.id)
     expect(sessions.value[2].id).toBe(s3.id)
@@ -183,5 +180,44 @@ describe('useChatHistory', () => {
       { id: '3', role: 'user', content: 'Second Query' },
     ])
     expect(session.title).toBe('Manual Title')
+  })
+
+  it('should switch to last active session when deleting current session', async () => {
+    const { createSession, switchSession, currentSessionId, lastActiveSessionId, deleteSession } =
+      useChatHistory()
+
+    const s1 = createSession()
+    await vi.advanceTimersByTimeAsync(10)
+    const s2 = createSession()
+
+    switchSession(s1.id)
+    switchSession(s2.id)
+
+    expect(currentSessionId.value).toBe(s2.id)
+    expect(lastActiveSessionId.value).toBe(s1.id)
+
+    deleteSession(s2.id)
+
+    expect(currentSessionId.value).toBe(s1.id)
+  })
+
+  it('should switch to highest-priority session when last active is unavailable', async () => {
+    const { createSession, switchSession, togglePin, currentSessionId, deleteSession } =
+      useChatHistory()
+
+    const s1 = createSession()
+    await vi.advanceTimersByTimeAsync(10)
+    const s2 = createSession()
+    await vi.advanceTimersByTimeAsync(10)
+    const s3 = createSession()
+
+    togglePin(s1.id)
+    switchSession(s3.id)
+
+    deleteSession(s2.id)
+    expect(currentSessionId.value).toBe(s3.id)
+
+    deleteSession(s3.id)
+    expect(currentSessionId.value).toBe(s1.id)
   })
 })

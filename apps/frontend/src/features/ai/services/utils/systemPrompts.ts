@@ -1,6 +1,10 @@
 import i18n from '@/i18n'
 import { useTodoStore, type Todo } from '@/features/todo/stores/todo'
 import { useMemory } from '@/features/ai/composables/useMemory'
+import {
+  MAX_PROMPT_DOC_CHARS_PER_FILE,
+  MAX_PROMPT_DOC_CHARS_TOTAL,
+} from '@/features/ai/constants/attachments'
 import type {
   AIChatCompletionMessage,
   AssistantMode,
@@ -247,6 +251,7 @@ export function injectSystemPrompts(
   memorySnapshot?: string[],
 ): AIChatCompletionMessage[] {
   const result: AIChatCompletionMessage[] = []
+  let documentCharsUsed = 0
 
   const systemBlocks: Array<{ content: string }> = []
 
@@ -338,11 +343,27 @@ export function injectSystemPrompts(
         if (msg.documents && msg.documents.length > 0) {
           const docsContext = msg.documents
             .map((doc) => {
+              const remainingTotal = MAX_PROMPT_DOC_CHARS_TOTAL - documentCharsUsed
+              if (remainingTotal <= 0) {
+                return null
+              }
+
+              const maxChars = Math.min(MAX_PROMPT_DOC_CHARS_PER_FILE, remainingTotal)
+              const normalizedContent = doc.content.replace(/\0/g, '')
+              const truncatedContent =
+                normalizedContent.length > maxChars
+                  ? `${normalizedContent.slice(0, maxChars)}\n...[truncated]`
+                  : normalizedContent
+              documentCharsUsed += truncatedContent.length
+
               const name = doc.name.replace(/[\r\n]/g, ' ').slice(0, 200)
-              return `<document name="${name}">\n${doc.content}\n</document>`
+              return `<document name="${name}">\n${truncatedContent}\n</document>`
             })
+            .filter((doc): doc is string => !!doc)
             .join('\n\n')
-          messageContent = `[documents]\n${docsContext}\n[/documents]\n\n---\n\n${messageContent}`
+          if (docsContext.trim()) {
+            messageContent = `[documents]\n${docsContext}\n[/documents]\n\n---\n\n${messageContent}`
+          }
         }
 
         if (msg.images && msg.images.length > 0) {

@@ -206,19 +206,12 @@ export const useMcpStore = defineStore('mcp', () => {
 
     const newEnabled = !server.enabled
 
-    // 1. 先更新数据库持久化状态
+    // updateServer 内部已处理启停后的连接状态切换，避免重复 connect/disconnect
     try {
       await updateServer(id, { enabled: newEnabled })
     } catch (err) {
       console.error('Failed to update enabled status:', err)
-      return // 如果更新失败，不进行连接操作
-    }
-
-    // 2. 根据启用状态自动连接或断开
-    if (newEnabled) {
-      await connectServer(id)
-    } else {
-      await disconnectServer(id)
+      return
     }
   }
 

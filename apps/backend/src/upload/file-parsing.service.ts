@@ -4,6 +4,7 @@ import { PDFParse } from 'pdf-parse'
 import * as mammoth from 'mammoth'
 import * as XLSX from 'xlsx'
 import type { UploadedFile } from './storage.service'
+import { MAX_PARSED_CONTENT_CHARS, PARSABLE_TEXT_EXTENSIONS } from './upload.constants'
 
 @Injectable()
 export class FileParsingService {
@@ -15,31 +16,58 @@ export class FileParsingService {
   async parseFile(file: UploadedFile): Promise<string> {
     const originalName = file.originalname
     const ext = extname(originalName).toLowerCase()
+    const extWithoutDot = ext.replace(/^\./, '')
 
     try {
+      let parsedContent = ''
+
       switch (ext) {
         case '.pdf':
-          return await this.parsePdf(file.buffer)
+          parsedContent = await this.parsePdf(file.buffer)
+          break
         case '.docx':
-          return await this.parseDocx(file.buffer)
+          parsedContent = await this.parseDocx(file.buffer)
+          break
         case '.xlsx':
         case '.xls':
-          return this.parseExcel(file.buffer)
-        case '.txt':
-        case '.md':
-        case '.json':
-        case '.csv':
-        case '.ts':
-        case '.js':
-        case '.py':
-          return file.buffer.toString('utf-8')
+          parsedContent = await this.parseExcel(file.buffer)
+          break
         default:
-          throw new BadRequestException(`Unsupported file type: ${ext}`)
+          if (
+            PARSABLE_TEXT_EXTENSIONS.includes(
+              extWithoutDot as (typeof PARSABLE_TEXT_EXTENSIONS)[number],
+            )
+          ) {
+            parsedContent = file.buffer.toString('utf-8')
+            break
+          }
+          throw new BadRequestException('upload.UNSUPPORTED_PARSE_FILE_TYPE')
       }
+
+      return this.truncateContent(parsedContent)
     } catch (error: unknown) {
+      if (error instanceof BadRequestException) {
+        const response = error.getResponse()
+        const messageFromResponse =
+          typeof response === 'string'
+            ? response
+            : typeof response === 'object' && response !== null
+              ? (response as { message?: unknown }).message
+              : undefined
+        const normalizedMessage = Array.isArray(messageFromResponse)
+          ? messageFromResponse.find((m): m is string => typeof m === 'string')
+          : typeof messageFromResponse === 'string'
+            ? messageFromResponse
+            : undefined
+
+        if (normalizedMessage?.startsWith('upload.')) {
+          throw error
+        }
+      }
+
       const message = error instanceof Error ? error.message : 'Unknown error'
       this.logger.error(`Failed to parse file ${originalName}: ${message}`)
-      throw new BadRequestException(`File parsing failed: ${message}`)
+      throw new BadRequestException('upload.FILE_PARSING_FAILED')
     }
   }
 
@@ -70,5 +98,13 @@ export class FileParsingService {
       text += '\n'
     })
     return Promise.resolve(text)
+  }
+
+  private truncateContent(content: string): string {
+    if (content.length <= MAX_PARSED_CONTENT_CHARS) {
+      return content
+    }
+
+    return `${content.slice(0, MAX_PARSED_CONTENT_CHARS)}\n\n...[truncated]`
   }
 }

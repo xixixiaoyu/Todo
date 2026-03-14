@@ -117,4 +117,47 @@ describe('TodoVisualizer', () => {
     expect(wrapper.text()).toContain('加载中...')
     expect(wrapper.find('[data-test="vchart"]').exists()).toBe(false)
   })
+
+  it('tooltip formatter 应对任务标题做 HTML 转义', async () => {
+    const store = useTodoStore()
+    store.filter = 'pending'
+    store.todos = [
+      {
+        id: 'xss-1',
+        title: '<img src=x onerror=alert(1)>',
+        completed: false,
+        order: 0,
+        isPinned: false,
+        parentId: null,
+        version: 0,
+        pomodoroCount: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]
+
+    const wrapper = mount(TodoVisualizer, {
+      props: { filter: 'pending' },
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    await nextTick()
+
+    const chart = wrapper.findComponent({ name: 'VChart' })
+    const option = chart.props('option') as {
+      tooltip: { formatter: (params: { data: { id: string; name: string } }) => string }
+    }
+
+    const html = option.tooltip.formatter({
+      data: {
+        id: 'xss-1',
+        name: '<img src=x onerror=alert(1)>',
+      },
+    })
+
+    expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;')
+    expect(html).not.toContain('<img src=x onerror=alert(1)>')
+  })
 })

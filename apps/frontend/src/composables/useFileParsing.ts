@@ -4,6 +4,7 @@ import { unwrapApiResponse } from '@lumina/shared'
 import { useAuthStore } from '@/features/auth/stores/auth'
 import { useToast } from './useToast'
 import i18n from '@/i18n'
+import { MAX_PARSED_FILE_CHARS, isFrontendParsable } from '@/features/ai/constants/attachments'
 
 export interface ParsedFile {
   id: string
@@ -22,28 +23,26 @@ export interface ParsedFile {
  */
 export function useFileParsing() {
   const { t } = i18n.global
-  const { error: toastError } = useToast()
+  const { error: toastError, warning: toastWarning } = useToast()
   const authStore = useAuthStore()
   const parsedFiles = ref<ParsedFile[]>([])
   const isParsing = ref(false)
 
-  // 判定是否适合前端直接解析
-  const isFrontendParsable = (file: File) => {
-    const textTypes = [
-      'text/plain',
-      'text/markdown',
-      'application/json',
-      'text/csv',
-      'text/javascript',
-      'application/javascript',
-      'text/typescript',
-    ]
-    const textExtensions = /\.(ts|js|py|go|java|c|cpp|h|hpp|rs|json|md|txt|csv|yaml|yml|toml)$/i
-
-    return textTypes.includes(file.type) || textExtensions.test(file.name)
-  }
-
   const generateId = () => Math.random().toString(36).substring(2, 11)
+
+  const clampContent = (content: string, filename: string): string => {
+    if (content.length <= MAX_PARSED_FILE_CHARS) {
+      return content
+    }
+
+    toastWarning(
+      t('ai.attachmentContentTruncated', {
+        name: filename,
+        maxChars: MAX_PARSED_FILE_CHARS,
+      }),
+    )
+    return `${content.slice(0, MAX_PARSED_FILE_CHARS)}\n\n...[truncated]`
+  }
 
   const parseFile = async (file: File) => {
     const fileId = generateId()
@@ -73,6 +72,8 @@ export function useFileParsing() {
         const response = await parseFileApi(file)
         content = unwrapApiResponse(response).content
       }
+
+      content = clampContent(content, file.name)
 
       // 更新状态
       const index = parsedFiles.value.findIndex((f) => f.id === fileId)

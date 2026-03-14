@@ -1,5 +1,6 @@
 import { computed, type ComputedRef, type Ref } from 'vue'
 import type { Todo } from '../stores/todo'
+import { isEffectivelyCompleted } from '../stores/todo.filtering'
 import type { PomodoroHistory } from '../stores/pomodoro'
 import {
   getCssVar,
@@ -11,6 +12,30 @@ import {
   mixRgb,
 } from '@/lib/colors'
 
+function getTodoById(todos: Todo[], id: string): Todo | undefined {
+  return todos.find((todo) => todo.id === id)
+}
+
+function getEffectiveCompletedAt(todo: Todo, todos: Todo[]): Date | null {
+  const visited = new Set<string>()
+  let current: Todo | undefined = todo
+
+  while (current) {
+    if (visited.has(current.id)) break
+    visited.add(current.id)
+
+    if (current.completedAt) {
+      const completedAt = new Date(current.completedAt)
+      if (!Number.isNaN(completedAt.getTime())) return completedAt
+    }
+
+    if (!current.parentId) break
+    current = getTodoById(todos, current.parentId)
+  }
+
+  return null
+}
+
 export function useTodoStatisticsOptions(params: {
   t: (key: string) => string
   locale: Ref<string>
@@ -20,7 +45,11 @@ export function useTodoStatisticsOptions(params: {
   pomodoroHistory: ComputedRef<PomodoroHistory[]>
 }) {
   const totalTasks = computed(() => params.activeTodos.value.length)
-  const completedTasks = computed(() => params.activeTodos.value.filter((t) => t.completed).length)
+  const completedTasks = computed(
+    () =>
+      params.activeTodos.value.filter((t) => isEffectivelyCompleted(t, params.activeTodos.value))
+        .length,
+  )
   const pendingTasks = computed(() => totalTasks.value - completedTasks.value)
   const completionRate = computed(() =>
     totalTasks.value > 0 ? Math.round((completedTasks.value / totalTasks.value) * 100) : 0,
@@ -68,8 +97,9 @@ export function useTodoStatisticsOptions(params: {
       nextD.setDate(nextD.getDate() + 1)
 
       return params.activeTodos.value.filter((t) => {
-        if (!t.completed || !t.completedAt) return false
-        const completedAt = new Date(t.completedAt)
+        if (!isEffectivelyCompleted(t, params.activeTodos.value)) return false
+        const completedAt = getEffectiveCompletedAt(t, params.activeTodos.value)
+        if (!completedAt) return false
         return completedAt >= d && completedAt < nextD
       }).length
     })

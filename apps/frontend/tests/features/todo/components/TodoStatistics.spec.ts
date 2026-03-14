@@ -258,4 +258,54 @@ describe('TodoStatistics', () => {
     expect(wrapper.findAll('[data-test="chart-skeleton"]').length).toBeGreaterThan(0)
     expect(wrapper.findAllComponents({ name: 'VChart' }).length).toBe(0)
   })
+
+  it('父任务未完成时，已勾选子任务不应计入完成数', async () => {
+    const todoStore = useTodoStore()
+    const pomodoroStore = usePomodoroStore()
+
+    pomodoroStore.history = []
+    pomodoroStore.completedSessions = 0
+
+    const now = new Date(2026, 1, 10, 9, 0, 0)
+
+    const parent = buildTodo({
+      id: 'parent',
+      title: 'Parent',
+      completed: false,
+      createdAt: now,
+      updatedAt: now,
+      parentId: null,
+    })
+
+    const child = buildTodo({
+      id: 'child',
+      title: 'Child',
+      completed: true,
+      completedAt: now,
+      createdAt: now,
+      updatedAt: now,
+      parentId: 'parent',
+    })
+
+    todoStore.todos = [parent, child]
+
+    const wrapper = mount(TodoStatistics, {
+      global: {
+        plugins: [i18n],
+        stubs: {
+          Card: { template: '<div><slot /></div>' },
+          CardContent: { template: '<div><slot /></div>' },
+          CardHeader: { template: '<div><slot /></div>' },
+          CardTitle: { template: '<div><slot /></div>' },
+        },
+      },
+    })
+
+    await nextTick()
+
+    const metrics = wrapper.findAll('h3').map((n) => n.text())
+    expect(metrics[0]).toBe('2')
+    expect(metrics[1]).toBe('0')
+    expect(metrics[2]).toBe('2')
+  })
 })
