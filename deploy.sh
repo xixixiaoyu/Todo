@@ -167,14 +167,35 @@ BUILDER_PRUNE_UNTIL=${BUILDER_PRUNE_UNTIL:-168h}
 ENABLE_AGGRESSIVE_PRUNE=${ENABLE_AGGRESSIVE_PRUNE:-false}
 validate_thresholds
 
+DISK_USAGE_BEFORE=$(get_disk_usage)
+if [ "$DISK_USAGE_BEFORE" -ge "$DISK_WARN_THRESHOLD" ]; then
+  echo "⚠️ 部署前磁盘占用 ${DISK_USAGE_BEFORE}%（阈值 ${DISK_WARN_THRESHOLD}%），执行预清理..."
+else
+  echo "🧹 正在执行部署前预清理（当前磁盘占用 ${DISK_USAGE_BEFORE}%）..."
+fi
+# 优先清理虚悬镜像
+"${DOCKER[@]}" image prune -f
+# 按照时间策略清理缓存和旧镜像
+"${DOCKER[@]}" builder prune -f --filter "until=${BUILDER_PRUNE_UNTIL}"
+"${DOCKER[@]}" image prune -a -f --filter "until=${IMAGE_PRUNE_UNTIL}"
+
 DISK_USAGE=$(get_disk_usage)
-if [ "$DISK_USAGE" -ge "$DISK_WARN_THRESHOLD" ]; then
-  echo "⚠️ 磁盘占用 ${DISK_USAGE}%（阈值 ${DISK_WARN_THRESHOLD}%），执行温和清理..."
-  # 优先清理虚悬镜像
-  "${DOCKER[@]}" image prune -f
-  # 按照时间策略清理缓存和旧镜像
-  "${DOCKER[@]}" builder prune -f --filter "until=${BUILDER_PRUNE_UNTIL}"
-  "${DOCKER[@]}" image prune -a -f --filter "until=${IMAGE_PRUNE_UNTIL}"
+echo "📊 部署前清理后磁盘占用：${DISK_USAGE}%"
+if [ "$DISK_USAGE" -ge "$DISK_CRITICAL_THRESHOLD" ]; then
+  if [ "$ENABLE_AGGRESSIVE_PRUNE" = "true" ]; then
+    echo "⚠️ 磁盘占用 ${DISK_USAGE}%（临界 ${DISK_CRITICAL_THRESHOLD}%），部署前执行激进清理..."
+    "${DOCKER[@]}" system prune -f
+    DISK_USAGE=$(get_disk_usage)
+    echo "✨ 部署前激进清理后磁盘占用：${DISK_USAGE}%"
+  else
+    echo "⚠️ 部署前磁盘占用仍为 ${DISK_USAGE}%（临界 ${DISK_CRITICAL_THRESHOLD}%）"
+    echo "⚠️ 如需部署前执行激进清理，请设置 ENABLE_AGGRESSIVE_PRUNE=true 后重试"
+  fi
+fi
+
+if [ "$DISK_USAGE" -ge "$DISK_ABORT_THRESHOLD" ]; then
+  echo "❌ 部署前磁盘占用 ${DISK_USAGE}% 超过中止阈值 ${DISK_ABORT_THRESHOLD}% ，为避免部署失败风险已终止"
+  exit 1
 fi
 
 if [ ! -f .env ]; then
