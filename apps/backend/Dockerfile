@@ -91,7 +91,7 @@ ENV IS_DOCKER=true
 
 # 健康检查 - 增加启动缓冲时间以应对初始化压力
 HEALTHCHECK --interval=15s --timeout=5s --start-period=60s --retries=5 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health/liveness || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/health/liveness || exit 1
 
 # 启动应用 - 容器由编排层负责拉起/重启，进程保持单实例以保证 WebSocket 会话一致性
 CMD ["node", "dist/src/main.js"]
