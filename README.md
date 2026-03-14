@@ -100,11 +100,40 @@ pnpm docker:dev
 
 生产部署（`./deploy.sh`）会自动启动 GoAccess 实时统计服务，基于 Nginx access log 生成可视化报表。
 
-- 默认地址：`http://127.0.0.1:7890`
-- 默认绑定：`127.0.0.1`（更安全，建议通过反向代理+鉴权暴露）
+- 默认监听：`127.0.0.1:7890`（仅服务器本机可访问）
 - 可选环境变量：
   - `GOACCESS_REPORT_PORT`：看板端口（默认 `7890`）
   - `GOACCESS_REPORT_BIND`：监听地址（默认 `127.0.0.1`）
+
+#### 方案一：Nginx Proxy Manager 反向代理（推荐）
+1. 打开 NPM 管理后台：`http://服务器IP:81`（若你保持 `NPM_ADMIN_BIND=127.0.0.1`，请先通过 SSH 隧道访问）
+2. 添加 Proxy Host：
+   - Domain：`stats.yourdomain.com`
+   - Forward Hostname / IP：`lumina-goaccess`
+   - Forward Port：`7890`
+3. 在 Access List 中启用 Basic Auth
+4. 在 SSL 中申请/配置 Let's Encrypt 证书并开启 HTTPS
+
+#### 方案二：SSH 隧道（临时调试）
+```bash
+# 在本地电脑执行
+ssh -L 7890:127.0.0.1:7890 user@服务器IP
+# 浏览器访问 http://localhost:7890
+```
+
+#### 方案三：直接暴露（不推荐生产环境）
+在 `.env` 中添加或修改：
+```bash
+GOACCESS_REPORT_BIND=0.0.0.0
+```
+然后重启容器。该方案必须配合额外安全措施（如防火墙限制来源 IP）。
+
+| 场景 | 推荐方案 |
+| :--- | :--- |
+| 生产环境长期使用 | NPM 反向代理 + HTTPS + Basic Auth |
+| 个人临时查看 | SSH 隧道 |
+| 内网环境 | NPM 反向代理或绑定 `0.0.0.0` |
+| 公网直接暴露 | ❌ 不推荐 |
 
 ---
 

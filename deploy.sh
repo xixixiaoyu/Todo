@@ -271,11 +271,27 @@ fi
 report_disk_health "$DISK_USAGE_AFTER"
 
 GOACCESS_REPORT_PORT=${GOACCESS_REPORT_PORT:-7890}
+GOACCESS_REPORT_BIND=${GOACCESS_REPORT_BIND:-127.0.0.1}
+NPM_ADMIN_BIND=${NPM_ADMIN_BIND:-127.0.0.1}
+NPM_ADMIN_PORT=${NPM_ADMIN_PORT:-81}
 
 echo "✅ 部署完成！"
 echo "🌐 前端访问地址: http://服务器IP"
 echo "📊 后端 API 地址: http://服务器IP/api"
-echo "📈 访问统计看板: http://${GOACCESS_REPORT_BIND:-127.0.0.1}:${GOACCESS_REPORT_PORT}"
-echo "🔒 默认仅监听 127.0.0.1，可通过 GOACCESS_REPORT_BIND=0.0.0.0 对外开放（建议配合鉴权）"
+if [ "$GOACCESS_REPORT_BIND" = "127.0.0.1" ]; then
+  echo "📈 访问统计看板默认仅本机可见: http://127.0.0.1:${GOACCESS_REPORT_PORT}"
+  echo "🔐 生产推荐: 使用 Nginx Proxy Manager 反向代理 + Basic Auth + HTTPS"
+  if [ "$NPM_ADMIN_BIND" = "127.0.0.1" ]; then
+    echo "🛡️ NPM 管理后台默认仅本机: http://127.0.0.1:${NPM_ADMIN_PORT}"
+    echo "   若需远程打开后台，请设置 NPM_ADMIN_BIND=0.0.0.0 并限制来源 IP"
+  else
+    echo "🛡️ NPM 管理后台: http://服务器IP:${NPM_ADMIN_PORT}"
+  fi
+  echo "🧪 临时调试可用 SSH 隧道: ssh -L ${GOACCESS_REPORT_PORT}:127.0.0.1:${GOACCESS_REPORT_PORT} user@服务器IP"
+  echo "   本地访问: http://localhost:${GOACCESS_REPORT_PORT}"
+else
+  echo "⚠️ 访问统计看板已对外监听: http://${GOACCESS_REPORT_BIND}:${GOACCESS_REPORT_PORT}"
+  echo "❗ 请务必配合防火墙或反向代理鉴权；生产环境不建议公网直连"
+fi
 echo "📜 查看运行状态: docker compose ps"
 echo "📝 查看实时日志: docker compose logs -f"
