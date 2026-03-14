@@ -8,8 +8,8 @@
   "type": "module",
   "scripts": {
     "dev": "cross-env NODE_OPTIONS='--max-old-space-size=8192' vite",
-    "type-check": "cross-env NODE_OPTIONS='--max-old-space-size=8192' vue-tsc -b",
-    "type-check:watch": "cross-env NODE_OPTIONS='--max-old-space-size=8192' vue-tsc -b --watch --preserveWatchOutput",
+    "type-check": "cross-env NODE_OPTIONS='--max-old-space-size=8192' vue-tsc --noEmit -p tsconfig.json",
+    "type-check:watch": "cross-env NODE_OPTIONS='--max-old-space-size=8192' vue-tsc --noEmit -p tsconfig.json --watch --preserveWatchOutput",
     "build": "cross-env NODE_OPTIONS='--max-old-space-size=8192' vite build",
     "preview": "vite preview",
     "lint": "cross-env NODE_OPTIONS='--max-old-space-size=8192' eslint . --cache",
