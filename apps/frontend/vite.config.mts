@@ -10,6 +10,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 const isWails = process.env.WAILS === 'true'
+const isPwaDevEnabled = process.env.VITE_PWA_DEV === 'true'
 
 // 根据环境和构建目标设置 base 路径
 const getBase = () => {
@@ -17,6 +18,63 @@ const getBase = () => {
   if (isWails) return './'
   // 生产环境优先从环境变量获取，否则默认为 '/'
   return process.env.VITE_BASE_URL || '/'
+}
+
+const getManualChunk = (id: string) => {
+  if (!id.includes('node_modules')) return undefined
+
+  if (
+    id.includes('/vue/') ||
+    id.includes('/vue-router/') ||
+    id.includes('/pinia/') ||
+    id.includes('/pinia-plugin-persistedstate/')
+  ) {
+    return 'vue-vendor'
+  }
+
+  if (
+    id.includes('/lucide-vue-next/') ||
+    id.includes('/gsap/') ||
+    id.includes('/reka-ui/') ||
+    id.includes('/clsx/') ||
+    id.includes('/tailwind-merge/')
+  ) {
+    return 'ui-vendor'
+  }
+
+  if (id.includes('/echarts/') || id.includes('/zrender/') || id.includes('/vue-echarts/')) {
+    return 'chart-vendor'
+  }
+
+  if (id.includes('/cytoscape/')) {
+    return 'cytoscape-vendor'
+  }
+
+  if (id.includes('/mermaid/') || id.includes('/@mermaid-js/')) {
+    return 'mermaid-vendor'
+  }
+
+  if (
+    id.includes('/markdown-it/') ||
+    id.includes('/markdown-it-highlightjs/') ||
+    id.includes('/highlight.js/') ||
+    id.includes('/katex/') ||
+    id.includes('/@iktakahiro/markdown-it-katex/')
+  ) {
+    return 'markdown-vendor'
+  }
+
+  if (
+    id.includes('/axios/') ||
+    id.includes('/dayjs/') ||
+    id.includes('/lodash-es/') ||
+    id.includes('/zod/') ||
+    id.includes('/vee-validate/')
+  ) {
+    return 'utils-vendor'
+  }
+
+  return undefined
 }
 
 export default defineConfig(async (): Promise<UserConfig> => {
@@ -29,7 +87,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
       vue(),
       // Gzip 压缩
       viteCompression({
-        verbose: true,
+        verbose: false,
         disable: false,
         threshold: 1024,
         algorithm: 'gzip',
@@ -37,7 +95,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
       }),
       // Brotli 压缩
       viteCompression({
-        verbose: true,
+        verbose: false,
         disable: false,
         threshold: 1024,
         algorithm: 'brotliCompress',
@@ -46,7 +104,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
       VitePWA({
         registerType: 'autoUpdate',
         devOptions: {
-          enabled: true,
+          enabled: isPwaDevEnabled,
         },
         includeAssets: [
           'favicon.ico',
@@ -117,16 +175,10 @@ export default defineConfig(async (): Promise<UserConfig> => {
     build: {
       rollupOptions: {
         output: {
-          manualChunks: {
-            'vue-vendor': ['vue', 'vue-router', 'pinia', 'pinia-plugin-persistedstate'],
-            'ui-vendor': ['lucide-vue-next', 'gsap', 'reka-ui', 'clsx', 'tailwind-merge'],
-            'chart-vendor': ['echarts', 'vue-echarts'],
-            'markdown-vendor': ['markdown-it', 'mermaid', 'highlight.js', 'katex'],
-            'utils-vendor': ['axios', 'dayjs', 'lodash-es', 'zod', 'vee-validate'],
-          },
+          manualChunks: getManualChunk,
         },
       },
-      chunkSizeWarningLimit: 1000,
+      chunkSizeWarningLimit: 2000,
     },
   }
 })

@@ -36,7 +36,7 @@ describe('Fireworks.vue', () => {
       },
     })
 
-    await wrapper.setProps({ active: true })
+    await wrapper.setProps({ active: true } as never)
     await nextTick()
 
     expect(confetti).toHaveBeenCalled()
@@ -54,7 +54,7 @@ describe('Fireworks.vue', () => {
       },
     })
 
-    await wrapper.setProps({ active: true })
+    await wrapper.setProps({ active: true } as never)
     await nextTick()
 
     // Fast forward time for the setTimeout in startFireworks

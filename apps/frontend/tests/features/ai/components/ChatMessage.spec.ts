@@ -153,7 +153,7 @@ describe('ChatMessage', () => {
           { modelId: 'm1', modelName: 'Model 1', content: 'done', status: 'done' as const },
         ],
       },
-    })
+    } as never)
     expect(wrapper.text()).toContain('ai.finalSynthesizing')
   })
 
@@ -200,7 +200,7 @@ describe('ChatMessage', () => {
         ...message,
         thinkingContent: '正在分析...',
       },
-    })
+    } as never)
     await flushPromises()
 
     expect(wrapper.find('.loading-container').exists()).toBe(false)

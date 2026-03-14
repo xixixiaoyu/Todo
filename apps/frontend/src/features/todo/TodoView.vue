@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, watch, computed, defineAsyncComponent } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { AlertTriangle, ChevronDown, ChevronUp } from 'lucide-vue-next'
 import { useTodoStore, type FilterType } from './stores/todo'
@@ -12,12 +12,8 @@ import TodoInput from './components/TodoInput.vue'
 import TodoFilter from './components/TodoFilter.vue'
 import TodoSearch from './components/TodoSearch.vue'
 import TodoList from './components/TodoList.vue'
-import TodoVisualizer from './components/TodoVisualizer.vue'
-import TodoStatistics from './components/TodoStatistics.vue'
 import PomodoroTimer from './components/PomodoroTimer.vue'
-import PomodoroEarth from './components/pomodoro/PomodoroEarth.vue'
 import Fireworks from '@/components/Fireworks.vue'
-import AiAssistantDrawer from '@/features/ai/components/AiAssistantDrawer.vue'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
@@ -29,6 +25,12 @@ const cardRef = ref<HTMLElement | null>(null)
 const inputContainerRef = ref<HTMLElement | null>(null)
 const { gsap, ctx } = useGsap()
 const { isMobile } = useIsMobile()
+const TodoVisualizer = defineAsyncComponent(() => import('./components/TodoVisualizer.vue'))
+const TodoStatistics = defineAsyncComponent(() => import('./components/TodoStatistics.vue'))
+const PomodoroEarth = defineAsyncComponent(() => import('./components/pomodoro/PomodoroEarth.vue'))
+const AiAssistantDrawer = defineAsyncComponent(
+  () => import('@/features/ai/components/AiAssistantDrawer.vue'),
+)
 
 // 预定义动画函数并注册到 GSAP Context，确保自动清理且高性能
 let animateTilt: (x: number, y: number) => void
@@ -92,6 +94,9 @@ watch(
 )
 
 const isInputVisible = computed(() => todoStore.viewMode === 'list' && todoStore.filter !== 'trash')
+const shouldMountPomodoroEarth = computed(
+  () => pomodoroStore.status !== 'idle' || pomodoroStore.isMiniMode,
+)
 
 const currentViewKey = computed(() => {
   if (todoStore.viewMode === 'visual') return 'visual'
@@ -198,6 +203,15 @@ const {
   saveEditing,
   handleEditKeydown,
 } = useTodo()
+const shouldMountAiDrawer = ref(false)
+
+watch(
+  isDrawerOpen,
+  (open) => {
+    if (open) shouldMountAiDrawer.value = true
+  },
+  { immediate: true },
+)
 
 const currentViewProps = computed(() => {
   if (todoStore.viewMode === 'stats') return {}
@@ -269,7 +283,7 @@ function onFireworksComplete() {
     @mouseleave="resetTilt"
   >
     <!-- 全屏地球背景 (番茄钟开启时显示) -->
-    <PomodoroEarth :mouse-pos="mousePos" />
+    <PomodoroEarth v-if="shouldMountPomodoroEarth" :mouse-pos="mousePos" />
 
     <!-- 背景装饰：从单一径向渐变升级为动态 Mesh Gradient -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none -z-20">
@@ -508,7 +522,7 @@ function onFireworksComplete() {
     />
 
     <!-- AI 助手抽屉 -->
-    <AiAssistantDrawer v-model="isDrawerOpen" />
+    <AiAssistantDrawer v-if="shouldMountAiDrawer" v-model="isDrawerOpen" />
 
     <!-- 番茄钟 -->
     <PomodoroTimer />

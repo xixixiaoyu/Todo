@@ -10,6 +10,7 @@ interface ImportMetaEnv {
   readonly VITE_API_BASE_URL: string
   readonly VITE_AUTH_REFRESH_RETRY_DELAY_MS?: string
   readonly VITE_AUTH_REFRESH_MAX_ATTEMPTS?: string
+  readonly VITE_PWA_DEV?: string
   readonly IS_WAILS: boolean
 }
 
