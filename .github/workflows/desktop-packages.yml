@@ -2,8 +2,19 @@ name: Desktop Installers
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
+    paths:
+      - 'apps/wails/**'
+      - 'apps/frontend/**'
+      - 'packages/shared/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
+      - '.github/workflows/desktop-packages.yml'
   workflow_dispatch:
 
 permissions:
