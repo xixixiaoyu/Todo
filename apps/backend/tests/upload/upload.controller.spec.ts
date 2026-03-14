@@ -56,6 +56,19 @@ describe('UploadController', () => {
     expect(mockStorageService.upload).not.toHaveBeenCalled()
   })
 
+  it('rejects generic text mime types that are not in whitelist', async () => {
+    const part = createMultipartPart({
+      filename: 'page.html',
+      mimetype: 'text/html',
+      content: '<h1>hello</h1>',
+    })
+
+    await expect(controller.uploadSingle(createSingleFileRequest(part))).rejects.toThrow(
+      BadRequestException,
+    )
+    expect(mockStorageService.upload).not.toHaveBeenCalled()
+  })
+
   it('accepts allowed file type and forwards to storage service', async () => {
     const uploaded: UploadedFile = {
       originalname: 'notes.docx',

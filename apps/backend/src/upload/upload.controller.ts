@@ -54,7 +54,6 @@ export class UploadController {
 
     if (
       ALLOWED_UPLOAD_MIME_TYPES.includes(mimetype as (typeof ALLOWED_UPLOAD_MIME_TYPES)[number]) ||
-      mimetype.startsWith('text/') ||
       hasAllowedExt
     ) {
       return
