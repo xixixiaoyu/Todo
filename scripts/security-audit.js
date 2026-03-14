@@ -1,5 +1,5 @@
-const IGNORED_ADVISORIES = ['1105440', '1111537', '1112876', '1112877']
-const IGNORED_MODULES = ['html-minifier', 'mjml', 'xlsx']
+const IGNORED_ADVISORIES = []
+const IGNORED_MODULES = []
 
 async function main() {
   const { execSync } = await import('node:child_process')

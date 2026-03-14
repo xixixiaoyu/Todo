@@ -1,8 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common'
-import { MailerService } from '@nestjs-modules/mailer'
+import { Inject, Injectable, Logger } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { I18nService, I18nContext } from 'nestjs-i18n'
+import type { SendMailOptions, Transporter } from 'nodemailer'
+import { MAIL_TRANSPORTER } from './mail.module'
 
-export interface SendMailOptions {
+export interface MailSendOptions {
   to: string | string[]
   subject: string
   text?: string
@@ -18,8 +20,9 @@ export class MailService {
   private readonly logger = new Logger(MailService.name)
 
   constructor(
-    private readonly mailerService: MailerService,
+    @Inject(MAIL_TRANSPORTER) private readonly transporter: Transporter,
     private readonly i18n: I18nService,
+    private readonly configService: ConfigService,
   ) {}
 
   /**
@@ -37,14 +40,16 @@ export class MailService {
   /**
    * 发送邮件
    */
-  async send(options: SendMailOptions): Promise<boolean> {
+  async send(options: MailSendOptions): Promise<boolean> {
     try {
-      await this.mailerService.sendMail({
+      const mailOptions: SendMailOptions = {
+        from: this.configService.get('MAIL_FROM', '"No Reply" <noreply@example.com>'),
         to: options.to,
         subject: options.subject,
         text: options.text,
         html: options.html,
-      })
+      }
+      await this.transporter.sendMail(mailOptions)
       this.logger.log(`邮件发送成功: ${options.subject} -> ${options.to}`)
       return true
     } catch (err) {

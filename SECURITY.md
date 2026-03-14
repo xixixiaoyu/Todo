@@ -35,5 +35,5 @@ This security policy applies to all components in the Lumina monorepo:
 
 We encourage users to:
 - Always keep their installation up to date.
-- Use strong, unique passwords and enable Passkey where possible.
+- Use strong, unique passwords and rotate credentials periodically.
 - Avoid exposing the backend database or Redis instance to the public internet.

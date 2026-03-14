@@ -1,33 +1,37 @@
 import { Module } from '@nestjs/common'
-import { MailerModule } from '@nestjs-modules/mailer'
 import { ConfigService } from '@nestjs/config'
+import { createTransport } from 'nodemailer'
 import { MailService } from './mail.service'
+
+export const MAIL_TRANSPORTER = Symbol('MAIL_TRANSPORTER')
 
 /**
  * 邮件模块
  * 集成 nodemailer，支持 SMTP 发送邮件
  */
 @Module({
-  imports: [
-    MailerModule.forRootAsync({
+  providers: [
+    {
+      provide: MAIL_TRANSPORTER,
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        transport: {
-          host: config.get('MAIL_HOST', 'smtp.example.com'),
-          port: config.get('MAIL_PORT', 587),
-          secure: config.get('MAIL_SECURE', false), // true for 465, false for other ports
-          auth: {
-            user: config.get('MAIL_USER'),
-            pass: config.get('MAIL_PASSWORD'),
-          },
-        },
-        defaults: {
-          from: config.get('MAIL_FROM', '"No Reply" <noreply@example.com>'),
-        },
-      }),
-    }),
+      useFactory: (config: ConfigService) => {
+        const user = config.get<string>('MAIL_USER')
+        const pass = config.get<string>('MAIL_PASSWORD')
+        const secure = String(config.get<string | boolean>('MAIL_SECURE', false)) === 'true'
+        const port = Number(config.get<string | number>('MAIL_PORT', 587))
+
+        const transportOptions = {
+          host: config.get<string>('MAIL_HOST', 'smtp.example.com'),
+          port: Number.isFinite(port) ? port : 587,
+          secure,
+          ...(user && pass ? { auth: { user, pass } } : {}),
+        }
+
+        return createTransport(transportOptions)
+      },
+    },
+    MailService,
   ],
-  providers: [MailService],
   exports: [MailService],
 })
 export class MailModule {}
