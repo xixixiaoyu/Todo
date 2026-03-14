@@ -1,35 +1,17 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { ClipboardList, CheckCircle2, SearchX, Trash2 } from 'lucide-vue-next'
-import { computed, onMounted } from 'vue'
+import { computed } from 'vue'
 import draggable from 'vuedraggable'
 import { useTodoStore, type Todo } from '../stores/todo'
 import TodoItem from './TodoItem.vue'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { useGsap } from '@/composables/useGsap'
 
 const { t } = useI18n()
-const { gsap, ctx } = useGsap()
 const store = useTodoStore()
 
 defineOptions({
   name: 'TodoList',
-})
-
-onMounted(() => {
-  ctx.add(() => {
-    const items = gsap.utils.toArray('.todo-item-wrapper')
-    if (items.length > 0) {
-      gsap.from(items, {
-        y: 12,
-        opacity: 0,
-        duration: 0.5,
-        stagger: 0.025,
-        ease: 'expo.out',
-        clearProps: 'all',
-      })
-    }
-  })
 })
 
 const props = defineProps<{

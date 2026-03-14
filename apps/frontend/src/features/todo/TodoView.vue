@@ -13,6 +13,7 @@ import TodoFilter from './components/TodoFilter.vue'
 import TodoSearch from './components/TodoSearch.vue'
 import TodoList from './components/TodoList.vue'
 import PomodoroTimer from './components/PomodoroTimer.vue'
+import AiAssistantDrawer from '@/features/ai/components/AiAssistantDrawer.vue'
 import Fireworks from '@/components/Fireworks.vue'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -28,9 +29,6 @@ const { isMobile } = useIsMobile()
 const TodoVisualizer = defineAsyncComponent(() => import('./components/TodoVisualizer.vue'))
 const TodoStatistics = defineAsyncComponent(() => import('./components/TodoStatistics.vue'))
 const PomodoroEarth = defineAsyncComponent(() => import('./components/pomodoro/PomodoroEarth.vue'))
-const AiAssistantDrawer = defineAsyncComponent(
-  () => import('@/features/ai/components/AiAssistantDrawer.vue'),
-)
 
 // 预定义动画函数并注册到 GSAP Context，确保自动清理且高性能
 let animateTilt: (x: number, y: number) => void
@@ -179,28 +177,6 @@ onMounted(() => {
     if (inputContainerRef.value) {
       syncInputContainerLayout(isInputVisible.value, false)
     }
-
-    // 整体卡片入场：更快的 Power4 曲线，减少位移
-    if (cardRef.value) {
-      gsap.from(cardRef.value, {
-        y: 10,
-        opacity: 0,
-        duration: 0.4,
-        ease: 'power3.out',
-      })
-    }
-
-    // 内部元素交错入场：极致响应
-    const containerChildren = gsap.utils.toArray('.todo-container > *')
-    if (containerChildren.length > 0) {
-      gsap.from(containerChildren, {
-        y: 8,
-        opacity: 0,
-        duration: 0.3,
-        stagger: 0.03,
-        ease: 'power2.out',
-      })
-    }
   })
 })
 
@@ -222,7 +198,7 @@ const {
   saveEditing,
   handleEditKeydown,
 } = useTodo()
-const shouldMountAiDrawer = ref(false)
+const shouldMountAiDrawer = ref(isDrawerOpen.value)
 
 watch(
   isDrawerOpen,

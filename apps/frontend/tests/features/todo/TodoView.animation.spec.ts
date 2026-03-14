@@ -10,6 +10,7 @@ const killTweensOfSpy = vi.fn()
 const toArraySpy = vi.fn(() => [document.createElement('div')])
 const addSpy = vi.fn((callback: () => void) => callback())
 const fetchTodosSpy = vi.fn()
+const isDrawerOpenRef = ref(false)
 const pomodoroStoreMock = reactive({
   isMiniMode: false,
   status: 'idle',
@@ -75,7 +76,7 @@ vi.mock('@/features/todo/composables/useTodo', () => ({
     showSearch: ref(false),
     searchInput: ref(''),
     showFireworks: ref(false),
-    isDrawerOpen: ref(false),
+    isDrawerOpen: isDrawerOpenRef,
     editingId: ref<string | null>(null),
     editingTitle: ref(''),
     showTooltip: ref(false),
@@ -99,27 +100,16 @@ describe('TodoView animation timing', () => {
     toArraySpy.mockClear()
     addSpy.mockClear()
     fetchTodosSpy.mockClear()
+    isDrawerOpenRef.value = false
     pomodoroStoreMock.isMiniMode = false
     pomodoroStoreMock.status = 'idle'
   })
 
-  it('does not add positive delay to initial gsap.from tweens', () => {
+  it('does not run post-paint gsap entrance tweens on initial mount', () => {
     shallowMount(TodoView)
 
     expect(fetchTodosSpy).toHaveBeenCalledTimes(1)
-    expect(fromSpy).toHaveBeenCalled()
-
-    const containerTweenCall = fromSpy.mock.calls.find(([, vars]) => {
-      if (!vars || typeof vars !== 'object') return false
-      return (vars as { stagger?: number }).stagger === 0.03
-    })
-
-    expect(containerTweenCall).toBeDefined()
-
-    const vars = containerTweenCall?.[1] as { delay?: number } | undefined
-    if (!vars || !Object.prototype.hasOwnProperty.call(vars, 'delay')) return
-
-    expect(vars.delay).not.toBeGreaterThan(0)
+    expect(fromSpy).not.toHaveBeenCalled()
   })
 
   it('re-applies input spacing after exiting mini mode', async () => {
@@ -148,5 +138,13 @@ describe('TodoView animation timing', () => {
 
     expect(spacingSetCall).toBeDefined()
     wrapper.unmount()
+  })
+
+  it('mounts the ai drawer on the first render when persisted state is open', () => {
+    isDrawerOpenRef.value = true
+
+    const wrapper = shallowMount(TodoView)
+
+    expect(wrapper.findComponent({ name: 'AiAssistantDrawer' }).exists()).toBe(true)
   })
 })

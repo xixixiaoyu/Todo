@@ -33,17 +33,19 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const { currentSessionId } = useChatHistory()
 
-// 是否正在切换会话（用于跳过冗余动画，或触发初始加载动画）
-const isSwitchingSession = ref(true)
+// 是否正在切换会话。首屏恢复持久化会话时不应被视为一次切换，否则会触发刷新闪动。
+const isSwitchingSession = ref(false)
 let switchingFallbackTimer: ReturnType<typeof setTimeout> | null = null
 
 onMounted(() => {
-  // 初始加载时也触发一次切换逻辑，确保出现动画与滚动到底部同步
-  if (props.messages.length > 0) {
-    handleSessionEntered()
-  } else {
-    isSwitchingSession.value = false
-  }
+  if (props.messages.length === 0) return
+
+  const lastMessage = props.messages[props.messages.length - 1]
+  setStreamingMode(!!lastMessage?.isStreaming)
+
+  void nextTick(() => {
+    scrollToBottom('instant')
+  })
 })
 
 const containerRef = ref<HTMLElement | null>(null)
@@ -301,7 +303,6 @@ defineExpose({
           <Transition
             name="session-fade"
             mode="out-in"
-            appear
             @enter="handleSessionEntering"
             @after-enter="handleSessionEntered"
           >
@@ -316,7 +317,7 @@ defineExpose({
                   {{ t('common.loadMore') }}
                 </button>
               </div>
-              <TransitionGroup name="message-list" tag="div" class="flex flex-col" appear>
+              <TransitionGroup name="message-list" tag="div" class="flex flex-col">
                 <ChatMessage
                   v-for="(msg, index) in visibleMessages"
                   :id="`chat-msg-${msg.id}`"
