@@ -22,6 +22,12 @@
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$"]
     },
+    "type-check:watch": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$"],
+      "cache": false,
+      "persistent": true
+    },
     "test": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$"],
@@ -115,6 +121,21 @@
         "!ios/**"
       ]
     },
+    "@lumina/frontend#type-check:watch": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true,
+      "inputs": [
+        "src/**",
+        "tests/**",
+        "package.json",
+        "tsconfig.json",
+        "vite.config.*",
+        "vitest.config.*",
+        "!android/**",
+        "!ios/**"
+      ]
+    },
     "@lumina/frontend#test": {
       "inputs": [
         "src/**",
@@ -137,6 +158,27 @@
       "cache": false,
       "persistent": true,
       "inputs": ["src/**", "package.json", "tsconfig.json", "tsup.config.*"]
+    },
+    "@lumina/shared#type-check:watch": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true,
+      "inputs": ["src/**", "package.json", "tsconfig.json", "tsup.config.*"]
+    },
+    "@lumina/backend#type-check:watch": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true,
+      "inputs": [
+        "src/**",
+        "tests/**",
+        "prisma/schema/**",
+        "package.json",
+        "tsconfig.json",
+        "nest-cli.json",
+        "prisma.config.*",
+        "vitest.config.*"
+      ]
     }
   }
 }

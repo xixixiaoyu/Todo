@@ -7,6 +7,7 @@
   "scripts": {
     "build": "cross-env NODE_OPTIONS='--max-old-space-size=8192' nest build",
     "type-check": "cross-env NODE_OPTIONS='--max-old-space-size=8192' tsc --noEmit",
+    "type-check:watch": "cross-env NODE_OPTIONS='--max-old-space-size=8192' tsc --noEmit --watch --preserveWatchOutput",
     "dev": "cross-env NODE_OPTIONS='--max-old-space-size=8192' ts-node-dev --respawn --transpile-only src/main.ts",
     "start": "node dist/src/main.js",
     "start:debug": "nest start --debug --watch",

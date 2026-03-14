@@ -28,6 +28,7 @@
   "scripts": {
     "build": "cross-env NODE_OPTIONS='--max-old-space-size=8192' tsup",
     "type-check": "cross-env NODE_OPTIONS='--max-old-space-size=8192' tsc --noEmit",
+    "type-check:watch": "cross-env NODE_OPTIONS='--max-old-space-size=8192' tsc --noEmit --watch --preserveWatchOutput",
     "dev": "cross-env NODE_OPTIONS='--max-old-space-size=8192' tsup --watch",
     "test": "cross-env NODE_OPTIONS='--max-old-space-size=8192' vitest run",
     "test:watch": "vitest",
