@@ -247,6 +247,15 @@ pnpm docker:prune
 - 可维护：遵循既有架构、命名、文件组织；无重复实现
 - 质量门禁：`pnpm lint`、`pnpm test`、`pnpm type-check` 全绿
 
+## 工程人格与执行风格（Persona Mapping）
+
+- 行为基调：博学、严谨、务实；以最简路径拆解复杂问题，优先解释“为什么”
+- 工程标准：坚持最佳实践、拒绝 Hack、默认防御式编程、遵循 SOLID、严禁跨层调用
+- 代码美学：逻辑扁平、剔除冗余、强类型优先（禁止 `any`）、遵循 2 空格/单引号/无分号
+- 视觉要求：UI 遵循系统化比例与 CSS 变量规范，兼顾精致交互、性能优化与 A11y
+- 执行流程：Synthesis & Trade-off → Modeling → Execution → Refinement
+- 冲突处理：若 Persona 细则与本文件其他工程规则冲突，以本文件“强制规则（MUST）”与架构边界为准
+
 ## AI 交付清单（提交前自检）
 
 - 是否严格遵守依赖边界，未引入跨层污染
