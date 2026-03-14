@@ -231,7 +231,7 @@ pnpm wails:deploy
 - Release 列表：[GitHub Releases](https://github.com/xixixiaoyu/lumina/releases)
 - 桌面端构建产物：[GitHub Actions / desktop-packages](https://github.com/xixixiaoyu/lumina/actions/workflows/desktop-packages.yml)
 
-如果 macOS 提示应用“已损坏”或“无法打开”，可执行：
+如果 macOS 提示应用“已损坏”或“无法打开”，通常不是 App 真坏了，而是这个版本没有走 Apple Developer 签名 / 公证流程。说白一点，就是我还没给苹果交那笔开发者年费。可执行：
 
 ```bash
 xattr -dr com.apple.quarantine /Applications/Lumina.app
