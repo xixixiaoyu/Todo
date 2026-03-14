@@ -20,6 +20,29 @@ jobs:
     environment:
       name: production
     steps:
+      - name: Validate deployment secrets
+        run: |
+          missing=0
+
+          if [ -z "${{ secrets.SERVER_HOST }}" ]; then
+            echo '::error::Missing secret SERVER_HOST (check repository secrets or environment "production" secrets).'
+            missing=1
+          fi
+
+          if [ -z "${{ secrets.SERVER_USER }}" ]; then
+            echo '::error::Missing secret SERVER_USER (check repository secrets or environment "production" secrets).'
+            missing=1
+          fi
+
+          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+            echo '::error::Missing secret SSH_PRIVATE_KEY (check repository secrets or environment "production" secrets).'
+            missing=1
+          fi
+
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+
       - name: Deploy to Tencent Cloud
         uses: appleboy/ssh-action@v1.0.3
         with:
