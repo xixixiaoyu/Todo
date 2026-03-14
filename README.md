@@ -9,10 +9,8 @@
 
 ## 📦 下载客户端
 
-- **正式版本（Release）**: [最新版本下载页](https://github.com/xixixiaoyu/lumina/releases/latest)
-- **Windows (.exe)**: [下载 Lumina-windows-installer.exe](https://github.com/xixixiaoyu/lumina/releases/latest/download/Lumina-windows-installer.exe)
-- **macOS (.dmg)**: [下载 Lumina-macos-installer.dmg](https://github.com/xixixiaoyu/lumina/releases/latest/download/Lumina-macos-installer.dmg)
-- **Linux (.tar.gz)**: [下载 Lumina-linux-amd64.tar.gz](https://github.com/xixixiaoyu/lumina/releases/latest/download/Lumina-linux-amd64.tar.gz)
+- **Release 列表**: [查看全部版本与资产](https://github.com/xixixiaoyu/lumina/releases)
+- **当前最新预发布**: [v1.0.0-beta.5](https://github.com/xixixiaoyu/lumina/releases/tag/v1.0.0-beta.5)
 - **开发构建（Actions Artifacts）**: [Desktop Installers 工作流](https://github.com/xixixiaoyu/lumina/actions/workflows/desktop-packages.yml)
 
 ---
