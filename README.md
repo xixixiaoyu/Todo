@@ -7,6 +7,14 @@
 > **简于形，深于思。**  
 > Lumina 是一款追求极致交互体验与严谨工程实践的 AI 驱动个人待办系统。它不仅仅是一个任务清单，更是一个具备“大脑”的效率中枢。
 
+## 📦 下载客户端
+
+- **正式版本（Release）**: [最新版本下载页](https://github.com/xixixiaoyu/lumina/releases/latest)
+- **Windows (.exe)**: [下载 Lumina-windows-installer.exe](https://github.com/xixixiaoyu/lumina/releases/latest/download/Lumina-windows-installer.exe)
+- **macOS (.dmg)**: [下载 Lumina-macos-installer.dmg](https://github.com/xixixiaoyu/lumina/releases/latest/download/Lumina-macos-installer.dmg)
+- **Linux (.tar.gz)**: [下载 Lumina-linux-amd64.tar.gz](https://github.com/xixixiaoyu/lumina/releases/latest/download/Lumina-linux-amd64.tar.gz)
+- **开发构建（Actions Artifacts）**: [Desktop Installers 工作流](https://github.com/xixixiaoyu/lumina/actions/workflows/desktop-packages.yml)
+
 ---
 
 ## 🏗️ 架构哲学：Thin Shell, Thick Brain
