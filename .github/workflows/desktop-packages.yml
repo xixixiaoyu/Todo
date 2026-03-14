@@ -328,6 +328,12 @@ jobs:
           - **macOS:** 下载 \`.dmg\`，将 App 拖入 Applications。
           - **Linux:** 下载 \`.tar.gz\` 后解压运行。
 
+          ### 🧩 macOS 启动排障（临时）
+          若 macOS 提示“已损坏/无法打开”，可执行：
+          \`\`\`bash
+          xattr -dr com.apple.quarantine /Applications/Lumina.app
+          \`\`\`
+
           ### 🔐 校验
           使用 \`checksums.txt\` 校验下载文件完整性：
           \`\`\`bash

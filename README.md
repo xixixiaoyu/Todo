@@ -12,6 +12,8 @@
 - **Release 列表**: [查看全部版本与资产](https://github.com/xixixiaoyu/lumina/releases)
 - **最新预发布**: [查看预发布版本（Pre-release）](https://github.com/xixixiaoyu/lumina/releases)
 - **开发构建（Actions Artifacts）**: [Desktop Installers 工作流](https://github.com/xixixiaoyu/lumina/actions/workflows/desktop-packages.yml)
+- **macOS 启动排障（临时）**: 若提示“已损坏/无法打开”，执行  
+  `xattr -dr com.apple.quarantine /Applications/Lumina.app`
 
 ---
 
