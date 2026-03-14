@@ -243,14 +243,19 @@ export IMAGE_TAG
 echo "🏷️ 使用镜像标签: ${IMAGE_TAG}"
 "${DOCKER[@]}" compose up -d --build --remove-orphans
 
-echo "🧹 正在执行即时清理..."
-# 1. 立即删除所有虚悬镜像 (dangling images) - 这些是刚才构建产生的旧版本
-"${DOCKER[@]}" image prune -f
+DISK_USAGE_AFTER_BUILD=$(get_disk_usage)
+if [ "$DISK_USAGE_AFTER_BUILD" -ge "$DISK_WARN_THRESHOLD" ]; then
+  echo "🧹 部署后磁盘占用 ${DISK_USAGE_AFTER_BUILD}%（阈值 ${DISK_WARN_THRESHOLD}%），执行即时清理..."
+  # 1. 立即删除所有虚悬镜像 (dangling images) - 这些是刚才构建产生的旧版本
+  "${DOCKER[@]}" image prune -f
 
-# 2. 按照时间策略清理不使用的镜像和缓存 (保留最近的)
-"${DOCKER[@]}" builder prune -f --filter "until=${BUILDER_PRUNE_UNTIL}"
-"${DOCKER[@]}" image prune -a -f --filter "until=${IMAGE_PRUNE_UNTIL}"
-report_docker_storage '部署后即时清理后'
+  # 2. 按照时间策略清理不使用的镜像和缓存 (保留最近的)
+  "${DOCKER[@]}" builder prune -f --filter "until=${BUILDER_PRUNE_UNTIL}"
+  "${DOCKER[@]}" image prune -a -f --filter "until=${IMAGE_PRUNE_UNTIL}"
+  report_docker_storage '部署后即时清理后'
+else
+  echo "✅ 部署后磁盘占用 ${DISK_USAGE_AFTER_BUILD}% 低于阈值 ${DISK_WARN_THRESHOLD}% ，跳过即时清理"
+fi
 
 DISK_USAGE_AFTER=$(get_disk_usage)
 if [ "$DISK_USAGE_AFTER" -ge "$DISK_CRITICAL_THRESHOLD" ]; then
