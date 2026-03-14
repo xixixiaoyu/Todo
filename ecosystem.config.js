@@ -10,7 +10,8 @@ module.exports = {
       // 在 Docker 中，目录是扁平的，cwd 为当前目录 (/app)
       // 在本地开发中，cwd 指向 apps/backend
       cwd: isDocker ? './' : path.join(__dirname, 'apps/backend'),
-      instances: isDocker ? 2 : 'max',
+      // Socket.IO 在 cluster + polling 下需要额外 sticky 会话能力，Docker 默认单实例避免会话抖动
+      instances: isDocker ? 1 : 'max',
       exec_mode: 'cluster',
       autorestart: true,
       watch: false,

@@ -20,9 +20,6 @@ WORKDIR /app
 # ============================================
 FROM base AS builder
 
-# 安装构建依赖 (原生模块编译需要)
-RUN apk add --no-cache python3 make g++ openssl
-
 # 复制依赖配置文件
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY apps/backend/package.json ./apps/backend/
@@ -49,9 +46,6 @@ RUN pnpm --filter @lumina/backend build
 # ============================================
 FROM base AS pruner
 
-# 安装构建依赖 (pnpm deploy 可能会重新触发原生模块的安装脚本)
-RUN apk add --no-cache python3 make g++ openssl libc6-compat
-
 COPY --from=builder /app /app
 
 # 使用 pnpm deploy 提取生产环境所需的最小依赖集
@@ -63,10 +57,6 @@ RUN pnpm --filter @lumina/backend --prod deploy /out
 # Stage 4: Production (Final lean image)
 # ============================================
 FROM ${NODE_IMAGE} AS production
-
-# 仅安装运行时可能需要的最小库及 PM2
-RUN apk add --no-cache openssl libgcc libstdc++ wget && \
-    npm install -g pm2
 
 # 创建非 root 用户以增强安全性
 RUN addgroup --system --gid 1001 nodejs && \
@@ -86,9 +76,6 @@ COPY --from=builder /app/apps/backend/prisma ./prisma
 # pnpm deploy 不会自动执行 generate，因此我们需要手动执行
 RUN npx prisma generate
 
-# 4. 复制 PM2 配置文件
-COPY ecosystem.config.js ./
-
 # 修正权限
 RUN chown -R nestjs:nodejs /app
 
@@ -106,5 +93,5 @@ ENV IS_DOCKER=true
 HEALTHCHECK --interval=15s --timeout=5s --start-period=60s --retries=5 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health/liveness || exit 1
 
-# 启动应用 - 使用 pm2-runtime 以适配 Docker 容器环境
-CMD ["pm2-runtime", "start", "ecosystem.config.js", "--env", "production"]
+# 启动应用 - 容器由编排层负责拉起/重启，进程保持单实例以保证 WebSocket 会话一致性
+CMD ["node", "dist/src/main.js"]

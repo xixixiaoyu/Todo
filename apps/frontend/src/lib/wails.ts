@@ -11,8 +11,8 @@ interface WailsRuntime {
 
 declare global {
   interface Window {
-    go: Record<string, unknown>
-    runtime: WailsRuntime
+    go?: Record<string, unknown>
+    runtime?: WailsRuntime
   }
 }
 
@@ -20,7 +20,7 @@ declare global {
  * 检测当前是否运行在 Wails 环境中
  */
 export const isWails = (): boolean => {
-  return typeof window !== 'undefined' && (!!window.go || !!window.runtime)
+  return typeof window !== 'undefined' && !!window.go && typeof window.go === 'object'
 }
 
 /**

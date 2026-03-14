@@ -75,7 +75,7 @@ services:
     restart: unless-stopped
     working_dir: /app/apps/backend
     ports:
-      - '3000:3000'
+      - '127.0.0.1:3000:3000'
     environment:
       NODE_ENV: development
       PORT: 3000
@@ -156,7 +156,7 @@ services:
     restart: unless-stopped
     working_dir: /app/apps/frontend
     ports:
-      - '5173:5173'
+      - '127.0.0.1:5173:5173'
     environment:
       NODE_ENV: development
       # Vite 代理目标 - 指向后端容器

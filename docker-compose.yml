@@ -210,9 +210,9 @@ services:
     container_name: lumina-npm
     restart: unless-stopped
     ports:
-      - '80:80' # HTTP
-      - '443:443' # HTTPS
-      - '81:81' # 管理后台
+      - '${NPM_HTTP_BIND:-0.0.0.0}:80:80' # HTTP
+      - '${NPM_HTTPS_BIND:-0.0.0.0}:443:443' # HTTPS
+      - '${NPM_ADMIN_BIND:-127.0.0.1}:${NPM_ADMIN_PORT:-81}:81' # 管理后台
     volumes:
       - lumina_npm_data:/data
       - lumina_npm_letsencrypt:/etc/letsencrypt

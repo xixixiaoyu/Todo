@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"strings"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -61,11 +63,22 @@ func (a *App) ShowErrorDialog(title, message string) {
 }
 
 // OpenBrowser opens the given URL in the system's default browser
-func (a *App) OpenBrowser(url string) {
+func (a *App) OpenBrowser(rawURL string) {
 	if !a.ready() {
 		return
 	}
-	runtime.BrowserOpenURL(a.ctx, url)
+
+	parsed, err := url.Parse(rawURL)
+	if err != nil || parsed.Scheme == "" {
+		return
+	}
+
+	scheme := strings.ToLower(parsed.Scheme)
+	if scheme != "http" && scheme != "https" && scheme != "mailto" {
+		return
+	}
+
+	runtime.BrowserOpenURL(a.ctx, rawURL)
 }
 
 // Quit the application
@@ -138,14 +151,7 @@ func (a *App) ToggleWindow() {
 		runtime.WindowSetAlwaysOnTop(a.ctx, true)
 		runtime.WindowSetAlwaysOnTop(a.ctx, false)
 	} else {
-		// If window is visible but not in focus, bring it to focus instead of minimising
-		// This is a common pattern for "Spotlight" style apps
-		runtime.WindowShow(a.ctx)
-		runtime.WindowSetAlwaysOnTop(a.ctx, true)
-		runtime.WindowSetAlwaysOnTop(a.ctx, false)
-
-		// To truly toggle (minimise if already in focus), we'd need more state.
-		// For now, let's focus on making sure it shows up.
+		runtime.WindowMinimise(a.ctx)
 	}
 }
 
