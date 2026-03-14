@@ -10,6 +10,27 @@ import { getAIStreamResponse, fetchNonStreamResponse, resetAbortSignal } from '.
 
 const t = i18n.global.t
 
+function isValidDiscussionPreset(preset: AIPreset | null | undefined): preset is AIPreset {
+  return !!(preset?.id && preset.baseUrl && preset.apiKey && preset.model)
+}
+
+function normalizeDiscussionModelIds(input: readonly string[] | null | undefined): string[] {
+  if (!Array.isArray(input)) return []
+
+  const seen = new Set<string>()
+  const normalized: string[] = []
+
+  for (const item of input) {
+    if (typeof item !== 'string') continue
+    const id = item.trim()
+    if (!id || seen.has(id)) continue
+    seen.add(id)
+    normalized.push(id)
+  }
+
+  return normalized
+}
+
 /**
  * 发送 AI 生图请求
  * @param prompt 提示词
@@ -103,7 +124,13 @@ export async function getMultiModelDiscussionStream(
   options: AIRequestOptions = {},
 ): Promise<void> {
   const aiConfig = getAIConfig()
-  const { discussionModelIds = [], discussionPrimaryModelId, thinkingMode } = aiConfig
+  const thinkingMode = aiConfig.thinkingMode
+  const discussionModelIds = normalizeDiscussionModelIds(aiConfig.discussionModelIds)
+  const discussionPrimaryModelId =
+    typeof aiConfig.discussionPrimaryModelId === 'string' &&
+    aiConfig.discussionPrimaryModelId.trim().length > 0
+      ? aiConfig.discussionPrimaryModelId
+      : null
 
   // 确保先中止之前的请求并获取新的 signal
   const signal = resetAbortSignal()
@@ -113,13 +140,14 @@ export async function getMultiModelDiscussionStream(
 
   // 确定主模型配置 (强制使用选中的讨论主模型预设)
   const primaryPreset = discussionPrimaryModelId
-    ? presets.find((p) => p.id === discussionPrimaryModelId)
+    ? presets.find((p) => p.id === discussionPrimaryModelId && isValidDiscussionPreset(p))
     : null
 
-  // 获取选中的副模型
-  const selectedPresets = presets.filter((p) => {
-    return discussionModelIds.includes(p.id)
-  })
+  // 获取选中的参与模型（保持用户选择顺序，过滤无效预设）
+  const presetMap = new Map(presets.map((p) => [p.id, p]))
+  const selectedPresets = discussionModelIds
+    .map((id) => presetMap.get(id))
+    .filter((preset): preset is AIPreset => isValidDiscussionPreset(preset))
 
   // 如果没有选择主模型或副模型，回退到普通单模型请求
   if (!primaryPreset || selectedPresets.length === 0) {

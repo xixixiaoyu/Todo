@@ -673,4 +673,95 @@ describe('aiService - Multi-model Discussion', () => {
 
     await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)
   })
+
+  it('should preserve contributor execution order from discussionModelIds', async () => {
+    const messages = [{ id: '1', role: 'user', content: 'hello' } as ChatMessage]
+    const onStepUpdate = vi.fn()
+    const onFinalChunk = vi.fn()
+
+    localStorage.setItem(
+      'ai-presets',
+      JSON.stringify([
+        { id: 'p1', name: 'P1', baseUrl: 'https://api.p1.com', apiKey: 'k1', model: 'm1' },
+        { id: 'p2', name: 'P2', baseUrl: 'https://api.p2.com', apiKey: 'k2', model: 'm2' },
+      ]),
+    )
+    localStorage.setItem(
+      'ai-config',
+      JSON.stringify({
+        ...JSON.parse(localStorage.getItem('ai-config') || '{}'),
+        discussionMode: true,
+        discussionModelIds: ['p2', 'p1'],
+        discussionPrimaryModelId: 'p1',
+      }),
+    )
+    _resetAIConfig()
+
+    fetchMock.mockImplementation(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = toUrlString(input)
+      const body = init?.body ? JSON.parse(init.body as string) : {}
+      if (body.stream === true) {
+        return {
+          ok: true,
+          body: {
+            getReader: () => ({
+              read: vi
+                .fn()
+                .mockResolvedValueOnce({
+                  value: new TextEncoder().encode(
+                    'data: {"choices":[{"delta":{"content":"Final"}}]}\n\n',
+                  ),
+                  done: false,
+                })
+                .mockResolvedValueOnce({
+                  value: new TextEncoder().encode('data: [DONE]\n\n'),
+                  done: true,
+                }),
+            }),
+          },
+        } as unknown as Response
+      }
+
+      return {
+        ok: true,
+        json: async () => ({
+          choices: [{ message: { content: url.includes('api.p1.com') ? 'A1' : 'A2' } }],
+        }),
+      } as unknown as Response
+    })
+
+    await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)
+
+    const lastSteps = onStepUpdate.mock.calls[onStepUpdate.mock.calls.length - 1][0]
+    expect(lastSteps[0].modelId).toBe('p2')
+    expect(lastSteps[1].modelId).toBe('p1')
+  })
+
+  it('should safely fallback when discussionModelIds is invalid data', async () => {
+    const messages = [{ id: '1', role: 'user', content: 'hello' } as ChatMessage]
+    const onStepUpdate = vi.fn()
+    const onFinalChunk = vi.fn()
+
+    localStorage.setItem(
+      'ai-presets',
+      JSON.stringify([
+        { id: 'p1', name: 'P1', baseUrl: 'https://api.p1.com', apiKey: 'k1', model: 'm1' },
+      ]),
+    )
+    localStorage.setItem(
+      'ai-config',
+      JSON.stringify({
+        ...JSON.parse(localStorage.getItem('ai-config') || '{}'),
+        discussionMode: true,
+        discussionModelIds: null,
+        discussionPrimaryModelId: 'p1',
+      }),
+    )
+    _resetAIConfig()
+
+    await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)
+
+    expect(onStepUpdate).not.toHaveBeenCalled()
+    expect(onFinalChunk).toHaveBeenCalledWith('Default response')
+  })
 })
