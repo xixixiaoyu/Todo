@@ -270,8 +270,12 @@ fi
 
 report_disk_health "$DISK_USAGE_AFTER"
 
+GOACCESS_REPORT_PORT=${GOACCESS_REPORT_PORT:-7890}
+
 echo "✅ 部署完成！"
 echo "🌐 前端访问地址: http://服务器IP"
 echo "📊 后端 API 地址: http://服务器IP/api"
+echo "📈 访问统计看板: http://${GOACCESS_REPORT_BIND:-127.0.0.1}:${GOACCESS_REPORT_PORT}"
+echo "🔒 默认仅监听 127.0.0.1，可通过 GOACCESS_REPORT_BIND=0.0.0.0 对外开放（建议配合鉴权）"
 echo "📜 查看运行状态: docker compose ps"
 echo "📝 查看实时日志: docker compose logs -f"

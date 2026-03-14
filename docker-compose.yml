@@ -155,7 +155,8 @@ services:
     tmpfs:
       - /tmp:rw,mode=1777
       - /var/cache/nginx:rw,uid=1001,gid=1001,mode=755
-      - /var/log/nginx:rw,uid=1001,gid=1001,mode=755
+    volumes:
+      - lumina_frontend_logs:/var/log/nginx
     healthcheck:
       test:
         ['CMD-SHELL', 'wget --no-verbose --tries=1 --spider http://127.0.0.1:80/health || exit 1']
@@ -166,6 +167,38 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    networks:
+      - lumina-network
+
+  # ============================================
+  # GoAccess (访问日志可视化)
+  # ============================================
+  goaccess:
+    image: allinurl/goaccess:1.9.4@sha256:9f8273d6b46fcbb7cb9334a7e8d20a6167ec570080f62731e7b2cb45803b8a2f
+    container_name: lumina-goaccess
+    restart: unless-stopped
+    logging: *default-logging
+    command: >
+      sh -c "mkdir -p /srv/report &&
+      touch /logs/access.log &&
+      goaccess /logs/access.log
+      --log-format='%h %^[%d:%t %^] \"%r\" %s %b \"%R\" \"%u\" \"%^\"'
+      --date-format='%d/%b/%Y'
+      --time-format='%T'
+      --real-time-html
+      --port=7890
+      --addr=0.0.0.0
+      --origin=*
+      --ignore-crawlers
+      --output=/srv/report/index.html"
+    ports:
+      - '${GOACCESS_REPORT_BIND:-127.0.0.1}:${GOACCESS_REPORT_PORT:-7890}:7890'
+    depends_on:
+      frontend:
+        condition: service_healthy
+    volumes:
+      - lumina_frontend_logs:/logs:ro
+      - lumina_goaccess_report:/srv/report
     networks:
       - lumina-network
 
@@ -196,5 +229,7 @@ networks:
 volumes:
   lumina_postgres_data:
   lumina_redis_data:
+  lumina_frontend_logs:
+  lumina_goaccess_report:
   lumina_npm_data:
   lumina_npm_letsencrypt:

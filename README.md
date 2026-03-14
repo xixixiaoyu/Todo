@@ -96,6 +96,16 @@ pnpm docker:dev
 3. **初始化库**: `pnpm db:push`
 4. **启动服务**: `pnpm dev`
 
+### 3. 访问统计看板 (GoAccess)
+
+生产部署（`./deploy.sh`）会自动启动 GoAccess 实时统计服务，基于 Nginx access log 生成可视化报表。
+
+- 默认地址：`http://127.0.0.1:7890`
+- 默认绑定：`127.0.0.1`（更安全，建议通过反向代理+鉴权暴露）
+- 可选环境变量：
+  - `GOACCESS_REPORT_PORT`：看板端口（默认 `7890`）
+  - `GOACCESS_REPORT_BIND`：监听地址（默认 `127.0.0.1`）
+
 ---
 
 ## 🤖 AI 开发辅助
