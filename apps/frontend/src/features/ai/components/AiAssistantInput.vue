@@ -130,6 +130,7 @@ const handleKeydown = (event: KeyboardEvent) => {
   }
 
   if (event.key === 'Enter' && !event.shiftKey) {
+    if (isMobile.value) return
     event.preventDefault()
     if (canSend.value) emit('send')
   }
