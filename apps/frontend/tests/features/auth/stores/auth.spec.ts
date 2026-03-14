@@ -382,11 +382,11 @@ describe('useAuthStore', () => {
       expect(authApi.getMe).not.toHaveBeenCalled()
     })
 
-    it('should logout on fetch failure', async () => {
+    it('should logout on fetch unauthorized', async () => {
       store.token = 'access-token'
       store.refreshToken = 'refresh-token'
 
-      vi.mocked(authApi.getMe).mockRejectedValue(new Error('Unauthorized'))
+      vi.mocked(authApi.getMe).mockRejectedValue({ response: { status: 401 } })
       vi.mocked(authApi.logout).mockResolvedValue({
         success: true,
         data: { message: 'Logged out' },
@@ -398,6 +398,27 @@ describe('useAuthStore', () => {
       expect(store.token).toBeNull()
       expect(store.refreshToken).toBeNull()
       expect(store.user).toBeNull()
+    })
+
+    it('should keep session on transient fetch failure', async () => {
+      store.token = 'access-token'
+      store.refreshToken = 'refresh-token'
+      store.user = mockUser
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      vi.mocked(authApi.getMe).mockRejectedValue(new Error('Network error'))
+
+      await store.fetchCurrentUser()
+
+      expect(store.token).toBe('access-token')
+      expect(store.refreshToken).toBe('refresh-token')
+      expect(store.user).toEqual(mockUser)
+      expect(authApi.logout).not.toHaveBeenCalled()
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Fetch current user failed (transient):',
+        expect.any(Error),
+      )
+      warnSpy.mockRestore()
     })
   })
 
@@ -431,11 +452,11 @@ describe('useAuthStore', () => {
       expect(authApi.refreshToken).not.toHaveBeenCalled()
     })
 
-    it('should logout on refresh failure', async () => {
+    it('should logout on refresh unauthorized failure', async () => {
       store.refreshToken = 'invalid-token'
       store.token = 'access-token'
 
-      vi.mocked(authApi.refreshToken).mockRejectedValue(new Error('Invalid token'))
+      vi.mocked(authApi.refreshToken).mockRejectedValue({ response: { status: 401 } })
       vi.mocked(authApi.logout).mockResolvedValue({
         success: true,
         data: { message: 'Logged out' },
@@ -448,6 +469,50 @@ describe('useAuthStore', () => {
       expect(store.token).toBeNull()
       expect(store.refreshToken).toBeNull()
       expect(store.user).toBeNull()
+    })
+
+    it('should keep session on transient refresh failure', async () => {
+      store.refreshToken = 'refresh-token'
+      store.token = 'access-token'
+      store.user = mockUser
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      vi.mocked(authApi.refreshToken).mockRejectedValue(new Error('Network error'))
+
+      const result = await store.refreshAccessToken()
+
+      expect(result).toBe(false)
+      expect(store.token).toBe('access-token')
+      expect(store.refreshToken).toBe('refresh-token')
+      expect(store.user).toEqual(mockUser)
+      expect(authApi.logout).not.toHaveBeenCalled()
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Refresh access token failed (transient):',
+        expect.any(Error),
+      )
+      warnSpy.mockRestore()
+    })
+
+    it('should retry once on transient refresh failure and succeed', async () => {
+      store.refreshToken = 'refresh-token'
+      store.token = 'access-token'
+      store.user = mockUser
+
+      vi.mocked(authApi.refreshToken)
+        .mockRejectedValueOnce({ response: { status: 503 } })
+        .mockResolvedValueOnce({
+          success: true,
+          data: mockAuthResponse,
+          timestamp: new Date().toISOString(),
+        })
+
+      const result = await store.refreshAccessToken()
+
+      expect(result).toBe(true)
+      expect(authApi.refreshToken).toHaveBeenCalledTimes(2)
+      expect(store.token).toBe('access-token')
+      expect(store.refreshToken).toBe('refresh-token')
+      expect(store.user).toEqual(mockUser)
     })
 
     it('should refresh token using stored refresh token', async () => {

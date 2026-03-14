@@ -178,16 +178,15 @@ httpClient.interceptors.response.use(
           return httpClient(originalRequest)
         }
 
-        const refreshError = new Error('Refresh token invalid')
+        const refreshError = new Error(
+          authStore.isAuthenticated ? 'Refresh token unavailable' : 'Refresh token invalid',
+        )
         onRefreshError(refreshError)
         isRefreshing = false
-        await authStore.logout()
         return Promise.reject(refreshError)
       } catch (refreshError) {
         onRefreshError(refreshError as Error)
         isRefreshing = false
-        const authStore = useAuthStore()
-        await authStore.logout()
         return Promise.reject(refreshError)
       }
     }

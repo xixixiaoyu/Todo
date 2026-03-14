@@ -54,6 +54,38 @@ export const useAuthStore = defineStore(
       localStorage.removeItem('auth')
     }
 
+    function isUnauthorizedError(e: unknown): boolean {
+      const maybeError = e as {
+        response?: {
+          status?: number
+        }
+      }
+      return maybeError.response?.status === 401
+    }
+
+    function isTransientError(e: unknown): boolean {
+      const maybeError = e as {
+        code?: string
+        response?: {
+          status?: number
+        }
+      }
+      const status = maybeError.response?.status
+      if (typeof status === 'number') {
+        return status >= 500
+      }
+
+      return (
+        maybeError.code === 'ECONNABORTED' ||
+        maybeError.code === 'ERR_NETWORK' ||
+        maybeError.code === 'ETIMEDOUT'
+      )
+    }
+
+    function sleep(ms: number): Promise<void> {
+      return new Promise((resolve) => setTimeout(resolve, ms))
+    }
+
     function hydrateFromStorage(): void {
       if (token.value && refreshToken.value && user.value) return
 
@@ -298,8 +330,12 @@ export const useAuthStore = defineStore(
       try {
         const response = await authApi.getMe()
         user.value = response.data
-      } catch {
-        void logout()
+      } catch (e: unknown) {
+        if (isUnauthorizedError(e)) {
+          void logout()
+        } else {
+          console.warn('Fetch current user failed (transient):', e)
+        }
       }
     }
 
@@ -313,18 +349,39 @@ export const useAuthStore = defineStore(
 
       if (!refreshToken.value) return false
 
-      try {
-        const response = await authApi.refreshToken(refreshToken.value)
-        token.value = response.data.accessToken
-        refreshToken.value = response.data.refreshToken
-        user.value = response.data.user
-        setToken(token.value)
-        persistAuthState()
-        return true
-      } catch {
-        void logout()
-        return false
+      const maxAttempts = 2
+      let lastError: unknown = null
+
+      for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+        try {
+          const response = await authApi.refreshToken(refreshToken.value)
+          token.value = response.data.accessToken
+          refreshToken.value = response.data.refreshToken
+          user.value = response.data.user
+          setToken(token.value)
+          persistAuthState()
+          return true
+        } catch (e: unknown) {
+          lastError = e
+
+          if (isUnauthorizedError(e)) {
+            void logout()
+            return false
+          }
+
+          const shouldRetry = attempt < maxAttempts && isTransientError(e)
+          if (shouldRetry) {
+            await sleep(300)
+            continue
+          }
+
+          console.warn('Refresh access token failed (transient):', e)
+          return false
+        }
       }
+
+      console.warn('Refresh access token failed (transient):', lastError)
+      return false
     }
 
     /**

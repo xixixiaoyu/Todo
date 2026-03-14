@@ -73,8 +73,15 @@ export function useSocket(): UseSocketReturn {
           context: error.context,
         })
 
-        // 如果是因为认证问题（或者是断连后 token 可能过期），尝试刷新 token 并重连
-        if (authStore.isAuthenticated) {
+        const message = (error.message || '').toLowerCase()
+        const isAuthError =
+          message.includes('unauthorized') ||
+          message.includes('token') ||
+          message.includes('jwt') ||
+          message.includes('authentication')
+
+        // 仅在认证错误时尝试刷新 token，避免网络抖动触发不必要的刷新流程
+        if (authStore.isAuthenticated && isAuthError) {
           console.warn('[Socket] Attempting to refresh token and reconnect...')
           const refreshed = await authStore.refreshAccessToken()
           if (refreshed && socketInstance) {

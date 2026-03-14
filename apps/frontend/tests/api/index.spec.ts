@@ -84,10 +84,11 @@ describe('response interceptor', () => {
     response?: { status: number }
   }) => Promise<unknown>
 
-  it('should logout when refresh succeeds without token', async () => {
+  it('should reject with invalid error when refresh succeeds without token', async () => {
     const authStore = {
       refreshAccessToken: vi.fn().mockResolvedValue(true),
       token: null,
+      isAuthenticated: false,
       logout: vi.fn().mockResolvedValue(undefined),
     }
 
@@ -105,13 +106,14 @@ describe('response interceptor', () => {
     }
 
     await expect(errorHandler(error)).rejects.toThrow('Refresh token invalid')
-    expect(authStore.logout).toHaveBeenCalled()
+    expect(authStore.logout).not.toHaveBeenCalled()
   })
 
-  it('should logout when refreshAccessToken throws error', async () => {
+  it('should reject without logout when refreshAccessToken throws error', async () => {
     const refreshError = new Error('Network error during refresh')
     const authStore = {
       refreshAccessToken: vi.fn().mockRejectedValue(refreshError),
+      isAuthenticated: true,
       logout: vi.fn().mockResolvedValue(undefined),
     }
 
@@ -129,7 +131,7 @@ describe('response interceptor', () => {
     }
 
     await expect(errorHandler(error)).rejects.toThrow('Network error during refresh')
-    expect(authStore.logout).toHaveBeenCalled()
+    expect(authStore.logout).not.toHaveBeenCalled()
   })
 })
 
