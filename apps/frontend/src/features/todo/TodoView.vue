@@ -113,6 +113,31 @@ const currentViewComponent = computed(() => {
 // 追踪上一次的 filter 以决定动画方向
 const direction = ref(0) // 1: next, -1: prev
 
+const getInputContainerLayout = (visible: boolean) => ({
+  height: visible ? (isMobile.value ? 56 : 52) : 0,
+  marginBottom: visible ? (isMobile.value ? 4 : 24) : 0,
+  opacity: visible ? 1 : 0,
+})
+
+const syncInputContainerLayout = (visible: boolean, animate: boolean) => {
+  if (!inputContainerRef.value) return
+
+  const layout = getInputContainerLayout(visible)
+  ctx.add(() => {
+    if (animate) {
+      gsap.to(inputContainerRef.value, {
+        ...layout,
+        duration: 0.5,
+        ease: 'expo.out',
+        overwrite: true,
+      })
+      return
+    }
+
+    gsap.set(inputContainerRef.value, layout)
+  })
+}
+
 watch(
   () => todoStore.viewMode,
   (newVal, oldVal) => {
@@ -132,20 +157,18 @@ watch(
 watch(
   isInputVisible,
   (visible) => {
-    if (!inputContainerRef.value) return
-
-    ctx.add(() => {
-      gsap.to(inputContainerRef.value, {
-        height: visible ? (isMobile.value ? 56 : 52) : 0,
-        marginBottom: visible ? (isMobile.value ? 4 : 24) : 0,
-        opacity: visible ? 1 : 0,
-        duration: 0.5,
-        ease: 'expo.out',
-        overwrite: true,
-      })
-    })
+    syncInputContainerLayout(visible, true)
   },
   { immediate: true },
+)
+
+watch(
+  [() => pomodoroStore.isMiniMode, isMobile, inputContainerRef],
+  ([isMiniMode]) => {
+    if (isMiniMode) return
+    syncInputContainerLayout(isInputVisible.value, false)
+  },
+  { flush: 'post' },
 )
 
 onMounted(() => {
@@ -154,11 +177,7 @@ onMounted(() => {
   ctx.add(() => {
     // 初始化输入框状态，避免首屏闪烁
     if (inputContainerRef.value) {
-      gsap.set(inputContainerRef.value, {
-        height: isInputVisible.value ? (isMobile.value ? 56 : 52) : 0,
-        marginBottom: isInputVisible.value ? (isMobile.value ? 4 : 24) : 0,
-        opacity: isInputVisible.value ? 1 : 0,
-      })
+      syncInputContainerLayout(isInputVisible.value, false)
     }
 
     // 整体卡片入场：更快的 Power4 曲线，减少位移
