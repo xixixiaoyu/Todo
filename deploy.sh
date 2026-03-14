@@ -53,6 +53,17 @@ report_disk_health() {
   fi
 }
 
+report_docker_storage() {
+  local stage=$1
+  echo "📦 Docker 磁盘占用摘要（${stage}）..."
+  "${DOCKER[@]}" system df || true
+
+  if [ "$DOCKER_DF_VERBOSE" = "true" ]; then
+    echo "🔎 Docker 磁盘占用明细（${stage}）..."
+    "${DOCKER[@]}" system df -v || true
+  fi
+}
+
 load_env_file() {
   local env_file=$1
   while IFS= read -r raw_line || [ -n "$raw_line" ]; do
@@ -165,6 +176,7 @@ ALERT_CRITICAL_THRESHOLD=${ALERT_CRITICAL_THRESHOLD:-90}
 IMAGE_PRUNE_UNTIL=${IMAGE_PRUNE_UNTIL:-240h}
 BUILDER_PRUNE_UNTIL=${BUILDER_PRUNE_UNTIL:-168h}
 ENABLE_AGGRESSIVE_PRUNE=${ENABLE_AGGRESSIVE_PRUNE:-false}
+DOCKER_DF_VERBOSE=${DOCKER_DF_VERBOSE:-false}
 validate_thresholds
 
 DISK_USAGE_BEFORE=$(get_disk_usage)
@@ -178,6 +190,7 @@ fi
 # 按照时间策略清理缓存和旧镜像
 "${DOCKER[@]}" builder prune -f --filter "until=${BUILDER_PRUNE_UNTIL}"
 "${DOCKER[@]}" image prune -a -f --filter "until=${IMAGE_PRUNE_UNTIL}"
+report_docker_storage '部署前预清理后'
 
 DISK_USAGE=$(get_disk_usage)
 echo "📊 部署前清理后磁盘占用：${DISK_USAGE}%"
@@ -237,6 +250,7 @@ echo "🧹 正在执行即时清理..."
 # 2. 按照时间策略清理不使用的镜像和缓存 (保留最近的)
 "${DOCKER[@]}" builder prune -f --filter "until=${BUILDER_PRUNE_UNTIL}"
 "${DOCKER[@]}" image prune -a -f --filter "until=${IMAGE_PRUNE_UNTIL}"
+report_docker_storage '部署后即时清理后'
 
 DISK_USAGE_AFTER=$(get_disk_usage)
 if [ "$DISK_USAGE_AFTER" -ge "$DISK_CRITICAL_THRESHOLD" ]; then
