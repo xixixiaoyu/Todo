@@ -22,6 +22,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const containerRef = ref<HTMLElement | null>(null)
+const { gsap, ctx } = useGsap()
 
 const getDefaultForm = (): McpServerFormState => ({
   name: '',
@@ -79,9 +80,11 @@ onMounted(() => {
   }
 
   // 入场动画
-  const { gsap, ctx } = useGsap()
+  const sections = containerRef.value?.querySelectorAll('.form-section')
+  if (!sections || sections.length === 0) return
+
   ctx.add(() => {
-    gsap.from('.form-section', {
+    gsap.from(sections, {
       y: 20,
       opacity: 0,
       duration: 0.5,
