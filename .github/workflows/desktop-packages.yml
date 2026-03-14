@@ -160,6 +160,28 @@ jobs:
         if: runner.os == 'Linux'
         run: pnpm wails:build
 
+      - name: 校验 macOS 签名与公证配置
+        if: runner.os == 'macOS' && github.ref_type == 'tag'
+        env:
+          MACOS_SIGN_CERT_BASE64: ${{ secrets.MACOS_SIGN_CERT_BASE64 }}
+          MACOS_SIGN_CERT_PASSWORD: ${{ secrets.MACOS_SIGN_CERT_PASSWORD }}
+          MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          missing=''
+          for key in MACOS_SIGN_CERT_BASE64 MACOS_SIGN_CERT_PASSWORD MACOS_SIGN_IDENTITY APPLE_ID APPLE_TEAM_ID APPLE_APP_PASSWORD; do
+            if [ -z "${!key}" ]; then
+              missing="${missing} ${key}"
+            fi
+          done
+
+          if [ -n "$missing" ]; then
+            echo "::error::Tag 发布缺少 macOS 签名/公证 secrets:${missing}"
+            exit 1
+          fi
+
       - name: 签名 macOS 应用
         if: runner.os == 'macOS'
         env:
