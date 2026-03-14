@@ -11,7 +11,6 @@ export const login = {
   forgotPassword: 'Forgot Password?',
   failed: 'Login failed',
   INVALID_CREDENTIALS: 'Invalid email or password',
-  orContinueWith: 'Or continue with',
 } as const
 
 export const auth = {

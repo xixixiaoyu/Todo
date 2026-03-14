@@ -250,49 +250,6 @@ export const useAuthStore = defineStore(
     }
 
     /**
-     * Google 登录
-     */
-    function loginWithGoogle() {
-      const apiUrl =
-        import.meta.env.VITE_API_BASE_URL ||
-        (import.meta.env.IS_WAILS ? 'http://localhost:3000/api' : '/api')
-      window.location.href = `${apiUrl}/auth/google`
-    }
-
-    /**
-     * 处理 OAuth 登录（从 Cookie 获取令牌）
-     */
-    async function handleOAuthLogin(): Promise<boolean> {
-      loading.value = true
-      error.value = null
-      fieldErrors.value = {}
-
-      try {
-        const response = await authApi.oauthLogin()
-        const payload = unwrapApiResponse(response)
-        token.value = payload.accessToken
-        refreshToken.value = payload.refreshToken || null
-        user.value = payload.user
-
-        setToken(token.value)
-        persistAuthState()
-
-        // 登录成功后触发数据合并同步
-        const { useTodoStore } = await import('@/features/todo/stores/todo')
-        const todoStore = useTodoStore()
-        await todoStore.mergeOnLogin(payload.user.id)
-
-        return true
-      } catch (e: unknown) {
-        console.error('OAuth login error:', e)
-        handleApiError(e, 'auth.oauthFailed')
-        return false
-      } finally {
-        loading.value = false
-      }
-    }
-
-    /**
      * 获取当前用户信息
      */
     async function fetchCurrentUser(): Promise<void> {
@@ -417,8 +374,6 @@ export const useAuthStore = defineStore(
       register,
       forgotPassword,
       resetPassword,
-      loginWithGoogle,
-      handleOAuthLogin,
       logout,
       fetchCurrentUser,
       refreshAccessToken,

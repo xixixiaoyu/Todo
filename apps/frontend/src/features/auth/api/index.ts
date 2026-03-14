@@ -57,14 +57,6 @@ export const authApi = {
   },
 
   /**
-   * OAuth 登录
-   */
-  async oauthLogin(): Promise<ApiResponse<AuthResponse>> {
-    const { data } = await httpClient.get<ApiResponse<AuthResponse>>('/auth/oauth/login')
-    return data
-  },
-
-  /**
    * 刷新访问令牌
    */
   async refreshToken(refreshToken: string): Promise<ApiResponse<AuthResponse>> {

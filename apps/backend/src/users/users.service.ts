@@ -57,26 +57,6 @@ export class UsersService {
   }
 
   /**
-   * 创建 Google 用户
-   */
-  async createWithGoogle(data: {
-    email: string
-    name: string
-    googleId: string
-    avatar?: string
-  }): Promise<User> {
-    const user = await this.prisma.user.create({
-      data: {
-        email: data.email,
-        name: data.name,
-        googleId: data.googleId,
-        avatar: data.avatar,
-      },
-    })
-    return formatUser(user as unknown as PrismaUser)
-  }
-
-  /**
    * 根据 ID 获取单个用户（内部使用，包含密码）
    */
   async findInternalById(id: number) {

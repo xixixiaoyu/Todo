@@ -11,7 +11,6 @@ export const login = {
   forgotPassword: '忘记密码？',
   failed: '登录失败',
   INVALID_CREDENTIALS: '邮箱或密码错误',
-  orContinueWith: '或通过以下方式继续',
 } as const
 
 export const auth = {

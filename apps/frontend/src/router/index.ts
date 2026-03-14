@@ -39,11 +39,6 @@ const router = createRouter({
       meta: { title: 'resetPassword.title' },
     },
     {
-      path: '/auth/callback',
-      name: 'auth-callback',
-      component: () => import('@/features/auth/views/AuthCallbackView.vue'),
-    },
-    {
       path: '/settings/mcp',
       name: 'mcp-settings',
       component: () => import('@/features/mcp/views/McpSettingsView.vue'),

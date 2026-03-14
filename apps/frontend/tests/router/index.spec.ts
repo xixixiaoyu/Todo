@@ -18,9 +18,6 @@ vi.mock('@/features/auth/views/ForgotPasswordView.vue', () => ({
 vi.mock('@/features/auth/views/ResetPasswordView.vue', () => ({
   default: { name: 'ResetPasswordView', template: '<div></div>' },
 }))
-vi.mock('@/features/auth/views/AuthCallbackView.vue', () => ({
-  default: { name: 'AuthCallbackView', template: '<div></div>' },
-}))
 vi.mock('@/views/error/NotFoundView.vue', () => ({
   default: { name: 'NotFoundView', template: '<div></div>' },
 }))

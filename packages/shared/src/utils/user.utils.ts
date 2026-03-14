@@ -8,7 +8,6 @@ export interface PrismaUser {
   email: string
   name: string
   avatar: string | null
-  googleId: string | null
   createdAt: Date
   updatedAt: Date
 }
@@ -23,7 +22,6 @@ export function formatUser(user: PrismaUser): User {
     email: user.email,
     name: user.name,
     avatar: user.avatar,
-    googleId: user.googleId,
     createdAt: user.createdAt.toISOString(),
     updatedAt: user.updatedAt.toISOString(),
   }

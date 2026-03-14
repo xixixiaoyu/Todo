@@ -13,7 +13,6 @@ const mockUsersService = {
   findOne: vi.fn(),
   create: vi.fn(),
   getUserById: vi.fn(),
-  createWithGoogle: vi.fn(),
   update: vi.fn(),
 }
 
@@ -111,55 +110,6 @@ describe('AuthService', () => {
 
       expect(result.accessToken).toBe('mock-token')
       expect(result.user).toEqual(mockUser)
-    })
-  })
-
-  describe('validateGoogleUser', () => {
-    it('should return user if googleId exists', async () => {
-      const mockUser = {
-        id: 1,
-        email: 'google@test.com',
-        googleId: 'google-123',
-        name: 'Google User',
-        avatar: 'photo-url',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-      mockUsersService.findInternalByEmail.mockResolvedValue(mockUser)
-
-      const profile = {
-        id: 'google-123',
-        emails: [{ value: 'google@test.com' }],
-        displayName: 'Google User',
-        photos: [{ value: 'photo-url' }],
-      }
-      const result = await service.validateGoogleUser(profile)
-
-      expect(result.id).toBe(1)
-      expect(mockUsersService.createWithGoogle).not.toHaveBeenCalled()
-    })
-
-    it('should create user if googleId does not exist', async () => {
-      mockUsersService.findInternalByEmail.mockResolvedValue(null)
-      mockUsersService.createWithGoogle.mockResolvedValue({
-        id: 2,
-        email: 'new@google.com',
-        googleId: 'new-123',
-        name: 'New User',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-
-      const profile = {
-        id: 'new-123',
-        emails: [{ value: 'new@google.com' }],
-        displayName: 'New User',
-        photos: [{ value: 'photo-url' }],
-      }
-      const result = await service.validateGoogleUser(profile)
-
-      expect(result.id).toBe(2)
-      expect(mockUsersService.createWithGoogle).toHaveBeenCalled()
     })
   })
 

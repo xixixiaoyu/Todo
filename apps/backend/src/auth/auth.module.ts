@@ -6,10 +6,8 @@ import { AuthService } from './auth.service'
 import { TokenService } from './token.service'
 import { PasswordService } from './password.service'
 import { AuthController } from './auth.controller'
-import { OAuthController } from './oauth.controller'
 import { PasswordController } from './password.controller'
 import { JwtStrategy } from './jwt.strategy'
-import { GoogleStrategy } from './google.strategy'
 import { PrismaModule } from '../prisma/prisma.module'
 import { MailModule } from '../mail/mail.module'
 import { RedisModule } from '../redis/redis.module'
@@ -35,8 +33,8 @@ import { UsersModule } from '../users/users.module'
       }),
     }),
   ],
-  controllers: [AuthController, OAuthController, PasswordController],
-  providers: [AuthService, TokenService, PasswordService, JwtStrategy, GoogleStrategy],
+  controllers: [AuthController, PasswordController],
+  providers: [AuthService, TokenService, PasswordService, JwtStrategy],
   exports: [AuthService, TokenService, PasswordService, JwtModule, PassportModule],
 })
 export class AuthModule {}

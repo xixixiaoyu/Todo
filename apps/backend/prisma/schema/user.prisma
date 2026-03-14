@@ -4,7 +4,6 @@ model User {
   name                 String
   password             String?
   avatar               String?
-  googleId             String?         @unique
   resetPasswordToken   String?
   resetPasswordExpires DateTime?
   createdAt            DateTime        @default(now())

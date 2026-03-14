@@ -61,7 +61,6 @@ export const UserSchema = z.object({
   email: z.string().email(),
   name: z.string(),
   avatar: z.string().url().optional().nullable(),
-  googleId: z.string().optional().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
 })

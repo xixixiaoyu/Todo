@@ -26,24 +26,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     super({
-      jwtFromRequest: ExtractJwt.fromExtractors([
-        ExtractJwt.fromAuthHeaderAsBearerToken(),
-        (req: {
-          url?: string
-          originalUrl?: string
-          cookies?: { accessToken?: string }
-          raw?: { url?: string; cookies?: { accessToken?: string } }
-        }) => {
-          // 只允许在 OAuth 登录回调路径下从 Cookie 获取 Token
-          // 这样可以防止 CSRF 攻击，因为其他业务接口将不再接受 Cookie 认证
-          const url = req.originalUrl ?? req.url ?? req.raw?.url ?? ''
-          const path = url.split('?')[0]
-          if (path === '/api/auth/oauth/login') {
-            return req.cookies?.accessToken ?? req.raw?.cookies?.accessToken ?? null
-          }
-          return null
-        },
-      ]),
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
       secretOrKey: jwtSecret,
     })

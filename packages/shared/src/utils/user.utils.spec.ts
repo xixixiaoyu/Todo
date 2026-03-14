@@ -8,7 +8,6 @@ describe('user.utils', () => {
     email: 'test@example.com',
     name: 'Test User',
     avatar: 'https://example.com/avatar.png',
-    googleId: null,
     createdAt: mockDate,
     updatedAt: mockDate,
   }
@@ -21,21 +20,18 @@ describe('user.utils', () => {
         email: 'test@example.com',
         name: 'Test User',
         avatar: 'https://example.com/avatar.png',
-        googleId: null,
         createdAt: '2024-01-21T00:00:00.000Z',
         updatedAt: '2024-01-21T00:00:00.000Z',
       })
     })
 
-    it('should handle null avatar and googleId', () => {
+    it('should handle null avatar', () => {
       const userMinimal: PrismaUser = {
         ...mockPrismaUser,
         avatar: null,
-        googleId: null,
       }
       const result = formatUser(userMinimal)
       expect(result.avatar).toBeNull()
-      expect(result.googleId).toBeNull()
     })
 
     it('should not mutate the input user object', () => {

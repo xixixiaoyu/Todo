@@ -1,16 +1,9 @@
 import { Injectable, UnauthorizedException, Inject, forwardRef } from '@nestjs/common'
 import { UsersService } from '../users/users.service'
-import type { LoginInput, RegisterInput, User, AuthResponse, PrismaUser } from '@lumina/shared'
+import type { LoginInput, RegisterInput, User, AuthResponse } from '@lumina/shared'
 import { formatUser } from '@lumina/shared'
 import { TokenService, JwtPayload } from './token.service'
 import { PasswordService } from './password.service'
-
-export interface GoogleProfile {
-  id: string
-  emails: Array<{ value: string }>
-  displayName: string
-  photos?: Array<{ value: string }>
-}
 
 /**
  * 认证服务 (Facade)
@@ -26,39 +19,6 @@ export class AuthService {
     @Inject(PasswordService)
     private readonly passwordService: PasswordService,
   ) {}
-
-  /**
-   * Google OAuth 相关
-   */
-  async validateGoogleUser(profile: GoogleProfile): Promise<User> {
-    const { id, emails, displayName, photos } = profile
-    const email = emails[0].value
-
-    const existingUser = await this.usersService.findInternalByEmail(email)
-
-    if (!existingUser) {
-      return this.usersService.createWithGoogle({
-        email,
-        name: displayName,
-        googleId: id,
-        avatar: photos?.[0]?.value,
-      })
-    }
-
-    if (!existingUser.googleId) {
-      const updatedUser = await this.usersService.update(existingUser.id, {
-        googleId: id,
-        avatar: existingUser.avatar || photos?.[0]?.value,
-      })
-      return formatUser(updatedUser as unknown as PrismaUser)
-    }
-
-    return formatUser(existingUser as unknown as PrismaUser)
-  }
-
-  async googleLogin(user: User): Promise<AuthResponse> {
-    return this.tokenService.buildAuthResponse(user)
-  }
 
   /**
    * 传统密码登录相关

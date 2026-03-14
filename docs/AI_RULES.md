@@ -150,7 +150,7 @@ type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse
 - 分层：Controller 只处理协议层（DTO/鉴权/序列化），领域逻辑在 Service，持久化在 Prisma 层封装
 - 数据一致性：写操作优先事务；避免在请求链路中做不可控的外部副作用
 - 鉴权：accessToken + refreshToken；需要认证的接口使用 `Authorization: Bearer <accessToken>`
-- Cookie 规则：仅 OAuth 回调路径会从 Cookie 提取 accessToken，其余接口不接受 Cookie 认证
+- Cookie 规则：认证接口统一使用 `Authorization: Bearer <accessToken>`，不接受 Cookie 认证
 - 安全约束：除 `GET/HEAD/OPTIONS` 外，必须携带 `X-Requested-With: XMLHttpRequest`
 - 限流：默认策略（1s/10、10s/50、1min/100），可通过 `THROTTLE_*` 环境变量覆盖
 - 缓存：仅缓存确定性且可失效的数据；TTL 统一用常量（如 `CacheableTTL.FIVE_MINUTES`）

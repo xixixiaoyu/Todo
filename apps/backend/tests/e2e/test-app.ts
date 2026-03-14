@@ -27,7 +27,6 @@ type InMemoryUser = {
   name: string
   password: string | null
   avatar: string | null
-  googleId: string | null
   resetPasswordToken: string | null
   resetPasswordExpires: Date | null
   createdAt: Date
@@ -185,7 +184,6 @@ function createInMemoryPrisma() {
           name: args.data.name,
           password: args.data.password,
           avatar: null,
-          googleId: null,
           resetPasswordToken: null,
           resetPasswordExpires: null,
           createdAt: now,
