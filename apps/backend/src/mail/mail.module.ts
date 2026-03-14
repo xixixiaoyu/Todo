@@ -1,9 +1,8 @@
 import { Module } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { createTransport } from 'nodemailer'
+import { MAIL_TRANSPORTER } from './mail.constants'
 import { MailService } from './mail.service'
-
-export const MAIL_TRANSPORTER = Symbol('MAIL_TRANSPORTER')
 
 /**
  * 邮件模块

@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { I18nService, I18nContext } from 'nestjs-i18n'
 import type { SendMailOptions, Transporter } from 'nodemailer'
-import { MAIL_TRANSPORTER } from './mail.module'
+import { MAIL_TRANSPORTER } from './mail.constants'
 
 export interface MailSendOptions {
   to: string | string[]
