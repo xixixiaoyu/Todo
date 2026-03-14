@@ -12,12 +12,11 @@ export default defineConfig({
   test: {
     environment: 'happy-dom',
     globals: true,
+    maxWorkers: '50%',
     alias: {
       '@': resolve(__dirname, './src'),
       '@lumina/shared': resolve(__dirname, '../../packages/shared/src/index.ts'),
     },
     setupFiles: ['./tests/setup.ts'],
-    // 限制并发，防止 Worker 崩溃导致卡死
-    fileParallelism: false,
   },
 })
