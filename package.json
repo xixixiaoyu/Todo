@@ -29,12 +29,17 @@
     "pnpm": ">=9.15.0"
   },
   "scripts": {
-    "dev": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run dev",
+    "dev": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run dev --filter=@lumina/backend --filter=@lumina/frontend",
+    "dev:all": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run dev",
     "build": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run build",
+    "build:ci": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run build --concurrency=50%",
     "type-check": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run type-check",
     "lint": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run lint",
     "lint:fix": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run lint -- --fix --cache",
     "test": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run test",
+    "ci:check": "pnpm format:check && cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run lint type-check --concurrency=50%",
+    "ci:test": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run test --concurrency=50%",
+    "ci:all": "pnpm ci:check && pnpm ci:test && pnpm security-audit",
     "test:watch": "turbo run test:watch",
     "test:coverage": "turbo run test:coverage",
     "format": "prettier --write .",

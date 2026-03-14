@@ -13,6 +13,10 @@ permissions:
 env:
   NODE_VERSION: '20.x'
   PNPM_VERSION: '9.15.0'
+  TURBO_TELEMETRY_DISABLED: '1'
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+  TURBO_API: ${{ secrets.TURBO_API }}
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -70,17 +74,11 @@ jobs:
       - name: 生成 Prisma Client
         run: pnpm db:generate
 
-      - name: 格式检查
-        run: pnpm format:check
+      - name: 运行分组质量检查（格式 + Lint + 类型）
+        run: pnpm ci:check
 
-      - name: Lint 检查
-        run: pnpm lint
-
-      - name: 类型检查
-        run: pnpm type-check
-
-      - name: 运行测试
-        run: pnpm test
+      - name: 运行分组测试
+        run: pnpm ci:test
 
       - name: 安全审计
         run: pnpm security-audit
@@ -137,4 +135,4 @@ jobs:
         run: pnpm db:generate
 
       - name: 构建项目
-        run: pnpm build
+        run: pnpm build:ci

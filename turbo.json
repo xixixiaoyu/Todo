@@ -1,33 +1,142 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["package.json", "pnpm-lock.yaml", "tsconfig.base.json"],
-  "globalPassThroughEnv": ["NODE_ENV"],
+  "globalEnv": ["NODE_ENV", "VITE_*", "WAILS"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**", "package.json", "tsconfig.json"],
+      "inputs": ["$TURBO_DEFAULT$"],
       "outputs": ["dist/**"]
     },
     "dev": {
       "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$"],
       "cache": false,
       "persistent": true
     },
     "lint": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**", "tests/**", "eslint.config.*", "package.json"]
+      "inputs": ["$TURBO_DEFAULT$"]
     },
     "type-check": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**", "package.json", "tsconfig.json"]
+      "inputs": ["$TURBO_DEFAULT$"]
     },
     "test": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**", "tests/**", "vitest.config.*", "package.json"],
+      "inputs": ["$TURBO_DEFAULT$"],
       "outputs": ["coverage/**"]
     },
     "clean": {
       "cache": false
+    },
+    "@lumina/backend#build": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "src/**",
+        "prisma/schema/**",
+        "package.json",
+        "tsconfig.json",
+        "nest-cli.json",
+        "prisma.config.*"
+      ],
+      "outputs": ["dist/**"]
+    },
+    "@lumina/backend#dev": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true,
+      "inputs": [
+        "src/**",
+        "prisma/schema/**",
+        "package.json",
+        "tsconfig.json",
+        "nest-cli.json",
+        "prisma.config.*",
+        "vitest.config.*",
+        ".env*"
+      ]
+    },
+    "@lumina/frontend#build": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "src/**",
+        "public/**",
+        "package.json",
+        "tsconfig.json",
+        "vite.config.*",
+        "postcss.config.*",
+        "tailwind.config.*",
+        "pwa-assets.config.ts",
+        ".env*",
+        "!android/**",
+        "!ios/**"
+      ],
+      "outputs": ["dist/**"]
+    },
+    "@lumina/frontend#dev": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true,
+      "inputs": [
+        "src/**",
+        "public/**",
+        "package.json",
+        "tsconfig.json",
+        "vite.config.*",
+        "postcss.config.*",
+        "tailwind.config.*",
+        "capacitor.config.ts",
+        ".env*",
+        "!android/**",
+        "!ios/**"
+      ]
+    },
+    "@lumina/frontend#lint": {
+      "inputs": [
+        "src/**",
+        "tests/**",
+        "package.json",
+        "tsconfig.json",
+        "eslint.config.*",
+        "!android/**",
+        "!ios/**"
+      ]
+    },
+    "@lumina/frontend#type-check": {
+      "inputs": [
+        "src/**",
+        "tests/**",
+        "package.json",
+        "tsconfig.json",
+        "vite.config.*",
+        "vitest.config.*",
+        "!android/**",
+        "!ios/**"
+      ]
+    },
+    "@lumina/frontend#test": {
+      "inputs": [
+        "src/**",
+        "tests/**",
+        "package.json",
+        "tsconfig.json",
+        "vitest.config.*",
+        "!android/**",
+        "!ios/**"
+      ],
+      "outputs": ["coverage/**"]
+    },
+    "@lumina/shared#build": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "package.json", "tsconfig.json", "tsup.config.*"],
+      "outputs": ["dist/**"]
+    },
+    "@lumina/shared#dev": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true,
+      "inputs": ["src/**", "package.json", "tsconfig.json", "tsup.config.*"]
     }
   }
 }
