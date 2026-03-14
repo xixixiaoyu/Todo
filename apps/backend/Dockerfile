@@ -61,6 +61,8 @@ RUN --mount=type=cache,id=lumina-pnpm-store,target=/pnpm/store pnpm --filter @lu
 # Stage 4: Production (Final lean image)
 # ============================================
 FROM ${NODE_IMAGE} AS production
+ARG VCS_REF=unknown
+LABEL org.opencontainers.image.revision=$VCS_REF
 
 # 创建非 root 用户以增强安全性
 RUN addgroup --system --gid 1001 nodejs && \

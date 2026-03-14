@@ -76,6 +76,8 @@ services:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
+      args:
+        VCS_REF: ${VCS_REF:-unknown}
     container_name: lumina-backend
     restart: unless-stopped
     logging: *default-logging
@@ -145,6 +147,8 @@ services:
     build:
       context: .
       dockerfile: apps/frontend/Dockerfile
+      args:
+        VCS_REF: ${VCS_REF:-unknown}
     container_name: lumina-frontend
     restart: unless-stopped
     logging: *default-logging

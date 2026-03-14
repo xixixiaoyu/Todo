@@ -48,6 +48,8 @@ RUN pnpm --filter @lumina/frontend build
 # Stage 3: Production image with Nginx
 # ============================================
 FROM ${NGINX_IMAGE} AS production
+ARG VCS_REF=unknown
+LABEL org.opencontainers.image.revision=$VCS_REF
 
 # 创建非 root 用户
 RUN addgroup -g 1001 -S frontend && \

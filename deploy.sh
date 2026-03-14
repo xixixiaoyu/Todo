@@ -97,6 +97,24 @@ docker_image_exists() {
   "${DOCKER[@]}" image inspect "$image_name" >/dev/null 2>&1
 }
 
+docker_image_revision() {
+  local image_name=$1
+  "${DOCKER[@]}" image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$image_name" 2>/dev/null || true
+}
+
+docker_image_matches_revision() {
+  local image_name=$1
+  local expected_revision=$2
+
+  if [ -z "$expected_revision" ]; then
+    return 1
+  fi
+
+  local actual_revision
+  actual_revision=$(docker_image_revision "$image_name")
+  [ -n "$actual_revision" ] && [ "$actual_revision" = "$expected_revision" ]
+}
+
 service_container_id() {
   "${DOCKER[@]}" compose ps -q "$1" 2>/dev/null || true
 }
@@ -290,9 +308,10 @@ DOCKER_DF_VERBOSE=${DOCKER_DF_VERBOSE:-false}
 DEFAULT_IMAGE_TAG=${IMAGE_TAG:-prod}
 BACKEND_IMAGE_TAG=${BACKEND_IMAGE_TAG:-$DEFAULT_IMAGE_TAG}
 FRONTEND_IMAGE_TAG=${FRONTEND_IMAGE_TAG:-$DEFAULT_IMAGE_TAG}
+VCS_REF=${CURRENT_HEAD:-${VCS_REF:-unknown}}
 DOCKER_BUILDKIT=${DOCKER_BUILDKIT:-1}
 COMPOSE_DOCKER_CLI_BUILD=${COMPOSE_DOCKER_CLI_BUILD:-1}
-export BACKEND_IMAGE_TAG FRONTEND_IMAGE_TAG DOCKER_BUILDKIT COMPOSE_DOCKER_CLI_BUILD
+export BACKEND_IMAGE_TAG FRONTEND_IMAGE_TAG VCS_REF DOCKER_BUILDKIT COMPOSE_DOCKER_CLI_BUILD
 validate_thresholds
 
 if [ -n "$CURRENT_HEAD_SHORT" ]; then
@@ -344,6 +363,9 @@ else
   if ! docker_image_exists "$BACKEND_IMAGE"; then
     BUILD_SERVICES+=('backend')
     BACKEND_BUILD_REASON="本地缺少镜像 ${BACKEND_IMAGE}"
+  elif [ -n "$CURRENT_HEAD" ] && ! docker_image_matches_revision "$BACKEND_IMAGE" "$CURRENT_HEAD"; then
+    BUILD_SERVICES+=('backend')
+    BACKEND_BUILD_REASON='后端镜像 revision 与当前代码版本不一致'
   elif [ "$HEAD_CHANGED" = "true" ] && backend_source_changed; then
     BUILD_SERVICES+=('backend')
     BACKEND_BUILD_REASON='检测到后端相关代码变更'
@@ -352,6 +374,9 @@ else
   if ! docker_image_exists "$FRONTEND_IMAGE"; then
     BUILD_SERVICES+=('frontend')
     FRONTEND_BUILD_REASON="本地缺少镜像 ${FRONTEND_IMAGE}"
+  elif [ -n "$CURRENT_HEAD" ] && ! docker_image_matches_revision "$FRONTEND_IMAGE" "$CURRENT_HEAD"; then
+    BUILD_SERVICES+=('frontend')
+    FRONTEND_BUILD_REASON='前端镜像 revision 与当前代码版本不一致'
   elif [ "$HEAD_CHANGED" = "true" ] && frontend_source_changed; then
     BUILD_SERVICES+=('frontend')
     FRONTEND_BUILD_REASON='检测到前端相关代码变更'
