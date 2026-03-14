@@ -175,7 +175,6 @@ onMounted(() => {
         duration: 0.3,
         stagger: 0.03,
         ease: 'power2.out',
-        delay: 0.1,
       })
     }
   })
