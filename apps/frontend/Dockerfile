@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 # ============================================
 # Stage 1: Build dependencies (monorepo base)
 # ============================================
@@ -9,10 +10,13 @@ FROM ${NODE_IMAGE} AS base
 # npm 镜像源配置 (淘宝镜像)
 ENV COREPACK_NPM_REGISTRY=https://registry.npmmirror.com
 ENV NODEJS_ORG_MIRROR=https://npmmirror.com/mirrors/node
+ENV PNPM_HOME=/pnpm
+ENV PNPM_STORE_DIR=/pnpm/store
+ENV PATH=$PNPM_HOME:$PATH
 RUN npm config set registry https://registry.npmmirror.com
 
 # 启用 corepack 并安装 pnpm
-RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate && pnpm config set store-dir "${PNPM_STORE_DIR}"
 
 WORKDIR /app
 
@@ -22,7 +26,7 @@ COPY apps/frontend/package.json ./apps/frontend/
 COPY packages/shared/package.json ./packages/shared/
 
 # 安装依赖
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=lumina-pnpm-store,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline
 
 # ============================================
 # Stage 2: Build application

@@ -74,20 +74,16 @@ load_env_file() {
     if [[ "$line" =~ ^[[:space:]]*(export[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*)=(.*)$ ]]; then
       local key=${BASH_REMATCH[2]}
       local val_raw=${BASH_REMATCH[3]}
-      local value=""
+      local value=''
 
-      # 去除前导空格
       val_raw="${val_raw#"${val_raw%%[![:space:]]*}"}"
 
-      # 分情况解析：双引号、单引号或未加引号（支持行内注释且不破坏引号内的 #）
       if [[ "$val_raw" =~ ^\"(.*)\"([[:space:]]*#.*)?$ ]]; then
         value="${BASH_REMATCH[1]}"
       elif [[ "$val_raw" =~ ^\'(.*)\'([[:space:]]*#.*)?$ ]]; then
         value="${BASH_REMATCH[1]}"
       else
-        # 未加引号时，截断到第一个 # 之前
         value="${val_raw%%#*}"
-        # 去除末尾空格
         value="${value%"${value##*[![:space:]]}"}"
       fi
 
@@ -96,9 +92,83 @@ load_env_file() {
   done < "$env_file"
 }
 
-backend_liveness_ok() {
-  "${DOCKER[@]}" compose exec -T backend node -e "const http=require('http');const req=http.get('http://localhost:3000/api/health/liveness',res=>{process.exit(res.statusCode===200?0:1)});req.on('error',()=>process.exit(1));req.setTimeout(1500,()=>{req.destroy();process.exit(1)});" >/dev/null 2>&1
+docker_image_exists() {
+  local image_name=$1
+  "${DOCKER[@]}" image inspect "$image_name" >/dev/null 2>&1
 }
+
+service_container_id() {
+  "${DOCKER[@]}" compose ps -q "$1" 2>/dev/null || true
+}
+
+get_service_health() {
+  local container_id
+  container_id=$(service_container_id "$1")
+
+  if [ -z "$container_id" ]; then
+    return 1
+  fi
+
+  "${DOCKER[@]}" inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$container_id" 2>/dev/null
+}
+
+wait_for_service_health() {
+  local service_name=$1
+  local timeout_seconds=${2:-120}
+  local interval_seconds=${3:-2}
+  local waited=0
+  local health_status=''
+
+  while [ "$waited" -lt "$timeout_seconds" ]; do
+    health_status=$(get_service_health "$service_name" || true)
+
+    case "$health_status" in
+      healthy | running)
+        return 0
+        ;;
+      exited | dead)
+        break
+        ;;
+    esac
+
+    sleep "$interval_seconds"
+    waited=$((waited + interval_seconds))
+  done
+
+  return 1
+}
+
+backend_source_changed() {
+  local changed_file
+  for changed_file in "${CHANGED_FILES[@]}"; do
+    case "$changed_file" in
+      package.json | pnpm-lock.yaml | pnpm-workspace.yaml | tsconfig.base.json | turbo.json | .npmrc | .dockerignore | apps/backend/* | packages/shared/*)
+        return 0
+        ;;
+    esac
+  done
+
+  return 1
+}
+
+frontend_source_changed() {
+  local changed_file
+  for changed_file in "${CHANGED_FILES[@]}"; do
+    case "$changed_file" in
+      package.json | pnpm-lock.yaml | pnpm-workspace.yaml | tsconfig.base.json | turbo.json | .npmrc | .dockerignore | apps/frontend/* | packages/shared/*)
+        return 0
+        ;;
+    esac
+  done
+
+  return 1
+}
+
+PREVIOUS_HEAD=''
+CURRENT_HEAD=''
+CURRENT_HEAD_SHORT=''
+HEAD_CHANGED=false
+CHANGED_FILES=()
 
 if [ -d .git ]; then
   if ! command -v git >/dev/null 2>&1; then
@@ -113,15 +183,16 @@ if [ -d .git ]; then
 
   GIT_REMOTE=${GIT_REMOTE:-origin}
   GIT_BRANCH=${GIT_BRANCH:-main}
+  PREVIOUS_HEAD=$(git rev-parse HEAD 2>/dev/null || true)
 
   echo "📥 正在更新代码（${GIT_REMOTE}/${GIT_BRANCH}）..."
   git remote prune "$GIT_REMOTE" >/dev/null 2>&1 || true
 
-  if ! git fetch "$GIT_REMOTE" --prune --tags --force; then
+  if ! git fetch "$GIT_REMOTE" "$GIT_BRANCH" --prune; then
     echo "⚠️ Git fetch 失败，执行仓库维护后重试..."
     git gc --prune=now >/dev/null 2>&1 || true
     git remote prune "$GIT_REMOTE" >/dev/null 2>&1 || true
-    git fetch "$GIT_REMOTE" --prune --tags --force
+    git fetch "$GIT_REMOTE" "$GIT_BRANCH" --prune
   fi
 
   if ! git show-ref --verify --quiet "refs/remotes/${GIT_REMOTE}/${GIT_BRANCH}"; then
@@ -134,6 +205,19 @@ if [ -d .git ]; then
   fi
 
   git pull --ff-only "$GIT_REMOTE" "$GIT_BRANCH"
+  CURRENT_HEAD=$(git rev-parse HEAD 2>/dev/null || true)
+  if [ -n "$CURRENT_HEAD" ]; then
+    CURRENT_HEAD_SHORT=$(git rev-parse --short=12 "$CURRENT_HEAD" 2>/dev/null || true)
+  fi
+
+  if [ -n "$PREVIOUS_HEAD" ] && [ -n "$CURRENT_HEAD" ] && [ "$PREVIOUS_HEAD" != "$CURRENT_HEAD" ]; then
+    HEAD_CHANGED=true
+    while IFS= read -r changed_file; do
+      if [ -n "$changed_file" ]; then
+        CHANGED_FILES+=("$changed_file")
+      fi
+    done < <(git diff --name-only "$PREVIOUS_HEAD" "$CURRENT_HEAD")
+  fi
 fi
 
 if ! command -v docker >/dev/null 2>&1; then
@@ -158,56 +242,6 @@ fi
 
 if [ ! -f docker-compose.yml ]; then
   echo "❌ 未发现 docker-compose.yml，请在项目根目录运行该脚本"
-  exit 1
-fi
-
-if ! "${DOCKER[@]}" compose config >/dev/null 2>&1; then
-  echo "❌ docker-compose.yml 配置无效，请先修复后再部署"
-  exit 1
-fi
-
-echo "🚀 开始部署 Lumina (简思) 项目..."
-
-DISK_WARN_THRESHOLD=${DISK_WARN_THRESHOLD:-80}
-DISK_CRITICAL_THRESHOLD=${DISK_CRITICAL_THRESHOLD:-90}
-DISK_ABORT_THRESHOLD=${DISK_ABORT_THRESHOLD:-95}
-ALERT_WARN_THRESHOLD=${ALERT_WARN_THRESHOLD:-85}
-ALERT_CRITICAL_THRESHOLD=${ALERT_CRITICAL_THRESHOLD:-90}
-IMAGE_PRUNE_UNTIL=${IMAGE_PRUNE_UNTIL:-240h}
-BUILDER_PRUNE_UNTIL=${BUILDER_PRUNE_UNTIL:-168h}
-ENABLE_AGGRESSIVE_PRUNE=${ENABLE_AGGRESSIVE_PRUNE:-false}
-DOCKER_DF_VERBOSE=${DOCKER_DF_VERBOSE:-false}
-validate_thresholds
-
-DISK_USAGE_BEFORE=$(get_disk_usage)
-if [ "$DISK_USAGE_BEFORE" -ge "$DISK_WARN_THRESHOLD" ]; then
-  echo "⚠️ 部署前磁盘占用 ${DISK_USAGE_BEFORE}%（阈值 ${DISK_WARN_THRESHOLD}%），执行预清理..."
-else
-  echo "🧹 正在执行部署前预清理（当前磁盘占用 ${DISK_USAGE_BEFORE}%）..."
-fi
-# 优先清理虚悬镜像
-"${DOCKER[@]}" image prune -f
-# 按照时间策略清理缓存和旧镜像
-"${DOCKER[@]}" builder prune -f --filter "until=${BUILDER_PRUNE_UNTIL}"
-"${DOCKER[@]}" image prune -a -f --filter "until=${IMAGE_PRUNE_UNTIL}"
-report_docker_storage '部署前预清理后'
-
-DISK_USAGE=$(get_disk_usage)
-echo "📊 部署前清理后磁盘占用：${DISK_USAGE}%"
-if [ "$DISK_USAGE" -ge "$DISK_CRITICAL_THRESHOLD" ]; then
-  if [ "$ENABLE_AGGRESSIVE_PRUNE" = "true" ]; then
-    echo "⚠️ 磁盘占用 ${DISK_USAGE}%（临界 ${DISK_CRITICAL_THRESHOLD}%），部署前执行激进清理..."
-    "${DOCKER[@]}" system prune -f
-    DISK_USAGE=$(get_disk_usage)
-    echo "✨ 部署前激进清理后磁盘占用：${DISK_USAGE}%"
-  else
-    echo "⚠️ 部署前磁盘占用仍为 ${DISK_USAGE}%（临界 ${DISK_CRITICAL_THRESHOLD}%）"
-    echo "⚠️ 如需部署前执行激进清理，请设置 ENABLE_AGGRESSIVE_PRUNE=true 后重试"
-  fi
-fi
-
-if [ "$DISK_USAGE" -ge "$DISK_ABORT_THRESHOLD" ]; then
-  echo "❌ 部署前磁盘占用 ${DISK_USAGE}% 超过中止阈值 ${DISK_ABORT_THRESHOLD}% ，为避免部署失败风险已终止"
   exit 1
 fi
 
@@ -237,19 +271,115 @@ if [ "${#MISSING_VARS[@]}" -gt 0 ]; then
   exit 1
 fi
 
-echo "📦 正在构建并启动容器..."
-IMAGE_TAG=$(git rev-parse --short HEAD 2>/dev/null || echo "latest")
-export IMAGE_TAG
-echo "🏷️ 使用镜像标签: ${IMAGE_TAG}"
-"${DOCKER[@]}" compose up -d --build --remove-orphans
+if ! "${DOCKER[@]}" compose config >/dev/null 2>&1; then
+  echo "❌ docker-compose.yml 配置无效，请先修复后再部署"
+  exit 1
+fi
+
+echo "🚀 开始部署 Lumina (简思) 项目..."
+
+DISK_WARN_THRESHOLD=${DISK_WARN_THRESHOLD:-80}
+DISK_CRITICAL_THRESHOLD=${DISK_CRITICAL_THRESHOLD:-90}
+DISK_ABORT_THRESHOLD=${DISK_ABORT_THRESHOLD:-95}
+ALERT_WARN_THRESHOLD=${ALERT_WARN_THRESHOLD:-85}
+ALERT_CRITICAL_THRESHOLD=${ALERT_CRITICAL_THRESHOLD:-90}
+IMAGE_PRUNE_UNTIL=${IMAGE_PRUNE_UNTIL:-240h}
+BUILDER_PRUNE_UNTIL=${BUILDER_PRUNE_UNTIL:-168h}
+ENABLE_AGGRESSIVE_PRUNE=${ENABLE_AGGRESSIVE_PRUNE:-false}
+DOCKER_DF_VERBOSE=${DOCKER_DF_VERBOSE:-false}
+DEFAULT_IMAGE_TAG=${CURRENT_HEAD_SHORT:-prod}
+BACKEND_IMAGE_TAG=${BACKEND_IMAGE_TAG:-$DEFAULT_IMAGE_TAG}
+FRONTEND_IMAGE_TAG=${FRONTEND_IMAGE_TAG:-$DEFAULT_IMAGE_TAG}
+DOCKER_BUILDKIT=${DOCKER_BUILDKIT:-1}
+COMPOSE_DOCKER_CLI_BUILD=${COMPOSE_DOCKER_CLI_BUILD:-1}
+export BACKEND_IMAGE_TAG FRONTEND_IMAGE_TAG DOCKER_BUILDKIT COMPOSE_DOCKER_CLI_BUILD
+validate_thresholds
+
+if [ -n "$CURRENT_HEAD_SHORT" ]; then
+  echo "📌 当前部署版本: ${CURRENT_HEAD_SHORT}"
+fi
+
+DISK_USAGE_BEFORE=$(get_disk_usage)
+if [ "$DISK_USAGE_BEFORE" -ge "$DISK_WARN_THRESHOLD" ]; then
+  echo "⚠️ 部署前磁盘占用 ${DISK_USAGE_BEFORE}%（阈值 ${DISK_WARN_THRESHOLD}%），执行预清理..."
+  "${DOCKER[@]}" image prune -f
+  "${DOCKER[@]}" builder prune -f --filter "until=${BUILDER_PRUNE_UNTIL}"
+  "${DOCKER[@]}" image prune -a -f --filter "until=${IMAGE_PRUNE_UNTIL}"
+  report_docker_storage '部署前预清理后'
+  DISK_USAGE=$(get_disk_usage)
+  echo "📊 部署前清理后磁盘占用：${DISK_USAGE}%"
+else
+  DISK_USAGE=$DISK_USAGE_BEFORE
+  echo "✅ 当前磁盘占用 ${DISK_USAGE}% 低于阈值 ${DISK_WARN_THRESHOLD}% ，跳过部署前清理以保留构建缓存"
+fi
+
+if [ "$DISK_USAGE" -ge "$DISK_CRITICAL_THRESHOLD" ]; then
+  if [ "$ENABLE_AGGRESSIVE_PRUNE" = "true" ]; then
+    echo "⚠️ 磁盘占用 ${DISK_USAGE}%（临界 ${DISK_CRITICAL_THRESHOLD}%），部署前执行激进清理..."
+    "${DOCKER[@]}" system prune -f
+    DISK_USAGE=$(get_disk_usage)
+    echo "✨ 部署前激进清理后磁盘占用：${DISK_USAGE}%"
+  else
+    echo "⚠️ 部署前磁盘占用仍为 ${DISK_USAGE}%（临界 ${DISK_CRITICAL_THRESHOLD}%）"
+    echo "⚠️ 如需部署前执行激进清理，请设置 ENABLE_AGGRESSIVE_PRUNE=true 后重试"
+  fi
+fi
+
+if [ "$DISK_USAGE" -ge "$DISK_ABORT_THRESHOLD" ]; then
+  echo "❌ 部署前磁盘占用 ${DISK_USAGE}% 超过中止阈值 ${DISK_ABORT_THRESHOLD}% ，为避免部署失败风险已终止"
+  exit 1
+fi
+
+BACKEND_IMAGE="lumina-backend:${BACKEND_IMAGE_TAG}"
+FRONTEND_IMAGE="lumina-frontend:${FRONTEND_IMAGE_TAG}"
+BUILD_SERVICES=()
+BACKEND_BUILD_REASON=''
+FRONTEND_BUILD_REASON=''
+
+if [ ! -d .git ]; then
+  BUILD_SERVICES=(backend frontend)
+  BACKEND_BUILD_REASON='非 Git 环境，执行保守全量构建'
+  FRONTEND_BUILD_REASON='非 Git 环境，执行保守全量构建'
+else
+  if ! docker_image_exists "$BACKEND_IMAGE"; then
+    BUILD_SERVICES+=('backend')
+    BACKEND_BUILD_REASON="本地缺少镜像 ${BACKEND_IMAGE}"
+  elif [ "$HEAD_CHANGED" = "true" ] && backend_source_changed; then
+    BUILD_SERVICES+=('backend')
+    BACKEND_BUILD_REASON='检测到后端相关代码变更'
+  fi
+
+  if ! docker_image_exists "$FRONTEND_IMAGE"; then
+    BUILD_SERVICES+=('frontend')
+    FRONTEND_BUILD_REASON="本地缺少镜像 ${FRONTEND_IMAGE}"
+  elif [ "$HEAD_CHANGED" = "true" ] && frontend_source_changed; then
+    BUILD_SERVICES+=('frontend')
+    FRONTEND_BUILD_REASON='检测到前端相关代码变更'
+  fi
+fi
+
+echo "🏷️ 使用镜像标签: backend=${BACKEND_IMAGE_TAG}, frontend=${FRONTEND_IMAGE_TAG}"
+
+if [ "${#BUILD_SERVICES[@]}" -gt 0 ]; then
+  echo "📦 需要重建的服务: ${BUILD_SERVICES[*]}"
+  if [ -n "$BACKEND_BUILD_REASON" ]; then
+    echo "   backend: ${BACKEND_BUILD_REASON}"
+  fi
+  if [ -n "$FRONTEND_BUILD_REASON" ]; then
+    echo "   frontend: ${FRONTEND_BUILD_REASON}"
+  fi
+  "${DOCKER[@]}" compose build "${BUILD_SERVICES[@]}"
+else
+  echo "⚡ 未检测到需要重建的服务，复用现有镜像"
+fi
+
+echo "🚀 正在启动并更新容器..."
+"${DOCKER[@]}" compose up -d --no-build --remove-orphans
 
 DISK_USAGE_AFTER_BUILD=$(get_disk_usage)
 if [ "$DISK_USAGE_AFTER_BUILD" -ge "$DISK_WARN_THRESHOLD" ]; then
   echo "🧹 部署后磁盘占用 ${DISK_USAGE_AFTER_BUILD}%（阈值 ${DISK_WARN_THRESHOLD}%），执行即时清理..."
-  # 1. 立即删除所有虚悬镜像 (dangling images) - 这些是刚才构建产生的旧版本
   "${DOCKER[@]}" image prune -f
-
-  # 2. 按照时间策略清理不使用的镜像和缓存 (保留最近的)
   "${DOCKER[@]}" builder prune -f --filter "until=${BUILDER_PRUNE_UNTIL}"
   "${DOCKER[@]}" image prune -a -f --filter "until=${IMAGE_PRUNE_UNTIL}"
   report_docker_storage '部署后即时清理后'
@@ -276,29 +406,11 @@ if [ "$DISK_USAGE_AFTER" -ge "$DISK_ABORT_THRESHOLD" ]; then
 fi
 
 echo "🗄️ 正在同步数据库 Schema..."
-echo "⏳ 等待 PostgreSQL 就绪..."
-for i in {1..60}; do
-  if "${DOCKER[@]}" compose exec -T postgres pg_isready -U "${POSTGRES_USER:-postgres}" >/dev/null 2>&1; then
-    break
-  fi
-  sleep 2
-done
-
-if ! "${DOCKER[@]}" compose exec -T postgres pg_isready -U "${POSTGRES_USER:-postgres}" >/dev/null 2>&1; then
-  echo "❌ PostgreSQL 未就绪，终止部署"
-  exit 1
-fi
-
 echo "⏳ 等待后端健康检查通过..."
-for i in {1..60}; do
-  if backend_liveness_ok; then
-    break
-  fi
-  sleep 2
-done
-
-if ! backend_liveness_ok; then
+if ! wait_for_service_health backend 180 2; then
   echo "❌ 后端未就绪，终止部署"
+  "${DOCKER[@]}" compose ps || true
+  "${DOCKER[@]}" compose logs --tail=100 backend || true
   exit 1
 fi
 

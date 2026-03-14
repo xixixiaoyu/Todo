@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 # ============================================
 # Stage 1: Base (Node + pnpm setup)
 # ============================================
@@ -8,10 +9,13 @@ FROM ${NODE_IMAGE} AS base
 # npm 镜像源配置 (淘宝镜像)
 ENV COREPACK_NPM_REGISTRY=https://registry.npmmirror.com
 ENV NODEJS_ORG_MIRROR=https://npmmirror.com/mirrors/node
+ENV PNPM_HOME=/pnpm
+ENV PNPM_STORE_DIR=/pnpm/store
+ENV PATH=$PNPM_HOME:$PATH
 RUN npm config set registry https://registry.npmmirror.com
 
 # 启用 corepack 并安装 pnpm
-RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate && pnpm config set store-dir "${PNPM_STORE_DIR}"
 
 WORKDIR /app
 
@@ -26,7 +30,7 @@ COPY apps/backend/package.json ./apps/backend/
 COPY packages/shared/package.json ./packages/shared/
 
 # 安装所有依赖 (包括 devDependencies)
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=lumina-pnpm-store,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline
 
 # 复制源代码及基础配置
 COPY tsconfig.base.json ./
@@ -51,7 +55,7 @@ COPY --from=builder /app /app
 # 使用 pnpm deploy 提取生产环境所需的最小依赖集
 # 这会自动处理 workspace:* 依赖，将其转换为独立目录结构
 # 注意：这会执行 pnpm install --prod
-RUN pnpm --filter @lumina/backend --prod deploy /out
+RUN --mount=type=cache,id=lumina-pnpm-store,target=/pnpm/store pnpm --filter @lumina/backend --prod deploy /out
 
 # ============================================
 # Stage 4: Production (Final lean image)

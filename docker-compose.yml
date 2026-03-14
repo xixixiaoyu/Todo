@@ -72,7 +72,7 @@ services:
   # Backend (NestJS)
   # ============================================
   backend:
-    image: lumina-backend:${IMAGE_TAG:-latest}
+    image: lumina-backend:${BACKEND_IMAGE_TAG:-prod}
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
@@ -141,7 +141,7 @@ services:
   # Frontend (Nginx)
   # ============================================
   frontend:
-    image: lumina-frontend:${IMAGE_TAG:-latest}
+    image: lumina-frontend:${FRONTEND_IMAGE_TAG:-prod}
     build:
       context: .
       dockerfile: apps/frontend/Dockerfile
