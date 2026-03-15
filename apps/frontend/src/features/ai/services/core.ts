@@ -349,7 +349,7 @@ export async function fetchNonStreamResponse(
   const requestBody: Record<string, unknown> = {
     model: config.model,
     messages,
-    temperature: config.temperature ?? 0.7,
+    temperature: config.temperature ?? 0.6,
     top_p: config.top_p ?? 0.95,
     stream: false,
   }
@@ -403,7 +403,7 @@ export async function getAIStaticResponse(
     model = aiConfig.model,
     baseUrl = aiConfig.baseUrl,
     apiKey = aiConfig.apiKey,
-    temperature = 0.3,
+    temperature = aiConfig.temperature,
     top_p = 0.95,
     thinkingEffort = aiConfig.thinkingEffort,
   } = options

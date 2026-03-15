@@ -151,6 +151,23 @@ describe('aiService - Request Parameters', () => {
   })
 
   describe('getAIStaticResponse', () => {
+    it('should include temperature: 0.6 by default', async () => {
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          choices: [{ message: { content: 'Hello' } }],
+        }),
+      } as Response)
+
+      await getAIStaticResponse([])
+
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+      const callArgs = fetchMock.mock.calls[0]
+      const requestBody = JSON.parse(callArgs[1]?.body as string)
+
+      expect(requestBody).toHaveProperty('temperature', 0.6)
+    })
+
     it('should include top_p: 0.95 by default', async () => {
       fetchMock.mockResolvedValueOnce({
         ok: true,

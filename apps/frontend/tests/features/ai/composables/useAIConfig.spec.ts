@@ -22,6 +22,7 @@ describe('useAIConfig - Core', () => {
       expect(config.value.baseUrl).toBe('https://api.deepseek.com')
       expect(config.value.apiKey).toBe('')
       expect(config.value.model).toBe('deepseek-chat')
+      expect(config.value.temperature).toBe(0.6)
     })
 
     it('should load saved config from localStorage', () => {

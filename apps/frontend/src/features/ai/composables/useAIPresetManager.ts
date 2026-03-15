@@ -52,7 +52,7 @@ export function useAIPresetManager(): {
     apiKey: '',
     model: '',
     systemPrompt: '',
-    temperature: 0.3,
+    temperature: 0.6,
     thinkingEffort: 'high',
     todoAssistant: false,
   })

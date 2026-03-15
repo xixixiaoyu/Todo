@@ -70,7 +70,7 @@ const DEFAULT_CONFIG: AIConfig = {
   baseUrl: 'https://api.deepseek.com',
   apiKey: '',
   model: 'deepseek-chat',
-  temperature: 0.3,
+  temperature: 0.6,
   systemPrompt: i18n.global.t('ai.defaultSystemPrompt'),
   thinkingMode: aiThinkingMode.value, // 使用初始值
   thinkingEffort: 'high',
