@@ -534,12 +534,9 @@ function onFireworksComplete() {
 }
 
 .todo-typography {
-  --todo-font-family:
-    'SF Pro Text', 'PingFang SC', 'Noto Sans SC', 'Inter', system-ui, -apple-system, sans-serif;
   --todo-font-title: 20px;
   --todo-font-body: 16px;
   --todo-font-meta: 14px;
   --todo-font-caption: 12px;
-  font-family: var(--todo-font-family);
 }
 </style>
