@@ -10,6 +10,69 @@ export const McpTransportType = {
 
 export type McpTransportType = (typeof McpTransportType)[keyof typeof McpTransportType]
 
+function isPrivateOrLoopbackIpv4(hostname: string): boolean {
+  const parts = hostname.split('.')
+  if (parts.length !== 4) return false
+  if (!parts.every((p) => /^\d+$/.test(p))) return false
+
+  const octets = parts.map((p) => Number(p))
+  if (octets.some((o) => o < 0 || o > 255)) return false
+
+  const [a, b] = octets
+  if (a === 10) return true
+  if (a === 127) return true
+  if (a === 169 && b === 254) return true
+  if (a === 172 && b >= 16 && b <= 31) return true
+  if (a === 192 && b === 168) return true
+  if (a === 0) return true
+
+  return false
+}
+
+function isPrivateOrLoopbackIpv6(hostname: string): boolean {
+  const normalized = hostname.toLowerCase()
+  if (!normalized.includes(':')) return false
+  if (normalized === '::1') return true
+  if (normalized.startsWith('fe80:')) return true
+  if (normalized.startsWith('fc') || normalized.startsWith('fd')) return true
+  return false
+}
+
+function isBlockedHostname(hostname: string): boolean {
+  const normalized = hostname.toLowerCase()
+
+  if (
+    normalized === 'localhost' ||
+    normalized.endsWith('.localhost') ||
+    normalized.endsWith('.local')
+  ) {
+    return true
+  }
+
+  if (isPrivateOrLoopbackIpv4(normalized)) {
+    return true
+  }
+
+  if (isPrivateOrLoopbackIpv6(normalized)) {
+    return true
+  }
+
+  return false
+}
+
+function isAllowedMcpHttpUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return false
+    }
+
+    return !isBlockedHostname(parsed.hostname)
+  } catch {
+    return false
+  }
+}
+
 /**
  * Stdio Transport 配置 Schema
  */
@@ -36,7 +99,10 @@ export type UpdateMcpServerDto = z.infer<typeof UpdateMcpServerSchema>
  * HTTP Transport 配置 Schema
  */
 export const HttpConfigSchema = z.object({
-  url: z.string().url('Invalid URL format'),
+  url: z
+    .string()
+    .url('Invalid URL format')
+    .refine(isAllowedMcpHttpUrl, 'Only public http(s) MCP URLs are allowed'),
   headers: z.record(z.string()).optional(),
   // OAuth / Bearer Token 支持
   auth: z

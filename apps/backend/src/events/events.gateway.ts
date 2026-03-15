@@ -7,10 +7,11 @@ import {
   OnGatewayInit,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  WsException,
 } from '@nestjs/websockets'
 import { Logger, OnModuleDestroy } from '@nestjs/common'
 import { Server, Socket } from 'socket.io'
-import { JwtService } from '@nestjs/jwt'
+import { TokenService } from '../auth/token.service'
 
 /**
  * WebSocket 事件网关
@@ -62,7 +63,25 @@ export class EventsGateway
   private readonly logger = new Logger(EventsGateway.name)
   private readonly broadcastTimers = new Map<number, NodeJS.Timeout>()
 
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(private readonly tokenService: TokenService) {}
+
+  private getAuthorizedUserId(client: Socket): number {
+    const sub = client.data.user?.sub
+    const userId = typeof sub === 'string' ? Number.parseInt(sub, 10) : sub
+    if (!Number.isInteger(userId) || userId <= 0) {
+      throw new WsException('unauthorized')
+    }
+    return userId
+  }
+
+  private ensureOwnRoomAccess(client: Socket, room: string): void {
+    const userId = this.getAuthorizedUserId(client)
+    const expectedRoom = `user:${userId}`
+    if (room !== expectedRoom) {
+      this.logger.warn(`Unauthorized room access attempt: user=${userId}, room=${room}`)
+      throw new WsException('forbidden room')
+    }
+  }
 
   afterInit(server: Server) {
     this.logger.log('WebSocket 网关已初始化')
@@ -78,7 +97,14 @@ export class EventsGateway
             return next(new Error('unauthorized'))
           }
 
-          const payload = await this.jwtService.verifyAsync(token)
+          const payload = this.tokenService.verifyAccessToken(token)
+          const isInvalidated = await this.tokenService.isUserSessionInvalidated(
+            payload.sub,
+            payload.iat,
+          )
+          if (isInvalidated) {
+            return next(new Error('unauthorized'))
+          }
           socket.data.user = payload
           next()
         } catch {
@@ -129,6 +155,7 @@ export class EventsGateway
     this.logger.debug(`收到消息: ${JSON.stringify(data)} from ${client.id}`)
 
     if (data.room) {
+      this.ensureOwnRoomAccess(client, data.room)
       // 发送到指定房间
       this.server.to(data.room).emit('message', {
         senderId: client.id,
@@ -179,6 +206,8 @@ export class EventsGateway
    */
   @SubscribeMessage('join')
   handleJoin(@MessageBody() data: { room: string }, @ConnectedSocket() client: Socket) {
+    this.ensureOwnRoomAccess(client, data.room)
+
     const joinPromise = client.join(data.room)
     if (joinPromise) {
       joinPromise.catch((err: Error) => {
@@ -201,6 +230,8 @@ export class EventsGateway
    */
   @SubscribeMessage('leave')
   handleLeave(@MessageBody() data: { room: string }, @ConnectedSocket() client: Socket) {
+    this.ensureOwnRoomAccess(client, data.room)
+
     const leavePromise = client.leave(data.room)
     if (leavePromise) {
       leavePromise.catch((err: Error) => {

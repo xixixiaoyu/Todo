@@ -112,6 +112,18 @@ export class TokenService {
     }
   }
 
+  verifyAccessToken(token: string): JwtPayload {
+    try {
+      const payload = this.jwtService.verify<JwtPayload>(token, { secret: this.accessTokenSecret })
+      if (payload.type !== 'access') {
+        throw new UnauthorizedException('auth.INVALID_TOKEN')
+      }
+      return payload
+    } catch {
+      throw new UnauthorizedException('auth.INVALID_TOKEN')
+    }
+  }
+
   /**
    * 将令牌加入黑名单
    */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { McpTransportType, UpdateMcpServerSchema } from './mcp.schema'
+import { CreateMcpServerSchema, McpTransportType, UpdateMcpServerSchema } from './mcp.schema'
 
 describe('UpdateMcpServerSchema', () => {
   it('accepts partial updates that do not touch runtime config', () => {
@@ -38,5 +38,29 @@ describe('UpdateMcpServerSchema', () => {
     })
 
     expect(result.success).toBe(true)
+  })
+
+  it('rejects localhost MCP HTTP endpoint on create', () => {
+    const result = CreateMcpServerSchema.safeParse({
+      name: 'local',
+      transport: McpTransportType.HTTP,
+      config: {
+        url: 'http://127.0.0.1:8080/mcp',
+      },
+    })
+
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects non-http MCP endpoint protocol on create', () => {
+    const result = CreateMcpServerSchema.safeParse({
+      name: 'ftp',
+      transport: McpTransportType.HTTP,
+      config: {
+        url: 'ftp://example.com/mcp',
+      },
+    })
+
+    expect(result.success).toBe(false)
   })
 })

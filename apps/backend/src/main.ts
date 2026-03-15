@@ -131,7 +131,11 @@ async function bootstrap() {
         return
       }
 
-      if (req.url.includes('/api/health') || req.url.includes('/socket.io')) {
+      const pathname = req.url.split('?')[0]
+      const isHealthPath = pathname === '/api/health' || pathname.startsWith('/api/health/')
+      const isSocketPath = pathname.startsWith('/socket.io')
+
+      if (isHealthPath || isSocketPath) {
         return
       }
 

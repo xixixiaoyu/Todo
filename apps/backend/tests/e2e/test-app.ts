@@ -494,7 +494,7 @@ export async function createE2eApp() {
     addHook: (
       name: 'preHandler',
       hook: (
-        req: { method: string; headers: Record<string, unknown> },
+        req: { method: string; url: string; headers: Record<string, unknown> },
         reply: { code: (s: number) => { send: (b: unknown) => void } },
       ) => Promise<void>,
     ) => void
@@ -505,6 +505,10 @@ export async function createE2eApp() {
   fastify.addHook('preHandler', async (req, reply) => {
     const method = req.method.toUpperCase()
     if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') return
+    const pathname = (req.url || '').split('?')[0]
+    const isHealthPath = pathname === '/api/health' || pathname.startsWith('/api/health/')
+    const isSocketPath = pathname.startsWith('/socket.io')
+    if (isHealthPath || isSocketPath) return
     const requestedWith = req.headers['x-requested-with']
     if (!requestedWith) {
       reply.code(403).send({

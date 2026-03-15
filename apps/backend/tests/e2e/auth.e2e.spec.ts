@@ -44,6 +44,23 @@ describe('Auth e2e', () => {
     })
   })
 
+  it('should not bypass security header check via query string path fragments', async () => {
+    const res = await inject({
+      method: 'POST',
+      url: '/api/auth/register?next=/api/health/liveness',
+      headers: {
+        'content-type': 'application/json',
+      },
+      payload: { email: 'b@example.com', name: 'Bob', password: 'password123' },
+    })
+
+    expect(res.statusCode).toBe(403)
+    expect(res.body).toMatchObject({
+      success: false,
+      message: 'Security check failed: X-Requested-With header is missing',
+    })
+  })
+
   it('should register, login, refresh, logout, and reject blacklisted refresh token', async () => {
     const registerRes = await inject<AuthResponse>({
       method: 'POST',

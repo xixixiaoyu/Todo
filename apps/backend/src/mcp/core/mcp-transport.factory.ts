@@ -1,11 +1,113 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'
+import { lookup } from 'node:dns/promises'
+import { basename } from 'node:path'
+import { isIP } from 'node:net'
 import { McpTransportType, type StdioConfig, type HttpConfig } from '../mcp.dto'
 
 @Injectable()
 export class McpTransportFactory {
   private readonly logger = new Logger(McpTransportFactory.name)
+
+  private isPrivateOrLoopbackIpv4(ip: string): boolean {
+    const parts = ip.split('.')
+    if (parts.length !== 4 || !parts.every((p) => /^\d+$/.test(p))) return false
+
+    const [a, b] = parts.map((p) => Number(p))
+    if (a === 10 || a === 127 || a === 0) return true
+    if (a === 169 && b === 254) return true
+    if (a === 172 && b >= 16 && b <= 31) return true
+    if (a === 192 && b === 168) return true
+    return false
+  }
+
+  private isPrivateOrLoopbackIpv6(ip: string): boolean {
+    const normalized = ip.toLowerCase()
+    if (normalized === '::1') return true
+    if (normalized.startsWith('fe80:')) return true
+    if (normalized.startsWith('fc') || normalized.startsWith('fd')) return true
+    return false
+  }
+
+  private isBlockedHostname(hostname: string): boolean {
+    const normalized = hostname.toLowerCase()
+    if (
+      normalized === 'localhost' ||
+      normalized.endsWith('.localhost') ||
+      normalized.endsWith('.local')
+    ) {
+      return true
+    }
+
+    const ipType = isIP(normalized)
+    if (ipType === 4) {
+      return this.isPrivateOrLoopbackIpv4(normalized)
+    }
+    if (ipType === 6) {
+      return this.isPrivateOrLoopbackIpv6(normalized)
+    }
+    return false
+  }
+
+  private isBlockedIpAddress(address: string): boolean {
+    const ipType = isIP(address)
+    if (ipType === 4) return this.isPrivateOrLoopbackIpv4(address)
+    if (ipType === 6) return this.isPrivateOrLoopbackIpv6(address)
+    return false
+  }
+
+  private parseAllowedCommands(raw: string | undefined): string[] {
+    return (raw || '')
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+  }
+
+  private ensureStdioTransportAllowed(command: string): void {
+    const nodeEnv = process.env.NODE_ENV || 'development'
+    const stdioEnabled = process.env.MCP_ENABLE_STDIO === 'true' || nodeEnv !== 'production'
+
+    if (!stdioEnabled) {
+      throw new Error('MCP stdio transport is disabled in current environment')
+    }
+
+    const allowedCommands = this.parseAllowedCommands(process.env.MCP_STDIO_ALLOWED_COMMANDS)
+    if (nodeEnv === 'production' && allowedCommands.length === 0) {
+      throw new Error('MCP_STDIO_ALLOWED_COMMANDS must be configured in production')
+    }
+
+    if (allowedCommands.length === 0) {
+      return
+    }
+
+    const commandBase = basename(command)
+    const isAllowed = allowedCommands.includes(command) || allowedCommands.includes(commandBase)
+    if (!isAllowed) {
+      throw new Error(`MCP stdio command is not allowlisted: ${command}`)
+    }
+  }
+
+  private async assertHttpEndpointSafe(url: string): Promise<void> {
+    const parsed = new URL(url)
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      throw new Error(`Unsupported MCP HTTP protocol: ${parsed.protocol}`)
+    }
+
+    const hostname = parsed.hostname.toLowerCase()
+    if (this.isBlockedHostname(hostname)) {
+      throw new Error(`Blocked MCP HTTP host: ${hostname}`)
+    }
+
+    const resolved = await lookup(hostname, { all: true, verbatim: true })
+    if (resolved.length === 0) {
+      throw new Error(`Unable to resolve MCP HTTP host: ${hostname}`)
+    }
+
+    if (resolved.some((record) => this.isBlockedIpAddress(record.address))) {
+      throw new Error(`Blocked MCP HTTP host resolution: ${hostname}`)
+    }
+  }
 
   async createTransport(
     serverId: string,
@@ -24,21 +126,17 @@ export class McpTransportFactory {
   }
 
   private createStdioTransport(serverId: string, config: StdioConfig): Transport {
-    let { command } = config
-    let args = config.args || []
+    const command = config.command.trim()
+    const args = config.args || []
 
-    // 后端兜底：如果没传参数但命令包含空格，尝试智能分割
-    if (args.length === 0 && command.trim().includes(' ')) {
-      const parts = command.trim().split(/\s+/)
-      command = parts[0]
-      args = parts.slice(1)
-      this.logger.warn(
-        `Auto-splitting command with spaces for ${serverId}: ${command} [${args.join(', ')}]`,
-      )
+    if (command.includes(' ')) {
+      throw new Error('MCP stdio command must not include spaces, please pass args separately')
     }
 
+    this.ensureStdioTransportAllowed(command)
+
     // 包名纠错：处理 @upstash/context7 -> @upstash/context7-mcp
-    args = args.map((arg) => {
+    const normalizedArgs = args.map((arg) => {
       if (arg === '@upstash/context7') {
         this.logger.warn(`Correcting package name: @upstash/context7 -> @upstash/context7-mcp`)
         return '@upstash/context7-mcp'
@@ -77,12 +175,12 @@ export class McpTransportFactory {
     }
 
     this.logger.log(
-      `Spawning MCP server: ${command} (args: ${args.length}) (CWD: ${config.cwd || 'default'})`,
+      `Spawning MCP server: ${command} (args: ${normalizedArgs.length}) (CWD: ${config.cwd || 'default'})`,
     )
 
     return new StdioClientTransport({
       command,
-      args,
+      args: normalizedArgs,
       env,
       cwd: config.cwd,
       stderr: 'pipe',
@@ -90,6 +188,8 @@ export class McpTransportFactory {
   }
 
   private async createHttpTransport(_serverId: string, config: HttpConfig): Promise<Transport> {
+    await this.assertHttpEndpointSafe(config.url)
+
     const headers: Record<string, string> = {}
     if (config.headers) {
       for (const [key, value] of Object.entries(config.headers)) {
