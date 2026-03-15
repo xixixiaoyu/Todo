@@ -13,11 +13,11 @@
 
 ## 测试成果
 
-截至 `2026-03-15`，仓库当前测试结果是：
+截至 `2026-03-15`（本次执行 `pnpm turbo run test --force` 无缓存实测），仓库当前测试结果是：
 
-- `97` 个测试文件
-- `659` 条测试用例
-- 前端 `563` 条、后端 `83` 条、共享包 `13` 条
+- `99` 个测试文件
+- `673` 条测试用例
+- 前端 `565` 条、后端 `93` 条、共享包 `15` 条
 - 本地已通过 `pnpm lint`、`pnpm test`、`pnpm type-check`
 
 这不是“有测一点”的状态，而是已经形成了覆盖前端交互、后端服务、共享契约的完整回归基础。对一个还在持续快速迭代的 AI Todo 项目来说，这一点很关键。
@@ -165,8 +165,11 @@ AI 在这里不是一个孤立弹窗。仓库里已经包含上下文压缩、�
 | :--- | :--- |
 | 前端 | Vue 3.5、Vite 8、Pinia、Tailwind CSS、GSAP、Three.js |
 | 后端 | NestJS 11（Fastify）、Prisma、PostgreSQL、Redis、BullMQ |
+| 数据请求与缓存 | Axios、TanStack Query |
+| 实时通信 | Socket.IO |
 | 跨端 | Wails、Capacitor |
 | 共享契约 | Zod、TypeScript |
+| 容器化 | Docker、Docker Compose |
 | 工程化 | pnpm Monorepo、Turborepo、ESLint、Prettier、Vitest |
 
 ## 架构说明
