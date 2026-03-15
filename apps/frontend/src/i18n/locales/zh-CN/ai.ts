@@ -53,6 +53,8 @@ export const ai = {
   baseUrlHint: '请求时会自动拼接 /chat/completions',
   apiKeyLabel: 'API Key',
   apiKeyPlaceholder: 'sk-...',
+  apiKeyHint: '请前往你所选模型服务商官网自行获取 API Key。',
+  apiKeyHintRecommended: '推荐（可选）：DeepSeek',
   modelLabel: '模型',
   modelPlaceholder: '例如：deepseek-chat',
   temperatureLabel: '温度',

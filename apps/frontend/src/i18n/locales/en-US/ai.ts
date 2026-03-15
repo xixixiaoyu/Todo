@@ -63,6 +63,8 @@ export const ai = {
   baseUrlHint: 'Request will automatically append /chat/completions',
   apiKeyLabel: 'API Key',
   apiKeyPlaceholder: 'sk-...',
+  apiKeyHint: 'Get your API Key from your chosen model provider official website.',
+  apiKeyHintRecommended: 'Recommended (optional): DeepSeek',
   modelLabel: 'Model',
   modelPlaceholder: 'e.g., deepseek-chat',
   temperatureLabel: 'Temp',

@@ -94,6 +94,26 @@ const showApiKey = ref(false)
           <Eye v-else :size="16" />
         </button>
       </div>
+      <div class="flex items-start gap-1.5 px-1">
+        <Info
+          :size="12"
+          class="mt-0.5 shrink-0 text-muted-foreground/80 dark:text-muted-foreground/60"
+        />
+        <p
+          class="text-[11px] leading-normal text-muted-foreground/80 dark:text-muted-foreground/60"
+        >
+          {{ t('ai.apiKeyHint') }}
+          <span class="ml-1">{{ t('ai.apiKeyHintRecommended') }}</span>
+          <a
+            href="https://platform.deepseek.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="ml-1 text-primary/90 underline decoration-primary/40 underline-offset-2 transition-colors hover:text-primary"
+          >
+            platform.deepseek.com
+          </a>
+        </p>
+      </div>
     </div>
 
     <div class="group space-y-2">

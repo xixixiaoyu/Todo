@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Eye, EyeOff, ChevronLeft } from 'lucide-vue-next'
+import { Eye, EyeOff, ChevronLeft, Info } from 'lucide-vue-next'
 import type { AIPreset } from '@/features/ai/composables/useAIConfig'
 
 const props = defineProps<{
@@ -114,6 +114,21 @@ const title = computed(() => (props.isCreating ? t('ai.createPreset') : t('ai.ed
             <EyeOff v-if="showApiKey" :size="14" />
             <Eye v-else :size="14" />
           </button>
+        </div>
+        <div class="mt-1 flex items-start gap-1">
+          <Info :size="12" class="mt-0.5 shrink-0 text-muted-foreground/80" />
+          <p class="text-[11px] leading-normal text-muted-foreground/80">
+            {{ t('ai.apiKeyHint') }}
+            <span class="ml-1">{{ t('ai.apiKeyHintRecommended') }}</span>
+            <a
+              href="https://platform.deepseek.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="ml-1 text-primary/90 underline decoration-primary/40 underline-offset-2 transition-colors hover:text-primary"
+            >
+              platform.deepseek.com
+            </a>
+          </p>
         </div>
       </div>
 
