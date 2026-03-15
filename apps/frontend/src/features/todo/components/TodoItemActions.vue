@@ -188,7 +188,7 @@ function handleApplySchedule(dueAt: Date | null, remindAt: Date | null) {
                   side="bottom"
                   :side-offset="10"
                   align="end"
-                  class="w-[340px] p-4 z-[110]"
+                  class="w-[92vw] max-w-[760px] max-h-[82vh] overflow-y-auto p-4 z-[110]"
                 >
                   <TodoSchedulePopover
                     :due-at="todo.dueAt"
@@ -290,7 +290,12 @@ function handleApplySchedule(dueAt: Date | null, remindAt: Date | null) {
                 <CalendarClock class="h-3.5 w-3.5 md:h-4 md:w-4" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent side="bottom" :side-offset="10" align="end" class="w-[340px] p-4 z-50">
+            <PopoverContent
+              side="bottom"
+              :side-offset="10"
+              align="end"
+              class="w-[92vw] max-w-[760px] max-h-[82vh] overflow-y-auto p-4 z-50"
+            >
               <TodoSchedulePopover
                 :due-at="todo.dueAt"
                 :remind-at="todo.remindAt"

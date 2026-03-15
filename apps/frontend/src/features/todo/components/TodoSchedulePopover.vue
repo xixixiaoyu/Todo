@@ -106,62 +106,64 @@ function apply() {
 
 <template>
   <div class="space-y-4">
-    <section class="space-y-2">
-      <div class="flex items-center justify-between gap-2">
-        <p class="text-sm font-semibold">{{ t('todo.dueAt') }}</p>
-        <Button
-          variant="ghost"
-          size="xs"
-          class="h-7 rounded-lg px-2 text-xs hover:bg-muted/50"
-          :disabled="!dueValue"
-          @click="dueValue = null"
-        >
-          {{ t('todo.clearDueAt') }}
-        </Button>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <Button
-          v-for="item in quickDue"
-          :key="item.key"
-          variant="secondary"
-          size="xs"
-          class="rounded-xl bg-secondary/70 hover:bg-secondary/90"
-          @click="item.run"
-        >
-          {{ t(item.key) }}
-        </Button>
-      </div>
-      <TodoDateTimePicker v-model="dueValue" />
-    </section>
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 md:items-start">
+      <section class="space-y-2">
+        <div class="flex items-center justify-between gap-2">
+          <p class="text-sm font-semibold">{{ t('todo.dueAt') }}</p>
+          <Button
+            variant="ghost"
+            size="xs"
+            class="h-7 rounded-lg px-2 text-xs hover:bg-muted/50"
+            :disabled="!dueValue"
+            @click="dueValue = null"
+          >
+            {{ t('todo.clearDueAt') }}
+          </Button>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <Button
+            v-for="item in quickDue"
+            :key="item.key"
+            variant="secondary"
+            size="xs"
+            class="rounded-xl bg-secondary/70 hover:bg-secondary/90"
+            @click="item.run"
+          >
+            {{ t(item.key) }}
+          </Button>
+        </div>
+        <TodoDateTimePicker v-model="dueValue" :default-expanded="true" />
+      </section>
 
-    <section class="space-y-2">
-      <div class="flex items-center justify-between gap-2">
-        <p class="text-sm font-semibold">{{ t('todo.remindAt') }}</p>
-        <Button
-          variant="ghost"
-          size="xs"
-          class="h-7 rounded-lg px-2 text-xs hover:bg-muted/50"
-          :disabled="!remindValue"
-          @click="remindValue = null"
-        >
-          {{ t('todo.clearRemindAt') }}
-        </Button>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <Button
-          v-for="item in quickRemind"
-          :key="item.key"
-          variant="secondary"
-          size="xs"
-          class="rounded-xl bg-secondary/70 hover:bg-secondary/90"
-          :disabled="item.disabled"
-          @click="item.run"
-        >
-          {{ t(item.key) }}
-        </Button>
-      </div>
-      <TodoDateTimePicker v-model="remindValue" />
-    </section>
+      <section class="space-y-2">
+        <div class="flex items-center justify-between gap-2">
+          <p class="text-sm font-semibold">{{ t('todo.remindAt') }}</p>
+          <Button
+            variant="ghost"
+            size="xs"
+            class="h-7 rounded-lg px-2 text-xs hover:bg-muted/50"
+            :disabled="!remindValue"
+            @click="remindValue = null"
+          >
+            {{ t('todo.clearRemindAt') }}
+          </Button>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <Button
+            v-for="item in quickRemind"
+            :key="item.key"
+            variant="secondary"
+            size="xs"
+            class="rounded-xl bg-secondary/70 hover:bg-secondary/90"
+            :disabled="item.disabled"
+            @click="item.run"
+          >
+            {{ t(item.key) }}
+          </Button>
+        </div>
+        <TodoDateTimePicker v-model="remindValue" :default-expanded="true" />
+      </section>
+    </div>
 
     <div
       v-if="isInvalid"

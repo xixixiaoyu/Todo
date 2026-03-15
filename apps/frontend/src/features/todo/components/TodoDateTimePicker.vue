@@ -5,9 +5,15 @@ import { useI18n } from 'vue-i18n'
 import { Button } from '@/components/ui/button'
 import { toDate } from '../stores/todo.dates'
 
-const props = defineProps<{
-  modelValue: Date | string | number | null | undefined
-}>()
+const props = withDefaults(
+  defineProps<{
+    modelValue: Date | string | number | null | undefined
+    defaultExpanded?: boolean
+  }>(),
+  {
+    defaultExpanded: false,
+  },
+)
 
 const emit = defineEmits<{
   'update:modelValue': [Date | null]
@@ -20,7 +26,7 @@ function pad2(n: number): string {
 }
 
 const value = computed<Date | null>(() => toDate(props.modelValue))
-const showCalendar = ref(false)
+const showCalendar = ref(props.defaultExpanded)
 
 const viewYear = ref<number>(new Date().getFullYear())
 const viewMonth = ref<number>(new Date().getMonth())
@@ -140,6 +146,10 @@ function setDateFromInput(raw: string) {
   emit('update:modelValue', new Date(year, month - 1, day, hour.value, minute.value, 0, 0))
 }
 
+function expandCalendar() {
+  showCalendar.value = true
+}
+
 function setSelectedDay(day: number) {
   if (day <= 0) return
   const base = value.value ?? new Date()
@@ -186,6 +196,7 @@ const minutes = Array.from({ length: 12 }, (_, i) => i * 5)
           class="h-9 rounded-xl border border-border/50 bg-background/60 px-2 text-sm tabular-nums outline-none focus:ring-1 focus:ring-ring"
           :value="dateInputValue"
           @input="setDateFromInput(($event.target as HTMLInputElement).value)"
+          @focus="expandCalendar"
         />
         <Button
           variant="ghost"
