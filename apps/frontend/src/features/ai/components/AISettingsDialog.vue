@@ -253,7 +253,7 @@ defineExpose({
       <Transition name="scale">
         <div
           v-if="modelValue"
-          class="flex w-full flex-col bg-background shadow-2xl transition-all duration-300 sm:max-h-[90%] sm:max-w-lg sm:rounded-2xl sm:border sm:border-border/50 h-full sm:h-auto rounded-none"
+          class="flex h-full w-full flex-col rounded-none bg-background shadow-2xl transition-all duration-300 sm:h-auto sm:max-h-[80vh] sm:max-w-lg sm:rounded-2xl sm:border sm:border-border/50"
         >
           <!-- 顶部区域：艺术化 Header -->
           <div class="relative flex shrink-0 flex-col overflow-hidden">
@@ -339,7 +339,7 @@ defineExpose({
           </div>
 
           <!-- 内容区域 -->
-          <div class="flex-1 overflow-y-auto custom-scrollbar">
+          <div class="custom-scrollbar min-h-0 flex-1 overflow-y-auto">
             <!-- 基础设置 Tab -->
             <AISettingsBasic
               v-if="activeTab === 'settings'"
