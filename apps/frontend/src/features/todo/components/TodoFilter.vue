@@ -63,7 +63,7 @@ async function handleClearTrash() {
       >
         <TabsTrigger
           value="pending"
-          class="flex items-center justify-center gap-1 md:gap-2 rounded-full px-2 md:px-4 text-[10px] md:text-sm font-medium transition-all duration-300 border border-transparent data-[state=active]:border-primary/20 data-[state=active]:bg-gradient-to-b data-[state=active]:from-background data-[state=active]:to-background/95 data-[state=active]:text-primary data-[state=active]:shadow-[0_2px_8px_-1px_rgba(0,0,0,0.08),0_0_1px_rgba(0,0,0,0.1)] dark:data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.6),0_0_1px_rgba(255,255,255,0.1)] data-[state=active]:scale-[1.02] data-[state=active]:font-semibold text-muted-foreground/70 hover:text-primary/80"
+          class="flex items-center justify-center gap-1 md:gap-2 rounded-full px-2 md:px-4 text-[var(--todo-font-meta)] font-medium transition-all duration-300 border border-transparent data-[state=active]:border-primary/20 data-[state=active]:bg-gradient-to-b data-[state=active]:from-background data-[state=active]:to-background/95 data-[state=active]:text-primary data-[state=active]:shadow-[0_2px_8px_-1px_rgba(0,0,0,0.08),0_0_1px_rgba(0,0,0,0.1)] dark:data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.6),0_0_1px_rgba(255,255,255,0.1)] data-[state=active]:scale-[1.02] data-[state=active]:font-semibold text-muted-foreground/70 hover:text-primary/80"
         >
           <Circle
             class="h-3 w-3 md:h-4 md:w-4 transition-colors"
@@ -75,7 +75,7 @@ async function handleClearTrash() {
         </TabsTrigger>
         <TabsTrigger
           value="completed"
-          class="flex items-center justify-center gap-1 md:gap-2 rounded-full px-2 md:px-4 text-[10px] md:text-sm font-medium transition-all duration-300 border border-transparent data-[state=active]:border-success/20 data-[state=active]:bg-gradient-to-b data-[state=active]:from-background data-[state=active]:to-background/95 data-[state=active]:text-success data-[state=active]:shadow-[0_2px_8px_-1px_rgba(0,0,0,0.08),0_0_1px_rgba(0,0,0,0.1)] dark:data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.6),0_0_1px_rgba(255,255,255,0.1)] data-[state=active]:scale-[1.02] data-[state=active]:font-semibold text-muted-foreground/70 hover:text-success/80"
+          class="flex items-center justify-center gap-1 md:gap-2 rounded-full px-2 md:px-4 text-[var(--todo-font-meta)] font-medium transition-all duration-300 border border-transparent data-[state=active]:border-success/20 data-[state=active]:bg-gradient-to-b data-[state=active]:from-background data-[state=active]:to-background/95 data-[state=active]:text-success data-[state=active]:shadow-[0_2px_8px_-1px_rgba(0,0,0,0.08),0_0_1px_rgba(0,0,0,0.1)] dark:data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.6),0_0_1px_rgba(255,255,255,0.1)] data-[state=active]:scale-[1.02] data-[state=active]:font-semibold text-muted-foreground/70 hover:text-success/80"
         >
           <CheckCircle2
             class="h-3 w-3 md:h-4 md:w-4 transition-colors"
@@ -88,7 +88,7 @@ async function handleClearTrash() {
         <TabsTrigger
           v-if="showTrash"
           value="trash"
-          class="flex items-center justify-center gap-1 md:gap-2 rounded-full px-2 md:px-4 text-[10px] md:text-sm font-medium transition-all duration-300 border border-transparent data-[state=active]:border-destructive/20 data-[state=active]:bg-gradient-to-b data-[state=active]:from-background data-[state=active]:to-background/95 data-[state=active]:text-destructive data-[state=active]:shadow-[0_2px_8px_-1px_rgba(0,0,0,0.08),0_0_1px_rgba(0,0,0,0.1)] dark:data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.6),0_0_1px_rgba(255,255,255,0.1)] data-[state=active]:scale-[1.02] data-[state=active]:font-semibold text-muted-foreground/70 hover:text-destructive/80"
+          class="flex items-center justify-center gap-1 md:gap-2 rounded-full px-2 md:px-4 text-[var(--todo-font-meta)] font-medium transition-all duration-300 border border-transparent data-[state=active]:border-destructive/20 data-[state=active]:bg-gradient-to-b data-[state=active]:from-background data-[state=active]:to-background/95 data-[state=active]:text-destructive data-[state=active]:shadow-[0_2px_8px_-1px_rgba(0,0,0,0.08),0_0_1px_rgba(0,0,0,0.1)] dark:data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.6),0_0_1px_rgba(255,255,255,0.1)] data-[state=active]:scale-[1.02] data-[state=active]:font-semibold text-muted-foreground/70 hover:text-destructive/80"
         >
           <Trash2
             class="h-3 w-3 md:h-4 md:w-4 transition-colors"
@@ -142,14 +142,14 @@ async function handleClearTrash() {
                 </PopoverTrigger>
                 <PopoverContent side="bottom" :side-offset="8" align="end" class="w-64 p-4 z-50">
                   <div class="space-y-3">
-                    <p class="text-sm font-medium leading-none">
+                    <p class="text-[var(--todo-font-meta)] font-medium leading-none">
                       {{ t('todo.clearTrashConfirm') }}
                     </p>
                     <div class="flex justify-end gap-2">
                       <Button
                         variant="ghost"
                         size="sm"
-                        class="h-8 rounded-lg px-3 text-xs"
+                        class="h-8 rounded-lg px-3 text-[var(--todo-font-caption)]"
                         @click="isClearPopoverOpen = false"
                       >
                         {{ t('common.cancel') }}
@@ -157,7 +157,7 @@ async function handleClearTrash() {
                       <Button
                         variant="destructive"
                         size="sm"
-                        class="h-8 rounded-lg px-3 text-xs shadow-lg shadow-destructive/20"
+                        class="h-8 rounded-lg px-3 text-[var(--todo-font-caption)] shadow-lg shadow-destructive/20"
                         @click="handleClearTrash"
                       >
                         {{ t('common.confirm') }}

@@ -272,7 +272,7 @@ function onFireworksComplete() {
 
 <template>
   <div
-    class="h-full bg-background p-0 md:p-8 flex items-center md:items-end justify-center overflow-hidden relative"
+    class="todo-typography h-full bg-background p-0 md:p-8 flex items-center md:items-end justify-center overflow-hidden relative"
     :class="{ 'p-0 items-center': pomodoroStore.isMiniMode }"
     @mousemove="handleMouseMove"
     @mouseleave="resetTilt"
@@ -322,7 +322,7 @@ function onFireworksComplete() {
             <div class="flex items-center justify-between gap-3">
               <div class="flex items-center gap-2 text-amber-700 dark:text-amber-300">
                 <AlertTriangle class="h-4 w-4 md:h-5 md:w-5" />
-                <p class="text-xs md:text-sm font-semibold">
+                <p class="text-[var(--todo-font-meta)] font-semibold">
                   {{ t('todo.syncConflictBanner', { count: syncConflicts.length }) }}
                 </p>
               </div>
@@ -330,7 +330,7 @@ function onFireworksComplete() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  class="h-8 rounded-lg px-2 text-[11px] md:text-xs hover:bg-amber-500/10"
+                  class="h-8 rounded-lg px-2 text-[var(--todo-font-caption)] hover:bg-amber-500/10"
                   @click="todoStore.clearSyncConflicts()"
                 >
                   {{ t('todo.syncConflictDismissAll') }}
@@ -355,10 +355,10 @@ function onFireworksComplete() {
               >
                 <div class="flex items-start justify-between gap-3">
                   <div class="min-w-0">
-                    <p class="truncate text-xs md:text-sm font-semibold text-foreground">
+                    <p class="truncate text-[var(--todo-font-meta)] font-semibold text-foreground">
                       {{ getConflictTitle(conflict.id) }}
                     </p>
-                    <p class="text-[11px] md:text-xs text-muted-foreground mt-0.5">
+                    <p class="text-[var(--todo-font-caption)] text-muted-foreground mt-0.5">
                       {{ conflictReasonLabel(conflict.reason) }}
                     </p>
                   </div>
@@ -366,7 +366,7 @@ function onFireworksComplete() {
                     <Button
                       variant="outline"
                       size="sm"
-                      class="h-7 rounded-lg px-2 text-[11px]"
+                      class="h-7 rounded-lg px-2 text-[var(--todo-font-caption)]"
                       @click="todoStore.acceptSyncConflict(conflict.id)"
                     >
                       {{ t('todo.syncConflictAcceptServer') }}
@@ -374,7 +374,7 @@ function onFireworksComplete() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      class="h-7 rounded-lg px-2 text-[11px]"
+                      class="h-7 rounded-lg px-2 text-[var(--todo-font-caption)]"
                       :disabled="!canRetryConflict(conflict.reason)"
                       @click="todoStore.retrySyncConflict(conflict.id)"
                     >
@@ -531,5 +531,15 @@ function onFireworksComplete() {
     linear-gradient(to right, black, transparent 15%, transparent 85%, black);
   mask-composite: intersect;
   pointer-events: none;
+}
+
+.todo-typography {
+  --todo-font-family:
+    'SF Pro Text', 'PingFang SC', 'Noto Sans SC', 'Inter', system-ui, -apple-system, sans-serif;
+  --todo-font-title: 20px;
+  --todo-font-body: 16px;
+  --todo-font-meta: 14px;
+  --todo-font-caption: 12px;
+  font-family: var(--todo-font-family);
 }
 </style>

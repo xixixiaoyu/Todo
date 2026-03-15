@@ -97,7 +97,7 @@ onMounted(() => {
                   :model-value="modelValue"
                   type="text"
                   :placeholder="t('todo.inputPlaceholder')"
-                  class="h-10 md:h-12 px-4 md:px-5 text-sm md:text-base rounded-xl border-border bg-card shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all focus-visible:ring-primary/20 group-hover:border-primary/30 group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]"
+                  class="h-10 md:h-12 px-4 md:px-5 text-[var(--todo-font-body)] rounded-xl border-border bg-card shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all focus-visible:ring-primary/20 group-hover:border-primary/30 group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] placeholder:text-[var(--todo-font-meta)]"
                   :class="{ 'border-destructive focus-visible:ring-destructive/20': errorMessage }"
                   @update:model-value="emit('update:modelValue', $event as string)"
                   @keydown="emit('keydown', $event)"
@@ -119,9 +119,10 @@ onMounted(() => {
                       class="bg-primary/10 text-primary border-none px-2 py-0.5 rounded-lg flex items-center gap-1 animate-in fade-in zoom-in duration-300"
                     >
                       <Calendar class="w-3 h-3" />
-                      <span class="text-[10px] font-medium uppercase tracking-wider">{{
-                        parsedDate
-                      }}</span>
+                      <span
+                        class="text-[var(--todo-font-caption)] font-medium uppercase tracking-wide"
+                        >{{ parsedDate }}</span
+                      >
                     </Badge>
                   </div>
                 </Transition>
@@ -139,7 +140,7 @@ onMounted(() => {
         </TooltipProvider>
       </div>
       <Button
-        class="h-10 md:h-12 px-3 md:px-6 rounded-xl text-sm md:text-base font-semibold shadow-[0_8px_20px_-4px_hsl(var(--primary)_/_0.3)] transition-all active:scale-95 hover:shadow-[0_12px_25px_-4px_hsl(var(--primary)_/_0.4)]"
+        class="h-10 md:h-12 px-3 md:px-6 rounded-xl text-[var(--todo-font-body)] font-semibold shadow-[0_8px_20px_-4px_hsl(var(--primary)_/_0.3)] transition-all active:scale-95 hover:shadow-[0_12px_25px_-4px_hsl(var(--primary)_/_0.4)]"
         @click="emit('add')"
       >
         <Plus class="h-4 w-4 md:h-5 md:w-5" :class="{ 'mr-1.5': !isMobile }" />

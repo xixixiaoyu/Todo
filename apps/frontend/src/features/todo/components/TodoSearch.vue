@@ -64,7 +64,7 @@ onMounted(() => {
       :model-value="modelValue"
       type="text"
       :placeholder="t('todo.searchPlaceholder')"
-      class="h-11 pl-11 pr-11 text-base bg-muted/30 border-none rounded-xl focus-visible:ring-primary/20"
+      class="h-11 pl-11 pr-11 text-[var(--todo-font-body)] bg-muted/30 border-none rounded-xl focus-visible:ring-primary/20 placeholder:text-[var(--todo-font-meta)]"
       @update:model-value="emit('update:modelValue', $event as string)"
       @keydown="handleKeyDown"
     />

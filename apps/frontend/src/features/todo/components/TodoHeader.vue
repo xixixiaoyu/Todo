@@ -69,12 +69,12 @@ const openAiAssistant = () => {
         <Snowflake :size="18" class="md:w-6 md:h-6" />
       </div>
       <h1
-        class="hidden sm:flex items-center gap-2 cursor-default text-primary text-xl md:text-2xl font-extrabold tracking-tight transition-transform hover:scale-105"
+        class="hidden sm:flex items-center gap-2 cursor-default text-primary text-[var(--todo-font-title)] font-semibold tracking-tight transition-transform hover:scale-105"
       >
         {{ t('common.appName') }}
         <Badge
           variant="outline"
-          class="px-1 h-3.5 text-[8px] uppercase border-primary/20 text-primary/70 bg-primary/5 font-medium tracking-widest select-none"
+          class="px-1.5 h-4.5 text-[var(--todo-font-caption)] uppercase border-primary/20 text-primary/70 bg-primary/5 font-medium tracking-wide select-none"
         >
           {{ t('common.beta') }}
         </Badge>
@@ -85,14 +85,16 @@ const openAiAssistant = () => {
       <Button
         variant="ghost"
         size="sm"
-        class="h-9 md:h-9 px-2.5 md:px-3 rounded-xl bg-primary/10 text-primary hover:bg-primary/15 transition-all duration-300 gap-1 md:gap-2 font-bold border border-primary/20 group/ai touch-manipulation"
+        class="h-9 md:h-9 px-2.5 md:px-3 rounded-xl bg-primary/10 text-primary hover:bg-primary/15 transition-all duration-300 gap-1 md:gap-2 font-semibold border border-primary/20 group/ai touch-manipulation"
         @click.stop="openAiAssistant"
       >
         <Clover
           :size="14"
           class="md:w-4 md:h-4 transition-transform group-hover/ai:rotate-12 group-hover/ai:scale-110"
         />
-        <span class="text-[10px] md:text-xs tracking-wide uppercase">{{ t('ai.assistant') }}</span>
+        <span class="text-[var(--todo-font-meta)] tracking-wide uppercase">{{
+          t('ai.assistant')
+        }}</span>
       </Button>
 
       <div class="hidden md:block mx-1 h-6 w-px bg-border/40"></div>
@@ -171,7 +173,9 @@ const openAiAssistant = () => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" class="w-48 rounded-xl p-2">
-          <DropdownMenuLabel class="text-xs text-muted-foreground font-normal">
+          <DropdownMenuLabel
+            class="text-[var(--todo-font-caption)] text-muted-foreground font-normal"
+          >
             {{ t('common.settings') }}
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
@@ -192,11 +196,11 @@ const openAiAssistant = () => {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <div class="flex items-center justify-between px-2 py-1.5">
-            <span class="text-sm">{{ t('common.theme.label') }}</span>
+            <span class="text-[var(--todo-font-meta)]">{{ t('common.theme.label') }}</span>
             <ThemeToggle />
           </div>
           <div class="flex items-center justify-between px-2 py-1.5">
-            <span class="text-sm">{{ t('common.themeColor.label') }}</span>
+            <span class="text-[var(--todo-font-meta)]">{{ t('common.themeColor.label') }}</span>
             <ThemeColorPicker />
           </div>
           <DropdownMenuItem class="rounded-lg cursor-pointer" @click="toggleLanguage">
@@ -245,7 +249,7 @@ const openAiAssistant = () => {
               @click="void todoStore.switchTodoSource('local')"
             >
               <HardDrive :size="14" />
-              <span class="text-xs">{{ t('todo.localSource') }}</span>
+              <span class="text-[var(--todo-font-caption)]">{{ t('todo.localSource') }}</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent>{{ t('todo.localSourceHint') }}</TooltipContent>
@@ -264,7 +268,7 @@ const openAiAssistant = () => {
               @click="void todoStore.switchTodoSource('remote')"
             >
               <Cloud :size="14" />
-              <span class="text-xs">{{ t('todo.remoteSource') }}</span>
+              <span class="text-[var(--todo-font-caption)]">{{ t('todo.remoteSource') }}</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent>{{ t('todo.remoteSourceHint') }}</TooltipContent>
@@ -286,7 +290,7 @@ const openAiAssistant = () => {
             ></div>
             <div
               v-else
-              class="flex h-full w-full items-center justify-center bg-amber-500 text-white font-bold text-sm transition-colors group-hover/user:bg-amber-600"
+              class="flex h-full w-full items-center justify-center bg-amber-500 text-white font-semibold text-[var(--todo-font-meta)] transition-colors group-hover/user:bg-amber-600"
             >
               {{ authStore.user?.name?.charAt(0).toUpperCase() || 'U' }}
             </div>
@@ -299,8 +303,10 @@ const openAiAssistant = () => {
         <DropdownMenuContent align="end" class="w-56 rounded-xl p-2">
           <DropdownMenuLabel class="font-normal">
             <div class="flex flex-col space-y-1">
-              <p class="text-sm font-medium leading-none">{{ authStore.user?.name }}</p>
-              <p class="text-xs leading-none text-muted-foreground">
+              <p class="text-[var(--todo-font-meta)] font-medium leading-none">
+                {{ authStore.user?.name }}
+              </p>
+              <p class="text-[var(--todo-font-caption)] leading-none text-muted-foreground">
                 {{ authStore.user?.email }}
               </p>
             </div>

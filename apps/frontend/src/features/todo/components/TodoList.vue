@@ -110,10 +110,12 @@ const displayTodos = computed(() => {
         </div>
 
         <div class="text-center space-y-2.5 px-6 relative z-10">
-          <h3 class="text-xl font-medium tracking-tight text-foreground/70">
+          <h3 class="text-[var(--todo-font-title)] font-medium tracking-tight text-foreground/70">
             {{ emptyState.title }}
           </h3>
-          <p class="text-base text-muted-foreground/50 max-w-[280px] mx-auto leading-relaxed">
+          <p
+            class="text-[var(--todo-font-meta)] text-muted-foreground/50 max-w-[280px] mx-auto leading-relaxed"
+          >
             {{ emptyState.description }}
           </p>
         </div>
