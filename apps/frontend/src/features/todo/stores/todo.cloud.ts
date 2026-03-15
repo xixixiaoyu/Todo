@@ -9,6 +9,7 @@ import { todoApi } from '../api'
 import type { Todo, TodoSyncConflict } from './todo.types'
 import i18n from '@/i18n'
 import { useToast } from '@/composables/useToast'
+import { nativeService } from '@/services/native'
 import { toDate, cloneTodo } from './todo.dates'
 
 const SYNC_COOLDOWN_MS = 2000
@@ -223,6 +224,12 @@ export function createTodoCloud(deps: {
 
   const debouncedSync = debounce(() => void sync(), SYNC_COOLDOWN_MS)
 
+  const notifyReminder = (title: string) => {
+    const message = t('todo.reminderToast', { title })
+    toast.info(message)
+    void nativeService.notify(t('common.appName'), message, 'info', { force: true }).catch(() => {})
+  }
+
   const onTodosSync = () => {
     if (!deps.isRemoteSource.value) return
     // 只有当存在待同步项，或距离上次同步已超过 SYNC_COOLDOWN_MS 时才触发同步
@@ -239,7 +246,7 @@ export function createTodoCloud(deps: {
     if (!todo || todo.deletedAt || todo.completed) return
 
     if (!todo.remindedAt) {
-      toast.info(t('todo.reminderToast', { title: todo.title }))
+      notifyReminder(todo.title)
     }
 
     todo.remindedAt = payload.remindedAt ? new Date(payload.remindedAt) : new Date()
@@ -258,7 +265,7 @@ export function createTodoCloud(deps: {
         if (!remindAt) continue
         if (remindAt.getTime() > now) continue
 
-        toast.info(t('todo.reminderToast', { title: todo.title }))
+        notifyReminder(todo.title)
         todo.remindedAt = new Date()
         todo.updatedAt = new Date()
         todo.syncStatus = 'pending'

@@ -19,7 +19,12 @@ export const nativeService = {
   /**
    * 显示通知/对话框
    */
-  async notify(title: string, message: string, type: 'info' | 'error' = 'info') {
+  async notify(
+    title: string,
+    message: string,
+    type: 'info' | 'error' = 'info',
+    options?: { force?: boolean },
+  ) {
     if (isWails()) {
       if (type === 'error') {
         return system.error(title, message)
@@ -30,7 +35,7 @@ export const nativeService = {
     // Web 平台尝试使用浏览器原生 Notification API
     if (this.platform === 'web' && 'Notification' in window) {
       // 如果文档已有焦点，通常用户正在看页面，通过 Toast 提醒即可，无需触发系统通知
-      if (document.hasFocus()) {
+      if (!options?.force && document.hasFocus()) {
         return
       }
 
