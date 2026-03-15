@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
+import { Injectable, Logger, OnModuleInit, ServiceUnavailableException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import {
   S3Client,
@@ -36,6 +36,7 @@ export class StorageService implements OnModuleInit {
   private bucket!: string
   private region!: string
   private endpoint: string | undefined
+  private storageConfigured = false
 
   constructor(private readonly config: ConfigService) {}
 
@@ -43,13 +44,21 @@ export class StorageService implements OnModuleInit {
     this.bucket = this.config.get('S3_BUCKET', 'lumina-uploads')
     this.region = this.config.get('S3_REGION', 'us-east-1')
     this.endpoint = this.config.get('S3_ENDPOINT') // 可选，用于 OSS/MinIO
+    const accessKeyId = this.config.get('S3_ACCESS_KEY_ID', '').trim()
+    const secretAccessKey = this.config.get('S3_SECRET_ACCESS_KEY', '').trim()
+    this.storageConfigured = Boolean(accessKeyId && secretAccessKey)
+
+    if (!this.storageConfigured) {
+      this.logger.warn('S3 凭证未配置，上传/删除/签名 URL 接口将不可用')
+      return
+    }
 
     this.s3Client = new S3Client({
       region: this.region,
       endpoint: this.endpoint,
       credentials: {
-        accessKeyId: this.config.get('S3_ACCESS_KEY_ID', ''),
-        secretAccessKey: this.config.get('S3_SECRET_ACCESS_KEY', ''),
+        accessKeyId,
+        secretAccessKey,
       },
       forcePathStyle: !!this.endpoint, // OSS/MinIO 需要开启
     })
@@ -61,6 +70,7 @@ export class StorageService implements OnModuleInit {
    * 上传文件到 S3
    */
   async upload(file: UploadedFile, folder = 'uploads'): Promise<UploadResult> {
+    this.ensureStorageConfigured()
     const ext = extname(file.originalname)
     const key = `${folder}/${randomUUID()}${ext}`
 
@@ -95,6 +105,7 @@ export class StorageService implements OnModuleInit {
    * 删除文件
    */
   async delete(key: string): Promise<void> {
+    this.ensureStorageConfigured()
     const command = new DeleteObjectCommand({
       Bucket: this.bucket,
       Key: key,
@@ -108,6 +119,7 @@ export class StorageService implements OnModuleInit {
    * 获取预签名 URL（用于临时访问私有文件）
    */
   async getSignedUrl(key: string, expiresIn = 3600): Promise<string> {
+    this.ensureStorageConfigured()
     const command = new GetObjectCommand({
       Bucket: this.bucket,
       Key: key,
@@ -126,5 +138,13 @@ export class StorageService implements OnModuleInit {
     }
     // AWS S3 格式
     return `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`
+  }
+
+  private ensureStorageConfigured() {
+    if (this.storageConfigured) {
+      return
+    }
+
+    throw new ServiceUnavailableException('upload.STORAGE_NOT_CONFIGURED')
   }
 }
