@@ -22,6 +22,7 @@ export const common = {
   pause: 'Pause',
   stop: 'Stop',
   clear: 'Clear',
+  today: 'Today',
   apply: 'Apply',
   discard: 'Discard',
   close: 'Close',

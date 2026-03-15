@@ -65,20 +65,6 @@ function nextOccurrence(hours: number, minutes: number): Date {
   return candidate
 }
 
-function nextMondayAt(hours: number, minutes: number): Date {
-  const now = new Date()
-  const day = now.getDay()
-  const delta = (1 - day + 7) % 7 || 7
-  return atTime(addDays(now, delta), hours, minutes)
-}
-
-function nextSaturdayAt(hours: number, minutes: number): Date {
-  const now = new Date()
-  const day = now.getDay()
-  const delta = (6 - day + 7) % 7 || 7
-  return atTime(addDays(now, delta), hours, minutes)
-}
-
 type QuickAction = { key: string; run: () => void; disabled?: boolean }
 
 const quickDue = computed<QuickAction[]>(() => [
@@ -87,8 +73,6 @@ const quickDue = computed<QuickAction[]>(() => [
     key: 'todo.quickDueTomorrow0900',
     run: () => (dueValue.value = atTime(addDays(new Date(), 1), 9, 0)),
   },
-  { key: 'todo.quickDueNextMon0900', run: () => (dueValue.value = nextMondayAt(9, 0)) },
-  { key: 'todo.quickDueWeekend2359', run: () => (dueValue.value = nextSaturdayAt(23, 59)) },
 ])
 
 const quickRemind = computed<QuickAction[]>(() => {
@@ -97,11 +81,6 @@ const quickRemind = computed<QuickAction[]>(() => {
   return [
     { key: 'todo.quickRemindIn15m', run: () => (remindValue.value = addMinutes(now, 15)) },
     { key: 'todo.quickRemindIn1h', run: () => (remindValue.value = addMinutes(now, 60)) },
-    { key: 'todo.quickRemindIn3h', run: () => (remindValue.value = addMinutes(now, 180)) },
-    {
-      key: 'todo.quickDueTomorrow0900',
-      run: () => (remindValue.value = atTime(addDays(now, 1), 9, 0)),
-    },
     {
       key: 'todo.quickRemindBeforeDue10m',
       run: () => {

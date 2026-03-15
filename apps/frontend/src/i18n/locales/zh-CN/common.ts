@@ -22,6 +22,7 @@ export const common = {
   pause: '暂停',
   stop: '停止',
   clear: '清除',
+  today: '今天',
   apply: '应用',
   discard: '放弃',
   close: '关闭',

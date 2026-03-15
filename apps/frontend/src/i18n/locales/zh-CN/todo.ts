@@ -63,6 +63,8 @@ export const todo = {
   quickRemindIn3h: '3 小时后',
   quickRemindBeforeDue10m: '提前 10 分钟',
   quickRemindBeforeDue30m: '提前 30 分钟',
+  expandCalendar: '展开日历',
+  collapseCalendar: '收起日历',
   syncConflictBanner: '检测到 {count} 项同步冲突，请选择处理方式',
   syncConflictDismissAll: '暂不处理',
   syncConflictAcceptServer: '接受云端',

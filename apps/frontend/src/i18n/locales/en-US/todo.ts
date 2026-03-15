@@ -63,6 +63,8 @@ export const todo = {
   quickRemindIn3h: 'In 3h',
   quickRemindBeforeDue10m: '10m before',
   quickRemindBeforeDue30m: '30m before',
+  expandCalendar: 'Show calendar',
+  collapseCalendar: 'Hide calendar',
   syncConflictBanner: 'Detected {count} sync conflicts. Choose how to resolve them.',
   syncConflictDismissAll: 'Dismiss',
   syncConflictAcceptServer: 'Accept Server',

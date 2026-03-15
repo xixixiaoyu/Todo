@@ -13,13 +13,14 @@ const emit = defineEmits<{
   'update:modelValue': [Date | null]
 }>()
 
-const { locale } = useI18n()
+const { locale, t } = useI18n()
 
 function pad2(n: number): string {
   return n.toString().padStart(2, '0')
 }
 
 const value = computed<Date | null>(() => toDate(props.modelValue))
+const showCalendar = ref(false)
 
 const viewYear = ref<number>(new Date().getFullYear())
 const viewMonth = ref<number>(new Date().getMonth())
@@ -115,6 +116,30 @@ function setToday() {
   )
 }
 
+function toDateInput(date: Date): string {
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`
+}
+
+const dateInputValue = computed(() => {
+  const current = value.value
+  if (!current) return ''
+  return toDateInput(current)
+})
+
+function setDateFromInput(raw: string) {
+  if (!raw) {
+    emit('update:modelValue', null)
+    return
+  }
+
+  const [year, month, day] = raw.split('-').map((part) => Number(part))
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return
+
+  viewYear.value = year
+  viewMonth.value = month - 1
+  emit('update:modelValue', new Date(year, month - 1, day, hour.value, minute.value, 0, 0))
+}
+
 function setSelectedDay(day: number) {
   if (day <= 0) return
   const base = value.value ?? new Date()
@@ -154,70 +179,32 @@ const minutes = Array.from({ length: 12 }, (_, i) => i * 5)
 
 <template>
   <div class="rounded-2xl border border-border/50 bg-background/50 backdrop-blur-xl p-3">
-    <div class="flex items-center justify-between gap-2">
-      <div class="flex items-center gap-1">
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex items-center gap-2">
+        <input
+          type="date"
+          class="h-9 rounded-xl border border-border/50 bg-background/60 px-2 text-sm tabular-nums outline-none focus:ring-1 focus:ring-ring"
+          :value="dateInputValue"
+          @input="setDateFromInput(($event.target as HTMLInputElement).value)"
+        />
         <Button
           variant="ghost"
-          size="icon"
-          class="h-8 w-8 rounded-xl hover:bg-muted/50"
-          aria-label="Previous month"
-          @click.stop="setMonth(-1)"
+          size="sm"
+          class="h-9 rounded-xl px-3 text-xs hover:bg-muted/50"
+          @click.stop="setToday"
         >
-          <ChevronLeft class="h-4 w-4 opacity-70" />
-        </Button>
-        <p class="text-sm font-semibold tracking-tight tabular-nums">{{ monthTitle }}</p>
-        <Button
-          variant="ghost"
-          size="icon"
-          class="h-8 w-8 rounded-xl hover:bg-muted/50"
-          aria-label="Next month"
-          @click.stop="setMonth(1)"
-        >
-          <ChevronRight class="h-4 w-4 opacity-70" />
+          {{ t('common.today') }}
         </Button>
       </div>
 
       <Button
         variant="ghost"
         size="sm"
-        class="h-8 rounded-xl px-3 text-xs hover:bg-muted/50"
-        @click.stop="setToday"
+        class="h-9 rounded-xl px-3 text-xs hover:bg-muted/50"
+        @click.stop="showCalendar = !showCalendar"
       >
-        今天
+        {{ showCalendar ? t('todo.collapseCalendar') : t('todo.expandCalendar') }}
       </Button>
-    </div>
-
-    <div class="mt-3 grid grid-cols-7 gap-1">
-      <div
-        v-for="w in weekdayLabels"
-        :key="w"
-        class="h-7 flex items-center justify-center text-[10px] font-semibold text-muted-foreground/70"
-      >
-        {{ w }}
-      </div>
-
-      <button
-        v-for="(cell, idx) in gridDays"
-        :key="idx"
-        type="button"
-        class="h-9 rounded-xl text-sm font-semibold tabular-nums transition-all duration-150 hover:-translate-y-[1px] active:translate-y-0"
-        :class="[
-          cell.isCurrentMonth
-            ? 'text-foreground hover:bg-muted/50'
-            : 'text-muted-foreground/30 cursor-default',
-          cell.isCurrentMonth && selectedKey === cellKey(cell.day)
-            ? 'bg-primary/15 text-primary'
-            : '',
-          cell.isCurrentMonth && todayKey === cellKey(cell.day) && selectedKey !== cellKey(cell.day)
-            ? 'ring-1 ring-primary/20'
-            : '',
-        ]"
-        :disabled="!cell.isCurrentMonth"
-        :aria-label="cell.isCurrentMonth ? dayAriaLabel(cell.day) : undefined"
-        @click.stop="setSelectedDay(cell.day)"
-      >
-        {{ cell.day || '' }}
-      </button>
     </div>
 
     <div class="mt-3 flex items-center justify-between gap-2">
@@ -241,6 +228,67 @@ const minutes = Array.from({ length: 12 }, (_, i) => i * 5)
         >
           <option v-for="m in minutes" :key="m" :value="m">{{ pad2(m) }}</option>
         </select>
+      </div>
+    </div>
+
+    <div v-if="showCalendar" class="mt-3">
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            class="h-8 w-8 rounded-xl hover:bg-muted/50"
+            aria-label="Previous month"
+            @click.stop="setMonth(-1)"
+          >
+            <ChevronLeft class="h-4 w-4 opacity-70" />
+          </Button>
+          <p class="text-sm font-semibold tracking-tight tabular-nums">{{ monthTitle }}</p>
+          <Button
+            variant="ghost"
+            size="icon"
+            class="h-8 w-8 rounded-xl hover:bg-muted/50"
+            aria-label="Next month"
+            @click.stop="setMonth(1)"
+          >
+            <ChevronRight class="h-4 w-4 opacity-70" />
+          </Button>
+        </div>
+      </div>
+
+      <div class="mt-3 grid grid-cols-7 gap-1">
+        <div
+          v-for="w in weekdayLabels"
+          :key="w"
+          class="h-7 flex items-center justify-center text-[10px] font-semibold text-muted-foreground/70"
+        >
+          {{ w }}
+        </div>
+
+        <button
+          v-for="(cell, idx) in gridDays"
+          :key="idx"
+          type="button"
+          class="h-9 rounded-xl text-sm font-semibold tabular-nums transition-all duration-150 hover:-translate-y-[1px] active:translate-y-0"
+          :class="[
+            cell.isCurrentMonth
+              ? 'text-foreground hover:bg-muted/50'
+              : 'text-muted-foreground/30 cursor-default',
+            cell.isCurrentMonth && selectedKey === cellKey(cell.day)
+              ? 'bg-primary/15 text-primary'
+              : '',
+            cell.isCurrentMonth &&
+            todayKey === cellKey(cell.day) &&
+            selectedKey !== cellKey(cell.day)
+              ? 'ring-1 ring-primary/20'
+              : '',
+          ]"
+          :disabled="!cell.isCurrentMonth"
+          :aria-label="cell.isCurrentMonth ? dayAriaLabel(cell.day) : undefined"
+          @click.stop="setSelectedDay(cell.day)"
+        >
+          {{ cell.day || '' }}
+        </button>
       </div>
     </div>
   </div>
