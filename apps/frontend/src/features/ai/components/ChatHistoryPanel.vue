@@ -243,7 +243,7 @@ function handleClearConfirm(): void {
 
     <!-- 清除确认弹窗 -->
     <AlertDialog v-model:open="showClearConfirm">
-      <AlertDialogContent>
+      <AlertDialogContent class="rounded-2xl">
         <AlertDialogHeader>
           <AlertDialogTitle>{{ t('ai.clearAll') }}</AlertDialogTitle>
           <AlertDialogDescription>
@@ -264,7 +264,7 @@ function handleClearConfirm(): void {
 
     <!-- 单个删除确认弹窗 -->
     <AlertDialog v-model:open="showDeleteConfirm">
-      <AlertDialogContent>
+      <AlertDialogContent class="rounded-2xl">
         <AlertDialogHeader>
           <AlertDialogTitle>{{ t('ai.deleteSession') }}</AlertDialogTitle>
           <AlertDialogDescription>

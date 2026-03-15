@@ -253,7 +253,7 @@ defineExpose({
       <Transition name="scale">
         <div
           v-if="modelValue"
-          class="flex h-full w-full flex-col rounded-none bg-background shadow-2xl transition-all duration-300 sm:h-auto sm:max-h-[80vh] sm:max-w-lg sm:rounded-2xl sm:border sm:border-border/50"
+          class="flex h-full w-full flex-col rounded-2xl bg-background shadow-2xl transition-all duration-300 sm:h-auto sm:max-h-[80vh] sm:max-w-lg sm:border sm:border-border/50"
         >
           <!-- 顶部区域：艺术化 Header -->
           <div class="relative flex shrink-0 flex-col overflow-hidden">
@@ -415,7 +415,7 @@ defineExpose({
 
   <!-- 保存为预设确认弹窗 -->
   <AlertDialog :open="showSaveAsPresetConfirm" @update:open="showSaveAsPresetConfirm = $event">
-    <AlertDialogContent>
+    <AlertDialogContent class="rounded-2xl">
       <AlertDialogHeader>
         <AlertDialogTitle>{{ t('ai.saveAsPresetTitle') }}</AlertDialogTitle>
         <AlertDialogDescription>

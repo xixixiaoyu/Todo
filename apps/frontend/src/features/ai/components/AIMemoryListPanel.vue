@@ -323,7 +323,7 @@ function handleClearConfirm() {
     </div>
 
     <AlertDialog :open="showClearConfirm" @update:open="showClearConfirm = $event">
-      <AlertDialogContent>
+      <AlertDialogContent class="rounded-2xl">
         <AlertDialogHeader>
           <AlertDialogTitle>{{ t('ai.memoryClear') }}</AlertDialogTitle>
           <AlertDialogDescription>
