@@ -32,6 +32,9 @@ const questionText = ref('')
 
 // 模式选择 - 最佳实践：默认使用浮窗回答，保持阅读心流
 const askMode = ref<'chat' | 'float'>('float')
+const askModeHint = computed(() =>
+  askMode.value === 'chat' ? t('ai.askSelectionModeHintChat') : t('ai.askSelectionModeHintFloat'),
+)
 
 // 浮窗回答状态
 const isResultOpen = ref(false)
@@ -435,6 +438,10 @@ defineExpose({ updateAskAnchor })
             </button>
           </div>
         </div>
+
+        <p class="text-[11px] leading-relaxed text-muted-foreground/85">
+          {{ askModeHint }}
+        </p>
       </div>
     </div>
 

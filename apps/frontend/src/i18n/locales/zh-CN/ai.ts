@@ -41,6 +41,8 @@ export const ai = {
   askSelectionQuote: '引用',
   askSelectionModeChat: '在聊天中发送',
   askSelectionModeFloat: '在浮窗中回答',
+  askSelectionModeHintChat: '完整分析（含会话上下文与工具能力），结果会进入聊天记录。',
+  askSelectionModeHintFloat: '快速轻量回答（默认不入聊天），可在结果中转存至对话。',
   askSelectionFloatingTitle: 'AI 快速解答',
   askSelectionTransferToChat: '转存至对话',
   settings: 'AI 助手设置',

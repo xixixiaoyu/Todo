@@ -51,6 +51,10 @@ export const ai = {
   askSelectionQuote: 'Quote',
   askSelectionModeChat: 'Send to Chat',
   askSelectionModeFloat: 'Answer in Popup',
+  askSelectionModeHintChat:
+    'Full analysis (conversation context + tool capabilities), saved to chat history.',
+  askSelectionModeHintFloat:
+    'Fast lightweight answer (not saved by default), transferable to chat afterward.',
   askSelectionFloatingTitle: 'AI Quick Answer',
   askSelectionTransferToChat: 'Transfer to Chat',
   settings: 'AI Assistant Settings',
