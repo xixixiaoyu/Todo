@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import TodoDateTimePicker from './TodoDateTimePicker.vue'
 import { toDate } from '../stores/todo.dates'
@@ -17,8 +16,6 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-
-const active = ref<'due' | 'remind'>('due')
 
 const dueValue = ref<Date | null>(null)
 const remindValue = ref<Date | null>(null)
@@ -100,14 +97,6 @@ const quickRemind = computed<QuickAction[]>(() => {
   ]
 })
 
-function clearActive() {
-  if (active.value === 'due') {
-    dueValue.value = null
-  } else {
-    remindValue.value = null
-  }
-}
-
 function apply() {
   if (isInvalid.value) return
   emit('apply', dueValue.value, remindValue.value)
@@ -116,47 +105,63 @@ function apply() {
 </script>
 
 <template>
-  <div class="space-y-3">
-    <Tabs v-model="active" class="w-full">
-      <TabsList class="w-full grid grid-cols-2 rounded-2xl bg-muted/60 p-1">
-        <TabsTrigger value="due" class="rounded-xl text-sm">{{ t('todo.dueAt') }}</TabsTrigger>
-        <TabsTrigger value="remind" class="rounded-xl text-sm">{{
-          t('todo.remindAt')
-        }}</TabsTrigger>
-      </TabsList>
+  <div class="space-y-4">
+    <section class="space-y-2">
+      <div class="flex items-center justify-between gap-2">
+        <p class="text-sm font-semibold">{{ t('todo.dueAt') }}</p>
+        <Button
+          variant="ghost"
+          size="xs"
+          class="h-7 rounded-lg px-2 text-xs hover:bg-muted/50"
+          :disabled="!dueValue"
+          @click="dueValue = null"
+        >
+          {{ t('todo.clearDueAt') }}
+        </Button>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <Button
+          v-for="item in quickDue"
+          :key="item.key"
+          variant="secondary"
+          size="xs"
+          class="rounded-xl bg-secondary/70 hover:bg-secondary/90"
+          @click="item.run"
+        >
+          {{ t(item.key) }}
+        </Button>
+      </div>
+      <TodoDateTimePicker v-model="dueValue" />
+    </section>
 
-      <TabsContent value="due" class="mt-3">
-        <div class="mb-3 flex flex-wrap gap-2">
-          <Button
-            v-for="item in quickDue"
-            :key="item.key"
-            variant="secondary"
-            size="xs"
-            class="rounded-xl bg-secondary/70 hover:bg-secondary/90"
-            @click="item.run"
-          >
-            {{ t(item.key) }}
-          </Button>
-        </div>
-        <TodoDateTimePicker v-model="dueValue" />
-      </TabsContent>
-      <TabsContent value="remind" class="mt-3">
-        <div class="mb-3 flex flex-wrap gap-2">
-          <Button
-            v-for="item in quickRemind"
-            :key="item.key"
-            variant="secondary"
-            size="xs"
-            class="rounded-xl bg-secondary/70 hover:bg-secondary/90"
-            :disabled="item.disabled"
-            @click="item.run"
-          >
-            {{ t(item.key) }}
-          </Button>
-        </div>
-        <TodoDateTimePicker v-model="remindValue" />
-      </TabsContent>
-    </Tabs>
+    <section class="space-y-2">
+      <div class="flex items-center justify-between gap-2">
+        <p class="text-sm font-semibold">{{ t('todo.remindAt') }}</p>
+        <Button
+          variant="ghost"
+          size="xs"
+          class="h-7 rounded-lg px-2 text-xs hover:bg-muted/50"
+          :disabled="!remindValue"
+          @click="remindValue = null"
+        >
+          {{ t('todo.clearRemindAt') }}
+        </Button>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <Button
+          v-for="item in quickRemind"
+          :key="item.key"
+          variant="secondary"
+          size="xs"
+          class="rounded-xl bg-secondary/70 hover:bg-secondary/90"
+          :disabled="item.disabled"
+          @click="item.run"
+        >
+          {{ t(item.key) }}
+        </Button>
+      </div>
+      <TodoDateTimePicker v-model="remindValue" />
+    </section>
 
     <div
       v-if="isInvalid"
@@ -165,34 +170,24 @@ function apply() {
       {{ t('todo.remindAfterDue') }}
     </div>
 
-    <div class="flex items-center justify-between gap-2 pt-1">
+    <div class="flex items-center justify-end gap-2 pt-1">
       <Button
         variant="ghost"
         size="sm"
         class="h-9 rounded-xl px-3 text-xs hover:bg-muted/50"
-        @click="clearActive"
+        @click="emit('close')"
       >
-        {{ t('common.clear') }}
+        {{ t('common.cancel') }}
       </Button>
-      <div class="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          class="h-9 rounded-xl px-3 text-xs hover:bg-muted/50"
-          @click="emit('close')"
-        >
-          {{ t('common.cancel') }}
-        </Button>
-        <Button
-          variant="default"
-          size="sm"
-          class="h-9 rounded-xl px-3 text-xs"
-          :disabled="isInvalid"
-          @click="apply"
-        >
-          {{ t('common.confirm') }}
-        </Button>
-      </div>
+      <Button
+        variant="default"
+        size="sm"
+        class="h-9 rounded-xl px-3 text-xs"
+        :disabled="isInvalid"
+        @click="apply"
+      >
+        {{ t('common.confirm') }}
+      </Button>
     </div>
   </div>
 </template>
