@@ -11,6 +11,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     maxWorkers: '50%',
+    setupFiles: ['./tests/setup.ts'],
     env: {
       TZ: 'UTC',
     },

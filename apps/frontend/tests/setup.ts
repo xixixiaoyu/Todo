@@ -1,12 +1,37 @@
 import { beforeEach, vi } from 'vitest'
 
+function extractStringArgs(args: unknown[]): string[] {
+  return args.filter((arg): arg is string => typeof arg === 'string')
+}
+
+function shouldSuppressFrontendTestLog(args: unknown[]): boolean {
+  const textArgs = extractStringArgs(args)
+  if (textArgs.length === 0) return false
+
+  return textArgs.some(
+    (text) =>
+      text.includes("KaTeX doesn't work in quirks mode") ||
+      text.startsWith('[INFO] common.pomodoro:') ||
+      text.startsWith('Retrying ') ||
+      text.includes('AI breakdown JSON parse failed, falling back to line splitting') ||
+      text.includes('Failed to trigger haptic feedback'),
+  )
+}
+
 const originalWarn = console.warn.bind(console)
 console.warn = (...args: unknown[]) => {
-  const [firstArg] = args
-  if (typeof firstArg === 'string' && firstArg.includes("KaTeX doesn't work in quirks mode")) {
+  if (shouldSuppressFrontendTestLog(args)) {
     return
   }
   originalWarn(...args)
+}
+
+const originalError = console.error.bind(console)
+console.error = (...args: unknown[]) => {
+  if (shouldSuppressFrontendTestLog(args)) {
+    return
+  }
+  originalError(...args)
 }
 
 function createLocalStorageMock() {
@@ -34,13 +59,21 @@ function createLocalStorageMock() {
 }
 
 const localStorageMock = createLocalStorageMock()
+const pendingRafTimers = new Set<number>()
 
 vi.stubGlobal('localStorage', localStorageMock as unknown as Storage)
 vi.stubGlobal('fetch', vi.fn())
 vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
-  return window.setTimeout(() => cb(Date.now()), 0)
+  const timerId = window.setTimeout(() => {
+    pendingRafTimers.delete(timerId)
+    if (typeof globalThis.requestAnimationFrame !== 'function') return
+    cb(Date.now())
+  }, 0)
+  pendingRafTimers.add(timerId)
+  return timerId
 })
 vi.stubGlobal('cancelAnimationFrame', (id: number) => {
+  pendingRafTimers.delete(id)
   window.clearTimeout(id)
 })
 
@@ -50,6 +83,11 @@ if (!document.doctype) {
 }
 
 beforeEach(() => {
+  pendingRafTimers.forEach((timerId) => {
+    window.clearTimeout(timerId)
+  })
+  pendingRafTimers.clear()
+
   localStorageMock.getItem.mockClear()
   localStorageMock.setItem.mockClear()
   localStorageMock.removeItem.mockClear()
