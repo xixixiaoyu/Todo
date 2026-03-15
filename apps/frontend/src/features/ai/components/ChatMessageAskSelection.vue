@@ -4,12 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useDraggable, useWindowSize } from '@vueuse/core'
 import { useEscClose } from '@/composables/useEscClose'
 import { GlobalSelectionManager } from '@/features/ai/utils/GlobalSelectionManager'
-import {
-  getAIStreamResponse,
-  generateId,
-  abortCurrentRequest,
-  type ChatMessage,
-} from '@/features/ai/services/aiService'
+import { getAIStreamResponse, generateId, type ChatMessage } from '@/features/ai/services/aiService'
 import ChatMessageMarkdown from '@/features/ai/components/ChatMessageMarkdown.vue'
 import ChatMessageThinking from '@/features/ai/components/ChatMessageThinking.vue'
 import { X, MessageSquare, LayoutTemplate, Send, ExternalLink } from 'lucide-vue-next'
@@ -45,6 +40,7 @@ const resultThinking = ref('')
 const isGeneratingResult = ref(false)
 const resultError = ref('')
 const lastSubmittedPrompt = ref('')
+let floatingAbortController: AbortController | null = null
 
 const resultMessage = computed<ChatMessage>(() => ({
   id: 'floating-result',
@@ -110,9 +106,11 @@ function closeAskPanel() {
 }
 
 function closeResultPanel() {
-  if (isGeneratingResult.value) {
-    abortCurrentRequest()
+  if (floatingAbortController) {
+    floatingAbortController.abort()
+    floatingAbortController = null
   }
+  isGeneratingResult.value = false
   isResultOpen.value = false
 }
 
@@ -190,6 +188,11 @@ async function submitAsk() {
 async function submitAskFloating() {
   const prompt = buildAskPrompt(selectionText.value, questionText.value)
   lastSubmittedPrompt.value = prompt
+  if (floatingAbortController) {
+    floatingAbortController.abort()
+  }
+  const requestController = new AbortController()
+  floatingAbortController = requestController
 
   // 记录位置以便浮窗出现在相同位置
   const initialX = panelX.value
@@ -234,10 +237,18 @@ async function submitAskFloating() {
       (thinking) => {
         resultThinking.value += thinking
       },
+      undefined,
+      {
+        abortSignal: requestController.signal,
+      },
     )
   } catch (err) {
     resultError.value = err instanceof Error ? err.message : String(err)
     isGeneratingResult.value = false
+  } finally {
+    if (floatingAbortController === requestController) {
+      floatingAbortController = null
+    }
   }
 }
 
@@ -320,6 +331,10 @@ watch([windowWidth, windowHeight], () => {
 })
 
 onUnmounted(() => {
+  if (floatingAbortController) {
+    floatingAbortController.abort()
+    floatingAbortController = null
+  }
   if (detachContainerEvents) detachContainerEvents()
   if (registeredEl) {
     GlobalSelectionManager.getInstance().unregister(registeredEl)

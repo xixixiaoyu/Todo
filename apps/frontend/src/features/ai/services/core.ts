@@ -135,9 +135,11 @@ export async function getAIStreamResponse(
     memorySnapshot,
     tools,
     toolChoice,
+    abortSignal,
   } = options
 
-  const signal = getAbortSignal()
+  const usesExternalSignal = !!abortSignal
+  const signal = abortSignal || getAbortSignal()
 
   // 构建消息列表（添加系统提示和 Todo 列表）
   const messagesWithSystemPrompts = injectSystemPrompts(
@@ -322,7 +324,9 @@ export async function getAIStreamResponse(
     }
     throw error
   } finally {
-    abortController = null
+    if (!usesExternalSignal && abortController?.signal === signal) {
+      abortController = null
+    }
   }
 }
 

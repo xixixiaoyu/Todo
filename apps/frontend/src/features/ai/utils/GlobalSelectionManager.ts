@@ -37,13 +37,17 @@ export class GlobalSelectionManager {
   }
 
   private startListening() {
+    if (this.isListening) return
     document.addEventListener('selectionchange', this.handleSelectionChange)
     document.addEventListener('mousedown', this.handleMouseDown, true)
+    this.isListening = true
   }
 
   private stopListening() {
+    if (!this.isListening) return
     document.removeEventListener('selectionchange', this.handleSelectionChange)
     document.removeEventListener('mousedown', this.handleMouseDown, true)
+    this.isListening = false
   }
 
   private handleSelectionChange = () => {

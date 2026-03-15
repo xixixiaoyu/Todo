@@ -4,8 +4,10 @@ import { createPinia, setActivePinia } from 'pinia'
 import i18n from '@/i18n'
 import ChatMessage from '@/features/ai/components/ChatMessage.vue'
 import type { ChatMessage as ChatMessageType } from '@/features/ai/composables/useChat'
+import * as aiService from '@/features/ai/services/aiService'
 
 beforeEach(() => {
+  vi.clearAllMocks()
   setActivePinia(createPinia())
 })
 import ChatMessageMarkdown from '@/features/ai/components/ChatMessageMarkdown.vue'
@@ -25,6 +27,7 @@ vi.mock('lucide-vue-next', () => ({
   CheckCircle2: { name: 'CheckCircle2', template: '<span>CheckCircle2</span>' },
   AlertCircle: { name: 'AlertCircle', template: '<span>AlertCircle</span>' },
   Send: { name: 'Send', template: '<span>Send</span>' },
+  ExternalLink: { name: 'ExternalLink', template: '<span>ExternalLink</span>' },
   Sparkles: { name: 'Sparkles', template: '<span>Sparkles</span>' },
   X: { name: 'X', template: '<span>X</span>' },
   BookCheck: { name: 'BookCheck', template: '<span>BookCheck</span>' },
@@ -46,6 +49,16 @@ vi.mock('vue-i18n', async (importOriginal) => {
     useI18n: () => ({
       t: (key: string) => key,
     }),
+  }
+})
+
+vi.mock('@/features/ai/services/aiService', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/ai/services/aiService')>()
+  return {
+    ...actual,
+    generateId: vi.fn(() => 'mock-id'),
+    getAIStreamResponse: vi.fn(actual.getAIStreamResponse),
+    abortCurrentRequest: vi.fn(actual.abortCurrentRequest),
   }
 })
 
@@ -508,5 +521,136 @@ describe('ChatMessage', () => {
     expect(prompt).toContain('What does this mean?')
     expect(prompt).toContain('ai.askSelectionQuote')
     expect(prompt).toContain('Hello')
+  })
+
+  it('should support floating ask flow and transfer result to chat', async () => {
+    vi.mocked(aiService.getAIStreamResponse).mockImplementationOnce(async (_messages, onChunk) => {
+      onChunk('Quick answer')
+      onChunk('[DONE]')
+    })
+
+    const wrapper = mount(ChatMessageMarkdown, {
+      props: { content: 'Hello world', isStreaming: false, isMobile: false },
+      global: {
+        stubs: {
+          Teleport: true,
+        },
+      },
+    })
+
+    await flushPromises()
+
+    const htmlContainer = wrapper.find('.markdown-content > div').element
+    const textNode = htmlContainer.childNodes[0]
+    const range = document.createRange()
+    range.setStart(textNode, 0)
+    range.setEnd(textNode, 5)
+    const selection = window.getSelection()
+    selection?.removeAllRanges()
+    selection?.addRange(range)
+
+    await wrapper.trigger('mouseup')
+    await flushPromises()
+
+    const askBtn = wrapper
+      .findAll('button')
+      .find((b) => b.text().trim() === 'ai.askSelectionAction')
+    expect(askBtn?.exists()).toBe(true)
+    await askBtn!.trigger('click')
+    await flushPromises()
+
+    const input = wrapper.find('input')
+    await input.setValue('What does this mean?')
+
+    const sendBtn = wrapper.findAll('button').find((b) => b.text().includes('ai.send'))
+    expect(sendBtn?.exists()).toBe(true)
+    await sendBtn!.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Quick answer')
+
+    const transferBtn = wrapper
+      .findAll('button')
+      .find((b) => b.text().includes('ai.askSelectionTransferToChat'))
+    expect(transferBtn?.exists()).toBe(true)
+    await transferBtn!.trigger('click')
+
+    expect(wrapper.emitted('transfer-selection')).toBeTruthy()
+    expect(wrapper.emitted('ask-selection')).toBeFalsy()
+  })
+
+  it('should abort only floating request when closing result panel', async () => {
+    let capturedSignal: AbortSignal | undefined
+    vi.mocked(aiService.getAIStreamResponse).mockImplementationOnce(
+      async (_messages, onChunk, _onThinking, _onReasoning, options) => {
+        capturedSignal = options?.abortSignal
+        await new Promise<void>((resolve) => {
+          if (!capturedSignal) {
+            resolve()
+            return
+          }
+          if (capturedSignal.aborted) {
+            onChunk('[ABORTED]')
+            resolve()
+            return
+          }
+          capturedSignal.addEventListener(
+            'abort',
+            () => {
+              onChunk('[ABORTED]')
+              resolve()
+            },
+            { once: true },
+          )
+        })
+      },
+    )
+
+    const wrapper = mount(ChatMessageMarkdown, {
+      props: { content: 'Hello world', isStreaming: false, isMobile: false },
+      global: {
+        stubs: {
+          Teleport: true,
+        },
+      },
+    })
+
+    await flushPromises()
+
+    const htmlContainer = wrapper.find('.markdown-content > div').element
+    const textNode = htmlContainer.childNodes[0]
+    const range = document.createRange()
+    range.setStart(textNode, 0)
+    range.setEnd(textNode, 5)
+    const selection = window.getSelection()
+    selection?.removeAllRanges()
+    selection?.addRange(range)
+
+    await wrapper.trigger('mouseup')
+    await flushPromises()
+
+    const askBtn = wrapper
+      .findAll('button')
+      .find((b) => b.text().trim() === 'ai.askSelectionAction')
+    expect(askBtn?.exists()).toBe(true)
+    await askBtn!.trigger('click')
+    await flushPromises()
+
+    const input = wrapper.find('input')
+    await input.setValue('Need details')
+
+    const sendBtn = wrapper.findAll('button').find((b) => b.text().includes('ai.send'))
+    expect(sendBtn?.exists()).toBe(true)
+    await sendBtn!.trigger('click')
+    await flushPromises()
+
+    const closeBtn = wrapper.find('button[aria-label="common.close"]')
+    expect(closeBtn.exists()).toBe(true)
+    await closeBtn.trigger('click')
+    await flushPromises()
+
+    expect(capturedSignal).toBeDefined()
+    expect(capturedSignal?.aborted).toBe(true)
+    expect(aiService.abortCurrentRequest).not.toHaveBeenCalled()
   })
 })

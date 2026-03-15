@@ -115,6 +115,7 @@ export interface AIRequestOptions {
   memorySnapshot?: string[]
   tools?: Tool[]
   toolChoice?: 'none' | 'auto' | 'required' | { type: 'function'; function: { name: string } }
+  abortSignal?: AbortSignal
 }
 
 export interface MultiModalContent {
