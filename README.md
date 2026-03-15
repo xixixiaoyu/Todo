@@ -121,7 +121,10 @@ pnpm dev
 
 ## 环境变量
 
-仓库根目录提供了 [`.env.example`](./.env.example)。
+仓库根目录提供两份模板：
+
+- [`.env.example`](./.env.example)：短版（日常必填）
+- [`.env.full.example`](./.env.full.example)：完整版（含可选与高级参数）
 
 最常见的做法：
 
@@ -129,14 +132,14 @@ pnpm dev
 cp .env.example .env
 ```
 
-第一次本地体验时，你主要关注这几类配置：
+第一次本地体验时，短版模板通常只需要这几项：
 
-- 数据库 / Redis：`POSTGRES_*`、`REDIS_*`
-- 鉴权安全：`JWT_SECRET`、`JWT_REFRESH_SECRET`
-- 前端访问地址：`FRONTEND_URL`、`CORS_ORIGIN`
-- AI 能力：在前端设置页按需配置（默认模型与地址已内置）
+- `DATABASE_URL`
+- `JWT_SECRET`、`JWT_REFRESH_SECRET`
+- `CORS_ORIGIN`
+- `POSTGRES_PASSWORD`、`REDIS_PASSWORD`
 
-其中 AI 相关变量是按需配置的。如果你暂时只想先把 Todo 主流程跑起来，可以先不填完整的 AI 配置。
+如果你需要更多配置（如 `FRONTEND_URL`、`MAIL_*`、`S3_*`、限流与部署高级参数），请改用 [`.env.full.example`](./.env.full.example)。
 
 ## 核心能力
 
