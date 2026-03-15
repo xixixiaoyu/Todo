@@ -67,9 +67,9 @@ export function saveAIThinkingMode(mode: 'enabled' | 'disabled'): void {
 // 默认配置
 const DEFAULT_CONFIG: AIConfig = {
   assistantMode: 'default',
-  baseUrl: import.meta.env.VITE_AI_API_URL || 'https://api.deepseek.com',
-  apiKey: import.meta.env.VITE_AI_API_KEY || '',
-  model: import.meta.env.VITE_AI_MODEL || 'deepseek-chat',
+  baseUrl: 'https://api.deepseek.com',
+  apiKey: '',
+  model: 'deepseek-chat',
   temperature: 0.3,
   systemPrompt: i18n.global.t('ai.defaultSystemPrompt'),
   thinkingMode: aiThinkingMode.value, // 使用初始值

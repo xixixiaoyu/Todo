@@ -134,7 +134,7 @@ cp .env.example .env
 - 数据库 / Redis：`POSTGRES_*`、`REDIS_*`
 - 鉴权安全：`JWT_SECRET`、`JWT_REFRESH_SECRET`
 - 前端访问地址：`FRONTEND_URL`、`CORS_ORIGIN`
-- AI 能力：`VITE_AI_API_URL`、`VITE_AI_API_KEY`、`VITE_AI_MODEL`
+- AI 能力：在前端设置页按需配置（默认模型与地址已内置）
 
 其中 AI 相关变量是按需配置的。如果你暂时只想先把 Todo 主流程跑起来，可以先不填完整的 AI 配置。
 

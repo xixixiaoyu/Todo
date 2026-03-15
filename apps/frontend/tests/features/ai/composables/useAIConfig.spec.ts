@@ -19,11 +19,9 @@ describe('useAIConfig - Core', () => {
       const { config, DEFAULT_CONFIG } = useAIConfig()
 
       expect(config.value).toEqual(DEFAULT_CONFIG)
-      expect(config.value.baseUrl).toBe(
-        import.meta.env.VITE_AI_API_URL || 'https://api.deepseek.com',
-      )
-      expect(config.value.apiKey).toBe(import.meta.env.VITE_AI_API_KEY || '')
-      expect(config.value.model).toBe(import.meta.env.VITE_AI_MODEL || 'deepseek-chat')
+      expect(config.value.baseUrl).toBe('https://api.deepseek.com')
+      expect(config.value.apiKey).toBe('')
+      expect(config.value.model).toBe('deepseek-chat')
     })
 
     it('should load saved config from localStorage', () => {

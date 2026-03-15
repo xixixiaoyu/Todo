@@ -4,15 +4,8 @@ import { authApi } from '../api'
 import { setToken } from '@/api'
 import { unwrapApiResponse, type User, type LoginInput, type RegisterInput } from '@lumina/shared'
 
-const AUTH_REFRESH_RETRY_DELAY_MS = Number(import.meta.env.VITE_AUTH_REFRESH_RETRY_DELAY_MS ?? 300)
-const AUTH_REFRESH_MAX_ATTEMPTS = Number(import.meta.env.VITE_AUTH_REFRESH_MAX_ATTEMPTS ?? 2)
-
-function normalizePositiveInt(value: number, fallback: number): number {
-  return Number.isInteger(value) && value > 0 ? value : fallback
-}
-
-const refreshRetryDelayMs = normalizePositiveInt(AUTH_REFRESH_RETRY_DELAY_MS, 300)
-const refreshMaxAttempts = normalizePositiveInt(AUTH_REFRESH_MAX_ATTEMPTS, 2)
+const refreshRetryDelayMs = 300
+const refreshMaxAttempts = 2
 
 type AuthTelemetryEvent =
   | 'refresh_retry'
