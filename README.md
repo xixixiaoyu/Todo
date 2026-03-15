@@ -40,7 +40,7 @@
 
 ### Todo 列表
 <p align="center">
-  <img src="./docs/images/todo%20列表.png" alt="Todo 列表" width="920" />
+  <img src="./docs/images/todo%20列表.png?v=2" alt="Todo 列表" width="920" />
 </p>
 
 ### 完成反馈
