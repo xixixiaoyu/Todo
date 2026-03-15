@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { usePomodoroStore } from '@/features/todo/stores/pomodoro'
+import { nativeService } from '@/services/native'
 
 const mockToast = {
   success: vi.fn(),
@@ -40,6 +41,27 @@ describe('usePomodoroStore', () => {
     expect(store.timeLeft).toBe(25 * 60)
     expect(store.activeTodoId).toBeNull()
     expect(store.completedSessions).toBe(0)
+  })
+
+  it('should not sync mini mode on initial idle state', () => {
+    const setMiniModeSpy = vi.spyOn(nativeService, 'setMiniMode').mockResolvedValue(undefined)
+
+    usePomodoroStore()
+
+    expect(setMiniModeSpy).not.toHaveBeenCalled()
+  })
+
+  it('should keep timer running when haptic fails on focus start', async () => {
+    vi.spyOn(nativeService, 'setMiniMode').mockResolvedValue(undefined)
+    vi.spyOn(nativeService, 'haptic').mockRejectedValueOnce(new Error('haptic unavailable'))
+    const store = usePomodoroStore()
+
+    await store.startFocus('todo-1')
+    advanceTime(1000)
+
+    expect(store.status).toBe('focus')
+    expect(store.isRunning).toBe(true)
+    expect(store.timeLeft).toBe(25 * 60 - 1)
   })
 
   it('should start focus with different modes correctly', async () => {

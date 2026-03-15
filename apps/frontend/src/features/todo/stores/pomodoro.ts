@@ -53,13 +53,18 @@ export const usePomodoroStore = defineStore(
 
     // Actions
     async function syncWailsWindow() {
-      await nativeService.setMiniMode(isMiniMode.value)
+      try {
+        await nativeService.setMiniMode(isMiniMode.value)
+      } catch (error) {
+        console.warn('Failed to sync mini mode with native window', error)
+      }
     }
 
     // Watch for mini mode changes to sync with Wails
     watch(
       isMiniMode,
-      () => {
+      (enabled, previousEnabled) => {
+        if (previousEnabled === undefined && !enabled) return
         void syncWailsWindow()
       },
       { immediate: true },
@@ -198,9 +203,25 @@ export const usePomodoroStore = defineStore(
       timeLeft.value = currentSessionTotal.value
       isMiniMode.value = true
 
-      await nativeService.haptic(ImpactStyle.Medium)
-
       startTimer()
+
+      void triggerHaptic(ImpactStyle.Medium)
+    }
+
+    async function triggerHaptic(style: ImpactStyle = ImpactStyle.Light) {
+      try {
+        await nativeService.haptic(style)
+      } catch (error) {
+        console.warn('Failed to trigger haptic feedback', error)
+      }
+    }
+
+    async function triggerHapticNotification(type: NotificationType = NotificationType.Success) {
+      try {
+        await nativeService.hapticNotification(type)
+      } catch (error) {
+        console.warn('Failed to trigger haptic notification', error)
+      }
     }
 
     function startTimer(isResumingFromPersistence = false) {
@@ -248,7 +269,7 @@ export const usePomodoroStore = defineStore(
         clearInterval(timerInterval.value)
         timerInterval.value = null
         targetEndTime.value = null
-        await nativeService.haptic(ImpactStyle.Light)
+        await triggerHaptic(ImpactStyle.Light)
       }
     }
 
@@ -261,7 +282,7 @@ export const usePomodoroStore = defineStore(
         } else if (status.value !== 'idle') {
           startTimer()
         }
-        await nativeService.haptic(ImpactStyle.Light)
+        await triggerHaptic(ImpactStyle.Light)
       }
     }
 
@@ -293,7 +314,9 @@ export const usePomodoroStore = defineStore(
         } else {
           toast.info(message)
         }
-        void nativeService.notify(t('common.pomodoro'), message)
+        void nativeService.notify(t('common.pomodoro'), message).catch((error) => {
+          console.warn('Failed to send pomodoro notification', error)
+        })
       }
 
       if (status.value === 'focus') {
@@ -329,7 +352,7 @@ export const usePomodoroStore = defineStore(
       }
 
       // Haptic feedback for completion
-      await nativeService.hapticNotification(NotificationType.Success)
+      await triggerHapticNotification(NotificationType.Success)
     }
 
     function toggleMiniMode() {
