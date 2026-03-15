@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useWindowSize, onKeyStroke } from '@vueuse/core'
 import ResizableDrawer from '@/components/ResizableDrawer.vue'
 import ChatMessageList from '@/features/ai/components/ChatMessageList.vue'
@@ -178,15 +178,6 @@ onKeyStroke(['j', 'J'], (e) => {
       handleNewChat()
     }
     modelValue.value = true
-  }
-})
-
-// 监听抽屉打开，自动聚焦输入框
-watch(modelValue, (isOpen) => {
-  if (isOpen) {
-    void nextTick(() => {
-      assistantInputRef.value?.focus()
-    })
   }
 })
 

@@ -162,6 +162,22 @@ describe('AiAssistantDrawer Navigation and Button States', () => {
     vi.clearAllMocks()
   })
 
+  it('should not auto-focus input when drawer is opened', async () => {
+    const focusSpy = vi
+      .spyOn(HTMLTextAreaElement.prototype, 'focus')
+      .mockImplementation(() => undefined)
+
+    const wrapper = mount(AiAssistantDrawer, {
+      props: { modelValue: false },
+    })
+
+    await wrapper.setProps({ modelValue: true })
+    await nextTick()
+
+    expect(focusSpy).not.toHaveBeenCalled()
+    focusSpy.mockRestore()
+  })
+
   it('should disable "New Chat" button when there is no chat history', async () => {
     const wrapper = mount(AiAssistantDrawer, {
       props: { modelValue: true },
