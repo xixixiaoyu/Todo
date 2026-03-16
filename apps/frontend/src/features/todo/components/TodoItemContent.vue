@@ -98,14 +98,14 @@ const isOverdue = computed(() => {
       <Tooltip v-if="todo.dueAt && store.filter !== 'trash'">
         <TooltipTrigger as-child>
           <div
-            class="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[var(--todo-font-caption)] font-semibold shrink-0 ml-1"
+            class="flex items-center gap-0.5 md:gap-1 px-1 md:px-1.5 py-[1px] md:py-0.5 rounded-md text-[11px] md:text-[var(--todo-font-caption)] leading-none font-medium md:font-semibold shrink-0 ml-1"
             :class="
               isOverdue
                 ? 'bg-destructive/10 text-destructive'
                 : 'bg-primary/10 text-primary dark:text-primary/90'
             "
           >
-            <CalendarClock class="w-3 h-3" />
+            <CalendarClock class="w-2.5 h-2.5 md:w-3 md:h-3" />
             <span>{{ formatDate(todo.dueAt!, 'MM-DD HH:mm') }}</span>
           </div>
         </TooltipTrigger>
@@ -115,9 +115,9 @@ const isOverdue = computed(() => {
       <Tooltip v-if="todo.remindAt && !todo.remindedAt && store.filter !== 'trash'">
         <TooltipTrigger as-child>
           <div
-            class="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400/90 text-[var(--todo-font-caption)] font-semibold shrink-0 ml-1"
+            class="flex items-center gap-0.5 md:gap-1 px-1 md:px-1.5 py-[1px] md:py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400/90 text-[11px] md:text-[var(--todo-font-caption)] leading-none font-medium md:font-semibold shrink-0 ml-1"
           >
-            <Bell class="w-3 h-3" />
+            <Bell class="w-2.5 h-2.5 md:w-3 md:h-3" />
             <span>{{ formatDate(todo.remindAt!, 'HH:mm') }}</span>
           </div>
         </TooltipTrigger>
