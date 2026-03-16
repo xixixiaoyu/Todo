@@ -270,19 +270,6 @@ onBeforeUnmount(() => {
                 </template>
                 <template v-else>
                   <div class="space-y-1 p-1">
-                    <Button
-                      variant="ghost"
-                      class="h-11 w-full justify-start gap-2.5 rounded-xl px-3 text-base"
-                      @click.stop="handleMobilePinToggle"
-                    >
-                      <PinOff
-                        v-if="todo.isPinned"
-                        class="h-4 w-4 text-muted-foreground lucide-pin-off"
-                      />
-                      <Pin v-else class="h-4 w-4 text-muted-foreground lucide-pin" />
-                      <span>{{ todo.isPinned ? t('todo.unpin') : t('todo.pin') }}</span>
-                    </Button>
-
                     <template v-if="!todo.completed">
                       <Button
                         variant="ghost"
@@ -314,28 +301,6 @@ onBeforeUnmount(() => {
                     </template>
 
                     <Button
-                      v-if="!todo.completed"
-                      variant="ghost"
-                      class="h-11 w-full justify-start gap-2.5 rounded-xl px-3 text-base"
-                      @click.stop="handleMobileStartEdit"
-                    >
-                      <Pencil class="h-4 w-4 text-muted-foreground" />
-                      <span>{{ t('todo.edit') }}</span>
-                    </Button>
-
-                    <Button
-                      v-if="!todo.completed && !todo.isProposedDelete"
-                      variant="ghost"
-                      class="h-11 w-full justify-start gap-2.5 rounded-xl px-3 text-base"
-                      :disabled="isBreakingDown"
-                      @click.stop="handleMobileBreakdown"
-                    >
-                      <Loader2 v-if="isBreakingDown" class="h-4 w-4 animate-spin text-primary" />
-                      <Wand2 v-else class="h-4 w-4 text-muted-foreground" />
-                      <span>{{ t('todo.breakdown') }}</span>
-                    </Button>
-
-                    <Button
                       v-if="!todo.isProposedDelete"
                       variant="ghost"
                       class="h-11 w-full justify-start gap-2.5 rounded-xl px-3 text-base"
@@ -352,6 +317,16 @@ onBeforeUnmount(() => {
                     </Button>
 
                     <Button
+                      v-if="!todo.completed"
+                      variant="ghost"
+                      class="h-11 w-full justify-start gap-2.5 rounded-xl px-3 text-base"
+                      @click.stop="handleMobileStartEdit"
+                    >
+                      <Pencil class="h-4 w-4 text-muted-foreground" />
+                      <span>{{ t('todo.edit') }}</span>
+                    </Button>
+
+                    <Button
                       v-if="(level || 0) < 2 && !todo.completed"
                       variant="ghost"
                       class="h-11 w-full justify-start gap-2.5 rounded-xl px-3 text-base"
@@ -359,6 +334,31 @@ onBeforeUnmount(() => {
                     >
                       <Plus class="h-4 w-4 text-muted-foreground" />
                       <span>{{ t('todo.addSubtask') }}</span>
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      class="h-11 w-full justify-start gap-2.5 rounded-xl px-3 text-base"
+                      @click.stop="handleMobilePinToggle"
+                    >
+                      <PinOff
+                        v-if="todo.isPinned"
+                        class="h-4 w-4 text-muted-foreground lucide-pin-off"
+                      />
+                      <Pin v-else class="h-4 w-4 text-muted-foreground lucide-pin" />
+                      <span>{{ todo.isPinned ? t('todo.unpin') : t('todo.pin') }}</span>
+                    </Button>
+
+                    <Button
+                      v-if="!todo.completed && !todo.isProposedDelete"
+                      variant="ghost"
+                      class="h-11 w-full justify-start gap-2.5 rounded-xl px-3 text-base"
+                      :disabled="isBreakingDown"
+                      @click.stop="handleMobileBreakdown"
+                    >
+                      <Loader2 v-if="isBreakingDown" class="h-4 w-4 animate-spin text-primary" />
+                      <Wand2 v-else class="h-4 w-4 text-muted-foreground" />
+                      <span>{{ t('todo.breakdown') }}</span>
                     </Button>
 
                     <div class="mt-2 border-t border-border/60 pt-2">

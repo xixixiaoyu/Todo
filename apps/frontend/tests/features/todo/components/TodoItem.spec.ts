@@ -163,6 +163,14 @@ describe('TodoItem', () => {
     expect(wrapper.text()).toContain('专注')
     expect(wrapper.text()).toContain('截止/提醒')
     expect(wrapper.text()).toContain('删除')
+
+    const actionText = wrapper.text()
+    expect(actionText.indexOf('专注')).toBeLessThan(actionText.indexOf('截止/提醒'))
+    expect(actionText.indexOf('截止/提醒')).toBeLessThan(actionText.indexOf('编辑'))
+    expect(actionText.indexOf('编辑')).toBeLessThan(actionText.indexOf('添加子任务'))
+    expect(actionText.indexOf('添加子任务')).toBeLessThan(actionText.indexOf('置顶'))
+    expect(actionText.indexOf('置顶')).toBeLessThan(actionText.indexOf('AI 拆解'))
+    expect(actionText.indexOf('AI 拆解')).toBeLessThan(actionText.indexOf('删除'))
   })
 
   it('should expand by default when expanded is undefined', () => {
