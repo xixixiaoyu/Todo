@@ -251,7 +251,7 @@ onBeforeUnmount(() => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    class="h-8 w-8 text-muted-foreground hover:text-foreground"
+                    class="h-7 w-7 text-muted-foreground/75 hover:text-muted-foreground hover:bg-muted/40"
                     @click.stop="closeMobileSheet"
                   >
                     <X class="h-4 w-4" />
@@ -278,9 +278,9 @@ onBeforeUnmount(() => {
                       >
                         <Target class="h-4 w-4 text-muted-foreground lucide-target" />
                         <span>{{ t('todo.focus') }}</span>
-                        <ChevronDown
-                          class="ml-auto h-4 w-4 text-muted-foreground transition-transform"
-                          :class="{ 'rotate-180': isMobileFocusExpanded }"
+                        <component
+                          :is="isMobileFocusExpanded ? ChevronDown : ChevronRight"
+                          class="ml-auto h-4 w-4 text-muted-foreground"
                         />
                       </Button>
                       <div
