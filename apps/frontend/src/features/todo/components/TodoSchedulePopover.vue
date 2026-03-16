@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { Button } from '@/components/ui/button'
 import TodoDateTimePicker from './TodoDateTimePicker.vue'
 import { toDate } from '../stores/todo.dates'
+import { useIsMobile } from '@/composables/useWindowSize'
 
 const props = defineProps<{
   dueAt: Date | string | number | null | undefined
@@ -16,9 +17,11 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const { isMobile } = useIsMobile()
 
 const dueValue = ref<Date | null>(null)
 const remindValue = ref<Date | null>(null)
+const mobileActiveField = ref<'due' | 'remind'>('due')
 
 watch(
   () => [props.dueAt, props.remindAt] as const,
@@ -97,6 +100,41 @@ const quickRemind = computed<QuickAction[]>(() => {
   ]
 })
 
+const mobileActiveValue = computed<Date | null>({
+  get: () => (mobileActiveField.value === 'due' ? dueValue.value : remindValue.value),
+  set: (nextValue) => {
+    if (mobileActiveField.value === 'due') {
+      dueValue.value = nextValue
+      return
+    }
+    remindValue.value = nextValue
+  },
+})
+
+const mobileQuickActions = computed(() =>
+  mobileActiveField.value === 'due' ? quickDue.value : quickRemind.value,
+)
+
+const mobileTitleKey = computed(() =>
+  mobileActiveField.value === 'due' ? 'todo.dueAt' : 'todo.remindAt',
+)
+
+const mobileClearKey = computed(() =>
+  mobileActiveField.value === 'due' ? 'todo.clearDueAt' : 'todo.clearRemindAt',
+)
+
+const mobileCanClear = computed(() =>
+  mobileActiveField.value === 'due' ? !!dueValue.value : !!remindValue.value,
+)
+
+function clearMobileActiveValue() {
+  if (mobileActiveField.value === 'due') {
+    dueValue.value = null
+    return
+  }
+  remindValue.value = null
+}
+
 function apply() {
   if (isInvalid.value) return
   emit('apply', dueValue.value, remindValue.value)
@@ -106,51 +144,54 @@ function apply() {
 
 <template>
   <div class="space-y-4">
-    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 md:items-start">
-      <section class="space-y-2">
-        <div class="flex items-center justify-between gap-2">
-          <p class="text-sm font-semibold">{{ t('todo.dueAt') }}</p>
+    <template v-if="isMobile">
+      <div class="rounded-xl border border-border/60 bg-muted/25 p-1">
+        <div class="grid grid-cols-2 gap-1">
           <Button
             variant="ghost"
-            size="xs"
-            class="h-7 rounded-lg px-2 text-xs hover:bg-muted/50"
-            :disabled="!dueValue"
-            @click="dueValue = null"
+            size="sm"
+            class="h-9 rounded-lg text-xs"
+            :class="
+              mobileActiveField === 'due'
+                ? 'bg-background text-foreground shadow-sm hover:bg-background'
+                : 'text-muted-foreground hover:bg-background/50'
+            "
+            @click="mobileActiveField = 'due'"
           >
-            {{ t('todo.clearDueAt') }}
+            {{ t('todo.dueAt') }}
           </Button>
-        </div>
-        <div class="flex flex-wrap gap-2">
           <Button
-            v-for="item in quickDue"
-            :key="item.key"
-            variant="secondary"
-            size="xs"
-            class="rounded-xl bg-secondary/70 hover:bg-secondary/90"
-            @click="item.run"
+            variant="ghost"
+            size="sm"
+            class="h-9 rounded-lg text-xs"
+            :class="
+              mobileActiveField === 'remind'
+                ? 'bg-background text-foreground shadow-sm hover:bg-background'
+                : 'text-muted-foreground hover:bg-background/50'
+            "
+            @click="mobileActiveField = 'remind'"
           >
-            {{ t(item.key) }}
+            {{ t('todo.remindAt') }}
           </Button>
         </div>
-        <TodoDateTimePicker v-model="dueValue" :default-expanded="true" />
-      </section>
+      </div>
 
       <section class="space-y-2">
         <div class="flex items-center justify-between gap-2">
-          <p class="text-sm font-semibold">{{ t('todo.remindAt') }}</p>
+          <p class="text-sm font-semibold">{{ t(mobileTitleKey) }}</p>
           <Button
             variant="ghost"
             size="xs"
             class="h-7 rounded-lg px-2 text-xs hover:bg-muted/50"
-            :disabled="!remindValue"
-            @click="remindValue = null"
+            :disabled="!mobileCanClear"
+            @click="clearMobileActiveValue"
           >
-            {{ t('todo.clearRemindAt') }}
+            {{ t(mobileClearKey) }}
           </Button>
         </div>
         <div class="flex flex-wrap gap-2">
           <Button
-            v-for="item in quickRemind"
+            v-for="item in mobileQuickActions"
             :key="item.key"
             variant="secondary"
             size="xs"
@@ -161,9 +202,72 @@ function apply() {
             {{ t(item.key) }}
           </Button>
         </div>
-        <TodoDateTimePicker v-model="remindValue" :default-expanded="true" />
+        <div class="max-h-[58vh] overflow-y-auto pr-1">
+          <TodoDateTimePicker v-model="mobileActiveValue" :default-expanded="false" />
+        </div>
       </section>
-    </div>
+    </template>
+
+    <template v-else>
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2 md:items-start">
+        <section class="space-y-2">
+          <div class="flex items-center justify-between gap-2">
+            <p class="text-sm font-semibold">{{ t('todo.dueAt') }}</p>
+            <Button
+              variant="ghost"
+              size="xs"
+              class="h-7 rounded-lg px-2 text-xs hover:bg-muted/50"
+              :disabled="!dueValue"
+              @click="dueValue = null"
+            >
+              {{ t('todo.clearDueAt') }}
+            </Button>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <Button
+              v-for="item in quickDue"
+              :key="item.key"
+              variant="secondary"
+              size="xs"
+              class="rounded-xl bg-secondary/70 hover:bg-secondary/90"
+              @click="item.run"
+            >
+              {{ t(item.key) }}
+            </Button>
+          </div>
+          <TodoDateTimePicker v-model="dueValue" :default-expanded="true" />
+        </section>
+
+        <section class="space-y-2">
+          <div class="flex items-center justify-between gap-2">
+            <p class="text-sm font-semibold">{{ t('todo.remindAt') }}</p>
+            <Button
+              variant="ghost"
+              size="xs"
+              class="h-7 rounded-lg px-2 text-xs hover:bg-muted/50"
+              :disabled="!remindValue"
+              @click="remindValue = null"
+            >
+              {{ t('todo.clearRemindAt') }}
+            </Button>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <Button
+              v-for="item in quickRemind"
+              :key="item.key"
+              variant="secondary"
+              size="xs"
+              class="rounded-xl bg-secondary/70 hover:bg-secondary/90"
+              :disabled="item.disabled"
+              @click="item.run"
+            >
+              {{ t(item.key) }}
+            </Button>
+          </div>
+          <TodoDateTimePicker v-model="remindValue" :default-expanded="true" />
+        </section>
+      </div>
+    </template>
 
     <div
       v-if="isInvalid"
