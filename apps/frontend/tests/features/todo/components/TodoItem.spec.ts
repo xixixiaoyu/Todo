@@ -1,4 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { ref } from 'vue'
+
+const isMobileMock = ref(false)
+
+vi.mock('@/composables/useWindowSize', () => ({
+  useIsMobile: () => ({ isMobile: isMobileMock }),
+}))
 
 // Mock lucide-vue-next components
 vi.mock('lucide-vue-next', () => ({
@@ -20,6 +27,7 @@ vi.mock('lucide-vue-next', () => ({
   Check: { template: '<span class="lucide-check">Check</span>' },
   X: { template: '<span class="lucide-x">X</span>' },
   RotateCcw: { template: '<span class="lucide-rotate-ccw">RotateCcw</span>' },
+  MoreHorizontal: { template: '<span class="lucide-more-horizontal">MoreHorizontal</span>' },
   Zap: { template: '<span class="lucide-zap">Zap</span>' },
   Timer: { template: '<span class="lucide-timer">Timer</span>' },
   Rocket: { template: '<span class="lucide-rocket">Rocket</span>' },
@@ -75,6 +83,7 @@ const i18n = createI18n({
 describe('TodoItem', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    isMobileMock.value = false
   })
 
   const mockTodo: Todo = {
@@ -103,6 +112,27 @@ describe('TodoItem', () => {
     })
 
     expect(wrapper.text()).toContain('Test todo')
+  })
+
+  it('should show only more menu trigger by default on mobile', () => {
+    isMobileMock.value = true
+
+    const wrapper = mount(TodoItem, {
+      props: {
+        todo: mockTodo,
+        allTodos: [mockTodo],
+        editingId: null,
+        editingTitle: '',
+      },
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    expect(wrapper.find('.lucide-more-horizontal').exists()).toBe(true)
+    expect(wrapper.find('.lucide-pin').exists()).toBe(false)
+    expect(wrapper.find('.lucide-pin-off').exists()).toBe(false)
+    expect(wrapper.find('.lucide-target').exists()).toBe(false)
   })
 
   it('should expand by default when expanded is undefined', () => {

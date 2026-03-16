@@ -6,6 +6,10 @@ import {
   Loader2,
   Wand2,
   Target,
+  Zap,
+  Timer,
+  Rocket,
+  Globe,
   CalendarClock,
   Pin,
   PinOff,
@@ -24,10 +28,14 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import TodoSchedulePopover from './TodoSchedulePopover.vue'
 import PomodoroModeSelector from './PomodoroModeSelector.vue'
+import type { PomodoroMode } from '../stores/pomodoro'
 
 const { t } = useI18n()
 const pomodoroStore = usePomodoroStore()
@@ -37,7 +45,6 @@ const { isMobile } = useIsMobile()
 const props = defineProps<{
   todo: Todo
   isBreakingDown: boolean
-  isMobileActionsVisible: boolean
   level?: number
 }>()
 
@@ -50,6 +57,16 @@ const emit = defineEmits<{
 }>()
 
 const isScheduleOpen = ref(false)
+const focusModes: ReadonlyArray<{
+  id: PomodoroMode
+  icon: typeof Zap
+  color: string
+}> = [
+  { id: 'icebreaker', icon: Zap, color: 'text-orange-500' },
+  { id: 'classic', icon: Timer, color: 'text-primary' },
+  { id: 'flow', icon: Rocket, color: 'text-blue-500' },
+  { id: 'cosmos', icon: Globe, color: 'text-purple-500' },
+]
 
 function handleApplySchedule(dueAt: Date | null, remindAt: Date | null) {
   todoStore.updateTodoSchedule(props.todo.id, dueAt, remindAt)
@@ -96,41 +113,11 @@ function handleApplySchedule(dueAt: Date | null, remindAt: Date | null) {
   <!-- Normal Mode Actions -->
   <div
     v-else
-    class="absolute right-0 top-0 bottom-0 flex items-center gap-0.5 opacity-0 md:group-hover:opacity-100 bg-gradient-to-l from-card via-card/95 to-transparent pl-8 md:pl-12 pr-2 md:pr-3 rounded-r-xl transition-all duration-200"
-    :class="{ 'opacity-100': isMobileActionsVisible }"
+    class="absolute right-0 top-0 bottom-0 flex items-center gap-0.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 bg-gradient-to-l from-card via-card/95 to-transparent pl-8 md:pl-12 pr-2 md:pr-3 rounded-r-xl transition-all duration-200"
   >
     <!-- Mobile Optimized Layout -->
     <template v-if="isMobile">
       <div class="flex items-center gap-0.5">
-        <!-- Pin (Always visible on mobile) -->
-        <Button
-          variant="ghost"
-          size="icon"
-          class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-          :class="{ 'text-primary bg-primary/5': todo.isPinned }"
-          @click.stop="todoStore.togglePin(todo.id)"
-        >
-          <PinOff v-if="todo.isPinned" class="h-3.5 w-3.5 lucide-pin-off" />
-          <Pin v-else class="h-3.5 w-3.5 lucide-pin" />
-        </Button>
-
-        <!-- Focus (Always visible on mobile) -->
-        <PomodoroModeSelector
-          v-if="!todo.completed"
-          :todo-id="todo.id"
-          @select="pomodoroStore.startFocus(todo.id, $event)"
-        >
-          <Button
-            variant="ghost"
-            size="icon"
-            class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-            :class="{ 'text-primary bg-primary/5': pomodoroStore.activeTodoId === todo.id }"
-            @click.stop
-          >
-            <Target class="h-3.5 w-3.5 lucide-target" />
-          </Button>
-        </PomodoroModeSelector>
-
         <!-- More Actions Dropdown -->
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
@@ -144,6 +131,35 @@ function handleApplySchedule(dueAt: Date | null, remindAt: Date | null) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" class="w-48 p-1 z-[100]">
+            <!-- Pin -->
+            <DropdownMenuItem
+              class="flex items-center gap-2 py-2 cursor-pointer"
+              @click.stop="todoStore.togglePin(todo.id)"
+            >
+              <PinOff v-if="todo.isPinned" class="h-4 w-4 text-muted-foreground lucide-pin-off" />
+              <Pin v-else class="h-4 w-4 text-muted-foreground lucide-pin" />
+              <span>{{ todo.isPinned ? t('todo.unpin') : t('todo.pin') }}</span>
+            </DropdownMenuItem>
+
+            <!-- Focus -->
+            <DropdownMenuSub v-if="!todo.completed">
+              <DropdownMenuSubTrigger class="flex items-center gap-2 py-2 cursor-pointer">
+                <Target class="h-4 w-4 text-muted-foreground lucide-target" />
+                <span>{{ t('todo.focus') }}</span>
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent class="w-52 p-1">
+                <DropdownMenuItem
+                  v-for="mode in focusModes"
+                  :key="mode.id"
+                  class="flex items-center gap-2 py-2 cursor-pointer"
+                  @click.stop="pomodoroStore.startFocus(todo.id, mode.id)"
+                >
+                  <component :is="mode.icon" class="h-4 w-4" :class="mode.color" />
+                  <span>{{ t(`pomodoro.modes.${mode.id}`) }}</span>
+                </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+
             <!-- Edit -->
             <DropdownMenuItem
               v-if="!todo.completed"

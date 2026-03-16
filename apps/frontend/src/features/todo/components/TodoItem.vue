@@ -47,7 +47,6 @@ const emit = defineEmits<{
 
 // --- State ---
 const isBreakingDown = ref(false)
-const isMobileActionsVisible = ref(false)
 const isAddingChild = ref(false)
 const showTooltip = ref(false)
 
@@ -97,12 +96,6 @@ const parentPath = computed(() => {
 })
 
 // --- Methods ---
-function toggleMobileActions() {
-  if (isMobile.value) {
-    isMobileActionsVisible.value = !isMobileActionsVisible.value
-  }
-}
-
 async function handleBreakdown() {
   isBreakingDown.value = true
   try {
@@ -252,9 +245,8 @@ watch(
         :todo="todo"
         :search-query="searchQuery"
         :parent-path="parentPath"
-        :class="{ 'pr-28 md:pr-0': isMobile && isMobileActionsVisible }"
+        :class="{ 'pr-12 md:pr-0': isMobile }"
         @start-edit="emit('startEdit', todo.id, todo.title)"
-        @toggle-mobile-actions="toggleMobileActions"
       />
 
       <!-- Right: Actions -->
@@ -262,7 +254,6 @@ watch(
         v-if="editingId !== todo.id"
         :todo="todo"
         :is-breaking-down="isBreakingDown"
-        :is-mobile-actions-visible="isMobileActionsVisible"
         :level="level"
         @start-edit="emit('startEdit', todo.id, todo.title)"
         @delete="handleDelete"

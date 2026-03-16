@@ -20,7 +20,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   startEdit: []
-  toggleMobileActions: []
 }>()
 
 const isOverdue = computed(() => {
@@ -32,7 +31,7 @@ const isOverdue = computed(() => {
 </script>
 
 <template>
-  <div class="flex-1 flex flex-col min-w-0" @click="emit('toggleMobileActions')">
+  <div class="flex-1 flex flex-col min-w-0">
     <!-- Parent Path Context (Search only) -->
     <div
       v-if="parentPath.length > 0"
