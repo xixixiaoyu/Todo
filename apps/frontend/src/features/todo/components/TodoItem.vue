@@ -65,7 +65,7 @@ const itemClass = computed(() => {
 const checkboxClass = computed(() => {
   const border = isChild.value ? 'border-primary/45' : 'border-primary/70'
 
-  return `h-5 w-5 rounded-full border-2 ${border} data-[state=checked]:border-success data-[state=checked]:bg-success transition-transform active:scale-90`
+  return `rounded-full border-2 ${border} data-[state=checked]:border-success data-[state=checked]:bg-success transition-transform active:scale-90`
 })
 const children = computed(() => {
   if (props.searchQuery) return []
@@ -217,7 +217,7 @@ watch(
           :model-value="todo.completed"
           :disabled="todo.isProposedDelete"
           :class="checkboxClass"
-          class="h-5.5 w-5.5 md:h-5 md:w-5"
+          class="h-5 w-5"
           @update:model-value="
             () => {
               void hapticImpact(ImpactStyle.Light)
