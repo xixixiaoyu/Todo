@@ -21,7 +21,7 @@ import {
   Plus,
   MoreHorizontal,
 } from 'lucide-vue-next'
-import { ref, watch } from 'vue'
+import { onBeforeUnmount, ref, watch } from 'vue'
 import { useTodoStore, type Todo } from '../stores/todo'
 import { usePomodoroStore } from '../stores/pomodoro'
 import { useIsMobile } from '@/composables/useWindowSize'
@@ -109,10 +109,53 @@ function handleMobileFocusSelect(mode: PomodoroMode) {
   closeMobileSheet()
 }
 
+function lockBackgroundScroll() {
+  if (typeof document === 'undefined') return
+  const body = document.body
+  const currentCount = Number(body.dataset.todoSheetLockCount ?? '0')
+
+  if (currentCount === 0) {
+    body.dataset.todoSheetPrevOverflow = body.style.overflow
+    body.dataset.todoSheetPrevTouchAction = body.style.touchAction
+    body.style.overflow = 'hidden'
+    body.style.touchAction = 'none'
+  }
+
+  body.dataset.todoSheetLockCount = String(currentCount + 1)
+}
+
+function unlockBackgroundScroll() {
+  if (typeof document === 'undefined') return
+  const body = document.body
+  const currentCount = Number(body.dataset.todoSheetLockCount ?? '0')
+
+  if (currentCount <= 1) {
+    body.style.overflow = body.dataset.todoSheetPrevOverflow ?? ''
+    body.style.touchAction = body.dataset.todoSheetPrevTouchAction ?? ''
+    delete body.dataset.todoSheetLockCount
+    delete body.dataset.todoSheetPrevOverflow
+    delete body.dataset.todoSheetPrevTouchAction
+    return
+  }
+
+  body.dataset.todoSheetLockCount = String(currentCount - 1)
+}
+
 watch(isMobileSheetOpen, (isOpen) => {
-  if (isOpen) return
+  if (isOpen) {
+    lockBackgroundScroll()
+    return
+  }
+
+  unlockBackgroundScroll()
   isMobileFocusExpanded.value = false
   isMobileScheduleEditorOpen.value = false
+})
+
+onBeforeUnmount(() => {
+  if (isMobileSheetOpen.value) {
+    unlockBackgroundScroll()
+  }
 })
 </script>
 
