@@ -92,13 +92,13 @@
   },
   "lint-staged": {
     "apps/frontend/**/*.{ts,tsx,vue}": [
-      "cross-env NODE_OPTIONS='--max-old-space-size=8192' eslint --fix --cache --config apps/frontend/eslint.config.mjs"
+      "cross-env NODE_OPTIONS='--max-old-space-size=8192' eslint --fix --cache --cache-strategy content --config apps/frontend/eslint.config.mjs"
     ],
     "apps/backend/**/*.ts": [
-      "cross-env NODE_OPTIONS='--max-old-space-size=8192' eslint --fix --cache --config apps/backend/eslint.config.mjs"
+      "cross-env NODE_OPTIONS='--max-old-space-size=8192' eslint --fix --cache --cache-strategy content --config apps/backend/eslint.config.mjs"
     ],
     "packages/shared/**/*.ts": [
-      "cross-env NODE_OPTIONS='--max-old-space-size=8192' eslint --fix --cache --config packages/shared/eslint.config.mjs"
+      "cross-env NODE_OPTIONS='--max-old-space-size=8192' eslint --fix --cache --cache-strategy content --config packages/shared/eslint.config.mjs"
     ],
     "**/*.{json,css,scss,html,yml,yaml,md}": [
       "prettier --write"

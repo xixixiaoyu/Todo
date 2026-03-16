@@ -21,7 +21,7 @@ export default [
     },
   },
   {
-    files: ['**/*.vue'],
+    files: ['src/**/*.vue'],
     languageOptions: {
       parserOptions: {
         parser: ts.parser,
@@ -38,6 +38,27 @@ export default [
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
+    },
+  },
+  {
+    files: [
+      'tests/**/*.ts',
+      'tests/**/*.tsx',
+      'tests/**/*.mts',
+      'tests/**/*.cts',
+      'tests/**/*.vue',
+    ],
+    languageOptions: {
+      parserOptions: {
+        parser: ts.parser,
+        projectService: false,
+        tsconfigRootDir: import.meta.dirname,
+        extraFileExtensions: ['.vue'],
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'off',
+      '@typescript-eslint/no-misused-promises': 'off',
     },
   },
   {
