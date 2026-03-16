@@ -21,6 +21,7 @@ type ReminderRuntime = typeof globalThis & {
 
 export function createTodoCloud(deps: {
   todos: Ref<Todo[]>
+  remoteTodos: Ref<Todo[]>
   loading: Ref<boolean>
   error: Ref<string | null>
   lastSyncAt: Ref<string | null>
@@ -112,7 +113,7 @@ export function createTodoCloud(deps: {
       const currentSocketId = await waitForConnection()
 
       const pendingTodos = deps.todos.value.filter((t) => t.syncStatus !== 'synced')
-
+      const pendingTodoIds = pendingTodos.map((t) => t.id)
       const syncSnapshots = new Map(
         pendingTodos.map((t) => [t.id, new Date(t.updatedAt).getTime()]),
       )
@@ -132,16 +133,19 @@ export function createTodoCloud(deps: {
         acceptedIds === undefined && conflicts === undefined && conflictIdSet.size === 0
       const serverTodoMap = new Map<string, Todo>()
       const nextSyncConflicts = [...deps.syncConflicts.value]
+      const applyToActiveRemote = deps.isRemoteSource.value
+      let syncTargetTodos = applyToActiveRemote ? deps.todos.value : deps.remoteTodos.value
 
-      pendingTodos.forEach((t) => {
-        const snapshotTime = syncSnapshots.get(t.id)
-        if (snapshotTime !== new Date(t.updatedAt).getTime()) return
-        if (acceptedIdSet.has(t.id) || shouldFallbackMarkSynced) {
-          t.syncStatus = 'synced'
+      pendingTodoIds.forEach((id) => {
+        const snapshotTime = syncSnapshots.get(id)
+        const targetTodo = syncTargetTodos.find((todo) => todo.id === id)
+        if (!targetTodo || snapshotTime !== new Date(targetTodo.updatedAt).getTime()) return
+        if (acceptedIdSet.has(id) || shouldFallbackMarkSynced) {
+          targetTodo.syncStatus = 'synced'
           return
         }
-        if (conflictIdSet.has(t.id)) {
-          t.syncStatus = 'error'
+        if (conflictIdSet.has(id)) {
+          targetTodo.syncStatus = 'error'
         }
       })
 
@@ -152,21 +156,19 @@ export function createTodoCloud(deps: {
           if (conflictIdSet.has(serverTodo.id)) {
             return
           }
-          const index = deps.todos.value.findIndex((t) => t.id === serverTodo.id)
+          const index = syncTargetTodos.findIndex((t) => t.id === serverTodo.id)
 
           if (index !== -1) {
-            deps.todos.value[index] = { ...deps.todos.value[index], ...todoData }
+            syncTargetTodos[index] = { ...syncTargetTodos[index], ...todoData }
           } else {
-            deps.todos.value.push(todoData)
+            syncTargetTodos.push(todoData)
           }
         })
-
-        deps.todos.value = [...deps.todos.value]
       }
 
       ;(conflicts ?? []).forEach((conflict: SharedSyncConflict) => {
-        const index = deps.todos.value.findIndex((x) => x.id === conflict.id)
-        const localDraft = index !== -1 ? cloneTodo(deps.todos.value[index]) : undefined
+        const index = syncTargetTodos.findIndex((x) => x.id === conflict.id)
+        const localDraft = index !== -1 ? cloneTodo(syncTargetTodos[index]) : undefined
         const serverSnapshot = serverTodoMap.get(conflict.id)
         const existingIndex = nextSyncConflicts.findIndex((x) => x.id === conflict.id)
         const conflictItem: TodoSyncConflict = {
@@ -185,15 +187,21 @@ export function createTodoCloud(deps: {
       })
 
       deps.syncConflicts.value = nextSyncConflicts.filter((item) =>
-        deps.todos.value.some((todo) => todo.id === item.id),
+        syncTargetTodos.some((todo) => todo.id === item.id),
       )
 
       if (deletedIds && deletedIds.length > 0) {
         const deletedSet = new Set(deletedIds)
-        deps.todos.value = deps.todos.value.filter((t) => !deletedSet.has(t.id))
+        syncTargetTodos = syncTargetTodos.filter((t) => !deletedSet.has(t.id))
         deps.syncConflicts.value = deps.syncConflicts.value.filter(
           (item) => !deletedSet.has(item.id),
         )
+      }
+
+      if (applyToActiveRemote) {
+        deps.todos.value = [...syncTargetTodos]
+      } else {
+        deps.remoteTodos.value = [...syncTargetTodos]
       }
 
       deps.lastSyncAt.value = serverTime

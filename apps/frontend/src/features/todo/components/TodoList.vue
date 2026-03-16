@@ -89,7 +89,7 @@ const displayTodos = computed(() => {
 
 <template>
   <div class="flex-1 flex flex-col min-h-0">
-    <ScrollArea class="flex-1 min-h-0 w-full -mx-4 px-4">
+    <ScrollArea class="flex-1 min-h-0 w-full">
       <!-- Empty State -->
       <div
         v-show="todos.length === 0"

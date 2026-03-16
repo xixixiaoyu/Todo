@@ -157,7 +157,7 @@ describe('Todo Store Sync', () => {
     expect(store.todos.every((t) => t.syncStatus === 'synced')).toBe(true)
   })
 
-  it('should carry local drafts to remote sync queue when logging in from local source', async () => {
+  it('should keep local drafts isolated when logging in from local source', async () => {
     const store = useTodoStore()
 
     await store.addTodo('Local Draft 1')
@@ -166,11 +166,19 @@ describe('Todo Store Sync', () => {
     const syncSpy = vi.mocked(todoApi.sync).mockImplementation(async (payload) => ({
       success: true,
       data: {
-        synced: payload.todos.map((todo) => ({
-          ...todo,
-          version: 1,
-          updatedAt: new Date().toISOString(),
-        })),
+        synced: [
+          {
+            id: 'remote-only',
+            title: 'Remote Only',
+            completed: false,
+            order: 0,
+            isPinned: false,
+            version: 1,
+            pomodoroCount: 0,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        ],
         deletedIds: [],
         acceptedIds: payload.todos.map((todo) => todo.id),
         conflicts: [],
@@ -183,9 +191,12 @@ describe('Todo Store Sync', () => {
 
     expect(store.todoSource).toBe('remote')
     expect(syncSpy).toHaveBeenCalledTimes(1)
-    const syncedTitles = syncSpy.mock.calls[0][0].todos.map((todo) => todo.title)
-    expect(syncedTitles).toEqual(expect.arrayContaining(['Local Draft 1', 'Local Draft 2']))
-    expect(store.todos.every((todo) => todo.syncStatus === 'synced')).toBe(true)
+    expect(syncSpy.mock.calls[0][0].todos).toHaveLength(0)
+    expect(store.todos.some((todo) => todo.id === 'remote-only')).toBe(true)
+    expect(store.todos.some((todo) => todo.title === 'Local Draft 1')).toBe(false)
+    expect(store.todos.some((todo) => todo.title === 'Local Draft 2')).toBe(false)
+    expect(store.localTodos.some((todo) => todo.title === 'Local Draft 1')).toBe(true)
+    expect(store.localTodos.some((todo) => todo.title === 'Local Draft 2')).toBe(true)
   })
 
   it('should clear local todos when login user changes', async () => {
@@ -505,7 +516,7 @@ describe('Todo Store Sync', () => {
 
     await store.switchTodoSource('remote')
     expect(store.todos.some((t) => t.id === 'remote-1')).toBe(true)
-    expect(store.todos.some((t) => t.title === 'Local Only')).toBe(true)
+    expect(store.todos.some((t) => t.title === 'Local Only')).toBe(false)
 
     await store.switchTodoSource('local')
     expect(store.todos.some((t) => t.title === 'Local Only')).toBe(true)
@@ -577,5 +588,54 @@ describe('Todo Store Sync', () => {
 
     expect(intervalSpy).toHaveBeenCalledTimes(1)
     intervalSpy.mockRestore()
+  })
+
+  it('should not apply stale remote sync result after switching back to local', async () => {
+    const store = useTodoStore()
+    await store.addTodo('Local Base')
+
+    let resolveSync!: (value: Awaited<ReturnType<typeof todoApi.sync>>) => void
+    const pendingSync = new Promise<Awaited<ReturnType<typeof todoApi.sync>>>((resolve) => {
+      resolveSync = resolve
+    })
+    vi.mocked(todoApi.sync).mockImplementationOnce(async () => pendingSync)
+
+    const switchToRemotePromise = store.switchTodoSource('remote')
+    await vi.waitFor(() => {
+      expect(todoApi.sync).toHaveBeenCalledTimes(1)
+    })
+
+    await store.switchTodoSource('local')
+    expect(store.todoSource).toBe('local')
+
+    resolveSync({
+      success: true,
+      data: {
+        synced: [
+          {
+            id: 'remote-race',
+            title: 'Remote Race',
+            completed: false,
+            order: 0,
+            isPinned: false,
+            version: 1,
+            pomodoroCount: 0,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        ],
+        deletedIds: [],
+        acceptedIds: [],
+        conflicts: [],
+        serverTime: new Date().toISOString(),
+      } as SyncResponse,
+      timestamp: new Date().toISOString(),
+    } as Awaited<ReturnType<typeof todoApi.sync>>)
+    await switchToRemotePromise
+    await nextTick()
+
+    expect(store.todoSource).toBe('local')
+    expect(store.todos.some((todo) => todo.title === 'Local Base')).toBe(true)
+    expect(store.todos.some((todo) => todo.id === 'remote-race')).toBe(false)
   })
 })

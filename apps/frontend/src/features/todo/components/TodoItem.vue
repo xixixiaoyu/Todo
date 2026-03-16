@@ -194,7 +194,7 @@ watch(
       <div class="flex items-center gap-1 md:gap-2">
         <div
           v-if="store.filter !== 'trash'"
-          class="drag-handle -ml-0.5 flex h-7 w-4 items-center justify-center cursor-grab active:cursor-grabbing md:-ml-1 md:h-8 md:w-5 group/drag"
+          class="drag-handle flex h-7 w-4 items-center justify-center cursor-grab active:cursor-grabbing md:h-8 md:w-5 group/drag"
           @touchstart="hapticSelectionStart"
         >
           <GripVertical
