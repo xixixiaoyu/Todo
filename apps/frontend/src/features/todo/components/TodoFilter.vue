@@ -49,7 +49,7 @@ async function handleClearTrash() {
 
 <template>
   <div
-    class="mb-2 md:mb-4 flex items-center justify-between md:justify-center relative min-h-11 gap-1 md:gap-2"
+    class="mb-3 md:mb-4 flex items-center justify-between md:justify-center relative min-h-10 gap-1.5 md:gap-2"
   >
     <!-- 中间切换卡 -->
     <Tabs
@@ -58,15 +58,15 @@ async function handleClearTrash() {
       @update:model-value="emit('update:filter', $event as FilterType)"
     >
       <TabsList
-        class="grid w-full h-10 md:h-12 p-1 bg-muted/60 dark:bg-muted/20 backdrop-blur-xl rounded-full border border-border/80 dark:border-border/40 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)]"
+        class="grid h-11 w-full rounded-[22px] border border-border/70 bg-card/85 p-1 backdrop-blur-xl shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)] dark:border-border/40 dark:bg-muted/20 dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] md:h-12 md:rounded-full md:bg-muted/60"
         :class="showTrash ? 'grid-cols-3' : 'grid-cols-2 max-w-[280px] mx-auto'"
       >
         <TabsTrigger
           value="pending"
-          class="flex items-center justify-center gap-1 md:gap-2 rounded-full px-2 md:px-4 text-[var(--todo-font-meta)] font-medium transition-all duration-300 border border-transparent data-[state=active]:border-primary/20 data-[state=active]:bg-gradient-to-b data-[state=active]:from-background data-[state=active]:to-background/95 data-[state=active]:text-primary data-[state=active]:shadow-[0_2px_8px_-1px_rgba(0,0,0,0.08),0_0_1px_rgba(0,0,0,0.1)] dark:data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.6),0_0_1px_rgba(255,255,255,0.1)] data-[state=active]:scale-[1.02] data-[state=active]:font-semibold text-muted-foreground/70 hover:text-primary/80"
+          class="flex items-center justify-center gap-1 rounded-[18px] border border-transparent px-2 text-[12px] font-medium text-muted-foreground/70 transition-all duration-300 hover:text-primary/80 data-[state=active]:border-primary/15 data-[state=active]:bg-background/95 data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:shadow-[0_1px_4px_rgba(0,0,0,0.06)] md:gap-2 md:rounded-full md:px-4 md:text-[var(--todo-font-meta)] md:data-[state=active]:bg-gradient-to-b md:data-[state=active]:from-background md:data-[state=active]:to-background/95 md:data-[state=active]:shadow-[0_2px_8px_-1px_rgba(0,0,0,0.08),0_0_1px_rgba(0,0,0,0.1)] dark:md:data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.6),0_0_1px_rgba(255,255,255,0.1)] md:data-[state=active]:scale-[1.02]"
         >
           <Circle
-            class="h-3 w-3 md:h-4 md:w-4 transition-colors"
+            class="h-[11px] w-[11px] transition-colors md:h-4 md:w-4"
             :class="
               filter === 'pending' ? 'text-primary fill-primary/10' : 'text-muted-foreground/70'
             "
@@ -75,10 +75,10 @@ async function handleClearTrash() {
         </TabsTrigger>
         <TabsTrigger
           value="completed"
-          class="flex items-center justify-center gap-1 md:gap-2 rounded-full px-2 md:px-4 text-[var(--todo-font-meta)] font-medium transition-all duration-300 border border-transparent data-[state=active]:border-success/20 data-[state=active]:bg-gradient-to-b data-[state=active]:from-background data-[state=active]:to-background/95 data-[state=active]:text-success data-[state=active]:shadow-[0_2px_8px_-1px_rgba(0,0,0,0.08),0_0_1px_rgba(0,0,0,0.1)] dark:data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.6),0_0_1px_rgba(255,255,255,0.1)] data-[state=active]:scale-[1.02] data-[state=active]:font-semibold text-muted-foreground/70 hover:text-success/80"
+          class="flex items-center justify-center gap-1 rounded-[18px] border border-transparent px-2 text-[12px] font-medium text-muted-foreground/70 transition-all duration-300 hover:text-success/80 data-[state=active]:border-success/15 data-[state=active]:bg-background/95 data-[state=active]:text-success data-[state=active]:font-semibold data-[state=active]:shadow-[0_1px_4px_rgba(0,0,0,0.06)] md:gap-2 md:rounded-full md:px-4 md:text-[var(--todo-font-meta)] md:data-[state=active]:bg-gradient-to-b md:data-[state=active]:from-background md:data-[state=active]:to-background/95 md:data-[state=active]:shadow-[0_2px_8px_-1px_rgba(0,0,0,0.08),0_0_1px_rgba(0,0,0,0.1)] dark:md:data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.6),0_0_1px_rgba(255,255,255,0.1)] md:data-[state=active]:scale-[1.02]"
         >
           <CheckCircle2
-            class="h-3 w-3 md:h-4 md:w-4 transition-colors"
+            class="h-[11px] w-[11px] transition-colors md:h-4 md:w-4"
             :class="
               filter === 'completed' ? 'text-success fill-success/10' : 'text-muted-foreground/70'
             "
@@ -88,10 +88,10 @@ async function handleClearTrash() {
         <TabsTrigger
           v-if="showTrash"
           value="trash"
-          class="flex items-center justify-center gap-1 md:gap-2 rounded-full px-2 md:px-4 text-[var(--todo-font-meta)] font-medium transition-all duration-300 border border-transparent data-[state=active]:border-destructive/20 data-[state=active]:bg-gradient-to-b data-[state=active]:from-background data-[state=active]:to-background/95 data-[state=active]:text-destructive data-[state=active]:shadow-[0_2px_8px_-1px_rgba(0,0,0,0.08),0_0_1px_rgba(0,0,0,0.1)] dark:data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.6),0_0_1px_rgba(255,255,255,0.1)] data-[state=active]:scale-[1.02] data-[state=active]:font-semibold text-muted-foreground/70 hover:text-destructive/80"
+          class="flex items-center justify-center gap-1 rounded-[18px] border border-transparent px-2 text-[12px] font-medium text-muted-foreground/70 transition-all duration-300 hover:text-destructive/80 data-[state=active]:border-destructive/15 data-[state=active]:bg-background/95 data-[state=active]:text-destructive data-[state=active]:font-semibold data-[state=active]:shadow-[0_1px_4px_rgba(0,0,0,0.06)] md:gap-2 md:rounded-full md:px-4 md:text-[var(--todo-font-meta)] md:data-[state=active]:bg-gradient-to-b md:data-[state=active]:from-background md:data-[state=active]:to-background/95 md:data-[state=active]:shadow-[0_2px_8px_-1px_rgba(0,0,0,0.08),0_0_1px_rgba(0,0,0,0.1)] dark:md:data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.6),0_0_1px_rgba(255,255,255,0.1)] md:data-[state=active]:scale-[1.02]"
         >
           <Trash2
-            class="h-3 w-3 md:h-4 md:w-4 transition-colors"
+            class="h-[11px] w-[11px] transition-colors md:h-4 md:w-4"
             :class="
               filter === 'trash'
                 ? 'text-destructive fill-destructive/10'
@@ -112,11 +112,11 @@ async function handleClearTrash() {
             <Button
               variant="ghost"
               size="icon"
-              class="h-9 w-9 md:h-10 md:w-10 rounded-xl transition-all duration-300"
+              class="h-8 w-8 rounded-[16px] transition-all duration-300 md:h-10 md:w-10 md:rounded-xl"
               :class="
                 showSearch
-                  ? 'text-primary bg-primary/10'
-                  : 'text-muted-foreground/60 hover:text-primary hover:bg-primary/5'
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground/60 hover:bg-primary/5 hover:text-primary'
               "
               @click="emit('update:showSearch', !showSearch)"
             >
@@ -177,7 +177,7 @@ async function handleClearTrash() {
             <Button
               variant="ghost"
               size="icon"
-              class="h-9 w-9 md:h-10 md:w-10 rounded-xl text-muted-foreground/60 hover:text-primary hover:bg-primary/5 transition-all duration-300"
+              class="h-8 w-8 rounded-[16px] text-muted-foreground/60 transition-all duration-300 hover:bg-primary/5 hover:text-primary md:h-10 md:w-10 md:rounded-xl"
               @click="todoStore.toggleAllExpansion"
             >
               <component

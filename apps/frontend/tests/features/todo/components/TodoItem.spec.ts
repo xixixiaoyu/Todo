@@ -611,8 +611,8 @@ describe('TodoItem', () => {
       const rootItem = rootWrapper.find('div.group')
       const childItem = childWrapper.find('div.group')
 
-      expect(rootItem.classes()).toContain('bg-card')
-      expect(rootItem.classes()).toContain('border-border/60')
+      expect(rootItem.classes()).toContain('bg-card/95')
+      expect(rootItem.classes()).toContain('border-border/55')
       expect(childItem.classes()).toContain('bg-muted/10')
       expect(childItem.classes()).toContain('border-border/30')
 

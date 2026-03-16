@@ -199,17 +199,17 @@ onBeforeUnmount(() => {
   <!-- Normal Mode Actions -->
   <div
     v-else
-    class="absolute right-0 top-0 bottom-0 flex items-center gap-0.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 bg-gradient-to-l from-card via-card/95 to-transparent pl-8 md:pl-12 pr-2 md:pr-3 rounded-r-xl transition-all duration-200"
+    class="absolute bottom-0 right-0 top-0 flex items-center gap-0.5 rounded-r-[20px] bg-gradient-to-l from-card via-card/90 to-transparent pl-3 pr-1 opacity-100 transition-all duration-200 md:rounded-r-xl md:from-card md:via-card/95 md:pl-12 md:pr-3 md:opacity-0 md:group-hover:opacity-100"
   >
     <!-- Mobile Optimized Layout -->
     <template v-if="isMobile">
       <Button
         variant="ghost"
         size="icon"
-        class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+        class="h-7 w-7 rounded-[14px] text-muted-foreground/70 hover:bg-primary/10 hover:text-primary md:h-8 md:w-8 md:rounded-md"
         @click.stop="openMobileSheet"
       >
-        <MoreHorizontal class="h-3.5 w-3.5" />
+        <MoreHorizontal class="h-3 w-3" />
       </Button>
 
       <Teleport to="body">

@@ -58,23 +58,23 @@ const openAiAssistant = () => {
 
 <template>
   <header
-    class="mb-4 md:mb-5 flex items-center justify-between transition-all duration-300 select-none"
+    class="mb-3 md:mb-5 flex items-center justify-between transition-all duration-300 select-none"
     style="--wails-draggable: drag"
     @dblclick="handleDblClick"
   >
-    <div class="flex items-center gap-1.5 md:gap-3 group">
+    <div class="flex items-center gap-2 md:gap-3 group">
       <div
-        class="p-1.5 md:p-2 rounded-xl bg-primary/10 text-primary transition-transform group-hover:rotate-12"
+        class="rounded-[18px] border border-primary/10 bg-primary/10 p-2 text-primary/85 transition-transform group-hover:rotate-12 md:rounded-xl"
       >
-        <Snowflake :size="18" class="md:w-6 md:h-6" />
+        <Snowflake :size="16" class="md:h-6 md:w-6" />
       </div>
       <h1
-        class="hidden sm:flex items-center gap-2 cursor-default text-primary text-[var(--todo-font-title)] font-semibold tracking-tight transition-transform hover:scale-105"
+        class="hidden sm:flex items-center gap-2 cursor-default text-[18px] font-semibold tracking-tight text-primary transition-transform hover:scale-105 md:text-[var(--todo-font-title)]"
       >
         {{ t('common.appName') }}
         <Badge
           variant="outline"
-          class="px-1.5 h-4.5 text-[var(--todo-font-caption)] uppercase border-primary/20 text-primary/70 bg-primary/5 font-medium tracking-wide select-none"
+          class="h-4.5 border-primary/15 bg-primary/5 px-1.5 text-[var(--todo-font-caption)] font-medium uppercase tracking-[0.08em] text-primary/65 select-none"
         >
           {{ t('common.beta') }}
         </Badge>
@@ -85,16 +85,14 @@ const openAiAssistant = () => {
       <Button
         variant="ghost"
         size="sm"
-        class="h-9 md:h-9 px-2.5 md:px-3 rounded-xl bg-primary/10 text-primary hover:bg-primary/15 transition-all duration-300 gap-1 md:gap-2 font-semibold border border-primary/20 group/ai touch-manipulation"
+        class="h-8 rounded-[18px] border border-primary/15 bg-primary/10 px-3 text-primary shadow-none transition-all duration-300 gap-1.5 font-semibold hover:bg-primary/15 md:h-9 md:rounded-xl md:px-3 group/ai touch-manipulation"
         @click.stop="openAiAssistant"
       >
         <Clover
           :size="14"
           class="md:w-4 md:h-4 transition-transform group-hover/ai:rotate-12 group-hover/ai:scale-110"
         />
-        <span class="text-[var(--todo-font-meta)] tracking-wide uppercase">{{
-          t('ai.assistant')
-        }}</span>
+        <span class="text-[var(--todo-font-meta)] tracking-[0.02em]">{{ t('ai.assistant') }}</span>
       </Button>
 
       <div class="hidden md:block mx-1 h-6 w-px bg-border/40"></div>
@@ -167,9 +165,9 @@ const openAiAssistant = () => {
           <Button
             variant="ghost"
             size="icon"
-            class="md:hidden h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+            class="h-8 w-8 rounded-[16px] border border-transparent text-muted-foreground/70 transition-all hover:bg-muted/40 hover:text-foreground md:hidden"
           >
-            <MoreHorizontal :size="20" />
+            <MoreHorizontal :size="18" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" class="w-48 rounded-xl p-2">
@@ -230,7 +228,7 @@ const openAiAssistant = () => {
         </Tooltip>
       </div>
 
-      <div class="mx-0.5 md:mx-1 h-6 w-px bg-border/40"></div>
+      <div class="mx-0.5 hidden h-6 w-px bg-border/40 md:mx-1 md:block"></div>
 
       <div
         class="hidden md:flex items-center gap-1 p-1 bg-muted/50 rounded-2xl border border-border/50"
@@ -281,7 +279,7 @@ const openAiAssistant = () => {
           <Button
             variant="outline"
             size="icon"
-            class="relative h-10 w-10 rounded-xl bg-card border-border hover:bg-accent transition-all overflow-hidden group/user"
+            class="relative h-9 w-9 overflow-hidden rounded-[18px] border-border/70 bg-card/90 transition-all hover:bg-accent md:h-10 md:w-10 md:rounded-xl group/user"
           >
             <div
               v-if="authStore.user?.avatar"
@@ -327,7 +325,7 @@ const openAiAssistant = () => {
           <Button
             variant="outline"
             size="icon"
-            class="h-10 w-10 rounded-xl bg-primary/5 border-primary/20 text-primary hover:bg-primary/10 hover:border-primary/30 transition-all shadow-sm"
+            class="h-9 w-9 rounded-[18px] border-primary/15 bg-primary/5 text-primary transition-all hover:border-primary/25 hover:bg-primary/10 md:h-10 md:w-10 md:rounded-xl"
             @click="void router.push('/login')"
           >
             <LogIn :size="18" />

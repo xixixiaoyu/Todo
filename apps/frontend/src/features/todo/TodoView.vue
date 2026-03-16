@@ -539,4 +539,13 @@ function onFireworksComplete() {
   --todo-font-meta: 14px;
   --todo-font-caption: 12px;
 }
+
+@media (max-width: 767px) {
+  .todo-typography {
+    --todo-font-title: 18px;
+    --todo-font-body: 15px;
+    --todo-font-meta: 13px;
+    --todo-font-caption: 11px;
+  }
+}
 </style>

@@ -56,16 +56,16 @@ const isExpanded = computed(() => props.todo.expanded ?? true)
 const hasChildren = computed(() => children.value.length > 0)
 const itemClass = computed(() => {
   if (isChild.value) {
-    return 'bg-muted/10 border-border/30 py-1.5 md:py-2 px-3 md:px-4 hover:bg-muted/20 hover:border-border/50'
+    return 'border-border/30 bg-muted/10 px-3 py-1.5 md:px-4 md:py-2 hover:bg-muted/15 hover:border-border/45'
   }
 
-  return 'bg-card border-border/60 px-3 md:px-4 py-2.5 md:py-3.5 hover:border-border/80'
+  return 'border-border/55 bg-card/95 px-3 py-2.5 md:px-4 md:py-3.5 hover:border-border/75'
 })
 
 const checkboxClass = computed(() => {
   const border = isChild.value ? 'border-primary/45' : 'border-primary/70'
 
-  return `h-5 w-5 rounded-full border-2 ${border} data-[state=checked]:bg-success data-[state=checked]:border-success transition-transform active:scale-90`
+  return `h-5 w-5 rounded-full border-2 ${border} data-[state=checked]:border-success data-[state=checked]:bg-success transition-transform active:scale-90`
 })
 const children = computed(() => {
   if (props.searchQuery) return []
@@ -179,7 +179,7 @@ watch(
 <template>
   <div class="flex flex-col">
     <div
-      class="group relative flex items-center gap-2 md:gap-3 rounded-xl border transition-all duration-200 hover:shadow-md hover:shadow-black/5"
+      class="group relative flex items-center gap-1.5 rounded-[18px] border transition-all duration-200 hover:shadow-[0_6px_18px_rgba(0,0,0,0.04)] md:gap-3 md:rounded-xl md:hover:shadow-md md:hover:shadow-black/5"
       :class="[
         itemClass,
         { 'border-primary/30 bg-primary/[0.03] shadow-sm shadow-primary/5': todo.isPinned },
@@ -194,11 +194,11 @@ watch(
       <div class="flex items-center gap-1 md:gap-2">
         <div
           v-if="store.filter !== 'trash'"
-          class="drag-handle flex items-center justify-center h-8 w-5 -ml-1 cursor-grab active:cursor-grabbing group/drag"
+          class="drag-handle -ml-0.5 flex h-7 w-4 items-center justify-center cursor-grab active:cursor-grabbing md:-ml-1 md:h-8 md:w-5 group/drag"
           @touchstart="hapticSelectionStart"
         >
           <GripVertical
-            class="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground/30 group-hover/drag:text-muted-foreground transition-colors"
+            class="h-3 w-3 md:h-4 md:w-4 text-muted-foreground/30 group-hover/drag:text-muted-foreground transition-colors"
           />
         </div>
         <Button
@@ -217,7 +217,7 @@ watch(
           :model-value="todo.completed"
           :disabled="todo.isProposedDelete"
           :class="checkboxClass"
-          class="h-6 w-6 md:h-5 md:w-5"
+          class="h-5.5 w-5.5 md:h-5 md:w-5"
           @update:model-value="
             () => {
               void hapticImpact(ImpactStyle.Light)

@@ -130,7 +130,7 @@ const displayTodos = computed(() => {
           ghost-class="opacity-50"
           chosen-class="scale-[1.02]"
           drag-class="rotate-1"
-          class="space-y-2 pb-6"
+          class="space-y-1.5 pb-6 md:space-y-2"
           :animation="200"
           :disabled="!!searchQuery"
           @start="store.setDragging(true)"
