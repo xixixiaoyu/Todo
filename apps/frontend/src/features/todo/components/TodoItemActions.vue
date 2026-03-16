@@ -382,36 +382,6 @@ onBeforeUnmount(() => {
 
     <!-- Desktop Layout (Original) -->
     <TooltipProvider v-else :delay-duration="0">
-      <!-- AI Breakdown -->
-      <Tooltip v-if="!todo.completed && !todo.isProposedDelete">
-        <TooltipTrigger as-child>
-          <Button
-            variant="ghost"
-            size="icon"
-            class="group h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 relative overflow-hidden transition-all duration-300"
-            :class="{ 'text-primary bg-primary/10 ring-1 ring-primary/20': isBreakingDown }"
-            :disabled="isBreakingDown"
-            @click.stop="emit('breakdown')"
-          >
-            <Loader2
-              v-if="isBreakingDown"
-              class="h-3.5 w-3.5 md:h-4 md:w-4 animate-spin text-primary relative z-10"
-            />
-            <Wand2
-              v-else
-              class="h-3.5 w-3.5 md:h-4 md:w-4 transition-transform group-hover:rotate-12 group-hover:scale-110 relative z-10"
-            />
-
-            <!-- Shimmer effect during loading -->
-            <div
-              v-if="isBreakingDown"
-              class="absolute inset-0 bg-gradient-to-r from-transparent via-primary/20 to-transparent animate-shimmer"
-            />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="top">{{ t('todo.breakdown') }}</TooltipContent>
-      </Tooltip>
-
       <!-- Focus -->
       <Tooltip v-if="!todo.completed">
         <TooltipTrigger as-child>
@@ -465,25 +435,6 @@ onBeforeUnmount(() => {
         <TooltipContent side="top">{{ t('todo.schedule') }}</TooltipContent>
       </Tooltip>
 
-      <!-- Pin -->
-      <Tooltip>
-        <TooltipTrigger as-child>
-          <Button
-            variant="ghost"
-            size="icon"
-            class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-            :class="{ 'text-primary bg-primary/5': todo.isPinned }"
-            @click.stop="todoStore.togglePin(todo.id)"
-          >
-            <PinOff v-if="todo.isPinned" class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-pin-off" />
-            <Pin v-else class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-pin" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="top">{{
-          todo.isPinned ? t('todo.unpin') : t('todo.pin')
-        }}</TooltipContent>
-      </Tooltip>
-
       <!-- Edit -->
       <Tooltip v-if="!todo.completed">
         <TooltipTrigger as-child>
@@ -512,6 +463,55 @@ onBeforeUnmount(() => {
           </Button>
         </TooltipTrigger>
         <TooltipContent side="top">{{ t('todo.addSubtask') }}</TooltipContent>
+      </Tooltip>
+
+      <!-- Pin -->
+      <Tooltip>
+        <TooltipTrigger as-child>
+          <Button
+            variant="ghost"
+            size="icon"
+            class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+            :class="{ 'text-primary bg-primary/5': todo.isPinned }"
+            @click.stop="todoStore.togglePin(todo.id)"
+          >
+            <PinOff v-if="todo.isPinned" class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-pin-off" />
+            <Pin v-else class="h-3.5 w-3.5 md:h-4 md:w-4 lucide-pin" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="top">{{
+          todo.isPinned ? t('todo.unpin') : t('todo.pin')
+        }}</TooltipContent>
+      </Tooltip>
+
+      <!-- AI Breakdown -->
+      <Tooltip v-if="!todo.completed && !todo.isProposedDelete">
+        <TooltipTrigger as-child>
+          <Button
+            variant="ghost"
+            size="icon"
+            class="group h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 relative overflow-hidden transition-all duration-300"
+            :class="{ 'text-primary bg-primary/10 ring-1 ring-primary/20': isBreakingDown }"
+            :disabled="isBreakingDown"
+            @click.stop="emit('breakdown')"
+          >
+            <Loader2
+              v-if="isBreakingDown"
+              class="h-3.5 w-3.5 md:h-4 md:w-4 animate-spin text-primary relative z-10"
+            />
+            <Wand2
+              v-else
+              class="h-3.5 w-3.5 md:h-4 md:w-4 transition-transform group-hover:rotate-12 group-hover:scale-110 relative z-10"
+            />
+
+            <!-- Shimmer effect during loading -->
+            <div
+              v-if="isBreakingDown"
+              class="absolute inset-0 bg-gradient-to-r from-transparent via-primary/20 to-transparent animate-shimmer"
+            />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="top">{{ t('todo.breakdown') }}</TooltipContent>
       </Tooltip>
 
       <!-- Delete -->
