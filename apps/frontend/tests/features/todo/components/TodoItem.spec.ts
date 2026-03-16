@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { ref } from 'vue'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { nextTick, ref } from 'vue'
 
 const isMobileMock = ref(false)
 
@@ -81,9 +81,22 @@ const i18n = createI18n({
 })
 
 describe('TodoItem', () => {
+  const resetBodyScrollLockState = () => {
+    document.body.style.overflow = ''
+    document.body.style.touchAction = ''
+    delete document.body.dataset.todoSheetLockCount
+    delete document.body.dataset.todoSheetPrevOverflow
+    delete document.body.dataset.todoSheetPrevTouchAction
+  }
+
   beforeEach(() => {
     setActivePinia(createPinia())
     isMobileMock.value = false
+    resetBodyScrollLockState()
+  })
+
+  afterEach(() => {
+    resetBodyScrollLockState()
   })
 
   const mockTodo: Todo = {
@@ -171,6 +184,43 @@ describe('TodoItem', () => {
     expect(actionText.indexOf('添加子任务')).toBeLessThan(actionText.indexOf('置顶'))
     expect(actionText.indexOf('置顶')).toBeLessThan(actionText.indexOf('AI 拆解'))
     expect(actionText.indexOf('AI 拆解')).toBeLessThan(actionText.indexOf('删除'))
+  })
+
+  it('should unlock body scroll when switching from mobile to desktop with sheet open', async () => {
+    isMobileMock.value = true
+
+    const wrapper = mount(TodoItem, {
+      props: {
+        todo: mockTodo,
+        allTodos: [mockTodo],
+        editingId: null,
+        editingTitle: '',
+      },
+      global: {
+        plugins: [i18n],
+        stubs: {
+          teleport: true,
+        },
+      },
+    })
+
+    const moreButton = wrapper
+      .findAll('button')
+      .find((button) => button.html().includes('lucide-more-horizontal'))
+    expect(moreButton).toBeTruthy()
+    await moreButton!.trigger('click')
+
+    expect(document.body.style.overflow).toBe('hidden')
+    expect(document.body.dataset.todoSheetLockCount).toBe('1')
+
+    isMobileMock.value = false
+    await nextTick()
+    await nextTick()
+
+    expect(document.body.style.overflow).toBe('')
+    expect(document.body.style.touchAction).toBe('')
+    expect(document.body.dataset.todoSheetLockCount).toBeUndefined()
+    expect(wrapper.find('.lucide-pin').exists()).toBe(true)
   })
 
   it('should expand by default when expanded is undefined', () => {

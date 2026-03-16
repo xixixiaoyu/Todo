@@ -152,6 +152,12 @@ watch(isMobileSheetOpen, (isOpen) => {
   isMobileScheduleEditorOpen.value = false
 })
 
+watch(isMobile, (mobile) => {
+  if (!mobile && isMobileSheetOpen.value) {
+    closeMobileSheet()
+  }
+})
+
 onBeforeUnmount(() => {
   if (isMobileSheetOpen.value) {
     unlockBackgroundScroll()

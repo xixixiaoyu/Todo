@@ -21,7 +21,7 @@ export default [
     },
   },
   {
-    files: ['src/**/*.vue'],
+    files: ['**/*.vue'],
     languageOptions: {
       parserOptions: {
         parser: ts.parser,
@@ -32,7 +32,7 @@ export default [
     },
   },
   {
-    files: ['*.ts', '*.tsx', '*.mts', '*.cts'],
+    files: ['**/*.ts', '**/*.tsx', '**/*.mts', '**/*.cts'],
     languageOptions: {
       parserOptions: {
         projectService: true,
@@ -42,11 +42,11 @@ export default [
   },
   {
     files: [
-      'tests/**/*.ts',
-      'tests/**/*.tsx',
-      'tests/**/*.mts',
-      'tests/**/*.cts',
-      'tests/**/*.vue',
+      '**/tests/**/*.ts',
+      '**/tests/**/*.tsx',
+      '**/tests/**/*.mts',
+      '**/tests/**/*.cts',
+      '**/tests/**/*.vue',
     ],
     languageOptions: {
       parserOptions: {
