@@ -135,6 +135,36 @@ describe('TodoItem', () => {
     expect(wrapper.find('.lucide-target').exists()).toBe(false)
   })
 
+  it('should open action sheet with key actions when more trigger is clicked on mobile', async () => {
+    isMobileMock.value = true
+
+    const wrapper = mount(TodoItem, {
+      props: {
+        todo: mockTodo,
+        allTodos: [mockTodo],
+        editingId: null,
+        editingTitle: '',
+      },
+      global: {
+        plugins: [i18n],
+        stubs: {
+          teleport: true,
+        },
+      },
+    })
+
+    const moreButton = wrapper
+      .findAll('button')
+      .find((b) => b.html().includes('lucide-more-horizontal'))
+    expect(moreButton).toBeTruthy()
+    await moreButton!.trigger('click')
+
+    expect(wrapper.text()).toContain('置顶')
+    expect(wrapper.text()).toContain('专注')
+    expect(wrapper.text()).toContain('截止/提醒')
+    expect(wrapper.text()).toContain('删除')
+  })
+
   it('should expand by default when expanded is undefined', () => {
     const parentTodo: Todo = {
       id: 'parent',

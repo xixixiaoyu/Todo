@@ -6,6 +6,10 @@ import {
   Loader2,
   Wand2,
   Target,
+  X,
+  ChevronRight,
+  ChevronDown,
+  ChevronLeft,
   Zap,
   Timer,
   Rocket,
@@ -17,22 +21,13 @@ import {
   Plus,
   MoreHorizontal,
 } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useTodoStore, type Todo } from '../stores/todo'
 import { usePomodoroStore } from '../stores/pomodoro'
 import { useIsMobile } from '@/composables/useWindowSize'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import TodoSchedulePopover from './TodoSchedulePopover.vue'
 import PomodoroModeSelector from './PomodoroModeSelector.vue'
 import type { PomodoroMode } from '../stores/pomodoro'
@@ -57,6 +52,9 @@ const emit = defineEmits<{
 }>()
 
 const isScheduleOpen = ref(false)
+const isMobileSheetOpen = ref(false)
+const isMobileFocusExpanded = ref(false)
+const isMobileScheduleEditorOpen = ref(false)
 const focusModes: ReadonlyArray<{
   id: PomodoroMode
   icon: typeof Zap
@@ -71,6 +69,51 @@ const focusModes: ReadonlyArray<{
 function handleApplySchedule(dueAt: Date | null, remindAt: Date | null) {
   todoStore.updateTodoSchedule(props.todo.id, dueAt, remindAt)
 }
+
+function openMobileSheet() {
+  isMobileSheetOpen.value = true
+}
+
+function closeMobileSheet() {
+  isMobileSheetOpen.value = false
+}
+
+function handleMobilePinToggle() {
+  void todoStore.togglePin(props.todo.id)
+  closeMobileSheet()
+}
+
+function handleMobileStartEdit() {
+  emit('startEdit')
+  closeMobileSheet()
+}
+
+function handleMobileBreakdown() {
+  if (props.isBreakingDown) return
+  emit('breakdown')
+  closeMobileSheet()
+}
+
+function handleMobileAddSubtask() {
+  emit('addSubtask')
+  closeMobileSheet()
+}
+
+function handleMobileDelete() {
+  emit('delete')
+  closeMobileSheet()
+}
+
+function handleMobileFocusSelect(mode: PomodoroMode) {
+  void pomodoroStore.startFocus(props.todo.id, mode)
+  closeMobileSheet()
+}
+
+watch(isMobileSheetOpen, (isOpen) => {
+  if (isOpen) return
+  isMobileFocusExpanded.value = false
+  isMobileScheduleEditorOpen.value = false
+})
 </script>
 
 <template>
@@ -117,126 +160,181 @@ function handleApplySchedule(dueAt: Date | null, remindAt: Date | null) {
   >
     <!-- Mobile Optimized Layout -->
     <template v-if="isMobile">
-      <div class="flex items-center gap-0.5">
-        <!-- More Actions Dropdown -->
-        <DropdownMenu>
-          <DropdownMenuTrigger as-child>
-            <Button
-              variant="ghost"
-              size="icon"
-              class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+      <Button
+        variant="ghost"
+        size="icon"
+        class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+        @click.stop="openMobileSheet"
+      >
+        <MoreHorizontal class="h-3.5 w-3.5" />
+      </Button>
+
+      <Teleport to="body">
+        <Transition name="mobile-sheet-fade">
+          <button
+            v-if="isMobileSheetOpen"
+            type="button"
+            class="fixed inset-0 z-[210] bg-black/35 backdrop-blur-[1px]"
+            @click.stop="closeMobileSheet"
+          />
+        </Transition>
+
+        <Transition name="mobile-sheet-slide">
+          <div
+            v-if="isMobileSheetOpen"
+            class="fixed inset-x-0 bottom-0 z-[211] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+          >
+            <div
+              class="mx-auto w-full max-w-md rounded-2xl border border-border/70 bg-card/95 shadow-2xl backdrop-blur-xl"
               @click.stop
             >
-              <MoreHorizontal class="h-3.5 w-3.5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" class="w-48 p-1 z-[100]">
-            <!-- Pin -->
-            <DropdownMenuItem
-              class="flex items-center gap-2 py-2 cursor-pointer"
-              @click.stop="todoStore.togglePin(todo.id)"
-            >
-              <PinOff v-if="todo.isPinned" class="h-4 w-4 text-muted-foreground lucide-pin-off" />
-              <Pin v-else class="h-4 w-4 text-muted-foreground lucide-pin" />
-              <span>{{ todo.isPinned ? t('todo.unpin') : t('todo.pin') }}</span>
-            </DropdownMenuItem>
+              <div class="flex justify-center pt-2.5 pb-1">
+                <span class="h-1 w-10 rounded-full bg-muted-foreground/30" />
+              </div>
 
-            <!-- Focus -->
-            <DropdownMenuSub v-if="!todo.completed">
-              <DropdownMenuSubTrigger class="flex items-center gap-2 py-2 cursor-pointer">
-                <Target class="h-4 w-4 text-muted-foreground lucide-target" />
-                <span>{{ t('todo.focus') }}</span>
-              </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent class="w-52 p-1">
-                <DropdownMenuItem
-                  v-for="mode in focusModes"
-                  :key="mode.id"
-                  class="flex items-center gap-2 py-2 cursor-pointer"
-                  @click.stop="pomodoroStore.startFocus(todo.id, mode.id)"
-                >
-                  <component :is="mode.icon" class="h-4 w-4" :class="mode.color" />
-                  <span>{{ t(`pomodoro.modes.${mode.id}`) }}</span>
-                </DropdownMenuItem>
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
+              <div class="px-2 pb-2">
+                <div class="mb-1 flex items-center justify-between px-1">
+                  <Button
+                    v-if="isMobileScheduleEditorOpen"
+                    variant="ghost"
+                    size="sm"
+                    class="h-8 rounded-lg px-2 text-muted-foreground"
+                    @click.stop="isMobileScheduleEditorOpen = false"
+                  >
+                    <ChevronLeft class="h-4 w-4 mr-1" />
+                    {{ t('common.back') }}
+                  </Button>
+                  <div v-else class="h-8" />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    class="h-8 w-8 text-muted-foreground hover:text-foreground"
+                    @click.stop="closeMobileSheet"
+                  >
+                    <X class="h-4 w-4" />
+                  </Button>
+                </div>
 
-            <!-- Edit -->
-            <DropdownMenuItem
-              v-if="!todo.completed"
-              class="flex items-center gap-2 py-2 cursor-pointer"
-              @click.stop="emit('startEdit')"
-            >
-              <Pencil class="h-4 w-4 text-muted-foreground" />
-              <span>{{ t('todo.edit') }}</span>
-            </DropdownMenuItem>
-
-            <!-- AI Breakdown -->
-            <DropdownMenuItem
-              v-if="!todo.completed && !todo.isProposedDelete"
-              class="flex items-center gap-2 py-2 cursor-pointer"
-              :disabled="isBreakingDown"
-              @click.stop="emit('breakdown')"
-            >
-              <Loader2 v-if="isBreakingDown" class="h-4 w-4 animate-spin text-primary" />
-              <Wand2 v-else class="h-4 w-4 text-muted-foreground" />
-              <span>{{ t('todo.breakdown') }}</span>
-            </DropdownMenuItem>
-
-            <!-- Schedule -->
-            <DropdownMenuItem
-              v-if="!todo.isProposedDelete"
-              class="flex items-center gap-2 py-2 cursor-pointer p-0"
-              @click.stop
-            >
-              <Popover v-model:open="isScheduleOpen">
-                <PopoverTrigger as-child>
-                  <div class="flex items-center gap-2 px-2 py-1.5 w-full h-full">
-                    <CalendarClock
-                      class="h-4 w-4 text-muted-foreground"
-                      :class="{ 'text-primary': todo.remindAt || todo.dueAt }"
+                <template v-if="isMobileScheduleEditorOpen">
+                  <div class="px-2 pb-2">
+                    <TodoSchedulePopover
+                      :due-at="todo.dueAt"
+                      :remind-at="todo.remindAt"
+                      @apply="handleApplySchedule"
+                      @close="closeMobileSheet"
                     />
-                    <span :class="{ 'text-primary font-medium': todo.remindAt || todo.dueAt }">{{
-                      t('todo.schedule')
-                    }}</span>
                   </div>
-                </PopoverTrigger>
-                <PopoverContent
-                  side="bottom"
-                  :side-offset="10"
-                  align="end"
-                  class="w-[92vw] max-w-[760px] max-h-[82vh] overflow-y-auto p-4 z-[110]"
-                >
-                  <TodoSchedulePopover
-                    :due-at="todo.dueAt"
-                    :remind-at="todo.remindAt"
-                    @apply="handleApplySchedule"
-                    @close="isScheduleOpen = false"
-                  />
-                </PopoverContent>
-              </Popover>
-            </DropdownMenuItem>
+                </template>
+                <template v-else>
+                  <div class="space-y-1 p-1">
+                    <Button
+                      variant="ghost"
+                      class="h-11 w-full justify-start gap-2.5 rounded-xl px-3 text-base"
+                      @click.stop="handleMobilePinToggle"
+                    >
+                      <PinOff
+                        v-if="todo.isPinned"
+                        class="h-4 w-4 text-muted-foreground lucide-pin-off"
+                      />
+                      <Pin v-else class="h-4 w-4 text-muted-foreground lucide-pin" />
+                      <span>{{ todo.isPinned ? t('todo.unpin') : t('todo.pin') }}</span>
+                    </Button>
 
-            <!-- Add Subtask -->
-            <DropdownMenuItem
-              v-if="(level || 0) < 2 && !todo.completed"
-              class="flex items-center gap-2 py-2 cursor-pointer"
-              @click.stop="emit('addSubtask')"
-            >
-              <Plus class="h-4 w-4 text-muted-foreground" />
-              <span>{{ t('todo.addSubtask') }}</span>
-            </DropdownMenuItem>
+                    <template v-if="!todo.completed">
+                      <Button
+                        variant="ghost"
+                        class="h-11 w-full justify-start gap-2.5 rounded-xl px-3 text-base"
+                        @click.stop="isMobileFocusExpanded = !isMobileFocusExpanded"
+                      >
+                        <Target class="h-4 w-4 text-muted-foreground lucide-target" />
+                        <span>{{ t('todo.focus') }}</span>
+                        <ChevronDown
+                          class="ml-auto h-4 w-4 text-muted-foreground transition-transform"
+                          :class="{ 'rotate-180': isMobileFocusExpanded }"
+                        />
+                      </Button>
+                      <div
+                        v-if="isMobileFocusExpanded"
+                        class="grid grid-cols-2 gap-2 rounded-xl border border-border/60 bg-muted/20 p-2"
+                      >
+                        <Button
+                          v-for="mode in focusModes"
+                          :key="mode.id"
+                          variant="ghost"
+                          class="h-10 justify-start gap-2 rounded-lg px-2.5"
+                          @click.stop="handleMobileFocusSelect(mode.id)"
+                        >
+                          <component :is="mode.icon" class="h-4 w-4" :class="mode.color" />
+                          <span class="text-sm">{{ t(`pomodoro.modes.${mode.id}`) }}</span>
+                        </Button>
+                      </div>
+                    </template>
 
-            <!-- Delete -->
-            <DropdownMenuItem
-              class="flex items-center gap-2 py-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
-              @click.stop="emit('delete')"
-            >
-              <Trash2 class="h-4 w-4" />
-              <span>{{ t('todo.delete') }}</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+                    <Button
+                      v-if="!todo.completed"
+                      variant="ghost"
+                      class="h-11 w-full justify-start gap-2.5 rounded-xl px-3 text-base"
+                      @click.stop="handleMobileStartEdit"
+                    >
+                      <Pencil class="h-4 w-4 text-muted-foreground" />
+                      <span>{{ t('todo.edit') }}</span>
+                    </Button>
+
+                    <Button
+                      v-if="!todo.completed && !todo.isProposedDelete"
+                      variant="ghost"
+                      class="h-11 w-full justify-start gap-2.5 rounded-xl px-3 text-base"
+                      :disabled="isBreakingDown"
+                      @click.stop="handleMobileBreakdown"
+                    >
+                      <Loader2 v-if="isBreakingDown" class="h-4 w-4 animate-spin text-primary" />
+                      <Wand2 v-else class="h-4 w-4 text-muted-foreground" />
+                      <span>{{ t('todo.breakdown') }}</span>
+                    </Button>
+
+                    <Button
+                      v-if="!todo.isProposedDelete"
+                      variant="ghost"
+                      class="h-11 w-full justify-start gap-2.5 rounded-xl px-3 text-base"
+                      @click.stop="isMobileScheduleEditorOpen = true"
+                    >
+                      <CalendarClock
+                        class="h-4 w-4 text-muted-foreground"
+                        :class="{ 'text-primary': todo.remindAt || todo.dueAt }"
+                      />
+                      <span :class="{ 'text-primary': todo.remindAt || todo.dueAt }">{{
+                        t('todo.schedule')
+                      }}</span>
+                      <ChevronRight class="ml-auto h-4 w-4 text-muted-foreground" />
+                    </Button>
+
+                    <Button
+                      v-if="(level || 0) < 2 && !todo.completed"
+                      variant="ghost"
+                      class="h-11 w-full justify-start gap-2.5 rounded-xl px-3 text-base"
+                      @click.stop="handleMobileAddSubtask"
+                    >
+                      <Plus class="h-4 w-4 text-muted-foreground" />
+                      <span>{{ t('todo.addSubtask') }}</span>
+                    </Button>
+
+                    <div class="mt-2 border-t border-border/60 pt-2">
+                      <Button
+                        variant="ghost"
+                        class="h-11 w-full justify-start gap-2.5 rounded-xl px-3 text-base text-destructive hover:text-destructive hover:bg-destructive/10"
+                        @click.stop="handleMobileDelete"
+                      >
+                        <Trash2 class="h-4 w-4" />
+                        <span>{{ t('todo.delete') }}</span>
+                      </Button>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+        </Transition>
+      </Teleport>
     </template>
 
     <!-- Desktop Layout (Original) -->
@@ -390,3 +488,28 @@ function handleApplySchedule(dueAt: Date | null, remindAt: Date | null) {
     </TooltipProvider>
   </div>
 </template>
+
+<style scoped>
+.mobile-sheet-fade-enter-active,
+.mobile-sheet-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.mobile-sheet-fade-enter-from,
+.mobile-sheet-fade-leave-to {
+  opacity: 0;
+}
+
+.mobile-sheet-slide-enter-active,
+.mobile-sheet-slide-leave-active {
+  transition:
+    transform 0.24s ease,
+    opacity 0.24s ease;
+}
+
+.mobile-sheet-slide-enter-from,
+.mobile-sheet-slide-leave-to {
+  opacity: 0;
+  transform: translateY(16px);
+}
+</style>
