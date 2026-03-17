@@ -201,16 +201,25 @@ watch(
             class="h-3 w-3 md:h-4 md:w-4 text-muted-foreground/30 group-hover/drag:text-muted-foreground transition-colors"
           />
         </div>
-        <Button
-          v-if="(level || 0) < 2 && hasChildren"
-          variant="ghost"
-          size="icon"
-          class="h-8 w-8 md:h-6 md:w-6 text-muted-foreground transition-opacity"
-          @click="toggleExpand"
+
+        <div
+          v-if="(level || 0) < 2"
+          data-test="expand-slot"
+          class="flex h-6 w-6 items-center justify-center"
         >
-          <ChevronDown v-if="isExpanded" class="h-3.5 w-3.5 md:h-4 md:w-4" />
-          <ChevronRight v-else class="h-3.5 w-3.5 md:h-4 md:w-4" />
-        </Button>
+          <Button
+            v-if="hasChildren"
+            data-test="expand-toggle"
+            variant="ghost"
+            size="icon"
+            class="h-6 w-6 rounded-md text-muted-foreground/80 transition-colors hover:bg-muted/60 hover:text-foreground"
+            :aria-label="isExpanded ? t('common.collapse') : t('common.expand')"
+            @click.stop="toggleExpand"
+          >
+            <ChevronDown v-if="isExpanded" class="h-3.5 w-3.5" />
+            <ChevronRight v-else class="h-3.5 w-3.5" />
+          </Button>
+        </div>
 
         <Checkbox
           v-if="store.filter !== 'trash'"

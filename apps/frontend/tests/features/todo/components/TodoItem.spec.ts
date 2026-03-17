@@ -75,6 +75,8 @@ const i18n = createI18n({
       },
       common: {
         delete: '删除',
+        expand: '展开',
+        collapse: '收起',
       },
     },
   },
@@ -579,6 +581,23 @@ describe('TodoItem', () => {
   })
 
   describe('expand arrow visibility', () => {
+    it('should keep expand slot to avoid content shift even without children', () => {
+      const wrapper = mount(TodoItem, {
+        props: {
+          todo: mockTodo,
+          allTodos: [mockTodo],
+          editingId: null,
+          editingTitle: '',
+        },
+        global: {
+          plugins: [i18n],
+        },
+      })
+
+      expect(wrapper.find('[data-test="expand-slot"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="expand-toggle"]').exists()).toBe(false)
+    })
+
     it('should not show expand arrow when there are no children', () => {
       const wrapper = mount(TodoItem, {
         props: {
