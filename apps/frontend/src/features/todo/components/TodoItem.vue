@@ -54,6 +54,18 @@ const showTooltip = ref(false)
 const isChild = computed(() => (props.level ?? 0) > 0)
 const isExpanded = computed(() => props.todo.expanded ?? true)
 const hasChildren = computed(() => children.value.length > 0)
+const shouldReserveExpandSlot = computed(() => {
+  if ((props.level ?? 0) >= 2) return false
+
+  const parentId = props.todo.parentId ?? null
+
+  return props.allTodos.some((candidate) => {
+    if ((candidate.parentId ?? null) !== parentId) return false
+    if (candidate.deletedAt) return false
+
+    return props.allTodos.some((child) => child.parentId === candidate.id && !child.deletedAt)
+  })
+})
 const itemClass = computed(() => {
   if (isChild.value) {
     return 'border-border/30 bg-muted/10 px-3 py-1.5 md:px-4 md:py-2 hover:bg-muted/15 hover:border-border/45'
@@ -203,7 +215,7 @@ watch(
         </div>
 
         <div
-          v-if="(level || 0) < 2"
+          v-if="shouldReserveExpandSlot"
           data-test="expand-slot"
           class="flex h-6 w-6 items-center justify-center"
         >

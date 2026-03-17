@@ -581,11 +581,43 @@ describe('TodoItem', () => {
   })
 
   describe('expand arrow visibility', () => {
-    it('should keep expand slot to avoid content shift even without children', () => {
+    it('should not keep expand slot when sibling group has no expandable item', () => {
       const wrapper = mount(TodoItem, {
         props: {
           todo: mockTodo,
           allTodos: [mockTodo],
+          editingId: null,
+          editingTitle: '',
+        },
+        global: {
+          plugins: [i18n],
+        },
+      })
+
+      expect(wrapper.find('[data-test="expand-slot"]').exists()).toBe(false)
+      expect(wrapper.find('[data-test="expand-toggle"]').exists()).toBe(false)
+    })
+
+    it('should keep expand slot for siblings when same level contains expandable item', () => {
+      const parentTodo: Todo = { ...mockTodo, id: 'parent-1', title: 'Parent', version: 0 }
+      const plainSibling: Todo = { ...mockTodo, id: 'sibling-1', title: 'Sibling', version: 0 }
+      const childTodo: Todo = {
+        id: 'child-1',
+        title: 'Child',
+        completed: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        isPinned: false,
+        order: 0,
+        parentId: 'parent-1',
+        version: 0,
+        pomodoroCount: 0,
+      }
+
+      const wrapper = mount(TodoItem, {
+        props: {
+          todo: plainSibling,
+          allTodos: [parentTodo, plainSibling, childTodo],
           editingId: null,
           editingTitle: '',
         },
