@@ -22,6 +22,8 @@ const hoveredBlockId = ref<string | null>(null)
 const isPanelHovered = ref(false)
 const isMatrixHovered = ref(false)
 const showPanel = computed(() => isMatrixHovered.value || isPanelHovered.value)
+const panelScrollRef = ref<HTMLElement | null>(null)
+const anchorButtonRefs = new Map<string, HTMLButtonElement>()
 
 // GSAP 面板动效
 const onEnter = (el: Element, done: () => void) => {
@@ -61,6 +63,36 @@ let pendingUpdateTimer: ReturnType<typeof setTimeout> | null = null
 let boundScrollContainer: HTMLElement | null = null
 
 const visibleMessageIdSet = computed(() => new Set(props.visibleMessageIds))
+
+const setAnchorButtonRef = (id: string, el: HTMLButtonElement | null) => {
+  if (el) {
+    anchorButtonRefs.set(id, el)
+    return
+  }
+  anchorButtonRefs.delete(id)
+}
+
+const syncPanelScrollToAnchor = (id: string) => {
+  const panel = panelScrollRef.value
+  const button = anchorButtonRefs.get(id)
+  if (!panel || !button) return
+
+  const lastAnchorId = questionAnchors.value[questionAnchors.value.length - 1]?.id
+  if (id === lastAnchorId) {
+    panel.scrollTop = Math.max(0, panel.scrollHeight - panel.clientHeight)
+    return
+  }
+
+  const panelRect = panel.getBoundingClientRect()
+  const buttonRect = button.getBoundingClientRect()
+  const EDGE_PADDING = 8
+
+  if (buttonRect.top < panelRect.top) {
+    panel.scrollTop -= panelRect.top - buttonRect.top + EDGE_PADDING
+  } else if (buttonRect.bottom > panelRect.bottom) {
+    panel.scrollTop += buttonRect.bottom - panelRect.bottom + EDGE_PADDING
+  }
+}
 
 const updateActiveBlock = () => {
   if (!props.scrollContainer) return
@@ -198,6 +230,19 @@ const scrollToMessage = async (id: string) => {
   }
 }
 
+watch(
+  [showPanel, activeBlockId, hoveredBlockId, questionAnchors],
+  () => {
+    if (!showPanel.value) return
+    const targetId = hoveredBlockId.value || activeBlockId.value
+    if (!targetId) return
+    void nextTick(() => {
+      syncPanelScrollToAnchor(targetId)
+    })
+  },
+  { deep: true },
+)
+
 const handleMouseEnterMatrix = () => {
   isMatrixHovered.value = true
 }
@@ -231,10 +276,14 @@ const handleMouseEnterItem = (id: string) => {
         @mouseenter="isPanelHovered = true"
         @mouseleave="isPanelHovered = false"
       >
-        <div class="flex flex-col gap-0.5 max-h-[400px] overflow-y-auto custom-scrollbar">
+        <div
+          ref="panelScrollRef"
+          class="flex flex-col gap-0.5 max-h-[400px] overflow-y-auto custom-scrollbar"
+        >
           <button
             v-for="anchor in questionAnchors"
             :key="anchor.id"
+            :ref="(el) => setAnchorButtonRef(anchor.id, el as HTMLButtonElement | null)"
             class="w-full text-left px-3 py-2 rounded-xl transition-all duration-200 group/item flex items-center gap-3"
             :class="[
               hoveredBlockId === anchor.id || (!hoveredBlockId && activeBlockId === anchor.id)

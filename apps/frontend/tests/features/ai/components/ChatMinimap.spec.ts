@@ -185,4 +185,44 @@ describe('ChatMinimap', () => {
     expect(matrixItems[1].classes()).toContain('bg-primary/60')
     expect(matrixItems[0].classes()).toContain('bg-muted-foreground/20')
   })
+
+  it('moves panel scrollbar to bottom when active anchor is the last one', async () => {
+    const container = createContainer()
+    addMessageElement('u-1', 80)
+    addMessageElement('u-2', 100)
+    addMessageElement('u-3', 120)
+    addMessageElement('u-4', 140)
+
+    const wrapper = mount(ChatMinimap, {
+      props: {
+        messages: [
+          { id: 'u-1', role: 'user', content: 'q1' },
+          { id: 'u-2', role: 'user', content: 'q2' },
+          { id: 'u-3', role: 'user', content: 'q3' },
+          { id: 'u-4', role: 'user', content: 'q4' },
+        ],
+        scrollContainer: container,
+        visibleMessageIds: ['u-1', 'u-2', 'u-3', 'u-4'],
+        ensureMessageVisible: vi.fn(async () => true),
+      },
+      global: {
+        stubs: {
+          Transition: false,
+        },
+      },
+    })
+
+    await wrapper.find('.cursor-pointer').trigger('mouseenter')
+    await nextTick()
+
+    const panel = wrapper.find('.custom-scrollbar').element as HTMLElement
+    Object.defineProperty(panel, 'scrollHeight', { configurable: true, get: () => 620 })
+    Object.defineProperty(panel, 'clientHeight', { configurable: true, get: () => 200 })
+    panel.scrollTop = 0
+
+    await wrapper.findAll('.w-3.h-0\\.5')[3].trigger('mouseenter')
+    await nextTick()
+
+    expect(panel.scrollTop).toBe(420)
+  })
 })
