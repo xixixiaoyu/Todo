@@ -474,6 +474,83 @@ describe('useTodoStore - Actions', () => {
     })
   })
 
+  describe('updateTodoSchedule', () => {
+    it('should set recurrence rule and timezone when dueAt is provided', () => {
+      store.todos = [
+        {
+          id: '1',
+          title: 'T1',
+          completed: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          order: 0,
+          version: 0,
+          pomodoroCount: 0,
+        },
+      ]
+
+      const result = store.updateTodoSchedule(
+        '1',
+        new Date('2026-03-17T09:00:00.000Z'),
+        new Date('2026-03-17T08:30:00.000Z'),
+        'DAILY',
+      )
+
+      expect(result).toBe(true)
+      expect(store.todos[0].recurrenceRule).toBe('DAILY')
+      expect(typeof store.todos[0].recurrenceTz).toBe('string')
+    })
+
+    it('should reject recurrence rule without dueAt', () => {
+      store.todos = [
+        {
+          id: '1',
+          title: 'T1',
+          completed: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          order: 0,
+          version: 0,
+          pomodoroCount: 0,
+        },
+      ]
+
+      const result = store.updateTodoSchedule('1', null, null, 'WEEKLY')
+
+      expect(result).toBe(false)
+      expect(store.error).toBe('todo.recurrenceNeedsDue')
+      expect(store.todos[0].recurrenceRule).toBeUndefined()
+    })
+
+    it('should clear recurrence when dueAt is removed', () => {
+      store.todos = [
+        {
+          id: '1',
+          title: 'T1',
+          completed: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          order: 0,
+          version: 0,
+          pomodoroCount: 0,
+          dueAt: new Date('2026-03-17T09:00:00.000Z'),
+          recurrenceRule: 'DAILY',
+          recurrenceTz: 'Asia/Shanghai',
+        },
+      ]
+
+      const result = store.updateTodoSchedule('1', null, null)
+
+      expect(result).toBe(true)
+      expect(store.todos[0].dueAt).toBeUndefined()
+      expect(store.todos[0].recurrenceRule).toBeNull()
+      expect(store.todos[0].recurrenceTz).toBeNull()
+    })
+  })
+
   describe('reorderTodos', () => {
     it('should update orders and parentId based on provided IDs', () => {
       store.todos = [

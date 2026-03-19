@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+export const RecurrenceRuleSchema = z.enum(['DAILY', 'WEEKDAYS', 'WEEKLY', 'MONTHLY'])
+
 /**
  * Todo 基础架构
  */
@@ -15,6 +17,9 @@ export const TodoSchema = z.object({
   dueAt: z.date().or(z.string()).nullable().optional(),
   remindAt: z.date().or(z.string()).nullable().optional(),
   remindedAt: z.date().or(z.string()).nullable().optional(),
+  recurrenceRule: RecurrenceRuleSchema.nullable().optional(),
+  recurrenceTz: z.string().min(1).max(64).nullable().optional(),
+  recurrenceSpawnedAt: z.date().or(z.string()).nullable().optional(),
   createdAt: z.date().or(z.string()),
   updatedAt: z.date().or(z.string()),
   completedAt: z.date().or(z.string()).nullable().optional(),
@@ -62,6 +67,7 @@ export const SyncResponseSchema = z.object({
 })
 
 export type Todo = z.infer<typeof TodoSchema>
+export type RecurrenceRule = z.infer<typeof RecurrenceRuleSchema>
 export type SyncItem = z.infer<typeof SyncItemSchema>
 export type SyncMergeRequest = z.infer<typeof SyncMergeRequestSchema>
 export type SyncConflict = z.infer<typeof SyncConflictSchema>

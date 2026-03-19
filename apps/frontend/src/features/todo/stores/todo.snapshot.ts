@@ -15,6 +15,15 @@ export function isSameTodoList(left: Todo[], right: Todo[]): boolean {
       a.parentId !== b.parentId ||
       a.version !== b.version ||
       a.syncStatus !== b.syncStatus ||
+      (a.dueAt ? new Date(a.dueAt).getTime() : 0) !== (b.dueAt ? new Date(b.dueAt).getTime() : 0) ||
+      (a.remindAt ? new Date(a.remindAt).getTime() : 0) !==
+        (b.remindAt ? new Date(b.remindAt).getTime() : 0) ||
+      (a.remindedAt ? new Date(a.remindedAt).getTime() : 0) !==
+        (b.remindedAt ? new Date(b.remindedAt).getTime() : 0) ||
+      (a.recurrenceSpawnedAt ? new Date(a.recurrenceSpawnedAt).getTime() : 0) !==
+        (b.recurrenceSpawnedAt ? new Date(b.recurrenceSpawnedAt).getTime() : 0) ||
+      (a.recurrenceRule ?? null) !== (b.recurrenceRule ?? null) ||
+      (a.recurrenceTz ?? null) !== (b.recurrenceTz ?? null) ||
       (a.createdAt ? new Date(a.createdAt).getTime() : 0) !==
         (b.createdAt ? new Date(b.createdAt).getTime() : 0) ||
       (a.updatedAt ? new Date(a.updatedAt).getTime() : 0) !==

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import type { RecurrenceRule } from '@lumina/shared'
 import { useI18n } from 'vue-i18n'
 import { Button } from '@/components/ui/button'
 import TodoDateTimePicker from './TodoDateTimePicker.vue'
@@ -9,10 +10,11 @@ import { useIsMobile } from '@/composables/useWindowSize'
 const props = defineProps<{
   dueAt: Date | string | number | null | undefined
   remindAt: Date | string | number | null | undefined
+  recurrenceRule?: RecurrenceRule | null | undefined
 }>()
 
 const emit = defineEmits<{
-  apply: [dueAt: Date | null, remindAt: Date | null]
+  apply: [dueAt: Date | null, remindAt: Date | null, recurrenceRule: RecurrenceRule | null]
   close: []
 }>()
 
@@ -21,13 +23,26 @@ const { isMobile } = useIsMobile()
 
 const dueValue = ref<Date | null>(null)
 const remindValue = ref<Date | null>(null)
+const recurrenceValue = ref<RecurrenceRule | null>(null)
 const mobileActiveField = ref<'due' | 'remind'>('due')
 
+type QuickAction = {
+  key: string
+  run: () => void
+  disabled?: boolean
+}
+
+type RecurrenceOption = {
+  value: RecurrenceRule | null
+  labelKey: string
+}
+
 watch(
-  () => [props.dueAt, props.remindAt] as const,
-  ([d, r]) => {
+  () => [props.dueAt, props.remindAt, props.recurrenceRule] as const,
+  ([d, r, recurrenceRule]) => {
     dueValue.value = toDate(d)
     remindValue.value = toDate(r)
+    recurrenceValue.value = recurrenceRule ?? null
   },
   { immediate: true },
 )
@@ -36,6 +51,8 @@ const isInvalid = computed(() => {
   if (!dueValue.value || !remindValue.value) return false
   return remindValue.value.getTime() > dueValue.value.getTime()
 })
+
+const isRecurrenceInvalid = computed(() => !!recurrenceValue.value && !dueValue.value)
 
 function addMinutes(base: Date, minutes: number): Date {
   const d = new Date(base)
@@ -64,8 +81,6 @@ function nextOccurrence(hours: number, minutes: number): Date {
   }
   return candidate
 }
-
-type QuickAction = { key: string; run: () => void; disabled?: boolean }
 
 const quickDue = computed<QuickAction[]>(() => [
   { key: 'todo.quickDueTonight2359', run: () => (dueValue.value = nextOccurrence(23, 59)) },
@@ -99,6 +114,14 @@ const quickRemind = computed<QuickAction[]>(() => {
     },
   ]
 })
+
+const recurrenceOptions = computed<RecurrenceOption[]>(() => [
+  { value: null, labelKey: 'todo.recurrenceNone' },
+  { value: 'DAILY', labelKey: 'todo.recurrenceDaily' },
+  { value: 'WEEKDAYS', labelKey: 'todo.recurrenceWeekdays' },
+  { value: 'WEEKLY', labelKey: 'todo.recurrenceWeekly' },
+  { value: 'MONTHLY', labelKey: 'todo.recurrenceMonthly' },
+])
 
 const mobileActiveValue = computed<Date | null>({
   get: () => (mobileActiveField.value === 'due' ? dueValue.value : remindValue.value),
@@ -136,8 +159,8 @@ function clearMobileActiveValue() {
 }
 
 function apply() {
-  if (isInvalid.value) return
-  emit('apply', dueValue.value, remindValue.value)
+  if (isInvalid.value || isRecurrenceInvalid.value) return
+  emit('apply', dueValue.value, remindValue.value, recurrenceValue.value)
   emit('close')
 }
 </script>
@@ -269,6 +292,35 @@ function apply() {
       </div>
     </template>
 
+    <section class="space-y-2.5 border-t border-border/60 pt-3">
+      <div class="flex items-center justify-between gap-2">
+        <p class="text-sm font-semibold">{{ t('todo.recurrence') }}</p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <Button
+          v-for="item in recurrenceOptions"
+          :key="item.labelKey"
+          variant="secondary"
+          size="xs"
+          class="rounded-xl"
+          :class="
+            recurrenceValue === item.value
+              ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+              : 'bg-secondary/70 hover:bg-secondary/90'
+          "
+          @click="recurrenceValue = item.value"
+        >
+          {{ t(item.labelKey) }}
+        </Button>
+      </div>
+      <p
+        v-if="isRecurrenceInvalid"
+        class="rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-600 dark:text-amber-400/90"
+      >
+        {{ t('todo.recurrenceNeedsDue') }}
+      </p>
+    </section>
+
     <div
       v-if="isInvalid"
       class="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive"
@@ -289,7 +341,7 @@ function apply() {
         variant="default"
         size="sm"
         class="h-9 rounded-xl px-3 text-xs"
-        :disabled="isInvalid"
+        :disabled="isInvalid || isRecurrenceInvalid"
         @click="apply"
       >
         {{ t('common.confirm') }}

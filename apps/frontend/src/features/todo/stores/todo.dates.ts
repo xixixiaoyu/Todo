@@ -31,6 +31,9 @@ export function normalizeTodoDatesInPlace(todo: Todo): void {
 
   const remindedAt = toDate(todo.remindedAt)
   if (remindedAt) todo.remindedAt = remindedAt
+
+  const recurrenceSpawnedAt = toDate(todo.recurrenceSpawnedAt)
+  if (recurrenceSpawnedAt) todo.recurrenceSpawnedAt = recurrenceSpawnedAt
 }
 
 export function cloneTodo(todo: Todo): Todo {
@@ -39,6 +42,7 @@ export function cloneTodo(todo: Todo): Todo {
     dueAt: todo.dueAt ? new Date(todo.dueAt) : undefined,
     remindAt: todo.remindAt ? new Date(todo.remindAt) : undefined,
     remindedAt: todo.remindedAt ? new Date(todo.remindedAt) : undefined,
+    recurrenceSpawnedAt: todo.recurrenceSpawnedAt ? new Date(todo.recurrenceSpawnedAt) : undefined,
     createdAt: new Date(todo.createdAt),
     updatedAt: new Date(todo.updatedAt),
     completedAt: todo.completedAt ? new Date(todo.completedAt) : undefined,

@@ -66,8 +66,12 @@ const focusModes: ReadonlyArray<{
   { id: 'cosmos', icon: Globe, color: 'text-purple-500' },
 ]
 
-function handleApplySchedule(dueAt: Date | null, remindAt: Date | null) {
-  todoStore.updateTodoSchedule(props.todo.id, dueAt, remindAt)
+function handleApplySchedule(
+  dueAt: Date | null,
+  remindAt: Date | null,
+  recurrenceRule: Todo['recurrenceRule'],
+) {
+  todoStore.updateTodoSchedule(props.todo.id, dueAt, remindAt, recurrenceRule)
 }
 
 function openMobileSheet() {
@@ -269,6 +273,7 @@ onBeforeUnmount(() => {
                     <TodoSchedulePopover
                       :due-at="todo.dueAt"
                       :remind-at="todo.remindAt"
+                      :recurrence-rule="todo.recurrenceRule"
                       @apply="handleApplySchedule"
                       @close="closeMobileSheet"
                     />
@@ -432,6 +437,7 @@ onBeforeUnmount(() => {
               <TodoSchedulePopover
                 :due-at="todo.dueAt"
                 :remind-at="todo.remindAt"
+                :recurrence-rule="todo.recurrenceRule"
                 @apply="handleApplySchedule"
                 @close="isScheduleOpen = false"
               />

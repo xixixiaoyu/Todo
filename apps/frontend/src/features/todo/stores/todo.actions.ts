@@ -35,7 +35,12 @@ export function createTodoActions(deps: {
   restoreTodo: (id: string) => Promise<void>
   deleteTodo: (id: string) => Promise<void>
   updateTodo: (id: string, title?: string, parentId?: string | null) => Promise<boolean>
-  updateTodoSchedule: (id: string, dueAt: Date | null, remindAt: Date | null) => boolean
+  updateTodoSchedule: (
+    id: string,
+    dueAt: Date | null,
+    remindAt: Date | null,
+    recurrenceRule?: Todo['recurrenceRule'] | null,
+  ) => boolean
   reorderTodos: (orderedIds: string[], parentId?: string | null) => void
   setDrawerOpen: (open: boolean) => void
   setMaximized: (maximized: boolean) => void
@@ -101,6 +106,11 @@ export function createTodoActions(deps: {
             dueAt: serverTodo.dueAt ? new Date(serverTodo.dueAt) : undefined,
             remindAt: serverTodo.remindAt ? new Date(serverTodo.remindAt) : undefined,
             remindedAt: serverTodo.remindedAt ? new Date(serverTodo.remindedAt) : undefined,
+            recurrenceRule: serverTodo.recurrenceRule || null,
+            recurrenceTz: serverTodo.recurrenceTz || null,
+            recurrenceSpawnedAt: serverTodo.recurrenceSpawnedAt
+              ? new Date(serverTodo.recurrenceSpawnedAt)
+              : undefined,
             createdAt: new Date(serverTodo.createdAt),
             updatedAt: new Date(serverTodo.updatedAt),
             completedAt: serverTodo.completedAt ? new Date(serverTodo.completedAt) : undefined,
@@ -524,7 +534,12 @@ ${contextStr}
     return true
   }
 
-  function updateTodoSchedule(id: string, dueAt: Date | null, remindAt: Date | null): boolean {
+  function updateTodoSchedule(
+    id: string,
+    dueAt: Date | null,
+    remindAt: Date | null,
+    recurrenceRule: Todo['recurrenceRule'] | null = undefined,
+  ): boolean {
     const todo = deps.todos.value.find((t) => t.id === id)
     if (!todo) return false
 
@@ -536,11 +551,27 @@ ${contextStr}
       return false
     }
 
+    if (recurrenceRule && !dueAt) {
+      deps.error.value = 'todo.recurrenceNeedsDue'
+      return false
+    }
+
     const prevRemindAt = toDate(todo.remindAt)?.getTime() ?? null
     const nextRemindAt = remindAt ? remindAt.getTime() : null
 
     todo.dueAt = dueAt || undefined
     todo.remindAt = remindAt || undefined
+    if (recurrenceRule !== undefined) {
+      todo.recurrenceRule = recurrenceRule || null
+      if (todo.recurrenceRule) {
+        todo.recurrenceTz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+      } else {
+        todo.recurrenceTz = null
+      }
+    } else if (todo.recurrenceRule && !dueAt) {
+      todo.recurrenceRule = null
+      todo.recurrenceTz = null
+    }
 
     if (prevRemindAt !== nextRemindAt) {
       todo.remindedAt = undefined

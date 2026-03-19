@@ -60,6 +60,11 @@ export function createTodoCloud(deps: {
     dueAt: serverTodo.dueAt ? new Date(serverTodo.dueAt) : undefined,
     remindAt: serverTodo.remindAt ? new Date(serverTodo.remindAt) : undefined,
     remindedAt: serverTodo.remindedAt ? new Date(serverTodo.remindedAt) : undefined,
+    recurrenceRule: serverTodo.recurrenceRule || null,
+    recurrenceTz: serverTodo.recurrenceTz || null,
+    recurrenceSpawnedAt: serverTodo.recurrenceSpawnedAt
+      ? new Date(serverTodo.recurrenceSpawnedAt)
+      : undefined,
     createdAt: new Date(serverTodo.createdAt),
     updatedAt: new Date(serverTodo.updatedAt),
     completedAt: serverTodo.completedAt ? new Date(serverTodo.completedAt) : undefined,

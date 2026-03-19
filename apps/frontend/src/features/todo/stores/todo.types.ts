@@ -1,4 +1,4 @@
-import type { Todo as SharedTodo } from '@lumina/shared'
+import type { Todo as SharedTodo, RecurrenceRule } from '@lumina/shared'
 
 export interface Todo extends SharedTodo {
   completedAt?: Date
@@ -6,6 +6,9 @@ export interface Todo extends SharedTodo {
   dueAt?: Date
   remindAt?: Date
   remindedAt?: Date
+  recurrenceRule?: RecurrenceRule | null
+  recurrenceTz?: string | null
+  recurrenceSpawnedAt?: Date
   parentId?: string | null
   expanded?: boolean
   isProposed?: boolean

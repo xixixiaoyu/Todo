@@ -10,6 +10,7 @@ describe('TodoSyncService', () => {
   const mockPrisma = {
     todo: {
       upsert: vi.fn(),
+      create: vi.fn(),
       findMany: vi.fn(),
       findUnique: vi.fn(),
     },
@@ -278,6 +279,318 @@ describe('TodoSyncService', () => {
           serverVersion: 5,
         },
       ])
+    })
+
+    it('should spawn next recurring todo when recurring task is completed', async () => {
+      const userId = 1
+      const id = '861a3556-9150-4819-b7b5-22e379434857'
+      const dueAt = '2026-03-17T09:00:00.000Z'
+      const remindAt = '2026-03-17T08:30:00.000Z'
+      const syncDto: SyncMergeDto = {
+        todos: [
+          {
+            id,
+            title: 'Daily standup',
+            completed: true,
+            order: 0,
+            isPinned: false,
+            parentId: null,
+            version: 2,
+            pomodoroCount: 4,
+            dueAt,
+            remindAt,
+            recurrenceRule: 'DAILY',
+            recurrenceTz: 'Asia/Shanghai',
+            recurrenceSpawnedAt: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            completedAt: new Date(),
+          },
+        ],
+        lastSyncAt: new Date(0).toISOString(),
+      }
+
+      mockPrisma.todoTombstone.findUnique.mockResolvedValue(null)
+      mockPrisma.todo.findUnique.mockResolvedValue({
+        userId,
+        version: 2,
+        completed: false,
+        remindAt: new Date(remindAt),
+        remindedAt: null,
+        recurrenceSpawnedAt: null,
+      })
+      mockPrisma.todo.upsert.mockResolvedValue({
+        id,
+        title: 'Daily standup',
+        completed: true,
+        order: 0,
+        isPinned: false,
+        parentId: null,
+        version: 3,
+        dueAt: new Date(dueAt),
+        remindAt: new Date(remindAt),
+        remindedAt: null,
+        recurrenceRule: 'DAILY',
+        recurrenceTz: 'Asia/Shanghai',
+        recurrenceSpawnedAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        completedAt: new Date(),
+        deletedAt: null,
+        pomodoroCount: 4,
+      })
+      mockPrisma.todo.create.mockResolvedValue({
+        id: 'next-recurring',
+      })
+      mockPrisma.todo.findMany.mockResolvedValue([])
+      mockPrisma.todoTombstone.findMany.mockResolvedValue([])
+
+      await service.sync(userId, syncDto)
+
+      expect(mockPrisma.todo.create).toHaveBeenCalledTimes(1)
+      const createArgs = mockPrisma.todo.create.mock.calls[0][0]
+      expect(createArgs.data.recurrenceRule).toBe('DAILY')
+      expect(createArgs.data.dueAt.toISOString()).toBe('2026-03-18T09:00:00.000Z')
+      expect(createArgs.data.remindAt.toISOString()).toBe('2026-03-18T08:30:00.000Z')
+      expect(createArgs.data.completed).toBe(false)
+      expect(createArgs.data.pomodoroCount).toBe(0)
+    })
+
+    it('should preserve recurrence metadata when client omits recurrence fields', async () => {
+      const userId = 1
+      const id = '861a3556-9150-4819-b7b5-22e379434857'
+      const existingSpawnedAt = new Date('2026-03-17T09:00:01.000Z')
+      const dueAt = '2026-03-19T09:00:00.000Z'
+      const syncDto: SyncMergeDto = {
+        todos: [
+          {
+            id,
+            title: 'Weekly plan',
+            completed: false,
+            order: 0,
+            isPinned: false,
+            version: 3,
+            pomodoroCount: 0,
+            dueAt,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ],
+        lastSyncAt: new Date(0).toISOString(),
+      }
+
+      mockPrisma.todoTombstone.findUnique.mockResolvedValue(null)
+      mockPrisma.todo.findUnique.mockResolvedValue({
+        userId,
+        version: 3,
+        completed: false,
+        remindAt: null,
+        remindedAt: null,
+        recurrenceRule: 'WEEKLY',
+        recurrenceTz: 'Asia/Shanghai',
+        recurrenceSpawnedAt: existingSpawnedAt,
+      })
+      mockPrisma.todo.upsert.mockResolvedValue({ id })
+      mockPrisma.todo.findMany.mockResolvedValue([])
+      mockPrisma.todoTombstone.findMany.mockResolvedValue([])
+
+      await service.sync(userId, syncDto)
+
+      const upsertArgs = mockPrisma.todo.upsert.mock.calls[0][0]
+      expect(upsertArgs.update.recurrenceRule).toBe('WEEKLY')
+      expect(upsertArgs.update.recurrenceTz).toBe('Asia/Shanghai')
+      expect(upsertArgs.update.recurrenceSpawnedAt).toEqual(existingSpawnedAt)
+    })
+
+    it('should clear recurrence fields when dueAt is missing', async () => {
+      const userId = 1
+      const id = '861a3556-9150-4819-b7b5-22e379434857'
+      const syncDto: SyncMergeDto = {
+        todos: [
+          {
+            id,
+            title: 'Broken recurring payload',
+            completed: false,
+            order: 0,
+            isPinned: false,
+            version: 2,
+            pomodoroCount: 0,
+            recurrenceRule: 'DAILY',
+            recurrenceTz: 'Asia/Shanghai',
+            recurrenceSpawnedAt: '2026-03-17T09:00:01.000Z',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ],
+        lastSyncAt: new Date(0).toISOString(),
+      }
+
+      mockPrisma.todoTombstone.findUnique.mockResolvedValue(null)
+      mockPrisma.todo.findUnique.mockResolvedValue({
+        userId,
+        version: 2,
+        completed: false,
+        remindAt: null,
+        remindedAt: null,
+        recurrenceRule: 'DAILY',
+        recurrenceTz: 'Asia/Shanghai',
+        recurrenceSpawnedAt: new Date('2026-03-17T09:00:01.000Z'),
+      })
+      mockPrisma.todo.upsert.mockResolvedValue({ id })
+      mockPrisma.todo.findMany.mockResolvedValue([])
+      mockPrisma.todoTombstone.findMany.mockResolvedValue([])
+
+      await service.sync(userId, syncDto)
+
+      const upsertArgs = mockPrisma.todo.upsert.mock.calls[0][0]
+      expect(upsertArgs.update.dueAt).toBeNull()
+      expect(upsertArgs.update.recurrenceRule).toBeNull()
+      expect(upsertArgs.update.recurrenceTz).toBeNull()
+      expect(upsertArgs.update.recurrenceSpawnedAt).toBeNull()
+      expect(mockPrisma.todo.create).not.toHaveBeenCalled()
+    })
+
+    it('should not spawn recurring todo again when recurrenceSpawnedAt already exists', async () => {
+      const userId = 1
+      const id = '861a3556-9150-4819-b7b5-22e379434857'
+      const syncDto: SyncMergeDto = {
+        todos: [
+          {
+            id,
+            title: 'Daily standup',
+            completed: true,
+            order: 0,
+            isPinned: false,
+            parentId: null,
+            version: 4,
+            pomodoroCount: 0,
+            dueAt: '2026-03-17T09:00:00.000Z',
+            remindAt: '2026-03-17T08:30:00.000Z',
+            recurrenceRule: 'DAILY',
+            recurrenceSpawnedAt: '2026-03-17T09:00:01.000Z',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ],
+        lastSyncAt: new Date(0).toISOString(),
+      }
+
+      mockPrisma.todoTombstone.findUnique.mockResolvedValue(null)
+      mockPrisma.todo.findUnique.mockResolvedValue({
+        userId,
+        version: 4,
+        completed: false,
+        remindAt: new Date('2026-03-17T08:30:00.000Z'),
+        remindedAt: null,
+        recurrenceSpawnedAt: new Date('2026-03-17T09:00:01.000Z'),
+      })
+      mockPrisma.todo.upsert.mockResolvedValue({ id })
+      mockPrisma.todo.findMany.mockResolvedValue([])
+      mockPrisma.todoTombstone.findMany.mockResolvedValue([])
+
+      await service.sync(userId, syncDto)
+
+      expect(mockPrisma.todo.create).not.toHaveBeenCalled()
+    })
+
+    it('should skip weekend when recurrence rule is WEEKDAYS', async () => {
+      const userId = 1
+      const id = '861a3556-9150-4819-b7b5-22e379434857'
+      const dueAt = '2026-03-20T09:00:00.000Z'
+      const remindAt = '2026-03-20T08:00:00.000Z'
+      const syncDto: SyncMergeDto = {
+        todos: [
+          {
+            id,
+            title: 'Weekday report',
+            completed: true,
+            order: 0,
+            isPinned: false,
+            parentId: null,
+            version: 1,
+            pomodoroCount: 0,
+            dueAt,
+            remindAt,
+            recurrenceRule: 'WEEKDAYS',
+            recurrenceSpawnedAt: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ],
+        lastSyncAt: new Date(0).toISOString(),
+      }
+
+      mockPrisma.todoTombstone.findUnique.mockResolvedValue(null)
+      mockPrisma.todo.findUnique.mockResolvedValue({
+        userId,
+        version: 1,
+        completed: false,
+        remindAt: new Date(remindAt),
+        remindedAt: null,
+        recurrenceSpawnedAt: null,
+      })
+      mockPrisma.todo.upsert.mockResolvedValue({ id })
+      mockPrisma.todo.create.mockResolvedValue({ id: 'next-weekday' })
+      mockPrisma.todo.findMany.mockResolvedValue([])
+      mockPrisma.todoTombstone.findMany.mockResolvedValue([])
+
+      await service.sync(userId, syncDto)
+
+      const createArgs = mockPrisma.todo.create.mock.calls[0][0]
+      expect(createArgs.data.dueAt.toISOString()).toBe('2026-03-23T09:00:00.000Z')
+      expect(createArgs.data.remindAt.toISOString()).toBe('2026-03-23T08:00:00.000Z')
+    })
+
+    it('should keep wall-clock time across DST based on recurrence timezone', async () => {
+      const userId = 1
+      const id = '861a3556-9150-4819-b7b5-22e379434857'
+      const dueAt = '2026-03-07T14:00:00.000Z'
+      const remindAt = '2026-03-07T13:30:00.000Z'
+      const syncDto: SyncMergeDto = {
+        todos: [
+          {
+            id,
+            title: 'NY daily standup',
+            completed: true,
+            order: 0,
+            isPinned: false,
+            parentId: null,
+            version: 1,
+            pomodoroCount: 0,
+            dueAt,
+            remindAt,
+            recurrenceRule: 'DAILY',
+            recurrenceTz: 'America/New_York',
+            recurrenceSpawnedAt: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            completedAt: new Date(),
+          },
+        ],
+        lastSyncAt: new Date(0).toISOString(),
+      }
+
+      mockPrisma.todoTombstone.findUnique.mockResolvedValue(null)
+      mockPrisma.todo.findUnique.mockResolvedValue({
+        userId,
+        version: 1,
+        completed: false,
+        remindAt: new Date(remindAt),
+        remindedAt: null,
+        recurrenceRule: 'DAILY',
+        recurrenceTz: 'America/New_York',
+        recurrenceSpawnedAt: null,
+      })
+      mockPrisma.todo.upsert.mockResolvedValue({ id })
+      mockPrisma.todo.create.mockResolvedValue({ id: 'next-recurring-dst' })
+      mockPrisma.todo.findMany.mockResolvedValue([])
+      mockPrisma.todoTombstone.findMany.mockResolvedValue([])
+
+      await service.sync(userId, syncDto)
+
+      const createArgs = mockPrisma.todo.create.mock.calls[0][0]
+      expect(createArgs.data.dueAt.toISOString()).toBe('2026-03-08T13:00:00.000Z')
+      expect(createArgs.data.remindAt.toISOString()).toBe('2026-03-08T12:30:00.000Z')
     })
   })
 })

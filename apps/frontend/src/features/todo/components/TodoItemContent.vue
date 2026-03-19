@@ -35,8 +35,17 @@ const hasMetaBadges = computed(() => {
   return Boolean(
     props.todo.pomodoroCount > 0 ||
     props.todo.dueAt ||
+    props.todo.recurrenceRule ||
     (props.todo.remindAt && !props.todo.remindedAt),
   )
+})
+
+const recurrenceLabelKey = computed(() => {
+  if (!props.todo.recurrenceRule) return null
+  if (props.todo.recurrenceRule === 'DAILY') return 'todo.recurrenceDaily'
+  if (props.todo.recurrenceRule === 'WEEKDAYS') return 'todo.recurrenceWeekdays'
+  if (props.todo.recurrenceRule === 'WEEKLY') return 'todo.recurrenceWeekly'
+  return 'todo.recurrenceMonthly'
 })
 </script>
 
@@ -137,6 +146,17 @@ const hasMetaBadges = computed(() => {
             </div>
           </TooltipTrigger>
           <TooltipContent side="top">{{ t('todo.remindAt') }}</TooltipContent>
+        </Tooltip>
+
+        <Tooltip v-if="recurrenceLabelKey">
+          <TooltipTrigger as-child>
+            <div
+              class="flex shrink-0 items-center rounded-lg bg-sky-500/10 px-1.5 py-[3px] font-medium leading-none text-sky-600 dark:text-sky-400/90 md:py-0.5"
+            >
+              <span>{{ t(recurrenceLabelKey) }}</span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top">{{ t('todo.recurrence') }}</TooltipContent>
         </Tooltip>
       </div>
     </div>

@@ -1,9 +1,16 @@
 import { Injectable, Inject } from '@nestjs/common'
+import { randomUUID } from 'node:crypto'
 import { PrismaService } from '../prisma/prisma.service'
 import { SyncMergeDto } from './todos.dto'
 import type { SyncItem } from '@lumina/shared'
 import { EventsGateway } from '../events/events.gateway'
 import type { Prisma } from '@prisma/client'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import timezone from 'dayjs/plugin/timezone'
+
+dayjs.extend(utc)
+dayjs.extend(timezone)
 
 const todoSelect = {
   id: true,
@@ -16,6 +23,9 @@ const todoSelect = {
   dueAt: true,
   remindAt: true,
   remindedAt: true,
+  recurrenceRule: true,
+  recurrenceTz: true,
+  recurrenceSpawnedAt: true,
   createdAt: true,
   updatedAt: true,
   completedAt: true,
@@ -25,11 +35,60 @@ const todoSelect = {
 
 type TodoPublic = Prisma.TodoGetPayload<{ select: typeof todoSelect }>
 type SyncConflictReason = 'TOMBSTONED' | 'OWNER_MISMATCH' | 'VERSION_CONFLICT'
+type RecurrenceRule = 'DAILY' | 'WEEKDAYS' | 'WEEKLY' | 'MONTHLY'
 
 interface SyncConflict {
   id: string
   reason: SyncConflictReason
   serverVersion?: number
+}
+
+function isRecurrenceRule(value: unknown): value is RecurrenceRule {
+  return value === 'DAILY' || value === 'WEEKDAYS' || value === 'WEEKLY' || value === 'MONTHLY'
+}
+
+function hasOwn(obj: object, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(obj, key)
+}
+
+function normalizeRecurrenceTz(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  if (!trimmed) return null
+  try {
+    Intl.DateTimeFormat(undefined, { timeZone: trimmed })
+    return trimmed
+  } catch {
+    return null
+  }
+}
+
+function toNullableDate(value: unknown): Date | null {
+  if (value === null || value === undefined) return null
+  const parsed = new Date(value as string | number | Date)
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
+function getNextDueAt(dueAt: Date, rule: RecurrenceRule, recurrenceTz: string | null): Date {
+  const timezoneName = recurrenceTz || 'UTC'
+  if (rule === 'DAILY')
+    return dayjs(dueAt).tz(timezoneName).add(1, 'day').tz(timezoneName, true).toDate()
+  if (rule === 'WEEKLY')
+    return dayjs(dueAt).tz(timezoneName).add(1, 'week').tz(timezoneName, true).toDate()
+  if (rule === 'MONTHLY')
+    return dayjs(dueAt).tz(timezoneName).add(1, 'month').tz(timezoneName, true).toDate()
+
+  let next = dayjs(dueAt).tz(timezoneName).add(1, 'day').tz(timezoneName, true)
+  while (next.day() === 0 || next.day() === 6) {
+    next = next.add(1, 'day').tz(timezoneName, true)
+  }
+  return next.toDate()
+}
+
+function getNextRemindAt(baseDueAt: Date, baseRemindAt: Date | null, nextDueAt: Date): Date | null {
+  if (!baseRemindAt) return null
+  const deltaMs = baseRemindAt.getTime() - baseDueAt.getTime()
+  return new Date(nextDueAt.getTime() + deltaMs)
 }
 
 @Injectable()
@@ -74,13 +133,43 @@ export class TodoSyncService {
             select: {
               userId: true,
               version: true,
+              completed: true,
               remindAt: true,
               remindedAt: true,
+              recurrenceRule: true,
+              recurrenceTz: true,
+              recurrenceSpawnedAt: true,
             },
           })
 
           const clientVersion = todo.version ?? 0
           const clientRemindAt = todo.remindAt ? new Date(todo.remindAt) : null
+          const clientDueAt = todo.dueAt ? new Date(todo.dueAt) : null
+          const hasRecurrenceRule = hasOwn(todo, 'recurrenceRule')
+          const hasRecurrenceTz = hasOwn(todo, 'recurrenceTz')
+          const hasRecurrenceSpawnedAt = hasOwn(todo, 'recurrenceSpawnedAt')
+
+          const recurrenceRule = hasRecurrenceRule
+            ? isRecurrenceRule(todo.recurrenceRule)
+              ? todo.recurrenceRule
+              : null
+            : isRecurrenceRule(existing?.recurrenceRule)
+              ? existing.recurrenceRule
+              : null
+
+          const recurrenceTz = recurrenceRule
+            ? hasRecurrenceTz
+              ? normalizeRecurrenceTz(todo.recurrenceTz)
+              : normalizeRecurrenceTz(existing?.recurrenceTz)
+            : null
+
+          const recurrenceSpawnedAtInput = hasRecurrenceSpawnedAt
+            ? toNullableDate(todo.recurrenceSpawnedAt)
+            : undefined
+
+          // 服务端兜底：循环任务必须绑定截止时间，避免写入无效状态
+          const effectiveRecurrenceRule = clientDueAt ? recurrenceRule : null
+          const effectiveRecurrenceTz = effectiveRecurrenceRule ? recurrenceTz : null
 
           if (existing && existing.userId !== userId) {
             conflicts.push({ id: todo.id, reason: 'OWNER_MISMATCH' })
@@ -106,6 +195,15 @@ export class TodoSyncService {
             !!clientRemindAt &&
             existing.remindAt.getTime() === clientRemindAt.getTime()
 
+          const shouldSpawnNextRecurring =
+            !!existing &&
+            !existing.completed &&
+            todo.completed &&
+            !todo.deletedAt &&
+            !!effectiveRecurrenceRule &&
+            (todo.parentId ?? null) === null &&
+            !existing.recurrenceSpawnedAt
+
           const data = {
             title: todo.title,
             completed: todo.completed,
@@ -113,9 +211,18 @@ export class TodoSyncService {
             isPinned: todo.isPinned,
             parentId: todo.parentId,
             pomodoroCount: todo.pomodoroCount,
-            dueAt: todo.dueAt ? new Date(todo.dueAt) : null,
+            dueAt: clientDueAt,
             remindAt: clientRemindAt,
             remindedAt: keepRemindedAt ? existing!.remindedAt : null,
+            recurrenceRule: effectiveRecurrenceRule,
+            recurrenceTz: effectiveRecurrenceTz,
+            recurrenceSpawnedAt: shouldSpawnNextRecurring
+              ? serverTime
+              : effectiveRecurrenceRule
+                ? recurrenceSpawnedAtInput === undefined
+                  ? (existing?.recurrenceSpawnedAt ?? null)
+                  : recurrenceSpawnedAtInput
+                : null,
             completedAt: todo.completedAt ? new Date(todo.completedAt) : null,
             deletedAt: todo.deletedAt ? new Date(todo.deletedAt) : null,
             updatedAt: serverTime,
@@ -136,6 +243,39 @@ export class TodoSyncService {
 
           successfullyUpdatedItems.push(updated)
           acceptedIds.push(todo.id)
+
+          if (shouldSpawnNextRecurring && effectiveRecurrenceRule && clientDueAt) {
+            const nextDueAt = getNextDueAt(
+              clientDueAt,
+              effectiveRecurrenceRule,
+              effectiveRecurrenceTz,
+            )
+            const nextRemindAt = getNextRemindAt(clientDueAt, clientRemindAt, nextDueAt)
+
+            await tx.todo.create({
+              data: {
+                id: randomUUID(),
+                title: todo.title,
+                completed: false,
+                order: todo.order,
+                isPinned: todo.isPinned,
+                parentId: null,
+                userId,
+                version: 1,
+                dueAt: nextDueAt,
+                remindAt: nextRemindAt,
+                remindedAt: null,
+                recurrenceRule: effectiveRecurrenceRule,
+                recurrenceTz: effectiveRecurrenceTz,
+                recurrenceSpawnedAt: null,
+                createdAt: serverTime,
+                updatedAt: serverTime,
+                completedAt: null,
+                deletedAt: null,
+                pomodoroCount: 0,
+              },
+            })
+          }
         }
       })
     }
