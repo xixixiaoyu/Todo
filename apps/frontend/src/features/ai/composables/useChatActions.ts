@@ -5,10 +5,7 @@ import {
   getAIImageResponse,
   abortCurrentRequest,
   generateId,
-  parseAssistantBlocks,
   type ChatMessage,
-  type TeachingAssessment,
-  type TeachingQuiz,
   type AIRequestOptions,
   type ToolCall,
 } from '@/features/ai/services/aiService'
@@ -16,52 +13,15 @@ import { useChatState } from './useChatState'
 import { useChatMemory } from './useChatMemory'
 import { useChatHistory } from './useChatHistory'
 import { getAIThinkingMode, getAIConfig } from './useAIConfig'
-import { useTodoStore, type ProposedTodoChange } from '@/features/todo/stores/todo'
+import { useTodoStore } from '@/features/todo/stores/todo'
 import { useAuthStore } from '@/features/auth/stores/auth'
 import type { McpToolResponse } from '@/features/mcp/api/mcp'
 import { createContextCompression } from './useChatActions.contextCompression'
 import { buildAiToolsFromMcpTools } from './useChatActions.mcpTools'
 import { executeToolCalls } from './useChatActions.toolCalls'
+import { createStreamChunkHandler } from './useChatActions.stream'
 
 const MAX_RETRIES = 3
-
-function stripTodoIdsFromText(input: string): string {
-  const uuid = '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'
-  const tempId = 'temp-[A-Za-z0-9_-]+'
-
-  let out = input
-  out = out.replace(
-    new RegExp(`^\\s*(?:ID|Id|id)\\s*[:：]\\s*(?:${uuid}|${tempId})\\s*$`, 'gm'),
-    '',
-  )
-  out = out.replace(
-    new RegExp(`\\s*[（(]\\s*(?:ID|Id|id)\\s*[:：]\\s*(?:${uuid}|${tempId})\\s*[)）]\\s*`, 'g'),
-    ' ',
-  )
-  out = out.replace(new RegExp(`\\b(?:ID|Id|id)\\s*[:：]\\s*(?:${uuid}|${tempId})\\b`, 'g'), '')
-  out = out.replace(/\n{3,}/g, '\n\n').trim()
-  return out
-}
-
-function buildTeachingFallbackQuiz(
-  content: string,
-  messageId: string,
-  t: (key: string, params?: Record<string, unknown>) => string,
-): TeachingQuiz[] {
-  const normalized = content.replace(/\s+/g, ' ').trim()
-  const summary =
-    normalized.length > 0
-      ? normalized.slice(0, 120)
-      : (t('ai.teachingFallbackSummaryDefault') as string)
-  return [
-    {
-      id: `${messageId}-fallback-understand`,
-      kind: 'short_answer',
-      stem: t('ai.teachingFallbackQuestion', { summary }) as string,
-      answerHint: t('ai.teachingFallbackHint') as string,
-    },
-  ]
-}
 
 /**
  * 聊天动作逻辑 composable
@@ -234,96 +194,24 @@ export function useChatActions(options: AIRequestOptions = {}) {
     currentAssistantMessageId.value = assistantMessageId
 
     try {
-      const handleChunk = (chunk: string) => {
-        if (chunk === '[DONE]') {
-          if (currentAIResponse.value) {
-            const parsed = parseAssistantBlocks(currentAIResponse.value, {
-              enableTodoActions: aiConfig.todoAssistant,
-            })
-
-            if (aiConfig.todoAssistant && parsed.todoActions) {
-              const proposedActions: ProposedTodoChange[] = parsed.todoActions.map((action) => ({
-                ...action,
-                id: action.id || generateId(),
-              }))
-              currentTodoActions.value = proposedActions
-              todoStore.setProposedChanges(assistantMessageId, proposedActions)
-            }
-
-            const teachingQuizzes: TeachingQuiz[] | undefined =
-              parsed.teachingQuizzes ||
-              (aiConfig.assistantMode === 'teaching'
-                ? buildTeachingFallbackQuiz(parsed.cleanText, assistantMessageId, t)
-                : undefined)
-            const teachingAssessments: TeachingAssessment[] | undefined = parsed.teachingAssessments
-            currentAIResponse.value = parsed.cleanText
-            if (aiConfig.todoAssistant && currentAIResponse.value) {
-              currentAIResponse.value = stripTodoIdsFromText(currentAIResponse.value)
-            }
-            const structuredBlockErrors = parsed.errors.length > 0 ? [...parsed.errors] : undefined
-            const pendingStructuredBlocks =
-              parsed.pendingStructuredBlocks.length > 0
-                ? [...parsed.pendingStructuredBlocks]
-                : undefined
-
-            const aiMessage: ChatMessage = {
-              id: assistantMessageId,
-              role: 'assistant',
-              content: currentAIResponse.value,
-              thinkingContent: currentThinkingContent.value || undefined,
-              reasoning_details: currentReasoningDetails.value || undefined,
-              discussionSteps:
-                currentDiscussionSteps.value.length > 0
-                  ? [...currentDiscussionSteps.value]
-                  : undefined,
-              todoActions:
-                currentTodoActions.value.length > 0 ? [...currentTodoActions.value] : undefined,
-              teachingQuizzes,
-              teachingAssessments,
-              structuredBlockErrors,
-              pendingStructuredBlocks,
-              createdAt: new Date(),
-            }
-
-            // 使用捕获的会话 ID 进行更新，防止切换会话后存错位置
-            if (generationSessionId) {
-              addSessionMessage(generationSessionId, aiMessage)
-            }
-
-            if (isMemoryEnabled.value && generationSessionId) {
-              const session = sessions.value.find((s) => s.id === generationSessionId)
-              const newHistory = session?.messages ?? []
-              void extractAndStoreMemories(newHistory)
-            }
-          }
-          resetStreamingState()
-          isGenerating.value = false
-        } else if (chunk === '[ABORTED]') {
-          if (currentAIResponse.value) {
-            const aiMessage: ChatMessage = {
-              id: assistantMessageId,
-              role: 'assistant',
-              content: currentAIResponse.value + `\n\n*${t('ai.aborted')}*`,
-              thinkingContent: currentThinkingContent.value || undefined,
-              reasoning_details: currentReasoningDetails.value || undefined,
-              discussionSteps:
-                currentDiscussionSteps.value.length > 0
-                  ? [...currentDiscussionSteps.value]
-                  : undefined,
-              createdAt: new Date(),
-            }
-
-            // 使用捕获的会话 ID 进行更新
-            if (generationSessionId) {
-              addSessionMessage(generationSessionId, aiMessage)
-            }
-          }
-          resetStreamingState()
-          isGenerating.value = false
-        } else {
-          currentAIResponse.value += chunk
-        }
-      }
+      const handleChunk = createStreamChunkHandler({
+        aiConfig,
+        assistantMessageId,
+        generationSessionId,
+        currentAIResponse,
+        currentThinkingContent,
+        currentReasoningDetails,
+        currentDiscussionSteps,
+        currentTodoActions,
+        isGenerating,
+        sessions,
+        addSessionMessage,
+        extractAndStoreMemories,
+        isMemoryEnabled,
+        resetStreamingState,
+        todoStore,
+        t,
+      })
 
       if (aiConfig.discussionMode && aiConfig.discussionModelIds.length > 0) {
         const { messagesForRequest, contextSummary } = await buildContextCompression(
