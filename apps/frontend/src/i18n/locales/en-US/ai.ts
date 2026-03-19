@@ -376,6 +376,8 @@ Current memory list:
   imageGenerationDesc:
     'Drawing mode enabled. Ensure the current model supports image generation (e.g., Gemini, DALL-E)',
   imagePromptPlaceholder: 'Describe the image you want to generate... Type / for shortcut menu',
+  imageAttachment: 'Image',
+  documentAttachment: 'Document',
   dragToMove: 'Drag to move / Scroll to zoom',
   uploadFile: 'Upload file (image or document)',
 } as const

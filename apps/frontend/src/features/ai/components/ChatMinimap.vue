@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { computed, ref, onUnmounted, watch, nextTick } from 'vue'
 import { useWindowSize } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import { useGsap } from '@/composables/useGsap'
@@ -8,6 +8,8 @@ import type { ChatMessage } from '@/features/ai/composables/useChat'
 const props = defineProps<{
   messages: ChatMessage[]
   scrollContainer: HTMLElement | null
+  visibleMessageIds: string[]
+  ensureMessageVisible: (id: string) => Promise<boolean>
 }>()
 
 const { t } = useI18n()
@@ -55,68 +57,96 @@ const onLeave = (el: Element, done: () => void) => {
 // 视口激活状态 (Scroll Spy)
 const activeBlockId = ref<string | null>(null)
 const SCROLL_THRESHOLD = 150 // 滚动激活阈值
+let pendingUpdateTimer: ReturnType<typeof setTimeout> | null = null
+let boundScrollContainer: HTMLElement | null = null
+
+const visibleMessageIdSet = computed(() => new Set(props.visibleMessageIds))
 
 const updateActiveBlock = () => {
-  if (!props.scrollContainer || questionAnchors.value.length === 0) return
+  if (!props.scrollContainer) return
 
   const container = props.scrollContainer
   const containerRect = container.getBoundingClientRect()
-  const anchors = questionAnchors.value
+  const anchors = questionAnchors.value.filter((anchor) => visibleMessageIdSet.value.has(anchor.id))
+
+  if (anchors.length === 0) {
+    activeBlockId.value = null
+    return
+  }
 
   // 找到最后一个「在视口顶部上方」或「正在视口中」的用户提问
-  let currentActiveId = anchors[0].id
+  let currentActiveId: string | null = null
 
   for (const anchor of anchors) {
     const el = document.getElementById(`chat-msg-${anchor.id}`)
-    if (el) {
-      const elRect = el.getBoundingClientRect()
-      // 算法：如果元素顶部距离容器顶部的距离 <= 阈值
-      // 使用相对坐标 elRect.top - containerRect.top，不受 offsetParent 影响
-      if (elRect.top - containerRect.top <= SCROLL_THRESHOLD) {
-        currentActiveId = anchor.id
-      } else {
-        break
-      }
+    if (!el) continue
+
+    if (!currentActiveId) {
+      currentActiveId = anchor.id
+    }
+
+    const elRect = el.getBoundingClientRect()
+    // 算法：如果元素顶部距离容器顶部的距离 <= 阈值
+    // 使用相对坐标 elRect.top - containerRect.top，不受 offsetParent 影响
+    if (elRect.top - containerRect.top <= SCROLL_THRESHOLD) {
+      currentActiveId = anchor.id
+    } else {
+      break
     }
   }
-  activeBlockId.value = currentActiveId
+
+  activeBlockId.value = currentActiveId ?? anchors[0].id
+}
+
+const scheduleActiveBlockUpdate = (delay = 0) => {
+  if (pendingUpdateTimer) {
+    clearTimeout(pendingUpdateTimer)
+    pendingUpdateTimer = null
+  }
+
+  pendingUpdateTimer = setTimeout(() => {
+    pendingUpdateTimer = null
+    updateActiveBlock()
+  }, delay)
+}
+
+const bindScrollListener = (container: HTMLElement | null) => {
+  if (boundScrollContainer) {
+    boundScrollContainer.removeEventListener('scroll', updateActiveBlock)
+  }
+
+  boundScrollContainer = container
+
+  if (boundScrollContainer) {
+    boundScrollContainer.addEventListener('scroll', updateActiveBlock, { passive: true })
+  }
 }
 
 // 确保监听器正确挂载，解决 props 异步传递导致的失效
 watch(
   () => props.scrollContainer,
-  (newContainer, oldContainer) => {
-    if (oldContainer) {
-      oldContainer.removeEventListener('scroll', updateActiveBlock)
-    }
-    if (newContainer) {
-      newContainer.addEventListener('scroll', updateActiveBlock, { passive: true })
-      setTimeout(updateActiveBlock, 300)
-    }
+  (newContainer) => {
+    bindScrollListener(newContainer)
+    scheduleActiveBlockUpdate(100)
   },
   { immediate: true },
 )
 
 watch(
-  () => props.messages.length,
+  [() => props.messages.length, () => props.visibleMessageIds],
   () => {
     void nextTick(() => {
-      setTimeout(updateActiveBlock, 500)
+      scheduleActiveBlockUpdate(80)
     })
   },
-  { immediate: true },
+  { immediate: true, deep: true },
 )
 
-onMounted(() => {
-  if (props.scrollContainer) {
-    props.scrollContainer.addEventListener('scroll', updateActiveBlock, { passive: true })
-    setTimeout(updateActiveBlock, 300)
-  }
-})
-
 onUnmounted(() => {
-  if (props.scrollContainer) {
-    props.scrollContainer.removeEventListener('scroll', updateActiveBlock)
+  bindScrollListener(null)
+  if (pendingUpdateTimer) {
+    clearTimeout(pendingUpdateTimer)
+    pendingUpdateTimer = null
   }
 })
 
@@ -126,8 +156,12 @@ const questionAnchors = computed(() => {
     .filter((m) => m.role === 'user')
     .map((m) => {
       let text = m.content || ''
-      if (!text && m.images?.length) {
-        text = `[${t('ai.image')}]`
+      if (!text && m.images?.length && m.documents?.length) {
+        text = `[${t('ai.imageAttachment')} + ${t('ai.documentAttachment')}]`
+      } else if (!text && m.images?.length) {
+        text = `[${t('ai.imageAttachment')}]`
+      } else if (!text && m.documents?.length) {
+        text = `[${t('ai.documentAttachment')}]`
       }
       if (!text) {
         text = '...'
@@ -137,8 +171,12 @@ const questionAnchors = computed(() => {
 })
 
 // 跳转到指定消息
-const scrollToMessage = (id: string) => {
+const scrollToMessage = async (id: string) => {
   if (!props.scrollContainer) return
+  const isVisible = await props.ensureMessageVisible(id)
+  if (!isVisible) return
+
+  await nextTick()
   const element = document.getElementById(`chat-msg-${id}`)
   if (element) {
     const container = props.scrollContainer
@@ -155,6 +193,8 @@ const scrollToMessage = (id: string) => {
         overwrite: true,
       })
     })
+
+    activeBlockId.value = id
   }
 }
 

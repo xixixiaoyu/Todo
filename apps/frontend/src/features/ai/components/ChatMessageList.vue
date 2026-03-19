@@ -58,6 +58,7 @@ const renderLimit = ref(DEFAULT_WINDOW_SIZE)
 
 const windowStartIndex = computed(() => Math.max(0, props.messages.length - renderLimit.value))
 const visibleMessages = computed(() => props.messages.slice(windowStartIndex.value))
+const visibleMessageIds = computed(() => visibleMessages.value.map((message) => message.id))
 const hiddenCount = computed(() =>
   Math.max(0, props.messages.length - visibleMessages.value.length),
 )
@@ -159,6 +160,23 @@ async function revealOlderMessages(step = WINDOW_STEP) {
   const nextScrollHeight = container.scrollHeight
   const delta = nextScrollHeight - prevScrollHeight
   container.scrollTop = prevScrollTop + (delta > 0 ? delta : 0)
+}
+
+async function ensureMessageVisible(messageId: string): Promise<boolean> {
+  const targetIndex = props.messages.findIndex((msg) => msg.id === messageId)
+  if (targetIndex === -1) return false
+
+  if (targetIndex >= windowStartIndex.value) {
+    return true
+  }
+
+  const requiredRenderLimit = props.messages.length - targetIndex
+  while (renderLimit.value < requiredRenderLimit) {
+    await revealOlderMessages()
+  }
+
+  await nextTick()
+  return targetIndex >= windowStartIndex.value
 }
 
 function handleScroll() {
@@ -353,7 +371,12 @@ defineExpose({
     </div>
 
     <div class="absolute top-1/2 -translate-y-1/2 right-2 z-30">
-      <ChatMinimap :messages="messages" :scroll-container="containerRef" />
+      <ChatMinimap
+        :messages="messages"
+        :scroll-container="containerRef"
+        :visible-message-ids="visibleMessageIds"
+        :ensure-message-visible="ensureMessageVisible"
+      />
     </div>
 
     <!-- 返回底部按钮 -->
