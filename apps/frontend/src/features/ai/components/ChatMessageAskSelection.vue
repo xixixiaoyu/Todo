@@ -13,6 +13,7 @@ import { useChat } from '@/features/ai/composables/useChat'
 
 const props = defineProps<{
   container: HTMLElement | null | undefined
+  isStreaming?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -142,6 +143,12 @@ function getSelectionInContainer() {
 }
 
 function updateAskAnchor() {
+  if (props.isStreaming) {
+    isAskButtonVisible.value = false
+    selectionText.value = ''
+    return
+  }
+
   const info = getSelectionInContainer()
   if (!info) {
     isAskButtonVisible.value = false
@@ -327,6 +334,18 @@ watch(
   { immediate: true },
 )
 
+watch(
+  () => props.isStreaming,
+  (streaming) => {
+    if (streaming) {
+      isAskButtonVisible.value = false
+      selectionText.value = ''
+      return
+    }
+    updateAskAnchor()
+  },
+)
+
 watch([windowWidth, windowHeight], () => {
   if (isAskPanelOpen.value) clampPanelIntoViewport(panelRef, panelX, panelY)
   if (isResultOpen.value) clampPanelIntoViewport(resultPanelRef, resultX, resultY)
@@ -350,7 +369,7 @@ defineExpose({ updateAskAnchor })
 <template>
   <Teleport to="body">
     <button
-      v-if="isAskButtonVisible && selectionText"
+      v-if="!isStreaming && isAskButtonVisible && selectionText"
       type="button"
       class="fixed z-[220] rounded-full border border-border/30 bg-card/70 px-3 py-1.5 text-xs font-medium text-foreground shadow-lg backdrop-blur-2xl transition-colors hover:bg-card/85 active:scale-[0.98]"
       :style="{ left: `${askButtonX}px`, top: `${askButtonY}px`, '--wails-draggable': 'no-drag' }"

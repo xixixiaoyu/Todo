@@ -50,6 +50,7 @@ defineExpose({
 
   <ChatMessageAskSelection
     :container="containerRef"
+    :is-streaming="isStreaming"
     @ask-selection="(prompt) => emit('ask-selection', prompt)"
     @transfer-selection="() => emit('transfer-selection')"
   />

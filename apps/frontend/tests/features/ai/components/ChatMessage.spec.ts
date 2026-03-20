@@ -523,6 +523,39 @@ describe('ChatMessage', () => {
     expect(prompt).toContain('Hello')
   })
 
+  it('should hide ask-selection action while streaming', async () => {
+    const wrapper = mount(ChatMessageMarkdown, {
+      props: { content: 'Hello world', isStreaming: true, isMobile: false },
+      global: {
+        stubs: {
+          Teleport: true,
+        },
+      },
+    })
+
+    await flushPromises()
+
+    const fallbackContainer = wrapper.find('.relative.selectable.select-text')
+    expect(fallbackContainer.exists()).toBe(true)
+    const textNode = fallbackContainer.element.childNodes[0]
+    expect(textNode).toBeTruthy()
+
+    const range = document.createRange()
+    range.setStart(textNode, 0)
+    range.setEnd(textNode, 5)
+    const selection = window.getSelection()
+    selection?.removeAllRanges()
+    selection?.addRange(range)
+
+    await wrapper.trigger('mouseup')
+    await flushPromises()
+
+    const askBtn = wrapper
+      .findAll('button')
+      .find((b) => b.text().trim() === 'ai.askSelectionAction')
+    expect(askBtn?.exists()).toBeFalsy()
+  })
+
   it('should support floating ask flow and transfer result to chat', async () => {
     vi.mocked(aiService.getAIStreamResponse).mockImplementationOnce(async (_messages, onChunk) => {
       onChunk('Quick answer')
