@@ -119,6 +119,29 @@ export function useChatMessageMarkdownRender(params: {
 
   const containerRef = ref<HTMLDivElement>()
   const renderedHtml = ref('')
+  let pendingRenderAfterSelection = false
+  let selectionPollTimer: ReturnType<typeof setTimeout> | null = null
+
+  const clearSelectionPollTimer = () => {
+    if (!selectionPollTimer) return
+    clearTimeout(selectionPollTimer)
+    selectionPollTimer = null
+  }
+
+  const hasActiveSelectionInContainer = () => {
+    const container = containerRef.value
+    if (!container) return false
+
+    const selection = window.getSelection?.()
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return false
+
+    try {
+      const range = selection.getRangeAt(0)
+      return container.contains(range.commonAncestorContainer)
+    } catch {
+      return false
+    }
+  }
 
   const injectInteractions = () => {
     const container = containerRef.value
@@ -150,12 +173,31 @@ export function useChatMessageMarkdownRender(params: {
   }
 
   let renderTimer: ReturnType<typeof setTimeout> | null = null
+  const scheduleRenderAfterSelection = () => {
+    pendingRenderAfterSelection = true
+    if (selectionPollTimer) return
+
+    selectionPollTimer = setTimeout(() => {
+      selectionPollTimer = null
+
+      if (hasActiveSelectionInContainer()) {
+        scheduleRenderAfterSelection()
+        return
+      }
+
+      if (!pendingRenderAfterSelection) return
+      pendingRenderAfterSelection = false
+      void updateRenderedContent(true)
+    }, 120)
+  }
 
   if (getCurrentInstance()) {
     onUnmounted(() => {
-      if (!renderTimer) return
-      clearTimeout(renderTimer)
-      renderTimer = null
+      if (renderTimer) {
+        clearTimeout(renderTimer)
+        renderTimer = null
+      }
+      clearSelectionPollTimer()
     })
   }
 
@@ -163,13 +205,29 @@ export function useChatMessageMarkdownRender(params: {
     const content = params.content.value
     const streaming = params.isStreaming.value
 
-    if (!content) return
+    if (!content) {
+      renderedHtml.value = ''
+      pendingRenderAfterSelection = false
+      clearSelectionPollTimer()
+      return
+    }
+
+    if (hasActiveSelectionInContainer()) {
+      scheduleRenderAfterSelection()
+      return
+    }
 
     if (streaming && !immediate) {
       if (renderTimer) return
       renderTimer = setTimeout(() => {
         renderTimer = null
+        if (hasActiveSelectionInContainer()) {
+          scheduleRenderAfterSelection()
+          return
+        }
         void (async () => {
+          pendingRenderAfterSelection = false
+          clearSelectionPollTimer()
           renderedHtml.value = await renderMarkdown(params.content.value, true)
           void nextTick(injectInteractions)
         })()
@@ -181,6 +239,8 @@ export function useChatMessageMarkdownRender(params: {
       clearTimeout(renderTimer)
       renderTimer = null
     }
+    pendingRenderAfterSelection = false
+    clearSelectionPollTimer()
     renderedHtml.value = await renderMarkdown(content, streaming)
     void nextTick(injectInteractions)
   }

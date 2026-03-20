@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { ref } from 'vue'
 import { useChatMessageMarkdownRender } from '@/features/ai/composables/useChatMessageMarkdownRender'
 
@@ -27,6 +27,10 @@ describe('useChatMessageMarkdownRender', () => {
     mockMermaidMap.clear()
     mockRenderMarkdown.mockClear()
     vi.restoreAllMocks()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it('should handle mermaid zoom by data-action', async () => {
@@ -78,5 +82,50 @@ describe('useChatMessageMarkdownRender', () => {
     await Promise.resolve()
 
     expect(writeText).toHaveBeenCalledWith('graph TD; A-->B')
+  })
+
+  it('should defer streaming render while text selection is active in container', async () => {
+    vi.useFakeTimers()
+
+    const content = ref('')
+    const isStreaming = ref(true)
+    const render = useChatMessageMarkdownRender({
+      content,
+      isStreaming,
+    })
+
+    const container = document.createElement('div')
+    const paragraph = document.createElement('p')
+    paragraph.textContent = 'streaming text'
+    container.appendChild(paragraph)
+    render.containerRef.value = container as HTMLDivElement
+
+    const range = document.createRange()
+    range.selectNodeContents(paragraph)
+
+    const selectionState = { active: true }
+    vi.spyOn(window, 'getSelection').mockImplementation(
+      () =>
+        ({
+          rangeCount: selectionState.active ? 1 : 0,
+          isCollapsed: !selectionState.active,
+          getRangeAt: () => range,
+        }) as unknown as Selection,
+    )
+
+    content.value = 'chunk-1'
+    await Promise.resolve()
+    vi.advanceTimersByTime(80)
+    await Promise.resolve()
+
+    expect(mockRenderMarkdown).not.toHaveBeenCalled()
+
+    selectionState.active = false
+    vi.advanceTimersByTime(140)
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(mockRenderMarkdown).toHaveBeenCalledWith('chunk-1', true)
+    expect(render.renderedHtml.value).toBe('chunk-1')
   })
 })
