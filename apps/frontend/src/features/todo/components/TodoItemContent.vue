@@ -22,11 +22,24 @@ const emit = defineEmits<{
   startEdit: []
 }>()
 
+const dueAtDate = computed(() => toDate(props.todo.dueAt))
+const remindAtDate = computed(() => toDate(props.todo.remindAt))
+
 const isOverdue = computed(() => {
-  const dueAt = toDate(props.todo.dueAt)
+  const dueAt = dueAtDate.value
   if (!dueAt) return false
   if (props.todo.completed) return false
   return dueAt.getTime() < Date.now()
+})
+
+const hasDueAt = computed(() => !!dueAtDate.value)
+const hasActiveReminder = computed(() => !!remindAtDate.value && !props.todo.remindedAt)
+
+const isReminderOverdue = computed(() => {
+  const remindAt = remindAtDate.value
+  if (!remindAt) return false
+  if (props.todo.completed || props.todo.remindedAt) return false
+  return remindAt.getTime() < Date.now()
 })
 
 const hasMetaBadges = computed(() => {
@@ -34,9 +47,9 @@ const hasMetaBadges = computed(() => {
 
   return Boolean(
     props.todo.pomodoroCount > 0 ||
-    props.todo.dueAt ||
+    hasDueAt.value ||
     props.todo.recurrenceRule ||
-    (props.todo.remindAt && !props.todo.remindedAt),
+    hasActiveReminder.value,
   )
 })
 
@@ -49,15 +62,15 @@ const recurrenceLabelKey = computed(() => {
 })
 
 const dueDisplay = computed(() => {
-  if (!props.todo.dueAt) return null
-  return formatDate(props.todo.dueAt, 'MM-DD HH:mm')
+  if (!dueAtDate.value) return null
+  return formatDate(dueAtDate.value, 'MM-DD HH:mm')
 })
 
 const remindDisplay = computed(() => {
-  const remindAt = toDate(props.todo.remindAt)
+  const remindAt = remindAtDate.value
   if (!remindAt) return null
 
-  const dueAt = toDate(props.todo.dueAt)
+  const dueAt = dueAtDate.value
   if (dueAt && dayjs(remindAt).isSame(dueAt, 'day')) {
     return formatDate(remindAt, 'HH:mm')
   }
@@ -70,7 +83,7 @@ const remindDisplay = computed(() => {
 })
 
 const remindRelativeDisplay = computed(() => {
-  const remindAt = toDate(props.todo.remindAt)
+  const remindAt = remindAtDate.value
   if (!remindAt) return null
   return formatRelativeTime(remindAt, locale.value)
 })
@@ -132,10 +145,10 @@ const remindRelativeDisplay = computed(() => {
         v-if="hasMetaBadges"
         class="flex flex-wrap items-center gap-1 pl-0.5 text-[11px] md:gap-1.5 md:text-[var(--todo-font-caption)]"
       >
-        <Tooltip v-if="todo.dueAt && dueDisplay">
+        <Tooltip v-if="hasDueAt && dueDisplay">
           <TooltipTrigger as-child>
             <div
-              class="flex shrink-0 items-center gap-1 rounded-lg px-1.5 py-[3px] font-semibold leading-none ring-1 ring-inset md:py-0.5"
+              class="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg px-1.5 py-[3px] font-semibold leading-none ring-1 ring-inset md:py-0.5"
               :class="
                 isOverdue
                   ? 'bg-destructive/10 text-destructive ring-destructive/25'
@@ -155,14 +168,16 @@ const remindRelativeDisplay = computed(() => {
           <TooltipContent side="top">{{ t('todo.dueAt') }}</TooltipContent>
         </Tooltip>
 
-        <Tooltip v-if="todo.remindAt && !todo.remindedAt && remindDisplay">
+        <Tooltip v-if="hasActiveReminder && remindDisplay">
           <TooltipTrigger as-child>
             <div
-              class="flex shrink-0 items-center gap-1 rounded-lg border px-1.5 py-[3px] font-medium leading-none md:py-0.5"
+              class="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg border px-1.5 py-[3px] font-medium leading-none md:py-0.5"
               :class="
-                todo.dueAt
-                  ? 'border-border/70 bg-muted/45 text-muted-foreground'
-                  : 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400/90'
+                isReminderOverdue
+                  ? 'border-destructive/35 bg-destructive/10 text-destructive'
+                  : hasDueAt
+                    ? 'border-border/70 bg-muted/45 text-muted-foreground'
+                    : 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400/90'
               "
             >
               <Bell class="h-3 w-3" />
@@ -180,7 +195,7 @@ const remindRelativeDisplay = computed(() => {
         <Tooltip v-if="todo.pomodoroCount > 0">
           <TooltipTrigger as-child>
             <div
-              class="animate-in fade-in zoom-in-95 flex shrink-0 items-center gap-1 rounded-lg bg-rose-500/10 px-1.5 py-[3px] font-medium text-rose-500 duration-500 dark:text-rose-400/90 md:py-0.5 md:font-semibold"
+              class="animate-in fade-in zoom-in-95 flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg bg-rose-500/10 px-1.5 py-[3px] font-medium text-rose-500 duration-500 dark:text-rose-400/90 md:py-0.5 md:font-semibold"
             >
               <Timer class="h-3 w-3" />
               <span>{{ todo.pomodoroCount }}</span>
@@ -194,7 +209,7 @@ const remindRelativeDisplay = computed(() => {
         <Tooltip v-if="recurrenceLabelKey">
           <TooltipTrigger as-child>
             <div
-              class="flex shrink-0 items-center rounded-lg bg-sky-500/10 px-1.5 py-[3px] font-medium leading-none text-sky-600 dark:text-sky-400/90 md:py-0.5"
+              class="flex shrink-0 items-center whitespace-nowrap rounded-lg bg-sky-500/10 px-1.5 py-[3px] font-medium leading-none text-sky-600 dark:text-sky-400/90 md:py-0.5"
             >
               <span>{{ t(recurrenceLabelKey) }}</span>
             </div>

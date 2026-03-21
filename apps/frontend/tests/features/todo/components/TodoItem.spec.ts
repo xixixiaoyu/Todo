@@ -32,6 +32,7 @@ vi.mock('lucide-vue-next', () => ({
   Timer: { template: '<span class="lucide-timer">Timer</span>' },
   Rocket: { template: '<span class="lucide-rocket">Rocket</span>' },
   Globe: { template: '<span class="lucide-globe">Globe</span>' },
+  Bell: { template: '<span class="lucide-bell">Bell</span>' },
 }))
 
 // Mock reka-ui components
@@ -72,6 +73,7 @@ const i18n = createI18n({
         pin: '置顶',
         schedule: '截止/提醒',
         delete: '删除',
+        overdue: '已逾期',
       },
       common: {
         delete: '删除',
@@ -98,6 +100,7 @@ describe('TodoItem', () => {
   })
 
   afterEach(() => {
+    vi.useRealTimers()
     resetBodyScrollLockState()
   })
 
@@ -127,6 +130,96 @@ describe('TodoItem', () => {
     })
 
     expect(wrapper.text()).toContain('Test todo')
+  })
+
+  it('should keep pinned indicator visible in content area', () => {
+    const pinnedTodo: Todo = { ...mockTodo, isPinned: true }
+    const wrapper = mount(TodoItem, {
+      props: {
+        todo: pinnedTodo,
+        allTodos: [pinnedTodo],
+        editingId: null,
+        editingTitle: '',
+      },
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    const pinIcons = wrapper.findAll('.lucide-pin')
+    expect(pinIcons).toHaveLength(1)
+    expect(pinIcons[0].classes()).not.toContain('group-hover:hidden')
+  })
+
+  it('should show overdue badge for overdue and incomplete todos', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-22T12:00:00.000Z'))
+
+    const overdueTodo: Todo = {
+      ...mockTodo,
+      dueAt: new Date('2026-03-21T10:00:00.000Z'),
+    }
+
+    const wrapper = mount(TodoItem, {
+      props: {
+        todo: overdueTodo,
+        allTodos: [overdueTodo],
+        editingId: null,
+        editingTitle: '',
+      },
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    expect(wrapper.text()).toContain('已逾期')
+  })
+
+  it('should not render invalid date text for malformed dueAt', () => {
+    const malformedDueTodo: Todo = {
+      ...mockTodo,
+      dueAt: 'invalid-date' as unknown as Date,
+    }
+
+    const wrapper = mount(TodoItem, {
+      props: {
+        todo: malformedDueTodo,
+        allTodos: [malformedDueTodo],
+        editingId: null,
+        editingTitle: '',
+      },
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    expect(wrapper.text()).not.toContain('Invalid Date')
+  })
+
+  it('should emphasize reminder badge when reminder time has passed', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-22T12:00:00.000Z'))
+
+    const reminderOverdueTodo: Todo = {
+      ...mockTodo,
+      remindAt: new Date('2026-03-22T10:00:00.000Z'),
+    }
+
+    const wrapper = mount(TodoItem, {
+      props: {
+        todo: reminderOverdueTodo,
+        allTodos: [reminderOverdueTodo],
+        editingId: null,
+        editingTitle: '',
+      },
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    const reminderBadge = wrapper.find('.lucide-bell').element.closest('div')
+    expect(reminderBadge).not.toBeNull()
+    expect(reminderBadge?.className).toContain('text-destructive')
   })
 
   it('should show only more menu trigger by default on mobile', () => {
