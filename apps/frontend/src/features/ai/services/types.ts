@@ -40,6 +40,68 @@ export interface Tool {
   }
 }
 
+export interface AISkillRuntimeSecret {
+  key: string
+  label?: string
+  placeholder?: string
+  hint?: string
+  envVar?: string
+  required?: boolean
+}
+
+export interface AISkillRuntimeValueBinding {
+  $source: 'arg' | 'secret'
+  key: string
+  default?: AISkillRuntimeTemplateValue
+  required?: boolean
+  prefix?: string
+  suffix?: string
+}
+
+export type AISkillRuntimeTemplateValue =
+  | string
+  | number
+  | boolean
+  | null
+  | AISkillRuntimeValueBinding
+  | AISkillRuntimeTemplateValue[]
+  | { [key: string]: AISkillRuntimeTemplateValue }
+
+export interface AISkillHttpRuntime {
+  type: 'http'
+  tool: {
+    name: string
+    description: string
+    parameters: Record<string, unknown>
+  }
+  secrets?: AISkillRuntimeSecret[]
+  request: {
+    url: string
+    method?: 'GET' | 'POST'
+    headers?: Record<string, AISkillRuntimeTemplateValue>
+    query?: Record<string, AISkillRuntimeTemplateValue>
+    body?: AISkillRuntimeTemplateValue
+    timeoutMs?: number
+    responseType?: 'json' | 'text'
+  }
+}
+
+export interface AISkillMcpRuntime {
+  type: 'mcp'
+  tool: {
+    name: string
+    description: string
+    parameters: Record<string, unknown>
+  }
+  target: {
+    toolName: string
+    serverId?: string
+  }
+  arguments?: AISkillRuntimeTemplateValue
+}
+
+export type AISkillRuntime = AISkillHttpRuntime | AISkillMcpRuntime
+
 export interface AISkill {
   id: string
   name: string
@@ -49,6 +111,7 @@ export interface AISkill {
   path?: string
   resources?: string[]
   allowImplicitInvocation?: boolean
+  runtime?: AISkillRuntime
 }
 
 export type AssistantMode = 'default' | 'teaching'

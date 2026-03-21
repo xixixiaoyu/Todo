@@ -65,6 +65,9 @@ export const ai = {
   apiKeyPlaceholder: 'sk-...',
   apiKeyHint: 'Get your API Key from your chosen model provider official website.',
   apiKeyHintRecommended: 'Recommended (optional): DeepSeek',
+  skillRuntimeSecretsHint:
+    "Installed skills with runtimes declare their required secrets here. Secrets are only used for that skill runtime's controlled requests.",
+  skillRuntimeSecretEnvHint: 'Suggested self-hosted env var name: {envVar}.',
   modelLabel: 'Model',
   modelPlaceholder: 'e.g., deepseek-chat',
   temperatureLabel: 'Temp',

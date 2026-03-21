@@ -58,7 +58,7 @@ describe('aiService - Message Cleaning', () => {
     _resetAIConfig()
   })
 
-  it('should clean non-standard fields like reasoning_details before sending', async () => {
+  it('should strip ui-only fields while preserving assistant reasoning protocol fields', async () => {
     const onChunk = vi.fn()
     fetchMock.mockResolvedValueOnce({
       ok: true,
@@ -91,12 +91,20 @@ describe('aiService - Message Cleaning', () => {
     )
     expect(assistantMsg).toBeDefined()
     expect(assistantMsg).toMatchObject({ role: 'assistant', content: 'Hello' })
-    // Should NOT have reasoning_details, id, or createdAt
-    expect((assistantMsg as Record<string, unknown>).reasoning_details).toBeUndefined()
+    expect((assistantMsg as Record<string, unknown>).reasoning_content).toBe(
+      'Some thinking process',
+    )
+    expect((assistantMsg as Record<string, unknown>).reasoning_details).toBe(
+      'Some thinking process',
+    )
     expect((assistantMsg as Record<string, unknown>).id).toBeUndefined()
     expect((assistantMsg as Record<string, unknown>).createdAt).toBeUndefined()
 
-    // Check keys length to ensure no extra fields
-    expect(Object.keys(assistantMsg as Record<string, unknown>)).toEqual(['role', 'content'])
+    expect(Object.keys(assistantMsg as Record<string, unknown>).sort()).toEqual([
+      'content',
+      'reasoning_content',
+      'reasoning_details',
+      'role',
+    ])
   })
 })

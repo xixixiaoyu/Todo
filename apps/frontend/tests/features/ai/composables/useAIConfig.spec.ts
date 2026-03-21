@@ -87,6 +87,37 @@ describe('useAIConfig - Core', () => {
         apiKey: 'test-key',
       })
     })
+
+    it('should migrate legacy tavily skills to explicit runtime metadata on load', () => {
+      localStorage.setItem(
+        'ai-skills',
+        JSON.stringify([
+          {
+            id: 'legacy-tavily',
+            name: 'tavily-search',
+            description: 'Search the live web',
+            prompt: 'Use Tavily search when current web information is needed.',
+          },
+        ]),
+      )
+
+      _resetAIConfig()
+      const { skills } = useAIConfig()
+
+      expect(skills.value[0]?.runtime).toMatchObject({
+        type: 'http',
+        tool: {
+          name: 'skill_tavily_search',
+        },
+      })
+
+      const persisted = JSON.parse(localStorage.getItem('ai-skills') || '[]') as Array<{
+        runtime?: unknown
+      }>
+      expect(persisted[0]?.runtime).toMatchObject({
+        type: 'http',
+      })
+    })
   })
 
   describe('AI Thinking Mode', () => {
@@ -458,6 +489,120 @@ describe('useAIConfig - Core', () => {
       expect(skills.value.map((item) => item.name)).toEqual(['code-review', 'architecture'])
     })
 
+    it('should preserve skill runtime metadata when importing JSON skills', () => {
+      const { skills, importSkills } = useAIConfig()
+
+      const count = importSkills(
+        JSON.stringify([
+          {
+            name: 'finance-lookup',
+            description: 'Lookup finance headlines',
+            prompt: 'Use the HTTP runtime',
+            runtime: {
+              type: 'http',
+              tool: {
+                name: 'skill_finance_lookup',
+                description: 'Fetch finance headlines',
+                parameters: {
+                  type: 'object',
+                  properties: {
+                    query: {
+                      type: 'string',
+                    },
+                  },
+                  required: ['query'],
+                },
+              },
+              secrets: [
+                {
+                  key: 'financeApiKey',
+                  envVar: 'FINANCE_API_KEY',
+                  required: true,
+                },
+              ],
+              request: {
+                url: 'https://api.example.com/finance',
+                method: 'POST',
+                body: {
+                  q: {
+                    $source: 'arg',
+                    key: 'query',
+                    required: true,
+                  },
+                },
+              },
+            },
+          },
+        ]),
+      )
+
+      expect(count).toBe(1)
+      expect(skills.value[0]?.runtime).toMatchObject({
+        type: 'http',
+        tool: {
+          name: 'skill_finance_lookup',
+        },
+        request: {
+          url: 'https://api.example.com/finance',
+          method: 'POST',
+        },
+      })
+    })
+
+    it('should preserve MCP runtime metadata when importing JSON skills', () => {
+      const { skills, importSkills } = useAIConfig()
+
+      const count = importSkills(
+        JSON.stringify({
+          name: 'browser-search',
+          description: 'Search through MCP',
+          prompt: 'Use MCP-backed browser search',
+          runtime: {
+            type: 'mcp',
+            tool: {
+              name: 'skill_browser_search',
+              description: 'Search with MCP',
+              parameters: {
+                type: 'object',
+                properties: {
+                  query: {
+                    type: 'string',
+                  },
+                },
+                required: ['query'],
+              },
+            },
+            target: {
+              toolName: 'search_web',
+            },
+            arguments: {
+              query: {
+                $source: 'arg',
+                key: 'query',
+                required: true,
+              },
+              limit: {
+                $source: 'arg',
+                key: 'maxResults',
+                default: 5,
+              },
+            },
+          },
+        }),
+      )
+
+      expect(count).toBe(1)
+      expect(skills.value[0]?.runtime).toMatchObject({
+        type: 'mcp',
+        tool: {
+          name: 'skill_browser_search',
+        },
+        target: {
+          toolName: 'search_web',
+        },
+      })
+    })
+
     it('should import a single SKILL.md document', () => {
       const { skills, importSkills } = useAIConfig()
 
@@ -510,7 +655,7 @@ describe('useAIConfig - Core', () => {
       expect(skills.value.map((item) => item.name)).toContain('remote-skill')
     })
 
-    it('should install skill from skillhub zip candidate', async () => {
+    it('should install legacy tavily skill package and migrate runtime metadata', async () => {
       const { skills, importSkillsFromExternalSource } = useAIConfig()
       const markdown = [
         '---',
@@ -562,6 +707,12 @@ describe('useAIConfig - Core', () => {
       expect(result.importedCount).toBe(1)
       expect(result.sourceUrl).toBe('https://lightmake.site/api/v1/download?slug=tavily-search')
       expect(skills.value.map((item) => item.name)).toContain('tavily-search')
+      expect(skills.value.find((item) => item.name === 'tavily-search')?.runtime).toMatchObject({
+        type: 'http',
+        tool: {
+          name: 'skill_tavily_search',
+        },
+      })
     })
 
     it('should reject zip package when SKILL.md original size exceeds the file limit', async () => {

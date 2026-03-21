@@ -25,6 +25,7 @@ import {
   buildSkillReadTool,
   createSkillReadToolHandler,
   READ_SKILL_TOOL_NAME,
+  buildSkillRuntimeTools,
 } from '@/features/ai/services/aiService'
 
 const MAX_RETRIES = 3
@@ -272,7 +273,21 @@ export function useChatActions(options: AIRequestOptions = {}) {
 
         const { aiTools: mcpAiTools, mcpToolLookup } = buildAiToolsFromMcpTools(mcpTools)
         const aiTools = [...mcpAiTools]
-        const localToolHandlers = new Map<string, (args: Record<string, unknown>) => string>()
+        const localToolHandlers = new Map<
+          string,
+          (args: Record<string, unknown>) => string | Promise<string>
+        >()
+        const skillRuntime = buildSkillRuntimeTools(skillContext.activatedSkills, {
+          mcpTools,
+          callMcpTool: mcpApi.callTool,
+          enableHttpRuntime: authStore.isAuthenticated,
+          enableMcpRuntime: aiConfig.mcpEnabled && authStore.isAuthenticated,
+        })
+
+        aiTools.unshift(...skillRuntime.aiTools)
+        skillRuntime.localToolHandlers.forEach((handler, name) => {
+          localToolHandlers.set(name, handler)
+        })
 
         const skillReadTool = buildSkillReadTool(skillContext.catalogSkills)
         if (skillReadTool) {

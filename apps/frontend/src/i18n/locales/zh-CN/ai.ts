@@ -56,6 +56,9 @@ export const ai = {
   apiKeyPlaceholder: 'sk-...',
   apiKeyHint: '请前往你所选模型服务商官网自行获取 API Key。',
   apiKeyHintRecommended: '推荐（可选）：DeepSeek',
+  skillRuntimeSecretsHint:
+    '已安装并带运行时的 skill 会在这里声明所需密钥。密钥仅用于对应 skill 的受控运行时请求。',
+  skillRuntimeSecretEnvHint: '建议的自托管环境变量名：{envVar}。',
   modelLabel: '模型',
   modelPlaceholder: '例如：deepseek-chat',
   temperatureLabel: '温度',

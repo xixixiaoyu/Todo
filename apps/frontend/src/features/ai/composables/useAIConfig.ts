@@ -1,4 +1,4 @@
-import { ref, watch, readonly, computed } from 'vue'
+import { ref, watch, readonly, computed, shallowRef } from 'vue'
 import { strFromU8, unzipSync } from 'fflate'
 import i18n from '@/i18n'
 import { httpClient } from '@/api'
@@ -7,6 +7,7 @@ import {
   parseSkillManifest,
   buildExternalSkillSourceCandidates,
   isTrustedSkillSourceUrl,
+  migrateLegacySkillRuntime,
 } from '@/features/ai/services/aiService'
 import type { AISkill } from '@/features/ai/services/types'
 import type { ApiResponse } from '@lumina/shared'
@@ -114,6 +115,10 @@ type ExternalSkillSourcePayload = {
   bodyBase64: string
 }
 
+type SkillArchivePayload = {
+  content: string
+}
+
 function encodeUtf8(content: string): Uint8Array {
   return utf8Encoder.encode(content)
 }
@@ -152,12 +157,18 @@ function isSkillMarkdownEntryPath(entryPath: string): boolean {
   return normalizedPath === 'skill.md' || normalizedPath.endsWith('/skill.md')
 }
 
-function extractSkillMarkdownFromZipArchive(archiveBytes: Uint8Array): string {
+function isSkillRuntimeEntryPath(entryPath: string): boolean {
+  const normalizedPath = entryPath.trim().toLowerCase()
+  return normalizedPath === 'skill.runtime.json' || normalizedPath.endsWith('/skill.runtime.json')
+}
+
+function extractSkillArchivePayloadFromZipArchive(archiveBytes: Uint8Array): SkillArchivePayload {
   let entries: Record<string, Uint8Array>
   try {
     entries = unzipSync(archiveBytes, {
       filter(file) {
-        if (!isSkillMarkdownEntryPath(file.name)) return false
+        if (!isSkillMarkdownEntryPath(file.name) && !isSkillRuntimeEntryPath(file.name))
+          return false
         if (file.originalSize > MAX_SKILL_FILE_BYTES) {
           throw createTooLargeError('File', file.originalSize)
         }
@@ -184,7 +195,35 @@ function extractSkillMarkdownFromZipArchive(archiveBytes: Uint8Array): string {
     throw new Error(`File too large: ${skillBytes.byteLength} bytes`)
   }
 
-  return strFromU8(skillBytes)
+  const skillMarkdown = strFromU8(skillBytes)
+  const runtimeEntry = Object.entries(entries).find(([entryPath]) =>
+    isSkillRuntimeEntryPath(entryPath),
+  )
+
+  if (!runtimeEntry) {
+    return {
+      content: skillMarkdown,
+    }
+  }
+
+  const runtimeBytes = runtimeEntry[1]
+  if (runtimeBytes.byteLength > MAX_SKILL_FILE_BYTES) {
+    throw new Error(`File too large: ${runtimeBytes.byteLength} bytes`)
+  }
+
+  let parsedRuntime: unknown
+  try {
+    parsedRuntime = JSON.parse(strFromU8(runtimeBytes))
+  } catch {
+    throw new Error('Invalid skill.runtime.json. Expected valid JSON.')
+  }
+
+  return {
+    content: JSON.stringify({
+      skill_md: skillMarkdown,
+      runtime: parsedRuntime,
+    }),
+  }
 }
 
 function decodeBase64ToBytes(base64: string): Uint8Array {
@@ -386,6 +425,11 @@ function normalizeSkill(raw: unknown): AISkill | null {
   const path = typeof item.path === 'string' && item.path.trim().length > 0 ? item.path.trim() : ''
   const allowImplicitInvocation =
     typeof item.allowImplicitInvocation === 'boolean' ? item.allowImplicitInvocation : undefined
+  const runtime = migrateLegacySkillRuntime({
+    name,
+    aliases,
+    runtime: item.runtime,
+  })
 
   return {
     id,
@@ -396,6 +440,7 @@ function normalizeSkill(raw: unknown): AISkill | null {
     ...(resources.length > 0 ? { resources } : {}),
     ...(path ? { path } : {}),
     ...(typeof allowImplicitInvocation === 'boolean' ? { allowImplicitInvocation } : {}),
+    ...(runtime ? { runtime } : {}),
   }
 }
 
@@ -439,6 +484,11 @@ function normalizeImportedSkill(raw: unknown): Omit<AISkill, 'id'> | null {
     typeof item.path === 'string' && item.path.trim().length > 0 ? item.path.trim() : undefined
   const allowImplicitInvocation =
     typeof item.allowImplicitInvocation === 'boolean' ? item.allowImplicitInvocation : undefined
+  const runtime = migrateLegacySkillRuntime({
+    name,
+    aliases,
+    runtime: item.runtime,
+  })
 
   return {
     name,
@@ -448,6 +498,14 @@ function normalizeImportedSkill(raw: unknown): Omit<AISkill, 'id'> | null {
     ...(resources.length > 0 ? { resources } : {}),
     ...(path ? { path } : {}),
     ...(typeof allowImplicitInvocation === 'boolean' ? { allowImplicitInvocation } : {}),
+    ...(runtime ? { runtime } : {}),
+  }
+}
+
+function createStoredSkill(skill: Omit<AISkill, 'id'>): AISkill {
+  return {
+    id: generateId(),
+    ...skill,
   }
 }
 
@@ -512,7 +570,7 @@ const DEFAULT_CONFIG: AIConfig = {
 // 全局配置状态（单例）
 const config = ref<AIConfig>(loadConfig())
 const presets = ref<AIPreset[]>(loadPresets())
-const skills = ref<AISkill[]>(loadSkills())
+const skills = shallowRef<AISkill[]>(loadSkills())
 const activePresetId = ref<string | null>(loadActivePresetId())
 
 // 监听思考模式变化并同步
@@ -592,7 +650,16 @@ function loadSkills(): AISkill[] {
     if (saved) {
       const parsed = JSON.parse(saved) as unknown
       if (!Array.isArray(parsed)) return []
-      return parsed.map((item) => normalizeSkill(item)).filter((item): item is AISkill => !!item)
+      const normalizedSkills = parsed
+        .map((item) => normalizeSkill(item))
+        .filter((item): item is AISkill => !!item)
+
+      const normalizedSerialized = JSON.stringify(normalizedSkills)
+      if (normalizedSerialized !== saved) {
+        localStorage.setItem(SKILLS_STORAGE_KEY, normalizedSerialized)
+      }
+
+      return normalizedSkills
     }
   } catch {
     console.warn('加载技能失败')
@@ -681,13 +748,14 @@ function findMatchingPreset(cfg: AIConfig, presetList: AIPreset[]): string | nul
 // 监听配置变化自动保存
 watch(config, (newConfig) => saveConfig(newConfig), { deep: true })
 watch(presets, (newPresets) => savePresets(newPresets), { deep: true })
-watch(skills, (newSkills) => saveSkills(newSkills), { deep: true })
-watch(activePresetId, (id) => saveActivePresetId(id))
-
 watch(
-  skills,
-  (newSkills) => {
-    const validIds = new Set(newSkills.map((item) => item.id))
+  () => JSON.stringify(skills.value),
+  (serializedSkills) => {
+    const nextSkills = JSON.parse(serializedSkills) as AISkill[]
+    saveSkills(nextSkills)
+
+    const skillIds = nextSkills.map((item) => item.id)
+    const validIds = new Set(skillIds)
     const nextSkillIds = config.value.skillIds.filter((id) => validIds.has(id))
     if (nextSkillIds.length !== config.value.skillIds.length) {
       config.value = {
@@ -696,8 +764,8 @@ watch(
       }
     }
   },
-  { deep: true },
 )
+watch(activePresetId, (id) => saveActivePresetId(id))
 
 // 监听配置或预设变化，自动同步激活状态
 watch(
@@ -1020,11 +1088,17 @@ export function useAIConfig() {
       }
     } catch {
       if (parsedFromMarkdown) {
+        const aliases: string[] = []
+        const runtime = migrateLegacySkillRuntime({
+          name: parsedFromMarkdown.name,
+          aliases,
+        })
         importedItems = [
           {
             name: parsedFromMarkdown.name,
             description: parsedFromMarkdown.description,
             prompt: parsedFromMarkdown.prompt,
+            ...(runtime ? { runtime } : {}),
           },
         ]
       } else {
@@ -1046,10 +1120,7 @@ export function useAIConfig() {
     }
 
     if (mode === 'replace') {
-      skills.value = dedupedByName.map((item) => ({
-        id: generateId(),
-        ...item,
-      }))
+      skills.value = dedupedByName.map((item) => createStoredSkill(item))
 
       const validIds = new Set(skills.value.map((skill) => skill.id))
       config.value = {
@@ -1073,10 +1144,7 @@ export function useAIConfig() {
         existingNameSet.add(key)
         return true
       })
-      .map((item) => ({
-        id: generateId(),
-        ...item,
-      }))
+      .map((item) => createStoredSkill(item))
 
     if (toAppend.length > 0) {
       skills.value = [...skills.value, ...toAppend]
@@ -1145,7 +1213,7 @@ export function useAIConfig() {
             MAX_SKILL_ARCHIVE_BYTES,
             'Archive',
           )
-          content = extractSkillMarkdownFromZipArchive(archiveBytes)
+          content = extractSkillArchivePayloadFromZipArchive(archiveBytes).content
         } else {
           if (contentType.includes('text/html')) {
             throw new Error('Received HTML content. Expected SKILL.md or JSON.')
@@ -1174,7 +1242,7 @@ export function useAIConfig() {
               if (proxied.contentBytes.byteLength > MAX_SKILL_ARCHIVE_BYTES) {
                 throw new Error(`Archive too large: ${proxied.contentBytes.byteLength} bytes`)
               }
-              content = extractSkillMarkdownFromZipArchive(proxied.contentBytes)
+              content = extractSkillArchivePayloadFromZipArchive(proxied.contentBytes).content
             } else {
               if (proxied.contentType.includes('text/html')) {
                 throw new Error('Received HTML content. Expected SKILL.md or JSON.')
@@ -1244,6 +1312,11 @@ export function useAIConfig() {
   function addSkill(skill: Omit<AISkill, 'id'>): AISkill {
     const normalizedAliases = normalizeSkillAliases(skill.aliases)
     const normalizedResources = normalizeSkillResources(skill.resources)
+    const runtime = migrateLegacySkillRuntime({
+      name: skill.name.trim(),
+      aliases: normalizedAliases,
+      runtime: skill.runtime,
+    })
     const newSkill: AISkill = {
       id: generateId(),
       name: skill.name.trim(),
@@ -1255,9 +1328,10 @@ export function useAIConfig() {
       ...(typeof skill.allowImplicitInvocation === 'boolean'
         ? { allowImplicitInvocation: skill.allowImplicitInvocation }
         : {}),
+      ...(runtime ? { runtime } : {}),
     }
 
-    skills.value.push(newSkill)
+    skills.value = [...skills.value, newSkill]
     return newSkill
   }
 
@@ -1278,20 +1352,30 @@ export function useAIConfig() {
       aliases: updates.aliases ? normalizeSkillAliases(updates.aliases) : current.aliases,
       resources: updates.resources ? normalizeSkillResources(updates.resources) : current.resources,
       path: typeof updates.path === 'string' ? updates.path.trim() || undefined : current.path,
+      runtime:
+        updates.runtime !== undefined || updates.name !== undefined || updates.aliases !== undefined
+          ? migrateLegacySkillRuntime({
+              name: typeof updates.name === 'string' ? updates.name.trim() : current.name,
+              aliases: updates.aliases ? normalizeSkillAliases(updates.aliases) : current.aliases,
+              runtime: updates.runtime !== undefined ? updates.runtime : current.runtime,
+            })
+          : current.runtime,
       allowImplicitInvocation:
         typeof updates.allowImplicitInvocation === 'boolean'
           ? updates.allowImplicitInvocation
           : current.allowImplicitInvocation,
     }
 
-    skills.value.splice(index, 1, updatedSkill)
+    const nextSkills = [...skills.value]
+    nextSkills.splice(index, 1, updatedSkill)
+    skills.value = nextSkills
   }
 
   function deleteSkill(skillId: string): void {
     const index = skills.value.findIndex((s) => s.id === skillId)
     if (index === -1) return
 
-    skills.value.splice(index, 1)
+    skills.value = skills.value.filter((skill) => skill.id !== skillId)
     if (config.value.skillIds.includes(skillId)) {
       setSkillIds(config.value.skillIds.filter((id) => id !== skillId))
     }
@@ -1315,7 +1399,7 @@ export function useAIConfig() {
       id: generateId(),
       name: `${skill.name}${i18n.global.t('ai.copySuffix')}`,
     }
-    skills.value.push(newSkill)
+    skills.value = [...skills.value, newSkill]
     return newSkill
   }
 
