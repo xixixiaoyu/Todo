@@ -480,6 +480,63 @@ describe('useChat', () => {
       expect(messages.value.some((m) => m.role === 'tool' && m.toolName === 'search')).toBe(true)
     })
 
+    it('should preserve reasoning when a tool-only assistant message triggers the next iteration', async () => {
+      const serverA = '11111111-1111-1111-1111-111111111111'
+      const aiToolName = `mcp_${serverA.slice(0, 8)}_search`
+      let secondIterationMessages: ChatMessage[] = []
+      let calls = 0
+
+      vi.mocked(mcpApi.getAllTools).mockResolvedValue([
+        { name: 'search', description: 'a', inputSchema: {}, serverId: serverA },
+      ])
+      vi.mocked(mcpApi.callTool).mockResolvedValue({
+        content: [{ type: 'text', text: 'ok' }],
+        isError: false,
+      })
+
+      mockGetAIStreamResponse.mockImplementation(
+        async (
+          messagesForRequest: ChatMessage[],
+          onChunk: OnChunk,
+          _onThinking?: OnThinking,
+          onReasoning?: OnReasoningDetails,
+          _options?: unknown,
+          onToolCall?: (toolCall: ToolCall) => void,
+        ) => {
+          calls++
+
+          if (calls === 1) {
+            onReasoning?.('Need to inspect the skill manifest first')
+            onToolCall?.({
+              id: 'tc1',
+              type: 'function',
+              function: {
+                name: aiToolName,
+                arguments: JSON.stringify({ q: 'x' }),
+              },
+            })
+            onChunk('[DONE]')
+            return
+          }
+
+          secondIterationMessages = messagesForRequest
+          onChunk('Final')
+          onChunk('[DONE]')
+        },
+      )
+
+      const { sendMessage } = useChat()
+      await sendMessage('test message')
+
+      const assistantMessage = secondIterationMessages.find(
+        (message) => message.role === 'assistant',
+      )
+
+      expect(assistantMessage?.content).toBe('')
+      expect(assistantMessage?.reasoning_details).toBe('Need to inspect the skill manifest first')
+      expect(assistantMessage?.tool_calls?.[0]?.id).toBe('tc1')
+    })
+
     it('should treat selected skills as active in default chat mode', async () => {
       vi.mocked(getAIConfig).mockReturnValue({
         assistantMode: 'default',

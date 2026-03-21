@@ -25,6 +25,8 @@ function truncateToolContent(input: string): string {
 export async function executeToolCalls(params: {
   assistantMessageId: string
   toolCalls: ToolCall[]
+  assistantThinkingContent?: string
+  assistantReasoningDetails?: string
   chatHistory: { value: ChatMessage[] }
   mcpToolLookup: Map<string, { serverId: string; toolName: string }>
   localToolHandlers?: Map<string, (args: Record<string, unknown>) => string | Promise<string>>
@@ -41,6 +43,10 @@ export async function executeToolCalls(params: {
   if (index > -1) {
     params.chatHistory.value[index] = {
       ...params.chatHistory.value[index],
+      thinkingContent:
+        params.chatHistory.value[index].thinkingContent || params.assistantThinkingContent,
+      reasoning_details:
+        params.chatHistory.value[index].reasoning_details || params.assistantReasoningDetails,
       tool_calls: params.toolCalls,
     }
     params.chatHistory.value = [...params.chatHistory.value]
@@ -51,6 +57,8 @@ export async function executeToolCalls(params: {
         id: params.assistantMessageId,
         role: 'assistant',
         content: '',
+        thinkingContent: params.assistantThinkingContent,
+        reasoning_details: params.assistantReasoningDetails,
         tool_calls: params.toolCalls,
         createdAt: new Date(),
       },

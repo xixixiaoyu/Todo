@@ -284,14 +284,18 @@ export function useChatActions(options: AIRequestOptions = {}) {
         }
 
         const toolCalls: ToolCall[] = []
+        let assistantThinking = ''
+        let assistantReasoningDetails = ''
 
         await getAIStreamResponse(
           messagesForRequest,
           handleChunk,
           (thinking: string) => {
+            assistantThinking += thinking
             currentThinkingContent.value += thinking
           },
           (details: string) => {
+            assistantReasoningDetails += details
             currentReasoningDetails.value += details
           },
           {
@@ -313,6 +317,8 @@ export function useChatActions(options: AIRequestOptions = {}) {
           await executeToolCalls({
             assistantMessageId,
             toolCalls,
+            assistantThinkingContent: assistantThinking || undefined,
+            assistantReasoningDetails: assistantReasoningDetails || undefined,
             chatHistory,
             mcpToolLookup,
             callMcpTool: mcpApi.callTool,

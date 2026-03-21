@@ -148,6 +148,71 @@ describe('aiService - Request Parameters', () => {
 
       expect(requestBody.reasoning).toEqual({ enabled: true, effort: 'low' })
     })
+
+    it('should preserve assistant reasoning fields for tool call messages', async () => {
+      const onChunk = vi.fn()
+      const encoder = new TextEncoder()
+
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        body: {
+          getReader: () => ({
+            read: vi
+              .fn()
+              .mockResolvedValueOnce({
+                value: encoder.encode('data: [DONE]\n\n'),
+                done: false,
+              })
+              .mockResolvedValueOnce({
+                value: null,
+                done: true,
+              }),
+          }),
+        },
+      } as unknown as Response)
+
+      await getAIStreamResponse(
+        [
+          {
+            id: 'a1',
+            role: 'assistant',
+            content: '',
+            reasoning_details: 'Need to inspect the skill manifest first',
+            tool_calls: [
+              {
+                id: 'tc1',
+                type: 'function',
+                function: {
+                  name: 'read_skill',
+                  arguments: '{"path":"skills/demo/SKILL.md"}',
+                },
+              },
+            ],
+          },
+        ],
+        onChunk,
+        undefined,
+        undefined,
+        { thinkingMode: 'enabled' },
+      )
+
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+      const callArgs = fetchMock.mock.calls[0]
+      const requestBody = JSON.parse(callArgs[1]?.body as string)
+      const assistantMessage = requestBody.messages.find(
+        (message: { role?: string }) => message.role === 'assistant',
+      ) as
+        | {
+            reasoning_content?: string
+            reasoning_details?: string
+            tool_calls?: Array<{ id: string }>
+          }
+        | undefined
+
+      expect(assistantMessage?.reasoning_content).toBe('Need to inspect the skill manifest first')
+      expect(assistantMessage?.reasoning_details).toBe('Need to inspect the skill manifest first')
+      expect(assistantMessage?.tool_calls?.[0]?.id).toBe('tc1')
+    })
   })
 
   describe('getAIStaticResponse', () => {

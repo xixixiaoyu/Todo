@@ -11,6 +11,7 @@ import type {
   AssistantMode,
   ChatMessage,
   MultiModalContent,
+  ToolCall,
 } from '../types'
 import { buildSkillManifest, getSkillPath } from './skills'
 
@@ -276,6 +277,22 @@ function formatActivatedSkillPayload(skills: AISkill[]): string {
   return ['```json', JSON.stringify(payload, null, 2), '```'].join('\n')
 }
 
+function buildAssistantProtocolFields(message: ChatMessage): {
+  reasoning_content?: string
+  reasoning_details?: string
+  tool_calls?: ToolCall[]
+} {
+  const reasoningContent = message.reasoning_details || message.thinkingContent
+
+  return {
+    ...(reasoningContent ? { reasoning_content: reasoningContent } : {}),
+    ...(message.reasoning_details ? { reasoning_details: message.reasoning_details } : {}),
+    ...(message.tool_calls && message.tool_calls.length > 0
+      ? { tool_calls: message.tool_calls }
+      : {}),
+  }
+}
+
 export function injectSystemPrompts(
   messages: ChatMessage[],
   systemPrompt: string,
@@ -432,9 +449,7 @@ export function injectSystemPrompts(
             return {
               role: 'assistant',
               content,
-              ...(msg.tool_calls && msg.tool_calls.length > 0
-                ? { tool_calls: msg.tool_calls }
-                : {}),
+              ...buildAssistantProtocolFields(msg),
             }
           }
 
@@ -448,7 +463,7 @@ export function injectSystemPrompts(
           return {
             role: 'assistant',
             content: messageContent,
-            ...(msg.tool_calls && msg.tool_calls.length > 0 ? { tool_calls: msg.tool_calls } : {}),
+            ...buildAssistantProtocolFields(msg),
           }
         }
 
