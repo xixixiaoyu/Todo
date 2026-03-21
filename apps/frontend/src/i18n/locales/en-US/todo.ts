@@ -49,6 +49,7 @@ export const todo = {
   clearTrashSuccess: 'Trash cleared',
   schedule: 'Schedule',
   dueAt: 'Due',
+  overdue: 'Overdue',
   noDueAt: 'Not set',
   remindAt: 'Remind',
   noReminder: 'No reminder',

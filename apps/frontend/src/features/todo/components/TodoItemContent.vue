@@ -6,10 +6,10 @@ import { computed } from 'vue'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { type Todo, useTodoStore } from '../stores/todo'
 import { highlightMatch } from '@/lib/utils'
-import dayjs, { formatDate } from '@/lib/dayjs'
+import dayjs, { formatDate, formatRelativeTime } from '@/lib/dayjs'
 import { toDate } from '../stores/todo.dates'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const store = useTodoStore()
 
 const props = defineProps<{
@@ -67,6 +67,12 @@ const remindDisplay = computed(() => {
   }
 
   return formatDate(remindAt, 'MM-DD HH:mm')
+})
+
+const remindRelativeDisplay = computed(() => {
+  const remindAt = toDate(props.todo.remindAt)
+  if (!remindAt) return null
+  return formatRelativeTime(remindAt, locale.value)
 })
 </script>
 
@@ -138,6 +144,12 @@ const remindDisplay = computed(() => {
             >
               <CalendarClock class="h-3 w-3" />
               <span>{{ dueDisplay }}</span>
+              <span
+                v-if="isOverdue"
+                class="rounded bg-destructive/15 px-1 py-[1px] text-[10px] font-semibold leading-none tracking-wide"
+              >
+                {{ t('todo.overdue') }}
+              </span>
             </div>
           </TooltipTrigger>
           <TooltipContent side="top">{{ t('todo.dueAt') }}</TooltipContent>
@@ -157,7 +169,12 @@ const remindDisplay = computed(() => {
               <span>{{ remindDisplay }}</span>
             </div>
           </TooltipTrigger>
-          <TooltipContent side="top">{{ t('todo.remindAt') }}</TooltipContent>
+          <TooltipContent side="top" class="space-y-0.5">
+            <p>{{ t('todo.remindAt') }}</p>
+            <p v-if="remindRelativeDisplay" class="text-[11px] text-muted-foreground">
+              {{ remindRelativeDisplay }}
+            </p>
+          </TooltipContent>
         </Tooltip>
 
         <Tooltip v-if="todo.pomodoroCount > 0">
