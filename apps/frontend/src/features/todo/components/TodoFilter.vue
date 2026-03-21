@@ -54,12 +54,12 @@ async function handleClearTrash() {
     <!-- 中间切换卡 -->
     <Tabs
       :model-value="filter"
-      class="flex-1 md:flex-none w-auto md:w-[400px]"
+      class="flex-1 md:flex-none w-auto md:w-[320px]"
       @update:model-value="emit('update:filter', $event as FilterType)"
     >
       <TabsList
         class="grid h-11 w-full rounded-[22px] border border-border/70 bg-card/85 p-1 backdrop-blur-xl shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)] dark:border-border/40 dark:bg-muted/20 dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] md:h-12 md:rounded-full md:bg-muted/60"
-        :class="showTrash ? 'grid-cols-3' : 'grid-cols-2 max-w-[280px] mx-auto'"
+        :class="['grid-cols-2', 'max-w-[280px]', 'mx-auto']"
       >
         <TabsTrigger
           value="pending"
@@ -85,21 +85,6 @@ async function handleClearTrash() {
           />
           <span class="truncate">{{ t('todo.completed') }}</span>
         </TabsTrigger>
-        <TabsTrigger
-          v-if="showTrash"
-          value="trash"
-          class="flex items-center justify-center gap-1 rounded-[18px] border border-transparent px-2 text-[12px] font-medium text-muted-foreground/70 transition-all duration-300 hover:text-destructive/80 data-[state=active]:border-destructive/15 data-[state=active]:bg-background/95 data-[state=active]:text-destructive data-[state=active]:font-semibold data-[state=active]:shadow-[0_1px_4px_rgba(0,0,0,0.06)] md:gap-2 md:rounded-full md:px-4 md:text-[var(--todo-font-meta)] md:data-[state=active]:bg-gradient-to-b md:data-[state=active]:from-background md:data-[state=active]:to-background/95 md:data-[state=active]:shadow-[0_2px_8px_-1px_rgba(0,0,0,0.08),0_0_1px_rgba(0,0,0,0.1)] dark:md:data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.6),0_0_1px_rgba(255,255,255,0.1)] md:data-[state=active]:scale-[1.02]"
-        >
-          <Trash2
-            class="h-[11px] w-[11px] transition-colors md:h-4 md:w-4"
-            :class="
-              filter === 'trash'
-                ? 'text-destructive fill-destructive/10'
-                : 'text-muted-foreground/70'
-            "
-          />
-          <span class="truncate">{{ t('todo.trash') }}</span>
-        </TabsTrigger>
       </TabsList>
     </Tabs>
 
@@ -124,6 +109,26 @@ async function handleClearTrash() {
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top">{{ t('todo.search') }}</TooltipContent>
+        </Tooltip>
+
+        <!-- Trash Filter -->
+        <Tooltip v-if="showTrash">
+          <TooltipTrigger as-child>
+            <Button
+              variant="ghost"
+              size="icon"
+              class="h-8 w-8 rounded-[16px] transition-all duration-300 md:h-10 md:w-10 md:rounded-xl"
+              :class="
+                filter === 'trash'
+                  ? 'bg-destructive/10 text-destructive hover:bg-destructive/15'
+                  : 'text-muted-foreground/60 hover:bg-destructive/5 hover:text-destructive'
+              "
+              @click="emit('update:filter', 'trash')"
+            >
+              <Trash2 :size="16" class="md:w-[18px] md:h-[18px]" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">{{ t('todo.trash') }}</TooltipContent>
         </Tooltip>
 
         <!-- Clear Trash -->

@@ -50,7 +50,8 @@ describe('TodoFilter', () => {
     })
 
     const triggers = wrapper.findAllComponents(TabsTrigger)
-    expect(triggers).toHaveLength(3)
+    expect(triggers).toHaveLength(2)
+    expect(triggers.some((trigger) => trigger.text().includes('回收站'))).toBe(false)
 
     const buttons = wrapper.findAll('button')
     // 2 (TabsTrigger as buttons) + 2 desktop tools (Search, Expand) = 4 buttons
@@ -88,6 +89,32 @@ describe('TodoFilter', () => {
       expect(wrapper.emitted('update:showSearch')).toBeTruthy()
       expect(wrapper.emitted('update:showSearch')?.[0]).toEqual([true])
     }
+  })
+
+  it('should emit update:filter with trash when trash icon button clicked', async () => {
+    const wrapper = mount(TodoFilter, {
+      props: {
+        filter: 'pending',
+        isDrawerOpen: false,
+        showSearch: false,
+      },
+      global: {
+        plugins: [i18n],
+        stubs: {
+          TooltipProvider: { template: '<div><slot /></div>' },
+          Tooltip: { template: '<div><slot /></div>' },
+          TooltipTrigger: { template: '<div><slot /></div>' },
+          TooltipContent: { template: '<div><slot /></div>' },
+        },
+      },
+    })
+
+    const trashIcon = wrapper.find('.lucide-trash-2')
+    expect(trashIcon.exists()).toBe(true)
+
+    await trashIcon.trigger('click')
+    expect(wrapper.emitted('update:filter')).toBeTruthy()
+    expect(wrapper.emitted('update:filter')?.[0]).toEqual(['trash'])
   })
 
   it('should display pending button text', () => {
