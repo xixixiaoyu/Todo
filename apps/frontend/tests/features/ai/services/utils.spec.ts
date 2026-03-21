@@ -35,6 +35,9 @@ vi.mock('@/i18n', () => ({
         if (key === 'ai.skillSystemPrompt') {
           return `[skill-system]\n${params.skills}`
         }
+        if (key === 'ai.skillRuntimeBoundaryPrompt') {
+          return '[skill-runtime-boundary]'
+        }
         if (key === 'ai.skillActivationUserPrompt') {
           return `[skill-activation]\n${params.skills}`
         }
@@ -259,6 +262,7 @@ describe('AI Utils - injectSystemPrompts', () => {
         typeof m.content === 'string' &&
         m.content.includes('[skill-system]'),
     )
+    expect(activated?.content).toContain('[skill-runtime-boundary]')
     expect(activated?.content).toContain('```json')
     expect(activated?.content).toContain('"skill_md":')
     expect(activated?.content).toContain('Always produce risk-first code review findings')

@@ -353,6 +353,12 @@ export function injectSystemPrompts(
     })
   }
 
+  if (activeSkills.length > 0 || skillCatalog.length > 0) {
+    systemBlocks.push({
+      content: t('ai.skillRuntimeBoundaryPrompt') as string,
+    })
+  }
+
   if (activeSkills.length > 0) {
     systemBlocks.push({
       content: t('ai.skillSystemPrompt', {
