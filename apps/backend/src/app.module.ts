@@ -19,6 +19,7 @@ import { UploadModule } from './upload'
 import { TodosModule } from './todos/todos.module'
 import { ScheduledTasksModule } from './scheduled-tasks'
 import { McpModule } from './mcp/mcp.module'
+import { SkillSourcesModule } from './skill-sources/skill-sources.module'
 
 /**
  * 应用程序根模块
@@ -153,6 +154,7 @@ import { McpModule } from './mcp/mcp.module'
     MailModule, // 邮件模块
     EventsModule, // WebSocket 模块
     UploadModule, // 文件上传模块
+    SkillSourcesModule, // 技能外部来源代理模块
     TodosModule, // 待办事项模块
     ScheduledTasksModule, // 定时任务模块
     McpModule, // MCP 模块

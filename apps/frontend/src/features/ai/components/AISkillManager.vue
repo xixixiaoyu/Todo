@@ -4,8 +4,22 @@ import { useI18n } from 'vue-i18n'
 import { Plus, Check, Pencil, Trash2, Copy, ChevronLeft, Download, Upload } from 'lucide-vue-next'
 import { useAIConfig, type AIConfig } from '@/features/ai/composables/useAIConfig'
 import type { AISkill } from '@/features/ai/services/types'
-import { parseSkillManifest } from '@/features/ai/services/aiService'
+import {
+  parseSkillManifest,
+  buildExternalSkillSourceCandidates,
+  getTrustedSkillSourceHosts,
+} from '@/features/ai/services/aiService'
 import { useToast } from '@/composables/useToast'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 type SkillForm = {
   name: string
@@ -36,7 +50,15 @@ const editingSkillId = ref<string | null>(null)
 const isCreatingSkill = ref(false)
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const externalSource = ref('')
+const pendingInstallSource = ref('')
+const pendingInstallCandidates = ref<string[]>([])
+const expectedSha256 = ref('')
+const showInstallConfirm = ref(false)
 const isInstallingExternalSource = ref(false)
+const trustedHosts = getTrustedSkillSourceHosts()
+const recommendedDomesticSkillSource = 'https://skillhub.tencent.com/#featured'
+const recommendedGlobalSkillSource = 'https://github.com/openai/skills/tree/main/skills/.curated'
+const exampleInstallCommand = 'skillhub install github'
 const form = ref<SkillForm>({
   name: '',
   description: '',
@@ -83,6 +105,15 @@ const descriptionError = computed(() => {
     (isCreatingSkill.value || isEditing.value)
   ) {
     return t('ai.skillDescriptionRequired')
+  }
+  return ''
+})
+
+const expectedSha256Error = computed(() => {
+  const value = expectedSha256.value.trim().toLowerCase()
+  if (!value) return ''
+  if (!/^[a-f0-9]{64}$/.test(value)) {
+    return t('ai.skillInstallSha256Invalid')
   }
   return ''
 })
@@ -225,22 +256,76 @@ function handleExport() {
   toast.success(t('ai.skillExportSuccess'))
 }
 
-async function installFromExternalSource() {
+function openInstallConfirm() {
   const source = externalSource.value.trim()
   if (!source || isInstallingExternalSource.value) return
+
+  const candidates = buildExternalSkillSourceCandidates(source)
+  if (candidates.length === 0) {
+    toast.error(t('ai.skillInstallErrorInvalidSource'))
+    return
+  }
+
+  pendingInstallSource.value = source
+  pendingInstallCandidates.value = candidates
+  expectedSha256.value = ''
+  showInstallConfirm.value = true
+}
+
+async function copyTextToClipboard(text: string): Promise<boolean> {
+  if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text)
+    return true
+  }
+
+  if (typeof document === 'undefined') return false
+
+  const textarea = document.createElement('textarea')
+  textarea.value = text
+  textarea.setAttribute('readonly', 'true')
+  textarea.style.position = 'fixed'
+  textarea.style.opacity = '0'
+  document.body.appendChild(textarea)
+  textarea.select()
+  textarea.setSelectionRange(0, textarea.value.length)
+  const copied = document.execCommand('copy')
+  document.body.removeChild(textarea)
+  return copied
+}
+
+async function copyInstallExample() {
+  externalSource.value = exampleInstallCommand
+  try {
+    const copied = await copyTextToClipboard(exampleInstallCommand)
+    if (!copied) throw new Error('Clipboard not available')
+    toast.success(t('ai.skillExternalInstallExampleCopied'))
+  } catch (error) {
+    console.error('Copy external install example error:', error)
+    toast.error(t('ai.skillExternalInstallExampleCopyFailed'))
+  }
+}
+
+async function installFromExternalSource() {
+  const source = pendingInstallSource.value.trim()
+  if (!source || isInstallingExternalSource.value) return
+  if (expectedSha256Error.value) return
 
   isInstallingExternalSource.value = true
 
   try {
-    const { importedCount } = await importSkillsFromExternalSource(source)
+    const { importedCount } = await importSkillsFromExternalSource(source, {
+      expectedSha256: expectedSha256.value.trim() || null,
+    })
     if (importedCount > 0) {
       toast.success(t('ai.skillInstallSuccess', { count: importedCount }))
     } else {
       toast.success(t('ai.skillImportNoop'))
     }
+    showInstallConfirm.value = false
   } catch (error) {
     console.error('Install external skill error:', error)
-    toast.error(t('ai.skillInstallError'))
+    const message = error instanceof Error ? error.message : t('ai.skillInstallError')
+    toast.error(message)
   } finally {
     isInstallingExternalSource.value = false
   }
@@ -421,6 +506,53 @@ async function installFromExternalSource() {
         <p class="text-[11px] text-muted-foreground/80">
           {{ t('ai.skillExternalInstallHint') }}
         </p>
+        <div
+          class="selectable select-text space-y-1 rounded-lg border border-border/60 bg-muted/25 px-2.5 py-2"
+        >
+          <p class="text-[11px] text-muted-foreground/90">
+            {{ t('ai.skillExternalInstallValidationHint') }}
+          </p>
+          <p class="text-[11px] text-muted-foreground/90">
+            {{ t('ai.skillExternalInstallTrustedHosts') }}
+          </p>
+          <div
+            class="flex items-center justify-between gap-2 rounded-md bg-background/40 px-2 py-1.5"
+          >
+            <p class="font-mono text-[11px] text-muted-foreground/95">
+              {{ t('ai.skillExternalInstallExampleLabel') }}{{ exampleInstallCommand }}
+            </p>
+            <button
+              class="inline-flex items-center gap-1 rounded-md border border-border/70 bg-muted/40 px-2 py-1 text-[10px] font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+              :title="t('common.copy')"
+              @click="copyInstallExample"
+            >
+              <Copy :size="11" />
+              {{ t('common.copy') }}
+            </button>
+          </div>
+          <p class="text-[11px] text-muted-foreground/90">
+            {{ t('ai.skillExternalInstallRecommendedSource') }}
+            <a
+              :href="recommendedDomesticSkillSource"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="ml-1 underline underline-offset-2 transition-colors hover:text-foreground"
+            >
+              {{ recommendedDomesticSkillSource }}
+            </a>
+          </p>
+          <p class="text-[11px] text-muted-foreground/90">
+            {{ t('ai.skillExternalInstallRecommendedSourceGlobal') }}
+            <a
+              :href="recommendedGlobalSkillSource"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="ml-1 underline underline-offset-2 transition-colors hover:text-foreground"
+            >
+              {{ recommendedGlobalSkillSource }}
+            </a>
+          </p>
+        </div>
         <div class="flex items-center gap-2">
           <input
             v-model="externalSource"
@@ -428,12 +560,12 @@ async function installFromExternalSource() {
             type="text"
             :placeholder="t('ai.skillExternalInstallPlaceholder')"
             class="h-9 flex-1 rounded-lg border border-border bg-muted/30 px-3 text-xs text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
-            @keyup.enter="installFromExternalSource"
+            @keyup.enter="openInstallConfirm"
           />
           <button
             class="h-9 rounded-lg border border-primary/30 bg-primary/10 px-3 text-xs font-semibold text-primary transition-colors hover:border-primary/50 hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
             :disabled="!externalSource.trim() || isInstallingExternalSource"
-            @click="installFromExternalSource"
+            @click="openInstallConfirm"
           >
             {{
               isInstallingExternalSource
@@ -517,4 +649,78 @@ async function installFromExternalSource() {
       </div>
     </div>
   </div>
+
+  <AlertDialog :open="showInstallConfirm" @update:open="showInstallConfirm = $event">
+    <AlertDialogContent class="rounded-2xl">
+      <AlertDialogHeader>
+        <AlertDialogTitle>{{ t('ai.skillInstallConfirmTitle') }}</AlertDialogTitle>
+        <AlertDialogDescription>
+          {{ t('ai.skillInstallConfirmDescription') }}
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+
+      <div class="space-y-3 py-1">
+        <div>
+          <p class="text-xs font-semibold text-foreground">{{ t('ai.skillInstallSourceLabel') }}</p>
+          <p
+            class="mt-1 break-all rounded-lg border border-border bg-muted/30 px-2.5 py-1.5 text-xs text-muted-foreground"
+          >
+            {{ pendingInstallSource }}
+          </p>
+        </div>
+
+        <div>
+          <p class="text-xs font-semibold text-foreground">
+            {{ t('ai.skillInstallCandidatesLabel') }}
+          </p>
+          <div
+            class="mt-1 max-h-32 space-y-1 overflow-y-auto rounded-lg border border-border bg-muted/30 p-2"
+          >
+            <p
+              v-for="candidate in pendingInstallCandidates.slice(0, 6)"
+              :key="candidate"
+              class="break-all text-[11px] text-muted-foreground"
+            >
+              {{ candidate }}
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-foreground">
+            {{ t('ai.skillInstallSha256Label') }}
+          </label>
+          <input
+            v-model="expectedSha256"
+            name="skill-install-sha256"
+            type="text"
+            :placeholder="t('ai.skillInstallSha256Placeholder')"
+            class="mt-1 h-9 w-full rounded-lg border border-border bg-muted/30 px-3 text-xs text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
+          />
+          <p v-if="expectedSha256Error" class="mt-1 text-[10px] text-destructive">
+            {{ expectedSha256Error }}
+          </p>
+        </div>
+
+        <p class="text-[11px] text-muted-foreground/80">
+          {{ t('ai.skillTrustedHostsHint', { hosts: trustedHosts.join(', ') }) }}
+        </p>
+      </div>
+
+      <AlertDialogFooter>
+        <AlertDialogCancel :disabled="isInstallingExternalSource">{{
+          t('common.cancel')
+        }}</AlertDialogCancel>
+        <AlertDialogAction
+          class="bg-primary text-primary-foreground hover:bg-primary-hover"
+          :disabled="isInstallingExternalSource || !!expectedSha256Error"
+          @click.prevent="installFromExternalSource"
+        >
+          {{
+            isInstallingExternalSource ? t('ai.skillInstalling') : t('ai.skillInstallFromExternal')
+          }}
+        </AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
 </template>

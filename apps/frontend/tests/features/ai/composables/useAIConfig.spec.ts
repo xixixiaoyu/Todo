@@ -1,11 +1,25 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { nextTick } from 'vue'
+import { createHash } from 'node:crypto'
+import { strToU8, zipSync } from 'fflate'
+import { httpClient } from '@/api'
 import {
   useAIConfig,
   _resetAIConfig,
   aiThinkingMode,
   getAIThinkingMode,
 } from '@/features/ai/composables/useAIConfig'
+
+function createByteStream(chunks: Uint8Array[]): ReadableStream<Uint8Array> {
+  return new ReadableStream<Uint8Array>({
+    start(controller) {
+      for (const chunk of chunks) {
+        controller.enqueue(chunk)
+      }
+      controller.close()
+    },
+  })
+}
 
 describe('useAIConfig - Core', () => {
   beforeEach(() => {
@@ -479,16 +493,120 @@ describe('useAIConfig - Core', () => {
       const fetchMock = vi.fn(async () => ({
         ok: true,
         status: 200,
+        headers: {
+          get: (key: string) => (key.toLowerCase() === 'content-type' ? 'text/markdown' : null),
+        },
         text: async () => markdown,
       }))
       vi.stubGlobal('fetch', fetchMock)
 
       const result = await importSkillsFromExternalSource(
-        'https://example.com/skills/remote/SKILL.md',
+        'https://raw.githubusercontent.com/openai/skills/main/skills/.curated/gh-address-comments/SKILL.md',
       )
       expect(result.importedCount).toBe(1)
-      expect(result.sourceUrl).toBe('https://example.com/skills/remote/SKILL.md')
+      expect(result.sourceUrl).toBe(
+        'https://raw.githubusercontent.com/openai/skills/main/skills/.curated/gh-address-comments/SKILL.md',
+      )
       expect(skills.value.map((item) => item.name)).toContain('remote-skill')
+    })
+
+    it('should install skill from skillhub zip candidate', async () => {
+      const { skills, importSkillsFromExternalSource } = useAIConfig()
+      const markdown = [
+        '---',
+        'name: tavily-search',
+        'description: Installed from SkillHub package',
+        '---',
+        '',
+        'Use Tavily search workflow.',
+      ].join('\n')
+      const archive = zipSync({ 'SKILL.md': strToU8(markdown) })
+      const archiveBuffer = archive.buffer.slice(
+        archive.byteOffset,
+        archive.byteOffset + archive.byteLength,
+      )
+
+      const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input)
+        if (url.includes('lightmake.site')) {
+          return {
+            ok: true,
+            status: 200,
+            headers: {
+              get: (key: string) =>
+                key.toLowerCase() === 'content-type'
+                  ? 'application/zip'
+                  : key.toLowerCase() === 'content-length'
+                    ? String(archive.byteLength)
+                    : null,
+            },
+            arrayBuffer: async (): Promise<ArrayBuffer> => archiveBuffer as ArrayBuffer,
+            text: async (): Promise<string> => '',
+          }
+        }
+
+        return {
+          ok: false,
+          status: 404,
+          headers: {
+            get: () => null,
+          },
+          text: async (): Promise<string> => '',
+        }
+      })
+      vi.stubGlobal('fetch', fetchMock)
+
+      const result = await importSkillsFromExternalSource('skillhub install tavily-search')
+
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+      expect(result.importedCount).toBe(1)
+      expect(result.sourceUrl).toBe('https://lightmake.site/api/v1/download?slug=tavily-search')
+      expect(skills.value.map((item) => item.name)).toContain('tavily-search')
+    })
+
+    it('should fallback to backend proxy when direct fetch is blocked', async () => {
+      const { skills, importSkillsFromExternalSource } = useAIConfig()
+      const markdown = [
+        '---',
+        'name: proxy-installed-skill',
+        'description: Installed by backend proxy',
+        '---',
+        '',
+        'Use proxy install flow.',
+      ].join('\n')
+      const archive = zipSync({ 'SKILL.md': strToU8(markdown) })
+      const archiveBase64 = Buffer.from(archive).toString('base64')
+
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async () => Promise.reject(new TypeError('Failed to fetch'))),
+      )
+
+      const proxySpy = vi.spyOn(httpClient, 'get').mockResolvedValue({
+        data: {
+          success: true,
+          data: {
+            sourceUrl: 'https://lightmake.site/api/v1/download?slug=tavily-search',
+            finalUrl:
+              'https://skillhub-1388575217.cos.accelerate.myqcloud.com/skills/tavily-search/1.0.0.zip',
+            contentType: 'application/zip',
+            contentLength: archive.byteLength,
+            bodyBase64: archiveBase64,
+          },
+          timestamp: new Date().toISOString(),
+        },
+      })
+
+      const result = await importSkillsFromExternalSource('skillhub install tavily-search')
+
+      expect(proxySpy).toHaveBeenCalledWith('/skills/external-source', {
+        params: { url: 'https://lightmake.site/api/v1/download?slug=tavily-search' },
+        timeout: 15000,
+      })
+      expect(result.importedCount).toBe(1)
+      expect(skills.value.map((item) => item.name)).toContain('proxy-installed-skill')
+
+      proxySpy.mockRestore()
     })
 
     it('should fallback to next external candidate when first one fails', async () => {
@@ -508,6 +626,9 @@ describe('useAIConfig - Core', () => {
           return {
             ok: false,
             status: 404,
+            headers: {
+              get: () => null,
+            },
             text: async () => '',
           }
         }
@@ -515,6 +636,9 @@ describe('useAIConfig - Core', () => {
         return {
           ok: true,
           status: 200,
+          headers: {
+            get: (key: string) => (key.toLowerCase() === 'content-type' ? 'text/markdown' : null),
+          },
           text: async () => markdown,
         }
       })
@@ -525,6 +649,164 @@ describe('useAIConfig - Core', () => {
       expect(fetchMock).toHaveBeenCalledTimes(3)
       expect(result.importedCount).toBe(1)
       expect(result.sourceUrl).toContain('/gh-address-comments/')
+    })
+
+    it('should fallback from curated raw url to alias candidate', async () => {
+      const { importSkillsFromExternalSource } = useAIConfig()
+      const markdown = [
+        '---',
+        'name: curated-raw-fallback-skill',
+        'description: Installed from curated alias fallback',
+        '---',
+        '',
+        'Use curated alias fallback flow.',
+      ].join('\n')
+
+      const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input)
+        if (url.includes('/.curated/github/')) {
+          return {
+            ok: false,
+            status: 404,
+            headers: {
+              get: () => null,
+            },
+            text: async () => '',
+          }
+        }
+
+        return {
+          ok: true,
+          status: 200,
+          headers: {
+            get: (key: string) => (key.toLowerCase() === 'content-type' ? 'text/markdown' : null),
+          },
+          text: async () => markdown,
+        }
+      })
+      vi.stubGlobal('fetch', fetchMock)
+
+      const result = await importSkillsFromExternalSource(
+        'https://raw.githubusercontent.com/openai/skills/main/skills/.curated/github/SKILL.md',
+      )
+
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+      expect(result.importedCount).toBe(1)
+      expect(result.sourceUrl).toContain('/gh-address-comments/')
+    })
+
+    it('should reject untrusted external source host', async () => {
+      const { importSkillsFromExternalSource } = useAIConfig()
+
+      await expect(
+        importSkillsFromExternalSource('https://example.com/skills/remote/SKILL.md'),
+      ).rejects.toThrow('Untrusted source host')
+    })
+
+    it('should reject trusted candidate when final response url is untrusted', async () => {
+      const { importSkillsFromExternalSource } = useAIConfig()
+      const content = [
+        '---',
+        'name: redirected-skill',
+        'description: Should be rejected',
+        '---',
+        '',
+        'Do not install.',
+      ].join('\n')
+
+      const fetchMock = vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        url: 'https://example.com/redirected/SKILL.md',
+        headers: {
+          get: (key: string) => (key.toLowerCase() === 'content-type' ? 'text/markdown' : null),
+        },
+        body: createByteStream([new TextEncoder().encode(content)]),
+        text: async () => {
+          throw new Error('text() should not be called')
+        },
+        arrayBuffer: async () => {
+          throw new Error('arrayBuffer() should not be called')
+        },
+      }))
+      vi.stubGlobal('fetch', fetchMock)
+
+      await expect(
+        importSkillsFromExternalSource(
+          'https://raw.githubusercontent.com/openai/skills/main/skills/.curated/gh-address-comments/SKILL.md',
+        ),
+      ).rejects.toThrow('Untrusted redirect host')
+    })
+
+    it('should validate expected SHA256 when provided', async () => {
+      const { importSkillsFromExternalSource } = useAIConfig()
+      const markdown = [
+        '---',
+        'name: sha-check-skill',
+        'description: Verify SHA check',
+        '---',
+        '',
+        'Use sha check.',
+      ].join('\n')
+      const validSha256 = createHash('sha256').update(markdown).digest('hex')
+
+      const fetchMock = vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        headers: {
+          get: (key: string) => (key.toLowerCase() === 'content-type' ? 'text/markdown' : null),
+        },
+        text: async () => markdown,
+      }))
+      vi.stubGlobal('fetch', fetchMock)
+
+      await expect(
+        importSkillsFromExternalSource(
+          'https://raw.githubusercontent.com/openai/skills/main/skills/.curated/gh-address-comments/SKILL.md',
+          {
+            expectedSha256: validSha256,
+          },
+        ),
+      ).resolves.toMatchObject({
+        importedCount: 1,
+      })
+
+      await expect(
+        importSkillsFromExternalSource(
+          'https://raw.githubusercontent.com/openai/skills/main/skills/.curated/gh-address-comments/SKILL.md',
+          {
+            expectedSha256: '0'.repeat(64),
+          },
+        ),
+      ).rejects.toThrow('SHA256 mismatch')
+    })
+
+    it('should enforce size limit using UTF-8 byte length for multibyte content', async () => {
+      const { importSkillsFromExternalSource } = useAIConfig()
+      const oversizedMultibyteContent = new TextEncoder().encode('你'.repeat(180000))
+      const textSpy = vi.fn(async () => '')
+      const arrayBufferSpy = vi.fn(async () => new ArrayBuffer(0))
+
+      const fetchMock = vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        url: 'https://raw.githubusercontent.com/openai/skills/main/skills/.curated/gh-address-comments/SKILL.md',
+        headers: {
+          get: (key: string) => (key.toLowerCase() === 'content-type' ? 'text/markdown' : null),
+        },
+        body: createByteStream([oversizedMultibyteContent]),
+        text: textSpy,
+        arrayBuffer: arrayBufferSpy,
+      }))
+      vi.stubGlobal('fetch', fetchMock)
+
+      await expect(
+        importSkillsFromExternalSource(
+          'https://raw.githubusercontent.com/openai/skills/main/skills/.curated/gh-address-comments/SKILL.md',
+        ),
+      ).rejects.toThrow('File too large')
+      expect(textSpy).not.toHaveBeenCalled()
+      expect(arrayBufferSpy).not.toHaveBeenCalled()
     })
   })
 })

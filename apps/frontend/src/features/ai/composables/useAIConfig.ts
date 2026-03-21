@@ -1,11 +1,15 @@
 import { ref, watch, readonly, computed } from 'vue'
+import { strFromU8, unzipSync } from 'fflate'
 import i18n from '@/i18n'
+import { httpClient } from '@/api'
 import {
   generateId,
   parseSkillManifest,
   buildExternalSkillSourceCandidates,
+  isTrustedSkillSourceUrl,
 } from '@/features/ai/services/aiService'
 import type { AISkill } from '@/features/ai/services/types'
+import type { ApiResponse } from '@lumina/shared'
 
 export type ThinkingMode = 'enabled' | 'disabled'
 export type AssistantMode = 'default' | 'teaching'
@@ -87,6 +91,232 @@ function normalizeIdList(value: unknown): string[] {
   }
 
   return result
+}
+
+function normalizeExpectedSha256(value: string | null | undefined): string | null {
+  if (typeof value !== 'string') return null
+  const normalized = value.trim().toLowerCase()
+  if (!normalized) return null
+  return /^[a-f0-9]{64}$/.test(normalized) ? normalized : null
+}
+
+const utf8Encoder = new TextEncoder()
+const utf8Decoder = new TextDecoder()
+const MAX_SKILL_FILE_BYTES = 512 * 1024
+const MAX_SKILL_ARCHIVE_BYTES = 2 * 1024 * 1024
+const EXTERNAL_SOURCE_ACCEPT_HEADER = 'application/json, text/markdown, text/plain, application/zip'
+
+type ExternalSkillSourcePayload = {
+  sourceUrl: string
+  finalUrl: string
+  contentType: string
+  contentLength: number
+  bodyBase64: string
+}
+
+function encodeUtf8(content: string): Uint8Array {
+  return utf8Encoder.encode(content)
+}
+
+function createTooLargeError(label: 'File' | 'Archive', size: number): Error {
+  return new Error(`${label} too large: ${size} bytes`)
+}
+
+function assertTrustedResolvedSourceUrl(url: string, errorLabel = 'Untrusted source host'): string {
+  const normalized = url.trim()
+  if (!normalized || !isTrustedSkillSourceUrl(normalized)) {
+    throw new Error(`${errorLabel}: ${normalized || url}`)
+  }
+  return normalized
+}
+
+async function computeSha256(content: string): Promise<string> {
+  const bytes = encodeUtf8(content)
+  const digestInput = new Uint8Array(bytes).buffer
+  const digest = await crypto.subtle.digest('SHA-256', digestInput)
+  return Array.from(new Uint8Array(digest))
+    .map((value) => value.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+function isZipContentType(contentType: string): boolean {
+  return (
+    contentType.includes('application/zip') ||
+    contentType.includes('application/x-zip-compressed') ||
+    contentType.includes('application/x-zip')
+  )
+}
+
+function extractSkillMarkdownFromZipArchive(archiveBytes: Uint8Array): string {
+  let entries: Record<string, Uint8Array>
+  try {
+    entries = unzipSync(archiveBytes)
+  } catch {
+    throw new Error('Invalid ZIP archive. Expected a skill package zip file.')
+  }
+
+  const skillEntry = Object.entries(entries).find(([entryPath]) => {
+    const normalizedPath = entryPath.trim().toLowerCase()
+    return normalizedPath === 'skill.md' || normalizedPath.endsWith('/skill.md')
+  })
+
+  if (!skillEntry) {
+    throw new Error('SKILL.md not found in ZIP archive.')
+  }
+
+  const skillBytes = skillEntry[1]
+  if (skillBytes.byteLength > MAX_SKILL_FILE_BYTES) {
+    throw new Error(`File too large: ${skillBytes.byteLength} bytes`)
+  }
+
+  return strFromU8(skillBytes)
+}
+
+function decodeBase64ToBytes(base64: string): Uint8Array {
+  const value = base64.trim()
+  if (!value) return new Uint8Array()
+
+  if (typeof atob === 'function') {
+    const binary = atob(value)
+    const bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i)
+    }
+    return bytes
+  }
+
+  if (typeof Buffer !== 'undefined') {
+    return new Uint8Array(Buffer.from(value, 'base64'))
+  }
+
+  throw new Error('Base64 decoder is not available in current runtime.')
+}
+
+function toUint8ArrayChunk(value: unknown): Uint8Array {
+  if (value instanceof Uint8Array) return value
+  if (value instanceof ArrayBuffer) return new Uint8Array(value)
+  if (ArrayBuffer.isView(value)) {
+    return new Uint8Array(value.buffer, value.byteOffset, value.byteLength)
+  }
+  if (typeof value === 'string') return encodeUtf8(value)
+
+  throw new Error('Unsupported response chunk type.')
+}
+
+function mergeUint8ArrayChunks(chunks: Uint8Array[], totalBytes: number): Uint8Array {
+  const merged = new Uint8Array(totalBytes)
+  let offset = 0
+
+  for (const chunk of chunks) {
+    merged.set(chunk, offset)
+    offset += chunk.byteLength
+  }
+
+  return merged
+}
+
+async function readResponseBytesWithLimit(
+  response: Response,
+  maxBytes: number,
+  label: 'File' | 'Archive',
+): Promise<Uint8Array> {
+  const contentLength = Number(response.headers.get('content-length') || '')
+  if (Number.isFinite(contentLength) && contentLength > maxBytes) {
+    throw createTooLargeError(label, contentLength)
+  }
+
+  if (!response.body) {
+    const fallbackBytes =
+      typeof response.arrayBuffer === 'function'
+        ? new Uint8Array(await response.arrayBuffer())
+        : encodeUtf8(await response.text())
+
+    if (fallbackBytes.byteLength > maxBytes) {
+      throw createTooLargeError(label, fallbackBytes.byteLength)
+    }
+
+    return fallbackBytes
+  }
+
+  const reader = response.body.getReader()
+  const chunks: Uint8Array[] = []
+  let totalBytes = 0
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      const chunk = toUint8ArrayChunk(value)
+      totalBytes += chunk.byteLength
+      if (totalBytes > maxBytes) {
+        await reader.cancel().catch(() => undefined)
+        throw createTooLargeError(label, totalBytes)
+      }
+
+      chunks.push(chunk)
+    }
+  } finally {
+    reader.releaseLock()
+  }
+
+  return mergeUint8ArrayChunks(chunks, totalBytes)
+}
+
+function isNetworkLikeFetchError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false
+  const message = error.message.toLowerCase()
+  return (
+    message.includes('failed to fetch') ||
+    message.includes('network') ||
+    message.includes('cors') ||
+    message.includes('load failed')
+  )
+}
+
+function getHttpErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message
+
+  if (error && typeof error === 'object') {
+    const maybeResponse = (error as { response?: unknown }).response
+    if (maybeResponse && typeof maybeResponse === 'object') {
+      const maybeMessage = (maybeResponse as { data?: { message?: unknown } }).data?.message
+      if (typeof maybeMessage === 'string' && maybeMessage.trim()) {
+        return maybeMessage
+      }
+    }
+  }
+
+  return String(error)
+}
+
+async function fetchExternalSourceViaProxy(url: string): Promise<{
+  contentType: string
+  contentBytes: Uint8Array
+}> {
+  const response = await httpClient.get<ApiResponse<ExternalSkillSourcePayload>>(
+    '/skills/external-source',
+    {
+      params: { url },
+      timeout: 15000,
+    },
+  )
+
+  const payload = response.data?.success ? response.data.data : null
+  if (!payload || typeof payload.bodyBase64 !== 'string') {
+    throw new Error('Invalid proxy response payload.')
+  }
+
+  assertTrustedResolvedSourceUrl(payload.sourceUrl || url)
+  assertTrustedResolvedSourceUrl(
+    payload.finalUrl || payload.sourceUrl || url,
+    'Untrusted redirect host',
+  )
+
+  return {
+    contentType: (payload.contentType || '').toLowerCase(),
+    contentBytes: decodeBase64ToBytes(payload.bodyBase64),
+  }
 }
 
 function normalizeSkillAliases(value: unknown): string[] {
@@ -842,13 +1072,29 @@ export function useAIConfig() {
 
   async function importSkillsFromExternalSource(
     source: string,
-    mode: 'merge' | 'replace' = 'merge',
-  ): Promise<{ importedCount: number; sourceUrl: string }> {
+    options:
+      | {
+          mode?: 'merge' | 'replace'
+          expectedSha256?: string | null
+        }
+      | undefined = undefined,
+  ): Promise<{ importedCount: number; sourceUrl: string; sha256: string }> {
+    const mode = options?.mode || 'merge'
+    const expectedSha256 = normalizeExpectedSha256(options?.expectedSha256)
+    if (options?.expectedSha256 && !expectedSha256) {
+      throw new Error('Invalid SHA256 format. Expected 64 hex characters.')
+    }
+
     const candidates = buildExternalSkillSourceCandidates(source)
     if (candidates.length === 0) {
       throw new Error(
         'Invalid external source. Use a URL, GitHub path (owner/repo/path), or skillhub install command.',
       )
+    }
+
+    const untrusted = candidates.filter((url) => !isTrustedSkillSourceUrl(url))
+    if (untrusted.length > 0) {
+      throw new Error(`Untrusted source host: ${untrusted.join(', ')}`)
     }
 
     const errors: string[] = []
@@ -861,7 +1107,7 @@ export function useAIConfig() {
         const response = await fetch(url, {
           method: 'GET',
           headers: {
-            Accept: 'application/json, text/markdown, text/plain',
+            Accept: EXTERNAL_SOURCE_ACCEPT_HEADER,
           },
           signal: controller.signal,
         })
@@ -870,11 +1116,81 @@ export function useAIConfig() {
           throw new Error(`HTTP ${response.status}`)
         }
 
-        const content = await response.text()
+        const finalUrl = assertTrustedResolvedSourceUrl(
+          response.url || url,
+          'Untrusted redirect host',
+        )
+        const contentType = (response.headers.get('content-type') || '').toLowerCase()
+        const isZip = isZipContentType(contentType) || finalUrl.toLowerCase().endsWith('.zip')
+
+        let content = ''
+        if (isZip) {
+          const archiveBytes = await readResponseBytesWithLimit(
+            response,
+            MAX_SKILL_ARCHIVE_BYTES,
+            'Archive',
+          )
+          content = extractSkillMarkdownFromZipArchive(archiveBytes)
+        } else {
+          if (contentType.includes('text/html')) {
+            throw new Error('Received HTML content. Expected SKILL.md or JSON.')
+          }
+
+          const textBytes = await readResponseBytesWithLimit(response, MAX_SKILL_FILE_BYTES, 'File')
+          content = utf8Decoder.decode(textBytes)
+        }
+
+        const sha256 = await computeSha256(content)
+        if (expectedSha256 && sha256 !== expectedSha256) {
+          throw new Error(`SHA256 mismatch. expected=${expectedSha256} actual=${sha256}`)
+        }
+
         const importedCount = importSkills(content, mode)
-        return { importedCount, sourceUrl: url }
+        return { importedCount, sourceUrl: url, sha256 }
       } catch (error) {
-        const reason = error instanceof Error ? error.message : String(error)
+        if (isNetworkLikeFetchError(error)) {
+          try {
+            const proxied = await fetchExternalSourceViaProxy(url)
+            const isZip =
+              isZipContentType(proxied.contentType) || url.toLowerCase().endsWith('.zip')
+
+            let content = ''
+            if (isZip) {
+              if (proxied.contentBytes.byteLength > MAX_SKILL_ARCHIVE_BYTES) {
+                throw new Error(`Archive too large: ${proxied.contentBytes.byteLength} bytes`)
+              }
+              content = extractSkillMarkdownFromZipArchive(proxied.contentBytes)
+            } else {
+              if (proxied.contentType.includes('text/html')) {
+                throw new Error('Received HTML content. Expected SKILL.md or JSON.')
+              }
+
+              if (proxied.contentBytes.byteLength > MAX_SKILL_FILE_BYTES) {
+                throw new Error(`File too large: ${proxied.contentBytes.byteLength} bytes`)
+              }
+
+              content = utf8Decoder.decode(proxied.contentBytes)
+              const contentByteLength = encodeUtf8(content).byteLength
+              if (contentByteLength > MAX_SKILL_FILE_BYTES) {
+                throw new Error(`File too large: ${contentByteLength} bytes`)
+              }
+            }
+
+            const sha256 = await computeSha256(content)
+            if (expectedSha256 && sha256 !== expectedSha256) {
+              throw new Error(`SHA256 mismatch. expected=${expectedSha256} actual=${sha256}`)
+            }
+
+            const importedCount = importSkills(content, mode)
+            return { importedCount, sourceUrl: url, sha256 }
+          } catch (proxyError) {
+            const reason = getHttpErrorMessage(proxyError)
+            errors.push(`${url}: ${reason}`)
+            continue
+          }
+        }
+
+        const reason = getHttpErrorMessage(error)
         errors.push(`${url}: ${reason}`)
       } finally {
         clearTimeout(timeout)

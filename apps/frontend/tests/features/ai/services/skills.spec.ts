@@ -9,6 +9,7 @@ import {
   createSkillReadToolHandler,
   READ_SKILL_TOOL_NAME,
   buildExternalSkillSourceCandidates,
+  isTrustedSkillSourceUrl,
 } from '@/features/ai/services/aiService'
 import type { AISkill, ChatMessage } from '@/features/ai/services/aiService'
 
@@ -156,10 +157,13 @@ describe('skills utils', () => {
       'https://github.com/openai/skills/tree/main/skills/.curated/github',
     )
     expect(fromGithubUrl[0]).toBe(
+      'https://raw.githubusercontent.com/openai/skills/main/skills/.curated/github/SKILL.md',
+    )
+    expect(fromGithubUrl).not.toContain(
       'https://github.com/openai/skills/tree/main/skills/.curated/github',
     )
-    expect(fromGithubUrl[1]).toBe(
-      'https://raw.githubusercontent.com/openai/skills/main/skills/.curated/github/SKILL.md',
+    expect(fromGithubUrl).toContain(
+      'https://raw.githubusercontent.com/openai/skills/main/skills/.curated/gh-address-comments/SKILL.md',
     )
 
     const fromInstallCommand = buildExternalSkillSourceCandidates(
@@ -170,6 +174,9 @@ describe('skills utils', () => {
     )
     expect(fromInstallCommand).toContain(
       'https://raw.githubusercontent.com/openai/skills/master/skills/.curated/github/SKILL.md',
+    )
+    expect(fromInstallCommand).toContain(
+      'https://raw.githubusercontent.com/openai/skills/main/skills/.curated/gh-address-comments/SKILL.md',
     )
 
     const fromCuratedCommand = buildExternalSkillSourceCandidates('skillhub install github')
@@ -182,5 +189,29 @@ describe('skills utils', () => {
     expect(fromCuratedCommand).toContain(
       'https://raw.githubusercontent.com/openai/skills/main/skills/.curated/gh-fix-ci/SKILL.md',
     )
+
+    const fromRawUrl = buildExternalSkillSourceCandidates(
+      'https://raw.githubusercontent.com/openai/skills/main/skills/.curated/github/SKILL.md',
+    )
+    expect(fromRawUrl).toContain(
+      'https://raw.githubusercontent.com/openai/skills/main/skills/.curated/gh-address-comments/SKILL.md',
+    )
+
+    const fromSkillhubCommand = buildExternalSkillSourceCandidates('skillhub install tavily-search')
+    expect(fromSkillhubCommand[0]).toBe('https://lightmake.site/api/v1/download?slug=tavily-search')
+    expect(fromSkillhubCommand).toContain(
+      'https://raw.githubusercontent.com/openai/skills/main/skills/.curated/tavily-search/SKILL.md',
+    )
+  })
+
+  it('validates trusted source hosts', () => {
+    expect(
+      isTrustedSkillSourceUrl('https://raw.githubusercontent.com/openai/skills/main/readme.md'),
+    ).toBe(true)
+    expect(isTrustedSkillSourceUrl('https://github.com/openai/skills')).toBe(true)
+    expect(
+      isTrustedSkillSourceUrl('https://lightmake.site/api/v1/download?slug=tavily-search'),
+    ).toBe(true)
+    expect(isTrustedSkillSourceUrl('https://example.com/skills/foo/SKILL.md')).toBe(false)
   })
 })

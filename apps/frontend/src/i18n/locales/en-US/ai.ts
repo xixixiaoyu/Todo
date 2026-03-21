@@ -138,12 +138,32 @@ export const ai = {
   skillExternalInstallLabel: 'Install From External Source',
   skillExternalInstallHint:
     'Supports URL, GitHub path (owner/repo/path), or `skillhub install ...` command.',
+  skillExternalInstallTrustedHosts:
+    'Trusted sources only (see install confirmation for host list).',
+  skillExternalInstallValidationHint:
+    'Accepted format: URL / owner/repo/path / skillhub install xxx. SHA256 is recommended, and file size is limited to 512KB.',
+  skillExternalInstallExampleLabel: 'Example command:',
+  skillExternalInstallExampleCopied: 'Example command copied and filled into input',
+  skillExternalInstallExampleCopyFailed: 'Copy failed. Please copy the example command manually',
+  skillExternalInstallRecommendedSource: 'Recommended source (China):',
+  skillExternalInstallRecommendedSourceGlobal: 'Recommended source (Global):',
   skillExternalInstallPlaceholder:
     'e.g. https://example.com/SKILL.md or openai/skills/skills/.curated/github',
   skillInstallFromExternal: 'Install',
   skillInstalling: 'Installing...',
   skillInstallSuccess: 'Successfully installed {count} skill(s) from external source',
   skillInstallError: 'Failed to install from external source. Check URL, format, or CORS policy.',
+  skillInstallErrorInvalidSource:
+    'Invalid source format. Use URL, GitHub path (owner/repo/path), or `skillhub install ...`.',
+  skillInstallConfirmTitle: 'Confirm External Installation',
+  skillInstallConfirmDescription:
+    'Please verify the source and resolved download URLs before installing.',
+  skillInstallSourceLabel: 'Source Input',
+  skillInstallCandidatesLabel: 'Resolved Candidate URLs',
+  skillInstallSha256Label: 'SHA256 (Optional)',
+  skillInstallSha256Placeholder: '64-char hex digest, e.g. a3f4...',
+  skillInstallSha256Invalid: 'Invalid SHA256. Expected exactly 64 hex characters.',
+  skillTrustedHostsHint: 'Trusted hosts: {hosts}',
   skillCatalogUserPrompt:
     '[Skills Catalog]\nThe following skills are available with metadata (name, description, path):\n{skills}\n\n[Usage Rules]\n- Decide whether a skill is needed based on the user task.\n- If details are needed, call the read_skill tool to load SKILL.md.\n- For skills marked allow_implicit_invocation: false, do not invoke unless the user explicitly requests it.',
   skillActivationUserPrompt:

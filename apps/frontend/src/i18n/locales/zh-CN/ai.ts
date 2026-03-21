@@ -127,12 +127,30 @@ export const ai = {
   skillExternalInstallLabel: '从外部来源安装',
   skillExternalInstallHint:
     '支持 URL、GitHub 路径（owner/repo/path）或 `skillhub install ...` 命令。',
+  skillExternalInstallTrustedHosts: '仅支持受信任来源（详细主机见安装确认弹窗）。',
+  skillExternalInstallValidationHint:
+    '支持格式：URL / owner/repo/path / skillhub install xxx；建议提供 SHA256，文件上限 512KB。',
+  skillExternalInstallExampleLabel: '示例命令：',
+  skillExternalInstallExampleCopied: '已复制示例命令，并填入输入框',
+  skillExternalInstallExampleCopyFailed: '复制失败，请手动复制示例命令',
+  skillExternalInstallRecommendedSource: '推荐技能源（国内）：',
+  skillExternalInstallRecommendedSourceGlobal: '推荐技能源（海外）：',
   skillExternalInstallPlaceholder:
     '例如：https://example.com/SKILL.md 或 openai/skills/skills/.curated/github',
   skillInstallFromExternal: '安装',
   skillInstalling: '安装中...',
   skillInstallSuccess: '已从外部来源成功安装 {count} 个技能',
   skillInstallError: '外部安装失败，请检查链接、内容格式或跨域限制。',
+  skillInstallErrorInvalidSource:
+    '来源格式无效，请使用 URL、GitHub 路径（owner/repo/path）或 `skillhub install ...`。',
+  skillInstallConfirmTitle: '确认外部安装',
+  skillInstallConfirmDescription: '安装前请确认来源输入与解析出的下载地址。',
+  skillInstallSourceLabel: '来源输入',
+  skillInstallCandidatesLabel: '解析后的候选地址',
+  skillInstallSha256Label: 'SHA256（可选）',
+  skillInstallSha256Placeholder: '64 位十六进制摘要，例如 a3f4...',
+  skillInstallSha256Invalid: 'SHA256 格式错误，必须是 64 位十六进制字符。',
+  skillTrustedHostsHint: '受信任主机：{hosts}',
   skillCatalogUserPrompt:
     '[技能目录]\n以下是当前可用技能的元数据（名称、描述、路径）：\n{skills}\n\n[使用规则]\n- 先基于用户任务判断是否需要技能。\n- 如需技能细节，优先调用 read_skill 工具读取对应 SKILL.md。\n- 对于 allow_implicit_invocation: false 的技能，除非用户明确点名，否则不要主动调用。',
   skillActivationUserPrompt:
