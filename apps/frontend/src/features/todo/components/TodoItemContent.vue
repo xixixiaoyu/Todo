@@ -67,11 +67,11 @@ const recurrenceLabelKey = computed(() => {
     </div>
 
     <!-- Todo Title & Badges -->
-    <div class="flex min-w-0 flex-col gap-0.5 md:flex-row md:items-center md:gap-1.5">
+    <div class="flex min-w-0 flex-col gap-1">
       <div class="flex min-w-0 items-center gap-1 md:gap-1.5">
         <Pin
           v-if="todo.isPinned && store.filter !== 'trash'"
-          class="h-3 w-3 shrink-0 text-primary/70 group-hover:hidden md:h-3.5 md:w-3.5"
+          class="h-3 w-3 shrink-0 text-primary/70 opacity-80 transition-opacity duration-200 group-hover:opacity-100 md:h-3.5 md:w-3.5"
         />
         <AiLuminaIcon
           v-if="todo.isProposed && store.filter !== 'trash'"
@@ -103,7 +103,7 @@ const recurrenceLabelKey = computed(() => {
 
       <div
         v-if="hasMetaBadges"
-        class="flex flex-wrap items-center gap-1 text-[11px] md:gap-1 md:text-[var(--todo-font-caption)]"
+        class="flex flex-wrap items-center gap-1 pl-0.5 text-[11px] md:gap-1.5 md:text-[var(--todo-font-caption)]"
       >
         <Tooltip v-if="todo.pomodoroCount > 0">
           <TooltipTrigger as-child>
