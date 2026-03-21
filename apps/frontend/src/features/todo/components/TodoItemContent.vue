@@ -6,7 +6,7 @@ import { computed } from 'vue'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { type Todo, useTodoStore } from '../stores/todo'
 import { highlightMatch } from '@/lib/utils'
-import { formatDate } from '@/lib/dayjs'
+import dayjs, { formatDate } from '@/lib/dayjs'
 import { toDate } from '../stores/todo.dates'
 
 const { t } = useI18n()
@@ -46,6 +46,27 @@ const recurrenceLabelKey = computed(() => {
   if (props.todo.recurrenceRule === 'WEEKDAYS') return 'todo.recurrenceWeekdays'
   if (props.todo.recurrenceRule === 'WEEKLY') return 'todo.recurrenceWeekly'
   return 'todo.recurrenceMonthly'
+})
+
+const dueDisplay = computed(() => {
+  if (!props.todo.dueAt) return null
+  return formatDate(props.todo.dueAt, 'MM-DD HH:mm')
+})
+
+const remindDisplay = computed(() => {
+  const remindAt = toDate(props.todo.remindAt)
+  if (!remindAt) return null
+
+  const dueAt = toDate(props.todo.dueAt)
+  if (dueAt && dayjs(remindAt).isSame(dueAt, 'day')) {
+    return formatDate(remindAt, 'HH:mm')
+  }
+
+  if (dayjs(remindAt).isSame(new Date(), 'day')) {
+    return formatDate(remindAt, 'HH:mm')
+  }
+
+  return formatDate(remindAt, 'MM-DD HH:mm')
 })
 </script>
 
@@ -105,6 +126,40 @@ const recurrenceLabelKey = computed(() => {
         v-if="hasMetaBadges"
         class="flex flex-wrap items-center gap-1 pl-0.5 text-[11px] md:gap-1.5 md:text-[var(--todo-font-caption)]"
       >
+        <Tooltip v-if="todo.dueAt && dueDisplay">
+          <TooltipTrigger as-child>
+            <div
+              class="flex shrink-0 items-center gap-1 rounded-lg px-1.5 py-[3px] font-semibold leading-none ring-1 ring-inset md:py-0.5"
+              :class="
+                isOverdue
+                  ? 'bg-destructive/10 text-destructive ring-destructive/25'
+                  : 'bg-primary/10 text-primary/90 ring-primary/20 dark:text-primary/90'
+              "
+            >
+              <CalendarClock class="h-3 w-3" />
+              <span>{{ dueDisplay }}</span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top">{{ t('todo.dueAt') }}</TooltipContent>
+        </Tooltip>
+
+        <Tooltip v-if="todo.remindAt && !todo.remindedAt && remindDisplay">
+          <TooltipTrigger as-child>
+            <div
+              class="flex shrink-0 items-center gap-1 rounded-lg border px-1.5 py-[3px] font-medium leading-none md:py-0.5"
+              :class="
+                todo.dueAt
+                  ? 'border-border/70 bg-muted/45 text-muted-foreground'
+                  : 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400/90'
+              "
+            >
+              <Bell class="h-3 w-3" />
+              <span>{{ remindDisplay }}</span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top">{{ t('todo.remindAt') }}</TooltipContent>
+        </Tooltip>
+
         <Tooltip v-if="todo.pomodoroCount > 0">
           <TooltipTrigger as-child>
             <div
@@ -117,35 +172,6 @@ const recurrenceLabelKey = computed(() => {
           <TooltipContent side="top">
             {{ t('pomodoro.sessions', { count: todo.pomodoroCount }) }}
           </TooltipContent>
-        </Tooltip>
-
-        <Tooltip v-if="todo.dueAt">
-          <TooltipTrigger as-child>
-            <div
-              class="flex shrink-0 items-center gap-1 rounded-lg px-1.5 py-[3px] font-medium leading-none md:py-0.5"
-              :class="
-                isOverdue
-                  ? 'bg-destructive/10 text-destructive'
-                  : 'bg-primary/10 text-primary/90 dark:text-primary/90'
-              "
-            >
-              <CalendarClock class="h-3 w-3" />
-              <span>{{ formatDate(todo.dueAt!, 'MM-DD HH:mm') }}</span>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="top">{{ t('todo.dueAt') }}</TooltipContent>
-        </Tooltip>
-
-        <Tooltip v-if="todo.remindAt && !todo.remindedAt">
-          <TooltipTrigger as-child>
-            <div
-              class="flex shrink-0 items-center gap-1 rounded-lg bg-amber-500/10 px-1.5 py-[3px] font-medium leading-none text-amber-600 dark:text-amber-400/90 md:py-0.5"
-            >
-              <Bell class="h-3 w-3" />
-              <span>{{ formatDate(todo.remindAt!, 'HH:mm') }}</span>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="top">{{ t('todo.remindAt') }}</TooltipContent>
         </Tooltip>
 
         <Tooltip v-if="recurrenceLabelKey">
