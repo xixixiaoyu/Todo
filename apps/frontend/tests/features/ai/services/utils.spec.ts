@@ -32,6 +32,9 @@ vi.mock('@/i18n', () => ({
         if (key === 'ai.skillCatalogUserPrompt') {
           return `[skill-catalog]\n${params.skills}`
         }
+        if (key === 'ai.skillSystemPrompt') {
+          return `[skill-system]\n${params.skills}`
+        }
         if (key === 'ai.skillActivationUserPrompt') {
           return `[skill-activation]\n${params.skills}`
         }
@@ -222,7 +225,7 @@ describe('AI Utils - injectSystemPrompts', () => {
     expect(tool?.tool_call_id).toBe('tc1')
   })
 
-  it('should inject skill catalog and activated skill payload in user context', () => {
+  it('should inject skill catalog as user context and active skill payload as system context', () => {
     const catalogSkills: AISkill[] = [
       {
         id: 's1',
@@ -252,14 +255,17 @@ describe('AI Utils - injectSystemPrompts', () => {
 
     const activated = result.find(
       (m) =>
-        m.role === 'user' &&
+        m.role === 'system' &&
         typeof m.content === 'string' &&
-        m.content.includes('[skill-activation]'),
+        m.content.includes('[skill-system]'),
     )
     expect(activated?.content).toContain('```json')
     expect(activated?.content).toContain('"skill_md":')
     expect(activated?.content).toContain('Always produce risk-first code review findings')
     expect(activated?.content).not.toContain('<skill_content ')
+    expect(
+      result.some((m) => typeof m.content === 'string' && m.content.includes('[skill-activation]')),
+    ).toBe(false)
   })
 })
 

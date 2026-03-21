@@ -147,17 +147,32 @@ function isZipContentType(contentType: string): boolean {
   )
 }
 
+function isSkillMarkdownEntryPath(entryPath: string): boolean {
+  const normalizedPath = entryPath.trim().toLowerCase()
+  return normalizedPath === 'skill.md' || normalizedPath.endsWith('/skill.md')
+}
+
 function extractSkillMarkdownFromZipArchive(archiveBytes: Uint8Array): string {
   let entries: Record<string, Uint8Array>
   try {
-    entries = unzipSync(archiveBytes)
-  } catch {
+    entries = unzipSync(archiveBytes, {
+      filter(file) {
+        if (!isSkillMarkdownEntryPath(file.name)) return false
+        if (file.originalSize > MAX_SKILL_FILE_BYTES) {
+          throw createTooLargeError('File', file.originalSize)
+        }
+        return true
+      },
+    })
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('File too large:')) {
+      throw error
+    }
     throw new Error('Invalid ZIP archive. Expected a skill package zip file.')
   }
 
   const skillEntry = Object.entries(entries).find(([entryPath]) => {
-    const normalizedPath = entryPath.trim().toLowerCase()
-    return normalizedPath === 'skill.md' || normalizedPath.endsWith('/skill.md')
+    return isSkillMarkdownEntryPath(entryPath)
   })
 
   if (!skillEntry) {

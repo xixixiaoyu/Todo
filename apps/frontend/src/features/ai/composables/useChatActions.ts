@@ -258,6 +258,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
           messages: messagesForRequest,
           skillLibrary: getAISkills(),
           selectedSkillIds: aiConfig.skillIds,
+          autoActivateSelected: true,
         })
         const { mcpApi } = await import('@/features/mcp/api/mcp')
         let mcpTools: McpToolResponse[] = []

@@ -336,6 +336,14 @@ export function injectSystemPrompts(
     })
   }
 
+  if (activeSkills.length > 0) {
+    systemBlocks.push({
+      content: t('ai.skillSystemPrompt', {
+        skills: formatActivatedSkillPayload(activeSkills),
+      }) as string,
+    })
+  }
+
   if (todoAssistant) {
     const todoStore = useTodoStore()
     const todoList = formatTodoItems(todoStore.todos)
@@ -372,15 +380,6 @@ export function injectSystemPrompts(
       role: 'user',
       content: t('ai.skillCatalogUserPrompt', {
         skills: formatSkillCatalog(skillCatalog),
-      }) as string,
-    })
-  }
-
-  if (activeSkills.length > 0) {
-    result.push({
-      role: 'user',
-      content: t('ai.skillActivationUserPrompt', {
-        skills: formatActivatedSkillPayload(activeSkills),
       }) as string,
     })
   }

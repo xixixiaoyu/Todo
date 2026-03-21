@@ -16,7 +16,7 @@ import {
   generateId,
 } from '@/features/ai/services/aiService'
 import type { ChatMessage, ToolCall } from '@/features/ai/services/aiService'
-import { getAIConfig } from '@/features/ai/composables/useAIConfig'
+import { getAIConfig, getAISkills } from '@/features/ai/composables/useAIConfig'
 import { mcpApi } from '@/features/mcp/api/mcp'
 import { useTodoStore } from '@/features/todo/stores/todo'
 
@@ -183,6 +183,7 @@ describe('useChat', () => {
       contextCompressionModelId: null,
       skillIds: [],
     })
+    vi.mocked(getAISkills).mockReturnValue([])
     mockUpdateSessionMessages.mockImplementation((sessionId, messages) => {
       if (mockCurrentSession.value && mockCurrentSession.value.id === sessionId) {
         mockCurrentSession.value = { ...mockCurrentSession.value, messages: [...messages] }
@@ -477,6 +478,59 @@ describe('useChat', () => {
 
       expect(mcpApi.callTool).toHaveBeenCalledWith(serverA, 'search', { q: 'x' })
       expect(messages.value.some((m) => m.role === 'tool' && m.toolName === 'search')).toBe(true)
+    })
+
+    it('should treat selected skills as active in default chat mode', async () => {
+      vi.mocked(getAIConfig).mockReturnValue({
+        assistantMode: 'default',
+        discussionMode: false,
+        discussionModelIds: [],
+        discussionPrimaryModelId: null,
+        memoryModelId: null,
+        baseUrl: '',
+        apiKey: '',
+        model: '',
+        systemPrompt: '',
+        temperature: 0.7,
+        thinkingMode: 'disabled',
+        thinkingEffort: 'high',
+        todoAssistant: false,
+        enableImageGeneration: false,
+        mcpEnabled: false,
+        contextCompressionEnabled: false,
+        contextCompressionTriggerChars: 24000,
+        contextCompressionModelId: null,
+        skillIds: ['skill-1'],
+      })
+      vi.mocked(getAISkills).mockReturnValue([
+        {
+          id: 'skill-1',
+          name: 'code-review',
+          description: 'Review code risks',
+          prompt: 'Always produce risk-first review findings',
+        },
+      ])
+
+      mockGetAIStreamResponse.mockImplementation(
+        async (_messages: ChatMessage[], onChunk: OnChunk) => {
+          onChunk('ok')
+          onChunk('[DONE]')
+        },
+      )
+
+      const { sendMessage } = useChat()
+      await sendMessage('review this change')
+
+      const firstCall = mockGetAIStreamResponse.mock.calls[0]
+      expect(firstCall).toBeDefined()
+
+      const sentOptions = firstCall?.[4] as
+        | { activeSkills?: Array<{ id: string; name: string }>; skills?: Array<{ id: string }> }
+        | undefined
+
+      expect(sentOptions?.skills?.map((skill) => skill.id)).toEqual(['skill-1'])
+      expect(sentOptions?.activeSkills?.map((skill) => skill.id)).toEqual(['skill-1'])
+      expect(sentOptions?.activeSkills?.map((skill) => skill.name)).toEqual(['code-review'])
     })
 
     it('should compress long context and pass summary to request', async () => {

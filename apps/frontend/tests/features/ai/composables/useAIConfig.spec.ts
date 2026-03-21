@@ -564,6 +564,44 @@ describe('useAIConfig - Core', () => {
       expect(skills.value.map((item) => item.name)).toContain('tavily-search')
     })
 
+    it('should reject zip package when SKILL.md original size exceeds the file limit', async () => {
+      const { importSkillsFromExternalSource } = useAIConfig()
+      const oversizedPrompt = 'A'.repeat(530 * 1024)
+      const markdown = [
+        '---',
+        'name: oversized-skill',
+        'description: Oversized skill package',
+        '---',
+        '',
+        oversizedPrompt,
+      ].join('\n')
+      const archive = zipSync({ 'nested/SKILL.md': strToU8(markdown) })
+      const archiveBuffer = archive.buffer.slice(
+        archive.byteOffset,
+        archive.byteOffset + archive.byteLength,
+      )
+
+      const fetchMock = vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        headers: {
+          get: (key: string) =>
+            key.toLowerCase() === 'content-type'
+              ? 'application/zip'
+              : key.toLowerCase() === 'content-length'
+                ? String(archive.byteLength)
+                : null,
+        },
+        arrayBuffer: async (): Promise<ArrayBuffer> => archiveBuffer as ArrayBuffer,
+        text: async (): Promise<string> => '',
+      }))
+      vi.stubGlobal('fetch', fetchMock)
+
+      await expect(
+        importSkillsFromExternalSource('skillhub install tavily-search'),
+      ).rejects.toThrow('File too large')
+    })
+
     it('should fallback to backend proxy when direct fetch is blocked', async () => {
       const { skills, importSkillsFromExternalSource } = useAIConfig()
       const markdown = [

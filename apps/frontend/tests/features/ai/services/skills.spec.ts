@@ -136,6 +136,22 @@ describe('skills utils', () => {
     })
   })
 
+  it('preserves quotes and backslashes when round-tripping SKILL.md frontmatter', () => {
+    const manifest = buildSkillManifest({
+      id: 's4',
+      name: 'quote "skill" \\ demo',
+      description: 'Use "quoted" paths like C:\\temp\\skill',
+      prompt: 'Follow "quoted" workflow',
+    })
+
+    const parsed = parseSkillManifest(manifest)
+    expect(parsed).toEqual({
+      name: 'quote "skill" \\ demo',
+      description: 'Use "quoted" paths like C:\\temp\\skill',
+      prompt: 'Follow "quoted" workflow',
+    })
+  })
+
   it('exposes read_skill tool and returns manifest via handler', () => {
     const tool = buildSkillReadTool(skillLibrary)
     expect(tool?.function.name).toBe(READ_SKILL_TOOL_NAME)

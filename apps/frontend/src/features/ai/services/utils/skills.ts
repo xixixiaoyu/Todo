@@ -73,18 +73,26 @@ function normalizeSkillPathSegment(value: string): string {
 }
 
 function quoteYamlValue(value: string): string {
-  const escaped = value.replace(/"/g, '\\"')
-  return `"${escaped}"`
+  return JSON.stringify(value)
 }
 
 function unquoteYamlValue(value: string): string {
   const trimmed = value.trim()
-  if (
-    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-    (trimmed.startsWith("'") && trimmed.endsWith("'"))
-  ) {
-    return trimmed.slice(1, -1)
+  if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+    try {
+      const parsed = JSON.parse(trimmed) as unknown
+      if (typeof parsed === 'string') {
+        return parsed
+      }
+    } catch {
+      return trimmed.slice(1, -1)
+    }
   }
+
+  if (trimmed.startsWith("'") && trimmed.endsWith("'")) {
+    return trimmed.slice(1, -1).replace(/''/g, "'")
+  }
+
   return trimmed
 }
 
