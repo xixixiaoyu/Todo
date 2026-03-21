@@ -21,16 +21,17 @@ import {
 import AISettingsBasic from './AISettingsBasic.vue'
 import AIMemoryManager from './AIMemoryManager.vue'
 import AIPresetManager from './AIPresetManager.vue'
+import AISkillManager from './AISkillManager.vue'
 import McpSettingsManager from '@/features/mcp/components/McpSettingsManager.vue'
 
 const props = defineProps<{
-  initialTab?: 'settings' | 'presets' | 'memory' | 'mcp' | 'contextCompression'
+  initialTab?: 'settings' | 'presets' | 'skills' | 'memory' | 'mcp' | 'contextCompression'
 }>()
 
 const emit = defineEmits<{
   (
     e: 'update:initialTab',
-    tab: 'settings' | 'presets' | 'memory' | 'mcp' | 'contextCompression',
+    tab: 'settings' | 'presets' | 'skills' | 'memory' | 'mcp' | 'contextCompression',
   ): void
 }>()
 
@@ -44,6 +45,7 @@ const {
   updateConfig,
   DEFAULT_CONFIG,
   presets,
+  skills,
   addPreset,
   activePresetId,
   switchPreset,
@@ -54,7 +56,7 @@ const {
 const presetManagerRef = ref<InstanceType<typeof AIPresetManager> | null>(null)
 
 // 当前 Tab
-const activeTab = ref<'settings' | 'presets' | 'memory' | 'mcp' | 'contextCompression'>(
+const activeTab = ref<'settings' | 'presets' | 'skills' | 'memory' | 'mcp' | 'contextCompression'>(
   props.initialTab || 'settings',
 )
 
@@ -69,6 +71,7 @@ const formData = ref<AIConfig>({
   discussionModelIds: [...config.value.discussionModelIds] as string[],
   discussionPrimaryModelId: config.value.discussionPrimaryModelId,
   memoryModelId: config.value.memoryModelId,
+  skillIds: [...config.value.skillIds] as string[],
 })
 
 /**
@@ -76,13 +79,17 @@ const formData = ref<AIConfig>({
  */
 const isDuplicatePreset = computed(() => {
   return presets.value.some((preset) => {
+    const presetSkillIds = [...(preset.skillIds || [])].sort()
+    const formSkillIds = [...formData.value.skillIds].sort()
     return (
       preset.baseUrl === formData.value.baseUrl &&
       preset.apiKey === formData.value.apiKey &&
       preset.model === formData.value.model &&
       preset.systemPrompt === formData.value.systemPrompt &&
       preset.temperature === formData.value.temperature &&
-      preset.todoAssistant === formData.value.todoAssistant
+      preset.todoAssistant === formData.value.todoAssistant &&
+      presetSkillIds.length === formSkillIds.length &&
+      presetSkillIds.every((id, index) => id === formSkillIds[index])
     )
   })
 })
@@ -110,6 +117,7 @@ watch(
         discussionModelIds: [...config.value.discussionModelIds] as string[],
         discussionPrimaryModelId: config.value.discussionPrimaryModelId,
         memoryModelId: config.value.memoryModelId,
+        skillIds: [...config.value.skillIds] as string[],
       }
     }
   },
@@ -125,6 +133,7 @@ watch(
       discussionModelIds: [...newConfig.discussionModelIds] as string[],
       discussionPrimaryModelId: newConfig.discussionPrimaryModelId,
       memoryModelId: newConfig.memoryModelId,
+      skillIds: [...newConfig.skillIds] as string[],
     }
     // 只有当外部配置真的变了且与当前表单不一致时才同步
     if (!isEqual(formData.value, newFormData)) {
@@ -167,6 +176,7 @@ function confirmSaveAsPreset() {
     systemPrompt: formData.value.systemPrompt,
     temperature: formData.value.temperature,
     todoAssistant: formData.value.todoAssistant,
+    skillIds: formData.value.skillIds,
   })
 
   syncTargetPresetId.value = newPreset.id
@@ -188,6 +198,7 @@ function handleReset() {
     discussionModelIds: [...DEFAULT_CONFIG.discussionModelIds] as string[],
     discussionPrimaryModelId: DEFAULT_CONFIG.discussionPrimaryModelId,
     memoryModelId: DEFAULT_CONFIG.memoryModelId,
+    skillIds: [...DEFAULT_CONFIG.skillIds] as string[],
   }
 }
 
@@ -221,6 +232,7 @@ watch(activePresetId, () => {
       discussionModelIds: [...config.value.discussionModelIds] as string[],
       discussionPrimaryModelId: config.value.discussionPrimaryModelId,
       memoryModelId: config.value.memoryModelId,
+      skillIds: [...config.value.skillIds] as string[],
     }
   }
 })
@@ -299,6 +311,7 @@ defineExpose({
                 v-for="tab in [
                   'settings',
                   'presets',
+                  'skills',
                   'memory',
                   'contextCompression',
                   'mcp',
@@ -345,10 +358,13 @@ defineExpose({
               v-if="activeTab === 'settings'"
               v-model="formData"
               :presets="presets"
+              :skills="skills"
             />
 
             <!-- 预设管理 Tab -->
             <AIPresetManager v-else-if="activeTab === 'presets'" ref="presetManagerRef" />
+
+            <AISkillManager v-else-if="activeTab === 'skills'" v-model="formData" />
 
             <!-- 记忆管理 Tab -->
             <AIMemoryManager
@@ -362,6 +378,7 @@ defineExpose({
               v-else-if="activeTab === 'contextCompression'"
               v-model="formData"
               :presets="presets"
+              :skills="skills"
               mode="contextCompression"
             />
 

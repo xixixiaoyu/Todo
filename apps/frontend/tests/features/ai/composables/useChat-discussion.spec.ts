@@ -62,8 +62,10 @@ vi.mock('@/features/ai/composables/useAIConfig', () => ({
     contextCompressionEnabled: false,
     contextCompressionTriggerChars: 24000,
     contextCompressionModelId: null,
+    skillIds: [],
   })),
   getAIThinkingMode: vi.fn(() => 'enabled'),
+  getAISkills: vi.fn(() => []),
 }))
 
 describe('useChat - Discussion Mode', () => {
@@ -107,6 +109,7 @@ describe('useChat - Discussion Mode', () => {
       contextCompressionEnabled: false,
       contextCompressionTriggerChars: 24000,
       contextCompressionModelId: null,
+      skillIds: [],
     } as AIConfig)
 
     mockGetMultiModelDiscussionStream.mockImplementation(

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { nextTick } from 'vue'
 import {
   useAIConfig,
@@ -12,6 +12,10 @@ describe('useAIConfig - Core', () => {
     localStorage.clear()
     _resetAIConfig()
     vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
   describe('initial state', () => {
@@ -368,6 +372,159 @@ describe('useAIConfig - Core', () => {
 
       expect(presets.value).toHaveLength(1)
       expect(presets.value[0].name).toBe('Valid')
+    })
+  })
+
+  describe('skills', () => {
+    it('should add and toggle skills into config', () => {
+      const { skills, config, addSkill, toggleSkill } = useAIConfig()
+
+      const created = addSkill({
+        name: 'code-review',
+        description: 'review mode',
+        aliases: ['review'],
+        prompt: 'focus on bugs first',
+      })
+
+      expect(skills.value).toHaveLength(1)
+      expect(config.value.skillIds).toEqual([])
+
+      toggleSkill(created.id)
+      expect(config.value.skillIds).toEqual([created.id])
+
+      toggleSkill(created.id)
+      expect(config.value.skillIds).toEqual([])
+    })
+
+    it('should delete selected skill and clean config references', () => {
+      const { config, addSkill, setSkillIds, deleteSkill } = useAIConfig()
+
+      const skill = addSkill({
+        name: 'architect',
+        prompt: 'provide architecture tradeoffs',
+      })
+      setSkillIds([skill.id])
+      expect(config.value.skillIds).toEqual([skill.id])
+
+      deleteSkill(skill.id)
+      expect(config.value.skillIds).toEqual([])
+    })
+
+    it('should import skills from JSON and skip duplicate names in merge mode', () => {
+      const { skills, importSkills } = useAIConfig()
+
+      const first = importSkills(
+        JSON.stringify([
+          {
+            name: 'code-review',
+            description: 'Review code changes',
+            prompt: 'Find bugs first',
+          },
+        ]),
+      )
+      expect(first).toBe(1)
+      expect(skills.value).toHaveLength(1)
+
+      const second = importSkills(
+        JSON.stringify([
+          {
+            name: 'code-review',
+            description: 'duplicate',
+            prompt: 'duplicate',
+          },
+          {
+            name: 'architecture',
+            description: 'System design analysis',
+            prompt: 'Provide trade-offs',
+          },
+        ]),
+      )
+
+      expect(second).toBe(1)
+      expect(skills.value.map((item) => item.name)).toEqual(['code-review', 'architecture'])
+    })
+
+    it('should import a single SKILL.md document', () => {
+      const { skills, importSkills } = useAIConfig()
+
+      const markdown = [
+        '---',
+        'name: skill-md-demo',
+        'description: Use this when demoing markdown skill import',
+        '---',
+        '',
+        'Always provide concise steps.',
+      ].join('\n')
+
+      const count = importSkills(markdown)
+      expect(count).toBe(1)
+      expect(skills.value[0]).toMatchObject({
+        name: 'skill-md-demo',
+        description: 'Use this when demoing markdown skill import',
+        prompt: 'Always provide concise steps.',
+      })
+    })
+
+    it('should install skill from external url', async () => {
+      const { skills, importSkillsFromExternalSource } = useAIConfig()
+      const markdown = [
+        '---',
+        'name: remote-skill',
+        'description: Installed from remote source',
+        '---',
+        '',
+        'Follow remote skill workflow.',
+      ].join('\n')
+
+      const fetchMock = vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        text: async () => markdown,
+      }))
+      vi.stubGlobal('fetch', fetchMock)
+
+      const result = await importSkillsFromExternalSource(
+        'https://example.com/skills/remote/SKILL.md',
+      )
+      expect(result.importedCount).toBe(1)
+      expect(result.sourceUrl).toBe('https://example.com/skills/remote/SKILL.md')
+      expect(skills.value.map((item) => item.name)).toContain('remote-skill')
+    })
+
+    it('should fallback to next external candidate when first one fails', async () => {
+      const { importSkillsFromExternalSource } = useAIConfig()
+      const markdown = [
+        '---',
+        'name: github-installed-skill',
+        'description: Installed from GitHub raw fallback',
+        '---',
+        '',
+        'Use GitHub fallback flow.',
+      ].join('\n')
+
+      const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input)
+        if (url.includes('/.curated/github/')) {
+          return {
+            ok: false,
+            status: 404,
+            text: async () => '',
+          }
+        }
+
+        return {
+          ok: true,
+          status: 200,
+          text: async () => markdown,
+        }
+      })
+      vi.stubGlobal('fetch', fetchMock)
+
+      const result = await importSkillsFromExternalSource('skillhub install github')
+
+      expect(fetchMock).toHaveBeenCalledTimes(3)
+      expect(result.importedCount).toBe(1)
+      expect(result.sourceUrl).toContain('/gh-address-comments/')
     })
   })
 })

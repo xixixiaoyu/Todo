@@ -27,6 +27,7 @@ export async function executeToolCalls(params: {
   toolCalls: ToolCall[]
   chatHistory: { value: ChatMessage[] }
   mcpToolLookup: Map<string, { serverId: string; toolName: string }>
+  localToolHandlers?: Map<string, (args: Record<string, unknown>) => string | Promise<string>>
   callMcpTool: (
     serverId: string,
     toolName: string,
@@ -71,6 +72,38 @@ export async function executeToolCalls(params: {
           createdAt: new Date(),
         },
       ]
+      continue
+    }
+
+    const localHandler = params.localToolHandlers?.get(aiToolName)
+    if (localHandler) {
+      try {
+        let contentStr = await localHandler(toolArgs)
+        contentStr = truncateToolContent(contentStr)
+        params.chatHistory.value = [
+          ...params.chatHistory.value,
+          {
+            id: generateId(),
+            role: 'tool',
+            tool_call_id: call.id,
+            toolName: aiToolName,
+            content: contentStr,
+            createdAt: new Date(),
+          },
+        ]
+      } catch (error) {
+        params.chatHistory.value = [
+          ...params.chatHistory.value,
+          {
+            id: generateId(),
+            role: 'tool',
+            tool_call_id: call.id,
+            toolName: aiToolName,
+            content: `Error: ${error instanceof Error ? error.message : String(error)}`,
+            createdAt: new Date(),
+          },
+        ]
+      }
       continue
     }
 

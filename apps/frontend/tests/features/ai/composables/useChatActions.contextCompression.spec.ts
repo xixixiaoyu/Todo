@@ -27,8 +27,10 @@ vi.mock('@/features/ai/composables/useAIConfig', () => ({
     contextCompressionEnabled: true,
     contextCompressionTriggerChars: 10,
     contextCompressionModelId: null,
+    skillIds: [],
   })),
   getAIPresets: vi.fn(() => []),
+  getAISkills: vi.fn(() => []),
 }))
 
 describe('createContextCompression', () => {

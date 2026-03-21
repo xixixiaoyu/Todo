@@ -133,6 +133,8 @@ export async function getAIStreamResponse(
     thinkingEffort = aiConfig.thinkingEffort,
     contextSummary,
     memorySnapshot,
+    skills,
+    activeSkills,
     tools,
     toolChoice,
     abortSignal,
@@ -149,6 +151,8 @@ export async function getAIStreamResponse(
     assistantMode,
     contextSummary,
     memorySnapshot,
+    skills,
+    activeSkills,
   )
 
   try {

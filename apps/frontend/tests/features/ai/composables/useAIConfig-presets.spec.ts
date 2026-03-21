@@ -210,6 +210,76 @@ describe('useAIConfig - Presets', () => {
       expect(activePresetId.value).toBe(preset.id)
     })
 
+    it('should include skillIds when matching preset activation', async () => {
+      const { updateConfig, addPreset, addSkill, activePresetId } = useAIConfig()
+      const skill = addSkill({
+        name: 'code-review',
+        prompt: 'Find risks first',
+      })
+
+      const preset = addPreset({
+        name: 'Matching Skill Preset',
+        baseUrl: 'https://match-api.com',
+        apiKey: 'match-key',
+        model: 'match-model',
+        systemPrompt: 'Match prompt',
+        temperature: 0.5,
+        todoAssistant: false,
+        skillIds: [skill.id],
+      })
+
+      updateConfig({
+        baseUrl: 'https://match-api.com',
+        apiKey: 'match-key',
+        model: 'match-model',
+        systemPrompt: 'Match prompt',
+        temperature: 0.5,
+        skillIds: [skill.id],
+      })
+
+      await nextTick()
+      expect(activePresetId.value).toBe(preset.id)
+
+      updateConfig({ skillIds: [] })
+      await nextTick()
+      expect(activePresetId.value).toBeNull()
+    })
+
+    it('should treat skillIds as an unordered set when matching preset', async () => {
+      const { updateConfig, addPreset, addSkill, activePresetId } = useAIConfig()
+      const skillA = addSkill({
+        name: 'code-review',
+        prompt: 'Find risks first',
+      })
+      const skillB = addSkill({
+        name: 'architect',
+        prompt: 'Focus on trade-offs',
+      })
+
+      const preset = addPreset({
+        name: 'Order-insensitive Skill Preset',
+        baseUrl: 'https://match-api.com',
+        apiKey: 'match-key',
+        model: 'match-model',
+        systemPrompt: 'Match prompt',
+        temperature: 0.5,
+        todoAssistant: false,
+        skillIds: [skillA.id, skillB.id],
+      })
+
+      updateConfig({
+        baseUrl: 'https://match-api.com',
+        apiKey: 'match-key',
+        model: 'match-model',
+        systemPrompt: 'Match prompt',
+        temperature: 0.5,
+        skillIds: [skillB.id, skillA.id],
+      })
+
+      await nextTick()
+      expect(activePresetId.value).toBe(preset.id)
+    })
+
     it('should automatically switch to null when config no longer matches any preset', async () => {
       const { updateConfig, addPreset, activePresetId, switchPreset } = useAIConfig()
 
@@ -296,6 +366,7 @@ describe('useAIConfig - Presets', () => {
         systemPrompt: 'Defaults prompt',
         thinkingEffort: 'high',
         todoAssistant: true,
+        skillIds: [],
       })
     })
 
@@ -380,7 +451,6 @@ describe('useAIConfig - Presets', () => {
 
       switchPreset(preset2.id)
       await nextTick()
-      // This is expected to FAIL currently because the watcher will snap back to preset1.id
       expect(activePresetId.value).toBe(preset2.id)
     })
   })

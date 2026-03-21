@@ -3,11 +3,13 @@ import { useI18n } from 'vue-i18n'
 import { debounce } from 'lodash-es'
 import { useAIConfig, type AIPreset } from '@/features/ai/composables/useAIConfig'
 import { useToast } from '@/composables/useToast'
+import type { AISkill } from '@/features/ai/services/types'
 
 type PresetForm = Omit<AIPreset, 'id'>
 
 export function useAIPresetManager(): {
   presets: Ref<AIPreset[]>
+  skills: Ref<AISkill[]>
   activePresetId: Ref<string | null>
   isCreatingPreset: Ref<boolean>
   editingPreset: Ref<AIPreset | null>
@@ -40,6 +42,7 @@ export function useAIPresetManager(): {
     switchPreset,
     exportPresets,
     importPresets,
+    skills,
   } = useAIConfig()
 
   const editingPreset = ref<AIPreset | null>(null)
@@ -55,6 +58,7 @@ export function useAIPresetManager(): {
     temperature: 0.6,
     thinkingEffort: 'high',
     todoAssistant: false,
+    skillIds: [],
   })
 
   const nameError = computed(() => {
@@ -81,6 +85,7 @@ export function useAIPresetManager(): {
     presetForm.value = {
       name: '',
       ...defaults,
+      skillIds: defaults.skillIds ? [...defaults.skillIds] : [],
     }
   }
 
@@ -97,6 +102,7 @@ export function useAIPresetManager(): {
       temperature: preset.temperature,
       thinkingEffort: preset.thinkingEffort || 'high',
       todoAssistant: preset.todoAssistant,
+      skillIds: preset.skillIds ? [...preset.skillIds] : [],
     }
   }
 
@@ -192,6 +198,7 @@ export function useAIPresetManager(): {
 
   return {
     presets,
+    skills,
     activePresetId,
     isCreatingPreset,
     editingPreset,

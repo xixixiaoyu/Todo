@@ -81,15 +81,30 @@ vi.mock('@/features/ai/composables/useChat', () => ({
 const mockUpdateConfig = vi.fn()
 const mockConfig = ref({
   assistantMode: 'default',
+  baseUrl: '',
+  apiKey: '',
+  model: '',
+  temperature: 0.7,
+  systemPrompt: '',
+  thinkingMode: 'disabled',
+  thinkingEffort: 'high',
   todoAssistant: false,
   discussionMode: false,
   enableImageGeneration: false,
   discussionModelIds: [],
+  discussionPrimaryModelId: null,
+  memoryModelId: null,
+  mcpEnabled: false,
+  contextCompressionEnabled: false,
+  contextCompressionTriggerChars: 24000,
+  contextCompressionModelId: null,
+  skillIds: [],
 })
 
 vi.mock('@/features/ai/composables/useAIConfig', () => ({
   useAIConfig: () => ({
     presets: ref([]),
+    skills: ref([]),
     activePreset: ref(null),
     switchPreset: vi.fn(),
     config: mockConfig,
@@ -133,10 +148,24 @@ describe('AiAssistantDrawer Mode Exclusivity', () => {
     // Reset config
     mockConfig.value = {
       assistantMode: 'default',
+      baseUrl: '',
+      apiKey: '',
+      model: '',
+      temperature: 0.7,
+      systemPrompt: '',
+      thinkingMode: 'disabled',
+      thinkingEffort: 'high',
       todoAssistant: false,
       discussionMode: false,
       enableImageGeneration: false,
       discussionModelIds: [],
+      discussionPrimaryModelId: null,
+      memoryModelId: null,
+      mcpEnabled: false,
+      contextCompressionEnabled: false,
+      contextCompressionTriggerChars: 24000,
+      contextCompressionModelId: null,
+      skillIds: [],
     }
     vi.clearAllMocks()
   })

@@ -106,11 +106,13 @@ const mockConfig = ref({
   contextCompressionEnabled: false,
   contextCompressionTriggerChars: 24000,
   contextCompressionModelId: null,
+  skillIds: [],
 })
 
 vi.mock('@/features/ai/composables/useAIConfig', () => ({
   getAIConfig: vi.fn(() => mockConfig.value),
   getAIThinkingMode: vi.fn(() => 'disabled'),
+  getAISkills: vi.fn(() => []),
 }))
 
 type ChatMessage = aiService.ChatMessage

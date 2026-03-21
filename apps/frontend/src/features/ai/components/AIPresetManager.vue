@@ -6,6 +6,7 @@ import AIPresetList from './AIPresetList.vue'
 
 const {
   presets,
+  skills,
   activePresetId,
   isCreatingPreset,
   editingPreset,
@@ -55,6 +56,7 @@ defineExpose({
       :is-creating="isCreatingPreset"
       :is-editing="isEditing"
       :name-error="nameError"
+      :skills="skills"
       @cancel="cancelEditPreset"
       @save="savePreset"
     />

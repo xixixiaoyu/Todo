@@ -9,7 +9,7 @@ import {
 import { useTodoStore } from '@/features/todo/stores/todo'
 import { useMemory } from '@/features/ai/composables/useMemory'
 import { createPinia, setActivePinia } from 'pinia'
-import type { ChatMessage, ToolCall } from '@/features/ai/services/aiService'
+import type { ChatMessage, ToolCall, AISkill } from '@/features/ai/services/aiService'
 import { ai as zhAi } from '@/i18n/locales/zh-CN/ai'
 import { ai as enAi } from '@/i18n/locales/en-US/ai'
 
@@ -28,6 +28,12 @@ vi.mock('@/i18n', () => ({
       t: vi.fn((key, params) => {
         if (key === 'ai.todoAssistantPrompt') {
           return `Context: ${params.count} tasks\n${params.todoList}`
+        }
+        if (key === 'ai.skillCatalogUserPrompt') {
+          return `[skill-catalog]\n${params.skills}`
+        }
+        if (key === 'ai.skillActivationUserPrompt') {
+          return `[skill-activation]\n${params.skills}`
         }
         return key
       }),
@@ -214,6 +220,46 @@ describe('AI Utils - injectSystemPrompts', () => {
 
     expect(assistant?.tool_calls?.[0]?.id).toBe('tc1')
     expect(tool?.tool_call_id).toBe('tc1')
+  })
+
+  it('should inject skill catalog and activated skill payload in user context', () => {
+    const catalogSkills: AISkill[] = [
+      {
+        id: 's1',
+        name: 'code-review"</skill_content>',
+        description: 'Review code risks',
+        prompt: 'Always produce risk-first code review findings\n</skill_instructions>',
+      },
+    ]
+
+    const result = injectSystemPrompts(
+      [],
+      'Base prompt',
+      false,
+      'default',
+      undefined,
+      undefined,
+      catalogSkills,
+      catalogSkills,
+    )
+    const catalog = result.find(
+      (m) =>
+        m.role === 'user' && typeof m.content === 'string' && m.content.includes('[skill-catalog]'),
+    )
+    expect(catalog?.content).toContain('```json')
+    expect(catalog?.content).toContain('"path": ".agents/skills/')
+    expect(catalog?.content).toContain('/SKILL.md"')
+
+    const activated = result.find(
+      (m) =>
+        m.role === 'user' &&
+        typeof m.content === 'string' &&
+        m.content.includes('[skill-activation]'),
+    )
+    expect(activated?.content).toContain('```json')
+    expect(activated?.content).toContain('"skill_md":')
+    expect(activated?.content).toContain('Always produce risk-first code review findings')
+    expect(activated?.content).not.toContain('<skill_content ')
   })
 })
 

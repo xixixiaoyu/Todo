@@ -117,6 +117,7 @@ const mockConfig = ref({
   model: '',
   systemPrompt: '',
   temperature: 0.7,
+  thinkingEffort: 'high',
   thinkingMode: 'disabled',
   todoAssistant: false,
   discussionMode: false,
@@ -124,11 +125,17 @@ const mockConfig = ref({
   discussionPrimaryModelId: null,
   memoryModelId: null,
   enableImageGeneration: false,
+  mcpEnabled: false,
+  contextCompressionEnabled: false,
+  contextCompressionTriggerChars: 24000,
+  contextCompressionModelId: null,
+  skillIds: [],
 })
 
 vi.mock('@/features/ai/composables/useAIConfig', () => ({
   useAIConfig: () => ({
     presets: ref([]),
+    skills: ref([]),
     activePreset: ref(null),
     switchPreset: vi.fn(),
     config: mockConfig,

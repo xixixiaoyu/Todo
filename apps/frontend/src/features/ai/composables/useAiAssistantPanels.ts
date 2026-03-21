@@ -4,6 +4,7 @@ import { useEscClose } from '@/composables/useEscClose'
 export type AiAssistantSettingsTab =
   | 'settings'
   | 'presets'
+  | 'skills'
   | 'memory'
   | 'mcp'
   | 'contextCompression'

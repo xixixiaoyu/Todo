@@ -16,6 +16,7 @@ vi.mock('lucide-vue-next', () => ({
   Users: { template: '<span>Users</span>' },
   Star: { template: '<span>Star</span>' },
   Copy: { template: '<span>Copy</span>' },
+  Pencil: { template: '<span>Pencil</span>' },
   Edit3: { template: '<span>Edit3</span>' },
   Globe: { template: '<span>Globe</span>' },
   Key: { template: '<span>Key</span>' },
@@ -52,9 +53,11 @@ const mockConfig = ref<AIConfig>({
   contextCompressionEnabled: false,
   contextCompressionTriggerChars: 24000,
   contextCompressionModelId: null,
+  skillIds: [],
 })
 
 const mockPresets = ref<AIPreset[]>([])
+const mockSkills = ref([])
 const mockActivePresetId = ref<string | null>(null)
 
 const updateConfig = vi.fn((partial) => {
@@ -72,6 +75,7 @@ const switchPreset = vi.fn((id) => {
       discussionModelIds: [] as string[],
       discussionPrimaryModelId: null,
       memoryModelId: null,
+      skillIds: preset.skillIds ? [...preset.skillIds] : [],
       ...preset,
     } as unknown as AIConfig
   }
@@ -101,6 +105,7 @@ const updatePreset = vi.fn((id, updates) => {
         discussionModelIds: [] as string[],
         discussionPrimaryModelId: null,
         memoryModelId: null,
+        skillIds: mockPresets.value[index].skillIds ? [...mockPresets.value[index].skillIds] : [],
         ...mockPresets.value[index],
       } as unknown as AIConfig
     }
@@ -127,12 +132,14 @@ const getPresetDefaults = vi.fn(() => ({
   temperature: 0.7,
   thinkingEffort: 'high',
   todoAssistant: false,
+  skillIds: [],
 }))
 
 vi.mock('@/features/ai/composables/useAIConfig', () => ({
   useAIConfig: () => ({
     config: mockConfig,
     presets: mockPresets,
+    skills: mockSkills,
     activePresetId: mockActivePresetId,
     updateConfig,
     switchPreset,
@@ -188,8 +195,10 @@ describe('AISettingsDialog', () => {
       contextCompressionEnabled: true,
       contextCompressionTriggerChars: 24000,
       contextCompressionModelId: null,
+      skillIds: [],
     }
     mockPresets.value = []
+    mockSkills.value = []
     mockActivePresetId.value = null
   })
 

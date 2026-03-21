@@ -6,11 +6,13 @@ import {
   MAX_PROMPT_DOC_CHARS_TOTAL,
 } from '@/features/ai/constants/attachments'
 import type {
+  AISkill,
   AIChatCompletionMessage,
   AssistantMode,
   ChatMessage,
   MultiModalContent,
 } from '../types'
+import { buildSkillManifest, getSkillPath } from './skills'
 
 const t = i18n.global.t
 
@@ -242,6 +244,38 @@ function formatTodoItems(todos: Todo[]): string {
   return lines.join('\n')
 }
 
+function formatSkillCatalog(skills: AISkill[]): string {
+  const payload = skills.map((skill) => ({
+    name: skill.name,
+    description: skill.description?.trim() || 'No description provided',
+    path: getSkillPath(skill),
+    ...(skill.allowImplicitInvocation === false ? { allow_implicit_invocation: false } : {}),
+  }))
+
+  return ['```json', JSON.stringify(payload, null, 2), '```'].join('\n')
+}
+
+function formatActivatedSkillPayload(skills: AISkill[]): string {
+  const payload = skills.map((skill) => {
+    const resources = Array.isArray(skill.resources)
+      ? skill.resources
+          .map((resource) => resource.trim())
+          .filter((resource) => resource.length > 0)
+          .slice(0, 32)
+      : []
+
+    return {
+      name: skill.name,
+      description: skill.description?.trim() || 'No description provided',
+      path: getSkillPath(skill),
+      skill_md: buildSkillManifest(skill),
+      resources,
+    }
+  })
+
+  return ['```json', JSON.stringify(payload, null, 2), '```'].join('\n')
+}
+
 export function injectSystemPrompts(
   messages: ChatMessage[],
   systemPrompt: string,
@@ -249,6 +283,8 @@ export function injectSystemPrompts(
   assistantMode: AssistantMode,
   contextSummary?: string,
   memorySnapshot?: string[],
+  skillCatalog: AISkill[] = [],
+  activeSkills: AISkill[] = [],
 ): AIChatCompletionMessage[] {
   const result: AIChatCompletionMessage[] = []
   let documentCharsUsed = 0
@@ -328,6 +364,24 @@ export function injectSystemPrompts(
     result.push({
       role: 'system',
       content,
+    })
+  }
+
+  if (skillCatalog.length > 0) {
+    result.push({
+      role: 'user',
+      content: t('ai.skillCatalogUserPrompt', {
+        skills: formatSkillCatalog(skillCatalog),
+      }) as string,
+    })
+  }
+
+  if (activeSkills.length > 0) {
+    result.push({
+      role: 'user',
+      content: t('ai.skillActivationUserPrompt', {
+        skills: formatActivatedSkillPayload(activeSkills),
+      }) as string,
     })
   }
 

@@ -133,8 +133,10 @@ vi.mock('@/features/ai/composables/useAIConfig', () => ({
     contextCompressionEnabled: false,
     contextCompressionTriggerChars: 24000,
     contextCompressionModelId: null,
+    skillIds: [],
   })),
   getAIThinkingMode: vi.fn(() => 'disabled'),
+  getAISkills: vi.fn(() => []),
 }))
 
 describe('useChat', () => {
@@ -179,6 +181,7 @@ describe('useChat', () => {
       contextCompressionEnabled: true,
       contextCompressionTriggerChars: 24000,
       contextCompressionModelId: null,
+      skillIds: [],
     })
     mockUpdateSessionMessages.mockImplementation((sessionId, messages) => {
       if (mockCurrentSession.value && mockCurrentSession.value.id === sessionId) {
@@ -497,6 +500,7 @@ describe('useChat', () => {
         contextCompressionEnabled: true,
         contextCompressionTriggerChars: 10,
         contextCompressionModelId: null,
+        skillIds: [],
       })
 
       mockCurrentSession.value = {
@@ -565,6 +569,7 @@ describe('useChat', () => {
         contextCompressionEnabled: false,
         contextCompressionTriggerChars: 24000,
         contextCompressionModelId: null,
+        skillIds: [],
       })
 
       mockGetAIStreamResponse.mockImplementation(

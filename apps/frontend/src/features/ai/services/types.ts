@@ -40,6 +40,17 @@ export interface Tool {
   }
 }
 
+export interface AISkill {
+  id: string
+  name: string
+  prompt: string
+  description?: string
+  aliases?: string[]
+  path?: string
+  resources?: string[]
+  allowImplicitInvocation?: boolean
+}
+
 export type AssistantMode = 'default' | 'teaching'
 
 export type TeachingQuizKind = 'single_choice' | 'multi_choice' | 'short_answer'
@@ -113,6 +124,8 @@ export interface AIRequestOptions {
   thinkingEffort?: 'low' | 'medium' | 'high'
   contextSummary?: string
   memorySnapshot?: string[]
+  skills?: AISkill[]
+  activeSkills?: AISkill[]
   tools?: Tool[]
   toolChoice?: 'none' | 'auto' | 'required' | { type: 'function'; function: { name: string } }
   abortSignal?: AbortSignal

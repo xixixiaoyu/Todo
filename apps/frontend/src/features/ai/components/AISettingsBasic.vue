@@ -2,6 +2,7 @@
 import { onMounted, useId, computed, toRefs } from 'vue'
 import { useGsap } from '@/composables/useGsap'
 import { type AIConfig, type AIPreset } from '@/features/ai/composables/useAIConfig'
+import type { AISkill } from '@/features/ai/services/types'
 import AISettingsDiscussionCard from './AISettingsDiscussionCard.vue'
 import AISettingsApiSection from './AISettingsApiSection.vue'
 import AISettingsParameterSection from './AISettingsParameterSection.vue'
@@ -10,6 +11,7 @@ import AISettingsContextCompressionSection from './AISettingsContextCompressionS
 const props = withDefaults(
   defineProps<{
     presets: AIPreset[]
+    skills: AISkill[]
     mode?: 'basic' | 'contextCompression'
   }>(),
   {
@@ -17,7 +19,7 @@ const props = withDefaults(
   },
 )
 
-const { presets } = toRefs(props)
+const { presets, skills } = toRefs(props)
 
 const formData = defineModel<AIConfig>({ required: true })
 
@@ -82,6 +84,7 @@ onMounted(() => {
           v-model="formData"
           :temperature-id="temperatureId"
           :system-prompt-id="systemPromptId"
+          :skills="skills"
         />
       </div>
     </template>

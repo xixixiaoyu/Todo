@@ -188,6 +188,8 @@ export async function getMultiModelDiscussionStream(
         aiConfig.assistantMode,
         options.contextSummary,
         options.memorySnapshot,
+        options.skills,
+        options.activeSkills,
       )
 
       const response = await fetchNonStreamResponse(
