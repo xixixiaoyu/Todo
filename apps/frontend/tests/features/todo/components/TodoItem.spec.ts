@@ -55,6 +55,8 @@ import { createPinia, setActivePinia } from 'pinia'
 import TodoItem from '@/features/todo/components/TodoItem.vue'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useTodoStore, type Todo } from '@/features/todo/stores/todo'
+import { common } from '@/i18n/locales/zh-CN/common'
+import { todo } from '@/i18n/locales/zh-CN/todo'
 
 // Mock vue-i18n
 const i18n = createI18n({
@@ -62,24 +64,8 @@ const i18n = createI18n({
   locale: 'zh-CN',
   messages: {
     'zh-CN': {
-      todo: {
-        editPlaceholder: '编辑待办事项',
-        save: '保存',
-        cancel: '取消',
-        edit: '编辑',
-        addSubtask: '添加子任务',
-        breakdown: 'AI 拆解',
-        focus: '专注',
-        pin: '置顶',
-        schedule: '截止/提醒',
-        delete: '删除',
-        overdue: '已逾期',
-      },
-      common: {
-        delete: '删除',
-        expand: '展开',
-        collapse: '收起',
-      },
+      todo,
+      common,
     },
   },
 })
