@@ -475,7 +475,7 @@ describe('useTodoStore - Actions', () => {
   })
 
   describe('updateTodoSchedule', () => {
-    it('should set recurrence rule and timezone when dueAt is provided', () => {
+    it('should set recurrence rule, timezone, and preserve the provided reminder time', () => {
       store.todos = [
         {
           id: '1',
@@ -500,6 +500,29 @@ describe('useTodoStore - Actions', () => {
       expect(result).toBe(true)
       expect(store.todos[0].recurrenceRule).toBe('DAILY')
       expect(typeof store.todos[0].recurrenceTz).toBe('string')
+      expect(store.todos[0].remindAt).toStrictEqual(new Date('2026-03-17T08:30:00.000Z'))
+    })
+
+    it('should allow reminder-only schedules when dueAt is omitted', () => {
+      store.todos = [
+        {
+          id: '1',
+          title: 'T1',
+          completed: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          order: 0,
+          version: 0,
+          pomodoroCount: 0,
+        },
+      ]
+
+      const result = store.updateTodoSchedule('1', null, new Date('2026-03-17T08:30:00.000Z'))
+
+      expect(result).toBe(true)
+      expect(store.todos[0].dueAt).toBeUndefined()
+      expect(store.todos[0].remindAt).toStrictEqual(new Date('2026-03-17T08:30:00.000Z'))
     })
 
     it('should reject recurrence rule without dueAt', () => {
@@ -546,6 +569,7 @@ describe('useTodoStore - Actions', () => {
 
       expect(result).toBe(true)
       expect(store.todos[0].dueAt).toBeUndefined()
+      expect(store.todos[0].remindAt).toBeUndefined()
       expect(store.todos[0].recurrenceRule).toBeNull()
       expect(store.todos[0].recurrenceTz).toBeNull()
     })

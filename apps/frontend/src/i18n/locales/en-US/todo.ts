@@ -52,6 +52,7 @@ export const todo = {
   overdue: 'Overdue',
   noDueAt: 'Not set',
   remindAt: 'Remind',
+  remindAtAuto: 'Reminder defaults to the due time',
   noReminder: 'No reminder',
   remindAtOptional: 'Reminder (Optional)',
   addReminder: 'Add reminder',

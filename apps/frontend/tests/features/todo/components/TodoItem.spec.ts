@@ -161,6 +161,28 @@ describe('TodoItem', () => {
     expect(wrapper.text()).toContain('已逾期')
   })
 
+  it('should render the due badge in the primary row when it is the only meta info', () => {
+    const dueOnlyTodo: Todo = {
+      ...mockTodo,
+      dueAt: new Date(2026, 2, 27, 16, 5),
+    }
+
+    const wrapper = mount(TodoItem, {
+      props: {
+        todo: dueOnlyTodo,
+        allTodos: [dueOnlyTodo],
+        editingId: null,
+        editingTitle: '',
+      },
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    expect(wrapper.find('[data-test="todo-due-badge"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="todo-secondary-meta"]').exists()).toBe(false)
+  })
+
   it('should not render invalid date text for malformed dueAt', () => {
     const malformedDueTodo: Todo = {
       ...mockTodo,
@@ -206,6 +228,30 @@ describe('TodoItem', () => {
     const reminderBadge = wrapper.find('.lucide-bell').element.closest('div')
     expect(reminderBadge).not.toBeNull()
     expect(reminderBadge?.className).toContain('text-destructive')
+  })
+
+  it('should hide the reminder badge when it matches the due time', () => {
+    const dueAt = new Date('2026-03-22T10:00:00.000Z')
+    const todoWithDefaultReminder: Todo = {
+      ...mockTodo,
+      dueAt,
+      remindAt: new Date(dueAt),
+    }
+
+    const wrapper = mount(TodoItem, {
+      props: {
+        todo: todoWithDefaultReminder,
+        allTodos: [todoWithDefaultReminder],
+        editingId: null,
+        editingTitle: '',
+      },
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    expect(wrapper.find('.lucide-calendar-clock').exists()).toBe(true)
+    expect(wrapper.find('.lucide-bell').exists()).toBe(false)
   })
 
   it('should show only more menu trigger by default on mobile', () => {
@@ -255,12 +301,12 @@ describe('TodoItem', () => {
 
     expect(wrapper.text()).toContain('置顶')
     expect(wrapper.text()).toContain('专注')
-    expect(wrapper.text()).toContain('截止/提醒')
+    expect(wrapper.text()).toContain('时间设置')
     expect(wrapper.text()).toContain('删除')
 
     const actionText = wrapper.text()
-    expect(actionText.indexOf('专注')).toBeLessThan(actionText.indexOf('截止/提醒'))
-    expect(actionText.indexOf('截止/提醒')).toBeLessThan(actionText.indexOf('编辑'))
+    expect(actionText.indexOf('专注')).toBeLessThan(actionText.indexOf('时间设置'))
+    expect(actionText.indexOf('时间设置')).toBeLessThan(actionText.indexOf('编辑'))
     expect(actionText.indexOf('编辑')).toBeLessThan(actionText.indexOf('添加子任务'))
     expect(actionText.indexOf('添加子任务')).toBeLessThan(actionText.indexOf('置顶'))
     expect(actionText.indexOf('置顶')).toBeLessThan(actionText.indexOf('AI 拆解'))

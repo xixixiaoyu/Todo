@@ -370,11 +370,13 @@ export function createTodoMutations(deps: TodoMutationDeps): {
       return false
     }
 
+    const nextDueAt = dueAt ? new Date(dueAt) : null
+    const nextReminderAt = remindAt ? new Date(remindAt) : null
     const prevRemindAt = toDate(todo.remindAt)?.getTime() ?? null
-    const nextRemindAt = remindAt ? remindAt.getTime() : null
+    const nextRemindAt = nextReminderAt ? nextReminderAt.getTime() : null
 
-    todo.dueAt = dueAt || undefined
-    todo.remindAt = remindAt || undefined
+    todo.dueAt = nextDueAt || undefined
+    todo.remindAt = nextReminderAt || undefined
     if (recurrenceRule !== undefined) {
       todo.recurrenceRule = recurrenceRule || null
       if (todo.recurrenceRule) {

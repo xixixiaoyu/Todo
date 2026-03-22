@@ -130,11 +130,16 @@ describe('TodoItemActions', () => {
 
   it('renders desktop actions and toggles pin from the desktop toolbar', async () => {
     const wrapper = mountComponent()
+    const desktopActions = wrapper.get('[data-test="desktop-actions"]')
 
     expect(wrapper.find('.lucide-more-horizontal').exists()).toBe(false)
     expect(wrapper.find('.lucide-pin').exists()).toBe(true)
     expect(wrapper.text()).toContain('专注')
-    expect(wrapper.text()).toContain('截止/提醒')
+    expect(wrapper.text()).toContain('时间设置')
+    expect(desktopActions.classes()).toContain('invisible')
+    expect(desktopActions.classes()).toContain('opacity-0')
+    expect(desktopActions.classes()).toContain('group-hover:visible')
+    expect(desktopActions.classes()).toContain('group-focus-within:visible')
 
     const pinButton = wrapper
       .findAll('button')

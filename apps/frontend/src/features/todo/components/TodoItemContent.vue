@@ -8,6 +8,7 @@ import { type Todo, useTodoStore } from '../stores/todo'
 import { highlightMatch } from '@/lib/utils'
 import dayjs, { formatDate, formatRelativeTime } from '@/lib/dayjs'
 import { toDate } from '../stores/todo.dates'
+import { hasDistinctReminderTime } from '../stores/todo.schedule'
 
 const { t, locale } = useI18n()
 const store = useTodoStore()
@@ -33,7 +34,9 @@ const isOverdue = computed(() => {
 })
 
 const hasDueAt = computed(() => !!dueAtDate.value)
-const hasActiveReminder = computed(() => !!remindAtDate.value && !props.todo.remindedAt)
+const hasStandaloneReminder = computed(
+  () => !props.todo.remindedAt && hasDistinctReminderTime(props.todo.dueAt, props.todo.remindAt),
+)
 
 const isReminderOverdue = computed(() => {
   const remindAt = remindAtDate.value
@@ -42,14 +45,11 @@ const isReminderOverdue = computed(() => {
   return remindAt.getTime() < Date.now()
 })
 
-const hasMetaBadges = computed(() => {
+const hasSecondaryMetaBadges = computed(() => {
   if (store.filter === 'trash') return false
 
   return Boolean(
-    props.todo.pomodoroCount > 0 ||
-    hasDueAt.value ||
-    props.todo.recurrenceRule ||
-    hasActiveReminder.value,
+    props.todo.pomodoroCount > 0 || props.todo.recurrenceRule || hasStandaloneReminder.value,
   )
 })
 
@@ -65,6 +65,10 @@ const dueDisplay = computed(() => {
   if (!dueAtDate.value) return null
   return formatDate(dueAtDate.value, 'MM-DD HH:mm')
 })
+
+const showDueBadge = computed(
+  () => store.filter !== 'trash' && hasDueAt.value && !!dueDisplay.value,
+)
 
 const remindDisplay = computed(() => {
   const remindAt = remindAtDate.value
@@ -108,47 +112,45 @@ const remindRelativeDisplay = computed(() => {
 
     <!-- Todo Title & Badges -->
     <div class="flex min-w-0 flex-col gap-1">
-      <div class="flex min-w-0 items-center gap-1 md:gap-1.5">
-        <Pin
-          v-if="todo.isPinned && store.filter !== 'trash'"
-          class="h-3 w-3 shrink-0 text-primary/70 opacity-80 transition-opacity duration-200 group-hover:opacity-100 md:h-3.5 md:w-3.5"
-        />
-        <AiLuminaIcon
-          v-if="todo.isProposed && store.filter !== 'trash'"
-          class="h-3 w-3 shrink-0 text-success/70 md:h-3.5 md:w-3.5"
-        />
-        <!-- eslint-disable vue/no-v-html -->
-        <Tooltip>
-          <TooltipTrigger as-child>
-            <span
-              class="flex-1 cursor-pointer select-text truncate text-[var(--todo-font-body)] leading-[1.15] text-foreground"
-              :class="[
-                todo.completed && store.filter !== 'trash'
-                  ? 'line-through text-muted-foreground/50'
-                  : '',
-                todo.isProposedDelete ? 'line-through text-destructive/50' : '',
-                todo.isProposed && store.filter !== 'trash' ? 'font-medium text-success/90' : '',
-              ]"
-              @dblclick="store.filter !== 'trash' && emit('startEdit')"
-              v-html="highlightMatch(todo.title, searchQuery || '')"
-            >
-            </span>
-          </TooltipTrigger>
-          <TooltipContent side="top" align="start" class="max-w-[300px] break-words">
-            {{ todo.title }}
-          </TooltipContent>
-        </Tooltip>
-        <!-- eslint-enable vue/no-v-html -->
-      </div>
+      <div class="flex min-w-0 items-center gap-2 md:gap-2.5">
+        <div class="flex min-w-0 flex-1 items-center gap-1 md:gap-1.5">
+          <Pin
+            v-if="todo.isPinned && store.filter !== 'trash'"
+            class="h-3 w-3 shrink-0 text-primary/70 opacity-80 transition-opacity duration-200 group-hover:opacity-100 md:h-3.5 md:w-3.5"
+          />
+          <AiLuminaIcon
+            v-if="todo.isProposed && store.filter !== 'trash'"
+            class="h-3 w-3 shrink-0 text-success/70 md:h-3.5 md:w-3.5"
+          />
+          <!-- eslint-disable vue/no-v-html -->
+          <Tooltip>
+            <TooltipTrigger as-child>
+              <span
+                class="flex-1 cursor-pointer select-text truncate text-[var(--todo-font-body)] leading-[1.15] text-foreground"
+                :class="[
+                  todo.completed && store.filter !== 'trash'
+                    ? 'line-through text-muted-foreground/50'
+                    : '',
+                  todo.isProposedDelete ? 'line-through text-destructive/50' : '',
+                  todo.isProposed && store.filter !== 'trash' ? 'font-medium text-success/90' : '',
+                ]"
+                @dblclick="store.filter !== 'trash' && emit('startEdit')"
+                v-html="highlightMatch(todo.title, searchQuery || '')"
+              >
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top" align="start" class="max-w-[300px] break-words">
+              {{ todo.title }}
+            </TooltipContent>
+          </Tooltip>
+          <!-- eslint-enable vue/no-v-html -->
+        </div>
 
-      <div
-        v-if="hasMetaBadges"
-        class="flex flex-wrap items-center gap-1 pl-0.5 text-[11px] md:gap-1.5 md:text-[var(--todo-font-caption)]"
-      >
-        <Tooltip v-if="hasDueAt && dueDisplay">
+        <Tooltip v-if="showDueBadge">
           <TooltipTrigger as-child>
             <div
-              class="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg px-1.5 py-[3px] font-semibold leading-none ring-1 ring-inset md:py-0.5"
+              data-test="todo-due-badge"
+              class="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 py-1 text-[11px] font-semibold leading-none ring-1 ring-inset md:text-[var(--todo-font-caption)]"
               :class="
                 isOverdue
                   ? 'bg-destructive/10 text-destructive ring-destructive/25'
@@ -159,7 +161,7 @@ const remindRelativeDisplay = computed(() => {
               <span>{{ dueDisplay }}</span>
               <span
                 v-if="isOverdue"
-                class="rounded bg-destructive/15 px-1 py-[1px] text-[10px] font-semibold leading-none tracking-wide"
+                class="rounded-full bg-destructive/15 px-1.5 py-[2px] text-[10px] font-semibold leading-none tracking-wide"
               >
                 {{ t('todo.overdue') }}
               </span>
@@ -167,8 +169,14 @@ const remindRelativeDisplay = computed(() => {
           </TooltipTrigger>
           <TooltipContent side="top">{{ t('todo.dueAt') }}</TooltipContent>
         </Tooltip>
+      </div>
 
-        <Tooltip v-if="hasActiveReminder && remindDisplay">
+      <div
+        v-if="hasSecondaryMetaBadges"
+        data-test="todo-secondary-meta"
+        class="flex flex-wrap items-center gap-1 pl-0.5 text-[11px] md:gap-1.5 md:text-[var(--todo-font-caption)]"
+      >
+        <Tooltip v-if="hasStandaloneReminder && remindDisplay">
           <TooltipTrigger as-child>
             <div
               class="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg border px-1.5 py-[3px] font-medium leading-none md:py-0.5"
