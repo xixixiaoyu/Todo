@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Input } from '@/components/ui/input'
 import type { McpServerFormState, McpAuthType } from './mcpServerForm.types'
@@ -16,6 +17,23 @@ const { t } = useI18n()
 function setAuthType(type: McpAuthType) {
   config.value.auth.type = type
 }
+
+const hasAuthInUrl = computed(() => {
+  try {
+    const parsed = new URL(config.value.url)
+    return Array.from(parsed.searchParams.keys()).some((key) => {
+      const normalizedKey = key.toLowerCase().replace(/[^a-z0-9]/g, '')
+      return (
+        normalizedKey.includes('apikey') ||
+        normalizedKey.includes('token') ||
+        normalizedKey.includes('accesskey') ||
+        normalizedKey.includes('auth')
+      )
+    })
+  } catch {
+    return false
+  }
+})
 </script>
 
 <template>
@@ -66,21 +84,28 @@ function setAuthType(type: McpAuthType) {
             class="flex gap-1 p-0.5 bg-background/80 rounded-xl border border-border/30 shadow-sm"
           >
             <button
-              v-for="t_auth in ['bearer', 'api_key'] as const"
-              :key="t_auth"
+              v-for="authOption in ['none', 'bearer', 'api_key'] as const"
+              :key="authOption"
               type="button"
               class="px-3 py-1 rounded-lg text-[10px] font-bold capitalize transition-all duration-300"
               :class="
-                config.auth.type === t_auth
+                config.auth.type === authOption
                   ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-105'
                   : 'text-muted-foreground/70 hover:text-foreground hover:bg-muted/50'
               "
-              @click="setAuthType(t_auth)"
+              @click="setAuthType(authOption)"
             >
-              {{ t_auth.replace('_', ' ') }}
+              {{ authOption === 'none' ? t('ai.mcpNoAuth') : authOption.replace('_', ' ') }}
             </button>
           </div>
         </div>
+
+        <p
+          v-if="hasAuthInUrl"
+          class="rounded-xl border border-primary/15 bg-primary/5 px-3 py-2 text-[10px] text-muted-foreground/75"
+        >
+          {{ t('ai.mcpUrlAuthHint') }}
+        </p>
 
         <!-- Auth Inputs -->
         <Transition
@@ -92,7 +117,13 @@ function setAuthType(type: McpAuthType) {
           leave-from-class="opacity-100 translate-y-0"
           leave-to-class="opacity-0 translate-y-2"
         >
-          <div v-if="config.auth.type === 'bearer'" class="space-y-2">
+          <div v-if="config.auth.type === 'none'" class="space-y-2">
+            <p class="text-[11px] text-muted-foreground/65 leading-relaxed">
+              {{ t('ai.mcpNoAuthDescription') }}
+            </p>
+          </div>
+
+          <div v-else-if="config.auth.type === 'bearer'" class="space-y-2">
             <label
               for="token"
               class="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-wider px-1"

@@ -211,7 +211,7 @@ defineOptions({
     v-bind="$attrs"
   >
     <div
-      class="relative flex h-full flex-col bg-card/40 backdrop-blur-3xl border-l border-primary/10 shadow-[-20px_0_50px_rgba(0,0,0,0.1)]"
+      class="relative flex h-full flex-col bg-card/40 backdrop-blur-3xl shadow-[-20px_0_50px_rgba(0,0,0,0.1)]"
     >
       <AiAssistantHeader
         :is-maximized="isMaximized"

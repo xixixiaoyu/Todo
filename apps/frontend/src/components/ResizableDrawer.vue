@@ -164,14 +164,12 @@ watch(
   background: hsl(var(--background) / 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-right: 1px solid hsl(var(--border) / 0.4);
   box-shadow: 10px 0 30px -15px rgba(0, 0, 0, 0.05);
   will-change: transform;
 }
 
 :root.dark .drawer {
   background: hsl(var(--background) / 0.8);
-  border-right: 1px solid hsl(var(--border) / 0.2);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
@@ -285,7 +283,7 @@ watch(
   background: hsl(var(--border) / 0.4);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  opacity: 1;
+  opacity: 0;
   transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
   pointer-events: none;
 }
@@ -297,6 +295,7 @@ watch(
   background: linear-gradient(to right, transparent, hsl(var(--primary) / 0.05) 50%, transparent);
   backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
+  opacity: 1;
 }
 
 .resize-handle:hover,

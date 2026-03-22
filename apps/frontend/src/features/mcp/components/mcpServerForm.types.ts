@@ -1,6 +1,6 @@
 import type { McpTransportType } from '@/features/mcp/api/mcp'
 
-export type McpAuthType = 'bearer' | 'api_key' | 'oauth'
+export type McpAuthType = 'none' | 'bearer' | 'api_key' | 'oauth'
 
 export interface McpServerFormState {
   name: string

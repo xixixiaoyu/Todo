@@ -365,11 +365,16 @@ export const ai = {
   mcpServerUrlHint: 'The endpoint URL of the remote MCP server',
   mcpAuth: 'Authentication',
   mcpAuthMethod: 'Method',
+  mcpNoAuth: 'No Auth',
+  mcpNoAuthDescription:
+    'Leave this as no auth when the server URL already contains credentials or the server does not require extra auth headers.',
   mcpAuthToken: 'Token',
   mcpAuthTokenPlaceholder: 'Paste your token here',
   mcpAuthApiKey: 'API Key',
   mcpAuthApiKeyPlaceholder: 'Your API Key',
   mcpAuthHeader: 'Header Name',
+  mcpUrlAuthHint:
+    'The URL appears to already include auth parameters, so the auth section below can stay empty.',
   mcpEditServer: 'Edit MCP Server',
   mcpCreateServer: 'Create MCP Server',
   mcpUpdateServer: 'Update Server',

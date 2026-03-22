@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { McpTransportType, type CreateMcpServerDto, type McpServerResponse } from '../api/mcp'
 import { Loader2 } from 'lucide-vue-next'
-import type { McpServerFormState } from './mcpServerForm.types'
+import type { McpServerFormState, McpAuthType } from './mcpServerForm.types'
 import McpServerFormBaseInfo from './McpServerFormBaseInfo.vue'
 import McpServerTransportSelector from './McpServerTransportSelector.vue'
 import McpServerStdioConfig from './McpServerStdioConfig.vue'
@@ -37,7 +37,7 @@ const getDefaultForm = (): McpServerFormState => ({
     url: '',
     headers: {} as Record<string, string>,
     auth: {
-      type: 'bearer' as 'bearer' | 'api_key' | 'oauth',
+      type: 'none' as McpAuthType,
       token: '',
       apiKey: '',
       apiKeyHeader: 'X-API-Key',
@@ -70,11 +70,13 @@ onMounted(() => {
       if (config.auth) {
         const auth = config.auth as Record<string, unknown>
         form.value.config.auth = {
-          type: auth.type as 'bearer' | 'api_key' | 'oauth',
+          type: auth.type as McpAuthType,
           token: (auth.token as string) || '',
           apiKey: (auth.apiKey as string) || '',
           apiKeyHeader: (auth.apiKeyHeader as string) || 'X-API-Key',
         }
+      } else {
+        form.value.config.auth = getDefaultForm().config.auth
       }
     }
   }
@@ -118,7 +120,8 @@ function handleSubmit() {
                 ? form.value.config.headers
                 : undefined,
             auth:
-              form.value.config.auth.token || form.value.config.auth.apiKey
+              form.value.config.auth.type !== 'none' &&
+              (form.value.config.auth.token || form.value.config.auth.apiKey)
                 ? {
                     type: form.value.config.auth.type,
                     token: form.value.config.auth.token || undefined,

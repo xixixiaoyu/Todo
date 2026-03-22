@@ -35,9 +35,12 @@ vi.mock('vue-i18n', () => ({
         'ai.mcpServerUrlPlaceholder': 'HTTPS Required',
         'ai.mcpAuth': 'Authentication',
         'ai.mcpAuthMethod': 'Auth Method',
+        'ai.mcpNoAuth': 'No Auth',
+        'ai.mcpNoAuthDescription': 'No auth required',
         'ai.mcpAuthToken': 'Token',
         'ai.mcpAuthApiKey': 'API Key',
         'ai.mcpAuthHeader': 'Header',
+        'ai.mcpUrlAuthHint': 'URL already includes auth parameters',
         'ai.mcpStdioDescription': 'Standard Input/Output',
         'ai.mcpHttpDescription': 'HTTP SSE',
         'common.cancel': 'Cancel',
@@ -108,6 +111,49 @@ describe('McpServerForm.vue', () => {
     await stdioBtn?.trigger('click')
     await nextTick()
     expect(wrapper.find('input#command').exists()).toBe(true)
+  })
+
+  it('defaults HTTP auth to no auth and omits auth from submit when left empty', async () => {
+    const wrapper = mount(McpServerForm)
+
+    const httpBtn = wrapper.findAll('button').find((b) => b.text().includes('HTTP'))
+
+    await httpBtn?.trigger('click')
+    await nextTick()
+
+    expect(wrapper.text()).toContain('No Auth')
+    expect(wrapper.text()).toContain('No auth required')
+
+    await wrapper.find('input#name').setValue('HTTP Server')
+    await wrapper.find('input#url').setValue('https://mcp.tavily.com/mcp')
+
+    const submitBtn = wrapper
+      .findAll('button')
+      .find((b) => b.text().includes('Update') || b.text().includes('Create'))
+    await submitBtn?.trigger('click')
+    await nextTick()
+
+    const emissions = wrapper.emitted('submit')
+    const submitData = emissions?.[0][0] as unknown as CreateMcpServerDto
+
+    expect(submitData.transport).toBe(McpTransportType.HTTP)
+    expect('auth' in submitData.config ? submitData.config.auth : undefined).toBeUndefined()
+  })
+
+  it('shows auth hint when URL already contains auth-like query params', async () => {
+    const wrapper = mount(McpServerForm)
+
+    const httpBtn = wrapper.findAll('button').find((b) => b.text().includes('HTTP'))
+
+    await httpBtn?.trigger('click')
+    await nextTick()
+
+    await wrapper
+      .find('input#url')
+      .setValue('https://mcp.tavily.com/mcp?tavilyApiKey=tvly-dev-example')
+    await nextTick()
+
+    expect(wrapper.text()).toContain('URL already includes auth parameters')
   })
 
   it('emits submit event with correct data', async () => {
