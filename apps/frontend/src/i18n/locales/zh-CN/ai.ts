@@ -305,6 +305,7 @@ export const ai = {
   mcpServerDescription: '连接本地或远程工具',
   mcpConnected: '已连接',
   mcpDisconnected: '未连接',
+  mcpConnectOnUse: '待使用时连接',
   mcpConnect: '连接',
   mcpDisconnect: '断开连接',
   mcpTools: '工具集',

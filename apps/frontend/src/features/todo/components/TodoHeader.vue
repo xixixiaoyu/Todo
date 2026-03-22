@@ -74,9 +74,13 @@ const openAiAssistant = () => {
         {{ t('common.appName') }}
         <Badge
           variant="outline"
-          class="h-4.5 border-primary/15 bg-primary/5 px-1.5 text-[var(--todo-font-caption)] font-medium uppercase tracking-[0.08em] text-primary/65 select-none"
+          class="h-6 rounded-full border-primary/12 bg-background/90 px-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_10px_20px_-16px_hsl(var(--primary)/0.55)] backdrop-blur-sm select-none"
         >
-          {{ t('common.beta') }}
+          <span
+            aria-hidden="true"
+            class="h-1.5 w-1.5 rounded-full bg-primary/55 shadow-[0_0_0_3px_hsl(var(--primary)/0.1)]"
+          />
+          <span class="translate-y-[0.5px]">{{ t('common.beta') }}</span>
         </Badge>
       </h1>
     </div>

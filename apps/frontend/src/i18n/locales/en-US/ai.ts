@@ -331,6 +331,7 @@ export const ai = {
   mcpServerDescription: 'Connect to local or remote tools',
   mcpConnected: 'Connected',
   mcpDisconnected: 'Disconnected',
+  mcpConnectOnUse: 'Connects on use',
   mcpConnect: 'Connect',
   mcpDisconnect: 'Disconnect',
   mcpTools: 'Tools',

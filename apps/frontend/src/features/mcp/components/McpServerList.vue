@@ -132,7 +132,7 @@ function getStatusStyle(server: McpServerResponse) {
   return {
     dot: 'bg-muted-foreground/30',
     text: 'text-muted-foreground/60',
-    label: t('ai.mcpDisconnected'),
+    label: t('ai.mcpConnectOnUse'),
   }
 }
 
