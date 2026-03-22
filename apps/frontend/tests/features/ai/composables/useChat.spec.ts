@@ -720,22 +720,45 @@ describe('useChat', () => {
       expect(firstCall).toBeDefined()
 
       const sentMessages = firstCall[0]
-      // Current implementation uses background compression (fire-and-forget),
-      // so the first request sends full history while compression starts in background.
-      expect(sentMessages).toHaveLength(3)
+      expect(sentMessages).toHaveLength(1)
       expect(sentMessages[0].role).toBe('user')
-      expect(sentMessages[0].content).toBe('old user message long long long')
+      expect(sentMessages[0].content).toBe('new message')
 
       const sentOptions = firstCall[4] as { contextSummary?: string } | undefined
-      // Summary is not yet available for this request
-      expect(sentOptions?.contextSummary).toBeUndefined()
-
-      // Wait for background compression to trigger
-      await vi.waitUntil(() => mockUpdateSessionContextSummary.mock.calls.length > 0)
+      expect(sentOptions?.contextSummary).toBe('summary')
       expect(mockUpdateSessionContextSummary).toHaveBeenCalledWith('s1', {
         summary: 'summary',
         untilMessageId: 'a1',
       })
+    })
+
+    it('should use live memory injection instead of stale session snapshot', async () => {
+      mockIsMemoryEnabled.value = true
+      mockMemories.value = ['Live Memory']
+
+      mockCurrentSession.value = {
+        id: 's1',
+        title: 'T1',
+        messages: [],
+        memorySnapshot: ['Stale Memory'],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+
+      mockGetAIStreamResponse.mockImplementation(
+        async (_messages: ChatMessage[], onChunk: OnChunk) => {
+          onChunk('ok')
+          onChunk('[DONE]')
+        },
+      )
+
+      const { sendMessage } = useChat()
+      await sendMessage('test message')
+
+      const firstCall = mockGetAIStreamResponse.mock.calls[0]
+      const sentOptions = firstCall?.[4] as { memorySnapshot?: string[] } | undefined
+
+      expect(sentOptions?.memorySnapshot).toBeUndefined()
     })
 
     it('should not parse streaming todo actions when todo assistant is disabled', async () => {

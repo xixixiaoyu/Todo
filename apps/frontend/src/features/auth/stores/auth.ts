@@ -3,6 +3,8 @@ import { ref, computed } from 'vue'
 import { authApi } from '../api'
 import { setToken } from '@/api'
 import { unwrapApiResponse, type User, type LoginInput, type RegisterInput } from '@lumina/shared'
+import { emitAiStorageScopeChanged } from '@/features/ai/composables/aiStorageScope'
+import { requestAnonymousAiMigration } from '@/features/ai/composables/useAiAnonymousMigration'
 
 const refreshRetryDelayMs = 300
 const refreshMaxAttempts = 2
@@ -57,10 +59,13 @@ export const useAuthStore = defineStore(
           user: user.value,
         }),
       )
+
+      emitAiStorageScopeChanged(user.value?.id || null)
     }
 
     function clearPersistedAuth(): void {
       localStorage.removeItem('auth')
+      emitAiStorageScopeChanged(null)
     }
 
     function isUnauthorizedError(e: unknown): boolean {
@@ -162,6 +167,7 @@ export const useAuthStore = defineStore(
         const { useTodoStore } = await import('@/features/todo/stores/todo')
         const todoStore = useTodoStore()
         await todoStore.mergeOnLogin(payload.user.id)
+        requestAnonymousAiMigration(payload.user.id)
 
         return true
       } catch (e: unknown) {
@@ -194,6 +200,7 @@ export const useAuthStore = defineStore(
         const { useTodoStore } = await import('@/features/todo/stores/todo')
         const todoStore = useTodoStore()
         await todoStore.mergeOnLogin(payload.user.id)
+        requestAnonymousAiMigration(payload.user.id)
 
         return true
       } catch (e: unknown) {

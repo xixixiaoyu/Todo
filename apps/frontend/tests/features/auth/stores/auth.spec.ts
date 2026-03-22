@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useAuthStore } from '@/features/auth/stores/auth'
 import { authApi } from '@/features/auth/api'
+import { requestAnonymousAiMigration } from '@/features/ai/composables/useAiAnonymousMigration'
 import type { User, LoginInput, RegisterInput } from '@lumina/shared'
 
 // Mock authApi
@@ -23,6 +24,10 @@ vi.mock('@/features/todo/stores/todo', () => ({
     mergeOnLogin: vi.fn().mockResolvedValue(undefined),
     clearRemoteOnLogout: vi.fn(),
   })),
+}))
+
+vi.mock('@/features/ai/composables/useAiAnonymousMigration', () => ({
+  requestAnonymousAiMigration: vi.fn(),
 }))
 
 describe('useAuthStore', () => {
@@ -96,6 +101,7 @@ describe('useAuthStore', () => {
         refreshToken: 'refresh-token',
         user: mockUser,
       })
+      expect(requestAnonymousAiMigration).toHaveBeenCalledWith(mockUser.id)
     })
 
     it('should handle login failure', async () => {
@@ -165,6 +171,7 @@ describe('useAuthStore', () => {
         refreshToken: 'refresh-token',
         user: mockUser,
       })
+      expect(requestAnonymousAiMigration).toHaveBeenCalledWith(mockUser.id)
     })
 
     it('should handle register failure', async () => {

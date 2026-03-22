@@ -352,7 +352,12 @@ export function injectSystemPrompts(
   }
 
   const { memories, isMemoryEnabled } = useMemory()
-  const currentMemories = memorySnapshot || (isMemoryEnabled.value ? memories.value : [])
+  const currentMemories =
+    memorySnapshot && memorySnapshot.length > 0
+      ? memorySnapshot
+      : isMemoryEnabled.value
+        ? memories.value
+        : []
 
   if (currentMemories.length > 0) {
     systemBlocks.push({

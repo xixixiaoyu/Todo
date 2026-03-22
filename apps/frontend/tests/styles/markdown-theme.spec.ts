@@ -20,4 +20,14 @@ describe('markdown theme styles', () => {
       'linear-gradient(0deg, hsl(var(--primary) / 0.08), hsl(var(--primary) / 0.08)),',
     )
   })
+
+  it('keeps primary reading text fully opaque for better stroke clarity', () => {
+    expect(markdownCss).toContain(
+      '@apply text-[15px] font-medium leading-[1.75] subpixel-antialiased;',
+    )
+    expect(markdownCss).toContain('.markdown-table td {\n  @apply px-5 py-3 text-left font-medium;')
+    expect(markdownCss).not.toContain('color: hsl(var(--foreground) / 0.92);')
+    expect(markdownCss).not.toContain('color: hsl(var(--foreground) / 0.9);')
+    expect(markdownCss).not.toContain('color: hsl(var(--foreground) / 0.88);')
+  })
 })

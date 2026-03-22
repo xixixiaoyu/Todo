@@ -5,6 +5,11 @@ import {
   _loadSessions,
 } from '@/features/ai/composables/useChatHistory'
 import type { ChatSession } from '@/features/ai/composables/useChatHistory'
+import { _resetMemory } from '@/features/ai/composables/useMemory'
+import {
+  buildAiScopedStorageKey,
+  emitAiStorageScopeChanged,
+} from '@/features/ai/composables/aiStorageScope'
 
 /**
  * 模拟从 localStorage 解析出的会话类型（Date 变为 string）
@@ -33,6 +38,7 @@ describe('useChatHistory', () => {
     vi.useFakeTimers()
     localStorage.clear()
     _resetChatHistory()
+    _resetMemory()
   })
 
   it('should persist new session after creation and reload', async () => {
@@ -47,10 +53,10 @@ describe('useChatHistory', () => {
 
     // 验证是否保存到 localStorage
     const savedSessions = JSON.parse(
-      localStorage.getItem('ai-chat-sessions') || '[]',
+      localStorage.getItem(buildAiScopedStorageKey('ai-chat-sessions')) || '[]',
     ) as SerializedChatSession[]
     expect(savedSessions.some((s) => s.id === sessionId)).toBe(true)
-    expect(localStorage.getItem('ai-chat-current-session')).toBe(sessionId)
+    expect(localStorage.getItem(buildAiScopedStorageKey('ai-chat-current-session'))).toBe(sessionId)
 
     // 2. 模拟页面刷新 (重新加载)
     _resetChatHistory()
@@ -68,11 +74,11 @@ describe('useChatHistory', () => {
     const sessionId = session.id
 
     // 现在 currentSessionId 的 watcher 是 sync 的，且 createSession 也会立即调用 saveSessions(true)
-    expect(localStorage.getItem('ai-chat-current-session')).toBe(sessionId)
+    expect(localStorage.getItem(buildAiScopedStorageKey('ai-chat-current-session'))).toBe(sessionId)
 
     // 验证是否已立即保存到 sessions 列表
     const savedSessions = JSON.parse(
-      localStorage.getItem('ai-chat-sessions') || '[]',
+      localStorage.getItem(buildAiScopedStorageKey('ai-chat-sessions')) || '[]',
     ) as SerializedChatSession[]
     expect(savedSessions.some((s) => s.id === sessionId)).toBe(true)
 
@@ -95,7 +101,7 @@ describe('useChatHistory', () => {
 
     // 验证此时 localStorage 还没有更新消息（因为节流）
     const savedSessionsBefore = JSON.parse(
-      localStorage.getItem('ai-chat-sessions') || '[]',
+      localStorage.getItem(buildAiScopedStorageKey('ai-chat-sessions')) || '[]',
     ) as SerializedChatSession[]
     const sessionBefore = savedSessionsBefore.find((s) => s.id === session.id)
     expect(sessionBefore?.messages.length).toBe(0)
@@ -105,7 +111,7 @@ describe('useChatHistory', () => {
 
     // 验证此时 localStorage 已经更新
     const savedSessionsAfter = JSON.parse(
-      localStorage.getItem('ai-chat-sessions') || '[]',
+      localStorage.getItem(buildAiScopedStorageKey('ai-chat-sessions')) || '[]',
     ) as SerializedChatSession[]
     const sessionAfter = savedSessionsAfter.find((s) => s.id === session.id)
     expect(sessionAfter?.messages.length).toBe(1)
@@ -219,5 +225,54 @@ describe('useChatHistory', () => {
 
     deleteSession(s3.id)
     expect(currentSessionId.value).toBe(s1.id)
+  })
+
+  it('should reload chat sessions when active user changes', () => {
+    const user1Sessions = [
+      {
+        id: 'user-1-session',
+        title: 'User 1',
+        messages: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ]
+    const user2Sessions = [
+      {
+        id: 'user-2-session',
+        title: 'User 2',
+        messages: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ]
+
+    localStorage.setItem('auth', JSON.stringify({ user: { id: 'user-1' } }))
+    localStorage.setItem(
+      buildAiScopedStorageKey('ai-chat-sessions', 'user-1'),
+      JSON.stringify(user1Sessions),
+    )
+    localStorage.setItem(
+      buildAiScopedStorageKey('ai-chat-current-session', 'user-1'),
+      'user-1-session',
+    )
+
+    _loadSessions()
+
+    const { currentSessionId } = useChatHistory()
+    expect(currentSessionId.value).toBe('user-1-session')
+
+    localStorage.setItem('auth', JSON.stringify({ user: { id: 'user-2' } }))
+    localStorage.setItem(
+      buildAiScopedStorageKey('ai-chat-sessions', 'user-2'),
+      JSON.stringify(user2Sessions),
+    )
+    localStorage.setItem(
+      buildAiScopedStorageKey('ai-chat-current-session', 'user-2'),
+      'user-2-session',
+    )
+    emitAiStorageScopeChanged('user-2')
+
+    expect(currentSessionId.value).toBe('user-2-session')
   })
 })

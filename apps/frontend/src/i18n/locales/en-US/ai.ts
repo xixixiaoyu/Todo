@@ -401,6 +401,22 @@ export const ai = {
   memoryImportSuccess: 'Successfully imported {count} memory snippets',
   memoryImportError: 'Failed to import memory, please check the file format',
   memoryExportSuccess: 'Memory exported successfully',
+  anonymousMigrationTitle: 'Import Guest AI Data',
+  anonymousMigrationDescriptionBoth:
+    'Guest AI data was found on this device: {memoryCount} memory snippets and {sessionCount} chat sessions. You can import everything now, or import only memories and keep the chats separate for the moment.',
+  anonymousMigrationDescriptionMemoryOnly:
+    'Guest AI memory was found on this device: {memoryCount} memory snippets. Import them into the current account so future replies keep these preferences and background details?',
+  anonymousMigrationDescriptionSessionOnly:
+    'Guest AI chat history was found on this device: {sessionCount} chat sessions. Import them into the current account and continue the conversation?',
+  anonymousMigrationImportAll: 'Import Memories and Chats',
+  anonymousMigrationImportMemoryOnly: 'Import Memories Only',
+  anonymousMigrationLater: 'Maybe Later',
+  anonymousMigrationReopenAction: 'Continue Import',
+  anonymousMigrationDeferred: 'Guest AI data was kept on this device. You can import it later.',
+  anonymousMigrationSuccess:
+    'Imported guest AI data: {memoryCount} memory snippets and {sessionCount} sessions',
+  anonymousMigrationMemoryOnlySuccess: 'Imported guest AI memories: {memoryCount} memory snippets',
+  anonymousMigrationError: 'Failed to import guest AI data. Please try again later.',
   uploadImage: 'Upload Image',
   removeImage: 'Remove Image',
   maxImagesReached: 'Maximum {count} images allowed',

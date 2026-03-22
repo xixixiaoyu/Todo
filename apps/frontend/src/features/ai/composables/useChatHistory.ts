@@ -3,6 +3,12 @@ import i18n from '@/i18n'
 import { generateId } from '@/features/ai/services/aiService'
 import type { ChatMessage } from '@/features/ai/services/aiService'
 import { useMemory } from './useMemory'
+import {
+  AI_STORAGE_SCOPE_CHANGE_EVENT,
+  getAiScopedStorageItem,
+  setAiScopedStorageItem,
+  removeAiScopedStorageItem,
+} from './aiStorageScope'
 
 export interface ChatSession {
   id: string
@@ -42,9 +48,9 @@ function compareSessionsByPriority(a: ChatSession, b: ChatSession): number {
  */
 function saveCurrentSessionId(id: string | null): void {
   if (id) {
-    localStorage.setItem(CURRENT_SESSION_KEY, id)
+    setAiScopedStorageItem(CURRENT_SESSION_KEY, id)
   } else {
-    localStorage.removeItem(CURRENT_SESSION_KEY)
+    removeAiScopedStorageItem(CURRENT_SESSION_KEY)
   }
 }
 
@@ -53,9 +59,9 @@ function saveCurrentSessionId(id: string | null): void {
  */
 function saveLastActiveSessionId(id: string | null): void {
   if (id) {
-    localStorage.setItem(LAST_ACTIVE_SESSION_KEY, id)
+    setAiScopedStorageItem(LAST_ACTIVE_SESSION_KEY, id)
   } else {
-    localStorage.removeItem(LAST_ACTIVE_SESSION_KEY)
+    removeAiScopedStorageItem(LAST_ACTIVE_SESSION_KEY)
   }
 }
 
@@ -63,8 +69,17 @@ function saveLastActiveSessionId(id: string | null): void {
  * 从 localStorage 加载会话列表
  */
 function loadSessions(): void {
+  if (saveTimer) {
+    clearTimeout(saveTimer)
+    saveTimer = null
+  }
+
+  sessions.value = []
+  currentSessionId.value = null
+  lastActiveSessionId.value = null
+
   try {
-    const saved = localStorage.getItem(SESSIONS_STORAGE_KEY)
+    const saved = getAiScopedStorageItem(SESSIONS_STORAGE_KEY)
     if (saved) {
       const parsed = JSON.parse(saved)
       sessions.value = parsed.map((s: ChatSession) => ({
@@ -84,7 +99,7 @@ function loadSessions(): void {
     }
 
     // 加载当前会话 ID
-    const savedCurrentId = localStorage.getItem(CURRENT_SESSION_KEY)
+    const savedCurrentId = getAiScopedStorageItem(CURRENT_SESSION_KEY)
     if (savedCurrentId && sessions.value.some((s) => s.id === savedCurrentId)) {
       currentSessionId.value = savedCurrentId
     } else if (sessions.value.length > 0) {
@@ -96,7 +111,7 @@ function loadSessions(): void {
     }
 
     // 加载上一个激活的会话 ID
-    const savedLastId = localStorage.getItem(LAST_ACTIVE_SESSION_KEY)
+    const savedLastId = getAiScopedStorageItem(LAST_ACTIVE_SESSION_KEY)
     if (savedLastId && sessions.value.some((s) => s.id === savedLastId)) {
       lastActiveSessionId.value = savedLastId
     }
@@ -154,7 +169,7 @@ function saveSessions(immediate = false): void {
           messages: s.messages.map(sanitizeMessageForStorage),
         })),
       )
-      localStorage.setItem(SESSIONS_STORAGE_KEY, data)
+      setAiScopedStorageItem(SESSIONS_STORAGE_KEY, data)
     } catch (e) {
       if (e instanceof Error && e.name === 'QuotaExceededError') {
         console.warn('会话历史保存失败：存储配额已满。尝试清理旧数据...')
@@ -200,6 +215,19 @@ if (typeof window !== 'undefined') {
 
   // 监听会话列表变化自动保存
   watch(sessions, () => saveSessions(), { deep: true })
+
+  window.addEventListener(AI_STORAGE_SCOPE_CHANGE_EVENT, loadSessions)
+  window.addEventListener('storage', (event) => {
+    if (
+      event.key === 'auth' ||
+      event.key === null ||
+      event.key.startsWith(`${SESSIONS_STORAGE_KEY}::`) ||
+      event.key.startsWith(`${CURRENT_SESSION_KEY}::`) ||
+      event.key.startsWith(`${LAST_ACTIVE_SESSION_KEY}::`)
+    ) {
+      loadSessions()
+    }
+  })
 }
 
 // 监听当前会话变化，更新上一个激活的会话并立即保存 ID
@@ -270,7 +298,8 @@ export function useChatHistory() {
       id: generateId(),
       title: i18n.global.t('ai.newChat'),
       messages: [],
-      memorySnapshot: isMemoryEnabled.value ? [...memories.value] : [],
+      memorySnapshot:
+        isMemoryEnabled.value && memories.value.length > 0 ? [...memories.value] : undefined,
       createdAt: new Date(),
       updatedAt: new Date(),
       isAutoTitle: true,
@@ -410,9 +439,9 @@ export function useChatHistory() {
     currentSessionId.value = null
     lastActiveSessionId.value = null
     // 强制清理 localStorage
-    localStorage.removeItem(SESSIONS_STORAGE_KEY)
-    localStorage.removeItem(CURRENT_SESSION_KEY)
-    localStorage.removeItem(LAST_ACTIVE_SESSION_KEY)
+    removeAiScopedStorageItem(SESSIONS_STORAGE_KEY)
+    removeAiScopedStorageItem(CURRENT_SESSION_KEY)
+    removeAiScopedStorageItem(LAST_ACTIVE_SESSION_KEY)
     saveSessions(true) // 立即同步状态
   }
 

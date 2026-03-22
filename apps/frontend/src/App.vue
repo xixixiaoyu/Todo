@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 import { useTodoStore } from '@/features/todo/stores/todo'
 import ToastProvider from '@/components/ui/ToastProvider.vue'
+import AIAnonymousMigrationDialog from '@/features/ai/components/AIAnonymousMigrationDialog.vue'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { nativeService } from '@/services/native'
 import { useTheme } from '@/composables/useTheme'
@@ -50,6 +51,7 @@ const handleDblClick = () => {
       </main>
 
       <ToastProvider />
+      <AIAnonymousMigrationDialog />
     </div>
   </TooltipProvider>
 </template>

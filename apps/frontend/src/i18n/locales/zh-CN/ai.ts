@@ -384,6 +384,21 @@ export const ai = {
   memoryImportSuccess: '成功导入 {count} 条记忆片段',
   memoryImportError: '导入记忆失败，请检查文件格式',
   memoryExportSuccess: '记忆已成功导出',
+  anonymousMigrationTitle: '导入游客 AI 数据',
+  anonymousMigrationDescriptionBoth:
+    '检测到当前设备上仍有游客阶段的 AI 数据：{memoryCount} 条记忆、{sessionCount} 个对话会话。你可以一次性导入全部内容，也可以只导入记忆，先保持对话分离。',
+  anonymousMigrationDescriptionMemoryOnly:
+    '检测到当前设备上仍有游客阶段的 {memoryCount} 条 AI 记忆。是否导入到当前账号，让后续回复继续沿用这些偏好与背景？',
+  anonymousMigrationDescriptionSessionOnly:
+    '检测到当前设备上仍有游客阶段的 {sessionCount} 个 AI 对话会话。是否导入到当前账号，并继续刚才那段对话？',
+  anonymousMigrationImportAll: '导入记忆与对话',
+  anonymousMigrationImportMemoryOnly: '仅导入记忆',
+  anonymousMigrationLater: '稍后再说',
+  anonymousMigrationReopenAction: '继续导入',
+  anonymousMigrationDeferred: '已保留游客 AI 数据，你可以稍后继续导入。',
+  anonymousMigrationSuccess: '已导入游客 AI 数据：{memoryCount} 条记忆，{sessionCount} 个会话',
+  anonymousMigrationMemoryOnlySuccess: '已导入游客 AI 记忆：{memoryCount} 条',
+  anonymousMigrationError: '导入游客 AI 数据失败，请稍后重试',
   uploadImage: '上传图片',
   removeImage: '删除图片',
   maxImagesReached: '最多允许上传 {count} 张图片',

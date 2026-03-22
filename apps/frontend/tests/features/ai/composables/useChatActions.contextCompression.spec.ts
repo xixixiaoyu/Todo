@@ -38,7 +38,7 @@ describe('createContextCompression', () => {
     vi.clearAllMocks()
   })
 
-  it('should await in-flight compression and return trimmed messages', async () => {
+  it('should await in-flight compression and protect the current request with summary', async () => {
     let resolveCompression: ((value: { content: string }) => void) | undefined
     const compressionPromise = new Promise<{ content: string }>((resolve) => {
       resolveCompression = resolve
@@ -74,25 +74,26 @@ describe('createContextCompression', () => {
       { id: 'u2', role: 'user', content: 'new message long long long' },
     ]
 
-    const first = await buildContextCompression(messages)
-    expect(first.messagesForRequest).toHaveLength(3)
-
     let settled = false
-    const secondPromise = buildContextCompression(messages).then((result) => {
+    const firstPromise = buildContextCompression(messages).then((result) => {
       settled = true
       return result
     })
+    const secondPromise = buildContextCompression(messages)
     await Promise.resolve()
     expect(settled).toBe(false)
 
     expect(resolveCompression).toBeDefined()
     resolveCompression!({ content: 'summary' })
+    const first = await firstPromise
     const second = await secondPromise
 
     expect(updateSessionContextSummary).toHaveBeenCalledWith('s1', {
       summary: 'summary',
       untilMessageId: 'a1',
     })
+    expect(first.contextSummary).toBe('summary')
+    expect(first.messagesForRequest.length).toBeLessThan(messages.length)
     expect(second.contextSummary).toBe('summary')
     expect(second.messagesForRequest.length).toBeLessThan(messages.length)
     expect(vi.mocked(getAIStaticResponse)).toHaveBeenCalledTimes(1)

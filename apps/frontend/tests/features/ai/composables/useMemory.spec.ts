@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { useMemory, _resetMemory } from '@/features/ai/composables/useMemory'
+import {
+  buildAiScopedStorageKey,
+  emitAiStorageScopeChanged,
+} from '@/features/ai/composables/aiStorageScope'
 
 vi.mock('@/features/ai/services/aiService', () => ({
   getAIStaticResponse: vi.fn(),
@@ -94,7 +98,7 @@ describe('useMemory', () => {
     expect(isMemoryEnabled.value).toBe(false) // default false
     toggleMemory(true)
     expect(isMemoryEnabled.value).toBe(true)
-    expect(localStorage.getItem('ai-memory-enabled')).toBe('true')
+    expect(localStorage.getItem(buildAiScopedStorageKey('ai-memory-enabled'))).toBe('true')
   })
 
   it('should compress memories using AI', async () => {
@@ -108,6 +112,41 @@ describe('useMemory', () => {
 
     expect(mockGetAIStaticResponse).toHaveBeenCalled()
     expect(memories.value).toEqual(['Compressed 1', 'Compressed 2'])
+  })
+
+  it('should ignore invalid items returned by memory compression', async () => {
+    const { memories, addMemories, compressMemories } = useMemory()
+    const { getAIStaticResponse } = await import('@/features/ai/services/aiService')
+    const mockGetAIStaticResponse = vi.mocked(getAIStaticResponse)
+    mockGetAIStaticResponse.mockResolvedValue({
+      content: '["Compressed 1", 123, null, "  ", "Compressed 2"]',
+    })
+
+    addMemories(['M1', 'M2', 'M3', 'M4'])
+    await compressMemories()
+
+    expect(memories.value).toEqual(['Compressed 1', 'Compressed 2'])
+  })
+
+  it('should reload namespaced memories when active user changes', () => {
+    localStorage.setItem(
+      buildAiScopedStorageKey('ai-memories', 'user-1'),
+      JSON.stringify(['User 1 Memory']),
+    )
+    localStorage.setItem(
+      buildAiScopedStorageKey('ai-memories', 'user-2'),
+      JSON.stringify(['User 2 Memory']),
+    )
+    localStorage.setItem('auth', JSON.stringify({ user: { id: 'user-1' } }))
+    _resetMemory()
+
+    const { memories } = useMemory()
+    expect(memories.value).toEqual(['User 1 Memory'])
+
+    localStorage.setItem('auth', JSON.stringify({ user: { id: 'user-2' } }))
+    emitAiStorageScopeChanged('user-2')
+
+    expect(memories.value).toEqual(['User 2 Memory'])
   })
 
   describe('Import/Export', () => {
