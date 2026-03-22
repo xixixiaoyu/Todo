@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { httpClient } from '@/api'
 import {
   _resetSkillRuntimeConfig,
   getSkillRuntimeConfig,
@@ -6,6 +7,7 @@ import {
 import type { AISkill } from '@/features/ai/services/aiService'
 import type { McpToolResponse } from '@/features/mcp/api/mcp'
 import {
+  callSkillHttpRuntime,
   buildSkillRuntimeTools,
   getSkillRuntimeAvailability,
   getSkillRuntimeSecretDefinitions,
@@ -128,6 +130,10 @@ describe('skill runtime tools', () => {
     vi.clearAllMocks()
     localStorage.clear()
     _resetSkillRuntimeConfig()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it('registers generic HTTP runtime tools from skill runtime definitions', () => {
@@ -302,6 +308,52 @@ describe('skill runtime tools', () => {
       }),
     ).rejects.toThrow('Missing required skill runtime secret: Finance API Key')
     expect(executeHttpRuntime).not.toHaveBeenCalled()
+  })
+
+  it('calls the skill runtime proxy endpoint and unwraps the response', async () => {
+    const postSpy = vi.spyOn(httpClient, 'post').mockResolvedValue({
+      data: {
+        success: true,
+        data: {
+          ok: true,
+        },
+        timestamp: new Date().toISOString(),
+      },
+    } as never)
+
+    await expect(
+      callSkillHttpRuntime({
+        skillName: 'finance-lookup',
+        runtime: {
+          type: 'http',
+          request: {
+            url: 'https://api.example.com/finance',
+            timeoutMs: 2500,
+          },
+        },
+        arguments: {
+          query: 'latest finance headlines',
+        },
+        secrets: {
+          financeApiKey: 'finance-secret',
+        },
+      }),
+    ).resolves.toEqual({
+      ok: true,
+    })
+
+    expect(postSpy).toHaveBeenCalledWith(
+      '/skills/runtime/http',
+      expect.objectContaining({
+        skillName: 'finance-lookup',
+        runtime: expect.objectContaining({
+          type: 'http',
+        }),
+      }),
+      {
+        timeout: 2500,
+      },
+    )
   })
 
   it('calls an MCP runtime target with mapped arguments', async () => {
