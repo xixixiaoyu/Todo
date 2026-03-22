@@ -295,12 +295,30 @@
 }
 
 .markdown-content strong {
-  @apply mx-0.5 font-bold;
+  @apply font-bold;
   color: hsl(var(--foreground));
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    transparent 58%,
+    hsl(var(--primary) / 0.22) 58%,
+    hsl(var(--primary) / 0.22) 92%,
+    transparent 92%
+  );
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 
 .dark .markdown-content strong {
-  @apply text-primary font-bold;
+  color: hsl(var(--foreground));
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    transparent 56%,
+    hsl(var(--primary) / 0.28) 56%,
+    hsl(var(--primary) / 0.28) 94%,
+    transparent 94%
+  );
 }
 
 .markdown-content em {

@@ -30,4 +30,18 @@ describe('markdown theme styles', () => {
     expect(markdownCss).not.toContain('color: hsl(var(--foreground) / 0.9);')
     expect(markdownCss).not.toContain('color: hsl(var(--foreground) / 0.88);')
   })
+
+  it('keeps strong text understated with a primary-tinted underline emphasis', () => {
+    expect(markdownCss).toContain('.markdown-content strong {\n  @apply font-bold;')
+    expect(markdownCss).toContain('color: hsl(var(--foreground));')
+    expect(markdownCss).toContain(
+      'transparent 58%,\n    hsl(var(--primary) / 0.22) 58%,\n    hsl(var(--primary) / 0.22) 92%,\n    transparent 92%',
+    )
+    expect(markdownCss).toContain('box-decoration-break: clone;')
+    expect(markdownCss).toContain(
+      'transparent 56%,\n    hsl(var(--primary) / 0.28) 56%,\n    hsl(var(--primary) / 0.28) 94%,\n    transparent 94%',
+    )
+    expect(markdownCss).not.toContain('rounded-[0.4rem]')
+    expect(markdownCss).not.toContain('text-shadow: 0 1px 0 hsl(var(--background) / 0.55);')
+  })
 })
