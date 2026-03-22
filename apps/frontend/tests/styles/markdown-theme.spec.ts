@@ -1,0 +1,23 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { describe, expect, it } from 'vitest'
+
+const markdownCss = readFileSync(resolve(process.cwd(), 'src/styles/markdown.css'), 'utf8')
+
+describe('markdown theme styles', () => {
+  it('uses theme tokens instead of hardcoded warm surfaces', () => {
+    expect(markdownCss).toContain('border: 1px solid hsl(var(--border));')
+    expect(markdownCss).toContain('hsl(var(--card));')
+    expect(markdownCss).not.toMatch(
+      /#(?:e8e4dd|dcd8ce|eeebe4|f4f2eb|faf8f4|fdfcfb|fcfbf9|6b5c4d|4a3f35|5a4c3d|8b8680)/i,
+    )
+  })
+
+  it('tints markdown tables and blockquotes with the active primary color', () => {
+    expect(markdownCss).toContain('background-color: hsl(var(--primary) / 0.04);')
+    expect(markdownCss).toContain('border-left: 4px solid hsl(var(--primary));')
+    expect(markdownCss).toContain(
+      'linear-gradient(0deg, hsl(var(--primary) / 0.08), hsl(var(--primary) / 0.08)),',
+    )
+  })
+})

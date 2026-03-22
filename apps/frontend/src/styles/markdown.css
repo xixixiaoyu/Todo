@@ -4,35 +4,59 @@
 
 /* 代码块容器 */
 .code-block-container {
-  @apply my-6 overflow-hidden rounded-xl border border-[#e8e4dd] bg-[#fafafa] shadow-sm transition-all;
+  @apply my-6 overflow-hidden rounded-xl shadow-sm transition-all;
+  border: 1px solid hsl(var(--border));
+  background:
+    linear-gradient(0deg, hsl(var(--primary) / 0.03), hsl(var(--primary) / 0.03)), hsl(var(--card));
 }
 
 .dark .code-block-container {
-  @apply border-[#2d2d2d]/80 bg-[#1e1e22]/90 shadow-2xl backdrop-blur-md;
+  @apply shadow-2xl backdrop-blur-md;
+  border-color: hsl(var(--border));
+  background:
+    linear-gradient(0deg, hsl(var(--primary) / 0.08), hsl(var(--primary) / 0.08)), hsl(var(--card));
 }
 
 .code-block-header {
-  @apply flex items-center justify-between border-b border-[#e8e4dd] bg-[#f5f5f5] px-4 py-2;
+  @apply flex items-center justify-between px-4 py-2;
+  border-bottom: 1px solid hsl(var(--border));
+  background:
+    linear-gradient(0deg, hsl(var(--primary) / 0.05), hsl(var(--primary) / 0.05)),
+    hsl(var(--secondary));
 }
 
 .dark .code-block-header {
-  @apply border-[#2d2d2d]/50 bg-[#252529]/80;
+  background:
+    linear-gradient(0deg, hsl(var(--primary) / 0.1), hsl(var(--primary) / 0.1)),
+    hsl(var(--secondary));
 }
 
 .code-language {
-  @apply flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-[#8b8680];
+  @apply flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider;
+  color: hsl(var(--muted-foreground));
 }
 
 .dark .code-language {
-  @apply text-[#a0a0a0]/70;
+  color: hsl(var(--muted-foreground));
 }
 
 .code-copy-button {
-  @apply flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px] font-bold text-[#8b8680] transition-all hover:bg-[#e8e4dd] hover:text-[#6b5c4d] active:scale-95;
+  @apply flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px] font-bold transition-all active:scale-95;
+  color: hsl(var(--muted-foreground));
 }
 
 .dark .code-copy-button {
-  @apply text-[#808080] hover:bg-white/5 hover:text-[#c0c0c0];
+  color: hsl(var(--muted-foreground));
+}
+
+.code-copy-button:hover {
+  background-color: hsl(var(--primary) / 0.08);
+  color: hsl(var(--foreground));
+}
+
+.dark .code-copy-button:hover {
+  background-color: hsl(var(--primary) / 0.16);
+  color: hsl(var(--foreground));
 }
 
 .code-copy-button .check-icon {
@@ -62,7 +86,7 @@
 .code-content {
   @apply m-0 overflow-x-auto p-4;
   scrollbar-width: thin;
-  scrollbar-color: #e8e4dd transparent;
+  scrollbar-color: hsl(var(--border)) transparent;
 }
 
 .dark .code-content {
@@ -86,12 +110,17 @@
 
 /* 数学公式 */
 .math-block {
-  @apply my-6 overflow-x-auto text-center py-6 px-4 rounded-xl bg-[#faf8f4]/50 border border-[#e8e4dd]/40;
+  @apply my-6 overflow-x-auto rounded-xl px-4 py-6 text-center;
+  border: 1px solid hsl(var(--border) / 0.72);
+  background:
+    linear-gradient(0deg, hsl(var(--primary) / 0.03), hsl(var(--primary) / 0.03)), hsl(var(--card));
   scrollbar-width: thin;
 }
 
 .dark .math-block {
-  @apply bg-[#1e1e1e]/50 border-[#3a3a3a]/40;
+  border-color: hsl(var(--border));
+  background:
+    linear-gradient(0deg, hsl(var(--primary) / 0.08), hsl(var(--primary) / 0.08)), hsl(var(--card));
 }
 
 .math-inline {
@@ -105,20 +134,33 @@
 
 /* 引用块 */
 .markdown-blockquote {
-  @apply my-6 border-l-[4px] border-primary bg-[#fdfcfb] py-3.5 pl-5 pr-4 italic text-[#6b5c4d] rounded-r-xl shadow-[inset_1px_0_0_rgba(0,0,0,0.02)];
+  @apply my-6 rounded-r-xl py-3.5 pl-5 pr-4 italic shadow-[inset_1px_0_0_rgba(0,0,0,0.02)];
+  border-left: 4px solid hsl(var(--primary));
+  background:
+    linear-gradient(0deg, hsl(var(--primary) / 0.06), hsl(var(--primary) / 0.06)), hsl(var(--card));
+  color: hsl(var(--foreground) / 0.88);
 }
 
 .dark .markdown-blockquote {
-  @apply border-primary/60 bg-[#1a1a1a] text-[#a0a0a0] shadow-none;
+  @apply shadow-none;
+  border-left-color: hsl(var(--primary) / 0.7);
+  background:
+    linear-gradient(0deg, hsl(var(--primary) / 0.12), hsl(var(--primary) / 0.12)), hsl(var(--card));
+  color: hsl(var(--foreground) / 0.82);
 }
 
 /* 表格 */
 .table-container {
-  @apply my-6 overflow-hidden rounded-xl border border-[#dcd8ce] bg-white shadow-sm;
+  @apply my-6 overflow-hidden rounded-xl shadow-sm;
+  border: 1px solid hsl(var(--border));
+  background:
+    linear-gradient(0deg, hsl(var(--primary) / 0.02), hsl(var(--primary) / 0.02)), hsl(var(--card));
 }
 
 .dark .table-container {
-  @apply border-[#444] bg-[#1e1e1e];
+  border-color: hsl(var(--border));
+  background:
+    linear-gradient(0deg, hsl(var(--primary) / 0.08), hsl(var(--primary) / 0.08)), hsl(var(--card));
 }
 
 .markdown-table {
@@ -126,19 +168,31 @@
 }
 
 .markdown-table th {
-  @apply bg-[#f4f2eb] font-bold text-[#4a3f35] px-5 py-3 text-left border-b border-[#dcd8ce];
+  @apply px-5 py-3 text-left font-bold;
+  border-bottom: 1px solid hsl(var(--border));
+  background:
+    linear-gradient(0deg, hsl(var(--primary) / 0.08), hsl(var(--primary) / 0.08)),
+    hsl(var(--secondary));
+  color: hsl(var(--foreground));
 }
 
 .markdown-table td {
-  @apply px-5 py-3 text-left border-b border-[#eeebe4] text-[#444];
+  @apply px-5 py-3 text-left;
+  border-bottom: 1px solid hsl(var(--border) / 0.72);
+  color: hsl(var(--foreground) / 0.9);
 }
 
 .dark .markdown-table th {
-  @apply bg-[#2a2a2a] text-[#d0d0d0] border-[#444];
+  border-color: hsl(var(--border));
+  background:
+    linear-gradient(0deg, hsl(var(--primary) / 0.14), hsl(var(--primary) / 0.14)),
+    hsl(var(--secondary));
+  color: hsl(var(--foreground));
 }
 
 .dark .markdown-table td {
-  @apply border-[#333] text-[#b0b0b0];
+  border-color: hsl(var(--border) / 0.92);
+  color: hsl(var(--foreground) / 0.86);
 }
 
 .markdown-table tr:last-child td {
@@ -146,27 +200,29 @@
 }
 
 .markdown-table tr:hover td {
-  @apply bg-[#fcfbf9];
+  background-color: hsl(var(--primary) / 0.04);
 }
 
 .dark .markdown-table tr:hover td {
-  @apply bg-[#222];
+  background-color: hsl(var(--primary) / 0.08);
 }
 
 /* Markdown 内容样式 */
 .markdown-content {
-  @apply text-[15px] leading-[1.75] text-[#3a3a3a] antialiased font-medium;
+  @apply text-[15px] font-medium leading-[1.75] antialiased;
+  color: hsl(var(--foreground) / 0.92);
 }
 
 .dark .markdown-content {
-  @apply text-[#d1d1d1];
+  color: hsl(var(--foreground) / 0.92);
 }
 
 .markdown-content h1 {
-  @apply mb-4 mt-8 text-2xl font-bold text-[#2a2a2a] flex items-center gap-3 tracking-tight;
+  @apply mb-4 mt-8 flex items-center gap-3 text-2xl font-bold tracking-tight;
+  color: hsl(var(--foreground));
 }
 .dark .markdown-content h1 {
-  @apply text-[#ececec];
+  color: hsl(var(--foreground));
 }
 .markdown-content h1::before {
   content: '';
@@ -174,28 +230,33 @@
 }
 
 .markdown-content h2 {
-  @apply mb-4 mt-7 text-xl font-bold text-[#2a2a2a] border-b border-[#e8e4dd]/60 pb-2 tracking-tight;
+  @apply mb-4 mt-7 border-b pb-2 text-xl font-bold tracking-tight;
+  border-color: hsl(var(--border));
+  color: hsl(var(--foreground));
 }
 .dark .markdown-content h2 {
-  @apply text-[#ececec] border-[#3a3a3a];
+  border-color: hsl(var(--border));
+  color: hsl(var(--foreground));
 }
 
 .markdown-content h3 {
-  @apply mb-3 mt-6 text-lg font-bold text-[#3a3a3a] tracking-tight;
+  @apply mb-3 mt-6 text-lg font-bold tracking-tight;
+  color: hsl(var(--foreground));
 }
 .dark .markdown-content h3 {
-  @apply text-[#ececec];
+  color: hsl(var(--foreground));
 }
 
 .markdown-content h4,
 .markdown-content h5,
 .markdown-content h6 {
-  @apply mb-3 mt-5 font-bold text-[#3a3a3a] tracking-tight;
+  @apply mb-3 mt-5 font-bold tracking-tight;
+  color: hsl(var(--foreground));
 }
 .dark .markdown-content h4,
 .dark .markdown-content h5,
 .dark .markdown-content h6 {
-  @apply text-[#ececec];
+  color: hsl(var(--foreground));
 }
 
 .markdown-content p {
@@ -225,15 +286,17 @@
 }
 
 .markdown-content hr {
-  @apply my-6 border-none h-px bg-gradient-to-r from-transparent via-[#dcd8ce] to-transparent opacity-100;
+  @apply my-6 h-px border-none opacity-100;
+  background: linear-gradient(to right, transparent, hsl(var(--border)), transparent);
 }
 
 .dark .markdown-content hr {
-  @apply via-[#4a4a4a];
+  background: linear-gradient(to right, transparent, hsl(var(--border)), transparent);
 }
 
 .markdown-content strong {
-  @apply font-bold text-[#2a2a2a] mx-0.5;
+  @apply mx-0.5 font-bold;
+  color: hsl(var(--foreground));
 }
 
 .dark .markdown-content strong {
@@ -241,19 +304,27 @@
 }
 
 .markdown-content em {
-  @apply italic text-[#5a4c3d] px-0.5;
+  @apply px-0.5 italic;
+  color: hsl(var(--muted-foreground));
 }
 
 .dark .markdown-content em {
-  @apply text-[#b0b0b0];
+  color: hsl(var(--muted-foreground));
 }
 
 .markdown-content blockquote {
-  @apply my-6 border-l-[4px] border-primary/60 bg-[#faf8f4] py-3.5 pl-5 pr-4 italic text-[#6b5c4d] rounded-r-xl;
+  @apply my-6 rounded-r-xl py-3.5 pl-5 pr-4 italic;
+  border-left: 4px solid hsl(var(--primary) / 0.7);
+  background:
+    linear-gradient(0deg, hsl(var(--primary) / 0.06), hsl(var(--primary) / 0.06)), hsl(var(--card));
+  color: hsl(var(--foreground) / 0.88);
 }
 
 .dark .markdown-content blockquote {
-  @apply border-primary/40 bg-[#1e1e1e] text-[#a0a0a0];
+  border-left-color: hsl(var(--primary) / 0.5);
+  background:
+    linear-gradient(0deg, hsl(var(--primary) / 0.12), hsl(var(--primary) / 0.12)), hsl(var(--card));
+  color: hsl(var(--foreground) / 0.82);
 }
 
 .markdown-content del {
@@ -262,16 +333,24 @@
 
 /* Mermaid 图表基础样式 */
 .mermaid-container {
-  @apply relative my-6 overflow-hidden rounded-xl border border-[#e8e4dd] bg-white shadow-sm transition-all duration-300;
+  @apply relative my-6 overflow-hidden rounded-xl shadow-sm transition-all duration-300;
+  border: 1px solid hsl(var(--border));
+  background:
+    linear-gradient(0deg, hsl(var(--primary) / 0.02), hsl(var(--primary) / 0.02)), hsl(var(--card));
 }
 
 .dark .mermaid-container {
-  @apply border-[#2d2d2d]/80 bg-[#1e1e22]/90 shadow-2xl backdrop-blur-md;
+  @apply shadow-2xl backdrop-blur-md;
+  border-color: hsl(var(--border));
+  background:
+    linear-gradient(0deg, hsl(var(--primary) / 0.08), hsl(var(--primary) / 0.08)), hsl(var(--card));
 }
 
 /* 缩放控制按钮 */
 .mermaid-zoom-controls {
-  @apply absolute right-3 top-3 z-10 flex gap-1 rounded-lg bg-white/90 p-1.5 shadow-sm backdrop-blur transition-all duration-300 opacity-0 translate-y-[-4px] pointer-events-none hover:bg-white;
+  @apply pointer-events-none absolute right-3 top-3 z-10 flex translate-y-[-4px] gap-1 rounded-lg p-1.5 opacity-0 shadow-sm backdrop-blur transition-all duration-300;
+  border: 1px solid hsl(var(--border) / 0.72);
+  background-color: hsl(var(--card) / 0.92);
 }
 
 .mermaid-container:hover .mermaid-zoom-controls {
@@ -279,23 +358,39 @@
 }
 
 .dark .mermaid-zoom-controls {
-  @apply bg-[#2a2a2a]/90 hover:bg-[#2a2a2a];
+  background-color: hsl(var(--card) / 0.92);
+}
+
+.mermaid-zoom-controls:hover {
+  background-color: hsl(var(--card));
 }
 
 .mermaid-zoom-btn {
-  @apply flex h-8 w-8 items-center justify-center rounded-md text-base text-[#6b5c4d] transition-all hover:bg-[#f5f3ed] active:scale-90;
+  @apply flex h-8 w-8 items-center justify-center rounded-md text-base transition-all active:scale-90;
+  color: hsl(var(--muted-foreground));
 }
 
 .mermaid-zoom-divider {
-  @apply mx-1 h-4 w-px bg-[#e8e4dd] self-center;
+  @apply mx-1 h-4 w-px self-center;
+  background-color: hsl(var(--border));
 }
 
 .dark .mermaid-zoom-divider {
-  @apply bg-[#3a3a3a];
+  background-color: hsl(var(--border));
 }
 
 .dark .mermaid-zoom-btn {
-  @apply text-[#a0a0a0] hover:bg-[#3a3a3a];
+  color: hsl(var(--muted-foreground));
+}
+
+.mermaid-zoom-btn:hover {
+  background-color: hsl(var(--primary) / 0.08);
+  color: hsl(var(--foreground));
+}
+
+.dark .mermaid-zoom-btn:hover {
+  background-color: hsl(var(--primary) / 0.16);
+  color: hsl(var(--foreground));
 }
 
 .mermaid-diagram {
@@ -326,7 +421,8 @@
 }
 
 .mermaid-loading {
-  @apply text-sm text-[#8b8680];
+  @apply text-sm;
+  color: hsl(var(--muted-foreground));
 }
 
 .mermaid-error {
