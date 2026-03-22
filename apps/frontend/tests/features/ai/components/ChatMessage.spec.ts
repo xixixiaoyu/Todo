@@ -220,6 +220,31 @@ describe('ChatMessage', () => {
     expect(wrapper.find('.thinking-content').exists()).toBe(true)
   })
 
+  it('should keep the thinking icon anchored and render sheen while streaming', async () => {
+    const message = {
+      id: '1',
+      role: 'assistant' as const,
+      content: '',
+      thinkingContent: '正在分析...',
+      isStreaming: true,
+    }
+
+    const wrapper = mount(ChatMessage, {
+      props: { message },
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    await flushPromises()
+
+    const iconShell = wrapper.find('.thinking-icon-shell')
+    expect(iconShell.exists()).toBe(true)
+    expect(iconShell.classes()).toContain('thinking-icon-shell--active')
+    expect(wrapper.find('.thinking-icon-sheen').exists()).toBe(true)
+    expect(iconShell.classes()).not.toContain('animate-ai-float')
+  })
+
   it('should show structured block loading states while streaming', () => {
     const message: ChatMessageType = {
       id: '1',

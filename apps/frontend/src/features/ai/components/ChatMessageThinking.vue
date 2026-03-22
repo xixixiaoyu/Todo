@@ -132,10 +132,11 @@ watch([() => props.message.thinkingContent, () => props.message.reasoning_detail
     >
       <h4 class="flex items-center gap-2">
         <div
-          class="flex items-center justify-center text-primary/80"
-          :class="{ 'animate-ai-float': isStreaming && !hasContent }"
+          class="thinking-icon-shell flex h-5 w-5 items-center justify-center text-primary/80"
+          :class="{ 'thinking-icon-shell--active': isStreaming && !hasContent }"
         >
-          <AiLuminaIcon :size="14" />
+          <span v-if="isStreaming && !hasContent" aria-hidden="true" class="thinking-icon-sheen" />
+          <AiLuminaIcon :size="14" class="relative z-[1]" />
         </div>
         <span
           class="font-medium tracking-wide transition-all duration-300 leading-none"
@@ -194,6 +195,37 @@ watch([() => props.message.thinkingContent, () => props.message.reasoning_detail
 </template>
 
 <style scoped>
+.thinking-icon-shell {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 9999px;
+  transform: translateZ(0);
+  will-change: opacity, filter;
+}
+
+.thinking-icon-shell--active {
+  background: radial-gradient(circle at center, hsla(var(--primary) / 0.18), transparent 72%);
+  animation: thinking-icon-glow 2.8s ease-in-out infinite;
+}
+
+.thinking-icon-sheen {
+  position: absolute;
+  inset: -45%;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 32%,
+    hsla(var(--primary) / 0.03) 43%,
+    hsla(var(--primary) / 0.52) 50%,
+    hsla(var(--primary) / 0.03) 57%,
+    transparent 68%
+  );
+  mix-blend-mode: screen;
+  filter: blur(1px);
+  animation: thinking-icon-sheen 3.2s linear infinite;
+}
+
 .thinking-text {
   max-height: 260px;
   overflow-y: auto;
@@ -227,5 +259,37 @@ watch([() => props.message.thinkingContent, () => props.message.reasoning_detail
   background-color: rgba(0, 0, 0, 0.05);
   padding: 0.1em 0.3em;
   border-radius: 3px;
+}
+
+@keyframes thinking-icon-glow {
+  0%,
+  100% {
+    opacity: 0.86;
+    filter: drop-shadow(0 0 2px hsla(var(--primary) / 0.18));
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 10px hsla(var(--primary) / 0.38));
+  }
+}
+
+@keyframes thinking-icon-sheen {
+  0% {
+    transform: translateX(-155%) rotate(10deg);
+    opacity: 0;
+  }
+  18% {
+    opacity: 0;
+  }
+  42% {
+    opacity: 0.95;
+  }
+  62% {
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(155%) rotate(10deg);
+    opacity: 0;
+  }
 }
 </style>
