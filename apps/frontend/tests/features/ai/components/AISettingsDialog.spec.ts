@@ -298,6 +298,41 @@ describe('AISettingsDialog', () => {
     expect(wrapper.findComponent({ name: 'AIPresetManager' }).exists()).toBe(true)
   })
 
+  it('renders tabs in the expected priority order', () => {
+    const wrapper = mount(AISettingsDialog, {
+      props: {
+        modelValue: true,
+      },
+      global: {
+        stubs: {
+          teleport: true,
+          'transition-root': {
+            template: '<div><slot /></div>',
+          },
+          'transition-child': {
+            template: '<div><slot /></div>',
+          },
+        },
+      },
+    })
+
+    const expectedTabs = [
+      'ai.basicSettings',
+      'ai.presetManagement',
+      'ai.memory',
+      'ai.contextCompression',
+      'ai.skills',
+      'ai.mcp',
+    ]
+
+    const renderedTabs = wrapper
+      .findAll('button')
+      .map((button) => button.text())
+      .filter((text) => expectedTabs.includes(text))
+
+    expect(renderedTabs).toEqual(expectedTabs)
+  })
+
   it('syncs current settings to active preset from settings tab', async () => {
     mockPresets.value = [
       {

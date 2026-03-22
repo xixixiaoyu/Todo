@@ -24,15 +24,23 @@ import AIPresetManager from './AIPresetManager.vue'
 import AISkillManager from './AISkillManager.vue'
 import McpSettingsManager from '@/features/mcp/components/McpSettingsManager.vue'
 
+type SettingsTab = 'settings' | 'presets' | 'skills' | 'memory' | 'mcp' | 'contextCompression'
+
+const orderedTabs: SettingsTab[] = [
+  'settings',
+  'presets',
+  'memory',
+  'contextCompression',
+  'skills',
+  'mcp',
+]
+
 const props = defineProps<{
-  initialTab?: 'settings' | 'presets' | 'skills' | 'memory' | 'mcp' | 'contextCompression'
+  initialTab?: SettingsTab
 }>()
 
 const emit = defineEmits<{
-  (
-    e: 'update:initialTab',
-    tab: 'settings' | 'presets' | 'skills' | 'memory' | 'mcp' | 'contextCompression',
-  ): void
+  (e: 'update:initialTab', tab: SettingsTab): void
 }>()
 
 const modelValue = defineModel<boolean>({ required: true })
@@ -56,9 +64,13 @@ const {
 const presetManagerRef = ref<InstanceType<typeof AIPresetManager> | null>(null)
 
 // 当前 Tab
-const activeTab = ref<'settings' | 'presets' | 'skills' | 'memory' | 'mcp' | 'contextCompression'>(
-  props.initialTab || 'settings',
-)
+const activeTab = ref<SettingsTab>(props.initialTab || 'settings')
+
+function getTabLabelKey(tab: SettingsTab) {
+  if (tab === 'settings') return 'ai.basicSettings'
+  if (tab === 'presets') return 'ai.presetManagement'
+  return `ai.${tab}`
+}
 
 // 监听内部 Tab 变化并通知外部
 watch(activeTab, (newTab) => {
@@ -267,31 +279,27 @@ defineExpose({
           v-if="modelValue"
           class="flex h-full w-full flex-col rounded-2xl bg-background shadow-2xl transition-all duration-300 sm:h-auto sm:max-h-[80vh] sm:max-w-lg sm:border sm:border-border/50"
         >
-          <!-- 顶部区域：艺术化 Header -->
-          <div class="relative flex shrink-0 flex-col overflow-hidden">
-            <!-- 多层弥散背景，营造温润感 -->
+          <!-- 顶部区域：紧凑 Header -->
+          <div
+            class="relative flex shrink-0 flex-col overflow-hidden border-b border-border/50 bg-gradient-to-b from-primary/5 via-background to-background"
+          >
             <div class="absolute inset-0 bg-muted/5" />
-            <div
-              class="absolute inset-0 bg-gradient-to-b from-primary/8 via-primary/2 to-transparent"
-            />
-            <div class="absolute top-0 left-1/4 h-24 w-1/2 bg-primary/5 blur-[40px]" />
+            <div class="absolute top-0 right-12 h-16 w-40 bg-primary/10 blur-[44px]" />
 
             <!-- 标题内容层 -->
             <div
-              class="relative flex items-center justify-between px-6 pt-6 pb-2 sm:px-8 sm:pt-7 sm:pb-3"
+              class="relative flex items-center justify-between px-6 pt-5 pb-1.5 sm:px-7 sm:pt-5 sm:pb-2"
             >
               <div class="flex items-center gap-3">
-                <div class="relative flex h-7 w-7 items-center justify-center">
-                  <div
-                    class="absolute inset-0 rotate-12 rounded-lg bg-primary/10 transition-transform group-hover:rotate-0"
-                  />
+                <div
+                  class="relative flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10"
+                >
+                  <div class="absolute inset-0 rounded-xl border border-primary/10" />
                   <AiLuminaIcon :size="15" class="relative text-primary" />
                 </div>
-                <div class="flex flex-col">
-                  <h2 class="text-[15px] font-bold tracking-tight text-foreground/90">
-                    {{ t('ai.settings') }}
-                  </h2>
-                </div>
+                <h2 class="text-[15px] font-bold tracking-tight text-foreground/90">
+                  {{ t('ai.settings') }}
+                </h2>
               </div>
               <button
                 class="group flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-primary/10 active:scale-90"
@@ -306,28 +314,17 @@ defineExpose({
             </div>
 
             <!-- 导航层 -->
-            <div class="no-scrollbar relative flex gap-6 overflow-x-auto px-6 sm:gap-8 sm:px-9">
+            <div class="no-scrollbar relative flex gap-5 overflow-x-auto px-6 sm:gap-6 sm:px-7">
               <button
-                v-for="tab in [
-                  'settings',
-                  'presets',
-                  'skills',
-                  'memory',
-                  'contextCompression',
-                  'mcp',
-                ] as const"
+                v-for="tab in orderedTabs"
                 :key="tab"
-                class="group relative shrink-0 py-4 text-[13px] font-bold tracking-wide transition-all"
+                class="group relative shrink-0 py-3 text-[13px] font-semibold tracking-wide transition-all"
                 :class="
                   activeTab === tab ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
                 "
                 @click="activeTab = tab"
               >
-                <span class="relative z-10">{{
-                  t(
-                    `ai.${tab === 'settings' ? 'basicSettings' : tab === 'presets' ? 'presetManagement' : tab}`,
-                  )
-                }}</span>
+                <span class="relative z-10">{{ t(getTabLabelKey(tab)) }}</span>
 
                 <!-- 灵动的指示器 -->
                 <div
@@ -340,15 +337,10 @@ defineExpose({
                 </div>
                 <!-- 悬停态光晕 -->
                 <div
-                  class="absolute inset-x-0 -bottom-2 h-8 w-full scale-50 bg-primary/10 opacity-0 blur-xl transition-all group-hover:scale-100 group-hover:opacity-100"
+                  class="absolute inset-x-0 -bottom-1.5 h-6 w-full scale-75 bg-primary/10 opacity-0 blur-lg transition-all group-hover:scale-100 group-hover:opacity-100"
                 />
               </button>
             </div>
-
-            <!-- 极细边框 -->
-            <div
-              class="h-px w-full bg-gradient-to-r from-transparent via-border/60 to-transparent"
-            />
           </div>
 
           <!-- 内容区域 -->
