@@ -106,6 +106,15 @@ const utf8Decoder = new TextDecoder()
 const MAX_SKILL_FILE_BYTES = 512 * 1024
 const MAX_SKILL_ARCHIVE_BYTES = 2 * 1024 * 1024
 const EXTERNAL_SOURCE_ACCEPT_HEADER = 'application/json, text/markdown, text/plain, application/zip'
+const EXTERNAL_PROXY_TIMEOUT_MS = 30000
+const PROXY_FIRST_EXTERNAL_SOURCE_HOSTS = new Set([
+  'lightmake.site',
+  'skillhub-1388575217.cos.ap-guangzhou.myqcloud.com',
+  'skillhub-1388575217.cos.accelerate.myqcloud.com',
+  'skillhub.club',
+  'www.skillhub.club',
+  'clawhub.ai',
+])
 
 type ExternalSkillSourcePayload = {
   sourceUrl: string
@@ -344,15 +353,58 @@ function getHttpErrorMessage(error: unknown): string {
   return String(error)
 }
 
+function shouldPreferProxyForExternalSource(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    return PROXY_FIRST_EXTERNAL_SOURCE_HOSTS.has(parsed.hostname)
+  } catch {
+    return false
+  }
+}
+
+function decodeExternalSourceContentFromBytes(params: {
+  contentType: string
+  contentBytes: Uint8Array
+  finalUrl: string
+}): string {
+  const contentType = params.contentType.toLowerCase()
+  const isZip = isZipContentType(contentType) || params.finalUrl.toLowerCase().endsWith('.zip')
+
+  if (isZip) {
+    if (params.contentBytes.byteLength > MAX_SKILL_ARCHIVE_BYTES) {
+      throw new Error(`Archive too large: ${params.contentBytes.byteLength} bytes`)
+    }
+
+    return extractSkillArchivePayloadFromZipArchive(params.contentBytes).content
+  }
+
+  if (contentType.includes('text/html')) {
+    throw new Error('Received HTML content. Expected SKILL.md or JSON.')
+  }
+
+  if (params.contentBytes.byteLength > MAX_SKILL_FILE_BYTES) {
+    throw new Error(`File too large: ${params.contentBytes.byteLength} bytes`)
+  }
+
+  const content = utf8Decoder.decode(params.contentBytes)
+  const contentByteLength = encodeUtf8(content).byteLength
+  if (contentByteLength > MAX_SKILL_FILE_BYTES) {
+    throw new Error(`File too large: ${contentByteLength} bytes`)
+  }
+
+  return content
+}
+
 async function fetchExternalSourceViaProxy(url: string): Promise<{
   contentType: string
   contentBytes: Uint8Array
+  finalUrl: string
 }> {
   const response = await httpClient.get<ApiResponse<ExternalSkillSourcePayload>>(
     '/skills/external-source',
     {
       params: { url },
-      timeout: 15000,
+      timeout: EXTERNAL_PROXY_TIMEOUT_MS,
     },
   )
 
@@ -370,6 +422,7 @@ async function fetchExternalSourceViaProxy(url: string): Promise<{
   return {
     contentType: (payload.contentType || '').toLowerCase(),
     contentBytes: decodeBase64ToBytes(payload.bodyBase64),
+    finalUrl: payload.finalUrl || payload.sourceUrl || url,
   }
 }
 
@@ -1185,8 +1238,26 @@ export function useAIConfig() {
     for (const url of candidates) {
       const controller = new AbortController()
       const timeout = setTimeout(() => controller.abort(), 12000)
+      const preferProxy = shouldPreferProxyForExternalSource(url)
 
       try {
+        if (preferProxy) {
+          const proxied = await fetchExternalSourceViaProxy(url)
+          const content = decodeExternalSourceContentFromBytes({
+            contentType: proxied.contentType,
+            contentBytes: proxied.contentBytes,
+            finalUrl: proxied.finalUrl,
+          })
+
+          const sha256 = await computeSha256(content)
+          if (expectedSha256 && sha256 !== expectedSha256) {
+            throw new Error(`SHA256 mismatch. expected=${expectedSha256} actual=${sha256}`)
+          }
+
+          const importedCount = importSkills(content, mode)
+          return { importedCount, sourceUrl: url, sha256 }
+        }
+
         const response = await fetch(url, {
           method: 'GET',
           headers: {
@@ -1231,33 +1302,14 @@ export function useAIConfig() {
         const importedCount = importSkills(content, mode)
         return { importedCount, sourceUrl: url, sha256 }
       } catch (error) {
-        if (isNetworkLikeFetchError(error)) {
+        if (!preferProxy && isNetworkLikeFetchError(error)) {
           try {
             const proxied = await fetchExternalSourceViaProxy(url)
-            const isZip =
-              isZipContentType(proxied.contentType) || url.toLowerCase().endsWith('.zip')
-
-            let content = ''
-            if (isZip) {
-              if (proxied.contentBytes.byteLength > MAX_SKILL_ARCHIVE_BYTES) {
-                throw new Error(`Archive too large: ${proxied.contentBytes.byteLength} bytes`)
-              }
-              content = extractSkillArchivePayloadFromZipArchive(proxied.contentBytes).content
-            } else {
-              if (proxied.contentType.includes('text/html')) {
-                throw new Error('Received HTML content. Expected SKILL.md or JSON.')
-              }
-
-              if (proxied.contentBytes.byteLength > MAX_SKILL_FILE_BYTES) {
-                throw new Error(`File too large: ${proxied.contentBytes.byteLength} bytes`)
-              }
-
-              content = utf8Decoder.decode(proxied.contentBytes)
-              const contentByteLength = encodeUtf8(content).byteLength
-              if (contentByteLength > MAX_SKILL_FILE_BYTES) {
-                throw new Error(`File too large: ${contentByteLength} bytes`)
-              }
-            }
+            const content = decodeExternalSourceContentFromBytes({
+              contentType: proxied.contentType,
+              contentBytes: proxied.contentBytes,
+              finalUrl: proxied.finalUrl,
+            })
 
             const sha256 = await computeSha256(content)
             if (expectedSha256 && sha256 !== expectedSha256) {

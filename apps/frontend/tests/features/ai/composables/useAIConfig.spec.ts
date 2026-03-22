@@ -666,44 +666,31 @@ describe('useAIConfig - Core', () => {
         'Use Tavily search workflow.',
       ].join('\n')
       const archive = zipSync({ 'SKILL.md': strToU8(markdown) })
-      const archiveBuffer = archive.buffer.slice(
-        archive.byteOffset,
-        archive.byteOffset + archive.byteLength,
-      )
-
-      const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-        const url = String(input)
-        if (url.includes('lightmake.site')) {
-          return {
-            ok: true,
-            status: 200,
-            headers: {
-              get: (key: string) =>
-                key.toLowerCase() === 'content-type'
-                  ? 'application/zip'
-                  : key.toLowerCase() === 'content-length'
-                    ? String(archive.byteLength)
-                    : null,
-            },
-            arrayBuffer: async (): Promise<ArrayBuffer> => archiveBuffer as ArrayBuffer,
-            text: async (): Promise<string> => '',
-          }
-        }
-
-        return {
-          ok: false,
-          status: 404,
-          headers: {
-            get: () => null,
+      const archiveBase64 = Buffer.from(archive).toString('base64')
+      const proxySpy = vi.spyOn(httpClient, 'get').mockResolvedValue({
+        data: {
+          success: true,
+          data: {
+            sourceUrl: 'https://lightmake.site/api/v1/download?slug=tavily-search',
+            finalUrl:
+              'https://skillhub-1388575217.cos.accelerate.myqcloud.com/skills/tavily-search/1.0.0.zip',
+            contentType: 'application/zip',
+            contentLength: archive.byteLength,
+            bodyBase64: archiveBase64,
           },
-          text: async (): Promise<string> => '',
-        }
+          timestamp: new Date().toISOString(),
+        },
       })
+      const fetchMock = vi.fn()
       vi.stubGlobal('fetch', fetchMock)
 
       const result = await importSkillsFromExternalSource('skillhub install tavily-search')
 
-      expect(fetchMock).toHaveBeenCalledTimes(1)
+      expect(fetchMock).not.toHaveBeenCalled()
+      expect(proxySpy).toHaveBeenCalledWith('/skills/external-source', {
+        params: { url: 'https://lightmake.site/api/v1/download?slug=tavily-search' },
+        timeout: 30000,
+      })
       expect(result.importedCount).toBe(1)
       expect(result.sourceUrl).toBe('https://lightmake.site/api/v1/download?slug=tavily-search')
       expect(skills.value.map((item) => item.name)).toContain('tavily-search')
@@ -713,6 +700,8 @@ describe('useAIConfig - Core', () => {
           name: 'skill_tavily_search',
         },
       })
+
+      proxySpy.mockRestore()
     })
 
     it('should reject zip package when SKILL.md original size exceeds the file limit', async () => {
@@ -727,33 +716,33 @@ describe('useAIConfig - Core', () => {
         oversizedPrompt,
       ].join('\n')
       const archive = zipSync({ 'nested/SKILL.md': strToU8(markdown) })
-      const archiveBuffer = archive.buffer.slice(
-        archive.byteOffset,
-        archive.byteOffset + archive.byteLength,
-      )
-
-      const fetchMock = vi.fn(async () => ({
-        ok: true,
-        status: 200,
-        headers: {
-          get: (key: string) =>
-            key.toLowerCase() === 'content-type'
-              ? 'application/zip'
-              : key.toLowerCase() === 'content-length'
-                ? String(archive.byteLength)
-                : null,
+      const archiveBase64 = Buffer.from(archive).toString('base64')
+      const proxySpy = vi.spyOn(httpClient, 'get').mockResolvedValue({
+        data: {
+          success: true,
+          data: {
+            sourceUrl: 'https://lightmake.site/api/v1/download?slug=tavily-search',
+            finalUrl:
+              'https://skillhub-1388575217.cos.accelerate.myqcloud.com/skills/tavily-search/1.0.0.zip',
+            contentType: 'application/zip',
+            contentLength: archive.byteLength,
+            bodyBase64: archiveBase64,
+          },
+          timestamp: new Date().toISOString(),
         },
-        arrayBuffer: async (): Promise<ArrayBuffer> => archiveBuffer as ArrayBuffer,
-        text: async (): Promise<string> => '',
-      }))
+      })
+      const fetchMock = vi.fn()
       vi.stubGlobal('fetch', fetchMock)
 
       await expect(
         importSkillsFromExternalSource('skillhub install tavily-search'),
       ).rejects.toThrow('File too large')
+
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+      proxySpy.mockRestore()
     })
 
-    it('should fallback to backend proxy when direct fetch is blocked', async () => {
+    it('should use backend proxy first for skillhub download candidates', async () => {
       const { skills, importSkillsFromExternalSource } = useAIConfig()
       const markdown = [
         '---',
@@ -790,7 +779,7 @@ describe('useAIConfig - Core', () => {
 
       expect(proxySpy).toHaveBeenCalledWith('/skills/external-source', {
         params: { url: 'https://lightmake.site/api/v1/download?slug=tavily-search' },
-        timeout: 15000,
+        timeout: 30000,
       })
       expect(result.importedCount).toBe(1)
       expect(skills.value.map((item) => item.name)).toContain('proxy-installed-skill')

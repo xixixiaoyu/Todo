@@ -114,6 +114,21 @@ export interface AISkill {
   runtime?: AISkillRuntime
 }
 
+export interface AISkillRuntimeAvailability {
+  skillId: string
+  skillName: string
+  runtimeType: AISkillRuntime['type']
+  toolName: string
+  status: 'available' | 'blocked'
+  reasonCode?:
+    | 'auth_required'
+    | 'missing_secrets'
+    | 'mcp_disabled'
+    | 'mcp_tool_not_found'
+    | 'mcp_tool_ambiguous'
+  missingSecrets?: string[]
+}
+
 export type AssistantMode = 'default' | 'teaching'
 
 export type TeachingQuizKind = 'single_choice' | 'multi_choice' | 'short_answer'
@@ -189,6 +204,7 @@ export interface AIRequestOptions {
   memorySnapshot?: string[]
   skills?: AISkill[]
   activeSkills?: AISkill[]
+  skillRuntimeAvailability?: AISkillRuntimeAvailability[]
   tools?: Tool[]
   toolChoice?: 'none' | 'auto' | 'required' | { type: 'function'; function: { name: string } }
   abortSignal?: AbortSignal

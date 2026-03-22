@@ -7,6 +7,7 @@ import type { AISkill } from '@/features/ai/services/aiService'
 import type { McpToolResponse } from '@/features/mcp/api/mcp'
 import {
   buildSkillRuntimeTools,
+  getSkillRuntimeAvailability,
   getSkillRuntimeSecretDefinitions,
   migrateLegacySkillRuntime,
   TAVILY_SEARCH_TOOL_NAME,
@@ -143,7 +144,7 @@ describe('skill runtime tools', () => {
     expect(result.localToolHandlers.has('skill_finance_lookup')).toBe(true)
   })
 
-  it('does not register tools for legacy tavily skills until they are migrated', () => {
+  it('auto-registers runtime tools for legacy tavily skills', () => {
     const result = buildSkillRuntimeTools([legacyTavilySkill], {
       runtimeConfig: {
         secrets: {
@@ -153,8 +154,8 @@ describe('skill runtime tools', () => {
       executeHttpRuntime: vi.fn(),
     })
 
-    expect(result.aiTools).toHaveLength(0)
-    expect(result.localToolHandlers.has(TAVILY_SEARCH_TOOL_NAME)).toBe(false)
+    expect(result.aiTools[0]?.function.name).toBe(TAVILY_SEARCH_TOOL_NAME)
+    expect(result.localToolHandlers.has(TAVILY_SEARCH_TOOL_NAME)).toBe(true)
   })
 
   it('registers migrated tavily skills with explicit runtime metadata', () => {
@@ -215,7 +216,7 @@ describe('skill runtime tools', () => {
             Authorization: {
               $source: 'secret',
               key: 'financeApiKey',
-              prefix: 'Bearer ',
+              prefix: 'Bearer',
               required: true,
             },
           },
@@ -247,6 +248,43 @@ describe('skill runtime tools', () => {
 
     expect(result.aiTools).toHaveLength(0)
     expect(result.localToolHandlers.has('skill_finance_lookup')).toBe(false)
+  })
+
+  it('reports blocked HTTP runtime when authentication is unavailable', () => {
+    expect(
+      getSkillRuntimeAvailability([genericHttpSkill], {
+        enableHttpRuntime: false,
+      }),
+    ).toEqual([
+      {
+        skillId: 's-http',
+        skillName: 'finance-lookup',
+        runtimeType: 'http',
+        toolName: 'skill_finance_lookup',
+        status: 'blocked',
+        reasonCode: 'auth_required',
+      },
+    ])
+  })
+
+  it('reports blocked HTTP runtime when required secrets are missing', () => {
+    expect(
+      getSkillRuntimeAvailability([genericHttpSkill], {
+        runtimeConfig: {
+          secrets: {},
+        },
+      }),
+    ).toEqual([
+      {
+        skillId: 's-http',
+        skillName: 'finance-lookup',
+        runtimeType: 'http',
+        toolName: 'skill_finance_lookup',
+        status: 'blocked',
+        reasonCode: 'missing_secrets',
+        missingSecrets: ['Finance API Key'],
+      },
+    ])
   })
 
   it('requires explicit configured secrets even when the skill documents an env var name', async () => {

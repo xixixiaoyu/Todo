@@ -135,6 +135,7 @@ export async function getAIStreamResponse(
     memorySnapshot,
     skills,
     activeSkills,
+    skillRuntimeAvailability,
     tools,
     toolChoice,
     abortSignal,
@@ -153,6 +154,7 @@ export async function getAIStreamResponse(
     memorySnapshot,
     skills,
     activeSkills,
+    skillRuntimeAvailability,
   )
 
   try {

@@ -9,6 +9,7 @@ import type {
   AISkill,
   AISkillHttpRuntime,
   AISkillMcpRuntime,
+  AISkillRuntimeAvailability,
   AISkillRuntime,
   AISkillRuntimeSecret,
   AISkillRuntimeTemplateValue,
@@ -395,7 +396,11 @@ export function migrateLegacySkillRuntime(skill: {
 }
 
 export function resolveSkillRuntime(skill: AISkill): AISkillRuntime | undefined {
-  return skill.runtime
+  return migrateLegacySkillRuntime({
+    name: skill.name,
+    aliases: skill.aliases,
+    runtime: skill.runtime,
+  })
 }
 
 function mergeSkillSecretDefinition(
@@ -450,6 +455,26 @@ function createExecutableHttpRuntime(runtime: AISkillHttpRuntime): ExecuteSkillH
       ...(runtime.request.responseType ? { responseType: runtime.request.responseType } : {}),
     },
   }
+}
+
+function getMissingRequiredSecretLabels(
+  runtime: AISkillHttpRuntime,
+  runtimeConfig: SkillRuntimeConfig,
+): string[] {
+  if (!runtime.secrets?.length) return []
+
+  const missingLabels: string[] = []
+
+  for (const secret of runtime.secrets) {
+    if (!secret.required) continue
+
+    const value = runtimeConfig.secrets[secret.key]?.trim()
+    if (value) continue
+
+    missingLabels.push(secret.label || secret.key)
+  }
+
+  return missingLabels
 }
 
 function pickConfiguredSecrets(
@@ -646,6 +671,106 @@ export async function callSkillHttpRuntime(
   })
 
   return unwrapApiResponse(data)
+}
+
+export function getSkillRuntimeAvailability(
+  activeSkills: AISkill[],
+  deps: {
+    runtimeConfig?: SkillRuntimeConfig
+    mcpTools?: McpToolResponse[]
+    enableHttpRuntime?: boolean
+    enableMcpRuntime?: boolean
+  } = {},
+): AISkillRuntimeAvailability[] {
+  const runtimeConfig = deps.runtimeConfig ?? getSkillRuntimeConfig()
+  const mcpTools = deps.mcpTools ?? []
+  const enableHttpRuntime = deps.enableHttpRuntime ?? true
+  const enableMcpRuntime = deps.enableMcpRuntime ?? true
+  const registeredToolNames = new Set<string>()
+  const availability: AISkillRuntimeAvailability[] = []
+
+  for (const skill of activeSkills) {
+    const runtime = resolveSkillRuntime(skill)
+    if (!runtime) continue
+
+    const toolName = runtime.tool.name
+    if (!toolName || registeredToolNames.has(toolName)) continue
+    registeredToolNames.add(toolName)
+
+    if (runtime.type === 'http') {
+      if (!enableHttpRuntime) {
+        availability.push({
+          skillId: skill.id,
+          skillName: skill.name,
+          runtimeType: runtime.type,
+          toolName,
+          status: 'blocked',
+          reasonCode: 'auth_required',
+        })
+        continue
+      }
+
+      const missingSecrets = getMissingRequiredSecretLabels(runtime, runtimeConfig)
+      if (missingSecrets.length > 0) {
+        availability.push({
+          skillId: skill.id,
+          skillName: skill.name,
+          runtimeType: runtime.type,
+          toolName,
+          status: 'blocked',
+          reasonCode: 'missing_secrets',
+          missingSecrets,
+        })
+        continue
+      }
+
+      availability.push({
+        skillId: skill.id,
+        skillName: skill.name,
+        runtimeType: runtime.type,
+        toolName,
+        status: 'available',
+      })
+      continue
+    }
+
+    if (!enableMcpRuntime) {
+      availability.push({
+        skillId: skill.id,
+        skillName: skill.name,
+        runtimeType: runtime.type,
+        toolName,
+        status: 'blocked',
+        reasonCode: 'mcp_disabled',
+      })
+      continue
+    }
+
+    try {
+      resolveMcpRuntimeTarget(runtime, mcpTools)
+      availability.push({
+        skillId: skill.id,
+        skillName: skill.name,
+        runtimeType: runtime.type,
+        toolName,
+        status: 'available',
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      availability.push({
+        skillId: skill.id,
+        skillName: skill.name,
+        runtimeType: runtime.type,
+        toolName,
+        status: 'blocked',
+        reasonCode: message.includes('Ambiguous MCP tool')
+          ? 'mcp_tool_ambiguous'
+          : 'mcp_tool_not_found',
+      })
+    }
+  }
+
+  return availability
 }
 
 export function buildSkillRuntimeTools(

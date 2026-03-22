@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   buildTeachingFallbackQuiz,
+  hasRuntimeAuthToken,
   stripTodoIdsFromText,
 } from '@/features/ai/composables/useChatActions.utils'
 
@@ -39,5 +40,12 @@ describe('useChatActions.utils', () => {
 
     const defaultQuiz = buildTeachingFallbackQuiz('', 'msg-2', t)
     expect(defaultQuiz[0].stem).toBe('Question: 默认摘要')
+  })
+
+  it('detects runtime auth from store token or persisted fallback token', () => {
+    expect(hasRuntimeAuthToken('access-token', null)).toBe(true)
+    expect(hasRuntimeAuthToken('', 'persisted-token')).toBe(true)
+    expect(hasRuntimeAuthToken('   ', '   ')).toBe(false)
+    expect(hasRuntimeAuthToken(null, null)).toBe(false)
   })
 })

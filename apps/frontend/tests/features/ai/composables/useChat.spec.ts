@@ -22,10 +22,20 @@ import { useTodoStore } from '@/features/todo/stores/todo'
 
 // Mock useAuthStore
 const mockIsAuthenticated = ref(true)
+const mockAuthToken = ref<string | null>('access-token')
+const mockHydrateFromStorage = vi.fn()
 vi.mock('@/features/auth/stores/auth', () => ({
   useAuthStore: vi.fn(() => ({
-    user: ref(null),
-    isAuthenticated: mockIsAuthenticated,
+    get user() {
+      return null
+    },
+    get isAuthenticated() {
+      return mockIsAuthenticated.value
+    },
+    get token() {
+      return mockAuthToken.value
+    },
+    hydrateFromStorage: mockHydrateFromStorage,
   })),
 }))
 
@@ -159,6 +169,10 @@ describe('useChat', () => {
 
     mockMemories.value = []
     mockIsMemoryEnabled.value = true
+    mockIsAuthenticated.value = true
+    mockAuthToken.value = 'access-token'
+    mockHydrateFromStorage.mockReset()
+    localStorage.removeItem('auth')
 
     // 重置 mock 实现
     mockCurrentSession.value = null
@@ -588,6 +602,70 @@ describe('useChat', () => {
       expect(sentOptions?.skills?.map((skill) => skill.id)).toEqual(['skill-1'])
       expect(sentOptions?.activeSkills?.map((skill) => skill.id)).toEqual(['skill-1'])
       expect(sentOptions?.activeSkills?.map((skill) => skill.name)).toEqual(['code-review'])
+    })
+
+    it('should keep read_skill available for blocked runtime skills in default chat mode', async () => {
+      mockIsAuthenticated.value = false
+      mockAuthToken.value = null
+
+      vi.mocked(getAIConfig).mockReturnValue({
+        assistantMode: 'default',
+        discussionMode: false,
+        discussionModelIds: [],
+        discussionPrimaryModelId: null,
+        memoryModelId: null,
+        baseUrl: '',
+        apiKey: '',
+        model: '',
+        systemPrompt: '',
+        temperature: 0.7,
+        thinkingMode: 'disabled',
+        thinkingEffort: 'high',
+        todoAssistant: false,
+        enableImageGeneration: false,
+        mcpEnabled: false,
+        contextCompressionEnabled: false,
+        contextCompressionTriggerChars: 24000,
+        contextCompressionModelId: null,
+        skillIds: ['skill-tavily'],
+      })
+      vi.mocked(getAISkills).mockReturnValue([
+        {
+          id: 'skill-tavily',
+          name: 'tavily-search',
+          description: 'Search the live web',
+          prompt: 'Use Tavily search when current web information is needed.',
+        },
+      ])
+
+      mockGetAIStreamResponse.mockImplementation(
+        async (_messages: ChatMessage[], onChunk: OnChunk) => {
+          onChunk('ok')
+          onChunk('[DONE]')
+        },
+      )
+
+      const { sendMessage } = useChat()
+      await sendMessage('how do I configure tavily?')
+
+      const firstCall = mockGetAIStreamResponse.mock.calls[0]
+      const sentOptions = firstCall?.[4] as
+        | {
+            tools?: Array<{ function?: { name?: string } }>
+            skillRuntimeAvailability?: Array<{ reasonCode?: string; skillId: string }>
+          }
+        | undefined
+
+      expect(sentOptions?.tools?.map((tool) => tool.function?.name)).toContain('read_skill')
+      expect(sentOptions?.tools?.map((tool) => tool.function?.name)).not.toContain(
+        'skill_tavily_search',
+      )
+      expect(sentOptions?.skillRuntimeAvailability).toEqual([
+        expect.objectContaining({
+          skillId: 'skill-tavily',
+          reasonCode: 'auth_required',
+        }),
+      ])
     })
 
     it('should compress long context and pass summary to request', async () => {

@@ -432,13 +432,11 @@ export function buildExternalSkillSourceCandidates(source: string): string[] {
     candidates.push(url)
   }
 
-  if (
-    installTarget &&
-    isSimpleSlugToken(installTarget) &&
-    !Object.prototype.hasOwnProperty.call(CURATED_SKILL_ALIASES, installTarget.toLowerCase())
-  ) {
-    const skillhubCandidates = createSkillhubDownloadCandidates(installTarget)
-    for (const item of skillhubCandidates) pushCandidate(item)
+  if (installTarget && isSimpleSlugToken(installTarget)) {
+    if (!Object.prototype.hasOwnProperty.call(CURATED_SKILL_ALIASES, installTarget.toLowerCase())) {
+      const skillhubCandidates = createSkillhubDownloadCandidates(installTarget)
+      for (const item of skillhubCandidates) pushCandidate(item)
+    }
   }
 
   if (HTTP_URL_PATTERN.test(normalized)) {

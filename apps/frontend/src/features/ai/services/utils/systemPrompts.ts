@@ -7,6 +7,7 @@ import {
 } from '@/features/ai/constants/attachments'
 import type {
   AISkill,
+  AISkillRuntimeAvailability,
   AIChatCompletionMessage,
   AssistantMode,
   ChatMessage,
@@ -277,6 +278,19 @@ function formatActivatedSkillPayload(skills: AISkill[]): string {
   return ['```json', JSON.stringify(payload, null, 2), '```'].join('\n')
 }
 
+function formatSkillRuntimeAvailabilityPayload(items: AISkillRuntimeAvailability[]): string {
+  const payload = items.map((item) => ({
+    skill: item.skillName,
+    runtime_type: item.runtimeType,
+    tool: item.toolName,
+    status: item.status,
+    ...(item.reasonCode ? { reason: item.reasonCode } : {}),
+    ...(item.missingSecrets?.length ? { missing_secrets: item.missingSecrets } : {}),
+  }))
+
+  return ['```json', JSON.stringify(payload, null, 2), '```'].join('\n')
+}
+
 function buildAssistantProtocolFields(message: ChatMessage): {
   reasoning_content?: string
   reasoning_details?: string
@@ -302,6 +316,7 @@ export function injectSystemPrompts(
   memorySnapshot?: string[],
   skillCatalog: AISkill[] = [],
   activeSkills: AISkill[] = [],
+  skillRuntimeAvailability: AISkillRuntimeAvailability[] = [],
 ): AIChatCompletionMessage[] {
   const result: AIChatCompletionMessage[] = []
   let documentCharsUsed = 0
@@ -356,6 +371,14 @@ export function injectSystemPrompts(
   if (activeSkills.length > 0 || skillCatalog.length > 0) {
     systemBlocks.push({
       content: t('ai.skillRuntimeBoundaryPrompt') as string,
+    })
+  }
+
+  if (skillRuntimeAvailability.length > 0) {
+    systemBlocks.push({
+      content: t('ai.skillRuntimeAvailabilityPrompt', {
+        statuses: formatSkillRuntimeAvailabilityPayload(skillRuntimeAvailability),
+      }) as string,
     })
   }
 

@@ -7,7 +7,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { useChat } from '@/features/ai/composables/useChat'
 import type { ChatSession } from '@/features/ai/composables/useChatHistory'
 import { getMultiModelDiscussionStream } from '@/features/ai/services/aiService'
-import { getAIConfig } from '@/features/ai/composables/useAIConfig'
+import { getAIConfig, getAISkills } from '@/features/ai/composables/useAIConfig'
 import type { AIConfig } from '@/features/ai/composables/useAIConfig'
 import type { ChatMessage, DiscussionStep } from '@/features/ai/services/aiService'
 
@@ -147,5 +147,49 @@ describe('useChat - Discussion Mode', () => {
     expect(assistantMessage!.discussionSteps).toHaveLength(1)
     expect(assistantMessage!.thinkingContent).toBe('Primary thinking process...')
     expect(assistantMessage!.content).toBe('Final answer')
+  })
+
+  it('should preserve runtime-backed active skills in discussion mode options', async () => {
+    vi.mocked(getAIConfig).mockReturnValue({
+      assistantMode: 'default',
+      discussionMode: true,
+      discussionModelIds: ['m1', 'm2'],
+      discussionPrimaryModelId: 'm1',
+      memoryModelId: null,
+      baseUrl: '',
+      apiKey: '',
+      model: '',
+      systemPrompt: '',
+      temperature: 0.7,
+      thinkingMode: 'enabled',
+      thinkingEffort: 'high',
+      todoAssistant: false,
+      enableImageGeneration: false,
+      mcpEnabled: false,
+      contextCompressionEnabled: false,
+      contextCompressionTriggerChars: 24000,
+      contextCompressionModelId: null,
+      skillIds: ['skill-tavily'],
+    } as AIConfig)
+    vi.mocked(getAISkills).mockReturnValue([
+      {
+        id: 'skill-tavily',
+        name: 'tavily-search',
+        description: 'Search the live web',
+        prompt: 'Use Tavily search when current web information is needed.',
+      },
+    ])
+
+    mockGetMultiModelDiscussionStream.mockImplementation(async () => {})
+
+    const { sendMessage } = useChat()
+    await sendMessage('use tavily for current news')
+
+    const call = mockGetMultiModelDiscussionStream.mock.calls[0]
+    expect(call).toBeDefined()
+
+    const options = call?.[5] as { activeSkills?: Array<{ id: string; name: string }> } | undefined
+    expect(options?.activeSkills?.map((skill) => skill.id)).toEqual(['skill-tavily'])
+    expect(options?.activeSkills?.map((skill) => skill.name)).toEqual(['tavily-search'])
   })
 })

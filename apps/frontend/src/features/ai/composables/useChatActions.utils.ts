@@ -1,5 +1,16 @@
 import type { TeachingQuiz } from '@/features/ai/services/aiService'
 
+export function hasRuntimeAuthToken(
+  authToken: string | null | undefined,
+  fallbackToken: string | null | undefined,
+): boolean {
+  const primary = typeof authToken === 'string' ? authToken.trim() : ''
+  if (primary) return true
+
+  const secondary = typeof fallbackToken === 'string' ? fallbackToken.trim() : ''
+  return secondary.length > 0
+}
+
 export function stripTodoIdsFromText(input: string): string {
   const uuid = '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'
   const tempId = 'temp-[A-Za-z0-9_-]+'

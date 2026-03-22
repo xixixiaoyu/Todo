@@ -38,6 +38,9 @@ vi.mock('@/i18n', () => ({
         if (key === 'ai.skillRuntimeBoundaryPrompt') {
           return '[skill-runtime-boundary]'
         }
+        if (key === 'ai.skillRuntimeAvailabilityPrompt') {
+          return `[skill-runtime-availability]\n${params.statuses}`
+        }
         if (key === 'ai.skillActivationUserPrompt') {
           return `[skill-activation]\n${params.skills}`
         }
@@ -271,6 +274,41 @@ describe('AI Utils - injectSystemPrompts', () => {
       result.some((m) => typeof m.content === 'string' && m.content.includes('[skill-activation]')),
     ).toBe(false)
   })
+
+  it('should inject skill runtime availability payload when provided', () => {
+    const result = injectSystemPrompts(
+      [],
+      'Base prompt',
+      false,
+      'default',
+      undefined,
+      undefined,
+      [],
+      [],
+      [
+        {
+          skillId: 's-runtime',
+          skillName: 'tavily',
+          runtimeType: 'http',
+          toolName: 'skill_tavily_search',
+          status: 'blocked',
+          reasonCode: 'auth_required',
+        },
+      ],
+    )
+
+    const systemMessage = result.find(
+      (m) =>
+        m.role === 'system' &&
+        typeof m.content === 'string' &&
+        m.content.includes('[skill-runtime-availability]'),
+    )
+
+    expect(systemMessage?.content).toContain('"skill": "tavily"')
+    expect(systemMessage?.content).toContain('"reason": "auth_required"')
+    expect(systemMessage?.content).toContain('"tool": "skill_tavily_search"')
+    expect(systemMessage?.content).not.toContain('"reason_detail"')
+  })
 })
 
 function extractTeachingQuizJson(prompt: string): string {
@@ -305,6 +343,13 @@ describe('AI i18n - teachingModeSystemPrompt', () => {
     expect(parsed.version).toBe(1)
     expect(Array.isArray(parsed.quizzes)).toBe(true)
     expect(parsed.quizzes.length).toBeGreaterThan(0)
+  })
+
+  it('en-US runtime availability prompt explains auth_required in English', () => {
+    expect(enAi.skillRuntimeAvailabilityPrompt).toContain(
+      'reason=auth_required means the user must sign in',
+    )
+    expect(enAi.skillRuntimeAvailabilityPrompt).not.toContain('需要先登录当前应用账号')
   })
 })
 

@@ -1,4 +1,5 @@
 import i18n from '@/i18n'
+import { getToken } from '@/api'
 import {
   getAIStreamResponse,
   getMultiModelDiscussionStream,
@@ -20,12 +21,15 @@ import { createContextCompression } from './useChatActions.contextCompression'
 import { buildAiToolsFromMcpTools } from './useChatActions.mcpTools'
 import { executeToolCalls } from './useChatActions.toolCalls'
 import { createStreamChunkHandler } from './useChatActions.stream'
+import { hasRuntimeAuthToken } from './useChatActions.utils'
 import {
   resolveSkillContext,
   buildSkillReadTool,
   createSkillReadToolHandler,
   READ_SKILL_TOOL_NAME,
   buildSkillRuntimeTools,
+  getSkillRuntimeAvailability,
+  resolveSkillRuntime,
 } from '@/features/ai/services/aiService'
 
 const MAX_RETRIES = 3
@@ -261,9 +265,11 @@ export function useChatActions(options: AIRequestOptions = {}) {
           selectedSkillIds: aiConfig.skillIds,
           autoActivateSelected: true,
         })
+        authStore.hydrateFromStorage()
+        const hasRuntimeAuthAccess = hasRuntimeAuthToken(authStore.token, getToken())
         const { mcpApi } = await import('@/features/mcp/api/mcp')
         let mcpTools: McpToolResponse[] = []
-        if (aiConfig.mcpEnabled && authStore.isAuthenticated) {
+        if (aiConfig.mcpEnabled && hasRuntimeAuthAccess) {
           try {
             mcpTools = await mcpApi.getAllTools()
           } catch (e) {
@@ -277,11 +283,19 @@ export function useChatActions(options: AIRequestOptions = {}) {
           string,
           (args: Record<string, unknown>) => string | Promise<string>
         >()
+        const skillRuntimeAvailability = getSkillRuntimeAvailability(skillContext.activatedSkills, {
+          mcpTools,
+          enableHttpRuntime: hasRuntimeAuthAccess,
+          enableMcpRuntime: aiConfig.mcpEnabled && hasRuntimeAuthAccess,
+        })
+        const activeSkillsForPrompt = skillContext.activatedSkills.filter(
+          (skill) => !resolveSkillRuntime(skill),
+        )
         const skillRuntime = buildSkillRuntimeTools(skillContext.activatedSkills, {
           mcpTools,
           callMcpTool: mcpApi.callTool,
-          enableHttpRuntime: authStore.isAuthenticated,
-          enableMcpRuntime: aiConfig.mcpEnabled && authStore.isAuthenticated,
+          enableHttpRuntime: hasRuntimeAuthAccess,
+          enableMcpRuntime: aiConfig.mcpEnabled && hasRuntimeAuthAccess,
         })
 
         aiTools.unshift(...skillRuntime.aiTools)
@@ -291,7 +305,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
 
         const skillReadTool = buildSkillReadTool(skillContext.catalogSkills)
         if (skillReadTool) {
-          aiTools.unshift(skillReadTool)
+          aiTools.push(skillReadTool)
           localToolHandlers.set(
             READ_SKILL_TOOL_NAME,
             createSkillReadToolHandler(skillContext.catalogSkills),
@@ -320,7 +334,8 @@ export function useChatActions(options: AIRequestOptions = {}) {
             contextSummary,
             memorySnapshot: currentSession.value?.memorySnapshot,
             skills: skillContext.catalogSkills,
-            activeSkills: skillContext.activatedSkills,
+            activeSkills: activeSkillsForPrompt,
+            skillRuntimeAvailability,
           },
           (toolCall) => {
             toolCalls.push(toolCall)

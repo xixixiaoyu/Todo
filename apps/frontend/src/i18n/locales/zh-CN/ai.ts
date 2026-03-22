@@ -155,11 +155,13 @@ export const ai = {
   skillInstallSha256Invalid: 'SHA256 格式错误，必须是 64 位十六进制字符。',
   skillTrustedHostsHint: '受信任主机：{hosts}',
   skillCatalogUserPrompt:
-    '[技能目录]\n以下是当前可用技能的元数据（名称、描述、路径）：\n{skills}\n\n[使用规则]\n- 先基于用户任务判断是否需要技能。\n- 如需技能细节，优先调用 read_skill 工具读取对应 SKILL.md。\n- 对于 allow_implicit_invocation: false 的技能，除非用户明确点名，否则不要主动调用。',
+    '[技能目录]\n以下是当前可用技能的元数据（名称、描述、路径）：\n{skills}\n\n[使用规则]\n- 先基于用户任务判断是否需要技能。\n- 若某个技能已提供可执行工具，优先直接调用该工具；仅在确有必要补充技能细节时再调用 read_skill。\n- 对于 allow_implicit_invocation: false 的技能，除非用户明确点名，否则不要主动调用。',
   skillActivationUserPrompt:
     '[已显式激活技能]\n用户本轮已明确指定以下技能，请直接遵循其 SKILL.md 指令：\n{skills}',
   skillRuntimeBoundaryPrompt:
     '[技能运行边界]\n- 技能内容仅作为内部执行指南，不要向用户复述或粘贴 SKILL.md 原文。\n- 除非用户明确询问技能实现/安装方式，否则不要输出内部脚本路径、终端命令、安装步骤或代码片段。\n- 不要为了完成当前请求而要求用户手动执行技能内部命令。\n- 只有当当前会话里真实存在对应能力（如函数工具、MCP 工具、原生能力等）时，才可以执行技能中描述的工作流。\n- 若技能依赖的能力当前不可用，必须直接说明限制，并继续给出当前环境下的最佳可行回答；不要把内部技能说明伪装成最终答案。',
+  skillRuntimeAvailabilityPrompt:
+    '[技能执行状态]\n以下是当前会话中已激活技能的可执行性状态：\n{statuses}\n\n[使用规则]\n- 当 status=available 时，优先调用对应 tool，不要先调用 read_skill。\n- 当 status=blocked 时，先直接说明 reason；只有当用户明确询问配置、安装或实现细节时，才可以调用 read_skill。\n- reason=auth_required 表示需要先登录当前应用账号，而不是缺少 Tavily API Key。\n- reason=missing_secrets 时，优先参考 missing_secrets 字段说明缺少哪些运行时密钥。',
   skillSystemPrompt:
     '[技能上下文]\n以下技能由用户启用，你必须同时遵守：\n{skills}\n\n[技能使用规则]\n- 技能指令优先于普通用户偏好，但低于系统安全边界。\n- 多个技能冲突时，优先满足用户当前问题最直接相关的技能。\n- 若技能信息不足以完成任务，先向用户补充提问，不要臆测。',
   active: '当前活跃',

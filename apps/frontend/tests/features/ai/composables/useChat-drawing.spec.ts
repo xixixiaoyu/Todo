@@ -83,8 +83,16 @@ vi.mock('@/features/todo/stores/todo', () => ({
 // Mock useAuthStore
 vi.mock('@/features/auth/stores/auth', () => ({
   useAuthStore: vi.fn(() => ({
-    user: ref(null),
-    isAuthenticated: computed(() => false),
+    get user() {
+      return null
+    },
+    get isAuthenticated() {
+      return false
+    },
+    get token() {
+      return null
+    },
+    hydrateFromStorage: vi.fn(),
   })),
 }))
 
