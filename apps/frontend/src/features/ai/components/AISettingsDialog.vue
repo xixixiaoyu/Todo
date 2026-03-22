@@ -380,21 +380,21 @@ defineExpose({
 
           <!-- 底部按钮 -->
           <div
-            class="flex shrink-0 flex-col gap-4 border-t border-border bg-muted/5 px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-5"
+            class="flex shrink-0 flex-col gap-3 border-t border-border bg-muted/5 px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-5"
           >
-            <div class="flex items-center gap-4">
+            <div class="flex w-full items-center sm:w-auto">
               <button
-                class="group flex items-center gap-2 text-xs font-medium text-muted-foreground transition-all hover:text-foreground"
+                class="group flex w-full items-center justify-start gap-2 whitespace-nowrap text-xs font-medium text-muted-foreground transition-all hover:text-foreground sm:w-auto"
                 @click="handleReset"
               >
                 <RotateCcw :size="14" class="transition-transform group-hover:-rotate-45" />
                 {{ t('ai.resetToDefault') }}
               </button>
             </div>
-            <div class="flex items-center gap-3">
+            <div class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
               <button
                 v-if="activeTab === 'settings' && !formData.discussionMode"
-                class="flex-1 rounded-xl border border-border bg-muted/30 px-4 py-2 text-sm font-bold tracking-tight text-foreground transition-all hover:border-primary/40 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+                class="w-full whitespace-nowrap rounded-xl border border-border bg-muted/30 px-4 py-2 text-sm font-bold tracking-tight text-foreground transition-all hover:border-primary/40 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 :disabled="!canSyncToPreset"
                 @click="handleSyncToPreset"
               >
@@ -402,18 +402,11 @@ defineExpose({
               </button>
               <button
                 v-if="activeTab === 'settings' && !formData.discussionMode"
-                class="flex-1 rounded-xl border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-bold tracking-tight text-primary transition-all hover:border-primary/50 hover:bg-primary/20 disabled:cursor-not-allowed disabled:border-border disabled:bg-muted/50 disabled:text-muted-foreground/50 sm:flex-none"
+                class="w-full whitespace-nowrap rounded-xl border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-bold tracking-tight text-primary transition-all hover:border-primary/50 hover:bg-primary/20 disabled:cursor-not-allowed disabled:border-border disabled:bg-muted/50 disabled:text-muted-foreground/50 sm:w-auto"
                 :disabled="isDuplicatePreset"
                 @click="handleSaveAsPreset"
               >
                 {{ t('ai.saveAsPreset') }}
-              </button>
-              <button
-                class="relative flex-1 overflow-hidden rounded-xl bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground shadow-[0_4px_12px_hsl(var(--primary)_/_0.3)] transition-all hover:bg-primary-hover hover:shadow-[0_6px_20px_hsl(var(--primary)_/_0.4)] active:scale-[0.98] sm:flex-none"
-                @click="handleClose"
-              >
-                <div class="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent" />
-                <span class="relative">{{ t('common.close') }}</span>
               </button>
             </div>
           </div>

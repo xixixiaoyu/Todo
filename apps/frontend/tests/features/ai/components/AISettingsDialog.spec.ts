@@ -333,6 +333,27 @@ describe('AISettingsDialog', () => {
     expect(renderedTabs).toEqual(expectedTabs)
   })
 
+  it('does not render a redundant footer close action', () => {
+    const wrapper = mount(AISettingsDialog, {
+      props: {
+        modelValue: true,
+      },
+      global: {
+        stubs: {
+          teleport: true,
+          'transition-root': {
+            template: '<div><slot /></div>',
+          },
+          'transition-child': {
+            template: '<div><slot /></div>',
+          },
+        },
+      },
+    })
+
+    expect(wrapper.text()).not.toContain('common.close')
+  })
+
   it('syncs current settings to active preset from settings tab', async () => {
     mockPresets.value = [
       {
