@@ -33,10 +33,15 @@ export const useMcpStore = defineStore('mcp', () => {
     return JSON.stringify(previous.config) !== JSON.stringify(next.config)
   }
 
+  type FetchServersOptions = {
+    autoConnect?: boolean
+  }
+
   /**
    * 加载所有 MCP 服务器配置
    */
-  async function fetchServers() {
+  async function fetchServers(options: FetchServersOptions = {}) {
+    const { autoConnect = true } = options
     isLoading.value = true
     error.value = null
     try {
@@ -54,7 +59,12 @@ export const useMcpStore = defineStore('mcp', () => {
           }
 
           // 如果服务器是启用的但未连接，尝试自动连接
-          if (s.enabled && !connectionStates.value[s.id] && !connectingStates.value[s.id]) {
+          if (
+            autoConnect &&
+            s.enabled &&
+            !connectionStates.value[s.id] &&
+            !connectingStates.value[s.id]
+          ) {
             connectServer(s.id).catch((err) => {
               console.error(`Auto-connect failed for ${s.name}:`, err)
             })

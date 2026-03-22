@@ -38,7 +38,7 @@ onMounted(async () => {
   if (!isAuthenticated.value) return
 
   try {
-    await store.fetchServers()
+    await store.fetchServers({ autoConnect: false })
   } catch (error: unknown) {
     // 如果是因为 401 导致的，不需要在组件层面记录 console.error
     const err = error as { response?: { status?: number }; message?: string }

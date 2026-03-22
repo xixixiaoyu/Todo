@@ -134,4 +134,16 @@ describe('useMcpStore', () => {
     expect(mcpApi.connect).toHaveBeenCalledTimes(1)
     expect(mcpApi.disconnect).not.toHaveBeenCalled()
   })
+
+  it('should not auto-connect enabled servers when fetchServers disables autoConnect', async () => {
+    vi.mocked(mcpApi.getServers).mockResolvedValue([baseServer])
+    vi.mocked(mcpApi.connect).mockResolvedValue()
+
+    const store = useMcpStore()
+    await store.fetchServers({ autoConnect: false })
+
+    expect(mcpApi.connect).not.toHaveBeenCalled()
+    expect(store.connectionStates.s1).toBe(false)
+    expect(store.servers).toHaveLength(1)
+  })
 })

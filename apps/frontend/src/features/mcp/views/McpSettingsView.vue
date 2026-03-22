@@ -38,7 +38,7 @@ const isToolsLoading = ref(false)
 
 onMounted(async () => {
   try {
-    await store.fetchServers()
+    await store.fetchServers({ autoConnect: false })
   } catch (error) {
     console.error('Failed to fetch servers:', error)
   }
