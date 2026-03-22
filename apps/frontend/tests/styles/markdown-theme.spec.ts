@@ -31,17 +31,19 @@ describe('markdown theme styles', () => {
     expect(markdownCss).not.toContain('color: hsl(var(--foreground) / 0.88);')
   })
 
-  it('keeps strong text understated with a primary-tinted underline emphasis', () => {
-    expect(markdownCss).toContain('.markdown-content strong {\n  @apply font-bold;')
-    expect(markdownCss).toContain('color: hsl(var(--foreground));')
+  it('uses theme-tinted strong text without background highlights', () => {
+    expect(markdownCss).toContain('.markdown-content strong {\n  @apply font-extrabold;')
+    expect(markdownCss).toContain('color: hsl(var(--primary-hover));')
+    expect(markdownCss).toContain('@supports (color: color-mix(in oklab, black, white)) {')
     expect(markdownCss).toContain(
-      'transparent 58%,\n    hsl(var(--primary) / 0.22) 58%,\n    hsl(var(--primary) / 0.22) 92%,\n    transparent 92%',
+      'color: color-mix(in oklab, hsl(var(--foreground)) 38%, hsl(var(--primary-hover)) 62%);',
     )
-    expect(markdownCss).toContain('box-decoration-break: clone;')
     expect(markdownCss).toContain(
-      'transparent 56%,\n    hsl(var(--primary) / 0.28) 56%,\n    hsl(var(--primary) / 0.28) 94%,\n    transparent 94%',
+      'color: color-mix(in oklab, hsl(var(--foreground)) 30%, hsl(var(--primary)) 70%);',
     )
-    expect(markdownCss).not.toContain('rounded-[0.4rem]')
-    expect(markdownCss).not.toContain('text-shadow: 0 1px 0 hsl(var(--background) / 0.55);')
+    expect(markdownCss).not.toContain('box-decoration-break: clone;')
+    expect(markdownCss).not.toContain(
+      '.markdown-content strong {\n  @apply font-extrabold;\n  color: hsl(var(--primary-hover));\n  background:',
+    )
   })
 })
