@@ -16,10 +16,10 @@ const { t } = useI18n()
 const { themeColor, setThemeColor, resetThemeColor } = useTheme()
 
 const inputId = useId()
-const customColor = ref(themeColor.value ?? '#7f9f97')
+const customColor = ref(themeColor.value ?? '#78958e')
 
 const presets = computed<ThemePreset[]>(() => [
-  { name: t('common.themeColor.presets.celadon'), value: '#7f9f97' },
+  { name: t('common.themeColor.presets.celadon'), value: '#78958e' },
   { name: t('common.themeColor.presets.twilightAmber'), value: '#9b8574' },
   { name: t('common.themeColor.presets.mistBlue'), value: '#728ba1' },
   { name: t('common.themeColor.presets.mossGreen'), value: '#7c9585' },
@@ -108,7 +108,7 @@ function reset() {
                 </span>
                 <span
                   v-else
-                  class="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-gradient-to-tr from-[#7f9f97] via-[#9b8574] to-[#728ba1] shadow-sm"
+                  class="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-gradient-to-tr from-[#78958e] via-[#9b8574] to-[#728ba1] shadow-sm"
                 >
                   <div class="h-1 w-1 rounded-full bg-white/80" />
                 </span>
@@ -123,7 +123,7 @@ function reset() {
               />
               <div
                 v-else
-                class="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full bg-gradient-to-tr from-[#7f9f97] via-[#9b8574] to-[#728ba1] opacity-40 blur-2xl transition-opacity group-hover:opacity-60"
+                class="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full bg-gradient-to-tr from-[#78958e] via-[#9b8574] to-[#728ba1] opacity-40 blur-2xl transition-opacity group-hover:opacity-60"
               />
             </button>
           </div>

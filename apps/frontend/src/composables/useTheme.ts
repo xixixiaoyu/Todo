@@ -28,7 +28,7 @@ function normalizeHex(hex: string) {
 }
 
 const PRESET_COLORS = [
-  '#7f9f97', // 青瓷 (Celadon) - 柔和但更有辨识度
+  '#78958e', // 青瓷 (Celadon) - 更经典耐看的低饱和青瓷
   '#9b8574', // 暮色 (Twilight Amber) - 低饱和暖棕
   '#728ba1', // 薄雾 (Mist Blue) - 平衡冷暖的灰蓝
   '#7c9585', // 苔青 (Moss Green) - 稳定的自然绿

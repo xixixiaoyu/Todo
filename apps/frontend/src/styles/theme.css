@@ -11,10 +11,10 @@
     --popover-foreground: 32 10% 20%;
 
     /* 主题色 */
-    --primary: var(--user-primary, 162 25% 55%);
-    --primary-hover: var(--user-primary-hover, 162 25% 50%);
+    --primary: var(--user-primary, 166 18% 53%);
+    --primary-hover: var(--user-primary-hover, 166 18% 47%);
     --primary-foreground: var(--user-primary-foreground, 40 15% 98%);
-    --primary-rgb: var(--user-primary-rgb, 111, 169, 151);
+    --primary-rgb: var(--user-primary-rgb, 114, 157, 147);
 
     /* 丝滑过渡配置 */
     --theme-transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
@@ -76,10 +76,10 @@
     --popover-foreground: 240 5% 90%;
 
     /* 主题色 - 保持活力但更沉稳，避免荧光感刺眼 */
-    --primary: var(--user-primary-dark, 162 25% 75%);
-    --primary-hover: var(--user-primary-hover-dark, 162 25% 80%);
+    --primary: var(--user-primary-dark, 166 18% 71%);
+    --primary-hover: var(--user-primary-hover-dark, 166 18% 76%);
     --primary-foreground: var(--user-primary-foreground-dark, 162 10% 10%);
-    --primary-rgb: var(--user-primary-rgb-dark, 175, 208, 197);
+    --primary-rgb: var(--user-primary-rgb-dark, 168, 194, 188);
 
     /* 次要色 - 融入背景，低调优雅 */
     --secondary: 240 4% 16%;

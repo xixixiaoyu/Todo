@@ -24,6 +24,11 @@ describe('mermaid rendering', () => {
         flowchart: expect.objectContaining({
           htmlLabels: true,
         }),
+        themeVariables: expect.objectContaining({
+          primaryColor: '#78958e',
+          primaryBorderColor: '#78958e',
+          lineColor: '#5c7f77',
+        }),
       }),
     )
   })
@@ -67,6 +72,11 @@ describe('mermaid rendering', () => {
       expect.objectContaining({
         theme: 'dark',
         themeCSS: expect.stringContaining('paint-order: stroke'),
+        themeVariables: expect.objectContaining({
+          primaryColor: '#78958e',
+          primaryBorderColor: '#698c84',
+          lineColor: '#78958e',
+        }),
       }),
     )
   })

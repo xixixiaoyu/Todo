@@ -7,6 +7,9 @@ let mermaid: typeof import('mermaid').default | null = null
 let mermaidLoadPromise: Promise<typeof import('mermaid').default> | null = null
 let mermaidInitialized = false
 let currentMermaidTheme: 'default' | 'dark' = 'default'
+const DEFAULT_MERMAID_PRIMARY = '#78958e'
+const DEFAULT_MERMAID_PRIMARY_BORDER = '#698c84'
+const DEFAULT_MERMAID_LINE = '#5c7f77'
 
 // 缓存与状态
 export const mermaidCodeCache = new Map<string, string>()
@@ -90,10 +93,10 @@ export async function initializeMermaid(theme: 'default' | 'dark' = 'default') {
     },
     themeVariables: isDark
       ? {
-          primaryColor: '#7f9f97',
+          primaryColor: DEFAULT_MERMAID_PRIMARY,
           primaryTextColor: '#f0f0f0',
-          primaryBorderColor: '#6a877f',
-          lineColor: '#7f9f97',
+          primaryBorderColor: DEFAULT_MERMAID_PRIMARY_BORDER,
+          lineColor: DEFAULT_MERMAID_PRIMARY,
           secondaryColor: '#3a3a3a',
           tertiaryColor: '#2a2a2a',
           mainBkg: '#1e1e1e',
@@ -106,10 +109,10 @@ export async function initializeMermaid(theme: 'default' | 'dark' = 'default') {
           nodeTextColor: '#f0f0f0',
         }
       : {
-          primaryColor: '#7f9f97',
+          primaryColor: DEFAULT_MERMAID_PRIMARY,
           primaryTextColor: '#3a3a3a',
-          primaryBorderColor: '#7f9f97',
-          lineColor: '#5f7d74',
+          primaryBorderColor: DEFAULT_MERMAID_PRIMARY,
+          lineColor: DEFAULT_MERMAID_LINE,
           secondaryColor: '#faf8f4',
           tertiaryColor: '#f5f3ed',
           mainBkg: '#ffffff',
