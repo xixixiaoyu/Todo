@@ -137,6 +137,7 @@ describe('TodoHeader', () => {
     const title = wrapper.find('h1').text()
     expect(title).toContain('简思')
     expect(title).toContain('Beta')
+    expect(wrapper.get('[data-test="beta-badge"]').text()).toBe('Beta')
   })
 
   it('点击语言切换按钮应该切换语言并保存到 localStorage', async () => {

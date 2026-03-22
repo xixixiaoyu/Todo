@@ -1,6 +1,8 @@
 import type { RecurrenceRule } from '@lumina/shared'
 import { toDate } from './todo.dates'
 
+export type ScheduleEditorKind = 'due' | 'reminder'
+
 export function resolveScheduleDate(
   dueAt: Date | string | number | null | undefined,
   remindAt: Date | string | number | null | undefined,
@@ -39,11 +41,22 @@ export function hasDistinctReminderTime(
   return dueDate.getTime() !== remindDate.getTime()
 }
 
+export function hasLegacyReminderOffset(
+  dueAt: Date | string | number | null | undefined,
+  remindAt: Date | string | number | null | undefined,
+): boolean {
+  return !!toDate(dueAt) && hasDistinctReminderTime(dueAt, remindAt)
+}
+
 export function resolveScheduleUpdate(
   dueAt: Date | string | number | null | undefined,
   remindAt: Date | string | number | null | undefined,
   nextDate: Date | null,
   recurrenceRule: RecurrenceRule | null,
+  options: {
+    scheduleKind: ScheduleEditorKind
+    keepLegacyReminderOffset: boolean
+  },
 ): { dueAt: Date | null; remindAt: Date | null } {
   if (!nextDate) {
     return {
@@ -56,14 +69,19 @@ export function resolveScheduleUpdate(
   const dueDate = toDate(dueAt)
   const remindDate = toDate(remindAt)
 
-  if (!dueDate && remindDate && !recurrenceRule) {
+  if (options.scheduleKind === 'reminder' && !recurrenceRule) {
     return {
       dueAt: null,
       remindAt: new Date(nextDueAt),
     }
   }
 
-  if (dueDate && remindDate && dueDate.getTime() !== remindDate.getTime()) {
+  if (
+    options.keepLegacyReminderOffset &&
+    dueDate &&
+    remindDate &&
+    dueDate.getTime() !== remindDate.getTime()
+  ) {
     const reminderOffset = remindDate.getTime() - dueDate.getTime()
 
     return {

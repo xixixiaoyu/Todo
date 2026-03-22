@@ -74,13 +74,22 @@ const openAiAssistant = () => {
         {{ t('common.appName') }}
         <Badge
           variant="outline"
-          class="h-6 rounded-full border-primary/12 bg-background/90 px-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_10px_20px_-16px_hsl(var(--primary)/0.55)] backdrop-blur-sm select-none"
+          data-test="beta-badge"
+          class="relative isolate h-6 gap-1.5 overflow-hidden rounded-full border-primary/15 bg-gradient-to-r from-background/95 via-background/90 to-primary/[0.08] pl-1.5 pr-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary/72 shadow-[0_0_0_1px_hsl(var(--primary)/0.06),0_12px_24px_-18px_hsl(var(--primary)/0.6)] backdrop-blur-xl select-none"
         >
           <span
             aria-hidden="true"
-            class="h-1.5 w-1.5 rounded-full bg-primary/55 shadow-[0_0_0_3px_hsl(var(--primary)/0.1)]"
+            class="absolute inset-x-0 top-0 h-px bg-white/35 dark:bg-white/12"
           />
-          <span class="translate-y-[0.5px]">{{ t('common.beta') }}</span>
+          <span
+            aria-hidden="true"
+            class="relative flex h-4 w-4 items-center justify-center rounded-full border border-primary/15 bg-primary/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_6px_16px_-12px_hsl(var(--primary)/0.85)]"
+          >
+            <span
+              class="h-1.5 w-1.5 rounded-full bg-primary/75 shadow-[0_0_12px_hsl(var(--primary)/0.55)]"
+            />
+          </span>
+          <span class="relative translate-y-[0.5px] leading-none">{{ t('common.beta') }}</span>
         </Badge>
       </h1>
     </div>

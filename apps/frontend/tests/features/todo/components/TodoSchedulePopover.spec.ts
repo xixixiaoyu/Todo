@@ -13,6 +13,8 @@ const i18n = createI18n({
         dueAt: '截止时间',
         remindAt: '提醒时间',
         remindAtAuto: '提醒将默认在截止时间触发',
+        remindAtDue: '到点提醒',
+        customReminder: '自定义提醒',
         recurrence: '循环',
         recurrenceNone: '不循环',
         recurrenceDaily: '每天',
@@ -61,7 +63,7 @@ describe('TodoSchedulePopover', () => {
     expect(wrapper.text()).not.toContain('清除提醒')
   })
 
-  it('uses the reminder timestamp as the editor seed for legacy reminder-only tasks', async () => {
+  it('keeps legacy reminder-only tasks in reminder mode until the user switches modes', async () => {
     const wrapper = mount(TodoSchedulePopover, {
       props: {
         dueAt: null,
@@ -76,6 +78,7 @@ describe('TodoSchedulePopover', () => {
     expect(wrapper.text()).toContain('提醒时间')
     expect(wrapper.text()).toContain('清除提醒')
     expect(wrapper.text()).not.toContain('提醒将默认在截止时间触发')
+    expect(wrapper.get('[data-test="schedule-kind-reminder"]').classes()).toContain('bg-background')
 
     const confirmButton = wrapper.findAll('button').find((button) => button.text().includes('确定'))
     expect(confirmButton).toBeTruthy()
@@ -84,6 +87,33 @@ describe('TodoSchedulePopover', () => {
     const emitted = wrapper.emitted('apply')
     expect(emitted).toBeTruthy()
     expect(emitted?.[0]?.[0]).toBeNull()
+    expect(emitted?.[0]?.[1]).toStrictEqual(new Date('2026-03-18T08:30:00.000Z'))
+  })
+
+  it('promotes legacy reminder-only tasks to due schedules after switching to due mode', async () => {
+    const wrapper = mount(TodoSchedulePopover, {
+      props: {
+        dueAt: null,
+        remindAt: new Date('2026-03-18T08:30:00.000Z'),
+      },
+      global: {
+        plugins: [i18n],
+        stubs,
+      },
+    })
+
+    await wrapper.get('[data-test="schedule-kind-due"]').trigger('click')
+
+    expect(wrapper.text()).toContain('提醒将默认在截止时间触发')
+    expect(wrapper.text()).toContain('清除截止')
+
+    const confirmButton = wrapper.findAll('button').find((button) => button.text().includes('确定'))
+    expect(confirmButton).toBeTruthy()
+    await confirmButton!.trigger('click')
+
+    const emitted = wrapper.emitted('apply')
+    expect(emitted).toBeTruthy()
+    expect(emitted?.[0]?.[0]).toStrictEqual(new Date('2026-03-18T08:30:00.000Z'))
     expect(emitted?.[0]?.[1]).toStrictEqual(new Date('2026-03-18T08:30:00.000Z'))
   })
 
@@ -99,6 +129,9 @@ describe('TodoSchedulePopover', () => {
         stubs,
       },
     })
+
+    expect(wrapper.text()).toContain('自定义提醒')
+    expect(wrapper.text()).toContain('到点提醒')
 
     const dailyButton = wrapper.findAll('button').find((button) => button.text().includes('每天'))
     expect(dailyButton).toBeTruthy()
@@ -142,6 +175,34 @@ describe('TodoSchedulePopover', () => {
     expect(emitted).toBeTruthy()
     expect(emitted?.[0]?.[0]).toStrictEqual(new Date('2026-03-17T10:15:00.000Z'))
     expect(emitted?.[0]?.[1]).toStrictEqual(new Date('2026-03-17T09:45:00.000Z'))
+  })
+
+  it('lets legacy custom reminders fall back to the due time', async () => {
+    const wrapper = mount(TodoSchedulePopover, {
+      props: {
+        dueAt: new Date('2026-03-17T09:00:00.000Z'),
+        remindAt: new Date('2026-03-17T08:30:00.000Z'),
+        recurrenceRule: null,
+      },
+      global: {
+        plugins: [i18n],
+        stubs,
+      },
+    })
+
+    await wrapper.get('[data-test="legacy-reminder-toggle"]').trigger('click')
+
+    expect(wrapper.text()).toContain('提醒将默认在截止时间触发')
+    expect(wrapper.text()).toContain('自定义提醒')
+
+    const confirmButton = wrapper.findAll('button').find((button) => button.text().includes('确定'))
+    expect(confirmButton).toBeTruthy()
+    await confirmButton!.trigger('click')
+
+    const emitted = wrapper.emitted('apply')
+    expect(emitted).toBeTruthy()
+    expect(emitted?.[0]?.[0]).toStrictEqual(new Date('2026-03-17T09:00:00.000Z'))
+    expect(emitted?.[0]?.[1]).toStrictEqual(new Date('2026-03-17T09:00:00.000Z'))
   })
 
   it('disables confirm when recurrence is set without dueAt', async () => {

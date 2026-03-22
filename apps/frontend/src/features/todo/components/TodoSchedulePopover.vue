@@ -5,10 +5,11 @@ import { useI18n } from 'vue-i18n'
 import { Button } from '@/components/ui/button'
 import TodoDateTimePicker from './TodoDateTimePicker.vue'
 import {
-  hasDistinctReminderTime,
+  hasLegacyReminderOffset,
   isReminderOnlySchedule,
   resolveScheduleDate,
   resolveScheduleUpdate,
+  type ScheduleEditorKind,
 } from '../stores/todo.schedule'
 
 const props = defineProps<{
@@ -25,6 +26,8 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const dueValue = ref<Date | null>(null)
 const recurrenceValue = ref<RecurrenceRule | null>(null)
+const scheduleKind = ref<ScheduleEditorKind>('due')
+const keepLegacyReminderOffset = ref(false)
 
 type QuickAction = {
   key: string
@@ -41,16 +44,36 @@ watch(
   ([d, r, recurrenceRule]) => {
     dueValue.value = resolveScheduleDate(d, r)
     recurrenceValue.value = recurrenceRule ?? null
+    scheduleKind.value = isReminderOnlySchedule(d, r) ? 'reminder' : 'due'
+    keepLegacyReminderOffset.value = hasLegacyReminderOffset(d, r)
   },
   { immediate: true },
 )
 
-const isRecurrenceInvalid = computed(() => !!recurrenceValue.value && !dueValue.value)
-const isReminderOnly = computed(() => isReminderOnlySchedule(props.dueAt, props.remindAt))
-const hasLegacyReminder = computed(() => hasDistinctReminderTime(props.dueAt, props.remindAt))
-const primaryLabelKey = computed(() => (isReminderOnly.value ? 'todo.remindAt' : 'todo.dueAt'))
+const isRecurrenceInvalid = computed(
+  () => !!recurrenceValue.value && (scheduleKind.value !== 'due' || !dueValue.value),
+)
+const isLegacyReminderOnly = computed(() => isReminderOnlySchedule(props.dueAt, props.remindAt))
+const showScheduleKindSwitch = computed(() => isLegacyReminderOnly.value)
+const showLegacyReminderToggle = computed(
+  () => scheduleKind.value === 'due' && hasLegacyReminderOffset(props.dueAt, props.remindAt),
+)
+const reminderHintKey = computed(() => {
+  if (scheduleKind.value !== 'due') return null
+  if (showLegacyReminderToggle.value && keepLegacyReminderOffset.value) {
+    return 'todo.customReminder'
+  }
+
+  return 'todo.remindAtAuto'
+})
+const legacyReminderToggleKey = computed(() =>
+  keepLegacyReminderOffset.value ? 'todo.remindAtDue' : 'todo.customReminder',
+)
+const primaryLabelKey = computed(() =>
+  scheduleKind.value === 'reminder' ? 'todo.remindAt' : 'todo.dueAt',
+)
 const clearLabelKey = computed(() =>
-  isReminderOnly.value ? 'todo.clearRemindAt' : 'todo.clearDueAt',
+  scheduleKind.value === 'reminder' ? 'todo.clearRemindAt' : 'todo.clearDueAt',
 )
 
 function addDays(base: Date, days: number): Date {
@@ -90,6 +113,13 @@ const recurrenceOptions = computed<RecurrenceOption[]>(() => [
   { value: 'MONTHLY', labelKey: 'todo.recurrenceMonthly' },
 ])
 
+function setScheduleKind(nextKind: ScheduleEditorKind) {
+  scheduleKind.value = nextKind
+  if (nextKind === 'due') {
+    keepLegacyReminderOffset.value = false
+  }
+}
+
 function apply() {
   if (isRecurrenceInvalid.value) return
   const nextSchedule = resolveScheduleUpdate(
@@ -97,6 +127,10 @@ function apply() {
     props.remindAt,
     dueValue.value,
     recurrenceValue.value,
+    {
+      scheduleKind: scheduleKind.value,
+      keepLegacyReminderOffset: keepLegacyReminderOffset.value,
+    },
   )
 
   emit('apply', nextSchedule.dueAt, nextSchedule.remindAt, recurrenceValue.value)
@@ -110,8 +144,41 @@ function apply() {
       <div class="flex items-center justify-between gap-2">
         <div class="space-y-1">
           <p class="text-sm font-semibold">{{ t(primaryLabelKey) }}</p>
-          <p v-if="!hasLegacyReminder" class="text-xs text-muted-foreground">
-            {{ t('todo.remindAtAuto') }}
+          <div
+            v-if="showScheduleKindSwitch"
+            class="inline-flex w-fit items-center rounded-lg border border-border/60 bg-muted/20 p-1"
+          >
+            <Button
+              data-test="schedule-kind-due"
+              variant="ghost"
+              size="xs"
+              class="h-7 rounded-md px-2 text-xs"
+              :class="
+                scheduleKind === 'due'
+                  ? 'bg-background text-foreground shadow-sm hover:bg-background'
+                  : 'text-muted-foreground hover:bg-background/50'
+              "
+              @click="setScheduleKind('due')"
+            >
+              {{ t('todo.dueAt') }}
+            </Button>
+            <Button
+              data-test="schedule-kind-reminder"
+              variant="ghost"
+              size="xs"
+              class="h-7 rounded-md px-2 text-xs"
+              :class="
+                scheduleKind === 'reminder'
+                  ? 'bg-background text-foreground shadow-sm hover:bg-background'
+                  : 'text-muted-foreground hover:bg-background/50'
+              "
+              @click="setScheduleKind('reminder')"
+            >
+              {{ t('todo.remindAt') }}
+            </Button>
+          </div>
+          <p v-if="reminderHintKey" class="text-xs text-muted-foreground">
+            {{ t(reminderHintKey) }}
           </p>
         </div>
         <Button
@@ -122,6 +189,20 @@ function apply() {
           @click="dueValue = null"
         >
           {{ t(clearLabelKey) }}
+        </Button>
+      </div>
+      <div v-if="showLegacyReminderToggle" class="flex items-center justify-between gap-2">
+        <div class="min-w-0 text-xs text-muted-foreground">
+          {{ t(keepLegacyReminderOffset ? 'todo.customReminder' : 'todo.remindAtAuto') }}
+        </div>
+        <Button
+          data-test="legacy-reminder-toggle"
+          variant="ghost"
+          size="xs"
+          class="h-7 rounded-lg px-2 text-xs hover:bg-muted/50"
+          @click="keepLegacyReminderOffset = !keepLegacyReminderOffset"
+        >
+          {{ t(legacyReminderToggleKey) }}
         </Button>
       </div>
       <div class="flex flex-wrap gap-2">
