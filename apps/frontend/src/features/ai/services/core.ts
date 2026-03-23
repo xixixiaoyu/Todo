@@ -11,7 +11,7 @@ import type {
   ToolCall,
   AIChatCompletionMessage,
 } from './types'
-import { buildApiUrl, getHeaders, injectSystemPrompts } from './utils'
+import { buildApiUrl, getHeaders, injectSystemPrompts, sanitizeRequestMessages } from './utils'
 
 const t = i18n.global.t
 
@@ -156,12 +156,13 @@ export async function getAIStreamResponse(
     activeSkills,
     skillRuntimeAvailability,
   )
+  const sanitizedMessages = sanitizeRequestMessages(messagesWithSystemPrompts)
 
   try {
     // 构建请求体
     const requestBody: Record<string, unknown> = {
       model,
-      messages: messagesWithSystemPrompts,
+      messages: sanitizedMessages,
       temperature,
       top_p,
       stream: true,
@@ -352,9 +353,10 @@ export async function fetchNonStreamResponse(
   thinkingMode?: string,
   signal?: AbortSignal,
 ): Promise<{ content: string; reasoning_details?: string }> {
+  const sanitizedMessages = sanitizeRequestMessages(messages)
   const requestBody: Record<string, unknown> = {
     model: config.model,
-    messages,
+    messages: sanitizedMessages,
     temperature: config.temperature ?? 0.6,
     top_p: config.top_p ?? 0.95,
     stream: false,

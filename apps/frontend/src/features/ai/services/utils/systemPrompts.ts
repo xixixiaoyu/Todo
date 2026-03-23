@@ -301,6 +301,122 @@ function buildAssistantRequestFields(message: ChatMessage): {
   }
 }
 
+function sanitizeToolCalls(input: unknown): ToolCall[] | undefined {
+  if (!Array.isArray(input)) return undefined
+
+  const sanitized = input
+    .map((item) => {
+      if (!item || typeof item !== 'object') return null
+
+      const record = item as Record<string, unknown>
+      const fn =
+        record.function && typeof record.function === 'object'
+          ? (record.function as Record<string, unknown>)
+          : null
+
+      if (record.type !== 'function' || !fn) return null
+
+      return {
+        id: typeof record.id === 'string' ? record.id : '',
+        type: 'function' as const,
+        function: {
+          name: typeof fn.name === 'string' ? fn.name : '',
+          arguments: typeof fn.arguments === 'string' ? fn.arguments : '',
+        },
+      }
+    })
+    .filter((item): item is ToolCall => !!item)
+
+  return sanitized.length > 0 ? sanitized : undefined
+}
+
+function sanitizeMessageContent(
+  content: string | MultiModalContent[],
+): string | MultiModalContent[] {
+  if (typeof content === 'string') {
+    return content
+  }
+
+  if (!Array.isArray(content)) {
+    return ''
+  }
+
+  const sanitized = content.reduce<MultiModalContent[]>((acc, item) => {
+    if (!item || typeof item !== 'object') return acc
+
+    const record = item as unknown as Record<string, unknown>
+
+    if (record.type === 'text') {
+      acc.push({
+        type: 'text',
+        text: typeof record.text === 'string' ? record.text : '',
+      })
+      return acc
+    }
+
+    if (
+      record.type === 'image_url' &&
+      record.image_url &&
+      typeof record.image_url === 'object' &&
+      typeof (record.image_url as { url?: unknown }).url === 'string'
+    ) {
+      acc.push({
+        type: 'image_url',
+        image_url: {
+          url: (record.image_url as { url: string }).url,
+        },
+      })
+    }
+
+    return acc
+  }, [])
+
+  return sanitized
+}
+
+function sanitizeToolMessageContent(content: unknown): string {
+  if (typeof content === 'string') {
+    return content
+  }
+
+  if (content == null) {
+    return ''
+  }
+
+  if (typeof content === 'number' || typeof content === 'boolean') {
+    return String(content)
+  }
+
+  try {
+    return JSON.stringify(content)
+  } catch {
+    return ''
+  }
+}
+
+export function sanitizeRequestMessages(
+  messages: AIChatCompletionMessage[],
+): AIChatCompletionMessage[] {
+  return messages.map((message) => {
+    if (message.role === 'tool') {
+      return {
+        role: 'tool',
+        content: sanitizeToolMessageContent(message.content),
+        ...(message.tool_call_id ? { tool_call_id: message.tool_call_id } : {}),
+      }
+    }
+
+    const toolCalls =
+      message.role === 'assistant' ? sanitizeToolCalls(message.tool_calls) : undefined
+
+    return {
+      role: message.role,
+      content: sanitizeMessageContent(message.content),
+      ...(toolCalls ? { tool_calls: toolCalls } : {}),
+    }
+  })
+}
+
 export function injectSystemPrompts(
   messages: ChatMessage[],
   systemPrompt: string,

@@ -5,7 +5,13 @@
 import { getAIConfig, getAIPresets, type AIPreset } from '@/features/ai/composables/useAIConfig'
 import i18n from '@/i18n'
 import type { ChatMessage, AIRequestOptions, DiscussionStep, MultiModalContent } from './types'
-import { buildApiUrl, getHeaders, generateId, injectSystemPrompts } from './utils'
+import {
+  buildApiUrl,
+  getHeaders,
+  generateId,
+  injectSystemPrompts,
+  sanitizeRequestMessages,
+} from './utils'
 import { getAIStreamResponse, fetchNonStreamResponse, resetAbortSignal } from './core'
 
 const t = i18n.global.t
@@ -66,12 +72,12 @@ export async function getAIImageResponse(
     headers: getHeaders(apiKey),
     body: JSON.stringify({
       model,
-      messages: [
+      messages: sanitizeRequestMessages([
         {
           role: 'user',
           content,
         },
-      ],
+      ]),
       top_p,
       // 开启图片生成能力 (针对 Gemini 2.0+ 或其他支持 modalities 的模型)
       modalities: ['image', 'text'],

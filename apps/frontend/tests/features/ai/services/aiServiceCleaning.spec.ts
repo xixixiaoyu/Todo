@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { getAIStreamResponse, type ChatMessage } from '@/features/ai/services/aiService'
+import {
+  getAIStreamResponse,
+  getAIStaticResponse,
+  type ChatMessage,
+} from '@/features/ai/services/aiService'
 import { _resetAIConfig } from '@/features/ai/composables/useAIConfig'
 
 const fetchMock = vi.mocked(fetch)
@@ -97,5 +101,73 @@ describe('aiService - Message Cleaning', () => {
     expect((assistantMsg as Record<string, unknown>).createdAt).toBeUndefined()
 
     expect(Object.keys(assistantMsg as Record<string, unknown>).sort()).toEqual(['content', 'role'])
+  })
+
+  it('should sanitize non-stream request messages at the transport boundary', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        choices: [{ message: { content: 'ok' } }],
+      }),
+    } as unknown as Response)
+
+    const messagesWithExtraFields = [
+      {
+        role: 'assistant',
+        content: 'Need a tool',
+        reasoning_content: 'private chain of thought',
+        reasoning_details: 'provider reasoning',
+        tool_calls: [
+          {
+            id: 'tc1',
+            type: 'function',
+            index: 7,
+            function: {
+              name: 'read_skill',
+              arguments: '{"path":"skills/demo/SKILL.md"}',
+              extra: 'ignore me',
+            },
+            extra: 'ignore me too',
+          },
+        ],
+        id: 'a1',
+        createdAt: new Date(),
+      },
+      {
+        role: 'tool',
+        content: '{"ok":true}',
+        tool_call_id: 'tc1',
+        toolName: 'read_skill',
+        id: 't1',
+      },
+    ] as unknown as Parameters<typeof getAIStaticResponse>[0]
+
+    await getAIStaticResponse(messagesWithExtraFields)
+
+    const sentMessages = getFirstRequestBody().messages as Array<Record<string, unknown>>
+    const assistantMsg = sentMessages.find((message) => message.role === 'assistant')
+    const toolMsg = sentMessages.find((message) => message.role === 'tool')
+
+    expect(assistantMsg).toBeDefined()
+    expect(assistantMsg?.reasoning_content).toBeUndefined()
+    expect(assistantMsg?.reasoning_details).toBeUndefined()
+    expect(assistantMsg?.id).toBeUndefined()
+    expect(assistantMsg?.createdAt).toBeUndefined()
+    expect(assistantMsg?.tool_calls).toEqual([
+      {
+        id: 'tc1',
+        type: 'function',
+        function: {
+          name: 'read_skill',
+          arguments: '{"path":"skills/demo/SKILL.md"}',
+        },
+      },
+    ])
+
+    expect(toolMsg).toEqual({
+      role: 'tool',
+      content: '{"ok":true}',
+      tool_call_id: 'tc1',
+    })
   })
 })
