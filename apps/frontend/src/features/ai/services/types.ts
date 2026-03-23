@@ -222,8 +222,6 @@ export type AIChatCompletionMessage =
   | {
       role: 'system' | 'user' | 'assistant'
       content: string | MultiModalContent[]
-      reasoning_content?: string
-      reasoning_details?: string
       tool_calls?: ToolCall[]
     }
   | {

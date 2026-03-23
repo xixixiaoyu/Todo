@@ -291,16 +291,10 @@ function formatSkillRuntimeAvailabilityPayload(items: AISkillRuntimeAvailability
   return ['```json', JSON.stringify(payload, null, 2), '```'].join('\n')
 }
 
-function buildAssistantProtocolFields(message: ChatMessage): {
-  reasoning_content?: string
-  reasoning_details?: string
+function buildAssistantRequestFields(message: ChatMessage): {
   tool_calls?: ToolCall[]
 } {
-  const reasoningContent = message.reasoning_details || message.thinkingContent
-
   return {
-    ...(reasoningContent ? { reasoning_content: reasoningContent } : {}),
-    ...(message.reasoning_details ? { reasoning_details: message.reasoning_details } : {}),
     ...(message.tool_calls && message.tool_calls.length > 0
       ? { tool_calls: message.tool_calls }
       : {}),
@@ -483,7 +477,7 @@ export function injectSystemPrompts(
             return {
               role: 'assistant',
               content,
-              ...buildAssistantProtocolFields(msg),
+              ...buildAssistantRequestFields(msg),
             }
           }
 
@@ -497,7 +491,7 @@ export function injectSystemPrompts(
           return {
             role: 'assistant',
             content: messageContent,
-            ...buildAssistantProtocolFields(msg),
+            ...buildAssistantRequestFields(msg),
           }
         }
 

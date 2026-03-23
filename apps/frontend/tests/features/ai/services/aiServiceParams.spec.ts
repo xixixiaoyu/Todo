@@ -149,7 +149,7 @@ describe('aiService - Request Parameters', () => {
       expect(requestBody.reasoning).toEqual({ enabled: true, effort: 'low' })
     })
 
-    it('should preserve assistant reasoning fields for tool call messages', async () => {
+    it('should preserve tool calls while stripping assistant reasoning fields', async () => {
       const onChunk = vi.fn()
       const encoder = new TextEncoder()
 
@@ -203,14 +203,14 @@ describe('aiService - Request Parameters', () => {
         (message: { role?: string }) => message.role === 'assistant',
       ) as
         | {
+            tool_calls?: Array<{ id: string }>
             reasoning_content?: string
             reasoning_details?: string
-            tool_calls?: Array<{ id: string }>
           }
         | undefined
 
-      expect(assistantMessage?.reasoning_content).toBe('Need to inspect the skill manifest first')
-      expect(assistantMessage?.reasoning_details).toBe('Need to inspect the skill manifest first')
+      expect(assistantMessage?.reasoning_content).toBeUndefined()
+      expect(assistantMessage?.reasoning_details).toBeUndefined()
       expect(assistantMessage?.tool_calls?.[0]?.id).toBe('tc1')
     })
   })
