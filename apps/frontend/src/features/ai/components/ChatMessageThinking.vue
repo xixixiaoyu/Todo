@@ -135,8 +135,11 @@ watch([() => props.message.thinkingContent, () => props.message.reasoning_detail
           class="thinking-icon-shell flex h-5 w-5 items-center justify-center text-primary/80"
           :class="{ 'thinking-icon-shell--active': isStreaming && !hasContent }"
         >
-          <span v-if="isStreaming && !hasContent" aria-hidden="true" class="thinking-icon-sheen" />
-          <AiLuminaIcon :size="14" class="relative z-[1]" />
+          <AiLuminaIcon
+            :size="14"
+            class="thinking-icon-core relative z-[1]"
+            :class="{ 'thinking-icon-core--active': isStreaming && !hasContent }"
+          />
         </div>
         <span
           class="font-medium tracking-wide transition-all duration-300 leading-none"
@@ -201,29 +204,25 @@ watch([() => props.message.thinkingContent, () => props.message.reasoning_detail
   overflow: hidden;
   border-radius: 9999px;
   transform: translateZ(0);
-  will-change: opacity, filter;
+  will-change: opacity, transform, filter;
+}
+
+.thinking-icon-core {
+  transform-origin: center;
+  transition:
+    opacity 0.28s ease,
+    filter 0.28s ease,
+    transform 0.28s ease;
 }
 
 .thinking-icon-shell--active {
-  background: radial-gradient(circle at center, hsla(var(--primary) / 0.18), transparent 72%);
-  animation: thinking-icon-glow 2.8s ease-in-out infinite;
+  background: radial-gradient(circle at center, hsla(var(--primary) / 0.12), transparent 74%);
+  animation: thinking-icon-halo 2.6s ease-in-out infinite;
 }
 
-.thinking-icon-sheen {
-  position: absolute;
-  inset: -45%;
-  pointer-events: none;
-  background: linear-gradient(
-    115deg,
-    transparent 32%,
-    hsla(var(--primary) / 0.03) 43%,
-    hsla(var(--primary) / 0.52) 50%,
-    hsla(var(--primary) / 0.03) 57%,
-    transparent 68%
-  );
-  mix-blend-mode: screen;
-  filter: blur(1px);
-  animation: thinking-icon-sheen 3.2s linear infinite;
+.thinking-icon-core--active {
+  animation: thinking-icon-breathe 2.6s ease-in-out infinite;
+  filter: drop-shadow(0 0 6px hsla(var(--primary) / 0.18));
 }
 
 .thinking-text {
@@ -261,35 +260,43 @@ watch([() => props.message.thinkingContent, () => props.message.reasoning_detail
   border-radius: 3px;
 }
 
-@keyframes thinking-icon-glow {
+@keyframes thinking-icon-halo {
   0%,
   100% {
-    opacity: 0.86;
-    filter: drop-shadow(0 0 2px hsla(var(--primary) / 0.18));
+    opacity: 0.52;
+    transform: scale(0.94);
   }
   50% {
-    opacity: 1;
-    filter: drop-shadow(0 0 10px hsla(var(--primary) / 0.38));
+    opacity: 0.92;
+    transform: scale(1.06);
   }
 }
 
-@keyframes thinking-icon-sheen {
+@keyframes thinking-icon-breathe {
   0% {
-    transform: translateX(-155%) rotate(10deg);
-    opacity: 0;
+    opacity: 0.82;
+    transform: scale(0.94);
   }
-  18% {
-    opacity: 0;
-  }
-  42% {
-    opacity: 0.95;
-  }
-  62% {
-    opacity: 0;
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
   }
   100% {
-    transform: translateX(155%) rotate(10deg);
-    opacity: 0;
+    opacity: 0.82;
+    transform: scale(0.94);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thinking-icon-shell--active,
+  .thinking-icon-core--active {
+    animation: none;
+  }
+
+  .thinking-icon-core--active {
+    opacity: 0.96;
+    transform: none;
+    filter: drop-shadow(0 0 4px hsla(var(--primary) / 0.12));
   }
 }
 </style>

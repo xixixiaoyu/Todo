@@ -220,7 +220,7 @@ describe('ChatMessage', () => {
     expect(wrapper.find('.thinking-content').exists()).toBe(true)
   })
 
-  it('should keep the thinking icon anchored and render sheen while streaming', async () => {
+  it('should keep the thinking icon anchored and render a subtle active state while streaming', async () => {
     const message = {
       id: '1',
       role: 'assistant' as const,
@@ -239,9 +239,13 @@ describe('ChatMessage', () => {
     await flushPromises()
 
     const iconShell = wrapper.find('.thinking-icon-shell')
+    const iconCore = wrapper.find('.thinking-icon-core')
+
     expect(iconShell.exists()).toBe(true)
+    expect(iconCore.exists()).toBe(true)
     expect(iconShell.classes()).toContain('thinking-icon-shell--active')
-    expect(wrapper.find('.thinking-icon-sheen').exists()).toBe(true)
+    expect(iconCore.classes()).toContain('thinking-icon-core--active')
+    expect(wrapper.find('.thinking-icon-sheen').exists()).toBe(false)
     expect(iconShell.classes()).not.toContain('animate-ai-float')
   })
 
