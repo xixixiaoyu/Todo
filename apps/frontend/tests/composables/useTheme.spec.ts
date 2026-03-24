@@ -127,10 +127,10 @@ describe('useTheme', () => {
   it('should cap overly light presets before writing the theme variables', async () => {
     const { setThemeColor } = useTheme()
 
-    setThemeColor('#8e81c0')
+    setThemeColor('#948ac0')
     await nextTick()
 
-    expect(document.documentElement.style.getPropertyValue('--user-primary')).toBe('252 33% 56%')
+    expect(document.documentElement.style.getPropertyValue('--user-primary')).toBe('251 30% 56%')
   })
 
   it('should reset theme color css variables', async () => {

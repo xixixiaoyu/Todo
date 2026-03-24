@@ -72,7 +72,7 @@ describe('ThemeColorPicker', () => {
     expect(presetButtons[4]?.attributes('title')).toBe('丁香')
 
     const lilacDot = presetButtons[4]?.find('span[style]')
-    expect(lilacDot?.attributes('style')).toContain('#8e81c0')
+    expect(lilacDot?.attributes('style')).toContain('#948ac0')
   })
 
   it('should mark audited presets as recommended', () => {

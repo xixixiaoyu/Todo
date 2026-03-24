@@ -58,7 +58,7 @@ export const THEME_PRESETS: ReadonlyArray<ThemePresetDefinition> = [
   { key: 'twilightAmber', value: '#9b8574' },
   { key: 'mistBlue', value: '#728ba1', recommended: true },
   { key: 'mossGreen', value: '#7c9585', recommended: true },
-  { key: 'lilacGray', value: '#8e81c0', recommended: true },
+  { key: 'lilacGray', value: '#948ac0', recommended: true },
   { key: 'sunsetRose', value: '#ae8792' },
   { key: 'graphite', value: '#647587' },
   { key: 'indigo', value: '#4f6284' },
