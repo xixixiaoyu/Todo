@@ -22,6 +22,7 @@ vi.mock('vue-i18n', () => ({
         'common.themeColor.reset': '重置主题色',
         'common.themeColor.custom': '自定义',
         'common.themeColor.recommended': '推荐',
+        'common.themeColor.recommendedShort': '优选',
         'common.themeColor.presets.celadon': '青瓷',
         'common.themeColor.presets.twilightAmber': '暮色',
         'common.themeColor.presets.mistBlue': '薄雾',
@@ -103,11 +104,10 @@ describe('ThemeColorPicker', () => {
     })
 
     expect(wrapper.findAll('[data-recommended="true"]')).toHaveLength(4)
-    expect(
-      wrapper.find('button[title="青瓷"] [data-recommended="true"]').attributes('aria-label'),
-    ).toBe('推荐')
+    expect(wrapper.find('button[title="青瓷"] [data-recommended="true"]').text()).toBe('优选')
     expect(wrapper.html()).toContain('grid-cols-2')
     expect(wrapper.html()).toContain('sm:grid-cols-3')
+    expect(wrapper.html()).toContain('absolute right-2.5 top-1.5')
     expect(wrapper.find('button[title="随机"] [data-recommended="true"]').exists()).toBe(false)
   })
 

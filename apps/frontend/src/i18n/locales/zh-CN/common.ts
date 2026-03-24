@@ -56,6 +56,7 @@ export const common = {
     desc: '选择经典配色，或使用调色盘自定义',
     custom: '自定义',
     recommended: '推荐',
+    recommendedShort: '优选',
     reset: '恢复默认',
     presets: {
       celadon: '青瓷',

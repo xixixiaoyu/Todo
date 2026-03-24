@@ -56,6 +56,7 @@ export const common = {
     desc: 'Pick a classic palette or choose a custom color',
     custom: 'Custom',
     recommended: 'Recommended',
+    recommendedShort: 'Curated',
     reset: 'Reset to default',
     presets: {
       celadon: 'Celadon',

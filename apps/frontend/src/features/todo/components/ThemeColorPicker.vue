@@ -2,7 +2,7 @@
 import type { ThemePresetDefinition } from '@/composables/useTheme'
 import { computed, ref, useId, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Palette, RotateCcw, Sparkles } from 'lucide-vue-next'
+import { Palette, RotateCcw } from 'lucide-vue-next'
 import { DEFAULT_THEME_COLOR, THEME_PRESETS, useTheme } from '@/composables/useTheme'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -78,12 +78,12 @@ function reset() {
           side="bottom"
           :side-offset="8"
           align="end"
-          class="z-[260] w-[min(24rem,calc(100vw-1.5rem))] max-w-[calc(100vw-1.5rem)]"
+          class="z-[260] w-[min(21.75rem,calc(100vw-1.5rem))] max-w-[calc(100vw-1.5rem)] p-3.5"
         >
-          <div class="flex items-start justify-between gap-3">
+          <div class="flex items-start justify-between gap-2.5">
             <div class="space-y-0.5">
               <div class="text-sm font-bold tracking-tight">{{ t('common.themeColor.label') }}</div>
-              <div class="text-[11px] text-muted-foreground/80">
+              <div class="text-[10px] text-muted-foreground/78">
                 {{ t('common.themeColor.desc') }}
               </div>
             </div>
@@ -99,19 +99,28 @@ function reset() {
             </Button>
           </div>
 
-          <div class="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+          <div class="mt-3.5 grid grid-cols-2 gap-2 sm:grid-cols-3">
             <button
               v-for="preset in presets"
               :key="preset.value"
               type="button"
-              class="group relative min-h-[3.25rem] overflow-hidden rounded-2xl border border-border/60 bg-background/40 px-3 py-2.5 text-left transition-all active:scale-[0.98] hover:border-primary/40 hover:bg-background"
+              class="group relative min-h-[2.9rem] overflow-hidden rounded-[1.15rem] border border-border/60 bg-background/40 px-2.5 py-2 text-left transition-all active:scale-[0.98] hover:border-primary/40 hover:bg-background"
               :class="{
                 'ring-2 ring-primary/30 border-primary/40': selectedColor === preset.value,
               }"
               :title="preset.name"
               @click="selectPreset(preset.value)"
             >
-              <div class="flex items-center justify-between gap-1.5">
+              <span
+                v-if="preset.recommended"
+                data-recommended="true"
+                :title="t('common.themeColor.recommended')"
+                class="pointer-events-none absolute right-2.5 top-1.5 text-[8px] font-medium tracking-[0.14em] text-primary/40"
+              >
+                {{ t('common.themeColor.recommendedShort') }}
+              </span>
+
+              <div class="flex min-h-[2rem] items-center gap-1.5">
                 <div class="flex min-w-0 flex-1 items-center gap-2">
                   <span
                     v-if="preset.value !== RANDOM_THEME_VALUE"
@@ -131,21 +140,11 @@ function reset() {
                     <div class="h-1 w-1 rounded-full bg-white/80" />
                   </span>
                   <span
-                    class="min-w-0 flex-1 text-xs font-semibold tracking-tight text-foreground/80"
+                    class="truncate text-[11px] font-semibold tracking-tight text-foreground/80"
                   >
                     {{ preset.name }}
                   </span>
                 </div>
-
-                <span
-                  v-if="preset.recommended"
-                  data-recommended="true"
-                  :aria-label="t('common.themeColor.recommended')"
-                  :title="t('common.themeColor.recommended')"
-                  class="flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full border border-primary/15 bg-primary/12 text-primary/90 shadow-sm backdrop-blur-sm"
-                >
-                  <Sparkles :size="9" aria-hidden="true" />
-                </span>
               </div>
               <div
                 v-if="preset.value !== RANDOM_THEME_VALUE"
@@ -160,7 +159,7 @@ function reset() {
           </div>
 
           <div
-            class="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-muted/20 px-3 py-2"
+            class="mt-3.5 flex items-center justify-between gap-2.5 rounded-[1.15rem] border border-border/60 bg-muted/20 px-2.5 py-2"
           >
             <label :for="inputId" class="text-xs font-semibold text-foreground/70">
               {{ t('common.themeColor.custom') }}
@@ -168,14 +167,14 @@ function reset() {
 
             <div class="flex items-center gap-2">
               <div
-                class="h-6 w-6 rounded-lg border border-border/60"
+                class="h-5.5 w-5.5 rounded-md border border-border/60"
                 :style="{ background: customColor }"
               />
               <input
                 :id="inputId"
                 v-model="customColor"
                 type="color"
-                class="h-9 w-12 cursor-pointer rounded-xl border border-border bg-background"
+                class="h-8 w-10 cursor-pointer rounded-[0.9rem] border border-border bg-background"
                 @change="applyCustomColor(customColor)"
               />
             </div>
