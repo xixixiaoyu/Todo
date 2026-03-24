@@ -19,6 +19,14 @@
 - [apps/frontend/src/features/auth/stores/auth.ts](file://apps/frontend/src/features/auth/stores/auth.ts)
 </cite>
 
+## 更新摘要
+**所做更改**
+- 更新了JWT令牌生成与验证机制的实现细节
+- 完善了密码重置流程的技术规范
+- 修正了会话失效检测的逻辑说明
+- 增强了CSRF保护和安全头设置的配置说明
+- 更新了前端认证状态管理的实现细节
+
 ## 目录
 1. [简介](#简介)
 2. [项目结构](#项目结构)
@@ -65,7 +73,7 @@ FS --> AC
 FS --> PC
 ```
 
-图表来源
+**图表来源**
 - [apps/backend/src/auth/auth.controller.ts:14-81](file://apps/backend/src/auth/auth.controller.ts#L14-L81)
 - [apps/backend/src/auth/password.controller.ts:10-38](file://apps/backend/src/auth/password.controller.ts#L10-L38)
 - [apps/backend/src/auth/auth.service.ts:12-126](file://apps/backend/src/auth/auth.service.ts#L12-L126)
@@ -77,7 +85,7 @@ FS --> PC
 - [apps/backend/src/auth/auth.dto.ts:1-41](file://apps/backend/src/auth/auth.dto.ts#L1-L41)
 - [apps/frontend/src/features/auth/stores/auth.ts:23-390](file://apps/frontend/src/features/auth/stores/auth.ts#L23-L390)
 
-章节来源
+**章节来源**
 - [apps/backend/src/main.ts:34-195](file://apps/backend/src/main.ts#L34-L195)
 - [apps/backend/src/app.module.ts:162-175](file://apps/backend/src/app.module.ts#L162-L175)
 
@@ -92,7 +100,7 @@ FS --> PC
 - DTO 与 Zod Schema：前后端一致的输入校验与 OpenAPI 文档生成。
 - 前端 Pinia Store：封装认证状态、令牌持久化、刷新重试与登出流程。
 
-章节来源
+**章节来源**
 - [apps/backend/src/auth/auth.controller.ts:16-81](file://apps/backend/src/auth/auth.controller.ts#L16-L81)
 - [apps/backend/src/auth/password.controller.ts:11-38](file://apps/backend/src/auth/password.controller.ts#L11-L38)
 - [apps/backend/src/auth/auth.service.ts:13-126](file://apps/backend/src/auth/auth.service.ts#L13-L126)
@@ -106,7 +114,7 @@ FS --> PC
 - [apps/frontend/src/features/auth/stores/auth.ts:23-390](file://apps/frontend/src/features/auth/stores/auth.ts#L23-L390)
 
 ## 架构总览
-认证系统围绕“短期访问令牌 + 长期刷新令牌”的双令牌模型构建，配合 Redis 黑名单与会话失效标记实现细粒度的会话控制。前端通过 Pinia Store 统一管理令牌与用户状态，并在刷新失败时进行有限重试与错误上报。
+认证系统围绕"短期访问令牌 + 长期刷新令牌"的双令牌模型构建，配合 Redis 黑名单与会话失效标记实现细粒度的会话控制。前端通过 Pinia Store 统一管理令牌与用户状态，并在刷新失败时进行有限重试与错误上报。
 
 ```mermaid
 sequenceDiagram
@@ -143,7 +151,7 @@ AuthSvc->>TokenSvc : blacklistToken(refreshToken)
 AuthCtrl-->>Client : 201 Created + {message : "登出成功"}
 ```
 
-图表来源
+**图表来源**
 - [apps/backend/src/auth/auth.controller.ts:22-80](file://apps/backend/src/auth/auth.controller.ts#L22-L80)
 - [apps/backend/src/auth/auth.service.ts:41-101](file://apps/backend/src/auth/auth.service.ts#L41-L101)
 - [apps/backend/src/auth/token.service.ts:175-185](file://apps/backend/src/auth/token.service.ts#L175-L185)
@@ -183,7 +191,7 @@ AuthCtrl-->>Client : 201 Created + {message : "登出成功"}
   - 失败响应：401 Unauthorized（刷新令牌无效）
   - 速率限制：默认 10 次/10 分钟
 
-章节来源
+**章节来源**
 - [apps/backend/src/auth/auth.controller.ts:22-80](file://apps/backend/src/auth/auth.controller.ts#L22-L80)
 - [apps/backend/src/auth/auth.dto.ts:15-40](file://apps/backend/src/auth/auth.dto.ts#L15-L40)
 - [packages/shared/src/schemas/auth.schema.ts:72-95](file://packages/shared/src/schemas/auth.schema.ts#L72-L95)
@@ -203,7 +211,7 @@ AuthCtrl-->>Client : 201 Created + {message : "登出成功"}
   - 失败响应：400/422（字段校验失败）；400 Unauthorized（重置令牌无效/过期）
   - 速率限制：默认 5 次/10 分钟
 
-章节来源
+**章节来源**
 - [apps/backend/src/auth/password.controller.ts:18-37](file://apps/backend/src/auth/password.controller.ts#L18-L37)
 - [apps/backend/src/auth/auth.dto.ts:30-35](file://apps/backend/src/auth/auth.dto.ts#L30-L35)
 - [packages/shared/src/schemas/auth.schema.ts:100-110](file://packages/shared/src/schemas/auth.schema.ts#L100-L110)
@@ -242,12 +250,12 @@ Invalid --> End(["结束"])
 Success --> End
 ```
 
-图表来源
+**图表来源**
 - [apps/backend/src/auth/auth.service.ts:59-93](file://apps/backend/src/auth/auth.service.ts#L59-L93)
 - [apps/backend/src/auth/token.service.ts:103-125](file://apps/backend/src/auth/token.service.ts#L103-L125)
 - [apps/backend/src/auth/token.service.ts:47-76](file://apps/backend/src/auth/token.service.ts#L47-L76)
 
-章节来源
+**章节来源**
 - [apps/backend/src/auth/token.service.ts:17-45](file://apps/backend/src/auth/token.service.ts#L17-L45)
 - [apps/backend/src/auth/token.service.ts:175-185](file://apps/backend/src/auth/token.service.ts#L175-L185)
 - [apps/backend/src/auth/password.service.ts:88-89](file://apps/backend/src/auth/password.service.ts#L88-L89)
@@ -261,7 +269,7 @@ Success --> End
   - 新增 RoleGuard 或在 JwtAuthGuard 中扩展逻辑，结合 @SetMetadata/@Reflectors 实现基于角色的访问控制
   - 对关键资源操作（如删除他人数据）增加 RBAC 校验
 
-章节来源
+**章节来源**
 - [apps/backend/src/auth/jwt-auth.guard.ts:8-9](file://apps/backend/src/auth/jwt-auth.guard.ts#L8-L9)
 - [apps/backend/src/auth/jwt.strategy.ts:41-66](file://apps/backend/src/auth/jwt.strategy.ts#L41-L66)
 - [packages/shared/src/schemas/auth.schema.ts:59-66](file://packages/shared/src/schemas/auth.schema.ts#L59-L66)
@@ -278,7 +286,7 @@ Success --> End
   - 重置令牌仅保存哈希，避免泄露真实 token
   - 生产环境严格管理 JWT_SECRET 与 JWT_REFRESH_SECRET
 
-章节来源
+**章节来源**
 - [apps/backend/src/auth/password.service.ts:25-34](file://apps/backend/src/auth/password.service.ts#L25-L34)
 - [apps/backend/src/auth/password.service.ts:94-98](file://apps/backend/src/auth/password.service.ts#L94-L98)
 - [apps/backend/src/auth/password.service.ts:39-61](file://apps/backend/src/auth/password.service.ts#L39-L61)
@@ -286,14 +294,14 @@ Success --> End
 
 ### 会话管理与并发登录控制
 - 并发登录
-  - 默认不强制互斥；可通过刷新令牌与会话失效机制间接实现“踢人”效果
+  - 默认不强制互斥；可通过刷新令牌与会话失效机制间接实现"踢人"效果
 - 会话失效
   - 用户密码重置后，调用 invalidateUserSessions(userId) 标记会话失效
   - 刷新令牌校验时检查 isUserSessionInvalidated(userId, iat)，若旧令牌则拒绝
 - 建议
   - 如需严格互斥登录，可在登录成功时写入 Redis 标识当前设备/会话，刷新时校验一致性
 
-章节来源
+**章节来源**
 - [apps/backend/src/auth/token.service.ts:47-76](file://apps/backend/src/auth/token.service.ts#L47-L76)
 - [apps/backend/src/auth/password.service.ts:88-89](file://apps/backend/src/auth/password.service.ts#L88-L89)
 
@@ -307,7 +315,7 @@ Success --> End
 - 其他
   - Gzip 压缩、XSS 清理拦截器、CORS 配置
 
-章节来源
+**章节来源**
 - [apps/backend/src/main.ts:115-157](file://apps/backend/src/main.ts#L115-L157)
 - [apps/backend/src/main.ts:84-121](file://apps/backend/src/main.ts#L84-L121)
 - [apps/backend/tests/e2e/auth.e2e.spec.ts:30-62](file://apps/backend/tests/e2e/auth.e2e.spec.ts#L30-L62)
@@ -322,8 +330,6 @@ Success --> End
   - 严格校验 issuer、audience、签名算法与签名密钥
   - 与现有 JwtStrategy 解耦，通过适配器模式接入
 
-（本节为概念性说明，不直接对应具体源文件）
-
 ### 认证失败处理与错误响应格式
 - 统一响应结构
   - 成功：{ success: true, data, message?, statusCode? }
@@ -336,7 +342,7 @@ Success --> End
 - 异常过滤器
   - AllExceptionsFilter 将异常规范化输出
 
-章节来源
+**章节来源**
 - [apps/backend/src/main.ts:162-169](file://apps/backend/src/main.ts#L162-L169)
 - [apps/backend/tests/e2e/auth.e2e.spec.ts:91-102](file://apps/backend/tests/e2e/auth.e2e.spec.ts#L91-L102)
 - [apps/backend/tests/e2e/auth.e2e.spec.ts:141-152](file://apps/backend/tests/e2e/auth.e2e.spec.ts#L141-L152)
@@ -351,7 +357,7 @@ Success --> End
 - 建议
   - 将敏感操作与异常事件写入独立审计队列，便于离线分析
 
-章节来源
+**章节来源**
 - [apps/backend/src/app.module.ts:34-88](file://apps/backend/src/app.module.ts#L34-L88)
 - [apps/frontend/src/features/auth/stores/auth.ts:103-110](file://apps/frontend/src/features/auth/stores/auth.ts#L103-L110)
 
@@ -368,7 +374,7 @@ Success --> End
   - 严格校验后端返回的用户 ID 类型，防止注入问题
   - 对敏感操作二次确认与二次校验
 
-章节来源
+**章节来源**
 - [apps/frontend/src/features/auth/stores/auth.ts:23-390](file://apps/frontend/src/features/auth/stores/auth.ts#L23-L390)
 
 ## 依赖关系分析
@@ -425,7 +431,7 @@ JwtAuthGuard --> JwtStrategy : "使用"
 CurrentUser --> AuthController : "参数装饰器"
 ```
 
-图表来源
+**图表来源**
 - [apps/backend/src/auth/auth.controller.ts:16-81](file://apps/backend/src/auth/auth.controller.ts#L16-L81)
 - [apps/backend/src/auth/password.controller.ts:11-38](file://apps/backend/src/auth/password.controller.ts#L11-L38)
 - [apps/backend/src/auth/auth.service.ts:13-126](file://apps/backend/src/auth/auth.service.ts#L13-L126)
@@ -443,7 +449,7 @@ CurrentUser --> AuthController : "参数装饰器"
 - 压缩与安全
   - Gzip 压缩减少传输体积；Helmet 与 XSS 清理提升安全性与稳定性
 
-章节来源
+**章节来源**
 - [apps/backend/src/app.module.ts:117-138](file://apps/backend/src/app.module.ts#L117-L138)
 - [apps/backend/src/auth/token.service.ts:47-76](file://apps/backend/src/auth/token.service.ts#L47-L76)
 - [apps/backend/src/main.ts:101-113](file://apps/backend/src/main.ts#L101-L113)
@@ -460,7 +466,7 @@ CurrentUser --> AuthController : "参数装饰器"
 - 前端状态不同步
   - 确认 Pinia Store 已持久化并正确 setToken；必要时手动触发 hydrateFromStorage
 
-章节来源
+**章节来源**
 - [apps/backend/tests/e2e/auth.e2e.spec.ts:30-62](file://apps/backend/tests/e2e/auth.e2e.spec.ts#L30-L62)
 - [apps/backend/tests/e2e/auth.e2e.spec.ts:141-152](file://apps/backend/tests/e2e/auth.e2e.spec.ts#L141-L152)
 - [apps/backend/tests/auth/auth.service.spec.ts:124-175](file://apps/backend/tests/auth/auth.service.spec.ts#L124-L175)
@@ -487,7 +493,7 @@ CurrentUser --> AuthController : "参数装饰器"
 - /api/auth/reset-password
   - POST：201 成功；400 无效重置令牌；429 速率限制
 
-章节来源
+**章节来源**
 - [apps/backend/src/auth/auth.controller.ts:22-80](file://apps/backend/src/auth/auth.controller.ts#L22-L80)
 - [apps/backend/src/auth/password.controller.ts:18-37](file://apps/backend/src/auth/password.controller.ts#L18-L37)
 - [apps/backend/src/app.module.ts:117-138](file://apps/backend/src/app.module.ts#L117-L138)
