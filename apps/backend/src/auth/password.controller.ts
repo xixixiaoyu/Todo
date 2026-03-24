@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger'
 import { Throttle } from '@nestjs/throttler'
 import { AuthService } from './auth.service'
 import { ForgotPasswordDto, ResetPasswordDto } from './auth.dto'
+import { PASSWORD_FORGOT_THROTTLE, PASSWORD_RESET_THROTTLE } from '../common'
 
 /**
  * 密码管理控制器
@@ -14,10 +15,9 @@ export class PasswordController {
 
   /**
    * 请求密码重置
-   * 限制: 每分钟最多 3 次尝试
    */
   @Post('forgot-password')
-  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @Throttle(PASSWORD_FORGOT_THROTTLE)
   @ApiOperation({ summary: '请求密码重置' })
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto): Promise<{ message: string }> {
     await this.authService.requestPasswordReset(forgotPasswordDto.email)
@@ -26,10 +26,9 @@ export class PasswordController {
 
   /**
    * 重置密码
-   * 限制: 每分钟最多 5 次尝试
    */
   @Post('reset-password')
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Throttle(PASSWORD_RESET_THROTTLE)
   @ApiOperation({ summary: '重置密码' })
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto): Promise<{ message: string }> {
     await this.authService.resetPassword(resetPasswordDto.token, resetPasswordDto.password)

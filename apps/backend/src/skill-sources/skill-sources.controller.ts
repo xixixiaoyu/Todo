@@ -1,5 +1,7 @@
 import { BadGatewayException, BadRequestException, Controller, Get, Query } from '@nestjs/common'
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger'
+import { Throttle } from '@nestjs/throttler'
+import { EXTERNAL_SOURCE_THROTTLE } from '../common'
 
 const TRUSTED_SKILL_SOURCE_HOSTS = new Set([
   'raw.githubusercontent.com',
@@ -157,6 +159,7 @@ async function fetchExternalSourceWithTrustedRedirects(params: {
 @Controller('skills')
 export class SkillSourcesController {
   @Get('external-source')
+  @Throttle(EXTERNAL_SOURCE_THROTTLE)
   @ApiOperation({ summary: '代理拉取外部技能来源（绕过浏览器 CORS）' })
   @ApiQuery({ name: 'url', required: true, description: '外部技能 URL' })
   async getExternalSource(@Query('url') url: string): Promise<ExternalSkillSourcePayload> {

@@ -1,15 +1,25 @@
 import { Test } from '@nestjs/testing'
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify'
+import { APP_GUARD } from '@nestjs/core'
 import { PassportModule } from '@nestjs/passport'
+import { ThrottlerModule } from '@nestjs/throttler'
 import { JwtService } from '@nestjs/jwt'
 import { ConfigService } from '@nestjs/config'
 import { ZodValidationPipe } from 'nestjs-zod'
 import fastifyCookie from '@fastify/cookie'
 import type { ApiResponse } from '@lumina/shared'
-import { AllExceptionsFilter, SanitizeInterceptor, TransformInterceptor } from '@/common'
+import {
+  AllExceptionsFilter,
+  AppThrottlerGuard,
+  RedisThrottlerStorage,
+  SanitizeInterceptor,
+  TransformInterceptor,
+  createGlobalThrottlerOptions,
+} from '@/common'
 import { AuthController } from '@/auth/auth.controller'
 import { AuthService } from '@/auth/auth.service'
 import { JwtStrategy } from '@/auth/jwt.strategy'
+import { PasswordController } from '@/auth/password.controller'
 import { PasswordService } from '@/auth/password.service'
 import { TokenService } from '@/auth/token.service'
 import { UsersService } from '@/users/users.service'
@@ -401,6 +411,9 @@ function createInMemoryRedis() {
       const val = await redis.get(key, options)
       return val !== undefined
     },
+    getRawClient() {
+      return undefined
+    },
   }
 
   return redis as unknown as RedisService
@@ -460,8 +473,13 @@ export async function createE2eApp() {
   const tokenService = new TokenService(jwtService, config, redis)
 
   const moduleRef = await Test.createTestingModule({
-    imports: [PassportModule.register({ defaultStrategy: 'jwt' })],
-    controllers: [AuthController, TodosController],
+    imports: [
+      PassportModule.register({ defaultStrategy: 'jwt' }),
+      ThrottlerModule.forRoot(
+        createGlobalThrottlerOptions(config, new RedisThrottlerStorage(redis)),
+      ),
+    ],
+    controllers: [AuthController, PasswordController, TodosController],
     providers: [
       AuthService,
       UsersService,
@@ -476,6 +494,7 @@ export async function createE2eApp() {
       { provide: ConfigService, useValue: config },
       { provide: MailService, useValue: mail },
       { provide: EventsGateway, useValue: events },
+      { provide: APP_GUARD, useClass: AppThrottlerGuard },
     ],
   }).compile()
 

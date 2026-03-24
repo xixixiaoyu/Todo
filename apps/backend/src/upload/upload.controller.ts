@@ -8,11 +8,13 @@ import {
   Req,
 } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiConsumes, ApiBody, ApiBearerAuth } from '@nestjs/swagger'
+import { Throttle } from '@nestjs/throttler'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { StorageService, type UploadResult, type UploadedFile } from './storage.service'
 import { FileParsingService } from './file-parsing.service'
 import { ALLOWED_UPLOAD_EXTENSIONS, ALLOWED_UPLOAD_MIME_TYPES } from './upload.constants'
 import type { FastifyRequestWithMultipart, MultipartFile } from '../common'
+import { FILE_PARSE_THROTTLE, FILE_UPLOAD_THROTTLE } from '../common'
 
 /**
  * 文件上传控制器
@@ -66,6 +68,7 @@ export class UploadController {
    * 上传单个文件
    */
   @Post('single')
+  @Throttle(FILE_UPLOAD_THROTTLE)
   @ApiOperation({ summary: '上传单个文件' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -90,6 +93,7 @@ export class UploadController {
    * 解析文件内容
    */
   @Post('parse')
+  @Throttle(FILE_PARSE_THROTTLE)
   @ApiOperation({ summary: '解析文件内容' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -115,6 +119,7 @@ export class UploadController {
    * 上传多个文件
    */
   @Post('multiple')
+  @Throttle(FILE_UPLOAD_THROTTLE)
   @ApiOperation({ summary: '上传多个文件（最多 10 个）' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({

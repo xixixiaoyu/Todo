@@ -13,6 +13,7 @@ import {
   Logger,
 } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger'
+import { Throttle } from '@nestjs/throttler'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { CurrentUser } from '../auth/current-user.decorator'
 import type { User } from '@lumina/shared'
@@ -26,6 +27,11 @@ import {
   type McpToolResponse,
   type ToolCallResult,
 } from './mcp.dto'
+import {
+  MCP_CONNECTION_THROTTLE,
+  MCP_TOOL_CALL_THROTTLE,
+  MCP_TOOL_DISCOVERY_THROTTLE,
+} from '../common'
 
 @ApiTags('MCP')
 @ApiBearerAuth()
@@ -104,6 +110,7 @@ export class McpController {
    * 获取已启用的所有工具
    */
   @Get('tools')
+  @Throttle(MCP_TOOL_DISCOVERY_THROTTLE)
   @ApiOperation({ summary: 'Get all tools from all enabled MCP servers' })
   async getAllTools(@CurrentUser() user: User): Promise<McpToolResponse[]> {
     const enabledServers = await this.configService.findEnabled(user.id)
@@ -132,6 +139,7 @@ export class McpController {
    * 连接到 MCP 服务器
    */
   @Post('servers/:id/connect')
+  @Throttle(MCP_CONNECTION_THROTTLE)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Connect to MCP server' })
   async connect(@CurrentUser() user: User, @Param('id', ParseUUIDPipe) id: string): Promise<void> {
@@ -143,6 +151,7 @@ export class McpController {
    * 断开 MCP 服务器连接
    */
   @Post('servers/:id/disconnect')
+  @Throttle(MCP_CONNECTION_THROTTLE)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Disconnect from MCP server' })
   async disconnect(
@@ -158,6 +167,7 @@ export class McpController {
    * 获取单个服务器的工具
    */
   @Get('servers/:id/tools')
+  @Throttle(MCP_TOOL_DISCOVERY_THROTTLE)
   @ApiOperation({ summary: 'Get tools from a specific MCP server' })
   async getTools(
     @CurrentUser() user: User,
@@ -178,6 +188,7 @@ export class McpController {
    * 调用工具
    */
   @Post('servers/:id/tools/call')
+  @Throttle(MCP_TOOL_CALL_THROTTLE)
   @ApiOperation({ summary: 'Call a tool on MCP server' })
   async callTool(
     @CurrentUser() user: User,

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import type { NestFastifyApplication } from '@nestjs/platform-fastify'
 import { unwrapApiResponse, type ApiResponse, type AuthResponse, type User } from '@lumina/shared'
 import { createE2eApp } from './test-app'
@@ -17,13 +17,13 @@ describe('Auth e2e', () => {
     payload?: unknown
   }) => Promise<{ statusCode: number; body: ApiResponse<T> | Record<string, unknown> }>
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     const res = await createE2eApp()
     app = res.app
     inject = res.inject
   })
 
-  afterAll(async () => {
+  afterEach(async () => {
     await app.close()
   })
 
@@ -150,5 +150,93 @@ describe('Auth e2e', () => {
       success: false,
       statusCode: 401,
     })
+  })
+
+  it('should throttle repeated register attempts with the dedicated policy', async () => {
+    const results: Array<{
+      statusCode: number
+      body: ApiResponse<AuthResponse> | Record<string, unknown>
+    }> = []
+
+    for (const suffix of ['alpha', 'beta', 'gamma']) {
+      results.push(
+        await inject<AuthResponse>({
+          method: 'POST',
+          url: '/api/auth/register',
+          headers: ajaxHeaders,
+          payload: {
+            email: `${suffix}@example.com`,
+            name: suffix,
+            password: 'password123',
+          },
+        }),
+      )
+    }
+
+    expect(results.map((result) => result.statusCode)).toEqual([201, 201, 429])
+    expect(results[2].body).toMatchObject({
+      success: false,
+      statusCode: 429,
+      message: 'common.error.TOO_MANY_REQUESTS',
+    })
+  })
+
+  it('should throttle repeated invalid login attempts before service execution', async () => {
+    const registerRes = await inject<AuthResponse>({
+      method: 'POST',
+      url: '/api/auth/register',
+      headers: ajaxHeaders,
+      payload: { email: 'limit-login@example.com', name: 'Limiter', password: 'password123' },
+    })
+
+    expect(registerRes.statusCode).toBe(201)
+
+    const attempts: Array<{
+      statusCode: number
+      body: Record<string, unknown> | ApiResponse<unknown>
+    }> = []
+
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      attempts.push(
+        await inject({
+          method: 'POST',
+          url: '/api/auth/login',
+          headers: ajaxHeaders,
+          payload: { email: 'limit-login@example.com', password: 'wrong-password' },
+        }),
+      )
+    }
+
+    expect(attempts.map((result) => result.statusCode)).toEqual([401, 401, 401, 429])
+  })
+
+  it('should keep auth me under the global throttle budget', async () => {
+    const registerRes = await inject<AuthResponse>({
+      method: 'POST',
+      url: '/api/auth/register',
+      headers: ajaxHeaders,
+      payload: { email: 'me-limit@example.com', name: 'Me Limit', password: 'password123' },
+    })
+
+    const { accessToken } = unwrapApiResponse(registerRes.body as ApiResponse<AuthResponse>)
+    const requests: Array<{
+      statusCode: number
+      body: ApiResponse<User> | Record<string, unknown>
+    }> = []
+
+    for (let attempt = 0; attempt < 11; attempt += 1) {
+      requests.push(
+        await inject<User>({
+          method: 'GET',
+          url: '/api/auth/me',
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+        }),
+      )
+    }
+
+    expect(requests.slice(0, 10).every((result) => result.statusCode === 200)).toBe(true)
+    expect(requests[10].statusCode).toBe(429)
   })
 })

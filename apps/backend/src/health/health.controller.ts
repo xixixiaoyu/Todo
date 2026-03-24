@@ -1,5 +1,6 @@
 import { Controller, Get } from '@nestjs/common'
 import { ApiTags, ApiOperation } from '@nestjs/swagger'
+import { SkipThrottle } from '@nestjs/throttler'
 import {
   HealthCheck,
   HealthCheckService,
@@ -8,6 +9,7 @@ import {
 } from '@nestjs/terminus'
 import { PrismaHealthIndicator } from './prisma.health'
 import { RedisHealthIndicator } from '../redis'
+import { THROTTLE_SKIP_ALL } from '../common'
 
 /**
  * 健康检查控制器
@@ -15,6 +17,7 @@ import { RedisHealthIndicator } from '../redis'
  */
 @ApiTags('健康检查')
 @Controller('health')
+@SkipThrottle(THROTTLE_SKIP_ALL)
 export class HealthController {
   constructor(
     private health: HealthCheckService,

@@ -1,7 +1,7 @@
 import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common'
 import { APP_GUARD } from '@nestjs/core'
 import { ConfigModule, ConfigService } from '@nestjs/config'
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler'
+import { ThrottlerModule } from '@nestjs/throttler'
 import { EventEmitterModule } from '@nestjs/event-emitter'
 import { BullModule } from '@nestjs/bullmq'
 import { LoggerModule } from 'nestjs-pino'
@@ -9,7 +9,7 @@ import { I18nModule, AcceptLanguageResolver, HeaderResolver } from 'nestjs-i18n'
 import * as path from 'path'
 import { I18nTsLoader } from './i18n/i18n-ts.loader'
 import { PrismaModule } from './prisma/prisma.module'
-import { RedisModule } from './redis'
+import { RedisModule, RedisService } from './redis'
 import { UsersModule } from './users/users.module'
 import { HealthModule } from './health/health.module'
 import { AuthModule } from './auth/auth.module'
@@ -20,6 +20,7 @@ import { TodosModule } from './todos/todos.module'
 import { ScheduledTasksModule } from './scheduled-tasks'
 import { McpModule } from './mcp/mcp.module'
 import { SkillSourcesModule } from './skill-sources/skill-sources.module'
+import { AppThrottlerGuard, RedisThrottlerStorage, createGlobalThrottlerOptions } from './common'
 
 /**
  * 应用程序根模块
@@ -115,26 +116,10 @@ import { SkillSourcesModule } from './skill-sources/skill-sources.module'
     }),
     // 速率限制模块（防止暴力破解）
     ThrottlerModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        throttlers: [
-          {
-            name: 'short',
-            ttl: config.get('THROTTLE_SHORT_TTL', 1000), // 1秒
-            limit: config.get('THROTTLE_SHORT_LIMIT', 20), // 每秒最多20次请求
-          },
-          {
-            name: 'medium',
-            ttl: config.get('THROTTLE_MEDIUM_TTL', 10000), // 10秒
-            limit: config.get('THROTTLE_MEDIUM_LIMIT', 100), // 每10秒最多100次请求
-          },
-          {
-            name: 'long',
-            ttl: config.get('THROTTLE_LONG_TTL', 60000), // 1分钟
-            limit: config.get('THROTTLE_LONG_LIMIT', 300), // 每分钟最多300次请求
-          },
-        ],
-      }),
+      imports: [RedisModule],
+      inject: [ConfigService, RedisService],
+      useFactory: (config: ConfigService, redisService: RedisService) =>
+        createGlobalThrottlerOptions(config, new RedisThrottlerStorage(redisService)),
     }),
     // 国际化模块
     I18nModule.forRoot({
@@ -163,7 +148,7 @@ import { SkillSourcesModule } from './skill-sources/skill-sources.module'
     // 全局速率限制守卫
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: AppThrottlerGuard,
     },
   ],
 })

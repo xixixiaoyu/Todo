@@ -9,6 +9,7 @@ export default {
     },
     error: {
       INTERNAL_SERVER_ERROR: '服务器内部错误',
+      TOO_MANY_REQUESTS: '请求过于频繁，请稍后再试',
     },
   },
 } as const

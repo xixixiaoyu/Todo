@@ -2,6 +2,16 @@ import { Injectable, Inject, Logger, OnModuleDestroy } from '@nestjs/common'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import type { Cache } from 'cache-manager'
 
+type CacheStoreLike = {
+  client?: unknown
+  disconnect?: () => Promise<void>
+}
+
+type KeyvStoreLike = {
+  store?: CacheStoreLike
+  disconnect?: () => Promise<void>
+}
+
 /**
  * 缓存键前缀枚举
  */
@@ -57,13 +67,16 @@ export class RedisService implements OnModuleDestroy {
 
   async onModuleDestroy() {
     try {
-      // cache-manager v7 使用 stores 数组
-      const cacheWithStores = this.cache as { stores?: Array<{ disconnect?: () => Promise<void> }> }
-      const stores = cacheWithStores.stores
+      const stores = this.getStores()
       if (stores && Array.isArray(stores)) {
         for (const store of stores) {
-          if (store && typeof store.disconnect === 'function') {
+          if (typeof store.disconnect === 'function') {
             await store.disconnect()
+            continue
+          }
+
+          if (typeof store.store?.disconnect === 'function') {
+            await store.store.disconnect()
           }
         }
         this.logger.log('Redis connection closed')
@@ -193,11 +206,20 @@ export class RedisService implements OnModuleDestroy {
     return this.cache
   }
 
+  getRawClient(): unknown | undefined {
+    return this.getStores()[0]?.store?.client
+  }
+
   /**
    * 为指定前缀创建一个命名空间缓存服务
    */
   namespace(prefix: CachePrefix | string): NamespacedCache {
     return new NamespacedCache(this, prefix)
+  }
+
+  private getStores(): KeyvStoreLike[] {
+    const cacheWithStores = this.cache as Cache & { stores?: KeyvStoreLike[] }
+    return Array.isArray(cacheWithStores.stores) ? cacheWithStores.stores : []
   }
 }
 

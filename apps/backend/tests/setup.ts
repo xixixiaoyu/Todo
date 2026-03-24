@@ -32,6 +32,7 @@ const shouldSuppressBackendWriteChunk = (chunk: unknown) => {
     text.includes('[Nest]') ||
     text.includes('UnauthorizedException: auth.INVALID_CREDENTIALS') ||
     text.includes('UnauthorizedException: auth.INVALID_REFRESH_TOKEN') ||
+    text.includes('ThrottlerException: common.error.TOO_MANY_REQUESTS') ||
     text.includes('at AuthService.login') ||
     text.includes('at AuthService.refreshToken')
   )
