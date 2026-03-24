@@ -47,6 +47,7 @@ type InMemoryTodo = {
   createdAt: Date
   updatedAt: Date
   completedAt: Date | null
+  deferredAt: Date | null
   deletedAt: Date | null
   pomodoroCount: number
   userId: number

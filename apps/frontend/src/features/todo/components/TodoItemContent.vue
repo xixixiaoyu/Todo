@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { Pin, Timer, ChevronRight, CalendarClock, Bell } from 'lucide-vue-next'
+import { Pin, Timer, ChevronRight, CalendarClock, Bell, Clock3 } from 'lucide-vue-next'
 import AiLuminaIcon from '@/features/ai/components/AiLuminaIcon.vue'
 import { computed } from 'vue'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -49,7 +49,10 @@ const hasSecondaryMetaBadges = computed(() => {
   if (store.filter === 'trash') return false
 
   return Boolean(
-    props.todo.pomodoroCount > 0 || props.todo.recurrenceRule || hasStandaloneReminder.value,
+    (props.todo.deferredAt && !props.todo.completed) ||
+    props.todo.pomodoroCount > 0 ||
+    props.todo.recurrenceRule ||
+    hasStandaloneReminder.value,
   )
 })
 
@@ -198,6 +201,18 @@ const remindRelativeDisplay = computed(() => {
               {{ remindRelativeDisplay }}
             </p>
           </TooltipContent>
+        </Tooltip>
+
+        <Tooltip v-if="todo.deferredAt && !todo.completed">
+          <TooltipTrigger as-child>
+            <div
+              class="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg border border-border/70 bg-muted/45 px-1.5 py-[3px] font-medium leading-none text-muted-foreground md:py-0.5"
+            >
+              <Clock3 class="h-3 w-3" />
+              <span>{{ t('todo.deferred') }}</span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top">{{ t('todo.deferredSection') }}</TooltipContent>
         </Tooltip>
 
         <Tooltip v-if="todo.pomodoroCount > 0">

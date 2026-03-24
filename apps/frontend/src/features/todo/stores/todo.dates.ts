@@ -20,6 +20,9 @@ export function normalizeTodoDatesInPlace(todo: Todo): void {
   const completedAt = toDate(todo.completedAt)
   if (completedAt) todo.completedAt = completedAt
 
+  const deferredAt = toDate(todo.deferredAt)
+  if (deferredAt) todo.deferredAt = deferredAt
+
   const deletedAt = toDate(todo.deletedAt)
   if (deletedAt) todo.deletedAt = deletedAt
 
@@ -46,6 +49,7 @@ export function cloneTodo(todo: Todo): Todo {
     createdAt: new Date(todo.createdAt),
     updatedAt: new Date(todo.updatedAt),
     completedAt: todo.completedAt ? new Date(todo.completedAt) : undefined,
+    deferredAt: todo.deferredAt ? new Date(todo.deferredAt) : undefined,
     deletedAt: todo.deletedAt ? new Date(todo.deletedAt) : undefined,
   }
 }

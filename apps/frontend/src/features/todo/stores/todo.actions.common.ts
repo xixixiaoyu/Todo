@@ -45,6 +45,7 @@ export function mapServerTodoToLocalTodo(serverTodo: SharedTodo): Todo {
     createdAt: new Date(serverTodo.createdAt),
     updatedAt: new Date(serverTodo.updatedAt),
     completedAt: serverTodo.completedAt ? new Date(serverTodo.completedAt) : undefined,
+    deferredAt: serverTodo.deferredAt ? new Date(serverTodo.deferredAt) : undefined,
     deletedAt: serverTodo.deletedAt ? new Date(serverTodo.deletedAt) : undefined,
     syncStatus: 'synced' as const,
   }

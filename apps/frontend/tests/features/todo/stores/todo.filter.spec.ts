@@ -243,6 +243,38 @@ describe('useTodoStore - Filtering', () => {
       expect(filtered[2].id).toBe('2') // Order 1
     })
 
+    it('should place deferred pending todos after current todos', () => {
+      store.todos = [
+        {
+          id: 'deferred',
+          title: 'Deferred',
+          completed: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: true,
+          order: 0,
+          version: 0,
+          pomodoroCount: 0,
+          deferredAt: new Date('2026-03-24T08:00:00.000Z'),
+        },
+        {
+          id: 'current',
+          title: 'Current',
+          completed: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          order: 1,
+          version: 0,
+          pomodoroCount: 0,
+        },
+      ]
+
+      const filtered = store.filteredTodos
+      expect(filtered[0].id).toBe('current')
+      expect(filtered[1].id).toBe('deferred')
+    })
+
     it('should consider a child effectively pending if its parent is pending', () => {
       const hierarchicalTodos = [
         {

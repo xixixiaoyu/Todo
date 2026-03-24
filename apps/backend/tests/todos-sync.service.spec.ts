@@ -60,6 +60,7 @@ describe('TodoSyncService', () => {
             isPinned: false,
             version: 0,
             pomodoroCount: 0,
+            deferredAt: '2026-03-24T08:00:00.000Z',
             createdAt: new Date(),
             updatedAt: new Date(),
           },
@@ -83,7 +84,13 @@ describe('TodoSyncService', () => {
       const result = await service.sync(userId, syncDto)
 
       expect(mockPrisma.$transaction).toHaveBeenCalled()
-      expect(mockPrisma.todo.upsert).toHaveBeenCalled()
+      expect(mockPrisma.todo.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          update: expect.objectContaining({
+            deferredAt: new Date('2026-03-24T08:00:00.000Z'),
+          }),
+        }),
+      )
       expect(mockPrisma.todo.findMany).toHaveBeenCalled()
       expect(result.synced).toHaveLength(2)
       expect(result.synced).toEqual(
@@ -93,6 +100,44 @@ describe('TodoSyncService', () => {
       expect(result.conflicts).toEqual([])
       expect(result.deletedIds).toHaveLength(0)
       expect(result.serverTime).toBeDefined()
+    })
+
+    it('should clear deferredAt when sync payload represents a completed child todo', async () => {
+      const userId = 1
+      const syncDto: SyncMergeDto = {
+        todos: [
+          {
+            id: '861a3556-9150-4819-b7b5-22e379434858',
+            title: 'Completed child todo',
+            completed: true,
+            order: 0,
+            isPinned: false,
+            parentId: '861a3556-9150-4819-b7b5-22e379434857',
+            version: 0,
+            pomodoroCount: 0,
+            deferredAt: '2026-03-24T08:00:00.000Z',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ],
+        lastSyncAt: new Date(0).toISOString(),
+      }
+
+      mockPrisma.todoTombstone.findUnique.mockResolvedValue(null)
+      mockPrisma.todo.findUnique.mockResolvedValue(null)
+      mockPrisma.todo.upsert.mockResolvedValue({ id: '861a3556-9150-4819-b7b5-22e379434858' })
+      mockPrisma.todo.findMany.mockResolvedValue([])
+      mockPrisma.todoTombstone.findMany.mockResolvedValue([])
+
+      await service.sync(userId, syncDto)
+
+      expect(mockPrisma.todo.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          update: expect.objectContaining({
+            deferredAt: null,
+          }),
+        }),
+      )
     })
 
     it('should exclude deleted items when since is 0', async () => {

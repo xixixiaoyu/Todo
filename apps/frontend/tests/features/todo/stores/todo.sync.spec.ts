@@ -93,6 +93,7 @@ describe('Todo Store Sync', () => {
     // Add a pending todo
     await store.addTodo('Test Todo')
     const pendingTodo = store.todos[0]
+    pendingTodo.deferredAt = new Date('2026-03-24T08:00:00.000Z')
     expect(pendingTodo.syncStatus).toBe('pending')
 
     const mockResponse = {
@@ -121,6 +122,10 @@ describe('Todo Store Sync', () => {
     )
 
     await store.sync()
+
+    expect(vi.mocked(todoApi.sync).mock.calls[0]?.[0].todos[0]?.deferredAt).toEqual(
+      new Date('2026-03-24T08:00:00.000Z'),
+    )
 
     // Check if pending todo was synced (status updated)
     expect(pendingTodo.syncStatus).toBe('synced')

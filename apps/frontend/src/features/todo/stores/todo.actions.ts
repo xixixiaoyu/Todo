@@ -31,6 +31,7 @@ export function createTodoActions(deps: {
   removeTodos: (ids: string[]) => Promise<void>
   toggleTodo: (id: string) => Promise<void>
   togglePin: (id: string) => Promise<void>
+  setTodoDeferred: (id: string, deferred: boolean) => Promise<boolean>
   incrementPomodoro: (id: string) => void
   breakdownTaskWithAI: (id: string) => Promise<string[]>
   restoreTodo: (id: string) => Promise<void>

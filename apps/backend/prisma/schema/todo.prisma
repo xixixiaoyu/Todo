@@ -16,6 +16,7 @@ model Todo {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   completedAt   DateTime?
+  deferredAt    DateTime?
   deletedAt     DateTime?
   pomodoroCount Int       @default(0)
   user          User      @relation(fields: [userId], references: [id])

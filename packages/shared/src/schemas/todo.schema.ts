@@ -23,6 +23,7 @@ export const TodoSchema = z.object({
   createdAt: z.date().or(z.string()),
   updatedAt: z.date().or(z.string()),
   completedAt: z.date().or(z.string()).nullable().optional(),
+  deferredAt: z.date().or(z.string()).nullable().optional(),
   deletedAt: z.date().or(z.string()).nullable().optional(),
 })
 

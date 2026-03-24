@@ -177,6 +177,7 @@ export function createNextRecurringTodoData(params: {
   createdAt: Date
   updatedAt: Date
   completedAt: null
+  deferredAt: null
   deletedAt: null
   pomodoroCount: 0
 } {
@@ -201,6 +202,7 @@ export function createNextRecurringTodoData(params: {
     createdAt: params.serverTime,
     updatedAt: params.serverTime,
     completedAt: null,
+    deferredAt: null,
     deletedAt: null,
     pomodoroCount: 0,
   }

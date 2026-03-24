@@ -10,6 +10,7 @@ import {
   Plus,
   Trash2,
   CalendarClock,
+  Clock3,
 } from 'lucide-vue-next'
 import { ref } from 'vue'
 import { useTodoStore, type Todo } from '../stores/todo'
@@ -154,6 +155,24 @@ function handleApplySchedule(
         </TooltipTrigger>
         <TooltipContent side="top">
           {{ todo.isPinned ? t('todo.unpin') : t('todo.pin') }}
+        </TooltipContent>
+      </Tooltip>
+
+      <Tooltip v-if="(level || 0) === 0 && !todo.completed && !todo.isProposedDelete">
+        <TooltipTrigger as-child>
+          <Button
+            variant="ghost"
+            size="icon"
+            data-test="deferred-toggle"
+            class="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+            :class="{ 'text-primary bg-primary/5': todo.deferredAt }"
+            @click.stop="void todoStore.setTodoDeferred(todo.id, !todo.deferredAt)"
+          >
+            <Clock3 class="h-3.5 w-3.5 md:h-4 md:w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="top">
+          {{ todo.deferredAt ? t('todo.resumeFromDeferred') : t('todo.defer') }}
         </TooltipContent>
       </Tooltip>
 

@@ -1,11 +1,20 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { ClipboardList, CheckCircle2, SearchX, Trash2 } from 'lucide-vue-next'
-import { computed } from 'vue'
+import {
+  ClipboardList,
+  CheckCircle2,
+  SearchX,
+  Trash2,
+  ChevronDown,
+  ChevronRight,
+  Clock3,
+} from 'lucide-vue-next'
+import { computed, ref, watch } from 'vue'
 import draggable from 'vuedraggable'
 import { useTodoStore, type Todo } from '../stores/todo'
 import TodoItem from './TodoItem.vue'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Button } from '@/components/ui/button'
 
 const { t } = useI18n()
 const store = useTodoStore()
@@ -34,11 +43,24 @@ const emit = defineEmits<{
 }>()
 
 const dragList = computed({
-  get: () => displayTodos.value,
+  get: () => (shouldShowDeferredSection.value ? activeTodos.value : displayTodos.value),
   set: (val) => {
     emit(
       'reorder',
-      val.map((t) => t.id),
+      shouldShowDeferredSection.value
+        ? [...val.map((todo) => todo.id), ...deferredTodos.value.map((todo) => todo.id)]
+        : val.map((todo) => todo.id),
+      null,
+    )
+  },
+})
+
+const deferredDragList = computed({
+  get: () => deferredTodos.value,
+  set: (val) => {
+    emit(
+      'reorder',
+      [...activeTodos.value.map((todo) => todo.id), ...val.map((todo) => todo.id)],
       null,
     )
   },
@@ -85,6 +107,35 @@ const displayTodos = computed(() => {
     return !props.todos.some((t) => t.id === todo.parentId)
   })
 })
+
+const activeTodos = computed(() =>
+  displayTodos.value.filter((todo) => !todo.deferredAt || todo.completed),
+)
+
+const deferredTodos = computed(() =>
+  displayTodos.value.filter((todo) => !!todo.deferredAt && !todo.completed),
+)
+
+const shouldShowDeferredSection = computed(
+  () => props.filter === 'pending' && !props.searchQuery && deferredTodos.value.length > 0,
+)
+
+const isDeferredSectionExpanded = ref(false)
+
+watch(
+  shouldShowDeferredSection,
+  (visible) => {
+    if (!visible) {
+      isDeferredSectionExpanded.value = false
+      return
+    }
+
+    if (activeTodos.value.length === 0) {
+      isDeferredSectionExpanded.value = true
+    }
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
@@ -123,6 +174,7 @@ const displayTodos = computed(() => {
 
       <div v-show="todos.length > 0" class="min-h-[100px]">
         <draggable
+          v-if="!shouldShowDeferredSection || activeTodos.length > 0"
           v-model="dragList"
           item-key="id"
           handle=".drag-handle"
@@ -130,7 +182,7 @@ const displayTodos = computed(() => {
           ghost-class="opacity-50"
           chosen-class="scale-[1.02]"
           drag-class="rotate-1"
-          class="space-y-1.5 pb-6 md:space-y-2"
+          class="space-y-1.5 md:space-y-2"
           :animation="200"
           :disabled="!!searchQuery"
           @start="store.setDragging(true)"
@@ -157,6 +209,73 @@ const displayTodos = computed(() => {
             </div>
           </template>
         </draggable>
+
+        <div
+          v-if="shouldShowDeferredSection"
+          class="pb-6"
+          :class="{ 'pt-4': activeTodos.length > 0 }"
+        >
+          <Button
+            variant="ghost"
+            data-test="deferred-section-toggle"
+            :aria-expanded="isDeferredSectionExpanded"
+            aria-controls="todo-deferred-section"
+            class="mb-2 flex h-auto w-full items-center justify-between rounded-2xl border border-border/60 bg-muted/15 px-3 py-2.5 text-left text-muted-foreground transition-colors hover:bg-muted/25 hover:text-foreground md:px-4"
+            @click="isDeferredSectionExpanded = !isDeferredSectionExpanded"
+          >
+            <span class="flex items-center gap-2">
+              <Clock3 class="h-4 w-4 text-primary/80" />
+              <span class="text-[var(--todo-font-meta)] font-medium text-foreground/85">
+                {{ t('todo.deferredSection') }}
+              </span>
+            </span>
+            <span class="flex items-center gap-2 text-[var(--todo-font-caption)]">
+              <span class="rounded-full bg-background/80 px-2 py-0.5 text-foreground/70">
+                {{ deferredTodos.length }}
+              </span>
+              <component
+                :is="isDeferredSectionExpanded ? ChevronDown : ChevronRight"
+                class="h-4 w-4 text-muted-foreground/70"
+              />
+            </span>
+          </Button>
+
+          <draggable
+            v-if="isDeferredSectionExpanded"
+            id="todo-deferred-section"
+            v-model="deferredDragList"
+            item-key="id"
+            handle=".drag-handle"
+            ghost-class="opacity-50"
+            chosen-class="scale-[1.02]"
+            drag-class="rotate-1"
+            class="space-y-1.5 md:space-y-2"
+            :animation="200"
+            @start="store.setDragging(true)"
+            @end="store.setDragging(false)"
+          >
+            <template #item="{ element: todo }">
+              <div class="todo-item-wrapper" data-test="deferred-section-list">
+                <TodoItem
+                  :key="todo.id"
+                  :todo="todo"
+                  :all-todos="todos"
+                  :editing-id="editingId"
+                  :editing-title="editingTitle"
+                  :search-query="searchQuery"
+                  @toggle="(id, currentCompleted) => emit('toggle', id, currentCompleted)"
+                  @start-edit="(id, title) => emit('startEdit', id, title)"
+                  @save-edit="emit('saveEdit')"
+                  @cancel-edit="emit('cancelEdit')"
+                  @delete="(id) => emit('delete', id)"
+                  @reorder="(ids, pId) => emit('reorder', ids, pId)"
+                  @update:editing-title="(value) => emit('update:editingTitle', value)"
+                  @edit-keydown="(e) => emit('editKeydown', e)"
+                />
+              </div>
+            </template>
+          </draggable>
+        </div>
       </div>
     </ScrollArea>
   </div>

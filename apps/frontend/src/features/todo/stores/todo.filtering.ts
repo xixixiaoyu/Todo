@@ -9,6 +9,10 @@ export function isEffectivelyCompleted(todo: Todo, allTodos: Todo[]): boolean {
   return isEffectivelyCompleted(parent, allTodos)
 }
 
+export function isDeferredTodo(todo: Todo): boolean {
+  return !todo.completed && !todo.deletedAt && !!todo.deferredAt
+}
+
 export function applyFilterAndSort(
   items: Todo[],
   filter: FilterType,
@@ -42,6 +46,12 @@ export function applyFilterAndSort(
     .sort((a, b) => {
       if (filter === 'trash') {
         return new Date(b.deletedAt!).getTime() - new Date(a.deletedAt!).getTime()
+      }
+
+      if (filter === 'pending') {
+        const aDeferred = isDeferredTodo(a)
+        const bDeferred = isDeferredTodo(b)
+        if (aDeferred !== bDeferred) return aDeferred ? 1 : -1
       }
 
       if (a.isPinned && !b.isPinned) return -1

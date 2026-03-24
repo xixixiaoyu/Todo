@@ -35,4 +35,22 @@ describe('TodoSchema recurrence fields', () => {
 
     expect(result.success).toBe(true)
   })
+
+  it('accepts todo with deferred metadata', () => {
+    const now = new Date().toISOString()
+    const result = TodoSchema.safeParse({
+      id: '11111111-1111-4111-8111-111111111111',
+      title: 'Read later',
+      completed: false,
+      order: 0,
+      isPinned: false,
+      version: 1,
+      pomodoroCount: 0,
+      createdAt: now,
+      updatedAt: now,
+      deferredAt: now,
+    })
+
+    expect(result.success).toBe(true)
+  })
 })

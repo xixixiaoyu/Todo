@@ -18,6 +18,7 @@ import {
   PinOff,
   Pencil,
   Plus,
+  Clock3,
   MoreHorizontal,
 } from 'lucide-vue-next'
 import { onBeforeUnmount, ref, watch } from 'vue'
@@ -98,6 +99,11 @@ function handleMobileAddSubtask() {
 
 function handleMobileDelete() {
   emit('delete')
+  closeMobileSheet()
+}
+
+function handleMobileDeferredToggle() {
+  void todoStore.setTodoDeferred(props.todo.id, !props.todo.deferredAt)
   closeMobileSheet()
 }
 
@@ -237,6 +243,21 @@ onBeforeUnmount(() => {
                     {{ t('todo.schedule') }}
                   </span>
                   <ChevronRight class="ml-auto h-4 w-4 text-muted-foreground" />
+                </Button>
+
+                <Button
+                  v-if="(level || 0) === 0 && !todo.completed && !todo.isProposedDelete"
+                  variant="ghost"
+                  class="h-11 w-full justify-start gap-2.5 rounded-xl px-3 text-base"
+                  @click.stop="handleMobileDeferredToggle"
+                >
+                  <Clock3
+                    class="h-4 w-4 text-muted-foreground"
+                    :class="{ 'text-primary': todo.deferredAt }"
+                  />
+                  <span :class="{ 'text-primary': todo.deferredAt }">
+                    {{ todo.deferredAt ? t('todo.resumeFromDeferred') : t('todo.defer') }}
+                  </span>
                 </Button>
 
                 <Button

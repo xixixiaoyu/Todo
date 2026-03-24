@@ -2,6 +2,7 @@ import type { Todo as SharedTodo, RecurrenceRule } from '@lumina/shared'
 
 export interface Todo extends SharedTodo {
   completedAt?: Date
+  deferredAt?: Date
   deletedAt?: Date
   dueAt?: Date
   remindAt?: Date

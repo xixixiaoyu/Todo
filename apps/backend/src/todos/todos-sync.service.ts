@@ -24,6 +24,7 @@ const todoSelect = {
   createdAt: true,
   updatedAt: true,
   completedAt: true,
+  deferredAt: true,
   deletedAt: true,
   pomodoroCount: true,
 } as const
@@ -89,6 +90,9 @@ export class TodoSyncService {
           })
 
           const clientVersion = todo.version ?? 0
+          const canDeferTodo =
+            !todo.completed && !todo.deletedAt && (todo.parentId ?? null) === null
+          const deferredAt = canDeferTodo && todo.deferredAt ? new Date(todo.deferredAt) : null
           const {
             clientDueAt,
             clientRemindAt,
@@ -135,6 +139,7 @@ export class TodoSyncService {
             recurrenceTz: effectiveRecurrenceTz,
             recurrenceSpawnedAt,
             completedAt: todo.completedAt ? new Date(todo.completedAt) : null,
+            deferredAt,
             deletedAt: todo.deletedAt ? new Date(todo.deletedAt) : null,
             updatedAt: serverTime,
             userId,

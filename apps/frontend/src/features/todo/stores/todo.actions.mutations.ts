@@ -17,6 +17,7 @@ export function createTodoMutations(deps: TodoMutationDeps): {
   removeTodos: (ids: string[]) => Promise<void>
   toggleTodo: (id: string) => Promise<void>
   togglePin: (id: string) => Promise<void>
+  setTodoDeferred: (id: string, deferred: boolean) => Promise<boolean>
   incrementPomodoro: (id: string) => void
   restoreTodo: (id: string) => Promise<void>
   deleteTodo: (id: string) => Promise<void>
@@ -219,13 +220,15 @@ export function createTodoMutations(deps: TodoMutationDeps): {
     const todo = deps.todos.value.find((item) => item.id === id)
     if (!todo) return
 
+    const toggledAt = new Date()
     todo.completed = !todo.completed
     if (todo.completed) {
-      todo.completedAt = new Date()
+      todo.completedAt = toggledAt
+      todo.deferredAt = undefined
     } else {
       delete todo.completedAt
     }
-    todo.updatedAt = new Date()
+    todo.updatedAt = toggledAt
     todo.syncStatus = 'pending'
 
     const toggleChildren = (parentId: string, completed: boolean) => {
@@ -233,11 +236,12 @@ export function createTodoMutations(deps: TodoMutationDeps): {
       children.forEach((child) => {
         child.completed = completed
         if (completed) {
-          child.completedAt = new Date()
+          child.completedAt = toggledAt
+          child.deferredAt = undefined
         } else {
           delete child.completedAt
         }
-        child.updatedAt = new Date()
+        child.updatedAt = toggledAt
         child.syncStatus = 'pending'
         toggleChildren(child.id, completed)
       })
@@ -260,6 +264,21 @@ export function createTodoMutations(deps: TodoMutationDeps): {
       todo.syncStatus = 'pending'
       deps.debouncedSync()
     }
+  }
+
+  async function setTodoDeferred(id: string, deferred: boolean): Promise<boolean> {
+    const todo = deps.todos.value.find((item) => item.id === id)
+    if (!todo || todo.completed || todo.deletedAt || todo.parentId) return false
+
+    if (deferred === !!todo.deferredAt) {
+      return true
+    }
+
+    todo.deferredAt = deferred ? new Date() : undefined
+    todo.updatedAt = new Date()
+    todo.syncStatus = 'pending'
+    deps.debouncedSync()
+    return true
   }
 
   function incrementPomodoro(id: string): void {
@@ -406,6 +425,7 @@ export function createTodoMutations(deps: TodoMutationDeps): {
     removeTodos,
     toggleTodo,
     togglePin,
+    setTodoDeferred,
     incrementPomodoro,
     restoreTodo,
     deleteTodo,

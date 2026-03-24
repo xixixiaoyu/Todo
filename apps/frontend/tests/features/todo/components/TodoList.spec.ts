@@ -68,6 +68,10 @@ const i18n = createI18n({
         schedule: '日程',
         pin: '置顶',
         unpin: '取消置顶',
+        defer: '移到稍后',
+        resumeFromDeferred: '移回当前',
+        deferred: '稍后',
+        deferredSection: '稍后处理',
         delete: '删除',
         addSubtask: '添加子任务',
         edit: '编辑',
@@ -196,5 +200,41 @@ describe('TodoList', () => {
     await firstItem.vm.$emit('toggle', '1', false)
     expect(wrapper.emitted('toggle')).toBeTruthy()
     expect(wrapper.emitted('toggle')?.[0]).toEqual(['1', false])
+  })
+
+  it('should render a collapsed deferred section for later tasks', async () => {
+    const wrapper = mount(TodoList, {
+      props: {
+        todos: [
+          {
+            ...mockTodos[0],
+            id: 'active',
+            title: 'Now',
+          },
+          {
+            ...mockTodos[0],
+            id: 'deferred',
+            title: 'Later',
+            order: 1,
+            deferredAt: new Date('2026-03-24T08:00:00.000Z'),
+          },
+        ],
+        filter: 'pending',
+        searchQuery: '',
+        editingId: null,
+        editingTitle: '',
+      },
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    expect(wrapper.get('[data-test="deferred-section-toggle"]').text()).toContain('稍后处理')
+    expect(wrapper.text()).toContain('Now')
+    expect(wrapper.text()).not.toContain('Later')
+
+    await wrapper.get('[data-test="deferred-section-toggle"]').trigger('click')
+
+    expect(wrapper.text()).toContain('Later')
   })
 })

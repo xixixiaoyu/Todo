@@ -474,6 +474,79 @@ describe('useTodoStore - Actions', () => {
     })
   })
 
+  describe('setTodoDeferred', () => {
+    it('should move a root todo into the deferred section and back', async () => {
+      store.todos = [
+        {
+          id: '1',
+          title: 'T1',
+          completed: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          order: 0,
+          version: 0,
+          pomodoroCount: 0,
+        },
+      ]
+
+      const deferredResult = await store.setTodoDeferred('1', true)
+
+      expect(deferredResult).toBe(true)
+      expect(store.todos[0].deferredAt).toBeDefined()
+      expect(store.todos[0].syncStatus).toBe('pending')
+
+      const resumeResult = await store.setTodoDeferred('1', false)
+
+      expect(resumeResult).toBe(true)
+      expect(store.todos[0].deferredAt).toBeUndefined()
+    })
+
+    it('should not defer subtasks', async () => {
+      store.todos = [
+        {
+          id: 'child-1',
+          title: 'Child',
+          completed: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          order: 0,
+          version: 0,
+          pomodoroCount: 0,
+          parentId: 'parent-1',
+        },
+      ]
+
+      const result = await store.setTodoDeferred('child-1', true)
+
+      expect(result).toBe(false)
+      expect(store.todos[0].deferredAt).toBeUndefined()
+    })
+
+    it('should clear deferred state when completing a deferred todo', async () => {
+      store.todos = [
+        {
+          id: '1',
+          title: 'T1',
+          completed: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          order: 0,
+          version: 0,
+          pomodoroCount: 0,
+          deferredAt: new Date('2026-03-24T08:00:00.000Z'),
+        },
+      ]
+
+      await store.toggleTodo('1')
+
+      expect(store.todos[0].completed).toBe(true)
+      expect(store.todos[0].deferredAt).toBeUndefined()
+    })
+  })
+
   describe('updateTodoSchedule', () => {
     it('should set recurrence rule, timezone, and preserve the provided reminder time', () => {
       store.todos = [

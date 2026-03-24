@@ -30,6 +30,8 @@ export function isSameTodoList(left: Todo[], right: Todo[]): boolean {
         (b.updatedAt ? new Date(b.updatedAt).getTime() : 0) ||
       (a.completedAt ? new Date(a.completedAt).getTime() : 0) !==
         (b.completedAt ? new Date(b.completedAt).getTime() : 0) ||
+      (a.deferredAt ? new Date(a.deferredAt).getTime() : 0) !==
+        (b.deferredAt ? new Date(b.deferredAt).getTime() : 0) ||
       (a.deletedAt ? new Date(a.deletedAt).getTime() : 0) !==
         (b.deletedAt ? new Date(b.deletedAt).getTime() : 0)
     ) {

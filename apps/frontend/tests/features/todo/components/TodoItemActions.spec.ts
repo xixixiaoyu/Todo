@@ -12,6 +12,7 @@ const isMobileMock = ref(false)
 const todoStoreMock = reactive({
   filter: 'pending',
   togglePin: vi.fn(),
+  setTodoDeferred: vi.fn(),
   restoreTodo: vi.fn(),
   updateTodoSchedule: vi.fn(),
 })
@@ -48,6 +49,7 @@ vi.mock('lucide-vue-next', () => ({
   Rocket: { template: '<span class="lucide-rocket">Rocket</span>' },
   Globe: { template: '<span class="lucide-globe">Globe</span>' },
   CalendarClock: { template: '<span class="lucide-calendar-clock">CalendarClock</span>' },
+  Clock3: { template: '<span class="lucide-clock3">Clock3</span>' },
   Pin: { template: '<span class="lucide-pin">Pin</span>' },
   PinOff: { template: '<span class="lucide-pin-off">PinOff</span>' },
   Pencil: { template: '<span class="lucide-pencil">Pencil</span>' },
@@ -116,6 +118,7 @@ describe('TodoItemActions', () => {
     isMobileMock.value = false
     todoStoreMock.filter = 'pending'
     todoStoreMock.togglePin.mockClear()
+    todoStoreMock.setTodoDeferred.mockClear()
     todoStoreMock.restoreTodo.mockClear()
     todoStoreMock.updateTodoSchedule.mockClear()
     pomodoroStoreMock.activeTodoId = null
@@ -149,6 +152,15 @@ describe('TodoItemActions', () => {
     await pinButton!.trigger('click')
 
     expect(todoStoreMock.togglePin).toHaveBeenCalledWith('todo-1')
+  })
+
+  it('toggles deferred state from the desktop toolbar', async () => {
+    const wrapper = mountComponent()
+
+    const deferredButton = wrapper.get('[data-test="deferred-toggle"]')
+    await deferredButton.trigger('click')
+
+    expect(todoStoreMock.setTodoDeferred).toHaveBeenCalledWith('todo-1', true)
   })
 
   it('opens the mobile sheet and locks body scroll until it closes', async () => {

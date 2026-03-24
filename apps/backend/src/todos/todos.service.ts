@@ -19,6 +19,7 @@ const todoSelect = {
   createdAt: true,
   updatedAt: true,
   completedAt: true,
+  deferredAt: true,
   deletedAt: true,
   pomodoroCount: true,
 } as const

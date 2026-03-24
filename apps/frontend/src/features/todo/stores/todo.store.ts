@@ -155,6 +155,7 @@ export const useTodoStore = defineStore(
         createdAt: todo.createdAt,
         updatedAt: todo.updatedAt,
         completedAt: todo.completedAt || null,
+        deferredAt: todo.deferredAt || null,
         deletedAt: todo.deletedAt || null,
       }
     }
