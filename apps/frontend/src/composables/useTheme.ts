@@ -32,8 +32,8 @@ const PRESET_COLORS = [
   '#9b8574', // 暮色 (Twilight Amber) - 低饱和暖棕
   '#728ba1', // 薄雾 (Mist Blue) - 平衡冷暖的灰蓝
   '#7c9585', // 苔青 (Moss Green) - 稳定的自然绿
+  '#8e81c0', // 丁香 (Lilac Gray) - 雾感灰紫
   '#ae8792', // 晚霞 (Sunset Rose) - 克制的玫瑰灰粉
-  '#918aa1', // 丁香 (Lilac Gray) - 温柔的紫灰
   '#647587', // 石墨 (Graphite) - 柔化后的深灰蓝
   '#4f6284', // 靛青 (Indigo) - 沉静的夜蓝
 ]
