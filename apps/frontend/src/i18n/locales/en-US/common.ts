@@ -55,6 +55,7 @@ export const common = {
     label: 'Theme Color',
     desc: 'Pick a classic palette or choose a custom color',
     custom: 'Custom',
+    recommended: 'Recommended',
     reset: 'Reset to default',
     presets: {
       celadon: 'Celadon',

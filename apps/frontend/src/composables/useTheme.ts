@@ -1,5 +1,22 @@
 import { useColorMode, useStorage } from '@vueuse/core'
-import { watch } from 'vue'
+import { readonly, ref, watch } from 'vue'
+
+export type ThemePresetKey =
+  | 'celadon'
+  | 'twilightAmber'
+  | 'mistBlue'
+  | 'mossGreen'
+  | 'lilacGray'
+  | 'sunsetRose'
+  | 'graphite'
+  | 'indigo'
+  | 'random'
+
+export type ThemePresetDefinition = {
+  key: ThemePresetKey
+  value: string
+  recommended?: boolean
+}
 
 type Hsl = {
   h: number
@@ -20,25 +37,42 @@ function clamp(value: number, min: number, max: number) {
 function normalizeHex(hex: string) {
   const trimmed = hex.trim()
   if (!trimmed) return null
-  if (trimmed === 'random') return 'random'
+  if (trimmed === RANDOM_THEME_VALUE) return RANDOM_THEME_VALUE
 
   const normalized = trimmed.startsWith('#') ? trimmed : `#${trimmed}`
   if (!/^#[0-9a-fA-F]{6}$/.test(normalized)) return null
   return normalized.toLowerCase()
 }
 
-const PRESET_COLORS = [
-  '#78958e', // 青瓷 (Celadon) - 更经典耐看的低饱和青瓷
-  '#9b8574', // 暮色 (Twilight Amber) - 低饱和暖棕
-  '#728ba1', // 薄雾 (Mist Blue) - 平衡冷暖的灰蓝
-  '#7c9585', // 苔青 (Moss Green) - 稳定的自然绿
-  '#8e81c0', // 丁香 (Lilac Gray) - 雾感灰紫
-  '#ae8792', // 晚霞 (Sunset Rose) - 克制的玫瑰灰粉
-  '#647587', // 石墨 (Graphite) - 柔化后的深灰蓝
-  '#4f6284', // 靛青 (Indigo) - 沉静的夜蓝
-]
+const RANDOM_THEME_VALUE = 'random'
+const LIGHT_FOREGROUND = '0 0% 100%'
+const DARK_FOREGROUND = '32 10% 8%'
+const MIN_THEME_LIGHTNESS = 38
+const MAX_THEME_LIGHTNESS = 56
+const MIN_CONTRAST_RATIO = 4.5
+
+type ThemeForeground = typeof LIGHT_FOREGROUND | typeof DARK_FOREGROUND
+
+export const THEME_PRESETS: ReadonlyArray<ThemePresetDefinition> = [
+  { key: 'celadon', value: '#78958e', recommended: true },
+  { key: 'twilightAmber', value: '#9b8574' },
+  { key: 'mistBlue', value: '#728ba1', recommended: true },
+  { key: 'mossGreen', value: '#7c9585', recommended: true },
+  { key: 'lilacGray', value: '#8e81c0', recommended: true },
+  { key: 'sunsetRose', value: '#ae8792' },
+  { key: 'graphite', value: '#647587' },
+  { key: 'indigo', value: '#4f6284' },
+  { key: 'random', value: RANDOM_THEME_VALUE },
+] as const
+
+export const DEFAULT_THEME_COLOR = THEME_PRESETS[0].value
+
+const PRESET_COLORS = THEME_PRESETS.filter((preset) => preset.value !== RANDOM_THEME_VALUE).map(
+  (preset) => preset.value,
+)
 
 let randomTimer: ReturnType<typeof setTimeout> | null = null
+const appliedThemeColor = ref<string | null>(null)
 
 function hexToRgb(hex: string): Rgb {
   const normalized = normalizeHex(hex)
@@ -129,11 +163,82 @@ function hslToRgb({ h, s, l }: Hsl): Rgb {
   }
 }
 
+const LIGHT_FOREGROUND_RGB: Rgb = { r: 255, g: 255, b: 255 }
+const DARK_FOREGROUND_RGB = hslToRgb({ h: 32, s: 10, l: 8 })
+
+function getRelativeLuminanceChannel(channel: number) {
+  const normalized = channel / 255
+  if (normalized <= 0.03928) return normalized / 12.92
+  return ((normalized + 0.055) / 1.055) ** 2.4
+}
+
+function getContrastRatio(a: Rgb, b: Rgb) {
+  const luminanceA =
+    0.2126 * getRelativeLuminanceChannel(a.r) +
+    0.7152 * getRelativeLuminanceChannel(a.g) +
+    0.0722 * getRelativeLuminanceChannel(a.b)
+  const luminanceB =
+    0.2126 * getRelativeLuminanceChannel(b.r) +
+    0.7152 * getRelativeLuminanceChannel(b.g) +
+    0.0722 * getRelativeLuminanceChannel(b.b)
+
+  const lighter = Math.max(luminanceA, luminanceB)
+  const darker = Math.min(luminanceA, luminanceB)
+
+  return (lighter + 0.05) / (darker + 0.05)
+}
+
+function getForegroundRgb(foreground: ThemeForeground) {
+  return foreground === LIGHT_FOREGROUND ? LIGHT_FOREGROUND_RGB : DARK_FOREGROUND_RGB
+}
+
+function pickAccessibleForeground(background: Rgb): ThemeForeground {
+  const lightContrast = getContrastRatio(background, LIGHT_FOREGROUND_RGB)
+  const darkContrast = getContrastRatio(background, DARK_FOREGROUND_RGB)
+
+  return lightContrast >= darkContrast ? LIGHT_FOREGROUND : DARK_FOREGROUND
+}
+
+function getForegroundContrast(background: Rgb, foreground: ThemeForeground) {
+  return getContrastRatio(background, getForegroundRgb(foreground))
+}
+
+function ensureAccessibleHoverLightness({
+  h,
+  s,
+  baseL,
+  targetL,
+  foreground,
+}: {
+  h: number
+  s: number
+  baseL: number
+  targetL: number
+  foreground: ThemeForeground
+}) {
+  const isAccessible = (lightness: number) =>
+    getForegroundContrast(hslToRgb({ h, s, l: lightness }), foreground) >= MIN_CONTRAST_RATIO
+
+  if (isAccessible(targetL)) return targetL
+
+  if (targetL < baseL) {
+    for (let lightness = targetL + 1; lightness <= baseL; lightness += 1) {
+      if (isAccessible(lightness)) return lightness
+    }
+  } else if (targetL > baseL) {
+    for (let lightness = targetL - 1; lightness >= baseL; lightness -= 1) {
+      if (isAccessible(lightness)) return lightness
+    }
+  }
+
+  return baseL
+}
+
 function applyThemeColor(hex: string | null) {
   if (typeof document === 'undefined') return
 
   const root = document.documentElement
-  if (hex === 'random') {
+  if (hex === RANDOM_THEME_VALUE) {
     // 随机模式下，如果不手动调用，这里不直接处理
     // 逻辑由 useTheme 里的 watch 处理
     return
@@ -154,6 +259,7 @@ function applyThemeColor(hex: string | null) {
 
   if (!normalized) {
     for (const key of keys) root.style.removeProperty(key)
+    appliedThemeColor.value = null
     return
   }
 
@@ -162,17 +268,29 @@ function applyThemeColor(hex: string | null) {
 
   const h = baseHsl.h
   const s = clamp(baseHsl.s, 18, 55)
-  const lightL = clamp(baseHsl.l, 38, 58)
+  const lightL = clamp(baseHsl.l, MIN_THEME_LIGHTNESS, MAX_THEME_LIGHTNESS)
   const darkL = clamp(lightL + 18, 56, 74)
-
-  const lightHoverL = clamp(lightL - 6, 22, 56)
-  const darkHoverL = clamp(darkL + 5, 58, 78)
 
   const lightRgb = hslToRgb({ h, s, l: lightL })
   const darkRgb = hslToRgb({ h, s, l: darkL })
 
-  const lightForeground = '0 0% 100%'
-  const darkForeground = darkL >= 60 ? '32 10% 8%' : '0 0% 100%'
+  const lightForeground = pickAccessibleForeground(lightRgb)
+  const darkForeground = pickAccessibleForeground(darkRgb)
+
+  const lightHoverL = ensureAccessibleHoverLightness({
+    h,
+    s,
+    baseL: lightL,
+    targetL: clamp(lightL - 6, 22, 56),
+    foreground: lightForeground,
+  })
+  const darkHoverL = ensureAccessibleHoverLightness({
+    h,
+    s,
+    baseL: darkL,
+    targetL: clamp(darkL + 5, 58, 78),
+    foreground: darkForeground,
+  })
 
   root.style.setProperty('--user-primary', `${h} ${s}% ${lightL}%`)
   root.style.setProperty('--user-primary-hover', `${h} ${s}% ${lightHoverL}%`)
@@ -183,6 +301,8 @@ function applyThemeColor(hex: string | null) {
   root.style.setProperty('--user-primary-hover-dark', `${h} ${s}% ${darkHoverL}%`)
   root.style.setProperty('--user-primary-foreground-dark', darkForeground)
   root.style.setProperty('--user-primary-rgb-dark', `${darkRgb.r}, ${darkRgb.g}, ${darkRgb.b}`)
+
+  appliedThemeColor.value = normalized
 }
 
 export function useTheme() {
@@ -198,7 +318,7 @@ export function useTheme() {
   const themeColor = useStorage<string | null>('theme-color', null)
 
   const applyRandomColor = () => {
-    if (themeColor.value !== 'random') return
+    if (themeColor.value !== RANDOM_THEME_VALUE) return
 
     const randomIndex = Math.floor(Math.random() * PRESET_COLORS.length)
     applyThemeColor(PRESET_COLORS[randomIndex])
@@ -212,7 +332,7 @@ export function useTheme() {
   watch(
     themeColor,
     (hex) => {
-      if (hex === 'random') {
+      if (hex === RANDOM_THEME_VALUE) {
         applyRandomColor()
       } else {
         if (randomTimer) {
@@ -231,10 +351,11 @@ export function useTheme() {
       mode.value = newTheme
     },
     themeColor,
+    effectiveThemeColor: readonly(appliedThemeColor),
     setThemeColor: (hex: string) => {
       const normalized = normalizeHex(hex)
       if (!normalized) return
-      if (normalized === 'random' && themeColor.value === 'random') {
+      if (normalized === RANDOM_THEME_VALUE && themeColor.value === RANDOM_THEME_VALUE) {
         applyRandomColor()
       } else {
         themeColor.value = normalized

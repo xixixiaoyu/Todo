@@ -29,6 +29,9 @@ describe('ThemeToggle', () => {
       theme: theme as unknown as ReturnType<typeof useTheme>['theme'],
       setTheme,
       themeColor: ref<string | null>(null) as unknown as ReturnType<typeof useTheme>['themeColor'],
+      effectiveThemeColor: ref<string | null>(null) as unknown as ReturnType<
+        typeof useTheme
+      >['effectiveThemeColor'],
       setThemeColor: vi.fn(),
       resetThemeColor: vi.fn(),
     })
