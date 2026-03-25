@@ -1,13 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { nextTick, ref } from 'vue'
+import { nextTick } from 'vue'
 import { hslToRgb, parseHslTriplet } from '@/lib/colors'
 import { useTheme } from '@/composables/useTheme'
 
-// Mock @vueuse/core
-vi.mock('@vueuse/core', () => ({
-  useColorMode: vi.fn(() => ref<'light' | 'dark' | 'auto'>('auto')),
-  useStorage: vi.fn((_key: string, initialValue: unknown) => ref(initialValue)),
+const { mockedColorMode, mockedPrefersDark } = vi.hoisted(() => ({
+  mockedColorMode: { value: 'auto' as 'light' | 'dark' | 'auto' },
+  mockedPrefersDark: { value: false },
 }))
+
+// Mock @vueuse/core
+vi.mock('@vueuse/core', async () => {
+  const { ref } = await import('vue')
+
+  return {
+    useColorMode: vi.fn(() => mockedColorMode),
+    useMediaQuery: vi.fn(() => mockedPrefersDark),
+    useStorage: vi.fn((_key: string, initialValue: unknown) => ref(initialValue)),
+  }
+})
 
 const themeVariableKeys = [
   '--user-primary',
@@ -62,6 +72,8 @@ function getRgbFromThemeVariable(name: string) {
 describe('useTheme', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockedColorMode.value = 'auto'
+    mockedPrefersDark.value = false
     for (const key of themeVariableKeys) {
       document.documentElement.style.removeProperty(key)
     }
@@ -70,6 +82,15 @@ describe('useTheme', () => {
   it('should initialize with default mode', () => {
     const { theme } = useTheme()
     expect(theme.value).toBe('auto')
+  })
+
+  it('should resolve dark mode from system preference when theme is auto', () => {
+    mockedPrefersDark.value = true
+
+    const { effectiveTheme, isDark } = useTheme()
+
+    expect(effectiveTheme.value).toBe('dark')
+    expect(isDark.value).toBe(true)
   })
 
   it('should change theme', () => {

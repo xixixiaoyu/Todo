@@ -6,6 +6,7 @@ type TodoUiDeps = {
   filter: Ref<FilterType>
   viewMode: Ref<ViewMode>
   searchQuery: Ref<string>
+  deferredSectionExpandedPreference: Ref<boolean | null>
   isDrawerOpen: Ref<boolean>
   isMaximized: Ref<boolean>
   isSilencingToast: Ref<boolean>
@@ -25,6 +26,7 @@ export function createTodoUiActions(deps: TodoUiDeps): {
   clearSearch: () => void
   clearError: () => void
   setSilencingToast: (silence: boolean) => void
+  setDeferredSectionExpandedPreference: (expanded: boolean | null) => void
   toggleAllExpansion: () => void
   toggleTodoExpansion: (id: string) => void
   getTodoPath: (todoId: string) => string[]
@@ -64,6 +66,10 @@ export function createTodoUiActions(deps: TodoUiDeps): {
     deps.isSilencingToast.value = silence
   }
 
+  function setDeferredSectionExpandedPreference(expanded: boolean | null): void {
+    deps.deferredSectionExpandedPreference.value = expanded
+  }
+
   function toggleAllExpansion(): void {
     const targetState = !deps.isAllExpanded.value
     deps.filteredTodos.value.forEach((todo) => {
@@ -87,6 +93,7 @@ export function createTodoUiActions(deps: TodoUiDeps): {
     clearSearch,
     clearError,
     setSilencingToast,
+    setDeferredSectionExpandedPreference,
     toggleAllExpansion,
     toggleTodoExpansion,
     getTodoPath: (todoId: string) => getTodoPath(deps.todos.value, todoId),

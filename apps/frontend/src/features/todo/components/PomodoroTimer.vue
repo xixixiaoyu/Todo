@@ -12,9 +12,9 @@ import PomodoroMiniControls from './pomodoro/PomodoroMiniControls.vue'
 
 const pomodoroStore = usePomodoroStore()
 const { gsap, ctx } = useGsap()
-const { theme } = useTheme()
+const { isDark: isThemeDark } = useTheme()
 
-const isDark = computed(() => theme.value === 'dark' || pomodoroStore.isMiniMode)
+const isDark = computed(() => isThemeDark.value || pomodoroStore.isMiniMode)
 
 const isWails = () => nativeService.platform === 'wails'
 
@@ -79,6 +79,7 @@ watch(
 <template>
   <Transition
     appear
+    :duration="{ enter: 500, leave: 0 }"
     enter-active-class="transition-all duration-500 ease-out"
     enter-from-class="opacity-0 scale-95 translate-y-4"
     enter-to-class="opacity-100 scale-100 translate-y-0"

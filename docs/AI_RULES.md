@@ -29,7 +29,7 @@ Lumina（简思）是基于 **NestJS 11（Fastify） + Vue 3.5（Vite） + Three
 - 依赖版本必须使用精确版本（移除 `^`/`~`），workspace 依赖保留 `workspace:*`
 - 修改 `packages/shared` 后，必须先执行 `pnpm --filter @lumina/shared build` 再验证下游
 - 不引入会泄露密钥/隐私的日志与代码；不在仓库内写入任何密钥
-- 变更完成后必须通过：`pnpm lint`、`pnpm test`、`pnpm type-check`
+- 变更完成后必须通过：`pnpm ci:check`、`pnpm test`
 - 破坏性清理命令仅在明确要求时执行（如 `pnpm docker:prune`）
 
 ## 建议规则（SHOULD）
@@ -195,11 +195,12 @@ pnpm dev
 pnpm docker:dev
 
 # 质量门禁（必须通过）
-pnpm lint
+pnpm ci:check
 pnpm test
-pnpm type-check
 
 # 可选质量辅助
+pnpm lint
+pnpm lint:strict
 pnpm format
 pnpm format:check
 pnpm test:watch
@@ -247,7 +248,7 @@ pnpm docker:prune
 - 兼容性：不破坏既有 API/Schema/存量数据（必要时提供迁移）
 - 可观测：错误可定位（语义化错误码/信息），不打印敏感信息
 - 可维护：遵循既有架构、命名、文件组织；无重复实现
-- 质量门禁：`pnpm lint`、`pnpm test`、`pnpm type-check` 全绿
+- 质量门禁：`pnpm ci:check`、`pnpm test` 全绿
 
 ## 工程人格与执行风格（Persona Mapping）
 
@@ -264,5 +265,5 @@ pnpm docker:prune
 - 是否补齐了受影响行为的测试
 - 是否同步更新了共享契约、类型与调用方
 - 是否验证了 API 响应结构与错误语义
-- 是否完成并记录质量门禁结果（`lint/test/type-check`）
+- 是否完成并记录质量门禁结果（`ci:check/test`）
 - 是否确认未引入敏感信息日志与密钥

@@ -10,12 +10,12 @@ const props = defineProps<{
 }>()
 
 const pomodoroStore = usePomodoroStore()
-const { theme } = useTheme()
+const { isDark: isThemeDark } = useTheme()
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const isTextureLoaded = ref(false)
 const { gsap, ctx } = useGsap()
 
-const isDark = computed(() => theme.value === 'dark' || pomodoroStore.isMiniMode)
+const isDark = computed(() => isThemeDark.value || pomodoroStore.isMiniMode)
 
 let scene: THREE.Scene
 let camera: THREE.PerspectiveCamera

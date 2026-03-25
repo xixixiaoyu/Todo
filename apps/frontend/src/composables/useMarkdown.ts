@@ -13,10 +13,10 @@ import { processMermaidQueue, mermaidCodeCache, mermaidSvgMap } from './markdown
  */
 export function useMarkdown() {
   const isRendering = ref(false)
-  const { theme } = useTheme()
+  const { effectiveTheme } = useTheme()
 
   // 监听主题变化，清理缓存
-  watch(theme, () => {
+  watch(effectiveTheme, () => {
     mermaidCodeCache.clear()
     mermaidSvgMap.clear()
   })

@@ -38,9 +38,10 @@
     "type-check": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run type-check --concurrency=2",
     "type-check:watch": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run type-check:watch --filter=@lumina/shared --filter=@lumina/backend --filter=@lumina/frontend",
     "lint": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run lint",
+    "lint:strict": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run lint:strict",
     "lint:fix": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run lint -- --fix --cache",
     "test": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run test",
-    "ci:check": "pnpm format:check && cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run lint type-check --concurrency=50%",
+    "ci:check": "pnpm format:check && cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run lint:strict type-check --concurrency=50%",
     "ci:test": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run test --concurrency=50%",
     "ci:all": "pnpm ci:check && pnpm ci:test && pnpm security-audit",
     "test:watch": "turbo run test:watch",
@@ -92,13 +93,16 @@
   },
   "lint-staged": {
     "apps/frontend/**/*.{ts,tsx,vue}": [
-      "cross-env NODE_OPTIONS='--max-old-space-size=8192' eslint --fix --cache --cache-strategy content --config apps/frontend/eslint.config.mjs"
+      "cross-env NODE_OPTIONS='--max-old-space-size=8192' eslint --fix --cache --cache-location apps/frontend/.eslintcache-fast --cache-strategy content --config apps/frontend/eslint.config.mjs",
+      "prettier --write"
     ],
     "apps/backend/**/*.ts": [
-      "cross-env NODE_OPTIONS='--max-old-space-size=8192' eslint --fix --cache --cache-strategy content --config apps/backend/eslint.config.mjs"
+      "cross-env NODE_OPTIONS='--max-old-space-size=8192' eslint --fix --cache --cache-location apps/backend/.eslintcache-fast --cache-strategy content --config apps/backend/eslint.config.mjs",
+      "prettier --write"
     ],
     "packages/shared/**/*.ts": [
-      "cross-env NODE_OPTIONS='--max-old-space-size=8192' eslint --fix --cache --cache-strategy content --config packages/shared/eslint.config.mjs"
+      "cross-env NODE_OPTIONS='--max-old-space-size=8192' eslint --fix --cache --cache-location packages/shared/.eslintcache-fast --cache-strategy content --config packages/shared/eslint.config.mjs",
+      "prettier --write"
     ],
     "**/*.{json,css,scss,html,yml,yaml,md}": [
       "prettier --write"

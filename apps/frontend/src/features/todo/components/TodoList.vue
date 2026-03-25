@@ -9,7 +9,7 @@ import {
   ChevronRight,
   Clock3,
 } from 'lucide-vue-next'
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import draggable from 'vuedraggable'
 import { useTodoStore, type Todo } from '../stores/todo'
 import TodoItem from './TodoItem.vue'
@@ -120,22 +120,13 @@ const shouldShowDeferredSection = computed(
   () => props.filter === 'pending' && !props.searchQuery && deferredTodos.value.length > 0,
 )
 
-const isDeferredSectionExpanded = ref(false)
-
-watch(
-  shouldShowDeferredSection,
-  (visible) => {
-    if (!visible) {
-      isDeferredSectionExpanded.value = false
-      return
-    }
-
-    if (activeTodos.value.length === 0) {
-      isDeferredSectionExpanded.value = true
-    }
-  },
-  { immediate: true },
+const isDeferredSectionExpanded = computed(
+  () => store.deferredSectionExpandedPreference ?? activeTodos.value.length === 0,
 )
+
+function toggleDeferredSection(): void {
+  store.setDeferredSectionExpandedPreference(!isDeferredSectionExpanded.value)
+}
 </script>
 
 <template>
@@ -221,7 +212,7 @@ watch(
             :aria-expanded="isDeferredSectionExpanded"
             aria-controls="todo-deferred-section"
             class="mb-2 flex h-auto w-full items-center justify-between rounded-2xl border border-border/60 bg-muted/15 px-3 py-2.5 text-left text-muted-foreground transition-colors hover:bg-muted/25 hover:text-foreground md:px-4"
-            @click="isDeferredSectionExpanded = !isDeferredSectionExpanded"
+            @click="toggleDeferredSection"
           >
             <span class="flex items-center gap-2">
               <Clock3 class="h-4 w-4 text-primary/80" />

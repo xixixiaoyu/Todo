@@ -4,9 +4,9 @@ import { useTheme } from '@/composables/useTheme'
 import { computed } from 'vue'
 
 const pomodoroStore = usePomodoroStore()
-const { theme } = useTheme()
+const { isDark: isThemeDark } = useTheme()
 
-const isDark = computed(() => theme.value === 'dark' || pomodoroStore.isMiniMode)
+const isDark = computed(() => isThemeDark.value || pomodoroStore.isMiniMode)
 
 // Use global theme color for progress ring and favicon
 const themeColor = 'hsl(var(--primary))'

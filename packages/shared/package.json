@@ -33,8 +33,9 @@
     "test": "cross-env NODE_OPTIONS='--max-old-space-size=8192' vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "lint": "cross-env NODE_OPTIONS='--max-old-space-size=8192' eslint . --cache --cache-strategy content",
-    "lint:fix": "cross-env NODE_OPTIONS='--max-old-space-size=8192' eslint . --fix --cache --cache-strategy content",
+    "lint": "cross-env NODE_OPTIONS='--max-old-space-size=8192' eslint src '*.{js,mjs,cjs,ts,mts,cts}' --cache --cache-location .eslintcache-fast --cache-strategy content --no-warn-ignored",
+    "lint:strict": "cross-env NODE_OPTIONS='--max-old-space-size=8192' eslint src '*.{js,mjs,cjs,ts,mts,cts}' --config eslint.strict.config.mjs --cache --cache-location .eslintcache-strict --cache-strategy content --no-warn-ignored",
+    "lint:fix": "cross-env NODE_OPTIONS='--max-old-space-size=8192' eslint src '*.{js,mjs,cjs,ts,mts,cts}' --fix --cache --cache-location .eslintcache-fast --cache-strategy content --no-warn-ignored",
     "clean": "rm -rf dist"
   },
   "dependencies": {

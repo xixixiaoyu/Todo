@@ -260,5 +260,18 @@ describe('useTodoStore - Expansion', () => {
       expect(store.todos[0].expanded).toBe(true)
       expect(store.isAllExpanded).toBe(true)
     })
+
+    it('should store deferred section expansion preference', () => {
+      expect(store.deferredSectionExpandedPreference).toBeNull()
+
+      store.setDeferredSectionExpandedPreference(true)
+      expect(store.deferredSectionExpandedPreference).toBe(true)
+
+      store.setDeferredSectionExpandedPreference(false)
+      expect(store.deferredSectionExpandedPreference).toBe(false)
+
+      store.setDeferredSectionExpandedPreference(null)
+      expect(store.deferredSectionExpandedPreference).toBeNull()
+    })
   })
 })

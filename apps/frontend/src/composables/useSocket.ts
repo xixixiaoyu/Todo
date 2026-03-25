@@ -1,11 +1,20 @@
 import { ref, type Ref } from 'vue'
 import { io, Socket } from 'socket.io-client'
 import { useAuthStore } from '@/features/auth/stores/auth'
+import {
+  isSocketAuthError,
+  isTransientSocketError,
+  type SocketConnectionError,
+} from './useSocket.errors'
 
 let socketInstance: Socket | null = null
 const isConnected = ref(false)
 const socketId = ref<string | null>(null)
 let isInitialized = false
+const SOCKET_ERROR_LOG_COOLDOWN_MS = 10_000
+const socketTransports = import.meta.env.DEV ? ['polling', 'websocket'] : ['websocket', 'polling']
+let lastUnexpectedSocketErrorFingerprint = ''
+let lastUnexpectedSocketErrorAt = 0
 
 export interface UseSocketReturn {
   socket: Socket | null
@@ -14,6 +23,31 @@ export interface UseSocketReturn {
   connect: () => Socket
   disconnect: () => void
   waitForConnection: (timeout?: number) => Promise<string | null>
+}
+
+export function getActiveSocketId(): string | null {
+  return isConnected.value ? socketId.value : null
+}
+
+function logUnexpectedSocketError(error: SocketConnectionError): void {
+  const fingerprint = `${error.type || ''}:${error.message || ''}`
+  const now = Date.now()
+  if (
+    fingerprint === lastUnexpectedSocketErrorFingerprint &&
+    now - lastUnexpectedSocketErrorAt < SOCKET_ERROR_LOG_COOLDOWN_MS
+  ) {
+    return
+  }
+
+  lastUnexpectedSocketErrorFingerprint = fingerprint
+  lastUnexpectedSocketErrorAt = now
+
+  console.error('[Socket] Unexpected connection error:', {
+    message: error.message,
+    type: error.type,
+    description: error.description,
+    context: error.context,
+  })
 }
 
 /**
@@ -27,10 +61,9 @@ export function useSocket(): UseSocketReturn {
 
     const socketURL = window.location.origin
 
-    // 建议在生产环境优先尝试 websocket，减少 polling 带来的 400 错误
     socketInstance = io(`${socketURL}/events`, {
       withCredentials: true,
-      transports: ['websocket', 'polling'], // 调换顺序，优先使用 websocket
+      transports: socketTransports,
       autoConnect: false,
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,
@@ -57,40 +90,22 @@ export function useSocket(): UseSocketReturn {
       socketId.value = null
     })
 
-    socketInstance.on(
-      'connect_error',
-      async (error: {
-        message: string
-        type?: string
-        description?: unknown
-        context?: unknown
-      }) => {
-        console.error('[Socket] Connection Error:', error)
-        console.error('[Socket] Error Details:', {
-          message: error.message,
-          type: error.type,
-          description: error.description, // Socket.io 专属错误描述
-          context: error.context,
-        })
+    socketInstance.on('connect_error', async (error: SocketConnectionError) => {
+      const isAuthError = isSocketAuthError(error)
 
-        const message = (error.message || '').toLowerCase()
-        const isAuthError =
-          message.includes('unauthorized') ||
-          message.includes('token') ||
-          message.includes('jwt') ||
-          message.includes('authentication')
-
-        // 仅在认证错误时尝试刷新 token，避免网络抖动触发不必要的刷新流程
-        if (authStore.isAuthenticated && isAuthError) {
-          console.warn('[Socket] Attempting to refresh token and reconnect...')
-          const refreshed = await authStore.refreshAccessToken()
-          if (refreshed && socketInstance) {
-            socketInstance.auth = { token: authStore.token }
-            socketInstance.connect()
-          }
+      if (authStore.isAuthenticated && isAuthError) {
+        const refreshed = await authStore.refreshAccessToken()
+        if (refreshed && socketInstance) {
+          socketInstance.auth = { token: authStore.token }
+          socketInstance.connect()
         }
-      },
-    )
+        return
+      }
+
+      if (isTransientSocketError(error)) return
+
+      logUnexpectedSocketError(error)
+    })
 
     return socketInstance
   }

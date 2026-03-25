@@ -237,4 +237,78 @@ describe('TodoList', () => {
 
     expect(wrapper.text()).toContain('Later')
   })
+
+  it('should expand deferred section by default when it is the only visible section', () => {
+    const wrapper = mount(TodoList, {
+      props: {
+        todos: [
+          {
+            ...mockTodos[0],
+            id: 'deferred',
+            title: 'Later',
+            deferredAt: new Date('2026-03-24T08:00:00.000Z'),
+          },
+        ],
+        filter: 'pending',
+        searchQuery: '',
+        editingId: null,
+        editingTitle: '',
+      },
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    expect(wrapper.get('[data-test="deferred-section-toggle"]').attributes('aria-expanded')).toBe(
+      'true',
+    )
+    expect(wrapper.text()).toContain('Later')
+  })
+
+  it('should remember deferred section expansion preference across remounts', async () => {
+    const props = {
+      todos: [
+        {
+          ...mockTodos[0],
+          id: 'active',
+          title: 'Now',
+        },
+        {
+          ...mockTodos[0],
+          id: 'deferred',
+          title: 'Later',
+          order: 1,
+          deferredAt: new Date('2026-03-24T08:00:00.000Z'),
+        },
+      ],
+      filter: 'pending' as const,
+      searchQuery: '',
+      editingId: null,
+      editingTitle: '',
+    }
+
+    const firstWrapper = mount(TodoList, {
+      props,
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    await firstWrapper.get('[data-test="deferred-section-toggle"]').trigger('click')
+    expect(firstWrapper.text()).toContain('Later')
+
+    firstWrapper.unmount()
+
+    const secondWrapper = mount(TodoList, {
+      props,
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    expect(
+      secondWrapper.get('[data-test="deferred-section-toggle"]').attributes('aria-expanded'),
+    ).toBe('true')
+    expect(secondWrapper.text()).toContain('Later')
+  })
 })

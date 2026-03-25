@@ -6,6 +6,7 @@ import { useMarkdown } from '@/composables/useMarkdown'
 vi.mock('@/composables/useTheme', () => ({
   useTheme: () => ({
     theme: ref('light'),
+    effectiveTheme: ref('light'),
   }),
 }))
 

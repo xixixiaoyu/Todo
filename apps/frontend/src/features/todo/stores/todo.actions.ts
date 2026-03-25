@@ -10,6 +10,7 @@ export function createTodoActions(deps: {
   filter: Ref<FilterType>
   viewMode: Ref<ViewMode>
   searchQuery: Ref<string>
+  deferredSectionExpandedPreference: Ref<boolean | null>
   loading: Ref<boolean>
   isDragging: Ref<boolean>
   error: Ref<string | null>
@@ -52,6 +53,7 @@ export function createTodoActions(deps: {
   clearSearch: () => void
   clearError: () => void
   setSilencingToast: (silence: boolean) => void
+  setDeferredSectionExpandedPreference: (expanded: boolean | null) => void
   toggleAllExpansion: () => void
   toggleTodoExpansion: (id: string) => void
   getTodoPath: (todoId: string) => string[]
@@ -77,6 +79,7 @@ export function createTodoActions(deps: {
     filter: deps.filter,
     viewMode: deps.viewMode,
     searchQuery: deps.searchQuery,
+    deferredSectionExpandedPreference: deps.deferredSectionExpandedPreference,
     isDrawerOpen: deps.isDrawerOpen,
     isMaximized: deps.isMaximized,
     isSilencingToast: deps.isSilencingToast,

@@ -17,60 +17,73 @@ type ThrottlerStorageRecord = {
 
 const REDIS_THROTTLE_SCRIPT = `
 local key = KEYS[1]
+local hitsKey = key .. ':hits'
+local blockKey = key .. ':block'
+local sequenceKey = key .. ':seq'
 local now = tonumber(ARGV[1])
 local ttl = tonumber(ARGV[2])
 local limit = tonumber(ARGV[3])
 local blockDuration = tonumber(ARGV[4])
 
-local values = redis.call('HMGET', key, 'totalHits', 'expiresAt', 'blockExpiresAt')
-local totalHits = tonumber(values[1]) or 0
-local expiresAt = tonumber(values[2]) or 0
-local blockExpiresAt = tonumber(values[3]) or 0
-
-if expiresAt <= now or (blockExpiresAt > 0 and blockExpiresAt <= now) then
-  totalHits = 0
-  expiresAt = now + ttl
-  blockExpiresAt = 0
-end
-
-local isBlocked = blockExpiresAt > now
-
-if not isBlocked then
-  totalHits = totalHits + 1
-
-  if totalHits > limit then
-    blockExpiresAt = now + blockDuration
-    isBlocked = true
+local function toSeconds(milliseconds)
+  if milliseconds <= 0 then
+    return 0
   end
+
+  return math.ceil(milliseconds / 1000)
 end
 
-local timeToExpireMs = expiresAt - now
-if timeToExpireMs < 0 then
-  timeToExpireMs = 0
+local function getTimeToExpireMs()
+  local earliestHit = redis.call('ZRANGE', hitsKey, 0, 0, 'WITHSCORES')
+  if not earliestHit[2] then
+    return 0
+  end
+
+  local expiresAt = tonumber(earliestHit[2]) + ttl
+  local timeToExpireMs = expiresAt - now
+  if timeToExpireMs < 0 then
+    return 0
+  end
+
+  return timeToExpireMs
 end
 
-local timeToBlockExpireMs = blockExpiresAt - now
-if timeToBlockExpireMs < 0 then
-  timeToBlockExpireMs = 0
+redis.call('ZREMRANGEBYSCORE', hitsKey, '-inf', now - ttl)
+
+local timeToBlockExpireMs = redis.call('PTTL', blockKey)
+if timeToBlockExpireMs > 0 then
+  local totalHits = redis.call('ZCARD', hitsKey)
+  return {
+    totalHits,
+    toSeconds(getTimeToExpireMs()),
+    1,
+    toSeconds(timeToBlockExpireMs)
+  }
 end
 
-local recordTtlMs = timeToExpireMs
-if timeToBlockExpireMs > recordTtlMs then
-  recordTtlMs = timeToBlockExpireMs
-end
-if recordTtlMs <= 0 then
-  recordTtlMs = 1
+local sequence = redis.call('INCR', sequenceKey)
+local member = tostring(now) .. '-' .. tostring(sequence)
+redis.call('ZADD', hitsKey, now, member)
+redis.call('PEXPIRE', hitsKey, ttl)
+redis.call('PEXPIRE', sequenceKey, ttl)
+
+local totalHits = redis.call('ZCARD', hitsKey)
+local timeToExpireMs = getTimeToExpireMs()
+
+if totalHits > limit then
+  redis.call('PSETEX', blockKey, blockDuration, '1')
+  redis.call('DEL', hitsKey)
+  redis.call('DEL', sequenceKey)
+
+  return {
+    totalHits,
+    toSeconds(timeToExpireMs),
+    1,
+    toSeconds(blockDuration)
+  }
 end
 
-redis.call('HSET', key, 'totalHits', totalHits, 'expiresAt', expiresAt, 'blockExpiresAt', blockExpiresAt)
-redis.call('PEXPIRE', key, recordTtlMs)
-
-return {
-  totalHits,
-  math.ceil(timeToExpireMs / 1000),
-  isBlocked and 1 or 0,
-  math.ceil(timeToBlockExpireMs / 1000)
-}
+return { totalHits, toSeconds(timeToExpireMs), 0, 0 }
 `
 
 function isRedisEvalClient(value: unknown): value is RedisEvalClient {

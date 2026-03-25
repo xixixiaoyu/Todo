@@ -52,6 +52,8 @@ apps/backend/src/generated/
 *.tsbuildinfo
 .cache
 .eslintcache
+.eslintcache-fast
+.eslintcache-strict
 apps/frontend/package.json.md5
 
 # Capacitor

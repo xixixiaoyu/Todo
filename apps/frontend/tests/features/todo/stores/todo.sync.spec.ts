@@ -10,15 +10,21 @@ type ReminderRuntime = typeof globalThis & {
   [REMINDER_LOOP_TIMER_KEY]?: ReturnType<typeof setInterval>
 }
 
-const mockSocket = {
-  on: vi.fn(),
-  off: vi.fn(),
-  once: vi.fn(),
-  emit: vi.fn(),
-}
+const { mockSocket, connectMock, getActiveSocketIdMock, waitForConnectionMock } = vi.hoisted(() => {
+  const hoistedMockSocket = {
+    on: vi.fn(),
+    off: vi.fn(),
+    once: vi.fn(),
+    emit: vi.fn(),
+  }
 
-const connectMock = vi.fn(() => mockSocket)
-const waitForConnectionMock = vi.fn().mockResolvedValue('mock-socket-id')
+  return {
+    mockSocket: hoistedMockSocket,
+    connectMock: vi.fn(() => hoistedMockSocket),
+    getActiveSocketIdMock: vi.fn<() => string | null>(() => 'mock-socket-id'),
+    waitForConnectionMock: vi.fn().mockResolvedValue('mock-socket-id'),
+  }
+})
 
 let authStoreMock: {
   isAuthenticated: boolean
@@ -51,6 +57,7 @@ vi.mock('@/features/auth/stores/auth', () => ({
 
 // Mock useSocket
 vi.mock('@/composables/useSocket', () => ({
+  getActiveSocketId: getActiveSocketIdMock,
   useSocket: () => ({
     socketId: { value: 'mock-socket-id' },
     connect: connectMock,
@@ -78,6 +85,7 @@ describe('Todo Store Sync', () => {
       hydrateFromStorage: vi.fn(),
       $subscribe: vi.fn(),
     }
+    getActiveSocketIdMock.mockReturnValue('mock-socket-id')
   })
 
   async function createRemoteStore() {
@@ -123,6 +131,8 @@ describe('Todo Store Sync', () => {
 
     await store.sync()
 
+    expect(waitForConnectionMock).not.toHaveBeenCalled()
+    expect(vi.mocked(todoApi.sync)).toHaveBeenCalledWith(expect.any(Object), 'mock-socket-id')
     expect(vi.mocked(todoApi.sync).mock.calls[0]?.[0].todos[0]?.deferredAt).toEqual(
       new Date('2026-03-24T08:00:00.000Z'),
     )
@@ -134,6 +144,30 @@ describe('Todo Store Sync', () => {
     expect(store.todos.some((t) => t.id === 'server-id')).toBe(true)
 
     expect(store.lastSyncAt).toBe(mockResponse.data.serverTime)
+  })
+
+  it('should sync without a socket header when realtime channel is offline', async () => {
+    const store = await createRemoteStore()
+    getActiveSocketIdMock.mockReturnValue(null)
+
+    await store.addTodo('Offline Sync')
+
+    vi.mocked(todoApi.sync).mockResolvedValue({
+      success: true,
+      data: {
+        synced: [],
+        deletedIds: [],
+        acceptedIds: [],
+        conflicts: [],
+        serverTime: new Date().toISOString(),
+      } as SyncResponse,
+      timestamp: new Date().toISOString(),
+    } as Awaited<ReturnType<typeof todoApi.sync>>)
+
+    await store.sync()
+
+    expect(waitForConnectionMock).not.toHaveBeenCalled()
+    expect(vi.mocked(todoApi.sync)).toHaveBeenCalledWith(expect.any(Object), null)
   })
 
   it('should merge data on login', async () => {

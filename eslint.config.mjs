@@ -1,7 +1,14 @@
 import js from '@eslint/js'
 import ts from 'typescript-eslint'
-import prettier from 'eslint-plugin-prettier/recommended'
+import configPrettier from 'eslint-config-prettier'
 import globals from 'globals'
+
+export const typedFilePatterns = ['**/*.ts', '**/*.tsx', '**/*.mts', '**/*.cts', '**/*.vue']
+
+export const typeAwareRules = {
+  '@typescript-eslint/no-floating-promises': 'error',
+  '@typescript-eslint/no-misused-promises': 'error',
+}
 
 /**
  * 基础规则配置（不包含 Prettier）
@@ -18,18 +25,12 @@ export const baseConfig = [
     },
   },
   {
-    files: ['**/*.ts', '**/*.tsx', '**/*.mts', '**/*.cts', '**/*.vue'],
-    languageOptions: {
-      parserOptions: {
-        projectService: true,
-        tsconfigRootDir: import.meta.dirname,
-      },
-    },
+    files: typedFilePatterns,
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-      '@typescript-eslint/no-floating-promises': 'error',
-      '@typescript-eslint/no-misused-promises': 'error',
+      '@typescript-eslint/no-floating-promises': 'off',
+      '@typescript-eslint/no-misused-promises': 'off',
     },
   },
   {
@@ -64,6 +65,6 @@ export const ignoreConfig = {
 }
 
 /**
- * 导出默认配置，方便简单使用
+ * 导出默认配置，关闭与 Prettier 冲突的规则，但不在 lint 阶段执行 Prettier
  */
-export default [...baseConfig, ignoreConfig, prettier]
+export default [...baseConfig, ignoreConfig, configPrettier]

@@ -1,5 +1,5 @@
 import { baseConfig, ignoreConfig } from '../../eslint.config.mjs'
-import prettier from 'eslint-plugin-prettier/recommended'
+import configPrettier from 'eslint-config-prettier'
 
 /**
  * Shared Package ESLint 配置
@@ -11,15 +11,9 @@ export default [
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.mts', '**/*.cts'],
     ignores: ['**/*.config.ts', '**/tsup.config.ts'],
-    languageOptions: {
-      parserOptions: {
-        projectService: true,
-        tsconfigRootDir: import.meta.dirname,
-      },
-    },
   },
   {
     ignores: ['dist', 'node_modules'],
   },
-  prettier,
+  configPrettier,
 ]

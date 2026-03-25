@@ -20,6 +20,7 @@ const {
 vi.mock('@/composables/useTheme', () => ({
   useTheme: () => ({
     theme: ref('light'),
+    effectiveTheme: ref('light'),
   }),
 }))
 

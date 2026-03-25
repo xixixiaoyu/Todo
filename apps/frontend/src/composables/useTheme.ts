@@ -1,5 +1,5 @@
-import { useColorMode, useStorage } from '@vueuse/core'
-import { readonly, ref, watch } from 'vue'
+import { useColorMode, useMediaQuery, useStorage } from '@vueuse/core'
+import { computed, readonly, ref, watch } from 'vue'
 
 export type ThemePresetKey =
   | 'celadon'
@@ -314,6 +314,13 @@ export function useTheme() {
       dark: 'dark',
     },
   })
+  const prefersDark = useMediaQuery('(prefers-color-scheme: dark)')
+  const effectiveTheme = computed<'light' | 'dark'>(() => {
+    if (mode.value === 'dark') return 'dark'
+    if (mode.value === 'light') return 'light'
+    return prefersDark.value ? 'dark' : 'light'
+  })
+  const isDark = computed(() => effectiveTheme.value === 'dark')
 
   const themeColor = useStorage<string | null>('theme-color', null)
 
@@ -347,6 +354,8 @@ export function useTheme() {
 
   return {
     theme: mode,
+    effectiveTheme: readonly(effectiveTheme),
+    isDark: readonly(isDark),
     setTheme: (newTheme: 'light' | 'dark' | 'auto') => {
       mode.value = newTheme
     },

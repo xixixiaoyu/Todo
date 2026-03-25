@@ -17,6 +17,24 @@ vi.mock('vue-i18n', () => ({
   }),
 }))
 
+type UseThemeResult = ReturnType<typeof useTheme>
+
+function createUseThemeMock(overrides: Partial<UseThemeResult> = {}): UseThemeResult {
+  return {
+    theme: ref<'light' | 'dark' | 'auto'>('auto') as unknown as UseThemeResult['theme'],
+    effectiveTheme: ref<'light' | 'dark'>('light') as unknown as UseThemeResult['effectiveTheme'],
+    isDark: ref(false) as unknown as UseThemeResult['isDark'],
+    setTheme: vi.fn(),
+    themeColor: ref<string | null>(null) as unknown as UseThemeResult['themeColor'],
+    effectiveThemeColor: ref<string | null>(
+      null,
+    ) as unknown as UseThemeResult['effectiveThemeColor'],
+    setThemeColor: vi.fn(),
+    resetThemeColor: vi.fn(),
+    ...overrides,
+  } as unknown as UseThemeResult
+}
+
 describe('ThemeToggle', () => {
   it('should cycle through themes when clicked', async () => {
     const theme = ref<'light' | 'dark' | 'auto'>('light')
@@ -25,16 +43,12 @@ describe('ThemeToggle', () => {
     })
 
     const mockedUseTheme = vi.mocked(useTheme)
-    mockedUseTheme.mockReturnValue({
-      theme: theme as unknown as ReturnType<typeof useTheme>['theme'],
-      setTheme,
-      themeColor: ref<string | null>(null) as unknown as ReturnType<typeof useTheme>['themeColor'],
-      effectiveThemeColor: ref<string | null>(null) as unknown as ReturnType<
-        typeof useTheme
-      >['effectiveThemeColor'],
-      setThemeColor: vi.fn(),
-      resetThemeColor: vi.fn(),
-    })
+    mockedUseTheme.mockReturnValue(
+      createUseThemeMock({
+        theme: theme as unknown as UseThemeResult['theme'],
+        setTheme,
+      }),
+    )
 
     const wrapper = mount({
       setup() {

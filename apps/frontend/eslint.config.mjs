@@ -2,7 +2,7 @@ import { baseConfig, ignoreConfig } from '../../eslint.config.mjs'
 import vue from 'eslint-plugin-vue'
 import ts from 'typescript-eslint'
 import globals from 'globals'
-import prettier from 'eslint-plugin-prettier/recommended'
+import configPrettier from 'eslint-config-prettier'
 
 /**
  * Frontend ESLint 配置
@@ -25,40 +25,9 @@ export default [
     languageOptions: {
       parserOptions: {
         parser: ts.parser,
-        projectService: true,
-        tsconfigRootDir: import.meta.dirname,
-        extraFileExtensions: ['.vue'],
-      },
-    },
-  },
-  {
-    files: ['**/*.ts', '**/*.tsx', '**/*.mts', '**/*.cts'],
-    languageOptions: {
-      parserOptions: {
-        projectService: true,
-        tsconfigRootDir: import.meta.dirname,
-      },
-    },
-  },
-  {
-    files: [
-      '**/tests/**/*.ts',
-      '**/tests/**/*.tsx',
-      '**/tests/**/*.mts',
-      '**/tests/**/*.cts',
-      '**/tests/**/*.vue',
-    ],
-    languageOptions: {
-      parserOptions: {
-        parser: ts.parser,
         projectService: false,
-        tsconfigRootDir: import.meta.dirname,
         extraFileExtensions: ['.vue'],
       },
-    },
-    rules: {
-      '@typescript-eslint/no-floating-promises': 'off',
-      '@typescript-eslint/no-misused-promises': 'off',
     },
   },
   {
@@ -100,5 +69,5 @@ export default [
       'wailsjs',
     ],
   },
-  prettier, // Prettier 必须放在最后，自动关闭所有格式冲突规则
+  configPrettier, // 只关闭与 Prettier 冲突的规则，避免在 lint 阶段重复执行格式化
 ]

@@ -1,5 +1,5 @@
 import { baseConfig, ignoreConfig } from '../../eslint.config.mjs'
-import prettier from 'eslint-plugin-prettier/recommended'
+import configPrettier from 'eslint-config-prettier'
 
 /**
  * Backend ESLint 配置
@@ -11,12 +11,6 @@ export default [
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.mts', '**/*.cts'],
     ignores: ['**/*.config.ts', '**/vitest.config.mts'],
-    languageOptions: {
-      parserOptions: {
-        projectService: true,
-        tsconfigRootDir: import.meta.dirname,
-      },
-    },
     rules: {
       '@typescript-eslint/interface-name-prefix': 'off',
       '@typescript-eslint/explicit-function-return-type': 'off',
@@ -26,5 +20,5 @@ export default [
   {
     ignores: ['dist', 'node_modules', 'src/generated', 'prisma/generated', 'coverage', '*.log'],
   },
-  prettier, // Prettier 必须放在最后
+  configPrettier, // 只关闭与 Prettier 冲突的规则
 ]

@@ -17,6 +17,9 @@
     "lint": {
       "inputs": ["$TURBO_DEFAULT$"]
     },
+    "lint:strict": {
+      "inputs": ["$TURBO_DEFAULT$"]
+    },
     "type-check": {
       "inputs": ["$TURBO_DEFAULT$"]
     },
@@ -106,6 +109,19 @@
         "package.json",
         "tsconfig.json",
         "eslint.config.*",
+        "eslint.strict.config.*",
+        "!android/**",
+        "!ios/**"
+      ]
+    },
+    "@lumina/frontend#lint:strict": {
+      "inputs": [
+        "src/**",
+        "tests/**",
+        "package.json",
+        "tsconfig.json",
+        "eslint.config.*",
+        "eslint.strict.config.*",
         "!android/**",
         "!ios/**"
       ]

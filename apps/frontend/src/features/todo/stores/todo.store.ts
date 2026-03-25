@@ -25,6 +25,7 @@ export const useTodoStore = defineStore(
     const filter = ref<FilterType>('pending')
     const viewMode = ref<ViewMode>('list')
     const searchQuery = ref('')
+    const deferredSectionExpandedPreference = ref<boolean | null>(null)
     const loading = ref(false)
     const isDragging = ref(false)
     const error = ref<string | null>(null)
@@ -189,6 +190,7 @@ export const useTodoStore = defineStore(
       filter,
       viewMode,
       searchQuery,
+      deferredSectionExpandedPreference,
       loading,
       isDragging,
       error,
@@ -272,6 +274,7 @@ export const useTodoStore = defineStore(
       filter,
       viewMode,
       searchQuery,
+      deferredSectionExpandedPreference,
       loading,
       isDragging,
       error,
@@ -325,6 +328,7 @@ export const useTodoStore = defineStore(
         'remoteTodos',
         'filter',
         'viewMode',
+        'deferredSectionExpandedPreference',
         'lastSyncAt',
         'syncOwnerId',
         'isDrawerOpen',
