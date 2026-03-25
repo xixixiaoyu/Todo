@@ -6,6 +6,7 @@ type TodoUiDeps = {
   filter: Ref<FilterType>
   viewMode: Ref<ViewMode>
   searchQuery: Ref<string>
+  todoExpansionState: Ref<Record<string, boolean>>
   deferredSectionExpandedPreference: Ref<boolean | null>
   isDrawerOpen: Ref<boolean>
   isMaximized: Ref<boolean>
@@ -74,6 +75,7 @@ export function createTodoUiActions(deps: TodoUiDeps): {
     const targetState = !deps.isAllExpanded.value
     deps.filteredTodos.value.forEach((todo) => {
       todo.expanded = targetState
+      deps.todoExpansionState.value[todo.id] = targetState
     })
   }
 
@@ -81,6 +83,7 @@ export function createTodoUiActions(deps: TodoUiDeps): {
     const todo = deps.todos.value.find((item) => item.id === id)
     if (todo) {
       todo.expanded = !(todo.expanded ?? true)
+      deps.todoExpansionState.value[id] = todo.expanded
     }
   }
 

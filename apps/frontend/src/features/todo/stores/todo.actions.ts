@@ -10,6 +10,7 @@ export function createTodoActions(deps: {
   filter: Ref<FilterType>
   viewMode: Ref<ViewMode>
   searchQuery: Ref<string>
+  todoExpansionState: Ref<Record<string, boolean>>
   deferredSectionExpandedPreference: Ref<boolean | null>
   loading: Ref<boolean>
   isDragging: Ref<boolean>
@@ -79,6 +80,7 @@ export function createTodoActions(deps: {
     filter: deps.filter,
     viewMode: deps.viewMode,
     searchQuery: deps.searchQuery,
+    todoExpansionState: deps.todoExpansionState,
     deferredSectionExpandedPreference: deps.deferredSectionExpandedPreference,
     isDrawerOpen: deps.isDrawerOpen,
     isMaximized: deps.isMaximized,

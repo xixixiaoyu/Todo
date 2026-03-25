@@ -25,6 +25,7 @@ export const useTodoStore = defineStore(
     const filter = ref<FilterType>('pending')
     const viewMode = ref<ViewMode>('list')
     const searchQuery = ref('')
+    const todoExpansionState = ref<Record<string, boolean>>({})
     const deferredSectionExpandedPreference = ref<boolean | null>(null)
     const loading = ref(false)
     const isDragging = ref(false)
@@ -60,6 +61,15 @@ export const useTodoStore = defineStore(
       todos.value.forEach(normalizeTodoDatesInPlace)
     }
 
+    const applyPersistedExpansionState = () => {
+      todos.value.forEach((todo) => {
+        const persistedExpanded = todoExpansionState.value[todo.id]
+        if (persistedExpanded !== undefined) {
+          todo.expanded = persistedExpanded
+        }
+      })
+    }
+
     const sourceManager = createTodoSourceManager({
       todos,
       todoSource,
@@ -86,6 +96,15 @@ export const useTodoStore = defineStore(
       () => {
         const targetTodos = todoSource.value === 'local' ? localTodos.value : remoteTodos.value
         sourceManager.applyTodosSnapshot(targetTodos)
+        applyPersistedExpansionState()
+      },
+      { immediate: true, deep: true },
+    )
+
+    watch(
+      todoExpansionState,
+      () => {
+        applyPersistedExpansionState()
       },
       { immediate: true, deep: true },
     )
@@ -190,6 +209,7 @@ export const useTodoStore = defineStore(
       filter,
       viewMode,
       searchQuery,
+      todoExpansionState,
       deferredSectionExpandedPreference,
       loading,
       isDragging,
@@ -274,6 +294,7 @@ export const useTodoStore = defineStore(
       filter,
       viewMode,
       searchQuery,
+      todoExpansionState,
       deferredSectionExpandedPreference,
       loading,
       isDragging,
@@ -328,6 +349,7 @@ export const useTodoStore = defineStore(
         'remoteTodos',
         'filter',
         'viewMode',
+        'todoExpansionState',
         'deferredSectionExpandedPreference',
         'lastSyncAt',
         'syncOwnerId',

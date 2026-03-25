@@ -94,9 +94,11 @@ describe('useTodoStore - Expansion', () => {
       ]
       store.toggleTodoExpansion('1')
       expect(store.todos[0].expanded).toBe(false)
+      expect(store.todoExpansionState).toEqual({ '1': false })
 
       store.toggleTodoExpansion('1')
       expect(store.todos[0].expanded).toBe(true)
+      expect(store.todoExpansionState).toEqual({ '1': true })
     })
 
     it('should automatically update isAllExpanded based on manual operations of parent nodes', async () => {
