@@ -42,6 +42,24 @@ describe('AiAssistantInput', () => {
     setViewportWidth(1024)
   })
 
+  it('uses the refined composer typography classes', () => {
+    const wrapper = mount(AiAssistantInput, {
+      props: {
+        ...defaultProps,
+        modelValue: 'hello',
+      },
+      global: {
+        stubs: {
+          AiAssistantInputAttachments: true,
+          AiAssistantInputSlashCommands: true,
+        },
+      },
+    })
+
+    expect(wrapper.find('.ai-assistant-composer').exists()).toBe(true)
+    expect(wrapper.find('textarea').classes()).toContain('ai-assistant-textarea')
+  })
+
   it('应在桌面端按 Enter 时发送消息', async () => {
     const wrapper = mount(AiAssistantInput, {
       props: {

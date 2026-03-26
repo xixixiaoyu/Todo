@@ -63,6 +63,64 @@ vi.mock('@/features/ai/services/aiService', async (importOriginal) => {
 })
 
 describe('ChatMessage', () => {
+  it('applies the refined typography classes to assistant and user bubbles', async () => {
+    const assistantWrapper = mount(ChatMessage, {
+      props: {
+        message: {
+          id: 'assistant-1',
+          role: 'assistant' as const,
+          content: 'Hello',
+        },
+      },
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    await flushPromises()
+
+    expect(assistantWrapper.find('.ai-chat-message--assistant').exists()).toBe(true)
+    expect(assistantWrapper.find('.ai-chat-markdown').exists()).toBe(true)
+
+    const userWrapper = mount(ChatMessage, {
+      props: {
+        message: {
+          id: 'user-1',
+          role: 'user' as const,
+          content: '你好',
+        },
+      },
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    expect(userWrapper.find('.ai-chat-message--user').exists()).toBe(true)
+    expect(userWrapper.find('.ai-chat-user-text').exists()).toBe(true)
+  })
+
+  it('keeps image generation bubbles free of assistant padding classes', () => {
+    const wrapper = mount(ChatMessage, {
+      props: {
+        message: {
+          id: 'assistant-image',
+          role: 'assistant' as const,
+          content: 'ai.generatingImage',
+        },
+      },
+      global: {
+        plugins: [i18n],
+        stubs: {
+          ImageLoadingState: true,
+        },
+      },
+    })
+
+    const bubble = wrapper.find('.ai-chat-message')
+    expect(bubble.classes()).toContain('p-0')
+    expect(bubble.classes()).not.toContain('ai-chat-message--assistant')
+  })
+
   it('should render discussion steps correctly', async () => {
     const message = {
       id: '1',
@@ -371,6 +429,8 @@ describe('ChatMessage', () => {
     // 应该显示 textarea
     const textarea = wrapper.find('textarea')
     expect(textarea.exists()).toBe(true)
+
+    expect(wrapper.html()).toContain('w-full max-w-full space-y-2')
 
     // 修改内容并保存
     await textarea.setValue('Updated content')

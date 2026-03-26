@@ -393,6 +393,69 @@
   @apply line-through opacity-50;
 }
 
+/* AI 对话排版微调 */
+.ai-chat-markdown,
+.ai-chat-text-fallback {
+  font-size: var(--ai-chat-body-size);
+  line-height: var(--ai-chat-body-line-height);
+  font-weight: var(--ai-chat-body-weight);
+  letter-spacing: 0.01em;
+  color: hsl(var(--ai-chat-assistant-text));
+}
+
+.ai-chat-markdown h1 {
+  margin: 1.75rem 0 0.875rem;
+  font-size: var(--ai-chat-heading-1-size);
+  line-height: var(--ai-chat-heading-1-line-height);
+  font-weight: var(--ai-chat-heading-1-weight);
+}
+
+.ai-chat-markdown h1::before {
+  height: 1.5rem;
+  opacity: 0.78;
+}
+
+.ai-chat-markdown h2 {
+  margin: 1.5rem 0 0.75rem;
+  font-size: var(--ai-chat-heading-2-size);
+  line-height: var(--ai-chat-heading-2-line-height);
+  font-weight: var(--ai-chat-heading-2-weight);
+}
+
+.ai-chat-markdown h3 {
+  margin: 1.25rem 0 0.625rem;
+  font-size: var(--ai-chat-heading-3-size);
+  line-height: var(--ai-chat-heading-3-line-height);
+  font-weight: var(--ai-chat-heading-3-weight);
+}
+
+.ai-chat-markdown p {
+  margin: 0 0 0.875rem;
+}
+
+.ai-chat-markdown p:last-child,
+.ai-chat-text-fallback:last-child {
+  margin-bottom: 0;
+}
+
+.ai-chat-markdown ul,
+.ai-chat-markdown ol {
+  margin: 0 0 1rem;
+  padding-left: 1.35rem;
+}
+
+.ai-chat-markdown li + li {
+  margin-top: 0.55rem;
+}
+
+.ai-chat-markdown blockquote {
+  margin: 1.25rem 0;
+}
+
+.ai-chat-markdown strong {
+  font-weight: var(--ai-chat-body-strong-weight);
+}
+
 /* Mermaid 图表基础样式 */
 .mermaid-container {
   @apply relative my-6 overflow-hidden rounded-xl shadow-sm transition-all duration-300;
@@ -579,5 +642,30 @@
   .markdown-table th,
   .markdown-table td {
     @apply px-3 py-2;
+  }
+}
+
+@media (max-width: 640px) {
+  .ai-chat-markdown {
+    line-height: 1.68;
+  }
+
+  .ai-chat-markdown h1 {
+    margin-top: 1.5rem;
+    font-size: 1.125rem;
+  }
+
+  .ai-chat-markdown h2 {
+    margin-top: 1.25rem;
+    font-size: 1rem;
+  }
+
+  .ai-chat-markdown h3 {
+    margin-top: 1rem;
+  }
+
+  .ai-chat-markdown ul,
+  .ai-chat-markdown ol {
+    padding-left: 1.15rem;
   }
 }

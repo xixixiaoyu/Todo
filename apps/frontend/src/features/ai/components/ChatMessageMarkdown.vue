@@ -31,7 +31,7 @@ defineExpose({
   <div ref="containerRef">
     <div
       v-if="renderedHtml"
-      class="markdown-content selectable relative break-words leading-relaxed select-text"
+      class="ai-chat-markdown markdown-content selectable relative break-words select-text"
     >
       <!-- eslint-disable-next-line vue/no-v-html -->
       <div v-html="renderedHtml" />
@@ -39,10 +39,7 @@ defineExpose({
 
     <div
       v-else-if="content"
-      :class="[
-        'relative selectable select-text break-words leading-relaxed',
-        isMobile ? 'text-[15px]' : 'text-[15px]',
-      ]"
+      class="ai-chat-text-fallback relative selectable select-text break-words whitespace-pre-wrap"
     >
       {{ content }}
     </div>

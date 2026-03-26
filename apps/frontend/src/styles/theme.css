@@ -64,6 +64,28 @@
     --ai-glass-bg: var(--background);
     --ai-glass-border: var(--border);
     --ai-header-yellow: 32 55% 82%;
+    --ai-chat-content-max-width: 46rem;
+    --ai-chat-body-size: 0.9375rem;
+    --ai-chat-body-line-height: 1.72;
+    --ai-chat-body-weight: 400;
+    --ai-chat-body-strong-weight: 500;
+    --ai-chat-user-size: 0.875rem;
+    --ai-chat-user-line-height: 1.6;
+    --ai-chat-user-weight: 500;
+    --ai-chat-heading-1-size: 1.25rem;
+    --ai-chat-heading-1-line-height: 1.35;
+    --ai-chat-heading-1-weight: 600;
+    --ai-chat-heading-2-size: 1.0625rem;
+    --ai-chat-heading-2-line-height: 1.45;
+    --ai-chat-heading-2-weight: 600;
+    --ai-chat-heading-3-size: 0.9375rem;
+    --ai-chat-heading-3-line-height: 1.5;
+    --ai-chat-heading-3-weight: 600;
+    --ai-chat-input-size: 0.9375rem;
+    --ai-chat-input-line-height: 1.5;
+    --ai-chat-input-weight: 400;
+    --ai-chat-placeholder: 32 5% 48%;
+    --ai-chat-assistant-text: 32 10% 22%;
   }
 
   .dark {
@@ -114,6 +136,8 @@
     --ai-glass-bg: 240 4% 10%;
     --ai-glass-border: 240 4% 18%;
     --ai-header-yellow: 32 60% 15%;
+    --ai-chat-placeholder: 240 5% 54%;
+    --ai-chat-assistant-text: 240 5% 92%;
   }
 
   /* 性能优化辅助类 */

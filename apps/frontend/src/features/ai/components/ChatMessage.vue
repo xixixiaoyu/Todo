@@ -141,9 +141,21 @@ defineExpose({
     <!-- 消息内容 -->
     <div
       :class="[
-        isMobile ? 'max-w-[92%]' : 'max-w-[85%]',
-        message.role === 'tool' ? 'space-y-0' : 'space-y-2',
+        message.role === 'tool'
+          ? 'w-full space-y-0'
+          : isUser
+            ? isEditing
+              ? 'w-full max-w-full space-y-2'
+              : isMobile
+                ? 'max-w-[88%] space-y-2'
+                : 'max-w-[76%] space-y-2'
+            : 'w-full space-y-2.5',
       ]"
+      :style="
+        !isUser && message.role !== 'tool'
+          ? { maxWidth: 'var(--ai-chat-content-max-width)' }
+          : undefined
+      "
     >
       <!-- 多模型讨论过程 -->
       <ChatMessageDiscussion v-if="hasDiscussion" :steps="message.discussionSteps" />
@@ -178,18 +190,23 @@ defineExpose({
         <!-- 正文气泡：用户消息或已有内容的 AI 消息 -->
         <div
           v-if="showMessageBubble"
-          class="selectable relative select-text break-words transition-all duration-300"
+          class="ai-chat-message selectable relative select-text break-words transition-all duration-300"
           :class="[
-            isUser || message.role !== 'tool' ? 'rounded-[1.25rem] px-4 py-3' : 'rounded-none p-0',
+            isUser || message.role !== 'tool'
+              ? isMobile
+                ? 'rounded-[1.25rem]'
+                : 'rounded-[1.5rem]'
+              : 'rounded-none p-0',
             isUser
-              ? 'bg-gradient-to-br from-primary/95 via-primary to-primary/90 text-primary-foreground shadow-[0_4px_12px_hsl(var(--primary)_/_0.15)]'
+              ? 'ai-chat-message--user bg-gradient-to-br from-primary/95 via-primary to-primary/90 text-primary-foreground shadow-[0_4px_12px_hsl(var(--primary)_/_0.15)]'
               : message.role === 'tool'
                 ? 'border-none bg-transparent shadow-none'
-                : 'border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] text-foreground shadow-sm',
+                : isImageGenerating
+                  ? 'border-none bg-transparent shadow-none p-0'
+                  : 'ai-chat-message--assistant border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] text-foreground shadow-sm',
             isEditing
               ? 'w-full !bg-card !text-foreground ring-2 ring-primary/20 border-primary'
               : '',
-            isImageGenerating ? 'p-0 border-none bg-transparent shadow-none' : '',
           ]"
         >
           <!-- 正在生成图片时显示精致加载状态 -->

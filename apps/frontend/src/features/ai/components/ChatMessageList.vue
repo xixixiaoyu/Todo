@@ -255,7 +255,10 @@ defineExpose({
       @scroll.passive="handleScroll"
     >
       <div
-        :class="['flex min-h-full w-full flex-col', isMaximized ? 'mx-auto max-w-4xl' : '']"
+        :class="[
+          'ai-chat-thread flex min-h-full w-full flex-col',
+          isMaximized ? 'mx-auto max-w-4xl' : '',
+        ]"
         style="overflow-anchor: none"
       >
         <!-- 空状态 -->

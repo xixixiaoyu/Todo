@@ -228,7 +228,7 @@ defineExpose({
 <template>
   <div
     :class="[
-      'input-container-refined relative flex flex-col rounded-[1.25rem] border border-[hsl(var(--ai-glass-border))] bg-[hsl(var(--ai-glass-bg))] shadow-[0_4px_20px_rgba(0,0,0,0.04)] transition-all duration-500 focus-within:border-primary/40 focus-within:shadow-[0_8px_32px_rgba(0,0,0,0.06)]',
+      'ai-assistant-composer input-container-refined relative flex flex-col rounded-[1.25rem] border border-[hsl(var(--ai-glass-border))] bg-[hsl(var(--ai-glass-bg))] shadow-[0_4px_20px_rgba(0,0,0,0.04)] transition-all duration-500 focus-within:border-primary/40 focus-within:shadow-[0_8px_32px_rgba(0,0,0,0.06)]',
       isMobile ? 'p-1 gap-0' : 'p-1 gap-0',
     ]"
   >
@@ -286,8 +286,8 @@ defineExpose({
                 : t('ai.placeholder')
         "
         :class="[
-          'flex-1 resize-none bg-transparent text-foreground outline-none placeholder:text-muted-foreground/40 leading-relaxed transition-colors',
-          isMobile ? 'px-2 py-1 text-[15px]' : 'px-2 py-1.5 text-[15px]',
+          'ai-assistant-textarea flex-1 resize-none bg-transparent text-foreground outline-none transition-colors',
+          isMobile ? 'px-2 py-1' : 'px-2 py-1.5',
         ]"
         @input="(e) => emit('update:modelValue', (e.target as HTMLTextAreaElement).value)"
         @keydown.exact="handleKeydown"

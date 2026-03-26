@@ -43,12 +43,7 @@ function onSave() {
 
     <!-- 用户消息：展示模式 -->
     <div v-else class="group/user relative selectable select-text">
-      <div
-        :class="[
-          'break-words whitespace-pre-wrap leading-relaxed',
-          isMobile ? 'text-[15px]' : 'text-[15px]',
-        ]"
-      >
+      <div class="ai-chat-user-text break-words whitespace-pre-wrap">
         {{ content }}
       </div>
       <!-- 编辑按钮 -->
