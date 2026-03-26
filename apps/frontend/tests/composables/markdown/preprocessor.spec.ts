@@ -37,6 +37,28 @@ describe('preprocessMarkdown', () => {
     expect(output).toContain('** code block should not be touched **')
   })
 
+  it('should normalize inline latex delimiters', () => {
+    const input = '这是 \\(a^2 + b^2 = c^2\\) 公式'
+    const output = preprocessMarkdown(input)
+
+    expect(output).toContain('$a^2 + b^2 = c^2$')
+  })
+
+  it('should normalize block latex delimiters', () => {
+    const input = '推导如下：\n\\[\nE = mc^2\n\\]\n结束'
+    const output = preprocessMarkdown(input)
+
+    expect(output).toContain('$$\nE = mc^2\n$$')
+  })
+
+  it('should preserve latex delimiters inside code blocks', () => {
+    const input = '```\n\\(a^2 + b^2 = c^2\\)\n```'
+    const output = preprocessMarkdown(input)
+
+    expect(output).toContain('\\(a^2 + b^2 = c^2\\)')
+    expect(output).not.toContain('$a^2 + b^2 = c^2$')
+  })
+
   it('should handle multiple bold blocks', () => {
     const input = '** bold 1 ** and ** bold 2 **'
     const output = preprocessMarkdown(input)

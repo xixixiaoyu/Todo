@@ -38,6 +38,25 @@ md.use(mdHighlight, {
   inline: false,
 })
 
+const defaultMathInlineRender = md.renderer.rules.math_inline
+const defaultMathBlockRender = md.renderer.rules.math_block
+
+md.renderer.rules.math_inline = (tokens, idx, options, env, self) => {
+  const rendered = defaultMathInlineRender
+    ? defaultMathInlineRender(tokens, idx, options, env, self)
+    : md.utils.escapeHtml(tokens[idx].content)
+
+  return `<span class="math-inline">${rendered}</span>`
+}
+
+md.renderer.rules.math_block = (tokens, idx, options, env, self) => {
+  const rendered = defaultMathBlockRender
+    ? defaultMathBlockRender(tokens, idx, options, env, self)
+    : md.utils.escapeHtml(tokens[idx].content)
+
+  return `<div class="math-block">${rendered.trim()}</div>\n`
+}
+
 // 自定义链接渲染：新窗口打开并添加类名
 const defaultLinkRender =
   md.renderer.rules.link_open ||

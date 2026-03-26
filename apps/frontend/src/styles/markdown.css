@@ -123,6 +123,10 @@
     linear-gradient(0deg, hsl(var(--primary) / 0.08), hsl(var(--primary) / 0.08)), hsl(var(--card));
 }
 
+.math-block .katex-block {
+  @apply m-0;
+}
+
 .math-inline {
   @apply inline-block align-middle px-1.5 text-primary;
 }

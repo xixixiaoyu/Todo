@@ -15,10 +15,23 @@ export function preprocessMarkdown(text: unknown): string {
     return placeholder
   })
 
-  // 2. 保护转义的美元符号 \$ -> __ESC_DOLLAR__
+  // 2. 兼容标准 LaTeX 定界符：\(...\) / \[...\]
+  processed = processed.replace(/(^|[^\\])\\\[\s*([\s\S]+?)\s*\\\]/g, (match, prefix, formula) => {
+    const normalized = formula.trim()
+    if (!normalized) return match
+    return `${prefix}\n\n$$\n${normalized}\n$$\n\n`
+  })
+
+  processed = processed.replace(/(^|[^\\])\\\(([^`\n]+?)\\\)/g, (match, prefix, formula) => {
+    const normalized = formula.trim()
+    if (!normalized) return match
+    return `${prefix}$${normalized}$`
+  })
+
+  // 3. 保护转义的美元符号 \$ -> __ESC_DOLLAR__
   processed = processed.replace(/\\(\$)/g, '__ESC_DOLLAR__')
 
-  // 3. 修复加粗和斜体中的空格问题
+  // 4. 修复加粗和斜体中的空格问题
   // 我们直接将其转换为 HTML 标签，以绕过 markdown-it 严格的 CJK 边界（flanking）解析规则
   // 处理 ** text ** -> <strong>text</strong>
   processed = processed.replace(/\*\*([^\n]+?)\*\*/g, (match, content) => {
@@ -31,15 +44,15 @@ export function preprocessMarkdown(text: unknown): string {
     return `<strong>${content.trim()}</strong>`
   })
 
-  // 4. 规范化块级公式 $$...$$
+  // 5. 规范化块级公式 $$...$$
   // 确保 $$ 独占一行或周围有换行，防止解析失败
   processed = processed.replace(/\n?\s*\$\$\s*([\s\S]+?)\s*\$\$\s*\n?/g, (_match, formula) => {
     return `\n\n$$\n${formula.trim()}\n$$\n\n`
   })
 
-  // 5. 还原代码块
+  // 6. 还原代码块
   processed = processed.replace(/V_CODE_BLOCK_(\d+)_V/g, (_match, index) => {
-    return codeBlocks[parseInt(index)]
+    return codeBlocks[parseInt(index, 10)]
   })
 
   return processed

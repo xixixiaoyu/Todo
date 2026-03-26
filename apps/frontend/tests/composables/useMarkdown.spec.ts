@@ -37,4 +37,19 @@ describe('useMarkdown', () => {
     const outputNull = await renderMarkdown(null)
     expect(outputNull).toBe('')
   })
+
+  it('should render inline latex formulas from standard delimiters', async () => {
+    const output = await renderMarkdown('勾股定理：\\(a^2 + b^2 = c^2\\)')
+
+    expect(output).toContain('class="math-inline"')
+    expect(output).toContain('class="katex"')
+    expect(output).toContain('katex-html')
+  })
+
+  it('should render block latex formulas from standard delimiters', async () => {
+    const output = await renderMarkdown('推导如下：\n\\[\nE = mc^2\n\\]\n结束')
+
+    expect(output).toContain('class="math-block"')
+    expect(output).toContain('class="katex-display"')
+  })
 })
