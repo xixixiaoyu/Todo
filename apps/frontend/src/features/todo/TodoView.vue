@@ -109,8 +109,8 @@ const currentViewComponent = computed(() => {
 const direction = ref(0) // 1: next, -1: prev
 
 const getInputContainerLayout = (visible: boolean) => ({
-  height: visible ? (isMobile.value ? 56 : 52) : 0,
-  marginBottom: visible ? (isMobile.value ? 4 : 24) : 0,
+  height: visible ? (isMobile.value ? 48 : 52) : 0,
+  marginBottom: visible ? (isMobile.value ? 4 : 20) : 0,
   opacity: visible ? 1 : 0,
 })
 
@@ -329,7 +329,7 @@ function onFireworksComplete() {
             v-model:is-drawer-open="isDrawerOpen"
             v-model:show-search="showSearch"
             :show-trash="todoStore.viewMode !== 'visual'"
-            class="mb-3 md:mb-6"
+            class="mb-3 md:mb-5"
           />
 
           <!-- Search Bar (Collapsible) - Keep near tabs -->
@@ -344,7 +344,7 @@ function onFireworksComplete() {
             <TodoSearch
               v-if="showSearch"
               v-model="searchInput"
-              class="mb-4"
+              class="mb-3"
               @clear="clearSearch"
               @close="showSearch = false"
             />
@@ -353,7 +353,7 @@ function onFireworksComplete() {
           <!-- List / Visualizer / Stats with smooth transitions -->
           <div
             class="flex-1 relative flex flex-col min-h-0"
-            :class="!showSearch && todoStore.viewMode === 'visual' ? 'mt-0' : 'mt-2'"
+            :class="!showSearch && todoStore.viewMode === 'visual' ? 'mt-0' : 'mt-1.5'"
           >
             <Transition
               mode="out-in"
@@ -448,18 +448,30 @@ function onFireworksComplete() {
 }
 
 .todo-typography {
-  --todo-font-title: 20px;
-  --todo-font-body: 16px;
-  --todo-font-meta: 14px;
+  --todo-font-title: 19px;
+  --todo-font-body: 15px;
+  --todo-font-meta: 13px;
   --todo-font-caption: 12px;
+  --todo-control-primary-height: 48px;
+  --todo-control-secondary-height: 40px;
+  --todo-segment-height: 46px;
+  --todo-item-height: 64px;
+  --todo-item-child-height: 56px;
+  --todo-radius-soft: 14px;
 }
 
 @media (max-width: 767px) {
   .todo-typography {
-    --todo-font-title: 18px;
-    --todo-font-body: 15px;
-    --todo-font-meta: 13px;
+    --todo-font-title: 17px;
+    --todo-font-body: 14px;
+    --todo-font-meta: 12px;
     --todo-font-caption: 11px;
+    --todo-control-primary-height: 44px;
+    --todo-control-secondary-height: 32px;
+    --todo-segment-height: 44px;
+    --todo-item-height: 56px;
+    --todo-item-child-height: 50px;
+    --todo-radius-soft: 16px;
   }
 }
 </style>

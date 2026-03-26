@@ -68,10 +68,10 @@ const shouldReserveExpandSlot = computed(() => {
 })
 const itemClass = computed(() => {
   if (isChild.value) {
-    return 'border-border/30 bg-muted/10 px-3 py-1.5 md:px-4 md:py-2 hover:bg-muted/15 hover:border-border/45'
+    return 'min-h-[var(--todo-item-child-height)] border-border/30 bg-muted/10 px-3 py-1.5 md:px-4 md:py-2 hover:bg-muted/15 hover:border-border/45'
   }
 
-  return 'border-border/55 bg-card/95 px-3 py-2.5 md:px-4 md:py-3.5 hover:border-border/75'
+  return 'min-h-[var(--todo-item-height)] border-border/55 bg-card/95 px-3 py-2 md:px-4 md:py-2.5 hover:border-border/75'
 })
 
 const checkboxClass = computed(() => {
@@ -191,7 +191,7 @@ watch(
 <template>
   <div class="flex flex-col">
     <div
-      class="group relative flex items-center gap-1.5 rounded-[18px] border transition-all duration-200 hover:shadow-[0_6px_18px_rgba(0,0,0,0.04)] md:gap-3 md:rounded-xl md:hover:shadow-md md:hover:shadow-black/5"
+      class="group relative flex items-center gap-1.5 rounded-[16px] border transition-all duration-200 hover:shadow-[0_6px_18px_rgba(0,0,0,0.04)] md:gap-2.5 md:rounded-[var(--todo-radius-soft)] md:hover:shadow-md md:hover:shadow-black/5"
       :class="[
         itemClass,
         { 'border-primary/30 bg-primary/[0.03] shadow-sm shadow-primary/5': todo.isPinned },

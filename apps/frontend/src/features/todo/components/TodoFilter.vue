@@ -54,19 +54,19 @@ async function handleClearTrash() {
     <!-- 中间切换卡 -->
     <Tabs
       :model-value="filter"
-      class="flex-1 md:flex-none w-auto md:w-[320px]"
+      class="flex-1 w-auto md:w-[300px] md:flex-none"
       @update:model-value="emit('update:filter', $event as FilterType)"
     >
       <TabsList
-        class="grid h-11 w-full rounded-[22px] border border-border/70 bg-card/85 p-1 backdrop-blur-xl shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)] dark:border-border/40 dark:bg-muted/20 dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] md:h-12 md:rounded-full md:bg-muted/60"
-        :class="['grid-cols-2', 'max-w-[280px]', 'mx-auto']"
+        class="grid h-[var(--todo-segment-height)] w-full rounded-[22px] border border-border/70 bg-card/85 p-1 backdrop-blur-xl shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)] dark:border-border/40 dark:bg-muted/20 dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] md:rounded-full md:bg-muted/60"
+        :class="['grid-cols-2', 'max-w-[272px]', 'mx-auto']"
       >
         <TabsTrigger
           value="pending"
-          class="flex items-center justify-center gap-1 rounded-[18px] border border-transparent px-2 text-[12px] font-medium text-muted-foreground/70 transition-all duration-300 hover:text-primary/80 data-[state=active]:border-primary/15 data-[state=active]:bg-background/95 data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:shadow-[0_1px_4px_rgba(0,0,0,0.06)] md:gap-2 md:rounded-full md:px-4 md:text-[var(--todo-font-meta)] md:data-[state=active]:bg-gradient-to-b md:data-[state=active]:from-background md:data-[state=active]:to-background/95 md:data-[state=active]:shadow-[0_2px_8px_-1px_rgba(0,0,0,0.08),0_0_1px_rgba(0,0,0,0.1)] dark:md:data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.6),0_0_1px_rgba(255,255,255,0.1)] md:data-[state=active]:scale-[1.02]"
+          class="flex items-center justify-center gap-1 rounded-[16px] border border-transparent px-2.5 text-[11px] font-medium text-muted-foreground/70 transition-all duration-300 hover:text-primary/80 data-[state=active]:border-primary/15 data-[state=active]:bg-background/95 data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:shadow-[0_1px_4px_rgba(0,0,0,0.06)] md:gap-1.5 md:rounded-full md:px-3.5 md:text-[var(--todo-font-meta)] md:data-[state=active]:bg-gradient-to-b md:data-[state=active]:from-background md:data-[state=active]:to-background/95 md:data-[state=active]:shadow-[0_2px_8px_-1px_rgba(0,0,0,0.08),0_0_1px_rgba(0,0,0,0.1)] dark:md:data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.6),0_0_1px_rgba(255,255,255,0.1)]"
         >
           <Circle
-            class="h-[11px] w-[11px] transition-colors md:h-4 md:w-4"
+            class="h-[11px] w-[11px] transition-colors md:h-[15px] md:w-[15px]"
             :class="
               filter === 'pending' ? 'text-primary fill-primary/10' : 'text-muted-foreground/70'
             "
@@ -75,10 +75,10 @@ async function handleClearTrash() {
         </TabsTrigger>
         <TabsTrigger
           value="completed"
-          class="flex items-center justify-center gap-1 rounded-[18px] border border-transparent px-2 text-[12px] font-medium text-muted-foreground/70 transition-all duration-300 hover:text-success/80 data-[state=active]:border-success/15 data-[state=active]:bg-background/95 data-[state=active]:text-success data-[state=active]:font-semibold data-[state=active]:shadow-[0_1px_4px_rgba(0,0,0,0.06)] md:gap-2 md:rounded-full md:px-4 md:text-[var(--todo-font-meta)] md:data-[state=active]:bg-gradient-to-b md:data-[state=active]:from-background md:data-[state=active]:to-background/95 md:data-[state=active]:shadow-[0_2px_8px_-1px_rgba(0,0,0,0.08),0_0_1px_rgba(0,0,0,0.1)] dark:md:data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.6),0_0_1px_rgba(255,255,255,0.1)] md:data-[state=active]:scale-[1.02]"
+          class="flex items-center justify-center gap-1 rounded-[16px] border border-transparent px-2.5 text-[11px] font-medium text-muted-foreground/70 transition-all duration-300 hover:text-success/80 data-[state=active]:border-success/15 data-[state=active]:bg-background/95 data-[state=active]:text-success data-[state=active]:font-semibold data-[state=active]:shadow-[0_1px_4px_rgba(0,0,0,0.06)] md:gap-1.5 md:rounded-full md:px-3.5 md:text-[var(--todo-font-meta)] md:data-[state=active]:bg-gradient-to-b md:data-[state=active]:from-background md:data-[state=active]:to-background/95 md:data-[state=active]:shadow-[0_2px_8px_-1px_rgba(0,0,0,0.08),0_0_1px_rgba(0,0,0,0.1)] dark:md:data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.6),0_0_1px_rgba(255,255,255,0.1)]"
         >
           <CheckCircle2
-            class="h-[11px] w-[11px] transition-colors md:h-4 md:w-4"
+            class="h-[11px] w-[11px] transition-colors md:h-[15px] md:w-[15px]"
             :class="
               filter === 'completed' ? 'text-success fill-success/10' : 'text-muted-foreground/70'
             "
@@ -97,7 +97,7 @@ async function handleClearTrash() {
             <Button
               variant="ghost"
               size="icon"
-              class="h-8 w-8 rounded-[16px] transition-all duration-300 md:h-10 md:w-10 md:rounded-xl"
+              class="h-[var(--todo-control-secondary-height)] w-[var(--todo-control-secondary-height)] rounded-[12px] transition-all duration-300 md:rounded-[var(--todo-radius-soft)]"
               :class="
                 showSearch
                   ? 'bg-primary/10 text-primary'
@@ -117,7 +117,7 @@ async function handleClearTrash() {
             <Button
               variant="ghost"
               size="icon"
-              class="h-8 w-8 rounded-[16px] transition-all duration-300 md:h-10 md:w-10 md:rounded-xl"
+              class="h-[var(--todo-control-secondary-height)] w-[var(--todo-control-secondary-height)] rounded-[12px] transition-all duration-300 md:rounded-[var(--todo-radius-soft)]"
               :class="
                 filter === 'trash'
                   ? 'bg-destructive/10 text-destructive hover:bg-destructive/15'
@@ -140,7 +140,7 @@ async function handleClearTrash() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    class="h-9 w-9 md:h-10 md:w-10 rounded-xl text-destructive hover:bg-destructive/10 transition-all duration-300"
+                    class="h-[var(--todo-control-secondary-height)] w-[var(--todo-control-secondary-height)] rounded-[12px] text-destructive transition-all duration-300 hover:bg-destructive/10 md:rounded-[var(--todo-radius-soft)]"
                   >
                     <Trash2 :size="16" class="md:w-[18px] md:h-[18px]" />
                   </Button>
@@ -182,7 +182,7 @@ async function handleClearTrash() {
             <Button
               variant="ghost"
               size="icon"
-              class="h-8 w-8 rounded-[16px] text-muted-foreground/60 transition-all duration-300 hover:bg-primary/5 hover:text-primary md:h-10 md:w-10 md:rounded-xl"
+              class="h-[var(--todo-control-secondary-height)] w-[var(--todo-control-secondary-height)] rounded-[12px] text-muted-foreground/60 transition-all duration-300 hover:bg-primary/5 hover:text-primary md:rounded-[var(--todo-radius-soft)]"
               @click="todoStore.toggleAllExpansion"
             >
               <component

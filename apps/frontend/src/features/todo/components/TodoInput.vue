@@ -97,7 +97,7 @@ onMounted(() => {
                   :model-value="modelValue"
                   type="text"
                   :placeholder="t('todo.inputPlaceholder')"
-                  class="h-11 rounded-[20px] border-border/80 bg-card/95 px-4 text-[var(--todo-font-body)] shadow-[0_2px_12px_rgba(0,0,0,0.035)] transition-all placeholder:text-[var(--todo-font-meta)] focus-visible:ring-primary/15 group-hover:border-primary/20 group-hover:shadow-[0_4px_16px_rgba(0,0,0,0.05)] md:h-12 md:rounded-xl md:px-5 md:shadow-[0_8px_30px_rgb(0,0,0,0.04)] md:group-hover:border-primary/30 md:group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]"
+                  class="h-[var(--todo-control-primary-height)] rounded-[var(--todo-radius-soft)] border-border/80 bg-card/95 px-4 text-[var(--todo-font-body)] shadow-[0_2px_12px_rgba(0,0,0,0.035)] transition-all placeholder:text-[var(--todo-font-meta)] focus-visible:ring-primary/15 group-hover:border-primary/20 group-hover:shadow-[0_4px_16px_rgba(0,0,0,0.05)] md:px-5 md:shadow-[0_8px_24px_rgb(0,0,0,0.04)] md:group-hover:border-primary/30 md:group-hover:shadow-[0_10px_28px_rgb(0,0,0,0.07)]"
                   :class="{ 'border-destructive focus-visible:ring-destructive/20': errorMessage }"
                   @update:model-value="emit('update:modelValue', $event as string)"
                   @keydown="emit('keydown', $event)"
@@ -140,10 +140,10 @@ onMounted(() => {
         </TooltipProvider>
       </div>
       <Button
-        class="h-11 w-11 rounded-[20px] border border-primary/10 px-0 text-[var(--todo-font-body)] font-semibold shadow-[0_4px_12px_-4px_hsl(var(--primary)_/_0.22)] transition-all active:scale-95 hover:shadow-[0_8px_16px_-6px_hsl(var(--primary)_/_0.28)] md:h-12 md:w-auto md:rounded-xl md:px-6 md:shadow-[0_8px_20px_-4px_hsl(var(--primary)_/_0.3)] md:hover:shadow-[0_12px_25px_-4px_hsl(var(--primary)_/_0.4)]"
+        class="h-[var(--todo-control-primary-height)] w-[var(--todo-control-primary-height)] rounded-[var(--todo-radius-soft)] border border-primary/10 px-0 text-[var(--todo-font-body)] font-semibold shadow-[0_4px_12px_-4px_hsl(var(--primary)_/_0.22)] transition-all active:scale-95 hover:shadow-[0_8px_16px_-6px_hsl(var(--primary)_/_0.28)] md:w-auto md:px-5 md:shadow-[0_8px_18px_-6px_hsl(var(--primary)_/_0.3)] md:hover:shadow-[0_10px_22px_-6px_hsl(var(--primary)_/_0.36)]"
         @click="emit('add')"
       >
-        <Plus class="h-4 w-4 md:h-5 md:w-5" :class="{ 'mr-1.5': !isMobile }" />
+        <Plus class="h-4 w-4 md:h-[18px] md:w-[18px]" :class="{ 'mr-1.5': !isMobile }" />
         <span v-if="!isMobile">{{ t('todo.add') }}</span>
       </Button>
     </div>

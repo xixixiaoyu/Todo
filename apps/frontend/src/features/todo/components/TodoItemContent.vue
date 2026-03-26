@@ -114,8 +114,8 @@ const remindRelativeDisplay = computed(() => {
     </div>
 
     <!-- Todo Title & Badges -->
-    <div class="flex min-w-0 flex-col gap-1">
-      <div class="flex min-w-0 items-center gap-2 md:gap-2.5">
+    <div class="flex min-w-0 flex-col gap-0.5">
+      <div class="flex min-w-0 items-center gap-2">
         <div class="flex min-w-0 flex-1 items-center gap-1 md:gap-1.5">
           <Pin
             v-if="todo.isPinned && store.filter !== 'trash'"
@@ -129,7 +129,7 @@ const remindRelativeDisplay = computed(() => {
           <Tooltip>
             <TooltipTrigger as-child>
               <span
-                class="flex-1 cursor-pointer select-text truncate text-[var(--todo-font-body)] leading-[1.15] text-foreground"
+                class="flex-1 cursor-pointer select-text truncate text-[var(--todo-font-body)] leading-[1.2] text-foreground"
                 :class="[
                   todo.completed && store.filter !== 'trash'
                     ? 'line-through text-muted-foreground/50'
@@ -153,7 +153,7 @@ const remindRelativeDisplay = computed(() => {
           <TooltipTrigger as-child>
             <div
               data-test="todo-due-badge"
-              class="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 py-1 text-[11px] font-semibold leading-none ring-1 ring-inset md:text-[var(--todo-font-caption)]"
+              class="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold leading-none ring-1 ring-inset md:text-[var(--todo-font-caption)]"
               :class="
                 isOverdue
                   ? 'bg-destructive/10 text-destructive ring-destructive/25'
@@ -177,7 +177,7 @@ const remindRelativeDisplay = computed(() => {
       <div
         v-if="hasSecondaryMetaBadges"
         data-test="todo-secondary-meta"
-        class="flex flex-wrap items-center gap-1 pl-0.5 text-[11px] md:gap-1.5 md:text-[var(--todo-font-caption)]"
+        class="flex flex-wrap items-center gap-0.5 pl-0.5 text-[11px] md:gap-1 md:text-[var(--todo-font-caption)]"
       >
         <Tooltip v-if="hasStandaloneReminder && remindDisplay">
           <TooltipTrigger as-child>
