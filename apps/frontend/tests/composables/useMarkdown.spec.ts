@@ -52,4 +52,35 @@ describe('useMarkdown', () => {
     expect(output).toContain('class="math-block"')
     expect(output).toContain('class="katex-display"')
   })
+
+  it('should render bare latex environments as block formulas', async () => {
+    const output = await renderMarkdown(
+      '推导如下：\n\\begin{aligned}\na&=b+c \\\\\nd&=e+f\n\\end{aligned}\n结束',
+    )
+
+    expect(output).toContain('class="math-block"')
+    expect(output).toContain('class="katex-display"')
+    expect(output).toContain('katex-html')
+  })
+
+  it('should render spaced inline dollar formulas', async () => {
+    const output = await renderMarkdown('结果是 $ a^2 + b^2 = c^2 $')
+
+    expect(output).toContain('class="math-inline"')
+    expect(output).toContain('class="katex"')
+  })
+
+  it('should render fenced math blocks as formulas', async () => {
+    const output = await renderMarkdown('```math\n\\int_0^1 x^2 \\, dx\n```')
+
+    expect(output).toContain('class="math-block"')
+    expect(output).toContain('class="katex-display"')
+  })
+
+  it('should keep unsupported math-like fenced blocks as code', async () => {
+    const output = await renderMarkdown('```asciimath\nsqrt(3^2+4^2)=5\n```')
+
+    expect(output).toContain('code-block-container')
+    expect(output).not.toContain('class="math-block"')
+  })
 })

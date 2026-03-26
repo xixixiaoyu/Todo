@@ -5,11 +5,19 @@ import type Renderer from 'markdown-it/lib/renderer.mjs'
 import mdKatex from '@iktakahiro/markdown-it-katex'
 import mdHighlight from 'markdown-it-highlightjs'
 import hljs from 'highlight.js'
+import katex from 'katex'
 import { getLanguageDisplayName, stableHash } from './utils'
 import type { MermaidQueueItem } from './mermaid'
 
 // 注册 mermaid 为普通文本，防止 highlight.js 报错
 hljs.registerLanguage('mermaid', () => ({ contains: [] }))
+hljs.registerLanguage('asciimath', () => ({ contains: [] }))
+hljs.registerLanguage('ascii-math', () => ({ contains: [] }))
+hljs.registerLanguage('mathml', () => ({ contains: [] }))
+hljs.registerLanguage('mml', () => ({ contains: [] }))
+hljs.registerLanguage('katex', () => ({ contains: [] }))
+
+const KATEX_FENCE_LANGUAGES = new Set(['math', 'latex', 'tex'])
 
 export interface MarkdownEnv {
   mermaidQueue?: MermaidQueueItem[]
@@ -37,6 +45,17 @@ md.use(mdHighlight, {
   hljs,
   inline: false,
 })
+
+function renderKatexBlock(latex: string): string | null {
+  const normalized = latex.trim()
+  if (!normalized) return null
+
+  return `<div class="math-block">${katex.renderToString(normalized, {
+    displayMode: true,
+    throwOnError: false,
+    errorColor: 'hsl(var(--destructive))',
+  })}</div>`
+}
 
 const defaultMathInlineRender = md.renderer.rules.math_inline
 const defaultMathBlockRender = md.renderer.rules.math_block
@@ -83,10 +102,11 @@ md.renderer.rules.fence = (tokens, idx, options, env: MarkdownEnv, self) => {
   const info = token.info ? token.info.trim() : ''
   const lang = info.split(/\s+/g)[0].toLowerCase()
   const content = token.content
+  const normalizedContent = content.trim()
 
   // Mermaid 特殊处理
   if (lang === 'mermaid') {
-    const code = content.trim()
+    const code = normalizedContent
 
     // 只有在非流式输出，或者代码块已完全闭合时才渲染图表
     const isClosed = env.closedMermaidBlocks?.has(code)
@@ -101,6 +121,11 @@ md.renderer.rules.fence = (tokens, idx, options, env: MarkdownEnv, self) => {
 
       return `<div id="${placeholderId}" class="mermaid-container" aria-busy="true" data-processed="false"><div class="mermaid-diagram"><div class="mermaid-loading">正在渲染图表...</div></div></div>`
     }
+  }
+
+  if (KATEX_FENCE_LANGUAGES.has(lang)) {
+    const renderedKatex = renderKatexBlock(content)
+    if (renderedKatex) return renderedKatex
   }
 
   // 普通代码块渲染（或者未闭合的 Mermaid）

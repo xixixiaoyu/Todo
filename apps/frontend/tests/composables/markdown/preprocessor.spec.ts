@@ -51,6 +51,35 @@ describe('preprocessMarkdown', () => {
     expect(output).toContain('$$\nE = mc^2\n$$')
   })
 
+  it('should normalize multiline inline latex delimiters as block math', () => {
+    const input = '推导如下：\\(\na^2 + b^2 = c^2\n\\)'
+    const output = preprocessMarkdown(input)
+
+    expect(output).toContain('$$\na^2 + b^2 = c^2\n$$')
+  })
+
+  it('should normalize bare latex environments as block math', () => {
+    const input = '推导如下：\n\\begin{aligned}\na&=b+c \\\\\nd&=e+f\n\\end{aligned}\n结束'
+    const output = preprocessMarkdown(input)
+
+    expect(output).toContain('$$\n\\begin{aligned}')
+    expect(output).toContain('\\end{aligned}\n$$')
+  })
+
+  it('should normalize spaced inline dollar formulas', () => {
+    const input = '结果是 $ a^2 + b^2 = c^2 $'
+    const output = preprocessMarkdown(input)
+
+    expect(output).toContain('$a^2 + b^2 = c^2$')
+  })
+
+  it('should keep non-math dollar text unchanged', () => {
+    const input = '售价是 $ 5 元 $'
+    const output = preprocessMarkdown(input)
+
+    expect(output).toContain('$ 5 元 $')
+  })
+
   it('should preserve latex delimiters inside code blocks', () => {
     const input = '```\n\\(a^2 + b^2 = c^2\\)\n```'
     const output = preprocessMarkdown(input)
