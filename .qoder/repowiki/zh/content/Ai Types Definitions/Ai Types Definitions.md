@@ -1,13 +1,23 @@
-# Ai 类型定义
+# AI 类型定义
 
 <cite>
 **本文档引用的文件**
 - [apps/frontend/src/features/ai/services/types.ts](file://apps/frontend/src/features/ai/services/types.ts)
 - [apps/frontend/src/features/ai/composables/useChatState.ts](file://apps/frontend/src/features/ai/composables/useChatState.ts)
 - [apps/frontend/src/features/ai/composables/useChatActions.ts](file://apps/frontend/src/features/ai/composables/useChatActions.ts)
+- [apps/frontend/src/features/ai/composables/useChatActions.runtime.ts](file://apps/frontend/src/features/ai/composables/useChatActions.runtime.ts)
+- [apps/frontend/src/features/ai/services/features.ts](file://apps/frontend/src/features/ai/services/features.ts)
 - [apps/backend/src/skill-sources/skill-runtime.dto.ts](file://apps/backend/src/skill-sources/skill-runtime.dto.ts)
 - [apps/frontend/src/features/ai/services/aiService.ts](file://apps/frontend/src/features/ai/services/aiService.ts)
 </cite>
+
+## 更新摘要
+**所做更改**
+- 新增了多模态讨论能力的类型定义和实现
+- 添加了 prepareRuntimeCapabilities 函数的详细说明
+- 更新了技能运行时工具集成的相关类型
+- 增强了讨论步骤的合成消息构建功能
+- 完善了工具回调支持和运行时能力准备机制
 
 ## 目录
 1. [简介](#简介)
@@ -24,12 +34,16 @@
 
 本文件系统性地梳理了项目中的AI类型定义体系，涵盖了前端AI服务的完整类型结构、后端技能运行时的验证模型，以及前后端交互的关键数据接口。通过对这些类型的深入分析，开发者可以更好地理解AI功能的数据流转、状态管理和扩展机制。
 
+**更新** 本次更新重点反映了新增的AI多模态讨论能力和runtime工具集成功能，包括讨论步骤的合成消息构建、工具回调支持以及运行时能力准备机制。
+
 ## 项目结构
 
 AI类型定义主要分布在以下位置：
 - 前端AI服务类型定义：`apps/frontend/src/features/ai/services/types.ts`
 - 前端聊天状态管理：`apps/frontend/src/features/ai/composables/useChatState.ts`
 - 前端聊天动作逻辑：`apps/frontend/src/features/ai/composables/useChatActions.ts`
+- 前端运行时能力准备：`apps/frontend/src/features/ai/composables/useChatActions.runtime.ts`
+- 前端AI服务功能：`apps/frontend/src/features/ai/services/features.ts`
 - 后端技能运行时DTO：`apps/backend/src/skill-sources/skill-runtime.dto.ts`
 - 前端AI服务入口：`apps/frontend/src/features/ai/services/aiService.ts`
 
@@ -39,6 +53,8 @@ subgraph "前端AI类型定义"
 FT["前端类型定义<br/>types.ts"]
 FS["聊天状态管理<br/>useChatState.ts"]
 FA["聊天动作逻辑<br/>useChatActions.ts"]
+FR["运行时能力准备<br/>useChatActions.runtime.ts"]
+FF["AI服务功能<br/>features.ts"]
 end
 subgraph "后端技能运行时"
 BST["技能运行时DTO<br/>skill-runtime.dto.ts"]
@@ -48,7 +64,9 @@ AIS["AI服务入口<br/>aiService.ts"]
 end
 FT --> FS
 FS --> FA
-FA --> AIS
+FA --> FR
+FR --> FF
+FF --> AIS
 AIS --> FT
 FT -.-> BST
 ```
@@ -57,12 +75,16 @@ FT -.-> BST
 - [apps/frontend/src/features/ai/services/types.ts:1-232](file://apps/frontend/src/features/ai/services/types.ts#L1-L232)
 - [apps/frontend/src/features/ai/composables/useChatState.ts:1-144](file://apps/frontend/src/features/ai/composables/useChatState.ts#L1-L144)
 - [apps/frontend/src/features/ai/composables/useChatActions.ts:1-492](file://apps/frontend/src/features/ai/composables/useChatActions.ts#L1-L492)
+- [apps/frontend/src/features/ai/composables/useChatActions.runtime.ts:1-100](file://apps/frontend/src/features/ai/composables/useChatActions.runtime.ts#L1-L100)
+- [apps/frontend/src/features/ai/services/features.ts:1-425](file://apps/frontend/src/features/ai/services/features.ts#L1-L425)
 - [apps/backend/src/skill-sources/skill-runtime.dto.ts:1-98](file://apps/backend/src/skill-sources/skill-runtime.dto.ts#L1-L98)
 
 **章节来源**
 - [apps/frontend/src/features/ai/services/types.ts:1-232](file://apps/frontend/src/features/ai/services/types.ts#L1-L232)
 - [apps/frontend/src/features/ai/composables/useChatState.ts:1-144](file://apps/frontend/src/features/ai/composables/useChatState.ts#L1-L144)
 - [apps/frontend/src/features/ai/composables/useChatActions.ts:1-492](file://apps/frontend/src/features/ai/composables/useChatActions.ts#L1-L492)
+- [apps/frontend/src/features/ai/composables/useChatActions.runtime.ts:1-100](file://apps/frontend/src/features/ai/composables/useChatActions.runtime.ts#L1-L100)
+- [apps/frontend/src/features/ai/services/features.ts:1-425](file://apps/frontend/src/features/ai/services/features.ts#L1-L425)
 - [apps/backend/src/skill-sources/skill-runtime.dto.ts:1-98](file://apps/backend/src/skill-sources/skill-runtime.dto.ts#L1-L98)
 
 ## 核心组件
@@ -92,6 +114,10 @@ FT -.-> BST
 - `TeachingQuiz`: 教学测验结构
 - `TeachingAssessment`: 教学评估结果
 - `StructuredBlockError`: 结构化块错误
+
+#### 多模态讨论类型
+- `DiscussionStep`: 讨论步骤定义，包含模型ID、模型名称、内容和状态
+- `DiscussionStep.status`: 支持 'thinking' | 'done' | 'error' 三种状态
 
 **章节来源**
 - [apps/frontend/src/features/ai/services/types.ts:5-232](file://apps/frontend/src/features/ai/services/types.ts#L5-L232)
@@ -136,6 +162,12 @@ class ChatMessage {
 +boolean isStreaming
 +Date createdAt
 }
+class DiscussionStep {
++string modelId
++string modelName
++string content
++'thinking'|'done'|'error' status
+}
 class AISkill {
 +string id
 +string name
@@ -165,6 +197,7 @@ class TeachingQuiz {
 +string answerHint
 +string|string[] userAnswer
 }
+ChatMessage --> DiscussionStep : "包含"
 ChatMessage --> ToolCall : "包含"
 ChatMessage --> AISkill : "应用"
 AISkill --> AISkillRuntime : "使用"
@@ -173,6 +206,7 @@ ChatMessage --> TeachingQuiz : "包含"
 
 **图表来源**
 - [apps/frontend/src/features/ai/services/types.ts:170-232](file://apps/frontend/src/features/ai/services/types.ts#L170-L232)
+- [apps/frontend/src/features/ai/services/types.ts:12-17](file://apps/frontend/src/features/ai/services/types.ts#L12-L17)
 - [apps/frontend/src/features/ai/services/types.ts:105-115](file://apps/frontend/src/features/ai/services/types.ts#L105-L115)
 - [apps/frontend/src/features/ai/services/types.ts:19-26](file://apps/frontend/src/features/ai/services/types.ts#L19-L26)
 - [apps/frontend/src/features/ai/services/types.ts:153-160](file://apps/frontend/src/features/ai/services/types.ts#L153-L160)
@@ -208,6 +242,7 @@ CS-->>UI : 渲染更新
 - 流式响应处理：支持实时更新AI响应
 - 错误状态管理：提供统一的错误处理机制
 - 教学模式支持：专门的教学问答状态管理
+- 讨论步骤管理：支持多模型讨论的状态跟踪
 
 **章节来源**
 - [apps/frontend/src/features/ai/composables/useChatState.ts:1-144](file://apps/frontend/src/features/ai/composables/useChatState.ts#L1-L144)
@@ -230,8 +265,9 @@ BuildContext --> ResolveSkills["解析技能上下文"]
 ResolveSkills --> CheckDiscussion{"讨论模式?"}
 CheckDiscussion --> |是| MultiModelDiscussion["多模型讨论"]
 CheckDiscussion --> |否| BuildTools["构建工具集"]
-MultiModelDiscussion --> End
-BuildTools --> ExecuteRequest["执行AI请求"]
+MultiModelDiscussion --> PrepareRuntime["准备运行时能力"]
+PrepareRuntime --> BuildSynthesis["构建合成消息"]
+BuildSynthesis --> ExecuteRequest["执行AI请求"]
 ExecuteRequest --> CheckToolCalls{"有工具调用?"}
 CheckToolCalls --> |是| ExecuteTools["执行工具调用"]
 CheckToolCalls --> |否| End
@@ -248,9 +284,96 @@ SendAgain --> End
 - 讨论模式：多模型协作讨论
 - 错误恢复：自动重试机制
 - 内存管理：智能上下文压缩
+- 运行时能力准备：动态配置AI工具集
 
 **章节来源**
 - [apps/frontend/src/features/ai/composables/useChatActions.ts:1-492](file://apps/frontend/src/features/ai/composables/useChatActions.ts#L1-L492)
+
+### 运行时能力准备系统
+
+新增的运行时能力准备系统负责动态配置和管理AI工具集：
+
+```mermaid
+classDiagram
+class PrepareRuntimeCapabilities {
++aiConfig : AIConfig
++getAuthToken() : string
++hydrateAuth() : void
++skillContext : SkillContext
++Promise<{
++mcpApi : McpApiClient
++mcpTools : McpToolResponse[]
++aiTools : Tool[]
++mcpToolLookup : Map
++localToolHandlers : Map
++activeSkillsForPrompt : AISkill[]
++skillRuntimeAvailability : AISkillRuntimeAvailability[]
++}>
+}
+class SkillContext {
++catalogSkills : AISkill[]
++activatedSkills : AISkill[]
+}
+class McpApiClient {
++getAllTools() : Promise
++callTool() : Promise
+}
+class LocalToolHandler {
++(args : Record) : string | Promise
+}
+PrepareRuntimeCapabilities --> SkillContext : "使用"
+PrepareRuntimeCapabilities --> McpApiClient : "创建"
+PrepareRuntimeCapabilities --> LocalToolHandler : "注册"
+```
+
+**图表来源**
+- [apps/frontend/src/features/ai/composables/useChatActions.runtime.ts:27-99](file://apps/frontend/src/features/ai/composables/useChatActions.runtime.ts#L27-L99)
+
+#### 核心功能特性
+- 动态工具发现：自动发现和注册MCP工具
+- 运行时配置：根据权限和配置动态启用工具
+- 工具回调管理：提供统一的工具调用接口
+- 能力可用性检查：验证工具的可用性和权限
+- 技能运行时集成：无缝集成HTTP和MCP运行时
+
+**章节来源**
+- [apps/frontend/src/features/ai/composables/useChatActions.runtime.ts:1-100](file://apps/frontend/src/features/ai/composables/useChatActions.runtime.ts#L1-L100)
+
+### 多模态讨论系统
+
+多模态讨论系统支持多个AI模型的并行讨论和结果合成：
+
+```mermaid
+flowchart TD
+Start([开始多模型讨论]) --> CollectSteps["收集讨论步骤"]
+CollectSteps --> BuildSummary["构建讨论摘要"]
+BuildSummary --> CheckSummary{"有讨论摘要?"}
+CheckSummary --> |否| DirectRequest["直接请求AI"]
+CheckSummary --> |是| BuildSynthesis["构建合成消息"]
+BuildSynthesis --> BuildPrompt["构建合成提示词"]
+BuildPrompt --> InsertUserMessage["插入用户消息"]
+InsertUserMessage --> ExecuteRequest["执行AI请求"]
+DirectRequest --> ExecuteRequest
+ExecuteRequest --> ProcessResponse["处理响应"]
+ProcessResponse --> UpdateSteps["更新讨论步骤"]
+UpdateSteps --> CheckComplete{"讨论完成?"}
+CheckComplete --> |否| ContinueDiscussion["继续讨论"]
+CheckComplete --> |是| FinalResponse["返回最终响应"]
+ContinueDiscussion --> CollectSteps
+```
+
+**图表来源**
+- [apps/frontend/src/features/ai/services/features.ts:73-178](file://apps/frontend/src/features/ai/services/features.ts#L73-L178)
+
+#### 核心功能特性
+- 讨论步骤管理：跟踪每个模型的讨论进度
+- 合成消息构建：将多模型讨论结果整合为单一消息
+- 连续性处理：支持讨论的连续性和上下文保持
+- 状态同步：确保所有参与模型的状态一致性
+- 错误处理：优雅处理讨论过程中的各种异常
+
+**章节来源**
+- [apps/frontend/src/features/ai/services/features.ts:46-178](file://apps/frontend/src/features/ai/services/features.ts#L46-L178)
 
 ### 技能运行时系统
 
@@ -319,12 +442,14 @@ AI类型定义之间的依赖关系体现了清晰的分层架构：
 ```mermaid
 graph LR
 subgraph "基础类型层"
-BasicTypes["基础类型<br/>ChatMessage, ToolCall"]
+BasicTypes["基础类型<br/>ChatMessage, ToolCall, DiscussionStep"]
 end
 subgraph "业务逻辑层"
 BusinessTypes["业务类型<br/>AISkill, TeachingQuiz"]
 StateManagement["状态管理<br/>useChatState"]
 ActionLogic["动作逻辑<br/>useChatActions"]
+RuntimePrep["运行时准备<br/>useChatActions.runtime"]
+DiscussionSys["讨论系统<br/>features.ts"]
 end
 subgraph "运行时层"
 RuntimeTypes["运行时类型<br/>AISkillRuntime, Secret"]
@@ -333,6 +458,8 @@ end
 BasicTypes --> BusinessTypes
 BusinessTypes --> StateManagement
 StateManagement --> ActionLogic
+ActionLogic --> RuntimePrep
+RuntimePrep --> DiscussionSys
 BusinessTypes --> RuntimeTypes
 RuntimeTypes --> BackendDTO
 ```
@@ -341,14 +468,17 @@ RuntimeTypes --> BackendDTO
 - [apps/frontend/src/features/ai/services/types.ts:170-232](file://apps/frontend/src/features/ai/services/types.ts#L170-L232)
 - [apps/frontend/src/features/ai/composables/useChatState.ts:1-144](file://apps/frontend/src/features/ai/composables/useChatState.ts#L1-L144)
 - [apps/frontend/src/features/ai/composables/useChatActions.ts:1-492](file://apps/frontend/src/features/ai/composables/useChatActions.ts#L1-L492)
+- [apps/frontend/src/features/ai/composables/useChatActions.runtime.ts:1-100](file://apps/frontend/src/features/ai/composables/useChatActions.runtime.ts#L1-L100)
+- [apps/frontend/src/features/ai/services/features.ts:1-425](file://apps/frontend/src/features/ai/services/features.ts#L1-L425)
 - [apps/backend/src/skill-sources/skill-runtime.dto.ts:1-98](file://apps/backend/src/skill-sources/skill-runtime.dto.ts#L1-L98)
 
 ### 关键依赖关系
 
-1. **类型继承关系**：`ChatMessage` 继承自基础消息类型，扩展了AI特定字段
+1. **类型继承关系**：`ChatMessage` 继承自基础消息类型，扩展了AI特定字段，包括 `discussionSteps` 字段
 2. **组合关系**：`AISkill` 组合了 `AISkillRuntime`，形成完整的技能定义
 3. **状态依赖**：`useChatActions` 依赖 `useChatState` 提供的状态管理
 4. **运行时依赖**：前端类型与后端DTO保持兼容性
+5. **讨论系统依赖**：讨论功能依赖于运行时能力准备系统提供的工具集
 
 **章节来源**
 - [apps/frontend/src/features/ai/services/types.ts:170-232](file://apps/frontend/src/features/ai/services/types.ts#L170-L232)
@@ -367,11 +497,18 @@ AI类型定义在设计时充分考虑了性能优化：
 - 流式响应处理避免大对象一次性加载
 - 智能状态清理机制防止内存泄漏
 - 条件渲染优化减少DOM操作
+- 讨论步骤的按需加载和清理
 
 ### 并发处理
 - 工具调用并行执行提升响应速度
 - 请求取消机制避免资源浪费
 - 重试策略平衡可靠性与性能
+- 多模型讨论的异步处理机制
+
+### 运行时优化
+- 动态工具发现避免不必要的初始化
+- 权限检查前置减少无效调用
+- 缓存机制提升工具调用性能
 
 ## 故障排除指南
 
@@ -388,6 +525,12 @@ AI类型定义在设计时充分考虑了性能优化：
 3. **工具调用失败**
    - 验证技能运行时配置
    - 检查密钥和认证信息
+   - 确认MCP工具的可用性
+
+4. **讨论功能异常**
+   - 检查讨论步骤的状态一致性
+   - 验证合成消息的构建逻辑
+   - 确认工具回调的正确性
 
 **章节来源**
 - [apps/frontend/src/features/ai/composables/useChatActions.ts:358-371](file://apps/frontend/src/features/ai/composables/useChatActions.ts#L358-L371)
@@ -395,4 +538,8 @@ AI类型定义在设计时充分考虑了性能优化：
 
 ## 结论
 
-AI类型定义体系展现了现代前端应用的类型安全设计理念。通过精心设计的类型层次结构、完善的错误处理机制和灵活的扩展接口，该体系为AI功能的开发提供了坚实的基础。建议在后续开发中继续遵循现有的类型设计原则，确保系统的可维护性和可扩展性。
+AI类型定义体系展现了现代前端应用的类型安全设计理念。通过精心设计的类型层次结构、完善的错误处理机制和灵活的扩展接口，该体系为AI功能的开发提供了坚实的基础。
+
+**更新** 本次更新显著增强了系统的多模态讨论能力和运行时工具集成功能，新增的 `prepareRuntimeCapabilities` 函数、讨论步骤的合成消息构建以及工具回调支持，使得AI系统能够更好地处理复杂的多模型协作场景。这些改进不仅提升了用户体验，也为未来的功能扩展奠定了坚实的技术基础。
+
+建议在后续开发中继续遵循现有的类型设计原则，确保系统的可维护性和可扩展性，同时充分利用新增的多模态讨论能力来创造更多价值。
