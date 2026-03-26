@@ -83,4 +83,22 @@ describe('useMarkdown', () => {
     expect(output).toContain('code-block-container')
     expect(output).not.toContain('class="math-block"')
   })
+
+  it('should render markdown task lists as checklist items', async () => {
+    const output = await renderMarkdown('- [ ] todo item\n- [x] **done item**')
+
+    expect(output).toContain('class="task-list-item"')
+    expect(output).toContain('class="task-list-marker"')
+    expect(output).toContain('task-list-marker task-list-marker-checked')
+    expect(output).toContain('<strong>done item</strong>')
+    expect(output).not.toContain('[ ] todo item')
+    expect(output).not.toContain('[x] ')
+  })
+
+  it('should not treat inline checkbox text outside lists as task lists', async () => {
+    const output = await renderMarkdown('说明文本中的 [x] 标记应保持原样')
+
+    expect(output).toContain('[x] 标记应保持原样')
+    expect(output).not.toContain('task-list-marker')
+  })
 })

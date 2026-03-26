@@ -1,7 +1,8 @@
 import MarkdownIt from 'markdown-it'
 import type { Options } from 'markdown-it'
-import type Token from 'markdown-it/lib/token.mjs'
+import Token from 'markdown-it/lib/token.mjs'
 import type Renderer from 'markdown-it/lib/renderer.mjs'
+import type StateCore from 'markdown-it/lib/rules_core/state_core.mjs'
 import mdKatex from '@iktakahiro/markdown-it-katex'
 import mdHighlight from 'markdown-it-highlightjs'
 import hljs from 'highlight.js'
@@ -18,11 +19,82 @@ hljs.registerLanguage('mml', () => ({ contains: [] }))
 hljs.registerLanguage('katex', () => ({ contains: [] }))
 
 const KATEX_FENCE_LANGUAGES = new Set(['math', 'latex', 'tex'])
+const TASK_LIST_MARKER_PATTERN = /^\[( |x|X)\](?:\s+|$)/
 
 export interface MarkdownEnv {
   mermaidQueue?: MermaidQueueItem[]
   isStreaming?: boolean
   closedMermaidBlocks?: Set<string>
+}
+
+function appendClass(token: Token, className: string) {
+  const classIndex = token.attrIndex('class')
+
+  if (classIndex < 0) {
+    token.attrPush(['class', className])
+    return
+  }
+
+  const currentValue = token.attrs?.[classIndex]?.[1] ?? ''
+  const nextClasses = new Set(currentValue.split(/\s+/).filter(Boolean))
+  nextClasses.add(className)
+  token.attrs![classIndex][1] = Array.from(nextClasses).join(' ')
+}
+
+function findInlineTokenIndex(tokens: Token[], listItemIndex: number): number {
+  const nextToken = tokens[listItemIndex + 1]
+
+  if (nextToken?.type === 'inline') return listItemIndex + 1
+  if (nextToken?.type === 'paragraph_open' && tokens[listItemIndex + 2]?.type === 'inline') {
+    return listItemIndex + 2
+  }
+
+  return -1
+}
+
+function installTaskListRule(markdown: MarkdownIt) {
+  markdown.core.ruler.after('inline', 'lumina-task-list', (state: StateCore) => {
+    for (let tokenIndex = 0; tokenIndex < state.tokens.length; tokenIndex += 1) {
+      const token = state.tokens[tokenIndex]
+      if (token.type !== 'list_item_open') continue
+
+      const inlineTokenIndex = findInlineTokenIndex(state.tokens, tokenIndex)
+      if (inlineTokenIndex === -1) continue
+
+      const inlineToken = state.tokens[inlineTokenIndex]
+      const children = inlineToken.children
+      if (!children || children.length === 0) continue
+
+      const firstContentIndex = children.findIndex(
+        (child) => child.type !== 'text' || child.content.length > 0,
+      )
+      if (firstContentIndex === -1) continue
+
+      const firstChild = children[firstContentIndex]
+      if (firstChild.type !== 'text') continue
+
+      const markerMatch = firstChild.content.match(TASK_LIST_MARKER_PATTERN)
+      if (!markerMatch) continue
+
+      const isChecked = markerMatch[1].toLowerCase() === 'x'
+      const strippedContent = firstChild.content.slice(markerMatch[0].length)
+
+      if (strippedContent) {
+        firstChild.content = strippedContent
+      } else {
+        children.splice(firstContentIndex, 1)
+      }
+
+      inlineToken.content = inlineToken.content.replace(TASK_LIST_MARKER_PATTERN, '')
+
+      const markerToken = new state.Token('html_inline', '', 0)
+      markerToken.content = `<span class="task-list-marker${isChecked ? ' task-list-marker-checked' : ''}" aria-hidden="true">${isChecked ? '☑' : '☐'}</span>`
+      children.splice(firstContentIndex, 0, markerToken)
+
+      appendClass(token, 'task-list-item')
+      if (isChecked) appendClass(token, 'task-list-item-checked')
+    }
+  })
 }
 
 /**
@@ -45,6 +117,8 @@ md.use(mdHighlight, {
   hljs,
   inline: false,
 })
+
+installTaskListRule(md)
 
 function renderKatexBlock(latex: string): string | null {
   const normalized = latex.trim()

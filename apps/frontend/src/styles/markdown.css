@@ -289,6 +289,42 @@
   @apply mt-2 mb-1;
 }
 
+.markdown-content .task-list-item {
+  @apply relative list-none pl-8;
+}
+
+.markdown-content .task-list-item > .task-list-marker {
+  @apply absolute left-0 inline-flex h-5 w-5 select-none items-center justify-center rounded-md text-[13px] font-bold leading-none;
+  top: 0.18em;
+  border: 1px solid hsl(var(--primary) / 0.24);
+  background:
+    linear-gradient(0deg, hsl(var(--primary) / 0.04), hsl(var(--primary) / 0.04)), hsl(var(--card));
+  color: hsl(var(--muted-foreground));
+}
+
+.dark .markdown-content .task-list-item > .task-list-marker {
+  border-color: hsl(var(--primary) / 0.28);
+  background:
+    linear-gradient(0deg, hsl(var(--primary) / 0.12), hsl(var(--primary) / 0.12)), hsl(var(--card));
+  color: hsl(var(--muted-foreground));
+}
+
+.markdown-content .task-list-item > .task-list-marker.task-list-marker-checked {
+  border-color: hsl(var(--primary) / 0.5);
+  background:
+    linear-gradient(0deg, hsl(var(--primary) / 0.18), hsl(var(--primary) / 0.18)),
+    hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.dark .markdown-content .task-list-item > .task-list-marker.task-list-marker-checked {
+  border-color: hsl(var(--primary) / 0.56);
+  background:
+    linear-gradient(0deg, hsl(var(--primary) / 0.22), hsl(var(--primary) / 0.22)),
+    hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
 .markdown-content hr {
   @apply my-6 h-px border-none opacity-100;
   background: linear-gradient(to right, transparent, hsl(var(--border)), transparent);
@@ -497,6 +533,10 @@
   .markdown-content ul,
   .markdown-content ol {
     @apply pl-5 my-3;
+  }
+
+  .markdown-content .task-list-item {
+    @apply pl-7;
   }
 
   .code-block-container {

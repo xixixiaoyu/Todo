@@ -46,4 +46,12 @@ describe('markdown theme styles', () => {
       '.markdown-content strong {\n  @apply font-extrabold;\n  color: hsl(var(--primary-hover));\n  background:',
     )
   })
+
+  it('styles task lists as checklist items instead of default bullets', () => {
+    expect(markdownCss).toContain(
+      '.markdown-content .task-list-item {\n  @apply relative list-none pl-8;',
+    )
+    expect(markdownCss).toContain('.markdown-content .task-list-item > .task-list-marker {')
+    expect(markdownCss).toContain('color: hsl(var(--primary-foreground));')
+  })
 })
