@@ -53,6 +53,18 @@ describe('useMarkdown', () => {
     expect(output).toContain('class="katex-display"')
   })
 
+  it('should keep block latex formulas inside list items', async () => {
+    const output = await renderMarkdown('- item\n  \\[\n  E = mc^2\n  \\]')
+
+    expect(output).toMatch(/<li[\s\S]*class="math-block"[\s\S]*<\/li>/)
+  })
+
+  it('should keep block latex formulas inside blockquotes', async () => {
+    const output = await renderMarkdown('> 引用\n> \\[\n> E = mc^2\n> \\]')
+
+    expect(output).toMatch(/<blockquote>[\s\S]*class="math-block"[\s\S]*<\/blockquote>/)
+  })
+
   it('should render bare latex environments as block formulas', async () => {
     const output = await renderMarkdown(
       '推导如下：\n\\begin{aligned}\na&=b+c \\\\\nd&=e+f\n\\end{aligned}\n结束',
@@ -75,6 +87,16 @@ describe('useMarkdown', () => {
 
     expect(output).toContain('class="math-block"')
     expect(output).toContain('class="katex-display"')
+  })
+
+  it('should not log highlight warnings for empty math fences', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined)
+    const output = await renderMarkdown('```math\n\n```')
+
+    expect(output).toContain('code-block-container')
+    expect(logSpy.mock.calls.flat().join(' ')).not.toContain("Could not find the language 'math'")
+
+    logSpy.mockRestore()
   })
 
   it('should keep unsupported math-like fenced blocks as code', async () => {

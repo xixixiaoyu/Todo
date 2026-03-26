@@ -54,11 +54,43 @@ function getNextNonEmptyLine(source: string, index: number): string | null {
   return null
 }
 
+function isMathBlockDelimiterLine(line: string | null): boolean {
+  if (!line) return false
+
+  return /^(?:>\s*)*\$\$$/.test(line)
+}
+
+function stripLinePrefix(content: string, linePrefix: string): string {
+  if (!linePrefix) return content
+
+  return content
+    .split('\n')
+    .map((line) => (line.startsWith(linePrefix) ? line.slice(linePrefix.length) : line))
+    .join('\n')
+}
+
+function formatBlockMath(content: string, linePrefix = ''): string | null {
+  const normalized = stripLinePrefix(content, linePrefix)
+    .split('\n')
+    .map((line) => line.trimEnd())
+    .join('\n')
+    .trim()
+
+  if (!normalized) return null
+
+  const prefixedContent = normalized
+    .split('\n')
+    .map((line) => `${linePrefix}${line}`)
+    .join('\n')
+
+  return `${linePrefix}$$\n${prefixedContent}\n${linePrefix}$$`
+}
+
 function isWrappedByBlockDelimiters(source: string, start: number, end: number): boolean {
   const previousLine = getPreviousNonEmptyLine(source, start)
   const nextLine = getNextNonEmptyLine(source, end)
 
-  return previousLine === '$$' || nextLine === '$$'
+  return isMathBlockDelimiterLine(previousLine) || isMathBlockDelimiterLine(nextLine)
 }
 
 /**
@@ -79,36 +111,65 @@ export function preprocessMarkdown(text: unknown): string {
   })
 
   // 2. 兼容标准 LaTeX 定界符：\(...\) / \[...\]
-  processed = processed.replace(/(^|[^\\])\\\[\s*([\s\S]+?)\s*\\\]/g, (match, prefix, formula) => {
-    const normalized = String(formula).trim()
-    if (!normalized) return match
-    return `${prefix}\n\n$$\n${normalized}\n$$\n\n`
-  })
+  processed = processed.replace(
+    /(^|\n)([>\t ]*)\\\[\s*\n([\s\S]*?)\n\2\\\](?=\n|$)/g,
+    (match, boundary, linePrefix, formula) => {
+      const normalized = formatBlockMath(String(formula), String(linePrefix))
+      if (!normalized) return match
+
+      return `${boundary}${normalized}`
+    },
+  )
+
+  processed = processed.replace(
+    /(^|\n)([>\t ]*)\\\[\s*([^\n]+?)\s*\\\](?=\n|$)/g,
+    (match, boundary, linePrefix, formula) => {
+      const normalized = formatBlockMath(String(formula), String(linePrefix))
+      if (!normalized) return match
+
+      return `${boundary}${normalized}`
+    },
+  )
+
+  processed = processed.replace(
+    /(^|\n)([>\t ]*)\\\(\s*\n([\s\S]*?)\n\2\\\)(?=\n|$)/g,
+    (match, boundary, linePrefix, formula) => {
+      const normalized = formatBlockMath(String(formula), String(linePrefix))
+      if (!normalized) return match
+
+      return `${boundary}${normalized}`
+    },
+  )
 
   processed = processed.replace(/(^|[^\\])\\\(([\s\S]+?)\\\)/g, (match, prefix, formula) => {
     const rawFormula = String(formula)
     const normalized = rawFormula.trim()
     if (!normalized) return match
+
     if (rawFormula.includes('\n')) {
       return `${prefix}\n\n$$\n${normalized}\n$$\n\n`
     }
+
     return `${prefix}$${normalized}$`
   })
 
   // 3. 兼容裸露的数学环境块：\begin{align}...\end{align}
   processed = processed.replace(
-    /(^|\n)([ \t]*\\begin\{([a-zA-Z*]+)\}[\s\S]*?\\end\{\3\}[ \t]*)(?=\n|$)/g,
-    (match, prefix, block, environment, offset, source) => {
+    /(^|\n)([>\t ]*)(\\begin\{([a-zA-Z*]+)\}[\s\S]*?\\end\{\4\})(?=\n|$)/g,
+    (match, boundary, linePrefix, block, environment, offset, source) => {
       const envName = String(environment)
       if (!MATH_BLOCK_ENVIRONMENTS.has(envName)) return match
 
-      const blockText = String(block).trim()
-      const blockStart = Number(offset) + String(prefix).length
-      const blockEnd = blockStart + blockText.length
+      const rawBlock = String(block)
+      const blockStart = Number(offset) + String(boundary).length + String(linePrefix).length
+      const blockEnd = blockStart + rawBlock.length
 
       if (isWrappedByBlockDelimiters(String(source), blockStart, blockEnd)) return match
 
-      return `${prefix}\n$$\n${blockText}\n$$\n`
+      const normalized = formatBlockMath(rawBlock, String(linePrefix))
+      if (!normalized) return match
+
+      return `${boundary}${normalized}`
     },
   )
 
@@ -144,9 +205,25 @@ export function preprocessMarkdown(text: unknown): string {
 
   // 7. 规范化块级公式 $$...$$
   // 确保 $$ 独占一行或周围有换行，防止解析失败
-  processed = processed.replace(/\n?\s*\$\$\s*([\s\S]+?)\s*\$\$\s*\n?/g, (_match, formula) => {
-    return `\n\n$$\n${formula.trim()}\n$$\n\n`
-  })
+  processed = processed.replace(
+    /(^|\n)([>\t ]*)\$\$\s*\n([\s\S]*?)\n\2\$\$(?=\n|$)/g,
+    (match, boundary, linePrefix, formula) => {
+      const normalized = formatBlockMath(String(formula), String(linePrefix))
+      if (!normalized) return match
+
+      return `${boundary}${normalized}`
+    },
+  )
+
+  processed = processed.replace(
+    /(^|\n)([>\t ]*)\$\$\s*([^\n]+?)\s*\$\$(?=\n|$)/g,
+    (match, boundary, linePrefix, formula) => {
+      const normalized = formatBlockMath(String(formula), String(linePrefix))
+      if (!normalized) return match
+
+      return `${boundary}${normalized}`
+    },
+  )
 
   // 8. 还原代码块
   processed = processed.replace(/V_CODE_BLOCK_(\d+)_V/g, (_match, index) => {

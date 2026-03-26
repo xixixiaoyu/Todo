@@ -51,6 +51,20 @@ describe('preprocessMarkdown', () => {
     expect(output).toContain('$$\nE = mc^2\n$$')
   })
 
+  it('should preserve list indentation when normalizing block latex delimiters', () => {
+    const input = '- item\n  \\[\n  E = mc^2\n  \\]'
+    const output = preprocessMarkdown(input)
+
+    expect(output).toContain('- item\n  $$\n  E = mc^2\n  $$')
+  })
+
+  it('should preserve blockquote prefixes when normalizing block latex delimiters', () => {
+    const input = '> 引用\n> \\[\n> E = mc^2\n> \\]'
+    const output = preprocessMarkdown(input)
+
+    expect(output).toContain('> 引用\n> $$\n> E = mc^2\n> $$')
+  })
+
   it('should normalize multiline inline latex delimiters as block math', () => {
     const input = '推导如下：\\(\na^2 + b^2 = c^2\n\\)'
     const output = preprocessMarkdown(input)
@@ -64,6 +78,14 @@ describe('preprocessMarkdown', () => {
 
     expect(output).toContain('$$\n\\begin{aligned}')
     expect(output).toContain('\\end{aligned}\n$$')
+  })
+
+  it('should preserve blockquote prefixes when normalizing bare latex environments', () => {
+    const input = '> 推导如下：\n> \\begin{aligned}\n> a&=b+c \\\\\n> d&=e+f\n> \\end{aligned}'
+    const output = preprocessMarkdown(input)
+
+    expect(output).toContain('> $$\n> \\begin{aligned}')
+    expect(output).toContain('> \\end{aligned}\n> $$')
   })
 
   it('should normalize spaced inline dollar formulas', () => {

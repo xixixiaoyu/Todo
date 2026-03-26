@@ -51,7 +51,11 @@ describe('markdown theme styles', () => {
     expect(markdownCss).toContain(
       '.markdown-content .task-list-item {\n  @apply relative list-none pl-8;',
     )
-    expect(markdownCss).toContain('.markdown-content .task-list-item > .task-list-marker {')
+    expect(markdownCss).toContain('.markdown-content .task-list-item > p:first-child {')
+    expect(markdownCss).toContain('.markdown-content .task-list-item > .task-list-marker,')
+    expect(markdownCss).toContain(
+      '.markdown-content .task-list-item > p:first-child > .task-list-marker {',
+    )
     expect(markdownCss).toContain('color: hsl(var(--primary-foreground));')
   })
 })
