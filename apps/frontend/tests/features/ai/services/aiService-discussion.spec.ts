@@ -339,6 +339,94 @@ describe('aiService - Multi-model Discussion', () => {
     expect(onFinalChunk).toHaveBeenCalledWith('Fallback synthesis')
   })
 
+  it('should expose tools only to the primary synthesis request', async () => {
+    const messages: ChatMessage[] = [{ id: '1', role: 'user', content: 'Need a grounded answer' }]
+    const onStepUpdate = vi.fn()
+    const onFinalChunk = vi.fn()
+    const tools = [
+      {
+        type: 'function' as const,
+        function: {
+          name: 'lookup_fact',
+          description: 'Lookup a fact',
+          parameters: {
+            type: 'object',
+            properties: {
+              topic: { type: 'string' },
+            },
+            required: ['topic'],
+          },
+        },
+      },
+    ]
+
+    localStorage.setItem(
+      'ai-presets',
+      JSON.stringify([
+        { id: 'p1', name: 'Primary', baseUrl: 'https://api.p1.com', apiKey: 'k1', model: 'm1' },
+        { id: 'p2', name: 'Contributor', baseUrl: 'https://api.p2.com', apiKey: 'k2', model: 'm2' },
+      ]),
+    )
+    localStorage.setItem(
+      'ai-config',
+      JSON.stringify({
+        discussionMode: true,
+        discussionModelIds: ['p1', 'p2'],
+        discussionPrimaryModelId: 'p1',
+      }),
+    )
+    _resetAIConfig()
+
+    fetchMock.mockImplementation(async (_input: string | URL | Request, init?: RequestInit) => {
+      const body = init?.body ? JSON.parse(init.body as string) : {}
+
+      if (body.stream === false) {
+        expect(body.tools).toBeUndefined()
+        expect(body.tool_choice).toBeUndefined()
+        return {
+          ok: true,
+          json: async () => ({
+            choices: [{ message: { content: 'Contributor answer' } }],
+          }),
+        } as unknown as Response
+      }
+
+      expect(body.tools).toEqual(tools)
+      expect(body.tool_choice).toBe('auto')
+      return {
+        ok: true,
+        body: {
+          getReader: () => ({
+            read: vi
+              .fn()
+              .mockResolvedValueOnce({
+                value: new TextEncoder().encode(
+                  'data: {"choices":[{"delta":{"content":"Final synthesis"}}]}\n\n',
+                ),
+                done: false,
+              })
+              .mockResolvedValueOnce({
+                value: new TextEncoder().encode('data: [DONE]\n\n'),
+                done: true,
+              }),
+          }),
+        },
+      } as unknown as Response
+    })
+
+    await getMultiModelDiscussionStream(
+      messages,
+      onStepUpdate,
+      onFinalChunk,
+      undefined,
+      undefined,
+      { tools },
+    )
+
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+    expect(onFinalChunk).toHaveBeenCalledWith('Final synthesis')
+  })
+
   it('should use explicitly configured primary model if provided, independent of basic settings', async () => {
     const messages = [{ id: '1', role: 'user', content: 'hello' } as ChatMessage]
     const onStepUpdate = vi.fn()
@@ -735,6 +823,308 @@ describe('aiService - Multi-model Discussion', () => {
     const lastSteps = onStepUpdate.mock.calls[onStepUpdate.mock.calls.length - 1][0]
     expect(lastSteps[0].modelId).toBe('p2')
     expect(lastSteps[1].modelId).toBe('p1')
+  })
+
+  it('should resume only the primary synthesis after tool execution', async () => {
+    const messages: ChatMessage[] = [
+      { id: 'u1', role: 'user', content: 'What is 1+1?' },
+      {
+        id: 'a1',
+        role: 'assistant',
+        content: '',
+        discussionSteps: [
+          {
+            modelId: 'p1',
+            modelName: 'Primary Model',
+            content: 'The answer is 2.',
+            status: 'done',
+          },
+          {
+            modelId: 'p2',
+            modelName: 'Other Model',
+            content: 'I also think it is 2.',
+            status: 'done',
+          },
+        ],
+        tool_calls: [
+          {
+            id: 'call-1',
+            type: 'function',
+            function: {
+              name: 'lookup_fact',
+              arguments: '{"topic":"1+1"}',
+            },
+          },
+        ],
+      },
+      {
+        id: 'tool-1',
+        role: 'tool',
+        tool_call_id: 'call-1',
+        toolName: 'lookup_fact',
+        content: '{"answer":"2"}',
+      },
+    ]
+    const onStepUpdate = vi.fn()
+    const onFinalChunk = vi.fn()
+
+    localStorage.setItem(
+      'ai-presets',
+      JSON.stringify([
+        {
+          id: 'p1',
+          name: 'Primary Model',
+          baseUrl: 'https://api.p1.com',
+          apiKey: 'k1',
+          model: 'm1',
+        },
+        {
+          id: 'p2',
+          name: 'Other Model',
+          baseUrl: 'https://api.p2.com',
+          apiKey: 'k2',
+          model: 'm2',
+        },
+      ]),
+    )
+    localStorage.setItem(
+      'ai-config',
+      JSON.stringify({
+        discussionMode: true,
+        discussionModelIds: ['p1', 'p2'],
+        discussionPrimaryModelId: 'p1',
+      }),
+    )
+    _resetAIConfig()
+
+    fetchMock.mockImplementation(async (_input: string | URL | Request, init?: RequestInit) => {
+      const body = init?.body ? JSON.parse(init.body as string) : {}
+
+      expect(body.stream).toBe(true)
+      expect(body.messages).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            role: 'user',
+            content: expect.stringContaining('Synthesis: What is 1+1?'),
+          }),
+          expect.objectContaining({
+            role: 'assistant',
+            tool_calls: [
+              expect.objectContaining({
+                function: expect.objectContaining({
+                  name: 'lookup_fact',
+                }),
+              }),
+            ],
+          }),
+          expect.objectContaining({
+            role: 'tool',
+            content: '{"answer":"2"}',
+          }),
+        ]),
+      )
+
+      return {
+        ok: true,
+        body: {
+          getReader: () => ({
+            read: vi
+              .fn()
+              .mockResolvedValueOnce({
+                value: new TextEncoder().encode(
+                  'data: {"choices":[{"delta":{"content":"Tool-informed final answer"}}]}\n\n',
+                ),
+                done: false,
+              })
+              .mockResolvedValueOnce({
+                value: new TextEncoder().encode('data: [DONE]\n\n'),
+                done: true,
+              }),
+          }),
+        },
+      } as unknown as Response
+    })
+
+    await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(onStepUpdate).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ modelId: 'p1', status: 'done' }),
+        expect.objectContaining({ modelId: 'p2', status: 'done' }),
+      ]),
+    )
+    expect(onFinalChunk).toHaveBeenCalledWith('Tool-informed final answer')
+  })
+
+  it('should preserve earlier synthesis tool history across repeated resumptions', async () => {
+    const messages: ChatMessage[] = [
+      { id: 'u1', role: 'user', content: 'What is 1+1?' },
+      {
+        id: 'a1',
+        role: 'assistant',
+        content: '',
+        discussionSteps: [
+          {
+            modelId: 'p1',
+            modelName: 'Primary Model',
+            content: 'The answer is 2.',
+            status: 'done',
+          },
+          {
+            modelId: 'p2',
+            modelName: 'Other Model',
+            content: 'I also think it is 2.',
+            status: 'done',
+          },
+        ],
+        tool_calls: [
+          {
+            id: 'call-1',
+            type: 'function',
+            function: {
+              name: 'lookup_fact',
+              arguments: '{"topic":"1+1"}',
+            },
+          },
+        ],
+      },
+      {
+        id: 'tool-1',
+        role: 'tool',
+        tool_call_id: 'call-1',
+        toolName: 'lookup_fact',
+        content: '{"answer":"2"}',
+      },
+      {
+        id: 'a2',
+        role: 'assistant',
+        content: '',
+        discussionSteps: [
+          {
+            modelId: 'p1',
+            modelName: 'Primary Model',
+            content: 'The answer is 2.',
+            status: 'done',
+          },
+          {
+            modelId: 'p2',
+            modelName: 'Other Model',
+            content: 'I also think it is 2.',
+            status: 'done',
+          },
+        ],
+        tool_calls: [
+          {
+            id: 'call-2',
+            type: 'function',
+            function: {
+              name: 'lookup_alt_fact',
+              arguments: '{"topic":"basic arithmetic"}',
+            },
+          },
+        ],
+      },
+      {
+        id: 'tool-2',
+        role: 'tool',
+        tool_call_id: 'call-2',
+        toolName: 'lookup_alt_fact',
+        content: '{"answer":"still 2"}',
+      },
+    ]
+    const onStepUpdate = vi.fn()
+    const onFinalChunk = vi.fn()
+
+    localStorage.setItem(
+      'ai-presets',
+      JSON.stringify([
+        {
+          id: 'p1',
+          name: 'Primary Model',
+          baseUrl: 'https://api.p1.com',
+          apiKey: 'k1',
+          model: 'm1',
+        },
+        {
+          id: 'p2',
+          name: 'Other Model',
+          baseUrl: 'https://api.p2.com',
+          apiKey: 'k2',
+          model: 'm2',
+        },
+      ]),
+    )
+    localStorage.setItem(
+      'ai-config',
+      JSON.stringify({
+        discussionMode: true,
+        discussionModelIds: ['p1', 'p2'],
+        discussionPrimaryModelId: 'p1',
+      }),
+    )
+    _resetAIConfig()
+
+    fetchMock.mockImplementation(async (_input: string | URL | Request, init?: RequestInit) => {
+      const body = init?.body ? JSON.parse(init.body as string) : {}
+
+      expect(body.stream).toBe(true)
+      expect(body.messages).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            role: 'assistant',
+            tool_calls: [
+              expect.objectContaining({
+                function: expect.objectContaining({ name: 'lookup_fact' }),
+              }),
+            ],
+          }),
+          expect.objectContaining({
+            role: 'tool',
+            tool_call_id: 'call-1',
+            content: '{"answer":"2"}',
+          }),
+          expect.objectContaining({
+            role: 'assistant',
+            tool_calls: [
+              expect.objectContaining({
+                function: expect.objectContaining({ name: 'lookup_alt_fact' }),
+              }),
+            ],
+          }),
+          expect.objectContaining({
+            role: 'tool',
+            tool_call_id: 'call-2',
+            content: '{"answer":"still 2"}',
+          }),
+        ]),
+      )
+
+      return {
+        ok: true,
+        body: {
+          getReader: () => ({
+            read: vi
+              .fn()
+              .mockResolvedValueOnce({
+                value: new TextEncoder().encode(
+                  'data: {"choices":[{"delta":{"content":"History-preserving answer"}}]}\n\n',
+                ),
+                done: false,
+              })
+              .mockResolvedValueOnce({
+                value: new TextEncoder().encode('data: [DONE]\n\n'),
+                done: true,
+              }),
+          }),
+        },
+      } as unknown as Response
+    })
+
+    await getMultiModelDiscussionStream(messages, onStepUpdate, onFinalChunk)
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(onFinalChunk).toHaveBeenCalledWith('History-preserving answer')
   })
 
   it('should safely fallback when discussionModelIds is invalid data', async () => {

@@ -1,4 +1,9 @@
-import { generateId, type ChatMessage, type ToolCall } from '@/features/ai/services/aiService'
+import {
+  generateId,
+  type ChatMessage,
+  type DiscussionStep,
+  type ToolCall,
+} from '@/features/ai/services/aiService'
 
 const MAX_TOOL_CONTENT_LENGTH = 15000
 
@@ -27,6 +32,7 @@ export async function executeToolCalls(params: {
   toolCalls: ToolCall[]
   assistantThinkingContent?: string
   assistantReasoningDetails?: string
+  discussionSteps?: DiscussionStep[]
   chatHistory: { value: ChatMessage[] }
   mcpToolLookup: Map<string, { serverId: string; toolName: string }>
   localToolHandlers?: Map<string, (args: Record<string, unknown>) => string | Promise<string>>
@@ -47,6 +53,7 @@ export async function executeToolCalls(params: {
         params.chatHistory.value[index].thinkingContent || params.assistantThinkingContent,
       reasoning_details:
         params.chatHistory.value[index].reasoning_details || params.assistantReasoningDetails,
+      discussionSteps: params.chatHistory.value[index].discussionSteps || params.discussionSteps,
       tool_calls: params.toolCalls,
     }
     params.chatHistory.value = [...params.chatHistory.value]
@@ -59,6 +66,7 @@ export async function executeToolCalls(params: {
         content: '',
         thinkingContent: params.assistantThinkingContent,
         reasoning_details: params.assistantReasoningDetails,
+        discussionSteps: params.discussionSteps,
         tool_calls: params.toolCalls,
         createdAt: new Date(),
       },

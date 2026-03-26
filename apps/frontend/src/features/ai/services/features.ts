@@ -4,7 +4,13 @@
 
 import { getAIConfig, getAIPresets, type AIPreset } from '@/features/ai/composables/useAIConfig'
 import i18n from '@/i18n'
-import type { ChatMessage, AIRequestOptions, DiscussionStep, MultiModalContent } from './types'
+import type {
+  ChatMessage,
+  AIRequestOptions,
+  DiscussionStep,
+  MultiModalContent,
+  ToolCall,
+} from './types'
 import {
   buildApiUrl,
   getHeaders,
@@ -35,6 +41,140 @@ function normalizeDiscussionModelIds(input: readonly string[] | null | undefined
   }
 
   return normalized
+}
+
+function buildDiscussionSummary(steps: DiscussionStep[]): string {
+  return steps
+    .filter((step) => step.status === 'done')
+    .map((step) => `【${step.modelName} 的回答】：\n${step.content}`)
+    .join('\n\n')
+}
+
+function findLatestUserMessage(messages: ChatMessage[]): ChatMessage | null {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].role === 'user') {
+      return messages[i]
+    }
+  }
+
+  return null
+}
+
+function findLatestUserMessageIndex(messages: ChatMessage[], targetId: string): number {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].id === targetId) {
+      return i
+    }
+  }
+
+  return -1
+}
+
+function buildSynthesisMessages(
+  messages: ChatMessage[],
+  steps: DiscussionStep[],
+): {
+  hasDiscussionSummary: boolean
+  messages: ChatMessage[]
+} {
+  const discussionSummary = buildDiscussionSummary(steps)
+  if (!discussionSummary.trim()) {
+    return {
+      hasDiscussionSummary: false,
+      messages,
+    }
+  }
+
+  const lastUserMessage = findLatestUserMessage(messages)
+  if (!lastUserMessage) {
+    return {
+      hasDiscussionSummary: false,
+      messages,
+    }
+  }
+
+  const userQuery =
+    lastUserMessage.content ||
+    (lastUserMessage.images?.length ? t('ai.visionQueryPlaceholder') : '')
+  const synthesisPrompt = t('ai.parallelSynthesisPrompt', {
+    originalQuery: userQuery,
+    discussionData: discussionSummary,
+  })
+
+  const lastUserIndex = findLatestUserMessageIndex(messages, lastUserMessage.id)
+  if (lastUserIndex === -1) {
+    return {
+      hasDiscussionSummary: true,
+      messages: [
+        ...messages,
+        {
+          id: generateId(),
+          role: 'user',
+          content: synthesisPrompt,
+          images: lastUserMessage.images,
+        },
+      ],
+    }
+  }
+
+  return {
+    hasDiscussionSummary: true,
+    messages: [
+      ...messages.slice(0, lastUserIndex),
+      {
+        id: generateId(),
+        role: 'user',
+        content: synthesisPrompt,
+        images: lastUserMessage.images,
+      },
+      ...messages.slice(lastUserIndex + 1),
+    ],
+  }
+}
+
+function resolveDiscussionContinuation(
+  messages: ChatMessage[],
+): { anchorIndex: number; steps: DiscussionStep[] } | null {
+  if (messages.length === 0 || messages[messages.length - 1].role !== 'tool') {
+    return null
+  }
+
+  let anchorIndex = messages.length - 1
+  while (anchorIndex >= 0 && messages[anchorIndex].role === 'tool') {
+    anchorIndex--
+  }
+
+  if (anchorIndex < 0) {
+    return null
+  }
+
+  const anchorMessage = messages[anchorIndex]
+  if (anchorMessage.role !== 'assistant' || !anchorMessage.discussionSteps?.length) {
+    return null
+  }
+
+  return {
+    anchorIndex,
+    steps: [...anchorMessage.discussionSteps],
+  }
+}
+
+function buildContinuationMessages(
+  messages: ChatMessage[],
+  steps: DiscussionStep[],
+): ChatMessage[] {
+  const continuation = resolveDiscussionContinuation(messages)
+  if (!continuation) {
+    return messages
+  }
+
+  const baseMessages = messages.slice(0, continuation.anchorIndex)
+  const synthesis = buildSynthesisMessages(baseMessages, steps)
+  if (!synthesis.hasDiscussionSummary) {
+    return messages
+  }
+
+  return [...synthesis.messages, ...messages.slice(continuation.anchorIndex)]
 }
 
 /**
@@ -128,6 +268,7 @@ export async function getMultiModelDiscussionStream(
   onThinking?: (thinking: string) => void,
   onReasoningDetails?: (details: string) => void,
   options: AIRequestOptions = {},
+  onToolCall?: (toolCall: ToolCall) => void,
 ): Promise<void> {
   const aiConfig = getAIConfig()
   const thinkingMode = aiConfig.thinkingMode
@@ -157,7 +298,14 @@ export async function getMultiModelDiscussionStream(
 
   // 如果没有选择主模型或副模型，回退到普通单模型请求
   if (!primaryPreset || selectedPresets.length === 0) {
-    return getAIStreamResponse(messages, onFinalChunk, onThinking, onReasoningDetails, options)
+    return getAIStreamResponse(
+      messages,
+      onFinalChunk,
+      onThinking,
+      onReasoningDetails,
+      options,
+      onToolCall,
+    )
   }
 
   const primaryConfig = {
@@ -166,10 +314,21 @@ export async function getMultiModelDiscussionStream(
     model: primaryPreset.model,
     temperature: primaryPreset.temperature,
   }
-
-  const lastMsg = messages[messages.length - 1]
-  const userQuery =
-    lastMsg.content || (lastMsg.images?.length ? t('ai.visionQueryPlaceholder') : '')
+  const continuation = resolveDiscussionContinuation(messages)
+  if (continuation) {
+    onStepUpdate([...continuation.steps])
+    return getAIStreamResponse(
+      buildContinuationMessages(messages, continuation.steps),
+      onFinalChunk,
+      onThinking,
+      onReasoningDetails,
+      {
+        ...options,
+        ...primaryConfig,
+      },
+      onToolCall,
+    )
+  }
 
   // 初始化步骤列表
   const steps: DiscussionStep[] = []
@@ -196,7 +355,7 @@ export async function getMultiModelDiscussionStream(
         options.memorySnapshot,
         options.skills,
         options.activeSkills,
-        options.skillRuntimeAvailability,
+        [],
       )
 
       const response = await fetchNonStreamResponse(
@@ -235,36 +394,31 @@ export async function getMultiModelDiscussionStream(
   }
 
   // 汇总结果
-  const discussionSummary = steps
-    .filter((s) => s.status === 'done')
-    .map((s) => `【${s.modelName} 的回答】：\n${s.content}`)
-    .join('\n\n')
+  const synthesis = buildSynthesisMessages(messages, steps)
 
-  if (!discussionSummary.trim()) {
-    return getAIStreamResponse(messages, onFinalChunk, onThinking, onReasoningDetails, {
-      ...options,
-      ...primaryConfig,
-    })
+  if (!synthesis.hasDiscussionSummary) {
+    return getAIStreamResponse(
+      messages,
+      onFinalChunk,
+      onThinking,
+      onReasoningDetails,
+      {
+        ...options,
+        ...primaryConfig,
+      },
+      onToolCall,
+    )
   }
 
-  const synthesisPrompt = t('ai.parallelSynthesisPrompt', {
-    originalQuery: userQuery,
-    discussionData: discussionSummary,
-  })
-
-  const lastUserMessage = messages[messages.length - 1]
-  const synthesisMessages: ChatMessage[] = [
-    ...messages.slice(0, -1),
+  return getAIStreamResponse(
+    synthesis.messages,
+    onFinalChunk,
+    onThinking,
+    onReasoningDetails,
     {
-      id: generateId(),
-      role: 'user',
-      content: synthesisPrompt,
-      images: lastUserMessage.images,
+      ...options,
+      ...primaryConfig,
     },
-  ]
-
-  return getAIStreamResponse(synthesisMessages, onFinalChunk, onThinking, onReasoningDetails, {
-    ...options,
-    ...primaryConfig,
-  })
+    onToolCall,
+  )
 }

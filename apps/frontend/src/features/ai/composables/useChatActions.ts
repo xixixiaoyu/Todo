@@ -1,5 +1,4 @@
 import i18n from '@/i18n'
-import { getToken } from '@/api'
 import {
   getAIStreamResponse,
   getMultiModelDiscussionStream,
@@ -16,21 +15,11 @@ import { useChatHistory } from './useChatHistory'
 import { getAIThinkingMode, getAIConfig, getAISkills } from './useAIConfig'
 import { useTodoStore } from '@/features/todo/stores/todo'
 import { useAuthStore } from '@/features/auth/stores/auth'
-import type { McpToolResponse } from '@/features/mcp/api/mcp'
 import { createContextCompression } from './useChatActions.contextCompression'
-import { buildAiToolsFromMcpTools } from './useChatActions.mcpTools'
 import { executeToolCalls } from './useChatActions.toolCalls'
 import { createStreamChunkHandler } from './useChatActions.stream'
-import { hasRuntimeAuthToken } from './useChatActions.utils'
-import {
-  resolveSkillContext,
-  buildSkillReadTool,
-  createSkillReadToolHandler,
-  READ_SKILL_TOOL_NAME,
-  buildSkillRuntimeTools,
-  getSkillRuntimeAvailability,
-  resolveSkillRuntime,
-} from '@/features/ai/services/aiService'
+import { prepareRuntimeCapabilities } from './useChatActions.runtime'
+import { resolveSkillContext } from '@/features/ai/services/aiService'
 
 const MAX_RETRIES = 3
 
@@ -234,26 +223,62 @@ export function useChatActions(options: AIRequestOptions = {}) {
           selectedSkillIds: aiConfig.skillIds,
           autoActivateSelected: true,
         })
+        const { mcpApi, aiTools, mcpToolLookup, localToolHandlers, skillRuntimeAvailability } =
+          await prepareRuntimeCapabilities({
+            aiConfig,
+            getAuthToken: () => authStore.token,
+            hydrateAuth: () => authStore.hydrateFromStorage(),
+            skillContext,
+          })
+        const toolCalls: ToolCall[] = []
+        let assistantThinking = ''
+        let assistantReasoningDetails = ''
+        let latestDiscussionSteps = [...currentDiscussionSteps.value]
+
         await getMultiModelDiscussionStream(
           messagesForRequest,
           (steps) => {
+            latestDiscussionSteps = [...steps]
             currentDiscussionSteps.value = steps
           },
           handleChunk,
           (thinking: string) => {
+            assistantThinking += thinking
             currentThinkingContent.value += thinking
           },
           (details: string) => {
+            assistantReasoningDetails += details
             currentReasoningDetails.value += details
           },
           {
             ...options,
             thinkingMode: getAIThinkingMode(),
             contextSummary,
+            tools: aiTools.length > 0 ? aiTools : undefined,
             skills: skillContext.catalogSkills,
             activeSkills: skillContext.activatedSkills,
+            skillRuntimeAvailability,
+          },
+          (toolCall) => {
+            toolCalls.push(toolCall)
           },
         )
+
+        if (toolCalls.length > 0) {
+          isGenerating.value = true
+          await executeToolCalls({
+            assistantMessageId,
+            toolCalls,
+            assistantThinkingContent: assistantThinking || undefined,
+            assistantReasoningDetails: assistantReasoningDetails || undefined,
+            discussionSteps: latestDiscussionSteps.length > 0 ? latestDiscussionSteps : undefined,
+            chatHistory,
+            mcpToolLookup,
+            callMcpTool: mcpApi.callTool,
+            localToolHandlers,
+          })
+          return sendMessage('', undefined, undefined, true, iteration + 1)
+        }
       } else {
         const { messagesForRequest, contextSummary } = await buildContextCompression(
           chatHistory.value,
@@ -264,52 +289,19 @@ export function useChatActions(options: AIRequestOptions = {}) {
           selectedSkillIds: aiConfig.skillIds,
           autoActivateSelected: true,
         })
-        authStore.hydrateFromStorage()
-        const hasRuntimeAuthAccess = hasRuntimeAuthToken(authStore.token, getToken())
-        const { mcpApi } = await import('@/features/mcp/api/mcp')
-        let mcpTools: McpToolResponse[] = []
-        if (aiConfig.mcpEnabled && hasRuntimeAuthAccess) {
-          try {
-            mcpTools = await mcpApi.getAllTools()
-          } catch (e) {
-            console.error('Failed to fetch MCP tools:', e)
-          }
-        }
-
-        const { aiTools: mcpAiTools, mcpToolLookup } = buildAiToolsFromMcpTools(mcpTools)
-        const aiTools = [...mcpAiTools]
-        const localToolHandlers = new Map<
-          string,
-          (args: Record<string, unknown>) => string | Promise<string>
-        >()
-        const skillRuntimeAvailability = getSkillRuntimeAvailability(skillContext.activatedSkills, {
-          mcpTools,
-          enableHttpRuntime: hasRuntimeAuthAccess,
-          enableMcpRuntime: aiConfig.mcpEnabled && hasRuntimeAuthAccess,
+        const {
+          mcpApi,
+          aiTools,
+          mcpToolLookup,
+          localToolHandlers,
+          activeSkillsForPrompt,
+          skillRuntimeAvailability,
+        } = await prepareRuntimeCapabilities({
+          aiConfig,
+          getAuthToken: () => authStore.token,
+          hydrateAuth: () => authStore.hydrateFromStorage(),
+          skillContext,
         })
-        const activeSkillsForPrompt = skillContext.activatedSkills.filter(
-          (skill) => !resolveSkillRuntime(skill),
-        )
-        const skillRuntime = buildSkillRuntimeTools(skillContext.activatedSkills, {
-          mcpTools,
-          callMcpTool: mcpApi.callTool,
-          enableHttpRuntime: hasRuntimeAuthAccess,
-          enableMcpRuntime: aiConfig.mcpEnabled && hasRuntimeAuthAccess,
-        })
-
-        aiTools.unshift(...skillRuntime.aiTools)
-        skillRuntime.localToolHandlers.forEach((handler, name) => {
-          localToolHandlers.set(name, handler)
-        })
-
-        const skillReadTool = buildSkillReadTool(skillContext.catalogSkills)
-        if (skillReadTool) {
-          aiTools.push(skillReadTool)
-          localToolHandlers.set(
-            READ_SKILL_TOOL_NAME,
-            createSkillReadToolHandler(skillContext.catalogSkills),
-          )
-        }
 
         const toolCalls: ToolCall[] = []
         let assistantThinking = ''
