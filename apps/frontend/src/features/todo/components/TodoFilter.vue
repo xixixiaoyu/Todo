@@ -58,12 +58,12 @@ async function handleClearTrash() {
       @update:model-value="emit('update:filter', $event as FilterType)"
     >
       <TabsList
-        class="grid h-[var(--todo-segment-height)] w-full rounded-[22px] border border-border/70 bg-card/85 p-1 backdrop-blur-xl shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)] dark:border-border/40 dark:bg-muted/20 dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] md:rounded-full md:bg-muted/60"
+        class="grid h-[var(--todo-segment-height)] w-full rounded-[22px] border border-border/60 bg-muted/15 p-[3px] backdrop-blur-lg shadow-[inset_0_1px_0_rgba(255,255,255,0.45)] dark:border-border/40 dark:bg-muted/15 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] md:rounded-full"
         :class="['grid-cols-2', 'max-w-[272px]', 'mx-auto']"
       >
         <TabsTrigger
           value="pending"
-          class="flex items-center justify-center gap-1 rounded-[16px] border border-transparent px-2.5 text-[11px] font-medium text-muted-foreground/70 transition-all duration-300 hover:text-primary/80 data-[state=active]:border-primary/15 data-[state=active]:bg-background/95 data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:shadow-[0_1px_4px_rgba(0,0,0,0.06)] md:gap-1.5 md:rounded-full md:px-3.5 md:text-[var(--todo-font-meta)] md:data-[state=active]:bg-gradient-to-b md:data-[state=active]:from-background md:data-[state=active]:to-background/95 md:data-[state=active]:shadow-[0_2px_8px_-1px_rgba(0,0,0,0.08),0_0_1px_rgba(0,0,0,0.1)] dark:md:data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.6),0_0_1px_rgba(255,255,255,0.1)]"
+          class="flex items-center justify-center gap-1 rounded-[16px] border border-transparent px-2.5 text-[11px] font-medium text-muted-foreground/72 transition-[background-color,color,box-shadow] duration-200 hover:bg-background/35 hover:text-foreground/80 data-[state=active]:bg-primary/[0.08] data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:shadow-[inset_0_0_0_1px_hsl(var(--primary)_/_0.14)] md:gap-1.5 md:rounded-full md:px-3.5 md:text-[var(--todo-font-meta)]"
         >
           <Circle
             class="h-[11px] w-[11px] transition-colors md:h-[15px] md:w-[15px]"
@@ -75,7 +75,7 @@ async function handleClearTrash() {
         </TabsTrigger>
         <TabsTrigger
           value="completed"
-          class="flex items-center justify-center gap-1 rounded-[16px] border border-transparent px-2.5 text-[11px] font-medium text-muted-foreground/70 transition-all duration-300 hover:text-success/80 data-[state=active]:border-success/15 data-[state=active]:bg-background/95 data-[state=active]:text-success data-[state=active]:font-semibold data-[state=active]:shadow-[0_1px_4px_rgba(0,0,0,0.06)] md:gap-1.5 md:rounded-full md:px-3.5 md:text-[var(--todo-font-meta)] md:data-[state=active]:bg-gradient-to-b md:data-[state=active]:from-background md:data-[state=active]:to-background/95 md:data-[state=active]:shadow-[0_2px_8px_-1px_rgba(0,0,0,0.08),0_0_1px_rgba(0,0,0,0.1)] dark:md:data-[state=active]:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.6),0_0_1px_rgba(255,255,255,0.1)]"
+          class="flex items-center justify-center gap-1 rounded-[16px] border border-transparent px-2.5 text-[11px] font-medium text-muted-foreground/72 transition-[background-color,color,box-shadow] duration-200 hover:bg-background/35 hover:text-foreground/80 data-[state=active]:bg-success/[0.08] data-[state=active]:text-success data-[state=active]:font-semibold data-[state=active]:shadow-[inset_0_0_0_1px_hsl(var(--success)_/_0.16)] md:gap-1.5 md:rounded-full md:px-3.5 md:text-[var(--todo-font-meta)]"
         >
           <CheckCircle2
             class="h-[11px] w-[11px] transition-colors md:h-[15px] md:w-[15px]"

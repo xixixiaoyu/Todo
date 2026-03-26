@@ -188,6 +188,7 @@ function toggleDeferredSection(): void {
                 :editing-id="editingId"
                 :editing-title="editingTitle"
                 :search-query="searchQuery"
+                :hide-deferred-badge="false"
                 @toggle="(id, currentCompleted) => emit('toggle', id, currentCompleted)"
                 @start-edit="(id, title) => emit('startEdit', id, title)"
                 @save-edit="emit('saveEdit')"
@@ -204,68 +205,82 @@ function toggleDeferredSection(): void {
         <div
           v-if="shouldShowDeferredSection"
           class="pb-6"
-          :class="{ 'pt-4': activeTodos.length > 0 }"
+          :class="{ 'pt-3': activeTodos.length > 0 }"
         >
-          <Button
-            variant="ghost"
-            data-test="deferred-section-toggle"
-            :aria-expanded="isDeferredSectionExpanded"
-            aria-controls="todo-deferred-section"
-            class="mb-2 flex h-auto w-full items-center justify-between rounded-2xl border border-border/60 bg-muted/15 px-3 py-2.5 text-left text-muted-foreground transition-colors hover:bg-muted/25 hover:text-foreground md:px-4"
-            @click="toggleDeferredSection"
+          <section
+            class="rounded-[20px] border border-primary/10 bg-primary/[0.03] px-2 py-2 md:rounded-[18px] md:px-3 md:py-3"
           >
-            <span class="flex items-center gap-2">
-              <Clock3 class="h-4 w-4 text-primary/80" />
-              <span class="text-[var(--todo-font-meta)] font-medium text-foreground/85">
-                {{ t('todo.deferredSection') }}
+            <Button
+              variant="ghost"
+              data-test="deferred-section-toggle"
+              :aria-expanded="isDeferredSectionExpanded"
+              aria-controls="todo-deferred-section"
+              class="flex h-10 w-full items-center justify-between rounded-[14px] border border-transparent bg-transparent px-2 py-1.5 text-left text-muted-foreground transition-colors hover:bg-background/55 hover:text-foreground md:h-11 md:px-2.5"
+              @click="toggleDeferredSection"
+            >
+              <span class="flex items-center gap-1.5">
+                <Clock3 class="h-3.5 w-3.5 text-primary/75 md:h-4 md:w-4" />
+                <span class="text-[var(--todo-font-meta)] font-medium text-foreground/82">
+                  {{ t('todo.deferredSection') }}
+                </span>
               </span>
-            </span>
-            <span class="flex items-center gap-2 text-[var(--todo-font-caption)]">
-              <span class="rounded-full bg-background/80 px-2 py-0.5 text-foreground/70">
-                {{ deferredTodos.length }}
-              </span>
-              <component
-                :is="isDeferredSectionExpanded ? ChevronDown : ChevronRight"
-                class="h-4 w-4 text-muted-foreground/70"
-              />
-            </span>
-          </Button>
-
-          <draggable
-            v-if="isDeferredSectionExpanded"
-            id="todo-deferred-section"
-            v-model="deferredDragList"
-            item-key="id"
-            handle=".drag-handle"
-            ghost-class="opacity-50"
-            chosen-class="scale-[1.02]"
-            drag-class="rotate-1"
-            class="space-y-1.5 md:space-y-2"
-            :animation="200"
-            @start="store.setDragging(true)"
-            @end="store.setDragging(false)"
-          >
-            <template #item="{ element: todo }">
-              <div class="todo-item-wrapper" data-test="deferred-section-list">
-                <TodoItem
-                  :key="todo.id"
-                  :todo="todo"
-                  :all-todos="todos"
-                  :editing-id="editingId"
-                  :editing-title="editingTitle"
-                  :search-query="searchQuery"
-                  @toggle="(id, currentCompleted) => emit('toggle', id, currentCompleted)"
-                  @start-edit="(id, title) => emit('startEdit', id, title)"
-                  @save-edit="emit('saveEdit')"
-                  @cancel-edit="emit('cancelEdit')"
-                  @delete="(id) => emit('delete', id)"
-                  @reorder="(ids, pId) => emit('reorder', ids, pId)"
-                  @update:editing-title="(value) => emit('update:editingTitle', value)"
-                  @edit-keydown="(e) => emit('editKeydown', e)"
+              <span
+                class="flex items-center gap-1.5 text-[11px] md:text-[var(--todo-font-caption)]"
+              >
+                <span
+                  class="rounded-full bg-background/80 px-1.5 py-0.5 font-medium leading-none text-foreground/68"
+                >
+                  {{ deferredTodos.length }}
+                </span>
+                <component
+                  :is="isDeferredSectionExpanded ? ChevronDown : ChevronRight"
+                  class="h-3.5 w-3.5 text-muted-foreground/60 md:h-4 md:w-4"
                 />
-              </div>
-            </template>
-          </draggable>
+              </span>
+            </Button>
+
+            <div v-if="isDeferredSectionExpanded" class="relative mt-2 pl-2 md:mt-2.5 md:pl-3">
+              <div
+                class="pointer-events-none absolute bottom-1 left-0 top-1 w-px rounded-full bg-primary/12"
+              ></div>
+
+              <draggable
+                id="todo-deferred-section"
+                v-model="deferredDragList"
+                item-key="id"
+                handle=".drag-handle"
+                ghost-class="opacity-50"
+                chosen-class="scale-[1.02]"
+                drag-class="rotate-1"
+                class="space-y-1.5 md:space-y-2"
+                :animation="200"
+                @start="store.setDragging(true)"
+                @end="store.setDragging(false)"
+              >
+                <template #item="{ element: todo }">
+                  <div class="todo-item-wrapper" data-test="deferred-section-list">
+                    <TodoItem
+                      :key="todo.id"
+                      :todo="todo"
+                      :all-todos="todos"
+                      :editing-id="editingId"
+                      :editing-title="editingTitle"
+                      :search-query="searchQuery"
+                      :hide-deferred-badge="true"
+                      @toggle="(id, currentCompleted) => emit('toggle', id, currentCompleted)"
+                      @start-edit="(id, title) => emit('startEdit', id, title)"
+                      @save-edit="emit('saveEdit')"
+                      @cancel-edit="emit('cancelEdit')"
+                      @delete="(id) => emit('delete', id)"
+                      @reorder="(ids, pId) => emit('reorder', ids, pId)"
+                      @update:editing-title="(value) => emit('update:editingTitle', value)"
+                      @edit-keydown="(e) => emit('editKeydown', e)"
+                    />
+                  </div>
+                </template>
+              </draggable>
+            </div>
+          </section>
         </div>
       </div>
     </ScrollArea>

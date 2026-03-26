@@ -17,6 +17,7 @@ const props = defineProps<{
   todo: Todo
   searchQuery?: string
   parentPath: string[]
+  hideDeferredBadge?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -45,11 +46,15 @@ const isReminderOverdue = computed(() => {
   return remindAt.getTime() < Date.now()
 })
 
+const showDeferredBadge = computed(
+  () => !props.hideDeferredBadge && !!props.todo.deferredAt && !props.todo.completed,
+)
+
 const hasSecondaryMetaBadges = computed(() => {
   if (store.filter === 'trash') return false
 
   return Boolean(
-    (props.todo.deferredAt && !props.todo.completed) ||
+    showDeferredBadge.value ||
     props.todo.pomodoroCount > 0 ||
     props.todo.recurrenceRule ||
     hasStandaloneReminder.value,
@@ -203,7 +208,7 @@ const remindRelativeDisplay = computed(() => {
           </TooltipContent>
         </Tooltip>
 
-        <Tooltip v-if="todo.deferredAt && !todo.completed">
+        <Tooltip v-if="showDeferredBadge">
           <TooltipTrigger as-child>
             <div
               class="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg border border-border/70 bg-muted/45 px-1.5 py-[3px] font-medium leading-none text-muted-foreground md:py-0.5"

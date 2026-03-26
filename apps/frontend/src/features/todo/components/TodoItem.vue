@@ -32,6 +32,7 @@ const props = defineProps<{
   editingTitle: string
   searchQuery?: string
   level?: number
+  hideDeferredBadge?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -266,6 +267,7 @@ watch(
         :todo="todo"
         :search-query="searchQuery"
         :parent-path="parentPath"
+        :hide-deferred-badge="hideDeferredBadge"
         :class="{ 'pr-12 md:pr-0': isMobile }"
         @start-edit="emit('startEdit', todo.id, todo.title)"
       />
@@ -327,6 +329,7 @@ watch(
             :editing-title="editingTitle"
             :search-query="searchQuery"
             :level="(level || 0) + 1"
+            :hide-deferred-badge="hideDeferredBadge"
             @toggle="(id, completed) => emit('toggle', id, completed)"
             @start-edit="(id, title) => emit('startEdit', id, title)"
             @save-edit="emit('saveEdit')"
