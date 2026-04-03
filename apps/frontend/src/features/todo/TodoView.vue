@@ -3,6 +3,7 @@ import { ref, onMounted, watch, computed, defineAsyncComponent } from 'vue'
 import { useTodoStore, type FilterType } from './stores/todo'
 import { usePomodoroStore } from './stores/pomodoro'
 import { useTodo } from './composables/useTodo'
+import { useImageTaskExtraction } from './composables/useImageTaskExtraction'
 import { useGsap } from '@/composables/useGsap'
 import { useIsMobile } from '@/composables/useWindowSize'
 import TodoHeader from './components/TodoHeader.vue'
@@ -12,6 +13,7 @@ import TodoSearch from './components/TodoSearch.vue'
 import TodoList from './components/TodoList.vue'
 import PomodoroTimer from './components/PomodoroTimer.vue'
 import TodoSyncConflictPanel from './components/TodoSyncConflictPanel.vue'
+import TodoImageTaskConfirmDialog from './components/TodoImageTaskConfirmDialog.vue'
 import AiAssistantDrawer from '@/features/ai/components/AiAssistantDrawer.vue'
 import Fireworks from '@/components/Fireworks.vue'
 import { Card, CardContent } from '@/components/ui/card'
@@ -195,6 +197,18 @@ const {
   saveEditing,
   handleEditKeydown,
 } = useTodo()
+
+const {
+  showDialog: showImageTaskDialog,
+  extractedTasks,
+  isExtracting,
+  extractionError,
+  handleImagePaste,
+  confirmAddTasks,
+  cancelExtraction,
+  retryExtraction,
+} = useImageTaskExtraction()
+
 const shouldMountAiDrawer = ref(isDrawerOpen.value)
 
 watch(
@@ -318,6 +332,7 @@ function onFireworksComplete() {
                 class="absolute inset-0"
                 @add="handleAddTodo"
                 @keydown="handleKeydown"
+                @paste="handleImagePaste"
               />
             </Transition>
           </div>
@@ -435,6 +450,17 @@ function onFireworksComplete() {
 
     <!-- 番茄钟 -->
     <PomodoroTimer />
+
+    <!-- 图片任务提取对话框 -->
+    <TodoImageTaskConfirmDialog
+      v-model:open="showImageTaskDialog"
+      :tasks="extractedTasks"
+      :is-loading="isExtracting"
+      :error="extractionError"
+      @confirm="confirmAddTasks"
+      @cancel="cancelExtraction"
+      @retry="retryExtraction"
+    />
   </div>
 </template>
 

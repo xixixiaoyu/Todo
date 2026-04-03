@@ -26,6 +26,7 @@ export const common = {
   today: '今天',
   apply: '应用',
   discard: '放弃',
+  retry: '重试',
   close: '关闭',
   loadMore: '加载更多',
   none: '无',

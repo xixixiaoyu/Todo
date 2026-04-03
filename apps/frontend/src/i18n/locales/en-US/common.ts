@@ -26,6 +26,7 @@ export const common = {
   today: 'Today',
   apply: 'Apply',
   discard: 'Discard',
+  retry: 'Retry',
   close: 'Close',
   loadMore: 'Load more',
   none: 'None',

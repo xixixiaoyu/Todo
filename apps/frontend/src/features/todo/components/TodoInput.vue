@@ -22,6 +22,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: string]
   add: []
   keydown: [e: KeyboardEvent]
+  paste: [e: ClipboardEvent]
 }>()
 
 const inputRef = ref<InstanceType<typeof Input> | null>(null)
@@ -101,6 +102,7 @@ onMounted(() => {
                   :class="{ 'border-destructive focus-visible:ring-destructive/20': errorMessage }"
                   @update:model-value="emit('update:modelValue', $event as string)"
                   @keydown="emit('keydown', $event)"
+                  @paste="emit('paste', $event)"
                 />
                 <Transition
                   enter-active-class="transition-all duration-300 ease-out"
