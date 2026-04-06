@@ -40,12 +40,26 @@ export function useChat(options: AIRequestOptions = {}) {
   const messages = computed(() => {
     const allMessages = [...chatHistory.value]
 
-    if (isGenerating.value) {
+    // 检查是否需要显示流式消息
+    // 条件：正在生成中，或者有未保存的响应内容（正文、思考内容、推理详情、讨论步骤）
+    // 注意：hasUnsavedResponse 分支处理流式完成后的短暂窗口：
+    //   - finalizeCompletedResponse 执行顺序为 addSessionMessage → resetStreamingState → isGenerating=false
+    //   - Vue 响应式更新时序可能导致 chatHistory 已更新但 currentAIResponse 尚未清空
+    //   - 此分支确保在状态完全同步前，用户仍能看到响应内容
+    const streamingId = currentAssistantMessageId.value || 'streaming-response'
+    const hasUnsavedResponse = !!(
+      currentAIResponse.value ||
+      currentThinkingContent.value ||
+      currentReasoningDetails.value ||
+      currentDiscussionSteps.value.length > 0
+    )
+
+    if (isGenerating.value || hasUnsavedResponse) {
       const lastMessage = allMessages[allMessages.length - 1]
-      const streamingId = currentAssistantMessageId.value || 'streaming-response'
 
       // 避免在流式结束瞬间产生重复
-      if (!lastMessage || lastMessage.id !== streamingId) {
+      // 检查：最后一条消息不是当前流式消息，且当前有内容需要显示
+      if ((!lastMessage || lastMessage.id !== streamingId) && hasUnsavedResponse) {
         const aiConfig = getAIConfig()
         const parsed = parseAssistantBlocks(currentAIResponse.value, {
           enableTodoActions: aiConfig.todoAssistant,
@@ -76,7 +90,7 @@ export function useChat(options: AIRequestOptions = {}) {
           teachingAssessments,
           structuredBlockErrors,
           pendingStructuredBlocks,
-          isStreaming: true,
+          isStreaming: isGenerating.value,
         })
       }
     }
