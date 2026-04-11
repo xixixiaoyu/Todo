@@ -10,6 +10,7 @@
 - [ChatMessageActions.vue](file://apps/frontend/src/features/ai/components/ChatMessageActions.vue)
 - [useChat.ts](file://apps/frontend/src/features/ai/composables/useChat.ts)
 - [useChatActions.ts](file://apps/frontend/src/features/ai/composables/useChatActions.ts)
+- [useChatActions.stream.ts](file://apps/frontend/src/features/ai/composables/useChatActions.stream.ts)
 - [useChatState.ts](file://apps/frontend/src/features/ai/composables/useChatState.ts)
 - [useAIConfig.ts](file://apps/frontend/src/features/ai/composables/useAIConfig.ts)
 - [useChatMessageMarkdownRender.ts](file://apps/frontend/src/features/ai/composables/useChatMessageMarkdownRender.ts)
@@ -20,6 +21,12 @@
 - [base.css](file://apps/frontend/src/styles/base.css)
 - [colors.ts](file://apps/frontend/src/lib/colors.ts)
 </cite>
+
+## 更新摘要
+**变更内容**
+- 新增 hasUnsavedResponse 条件检查机制，解决流式响应完成后重复消息bug
+- 优化消息显示逻辑，确保流式完成到状态完全同步期间用户不会丢失最终响应内容
+- 增强流式渲染的时序控制，避免状态不同步导致的消息重复问题
 
 ## 目录
 1. [简介](#简介)
@@ -44,6 +51,8 @@ AI 聊天样式系统是一个基于 Vue 3 和 TypeScript 构建的现代化聊�
 - 图片预览和交互功能
 - 教学模式和思维过程可视化
 
+**更新** 本次更新重点修复了流式响应完成后可能出现重复消息的bug，通过新增 hasUnsavedResponse 条件检查机制，确保在流式完成到状态完全同步期间用户不会丢失最终响应内容。
+
 ## 项目结构
 
 AI 聊天样式系统采用清晰的分层架构，主要分为以下几个层次：
@@ -60,6 +69,7 @@ end
 subgraph "组合式 API 层"
 ChatComposable[useChat.ts]
 ActionsComposable[useChatActions.ts]
+StreamActions[useChatActions.stream.ts]
 StateComposable[useChatState.ts]
 ConfigComposable[useAIConfig.ts]
 end
@@ -80,6 +90,7 @@ MessageList --> Message
 Message --> Components
 Drawer --> ChatComposable
 ChatComposable --> ActionsComposable
+ChatComposable --> StreamActions
 ChatComposable --> StateComposable
 ChatComposable --> ConfigComposable
 Components --> MarkdownRender
@@ -93,12 +104,12 @@ MarkdownCSS --> BaseCSS
 **图表来源**
 - [AiAssistantDrawer.vue:1-336](file://apps/frontend/src/features/ai/components/AiAssistantDrawer.vue#L1-L336)
 - [ChatMessageList.vue:1-492](file://apps/frontend/src/features/ai/components/ChatMessageList.vue#L1-L492)
-- [useChat.ts:1-119](file://apps/frontend/src/features/ai/composables/useChat.ts#L1-L119)
+- [useChat.ts:1-133](file://apps/frontend/src/features/ai/composables/useChat.ts#L1-L133)
 
 **章节来源**
 - [AiAssistantDrawer.vue:1-336](file://apps/frontend/src/features/ai/components/AiAssistantDrawer.vue#L1-L336)
 - [ChatMessageList.vue:1-492](file://apps/frontend/src/features/ai/components/ChatMessageList.vue#L1-L492)
-- [useChat.ts:1-119](file://apps/frontend/src/features/ai/composables/useChat.ts#L1-L119)
+- [useChat.ts:1-133](file://apps/frontend/src/features/ai/composables/useChat.ts#L1-L133)
 
 ## 核心组件
 
@@ -134,6 +145,8 @@ ChatMessage 提供完整的消息渲染能力，支持多种消息类型和交�
 - 图片消息
 - 教学模式内容
 
+**更新** 新增流式响应时序控制机制，通过 hasUnsavedResponse 条件检查避免重复消息显示。
+
 **章节来源**
 - [AiAssistantDrawer.vue:1-336](file://apps/frontend/src/features/ai/components/AiAssistantDrawer.vue#L1-L336)
 - [ChatMessageList.vue:1-492](file://apps/frontend/src/features/ai/components/ChatMessageList.vue#L1-L492)
@@ -149,22 +162,25 @@ participant User as 用户
 participant Drawer as AiAssistantDrawer
 participant Chat as useChat
 participant Actions as useChatActions
+participant StreamActions as useChatActions.stream
 participant State as useChatState
 participant AI as AI服务
 User->>Drawer : 输入消息
 Drawer->>Chat : sendMessage()
 Chat->>State : 更新状态
 Chat->>Actions : 执行动作
-Actions->>AI : 发送请求
-AI-->>Actions : 流式响应
-Actions->>State : 更新流式状态
-State-->>Drawer : 计算属性更新
+Actions->>StreamActions : 创建流处理器
+StreamActions->>AI : 发送请求
+AI-->>StreamActions : 流式响应
+StreamActions->>State : 更新流式状态
+State-->>Chat : hasUnsavedResponse 检查
+Chat-->>Drawer : 计算属性更新
 Drawer->>Drawer : 重新渲染消息列表
 ```
 
 **图表来源**
-- [useChat.ts:21-119](file://apps/frontend/src/features/ai/composables/useChat.ts#L21-L119)
-- [useChatActions.ts:136-364](file://apps/frontend/src/features/ai/composables/useChatActions.ts#L136-L364)
+- [useChat.ts:43-99](file://apps/frontend/src/features/ai/composables/useChat.ts#L43-L99)
+- [useChatActions.stream.ts:202-269](file://apps/frontend/src/features/ai/composables/useChatActions.stream.ts#L202-L269)
 - [useChatState.ts:41-144](file://apps/frontend/src/features/ai/composables/useChatState.ts#L41-L144)
 
 ### 数据流架构
@@ -175,28 +191,32 @@ subgraph "数据流"
 Input[用户输入] --> Composable[useChat]
 Composable --> State[useChatState]
 Composable --> Actions[useChatActions]
-Actions --> AI[AI服务]
+Actions --> StreamHandler[useChatActions.stream]
+StreamHandler --> AI[AI服务]
 AI --> Stream[流式响应]
 Stream --> State
-State --> Computed[计算属性]
+State --> HasUnsaved[hasUnsavedResponse 检查]
+HasUnsaved --> Computed[计算属性]
 Computed --> UI[UI渲染]
 end
 subgraph "状态管理"
 State --> Messages[消息数组]
 State --> Generating[生成状态]
 State --> Error[错误状态]
+State --> StreamingState[流式状态]
 end
 UI --> Events[用户事件]
 Events --> Actions
 ```
 
 **图表来源**
-- [useChat.ts:40-85](file://apps/frontend/src/features/ai/composables/useChat.ts#L40-L85)
-- [useChatState.ts:44-51](file://apps/frontend/src/features/ai/composables/useChatState.ts#L44-L51)
+- [useChat.ts:40-99](file://apps/frontend/src/features/ai/composables/useChat.ts#L40-L99)
+- [useChatState.ts:44-70](file://apps/frontend/src/features/ai/composables/useChatState.ts#L44-L70)
 
 **章节来源**
-- [useChat.ts:1-119](file://apps/frontend/src/features/ai/composables/useChat.ts#L1-L119)
+- [useChat.ts:1-133](file://apps/frontend/src/features/ai/composables/useChat.ts#L1-L133)
 - [useChatActions.ts:1-484](file://apps/frontend/src/features/ai/composables/useChatActions.ts#L1-L484)
+- [useChatActions.stream.ts:1-269](file://apps/frontend/src/features/ai/composables/useChatActions.stream.ts#L1-L269)
 - [useChatState.ts:1-144](file://apps/frontend/src/features/ai/composables/useChatState.ts#L1-L144)
 
 ## 详细组件分析
@@ -277,6 +297,29 @@ ChatMessage --> MessageStyles
 **图表来源**
 - [ChatMessage.vue:23-125](file://apps/frontend/src/features/ai/components/ChatMessage.vue#L23-L125)
 
+### 流式响应处理系统
+
+**更新** 新增 hasUnsavedResponse 条件检查机制，专门处理流式响应完成后的状态同步问题。
+
+```mermaid
+flowchart TD
+Start[流式响应开始] --> CheckGenerating{isGenerating检查}
+CheckGenerating --> |true| CheckUnsaved{hasUnsavedResponse检查}
+CheckGenerating --> |false| Finalize[finalizeCompletedResponse]
+CheckUnsaved --> |true| ShowTempMessage[显示临时消息]
+CheckUnsaved --> |false| Skip[跳过显示]
+ShowTempMessage --> WaitSync[等待状态同步]
+WaitSync --> SyncComplete[状态完全同步]
+SyncComplete --> Finalize
+Skip --> WaitSync
+Finalize --> ClearState[清除流式状态]
+ClearState --> End[完成]
+```
+
+**图表来源**
+- [useChat.ts:43-99](file://apps/frontend/src/features/ai/composables/useChat.ts#L43-L99)
+- [useChatActions.stream.ts:222-248](file://apps/frontend/src/features/ai/composables/useChatActions.stream.ts#L222-L248)
+
 ### Markdown 渲染引擎
 
 useChatMessageMarkdownRender 提供了强大的 Markdown 渲染能力，支持代码高亮、Mermaid 图表等高级功能。
@@ -304,6 +347,7 @@ Output[渲染后的 HTML] --> Container[消息容器]
 **章节来源**
 - [ChatMessage.vue:1-411](file://apps/frontend/src/features/ai/components/ChatMessage.vue#L1-L411)
 - [useChatMessageMarkdownRender.ts:1-276](file://apps/frontend/src/features/ai/composables/useChatMessageMarkdownRender.ts#L1-L276)
+- [useChat.ts:43-99](file://apps/frontend/src/features/ai/composables/useChat.ts#L43-L99)
 
 ### 主题和样式系统
 
@@ -364,6 +408,7 @@ Message[ChatMessage]
 Components[子组件]
 useChat[useChat]
 useChatActions[useChatActions]
+useChatActionsStream[useChatActions.stream]
 useChatState[useChatState]
 useAIConfig[useAIConfig]
 styles[样式系统]
@@ -377,6 +422,7 @@ MessageList --> Message
 Message --> Components
 Drawer --> useChat
 useChat --> useChatActions
+useChat --> useChatActionsStream
 useChat --> useChatState
 useChat --> useAIConfig
 styles --> Components
@@ -409,7 +455,7 @@ Parent->>Child : 重新渲染
 
 **章节来源**
 - [AiAssistantDrawer.vue:1-336](file://apps/frontend/src/features/ai/components/AiAssistantDrawer.vue#L1-L336)
-- [useChat.ts:1-119](file://apps/frontend/src/features/ai/composables/useChat.ts#L1-L119)
+- [useChat.ts:1-133](file://apps/frontend/src/features/ai/composables/useChat.ts#L1-L133)
 
 ## 性能考虑
 
@@ -424,15 +470,19 @@ Parent->>Child : 重新渲染
 
 ### 流式渲染优化
 
+**更新** 新增 hasUnsavedResponse 条件检查，优化流式渲染时序控制：
+
 ```mermaid
 flowchart TD
 Start[开始渲染] --> CheckSelection{检查选中状态}
 CheckSelection --> |有选中| DelayRender[延迟渲染]
-CheckSelection --> |无选中| RenderNow[立即渲染]
+CheckSelection --> |无选中| CheckUnsaved{检查hasUnsavedResponse}
+CheckUnsaved --> |有未保存响应| DelayRender
+CheckUnsaved --> |无未保存响应| RenderNow[立即渲染]
 DelayRender --> PollSelection[轮询选中状态]
 PollSelection --> SelectionEnd{选中结束?}
 SelectionEnd --> |否| PollSelection
-SelectionEnd --> |是| RenderNow
+SelectionEnd --> |是| CheckUnsaved
 RenderNow --> UpdateHTML[更新 HTML]
 UpdateHTML --> InjectInteractions[注入交互]
 InjectInteractions --> End[完成]
@@ -440,6 +490,7 @@ InjectInteractions --> End[完成]
 
 **图表来源**
 - [useChatMessageMarkdownRender.ts:175-246](file://apps/frontend/src/features/ai/composables/useChatMessageMarkdownRender.ts#L175-L246)
+- [useChat.ts:43-99](file://apps/frontend/src/features/ai/composables/useChat.ts#L43-L99)
 
 ### 样式性能优化
 
@@ -456,6 +507,13 @@ InjectInteractions --> End[完成]
 1. 检查 `chatHistory` 状态是否正确更新
 2. 验证 `messages` 计算属性的逻辑
 3. 确认 `isGenerating` 状态是否阻塞渲染
+4. **新增** 检查 `hasUnsavedResponse` 条件检查是否正确执行
+
+**流式响应重复消息问题**
+1. 检查 `finalizeCompletedResponse` 函数的执行顺序
+2. 验证 `resetStreamingState` 是否在状态同步后正确调用
+3. 确认 `hasUnsavedResponse` 条件检查逻辑
+4. 检查 Vue 响应式更新时序是否正确
 
 **渲染性能问题**
 1. 检查 `renderLimit` 设置
@@ -481,9 +539,15 @@ LogState --> MonitorPerformance[监控性能]
 MonitorPerformance --> Optimize[优化性能]
 ```
 
+**更新** 新增 hasUnsavedResponse 相关调试步骤：
+1. 在 `useChat.ts` 中添加 `hasUnsavedResponse` 条件检查日志
+2. 监控流式完成到状态同步的时间差
+3. 验证 `finalizeCompletedResponse` 和 `resetStreamingState` 的执行顺序
+
 **章节来源**
 - [useChatState.ts:25-36](file://apps/frontend/src/features/ai/composables/useChatState.ts#L25-L36)
 - [useChatActions.ts:350-363](file://apps/frontend/src/features/ai/composables/useChatActions.ts#L350-L363)
+- [useChat.ts:43-99](file://apps/frontend/src/features/ai/composables/useChat.ts#L43-L99)
 
 ## 结论
 
@@ -500,5 +564,7 @@ AI 聊天样式系统展现了现代前端开发的最佳实践，通过模块�
 - 灵活的状态管理模式
 - 强大的扩展性和定制能力
 - 良好的性能表现和用户体验
+
+**更新** 本次更新重点解决了流式响应完成后可能出现重复消息的关键bug，通过新增 hasUnsavedResponse 条件检查机制，确保了消息显示的准确性和用户体验的稳定性。这一改进体现了系统在细节处理上的完善和对用户体验的重视。
 
 该系统为构建复杂的聊天应用提供了优秀的基础设施，开发者可以在此基础上快速扩展新的功能和特性。
