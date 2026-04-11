@@ -178,6 +178,14 @@ function handleSubtaskAdded() {
   }
 }
 
+function handleDragEnd() {
+  store.setDragging(false)
+  // Auto-expand collapsed parent when a child is dragged into it
+  if (!isExpanded.value && hasChildren.value) {
+    store.toggleTodoExpansion(props.todo.id)
+  }
+}
+
 // --- Watchers ---
 watch(
   () => store.error,
@@ -299,8 +307,8 @@ watch(
 
     <!-- Subtasks List (Recursive) -->
     <div
-      v-if="isExpanded && (level || 0) < 2"
-      v-show="hasChildren || store.isDragging"
+      v-if="(level || 0) < 2"
+      v-show="isExpanded || store.isDragging"
       class="flex flex-col ml-[32px] md:ml-[32px] transition-all duration-300"
       :class="[hasChildren ? 'mt-2 gap-2' : 'mt-1']"
     >
@@ -319,7 +327,7 @@ watch(
             store.setDragging(true)
           }
         "
-        @end="store.setDragging(false)"
+        @end="handleDragEnd"
       >
         <template #item="{ element }">
           <TodoItem
