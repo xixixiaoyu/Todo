@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import draggable from 'vuedraggable'
 import { ChevronDown, ChevronRight, GripVertical } from 'lucide-vue-next'
 import { useHaptics, ImpactStyle } from '@/composables/useHaptics'
+import { useGsap } from '@/composables/useGsap'
 import { useTodoStore, type Todo } from '../stores/todo'
 import { useIsMobile } from '@/composables/useWindowSize'
 import { useToast } from '@/composables/useToast'
@@ -20,10 +21,12 @@ const store = useTodoStore()
 const { isMobile } = useIsMobile()
 const { hapticImpact, hapticSelectionStart } = useHaptics()
 const { success: showToastSuccess, error: showToastError } = useToast()
+const { gsap, ctx } = useGsap()
 const { t } = useI18n()
 
 const editInputId = useId()
 const subtaskInputId = useId()
+const subtaskListRef = ref<HTMLElement | null>(null)
 
 const props = defineProps<{
   todo: Todo
@@ -195,6 +198,62 @@ watch(
     }
   },
 )
+
+// 使用 GSAP 驱动的高性能高度展开动画，替代简单的 v-show
+watch(
+  () => isExpanded.value || store.isDragging,
+  (shouldShow, prevShow) => {
+    if (!subtaskListRef.value) return
+
+    // 如果是初次挂载（prevShow 为 undefined），则使用 set 而非 animate
+    const isInitial = prevShow === undefined
+
+    ctx.add(() => {
+      if (shouldShow) {
+        // 展开动画
+        if (isInitial) {
+          gsap.set(subtaskListRef.value, {
+            height: 'auto',
+            opacity: 1,
+            display: 'flex',
+          })
+        } else {
+          gsap.fromTo(
+            subtaskListRef.value,
+            { height: 0, opacity: 0, display: 'flex' },
+            {
+              height: 'auto',
+              opacity: 1,
+              duration: 0.4,
+              ease: 'expo.out',
+              clearProps: 'height', // 动画结束后清除 height，以便内容自适应
+            },
+          )
+        }
+      } else {
+        // 折叠动画
+        if (isInitial) {
+          gsap.set(subtaskListRef.value, {
+            height: 0,
+            opacity: 0,
+            display: 'none',
+          })
+        } else {
+          gsap.to(subtaskListRef.value, {
+            height: 0,
+            opacity: 0,
+            duration: 0.3,
+            ease: 'power2.inOut',
+            onComplete: () => {
+              gsap.set(subtaskListRef.value, { display: 'none' })
+            },
+          })
+        }
+      }
+    })
+  },
+  { immediate: true, flush: 'post' },
+)
 </script>
 
 <template>
@@ -308,8 +367,8 @@ watch(
     <!-- Subtasks List (Recursive) -->
     <div
       v-if="(level || 0) < 2"
-      v-show="isExpanded || store.isDragging"
-      class="flex flex-col ml-[32px] md:ml-[32px] transition-all duration-300"
+      ref="subtaskListRef"
+      class="flex flex-col ml-[32px] md:ml-[32px] overflow-hidden"
       :class="[hasChildren ? 'mt-2 gap-2' : 'mt-1']"
     >
       <draggable
