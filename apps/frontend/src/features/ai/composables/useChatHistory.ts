@@ -323,9 +323,10 @@ export function useChatHistory() {
    * 更新会话消息
    */
   function updateSessionMessages(sessionId: string, messages: ChatMessage[]): void {
-    const session = sessions.value.find((s) => s.id === sessionId)
-    if (!session) return
+    const index = sessions.value.findIndex((s) => s.id === sessionId)
+    if (index === -1) return
 
+    const session = { ...sessions.value[index] }
     session.messages = messages
     session.updatedAt = new Date()
 
@@ -338,6 +339,8 @@ export function useChatHistory() {
         session.title = title.slice(0, 100) // 限制标题长度，防止极端情况
       }
     }
+
+    sessions.value[index] = session
   }
 
   /**

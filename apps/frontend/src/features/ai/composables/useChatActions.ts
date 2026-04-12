@@ -82,10 +82,8 @@ export function useChatActions(options: AIRequestOptions = {}) {
       createdAt: new Date(),
     }
 
-    // 立即更新到指定会话
-    if (generationSessionId) {
-      addSessionMessage(generationSessionId, userMessage)
-    }
+    // 立即更新到当前会话
+    chatHistory.value = [...chatHistory.value, userMessage]
 
     currentAssistantMessageId.value = generateId()
     currentAIResponse.value = t('ai.generatingImage')
@@ -183,10 +181,8 @@ export function useChatActions(options: AIRequestOptions = {}) {
         createdAt: new Date(),
       }
 
-      // 立即更新到指定会话
-      if (generationSessionId) {
-        addSessionMessage(generationSessionId, userMessage)
-      }
+      // 立即更新到当前会话
+      chatHistory.value = [...chatHistory.value, userMessage]
     }
 
     isGenerating.value = true
