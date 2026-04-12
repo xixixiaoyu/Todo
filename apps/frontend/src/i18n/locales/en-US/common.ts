@@ -18,6 +18,7 @@ export const common = {
   edit: 'Edit',
   save: 'Save',
   copy: 'Copy',
+  copied: 'Copied',
   delete: 'Delete',
   start: 'Start',
   pause: 'Pause',

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { AlertCircle } from 'lucide-vue-next'
 
 const props = defineProps<{
   modelValue: string | undefined
@@ -104,7 +105,7 @@ const displayError = computed(() => {
         <slot name="icon" />
       </div>
     </div>
-    <div class="min-h-[20px] px-1">
+    <div class="min-h-[22px] px-1 py-0.5">
       <Transition
         enter-active-class="transition duration-300 ease-out"
         enter-from-class="transform -translate-y-1 opacity-0 scale-95"
@@ -113,18 +114,11 @@ const displayError = computed(() => {
         leave-from-class="transform translate-y-0 opacity-100 scale-100"
         leave-to-class="transform -translate-y-1 opacity-0 scale-95"
       >
-        <p v-if="displayError" class="text-[11px] font-bold text-error flex items-center gap-1.5">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            class="w-3 h-3 flex-shrink-0"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
+        <p
+          v-if="displayError"
+          class="text-[11px] font-bold text-error flex items-center gap-1.5 select-text leading-tight"
+        >
+          <AlertCircle :size="12" stroke-width="2.5" class="shrink-0" />
           {{ displayError }}
         </p>
       </Transition>

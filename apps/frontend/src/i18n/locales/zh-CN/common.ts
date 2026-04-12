@@ -18,6 +18,7 @@ export const common = {
   edit: '编辑',
   save: '保存',
   copy: '复制',
+  copied: '已复制',
   delete: '删除',
   start: '开始',
   pause: '暂停',

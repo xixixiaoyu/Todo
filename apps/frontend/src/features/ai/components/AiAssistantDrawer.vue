@@ -18,8 +18,11 @@ import { useAiAssistantComposer } from '@/features/ai/composables/useAiAssistant
 import { useTodoStore } from '@/features/todo/stores/todo'
 import { useI18n } from 'vue-i18n'
 import { useResizable } from '@/composables/useResizable'
+import { useToast } from '@/composables/useToast'
+import { AlertCircle, X, Copy, Check } from 'lucide-vue-next'
 
 const { t } = useI18n()
+const { success: showToast } = useToast()
 const modelValue = defineModel<boolean>({ required: true })
 
 // AI 配置与预设
@@ -63,6 +66,7 @@ const {
   messages,
   isGenerating,
   error,
+  clearError,
   sendMessage,
   stopGenerating,
   clearHistory,
@@ -72,6 +76,22 @@ const {
   updateTeachingQuizAnswer,
   getTeachingQuizSnapshot,
 } = useChat()
+
+const isCopying = ref(false)
+const copyError = async () => {
+  if (!error.value || isCopying.value) return
+  try {
+    isCopying.value = true
+    await navigator.clipboard.writeText(error.value)
+    showToast(t('common.copied'))
+    setTimeout(() => {
+      isCopying.value = false
+    }, 2000)
+  } catch (err) {
+    console.error('Failed to copy error:', err)
+    isCopying.value = false
+  }
+}
 
 const todoStore = useTodoStore()
 const isMaximized = computed({
@@ -236,15 +256,44 @@ defineOptions({
       </div>
 
       <!-- 错误提示 -->
-      <div
-        v-if="error"
-        :class="[
-          'mx-4 mb-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400',
-          isMaximized ? 'mx-auto max-w-4xl w-[calc(100%-2rem)]' : '',
-        ]"
+      <Transition
+        enter-active-class="transition duration-300 ease-out"
+        enter-from-class="transform -translate-y-2 opacity-0"
+        enter-to-class="transform translate-y-0 opacity-100"
+        leave-active-class="transition duration-200 ease-in"
+        leave-from-class="transform translate-y-0 opacity-100"
+        leave-to-class="transform -translate-y-2 opacity-0"
       >
-        {{ error }}
-      </div>
+        <div
+          v-if="error"
+          :class="[
+            'mx-4 mb-3 flex items-start gap-3 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-600 backdrop-blur-md dark:text-red-400 select-text group',
+            isMaximized ? 'mx-auto max-w-4xl w-[calc(100%-2rem)]' : '',
+          ]"
+        >
+          <AlertCircle :size="18" class="mt-0.5 shrink-0 opacity-80" />
+          <div class="flex-1 leading-relaxed">
+            {{ error }}
+          </div>
+          <div class="flex items-center gap-1 shrink-0 -mr-1">
+            <button
+              class="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+              :title="t('common.copy')"
+              @click="copyError"
+            >
+              <Check v-if="isCopying" :size="14" class="text-green-500" />
+              <Copy v-else :size="14" />
+            </button>
+            <button
+              class="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors opacity-60 hover:opacity-100"
+              :title="t('common.close')"
+              @click="clearError"
+            >
+              <X :size="14" />
+            </button>
+          </div>
+        </div>
+      </Transition>
 
       <!-- 底部工具栏与输入框 -->
       <AiAssistantToolbar
