@@ -36,7 +36,7 @@ export interface ProposedTodoChange {
 }
 
 export type FilterType = 'pending' | 'completed' | 'trash'
-export type ViewMode = 'list' | 'visual' | 'stats'
+export type ViewMode = 'list' | 'visual' | 'stats' | 'scratchpad'
 export type TodoDataSource = 'local' | 'remote'
 
 export interface TreeData {

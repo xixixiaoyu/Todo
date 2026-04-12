@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed, defineAsyncComponent } from 'vue'
-import { useTodoStore, type FilterType } from './stores/todo'
+import { useTodoStore, type FilterType, type ViewMode } from './stores/todo'
 import { usePomodoroStore } from './stores/pomodoro'
 import { useTodo } from './composables/useTodo'
 import { useImageTaskExtraction } from './composables/useImageTaskExtraction'
@@ -11,6 +11,7 @@ import TodoInput from './components/TodoInput.vue'
 import TodoFilter from './components/TodoFilter.vue'
 import TodoSearch from './components/TodoSearch.vue'
 import TodoList from './components/TodoList.vue'
+import TodoScratchpad from './components/TodoScratchpad.vue'
 import PomodoroTimer from './components/PomodoroTimer.vue'
 import TodoSyncConflictPanel from './components/TodoSyncConflictPanel.vue'
 import TodoImageTaskConfirmDialog from './components/TodoImageTaskConfirmDialog.vue'
@@ -104,6 +105,7 @@ const currentViewKey = computed(() => {
 const currentViewComponent = computed(() => {
   if (todoStore.viewMode === 'list') return TodoList
   if (todoStore.viewMode === 'visual') return TodoVisualizer
+  if (todoStore.viewMode === 'scratchpad') return TodoScratchpad
   return TodoStatistics
 })
 
@@ -138,7 +140,12 @@ const syncInputContainerLayout = (visible: boolean, animate: boolean) => {
 watch(
   () => todoStore.viewMode,
   (newVal, oldVal) => {
-    const viewOrder: Record<'list' | 'visual' | 'stats', number> = { list: 0, visual: 1, stats: 2 }
+    const viewOrder: Record<ViewMode, number> = {
+      list: 0,
+      scratchpad: 1,
+      visual: 2,
+      stats: 3,
+    }
     direction.value = viewOrder[newVal] > viewOrder[oldVal] ? 1 : -1
   },
 )
@@ -220,7 +227,7 @@ watch(
 )
 
 const currentViewProps = computed(() => {
-  if (todoStore.viewMode === 'stats') return {}
+  if (todoStore.viewMode === 'stats' || todoStore.viewMode === 'scratchpad') return {}
 
   const baseProps = {
     filter: todoStore.filter,
@@ -238,6 +245,15 @@ const currentViewProps = computed(() => {
 })
 
 const currentViewListeners = computed(() => {
+  if (todoStore.viewMode === 'visual') {
+    return {
+      toggle: (id: string, currentCompleted: boolean) => handleToggleTodo(id, currentCompleted),
+      delete: (id: string): void => {
+        void todoStore.deleteTodo(id)
+      },
+    }
+  }
+
   if (todoStore.viewMode !== 'list') return {}
 
   return {
@@ -245,7 +261,9 @@ const currentViewListeners = computed(() => {
     startEdit: (id: string, title: string) => startEditing(id, title),
     saveEdit: () => saveEditing(),
     cancelEdit: () => cancelEditing(),
-    delete: (id: string) => void todoStore.deleteTodo(id),
+    delete: (id: string): void => {
+      void todoStore.deleteTodo(id)
+    },
     reorder: (ids: string[], pId: string | null) => todoStore.reorderTodos(ids, pId),
     'update:editingTitle': (value: string) => {
       editingTitle.value = value
