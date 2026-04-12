@@ -43,6 +43,7 @@ export const todo = {
   resumeFromDeferred: 'Move back to current',
   deferred: 'Later',
   deferredSection: 'Later',
+  dropToRestore: 'Drop here to restore to current',
   trash: 'Trash',
   emptyTrash: 'Trash is empty',
   emptyTrashDescription: 'Deleted tasks will be kept here for 30 days',

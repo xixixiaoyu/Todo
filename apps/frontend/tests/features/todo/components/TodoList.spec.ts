@@ -72,6 +72,7 @@ const i18n = createI18n({
         resumeFromDeferred: '移回当前',
         deferred: '稍后',
         deferredSection: '稍后处理',
+        dropToRestore: '拖入此处恢复到当前',
         delete: '删除',
         addSubtask: '添加子任务',
         edit: '编辑',
@@ -443,5 +444,77 @@ describe('TodoList', () => {
     ])
 
     expect(setTodoDeferredSpy).toHaveBeenCalledWith('active', true)
+  })
+
+  it('should render an empty drop zone when active list is empty but deferred list has items', () => {
+    const wrapper = mount(TodoList, {
+      props: {
+        todos: [
+          {
+            ...mockTodos[0],
+            id: 'deferred',
+            title: 'Later',
+            deferredAt: new Date('2026-03-24T08:00:00.000Z'),
+          },
+        ],
+        filter: 'pending',
+        searchQuery: '',
+        editingId: null,
+        editingTitle: '',
+      },
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    // 验证主列表容器渲染了空落脚点提示
+    expect(wrapper.text()).toContain('拖入此处恢复到当前')
+    // 验证主列表 draggable 依然存在（不应被 v-if 移除）
+    const draggables = wrapper.findAllComponents({ name: 'draggable' })
+    expect(draggables.length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('should call setTodoDeferred(false) when an item is dragged into a subtask list', async () => {
+    const setTodoDeferredSpy = vi.spyOn(useTodoStore(), 'setTodoDeferred')
+
+    const wrapper = mount(TodoList, {
+      props: {
+        todos: [
+          {
+            ...mockTodos[0],
+            id: 'parent',
+            title: 'Parent Task',
+          },
+          {
+            ...mockTodos[0],
+            id: 'deferred-item',
+            title: 'Sub Task Candidate',
+            deferredAt: new Date(),
+          },
+        ],
+        filter: 'pending',
+        searchQuery: '',
+        editingId: null,
+        editingTitle: '',
+      },
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    // 找到父任务对应的 TodoItem
+    const parentItem = wrapper
+      .findAllComponents(TodoItem)
+      .find((c) => c.props('todo').id === 'parent')!
+    // 找到父任务内部的 draggable（子任务容器）
+    const subtaskDraggable = parentItem.findComponent({ name: 'draggable' })
+
+    // 模拟将 deferred-item 拖入 parent 的子任务列表
+    await subtaskDraggable.vm.$emit('update:modelValue', [
+      { ...mockTodos[0], id: 'deferred-item', title: 'Sub Task Candidate', deferredAt: new Date() },
+    ])
+
+    // 验证是否触发了状态清除
+    expect(setTodoDeferredSpy).toHaveBeenCalledWith('deferred-item', false)
   })
 })

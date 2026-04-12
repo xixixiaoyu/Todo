@@ -43,6 +43,7 @@ export const todo = {
   resumeFromDeferred: '移回当前',
   deferred: '稍后',
   deferredSection: '稍后处理',
+  dropToRestore: '拖入此处恢复到当前',
   trash: '回收站',
   emptyTrash: '回收站是空的',
   emptyTrashDescription: '被删除的任务会在这里保留 30 天',

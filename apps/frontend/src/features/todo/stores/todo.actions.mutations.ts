@@ -79,6 +79,12 @@ export function createTodoMutations(deps: TodoMutationDeps): {
           if (parentId !== undefined) {
             todo.parentId = parentId
           }
+
+          // If a todo becomes a subtask, it must not be deferred
+          if (todo.parentId && todo.deferredAt) {
+            todo.deferredAt = undefined
+          }
+
           todo.updatedAt = new Date()
           todo.syncStatus = 'pending'
         }

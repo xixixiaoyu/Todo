@@ -181,7 +181,7 @@ function toggleDeferredSection(): void {
 
       <div v-show="todos.length > 0" class="min-h-[100px]">
         <draggable
-          v-if="!shouldShowDeferredSection || activeTodos.length > 0"
+          v-if="props.filter !== 'trash'"
           v-model="dragList"
           item-key="id"
           handle=".drag-handle"
@@ -189,7 +189,13 @@ function toggleDeferredSection(): void {
           ghost-class="opacity-50"
           chosen-class="scale-[1.02]"
           drag-class="rotate-1"
-          class="space-y-1.5 md:space-y-2"
+          :class="[
+            'space-y-1.5 md:space-y-2 transition-all duration-300',
+            {
+              'min-h-[64px] border-2 border-dashed border-primary/10 rounded-[20px] bg-primary/[0.02] flex items-center justify-center mb-4 group/dropzone':
+                activeTodos.length === 0 && shouldShowDeferredSection,
+            },
+          ]"
           :animation="200"
           :disabled="!!searchQuery"
           @start="store.setDragging(true)"
@@ -214,6 +220,14 @@ function toggleDeferredSection(): void {
                 @update:editing-title="(value) => emit('update:editingTitle', value)"
                 @edit-keydown="(e) => emit('editKeydown', e)"
               />
+            </div>
+          </template>
+          <template v-if="activeTodos.length === 0 && shouldShowDeferredSection" #header>
+            <div
+              class="pointer-events-none flex items-center gap-2 text-[var(--todo-font-meta)] font-medium text-primary/30 group-hover/dropzone:text-primary/50 transition-colors"
+            >
+              <ClipboardList class="h-4 w-4" />
+              <span>{{ t('todo.dropToRestore') }}</span>
             </div>
           </template>
         </draggable>
