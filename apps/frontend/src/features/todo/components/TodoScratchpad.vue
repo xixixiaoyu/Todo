@@ -39,6 +39,7 @@ interface ScratchpadItem {
   id: string
   type: 'text' | 'image'
   content: string
+  image?: string // 添加可选的图片字段支持图文混排
   createdAt: number
   color?: string
   todoId?: string
@@ -51,10 +52,12 @@ const items = useLocalStorage<ScratchpadItem[]>('lumina-scratchpad-items', [])
 const showClearDialog = ref(false)
 const editingId = ref<string | null>(null)
 const editContent = ref('')
+const editImage = ref<string | undefined>(undefined)
 const editTodoId = ref<string | undefined>(undefined)
 const previewImageUrl = ref<string | null>(null)
 const isAddingNew = ref(false)
 const newNoteContent = ref('')
+const newNoteImage = ref<string | undefined>(undefined)
 const newNoteTodoId = ref<string | undefined>(undefined)
 const newNoteTextareaRef = ref<HTMLTextAreaElement | null>(null)
 const todoSearchQuery = ref('')
@@ -78,37 +81,52 @@ const filteredTodos = computed(() => {
 const getRandomColor = () => COLORS[Math.floor(Math.random() * COLORS.length)]
 
 const handlePaste = (event: ClipboardEvent) => {
-  if (editingId.value || isAddingNew.value) return
-
   const clipboardData = event.clipboardData
   if (!clipboardData) return
 
-  const files = clipboardData.files
-  if (files.length > 0) {
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
-      if (file.type.startsWith('image/')) {
+  const items_clipboard = clipboardData.items
+  let hasImage = false
+
+  for (let i = 0; i < items_clipboard.length; i++) {
+    const item = items_clipboard[i]
+    if (item.type.startsWith('image/')) {
+      hasImage = true
+      const file = item.getAsFile()
+      if (file) {
         const reader = new FileReader()
         reader.onload = (e) => {
           const content = e.target?.result as string
-          addItem('image', content)
+          if (editingId.value) {
+            editImage.value = content
+          } else {
+            // 如果没在编辑，则开启“新建笔记”并填入图片
+            if (!isAddingNew.value) {
+              startAddNew()
+            }
+            newNoteImage.value = content
+          }
         }
         reader.readAsDataURL(file)
       }
     }
   }
 
-  const text = clipboardData.getData('text/plain')
-  if (text && files.length === 0) {
-    addItem('text', text)
+  // 只有在非编辑/新增模式下且没有图片时，才自动处理文字粘贴为新笔记
+  // 这样可以确保在 textarea 中粘贴文字时保持默认行为
+  if (!editingId.value && !isAddingNew.value && !hasImage) {
+    const text = clipboardData.getData('text/plain')
+    if (text) {
+      addItem('text', text)
+    }
   }
 }
 
-const addItem = (type: 'text' | 'image', content: string, todoId?: string) => {
+const addItem = (type: 'text' | 'image', content: string, todoId?: string, image?: string) => {
   const newItem: ScratchpadItem = {
     id: crypto.randomUUID(),
     type,
     content,
+    image,
     createdAt: Date.now(),
     color: getRandomColor(),
     todoId,
@@ -119,6 +137,7 @@ const addItem = (type: 'text' | 'image', content: string, todoId?: string) => {
 const startAddNew = () => {
   isAddingNew.value = true
   newNoteContent.value = ''
+  newNoteImage.value = undefined
   newNoteTodoId.value = undefined
   void nextTick(() => {
     newNoteTextareaRef.value?.focus()
@@ -128,12 +147,13 @@ const startAddNew = () => {
 const cancelAddNew = () => {
   isAddingNew.value = false
   newNoteContent.value = ''
+  newNoteImage.value = undefined
   newNoteTodoId.value = undefined
 }
 
 const confirmAddNew = () => {
-  if (newNoteContent.value.trim()) {
-    addItem('text', newNoteContent.value.trim(), newNoteTodoId.value)
+  if (newNoteContent.value.trim() || newNoteImage.value) {
+    addItem('text', newNoteContent.value.trim(), newNoteTodoId.value, newNoteImage.value)
   }
   cancelAddNew()
 }
@@ -141,19 +161,22 @@ const confirmAddNew = () => {
 const startEditing = (item: ScratchpadItem) => {
   editingId.value = item.id
   editContent.value = item.content
+  editImage.value = item.image
   editTodoId.value = item.todoId
 }
 
 const cancelEditing = () => {
   editingId.value = null
   editContent.value = ''
+  editImage.value = undefined
   editTodoId.value = undefined
 }
 
 const saveEditing = (id: string) => {
   const item = items.value.find((i) => i.id === id)
-  if (item && editContent.value.trim()) {
+  if (item && (editContent.value.trim() || editImage.value)) {
     item.content = editContent.value.trim()
+    item.image = editImage.value
     item.todoId = editTodoId.value
   }
   cancelEditing()
@@ -197,6 +220,19 @@ const jumpToTodo = (todoId: string) => {
 
 onMounted(() => {
   window.addEventListener('paste', handlePaste)
+
+  // 简单的迁移逻辑：将旧的 type: 'image' 转换为统一的笔记格式
+  items.value = items.value.map((item) => {
+    if (item.type === 'image' && item.content.startsWith('data:image/')) {
+      return {
+        ...item,
+        type: 'text',
+        image: item.content,
+        content: '',
+      }
+    }
+    return item
+  })
 })
 
 onUnmounted(() => {
@@ -237,7 +273,8 @@ onUnmounted(() => {
     <ScrollArea class="flex-1 -mx-1 px-1">
       <div
         v-if="items.length === 0 && !isAddingNew"
-        class="flex flex-col items-center justify-center h-[400px] text-center space-y-4 opacity-60"
+        class="flex flex-col items-center justify-center h-[400px] text-center space-y-4 opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
+        @click="startAddNew"
       >
         <div class="p-6 rounded-full bg-muted/30 border-2 border-dashed border-muted-foreground/20">
           <ClipboardPaste :size="48" class="text-muted-foreground/40" />
@@ -257,6 +294,20 @@ onUnmounted(() => {
           class="relative overflow-hidden border-primary/30 bg-primary/5 shadow-inner"
         >
           <CardContent class="p-4 flex flex-col h-full space-y-3">
+            <div v-if="newNoteImage" class="relative group/new-img">
+              <img
+                :src="newNoteImage"
+                class="w-full h-auto max-h-[150px] object-contain rounded-lg border bg-muted/20"
+              />
+              <Button
+                variant="destructive"
+                size="icon"
+                class="absolute top-1 right-1 h-6 w-6 rounded-full opacity-0 group-hover/new-img:opacity-100 transition-opacity"
+                @click="newNoteImage = undefined"
+              >
+                <X :size="12" />
+              </Button>
+            </div>
             <textarea
               ref="newNoteTextareaRef"
               v-model="newNoteContent"
@@ -340,13 +391,13 @@ onUnmounted(() => {
           :class="[item.color || 'bg-card/50']"
         >
           <CardContent class="p-4">
-            <!-- Text Item -->
-            <div v-if="item.type === 'text'" class="space-y-3">
+            <!-- Unified Note Item -->
+            <div class="space-y-3">
               <div class="flex items-center justify-between">
                 <div
                   class="flex items-center gap-2 text-[10px] font-medium text-muted-foreground/60"
                 >
-                  <Type :size="12" />
+                  <component :is="item.image ? ImageIcon : Type" :size="12" />
                   <span>{{ new Date(item.createdAt).toLocaleString() }}</span>
                 </div>
                 <div
@@ -362,7 +413,7 @@ onUnmounted(() => {
                     <Pencil :size="12" />
                   </Button>
                   <Button
-                    v-if="editingId !== item.id"
+                    v-if="editingId !== item.id && item.content"
                     variant="ghost"
                     size="icon"
                     class="h-7 w-7 rounded-lg"
@@ -382,6 +433,20 @@ onUnmounted(() => {
               </div>
 
               <div v-if="editingId === item.id" class="space-y-3">
+                <div v-if="editImage" class="relative group/edit-img">
+                  <img
+                    :src="editImage"
+                    class="w-full h-auto max-h-[150px] object-contain rounded-lg border bg-muted/20"
+                  />
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    class="absolute top-1 right-1 h-6 w-6 rounded-full opacity-0 group-hover/edit-img:opacity-100 transition-opacity"
+                    @click="editImage = undefined"
+                  >
+                    <X :size="12" />
+                  </Button>
+                </div>
                 <textarea
                   v-model="editContent"
                   class="w-full bg-background/50 rounded-lg p-2 text-sm resize-none min-h-[100px] border-none focus:ring-1 focus:ring-primary/30"
@@ -459,6 +524,21 @@ onUnmounted(() => {
                 </div>
               </div>
               <div v-else class="space-y-3">
+                <div
+                  v-if="item.image"
+                  class="relative rounded-lg overflow-hidden border border-border/20 bg-muted/20 cursor-zoom-in group/card-img"
+                  @dblclick="openImagePreview(item.image)"
+                >
+                  <img
+                    :src="item.image"
+                    class="w-full h-auto object-contain max-h-[200px] transition-transform duration-500 group-hover/card-img:scale-105"
+                  />
+                  <div
+                    class="absolute inset-0 bg-black/0 group-hover/card-img:bg-black/5 transition-colors flex items-center justify-center opacity-0 group-hover/card-img:opacity-100"
+                  >
+                    <Maximize2 :size="16" class="text-white drop-shadow-md" />
+                  </div>
+                </div>
                 <p
                   class="text-sm leading-relaxed whitespace-pre-wrap break-words text-foreground/90 selection:bg-primary/20"
                   @dblclick="startEditing(item)"
@@ -524,112 +604,6 @@ onUnmounted(() => {
                     <X :size="8" />
                   </Button>
                 </div>
-              </div>
-            </div>
-
-            <!-- Image Item -->
-            <div v-else class="space-y-3">
-              <div class="flex items-center justify-between">
-                <div
-                  class="flex items-center gap-2 text-[10px] font-medium text-muted-foreground/60"
-                >
-                  <ImageIcon :size="12" />
-                  <span>{{ new Date(item.createdAt).toLocaleString() }}</span>
-                </div>
-                <div
-                  class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    class="h-7 w-7 rounded-lg"
-                    @click="openImagePreview(item.content)"
-                  >
-                    <Maximize2 :size="12" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    class="h-7 w-7 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
-                    @click="removeItem(item.id)"
-                  >
-                    <X :size="12" />
-                  </Button>
-                </div>
-              </div>
-              <div
-                class="relative rounded-lg overflow-hidden border border-border/20 bg-muted/20 cursor-zoom-in group/img"
-                @dblclick="openImagePreview(item.content)"
-              >
-                <img
-                  :src="item.content"
-                  class="w-full h-auto object-contain max-h-[300px] transition-transform duration-500 group-hover/img:scale-105"
-                  alt="Pasted content"
-                />
-                <div
-                  class="absolute inset-0 bg-black/0 group-hover/img:bg-black/5 transition-colors flex items-center justify-center opacity-0 group-hover/img:opacity-100"
-                >
-                  <Maximize2 :size="20" class="text-white drop-shadow-md" />
-                </div>
-              </div>
-              <!-- Linked Todo Tag for Images (only in non-editing mode as images aren't editable content-wise) -->
-              <div class="flex flex-wrap gap-1 mt-2 items-center justify-between">
-                <div v-if="item.todoId" class="flex gap-1">
-                  <Badge
-                    variant="secondary"
-                    class="bg-primary/10 text-primary border-none cursor-pointer hover:bg-primary/20 transition-colors gap-1 px-1.5 py-0.5 text-[10px]"
-                    @click="jumpToTodo(item.todoId)"
-                  >
-                    <LinkIcon :size="10" />
-                    {{ getTodoTitle(item.todoId) }}
-                  </Badge>
-                </div>
-                <div v-else class="opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Popover>
-                    <PopoverTrigger as-child>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        class="h-6 px-1.5 text-[9px] rounded-md gap-1 border border-primary/5 bg-background/30"
-                      >
-                        <Plus :size="9" />
-                        {{ t('todo.scratchpad.associateTodo') }}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent class="w-[200px] p-0" align="start">
-                      <div class="p-1.5 border-b">
-                        <Input
-                          v-model="todoSearchQuery"
-                          :placeholder="t('todo.scratchpad.searchTodo')"
-                          class="h-7 text-[10px]"
-                        />
-                      </div>
-                      <ScrollArea class="h-[150px]">
-                        <div class="p-1">
-                          <Button
-                            v-for="todo in filteredTodos"
-                            :key="todo.id"
-                            variant="ghost"
-                            class="w-full justify-start text-left text-[10px] h-7 px-1.5 rounded-md"
-                            @click="item.todoId = todo.id"
-                          >
-                            <span class="truncate">{{ todo.title }}</span>
-                          </Button>
-                        </div>
-                      </ScrollArea>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <!-- Allow unlinking even for images -->
-                <Button
-                  v-if="item.todoId"
-                  variant="ghost"
-                  size="icon"
-                  class="h-5 w-5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                  @click="item.todoId = undefined"
-                >
-                  <X :size="8" />
-                </Button>
               </div>
             </div>
           </CardContent>
