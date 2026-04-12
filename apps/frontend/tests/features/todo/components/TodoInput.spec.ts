@@ -10,7 +10,8 @@ const i18n = createI18n({
   messages: {
     'zh-CN': {
       todo: {
-        inputPlaceholder: '添加新的待办事项...',
+        inputPlaceholder: '添加新的待办事项，或粘贴图片进行分析...',
+        inputPlaceholderNoAI: '添加新的待办事项，或粘贴图片分析（需配置 AI）...',
         add: '添加',
         duplicate: '已存在相同的待办事项',
       },

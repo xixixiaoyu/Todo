@@ -3,6 +3,7 @@ import { useI18n } from 'vue-i18n'
 import { Plus, Calendar } from 'lucide-vue-next'
 import { ref, onMounted, computed, useId } from 'vue'
 import { useIsMobile } from '@/composables/useWindowSize'
+import { useAIConfig } from '@/features/ai/composables/useAIConfig'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -10,6 +11,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 const { t } = useI18n()
 const { isMobile } = useIsMobile()
+const { isConfigValid } = useAIConfig()
 const inputId = useId()
 
 const props = defineProps<{
@@ -26,6 +28,11 @@ const emit = defineEmits<{
 }>()
 
 const inputRef = ref<InstanceType<typeof Input> | null>(null)
+
+// 根据 AI 配置状态显示不同的 placeholder
+const placeholder = computed(() => {
+  return isConfigValid() ? t('todo.inputPlaceholder') : t('todo.inputPlaceholderNoAI')
+})
 
 // Simple NLP Date Parsing
 const parsedDate = computed(() => {
@@ -90,14 +97,14 @@ onMounted(() => {
           <Tooltip :open="showTooltip">
             <TooltipTrigger as-child>
               <div>
-                <label :for="inputId" class="sr-only">{{ t('todo.inputPlaceholder') }}</label>
+                <label :for="inputId" class="sr-only">{{ placeholder }}</label>
                 <Input
                   :id="inputId"
                   ref="inputRef"
                   name="todo-input"
                   :model-value="modelValue"
                   type="text"
-                  :placeholder="t('todo.inputPlaceholder')"
+                  :placeholder="placeholder"
                   class="h-[var(--todo-control-primary-height)] rounded-[var(--todo-radius-soft)] border-border/80 bg-card/95 px-4 text-[var(--todo-font-body)] shadow-[0_2px_12px_rgba(0,0,0,0.035)] transition-all placeholder:text-[var(--todo-font-meta)] focus-visible:ring-primary/15 group-hover:border-primary/20 group-hover:shadow-[0_4px_16px_rgba(0,0,0,0.05)] md:px-5 md:shadow-[0_8px_24px_rgb(0,0,0,0.04)] md:group-hover:border-primary/30 md:group-hover:shadow-[0_10px_28px_rgb(0,0,0,0.07)]"
                   :class="{ 'border-destructive focus-visible:ring-destructive/20': errorMessage }"
                   @update:model-value="emit('update:modelValue', $event as string)"

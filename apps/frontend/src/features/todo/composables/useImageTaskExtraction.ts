@@ -94,8 +94,12 @@ export function useImageTaskExtraction() {
       }
     } catch (error) {
       console.error('Failed to extract tasks from image:', error)
-      extractionError.value =
-        error instanceof Error ? error.message : t('todo.imageTaskExtraction.extractionFailed')
+      if (error instanceof Error && error.message === 'AI_CONFIG_MISSING') {
+        extractionError.value = t('todo.imageTaskExtraction.configMissing')
+      } else {
+        extractionError.value =
+          error instanceof Error ? error.message : t('todo.imageTaskExtraction.extractionFailed')
+      }
     } finally {
       isExtracting.value = false
     }

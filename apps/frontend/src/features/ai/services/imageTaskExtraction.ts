@@ -48,6 +48,10 @@ export async function extractTasksFromImage(
   const aiConfig = getAIConfig()
   const { baseUrl = aiConfig.baseUrl, apiKey = aiConfig.apiKey, model = aiConfig.model } = options
 
+  if (!apiKey || !baseUrl) {
+    throw new Error('AI_CONFIG_MISSING')
+  }
+
   // 构建多模态消息内容
   const content: MultiModalContent[] = [
     { type: 'text', text: '请分析这张图片，提取其中的待办任务。' },
@@ -98,45 +102,38 @@ export async function extractTasksFromImage(
  * 从 AI 响应中解析任务列表
  */
 function parseTasksFromResponse(content: string): string[] {
-  // 尝试直接解析 JSON
-  try {
-    const trimmed = content.trim()
+  // 1. 预处理：移除思考过程 <think>...</think>
+  const cleanContent = content.replace(/<think>[\s\S]*?<\/think>/g, '').trim()
 
-    // 尝试提取 JSON 数组部分
-    const jsonMatch = trimmed.match(/\[[\s\S]*\]/)
+  // 2. 尝试提取 JSON 数组
+  try {
+    // 匹配最外层的 JSON 数组 [ ... ]
+    const jsonMatch = cleanContent.match(/\[\s*("[^"]*"\s*,\s*)*"[^"]*"\s*\]/)
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0])
       if (Array.isArray(parsed)) {
         return parsed
           .filter((item): item is string => typeof item === 'string')
           .map((task) => task.trim())
-          .filter((task) => task.length > 0)
+          .filter((task) => task.length > 0 && task.length < 200)
       }
     }
-
-    // 如果整体是 JSON 数组
-    const parsed = JSON.parse(trimmed)
-    if (Array.isArray(parsed)) {
-      return parsed
-        .filter((item): item is string => typeof item === 'string')
-        .map((task) => task.trim())
-        .filter((task) => task.length > 0)
-    }
   } catch {
-    // JSON 解析失败，尝试其他方式
+    // JSON 提取/解析失败
   }
 
-  // 如果无法解析 JSON，尝试按行分割
-  const lines = content
-    .split('\n')
-    .map((line) => line.replace(/^[-*\d.)\]]+\s*/, '').trim())
-    .filter((line) => line.length > 0 && line.length < 200)
+  // 3. 严格兜底策略：如果模型返回的是一段话而不是列表，不应该将其误判为任务
+  // 检查是否包含明显的列表特征（如每行以数字或符号开头）
+  const lines = cleanContent.split('\n').filter((l) => l.trim().length > 0)
+  const isLikelyList = lines.every((line) => /^[-*•+]|\d+[.)]/.test(line.trim()))
 
-  // 如果有合理的行，返回它们
-  if (lines.length > 0 && lines.length <= 20) {
+  if (isLikelyList && lines.length > 0 && lines.length <= 20) {
     return lines
+      .map((line) => line.replace(/^[-*•+]\s*|\d+[.)]\s*/, '').trim())
+      .filter((line) => line.length > 0 && line.length < 200)
   }
 
+  // 如果没有明确的列表格式，且 JSON 解析也失败了，说明模型可能在「胡言乱语」或拒绝服务
   return []
 }
 

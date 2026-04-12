@@ -1,6 +1,7 @@
 export const todo = {
   title: '待办事项',
-  inputPlaceholder: '添加新的待办事项...',
+  inputPlaceholder: '添加新的待办事项，或粘贴图片进行分析...',
+  inputPlaceholderNoAI: '添加新的待办事项，或粘贴图片分析（需配置 AI）...',
   add: '添加',
   pending: '待完成',
   completed: '已完成',
@@ -127,6 +128,7 @@ export const todo = {
     noTasksFound: '未能从图片中识别出任务',
     confirmAdd: '确认添加',
     extractionFailed: '图片解析失败，请重试',
+    configMissing: '未配置 AI 助手，请在设置中配置 API Key 后使用',
     addTask: '添加任务',
     taskPlaceholder: '输入任务内容...',
     imageTooLarge: '图片过大，请选择小于 {maxSize}MB 的图片',

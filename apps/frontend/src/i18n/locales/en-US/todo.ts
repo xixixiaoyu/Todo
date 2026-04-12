@@ -1,6 +1,7 @@
 export const todo = {
   title: 'To-Do',
-  inputPlaceholder: 'Add a new task...',
+  inputPlaceholder: 'Add a new task, or paste an image to analyze...',
+  inputPlaceholderNoAI: 'Add a new task, or paste an image to analyze (AI required)...',
   add: 'Add',
   pending: 'Pending',
   completed: 'Completed',
@@ -128,6 +129,7 @@ export const todo = {
     noTasksFound: 'No tasks found in the image',
     confirmAdd: 'Confirm Add',
     extractionFailed: 'Failed to extract tasks, please try again',
+    configMissing: 'AI not configured, please set API Key in settings first',
     addTask: 'Add task',
     taskPlaceholder: 'Enter task...',
     imageTooLarge: 'Image is too large, please choose an image smaller than {maxSize}MB',
