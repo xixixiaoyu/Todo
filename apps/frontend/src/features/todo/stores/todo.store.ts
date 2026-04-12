@@ -62,12 +62,18 @@ export const useTodoStore = defineStore(
     }
 
     const applyPersistedExpansionState = () => {
+      let changed = false
       todos.value.forEach((todo) => {
         const persistedExpanded = todoExpansionState.value[todo.id]
-        if (persistedExpanded !== undefined) {
+        if (persistedExpanded !== undefined && todo.expanded !== persistedExpanded) {
           todo.expanded = persistedExpanded
+          changed = true
+        } else if (todo.expanded !== undefined && persistedExpanded === undefined) {
+          // Sync existing expanded state into todoExpansionState if not already present
+          todoExpansionState.value[todo.id] = todo.expanded
         }
       })
+      return changed
     }
 
     const sourceManager = createTodoSourceManager({
@@ -85,6 +91,23 @@ export const useTodoStore = defineStore(
       todos,
       () => {
         normalizeAllTodos()
+
+        // 1. Sync from persistence record to todos (for newly loaded/synced todos)
+        applyPersistedExpansionState()
+
+        // 2. Sync from todos back to persistence record (for state changes in UI)
+        const nextExpansionState = { ...todoExpansionState.value }
+        let expansionChanged = false
+        todos.value.forEach((todo) => {
+          if (todo.expanded !== undefined && nextExpansionState[todo.id] !== todo.expanded) {
+            nextExpansionState[todo.id] = todo.expanded
+            expansionChanged = true
+          }
+        })
+        if (expansionChanged) {
+          todoExpansionState.value = nextExpansionState
+        }
+
         if (sourceManager.isApplyingSourceSnapshot()) return
         sourceManager.persistActiveSourceTodos()
       },
@@ -104,6 +127,7 @@ export const useTodoStore = defineStore(
     watch(
       todoExpansionState,
       () => {
+        if (sourceManager.isApplyingSourceSnapshot()) return
         applyPersistedExpansionState()
       },
       { immediate: true, deep: true },

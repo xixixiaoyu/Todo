@@ -201,25 +201,25 @@ watch(
 
 // 使用 GSAP 驱动的高性能高度展开动画，替代简单的 v-show
 watch(
-  () => isExpanded.value || store.isDragging,
-  (shouldShow, prevShow) => {
-    if (!subtaskListRef.value) return
+  [() => isExpanded.value || store.isDragging, subtaskListRef],
+  ([shouldShow, el], [_, oldEl]) => {
+    if (!el) return
 
-    // 如果是初次挂载（prevShow 为 undefined），则使用 set 而非 animate
-    const isInitial = prevShow === undefined
+    // 如果是初次挂载（oldEl 为 null），则使用 set 而非 animate
+    const isInitial = !oldEl
 
     ctx.add(() => {
       if (shouldShow) {
         // 展开动画
         if (isInitial) {
-          gsap.set(subtaskListRef.value, {
+          gsap.set(el, {
             height: 'auto',
             opacity: 1,
             display: 'flex',
           })
         } else {
           gsap.fromTo(
-            subtaskListRef.value,
+            el,
             { height: 0, opacity: 0, display: 'flex' },
             {
               height: 'auto',
@@ -233,19 +233,19 @@ watch(
       } else {
         // 折叠动画
         if (isInitial) {
-          gsap.set(subtaskListRef.value, {
+          gsap.set(el, {
             height: 0,
             opacity: 0,
             display: 'none',
           })
         } else {
-          gsap.to(subtaskListRef.value, {
+          gsap.to(el, {
             height: 0,
             opacity: 0,
             duration: 0.3,
             ease: 'power2.inOut',
             onComplete: () => {
-              gsap.set(subtaskListRef.value, { display: 'none' })
+              gsap.set(el, { display: 'none' })
             },
           })
         }

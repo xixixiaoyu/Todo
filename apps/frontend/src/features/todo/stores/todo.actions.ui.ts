@@ -73,17 +73,23 @@ export function createTodoUiActions(deps: TodoUiDeps): {
 
   function toggleAllExpansion(): void {
     const targetState = !deps.isAllExpanded.value
+    const nextExpansionState = { ...deps.todoExpansionState.value }
     deps.filteredTodos.value.forEach((todo) => {
       todo.expanded = targetState
-      deps.todoExpansionState.value[todo.id] = targetState
+      nextExpansionState[todo.id] = targetState
     })
+    deps.todoExpansionState.value = nextExpansionState
   }
 
   function toggleTodoExpansion(id: string): void {
     const todo = deps.todos.value.find((item) => item.id === id)
     if (todo) {
-      todo.expanded = !(todo.expanded ?? true)
-      deps.todoExpansionState.value[id] = todo.expanded
+      const nextState = !(todo.expanded ?? true)
+      todo.expanded = nextState
+      deps.todoExpansionState.value = {
+        ...deps.todoExpansionState.value,
+        [id]: nextState,
+      }
     }
   }
 
