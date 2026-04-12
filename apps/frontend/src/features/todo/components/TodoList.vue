@@ -45,6 +45,15 @@ const emit = defineEmits<{
 const dragList = computed({
   get: () => (shouldShowDeferredSection.value ? activeTodos.value : displayTodos.value),
   set: (val) => {
+    if (shouldShowDeferredSection.value) {
+      // 检测从「稍后处理」拖入当前列表的项：它们仍持有 deferredAt
+      // 必须在 reorder 之前立即清除，否则 computed getter 会把项弹回旧列表
+      for (const todo of val) {
+        if (todo.deferredAt && !todo.completed) {
+          void store.setTodoDeferred(todo.id, false)
+        }
+      }
+    }
     emit(
       'reorder',
       shouldShowDeferredSection.value
@@ -58,6 +67,13 @@ const dragList = computed({
 const deferredDragList = computed({
   get: () => deferredTodos.value,
   set: (val) => {
+    // 检测从当前列表拖入「稍后处理」的项：它们尚未持有 deferredAt
+    // 必须在 reorder 之前立即设置，否则 computed getter 会把项弹回旧列表
+    for (const todo of val) {
+      if (!todo.deferredAt && !todo.completed && !todo.parentId) {
+        void store.setTodoDeferred(todo.id, true)
+      }
+    }
     emit(
       'reorder',
       [...activeTodos.value.map((todo) => todo.id), ...val.map((todo) => todo.id)],
@@ -249,6 +265,7 @@ function toggleDeferredSection(): void {
                 v-model="deferredDragList"
                 item-key="id"
                 handle=".drag-handle"
+                :group="{ name: 'todos', pull: true, put: true }"
                 ghost-class="opacity-50"
                 chosen-class="scale-[1.02]"
                 drag-class="rotate-1"

@@ -5,7 +5,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { vi } from 'vitest'
 import TodoList from '@/features/todo/components/TodoList.vue'
 import TodoItem from '@/features/todo/components/TodoItem.vue'
-import type { Todo } from '@/features/todo/stores/todo'
+import { useTodoStore, type Todo } from '@/features/todo/stores/todo'
 
 // Mock reka-ui components
 vi.mock('reka-ui', async (importOriginal) => {
@@ -86,6 +86,7 @@ const i18n = createI18n({
 describe('TodoList', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    vi.clearAllMocks()
   })
 
   const mockTodos: Todo[] = [
@@ -310,5 +311,137 @@ describe('TodoList', () => {
       secondWrapper.get('[data-test="deferred-section-toggle"]').attributes('aria-expanded'),
     ).toBe('true')
     expect(secondWrapper.text()).toContain('Later')
+  })
+
+  it('should render deferred draggable with correct group config for cross-list drag', async () => {
+    const wrapper = mount(TodoList, {
+      props: {
+        todos: [
+          {
+            ...mockTodos[0],
+            id: 'active',
+            title: 'Now',
+          },
+          {
+            ...mockTodos[0],
+            id: 'deferred-item',
+            title: 'Later',
+            deferredAt: new Date('2026-03-24T08:00:00.000Z'),
+          },
+        ],
+        filter: 'pending',
+        searchQuery: '',
+        editingId: null,
+        editingTitle: '',
+      },
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    // 展开稍后处理区域
+    await wrapper.get('[data-test="deferred-section-toggle"]').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    // 验证稍后处理区域的 draggable 渲染出来且具备跨区拖拽的 group 配置
+    const deferredSectionEl = wrapper.find('#todo-deferred-section')
+    expect(deferredSectionEl.exists()).toBe(true)
+  })
+
+  it('should call setTodoDeferred when an item is dragged from deferred to active list', async () => {
+    const setTodoDeferredSpy = vi.spyOn(useTodoStore(), 'setTodoDeferred')
+
+    const wrapper = mount(TodoList, {
+      props: {
+        todos: [
+          {
+            ...mockTodos[0],
+            id: 'active',
+            title: 'Now',
+          },
+          {
+            ...mockTodos[0],
+            id: 'deferred',
+            title: 'Later',
+            deferredAt: new Date('2026-03-24T08:00:00.000Z'),
+          },
+        ],
+        filter: 'pending',
+        searchQuery: '',
+        editingId: null,
+        editingTitle: '',
+      },
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    // 模拟 vuedraggable 将 deferred 项拖入 active 列表的 v-model setter
+    // dragList setter 检测到 val 中存在 deferredAt 的项，立即调用 setTodoDeferred(id, false)
+    const draggables = wrapper.findAllComponents({ name: 'draggable' })
+    const activeDraggable = draggables[0]
+    // 模拟 vuedraggable 更新 v-model：active 列表新增一个有 deferredAt 的项
+    await activeDraggable.vm.$emit('update:modelValue', [
+      { ...mockTodos[0], id: 'active', title: 'Now' },
+      { ...mockTodos[0], id: 'deferred', title: 'Later', deferredAt: new Date() },
+    ])
+
+    expect(setTodoDeferredSpy).toHaveBeenCalledWith('deferred', false)
+  })
+
+  it('should call setTodoDeferred when an item is dragged from active to deferred list', async () => {
+    const setTodoDeferredSpy = vi.spyOn(useTodoStore(), 'setTodoDeferred')
+
+    const wrapper = mount(TodoList, {
+      props: {
+        todos: [
+          {
+            ...mockTodos[0],
+            id: 'active',
+            title: 'Now',
+          },
+          {
+            ...mockTodos[0],
+            id: 'deferred-item',
+            title: 'Later',
+            deferredAt: new Date('2026-03-24T08:00:00.000Z'),
+          },
+        ],
+        filter: 'pending',
+        searchQuery: '',
+        editingId: null,
+        editingTitle: '',
+      },
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    // 展开稍后处理区域
+    await wrapper.get('[data-test="deferred-section-toggle"]').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    // 验证 deferred section 已渲染
+    const deferredDraggable = wrapper
+      .findAllComponents({ name: 'draggable' })
+      .find((c) => c.attributes('id') === 'todo-deferred-section')!
+    expect(deferredDraggable.exists()).toBe(true)
+
+    // 清除可能在 mount 期间意外触发的调用
+    setTodoDeferredSpy.mockClear()
+
+    // 模拟 vuedraggable 将 active 项拖入 deferred 列表 of v-model setter
+    // deferredDragList setter 检测到 val 中存在没有 deferredAt 的项，立即调用 setTodoDeferred(id, true)
+    await deferredDraggable.vm.$emit('update:modelValue', [
+      {
+        ...mockTodos[0],
+        id: 'deferred-item',
+        title: 'Later',
+        deferredAt: new Date('2026-03-24T08:00:00.000Z'),
+      },
+      { ...mockTodos[0], id: 'active', title: 'Now' }, // 这里的 active 项没有 deferredAt
+    ])
+
+    expect(setTodoDeferredSpy).toHaveBeenCalledWith('active', true)
   })
 })
