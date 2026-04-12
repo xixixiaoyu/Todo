@@ -70,7 +70,7 @@ const deferredDragList = computed({
     // 检测从当前列表拖入「稍后处理」的项：它们尚未持有 deferredAt
     // 必须在 reorder 之前立即设置，否则 computed getter 会把项弹回旧列表
     for (const todo of val) {
-      if (!todo.deferredAt && !todo.completed && !todo.parentId) {
+      if (!todo.deferredAt && !todo.completed) {
         void store.setTodoDeferred(todo.id, true)
       }
     }

@@ -31,6 +31,7 @@ vi.mock('lucide-vue-next', () => ({
   MoreHorizontal: { template: '<span>MoreHorizontal</span>' },
   HardDrive: { template: '<span>HardDrive</span>' },
   Cloud: { template: '<span>Cloud</span>' },
+  ClipboardPaste: { template: '<span>ClipboardPaste</span>' },
 }))
 
 // Mock vue-i18n

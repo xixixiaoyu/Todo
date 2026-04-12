@@ -135,9 +135,12 @@ export const useTodoStore = defineStore(
 
     watch(searchQuery, (newQuery) => {
       if (newQuery.trim()) {
+        const nextExpansionState = { ...todoExpansionState.value }
         todos.value.forEach((todo) => {
           todo.expanded = true
+          nextExpansionState[todo.id] = true
         })
+        todoExpansionState.value = nextExpansionState
       }
     })
 

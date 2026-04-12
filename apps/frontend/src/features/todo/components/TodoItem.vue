@@ -99,6 +99,12 @@ const children = computed(() => {
 const dragChildren = computed({
   get: () => children.value,
   set: (val) => {
+    // 检测拖入子任务列表的项：它们不应处于「稍后处理」状态
+    for (const todo of val) {
+      if (todo.deferredAt && !todo.completed) {
+        void store.setTodoDeferred(todo.id, false)
+      }
+    }
     store.reorderTodos(
       val.map((t) => t.id),
       props.todo.id,

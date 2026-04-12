@@ -274,13 +274,24 @@ export function createTodoMutations(deps: TodoMutationDeps): {
 
   async function setTodoDeferred(id: string, deferred: boolean): Promise<boolean> {
     const todo = deps.todos.value.find((item) => item.id === id)
-    if (!todo || todo.completed || todo.deletedAt || todo.parentId) return false
+    if (!todo || todo.completed || todo.deletedAt) return false
 
     if (deferred === !!todo.deferredAt) {
       return true
     }
 
-    todo.deferredAt = deferred ? new Date() : undefined
+    if (deferred) {
+      todo.deferredAt = new Date()
+      // If a subtask is deferred, it becomes a root task
+      if (todo.parentId) {
+        const oldParentId = todo.parentId
+        todo.parentId = null
+        updateParentStatus(oldParentId)
+      }
+    } else {
+      todo.deferredAt = undefined
+    }
+
     todo.updatedAt = new Date()
     todo.syncStatus = 'pending'
     deps.debouncedSync()

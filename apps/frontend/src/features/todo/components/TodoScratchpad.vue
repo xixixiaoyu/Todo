@@ -77,7 +77,7 @@ const filteredTodos = computed(() => {
 
 const getRandomColor = () => COLORS[Math.floor(Math.random() * COLORS.length)]
 
-const handlePaste = async (event: ClipboardEvent) => {
+const handlePaste = (event: ClipboardEvent) => {
   if (editingId.value || isAddingNew.value) return
 
   const clipboardData = event.clipboardData
@@ -120,7 +120,7 @@ const startAddNew = () => {
   isAddingNew.value = true
   newNoteContent.value = ''
   newNoteTodoId.value = undefined
-  nextTick(() => {
+  void nextTick(() => {
     newNoteTextareaRef.value?.focus()
   })
 }

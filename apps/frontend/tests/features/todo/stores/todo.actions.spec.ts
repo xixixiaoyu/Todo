@@ -229,6 +229,39 @@ describe('useTodoStore - Actions', () => {
       expect(store.todos.find((t) => t.id === 'parent')?.completed).toBe(true)
     })
 
+    it('should clear parentId when a subtask is deferred', async () => {
+      store.todos = [
+        {
+          id: 'parent',
+          title: 'Parent',
+          completed: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          order: 0,
+          version: 0,
+          pomodoroCount: 0,
+        },
+        {
+          id: 'child',
+          title: 'Child',
+          completed: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          parentId: 'parent',
+          order: 0,
+          version: 0,
+          pomodoroCount: 0,
+        },
+      ]
+
+      await store.setTodoDeferred('child', true)
+      const child = store.todos.find((t) => t.id === 'child')!
+      expect(child.deferredAt).toBeDefined()
+      expect(child.parentId).toBeNull()
+    })
+
     it('should toggle status recursively for 3 levels', async () => {
       store.todos = [
         {
@@ -526,7 +559,7 @@ describe('useTodoStore - Actions', () => {
       expect(store.todos[0].deferredAt).toBeUndefined()
     })
 
-    it('should not defer subtasks', async () => {
+    it('should allow deferring subtasks (will become root tasks)', async () => {
       store.todos = [
         {
           id: 'child-1',
@@ -544,8 +577,9 @@ describe('useTodoStore - Actions', () => {
 
       const result = await store.setTodoDeferred('child-1', true)
 
-      expect(result).toBe(false)
-      expect(store.todos[0].deferredAt).toBeUndefined()
+      expect(result).toBe(true)
+      expect(store.todos[0].deferredAt).toBeDefined()
+      expect(store.todos[0].parentId).toBeNull()
     })
 
     it('should clear deferred state when completing a deferred todo', async () => {

@@ -217,6 +217,6 @@ describe('TodoInput', () => {
     })
 
     const input = wrapper.find('input[type="text"]')
-    expect(input.attributes('placeholder')).toBe('添加新的待办事项...')
+    expect(input.attributes('placeholder')).toBe('添加新的待办事项，或粘贴图片分析（需配置 AI）...')
   })
 })

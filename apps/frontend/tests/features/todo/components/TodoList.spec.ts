@@ -517,4 +517,76 @@ describe('TodoList', () => {
     // 验证是否触发了状态清除
     expect(setTodoDeferredSpy).toHaveBeenCalledWith('deferred-item', false)
   })
+
+  it('should call setTodoDeferred(true) when a subtask is dragged into the deferred list', async () => {
+    const store = useTodoStore()
+    const setTodoDeferredSpy = vi.spyOn(store, 'setTodoDeferred')
+    store.deferredSectionExpandedPreference = true
+
+    const wrapper = mount(TodoList, {
+      props: {
+        todos: [
+          {
+            ...mockTodos[0],
+            id: 'parent',
+            title: 'Parent Task',
+            completed: false,
+          },
+          {
+            ...mockTodos[0],
+            id: 'subtask',
+            title: 'Sub Task',
+            parentId: 'parent',
+            completed: false,
+          },
+          {
+            ...mockTodos[0],
+            id: 'deferred-existing',
+            title: 'Deferred Item',
+            deferredAt: new Date(),
+            completed: false,
+          },
+        ],
+        filter: 'pending',
+        searchQuery: '',
+        editingId: null,
+        editingTitle: '',
+      },
+      global: {
+        plugins: [i18n],
+      },
+    })
+
+    // 找到「稍后处理」列表的 draggable (它应该是 TodoList 根下的第二个 draggable)
+    // 注意：TodoItem 内部也有 draggable，所以我们要找包含 deferredTodos 的那个
+    const deferredDraggable = wrapper
+      .findAllComponents({ name: 'draggable' })
+      .find((c) => (c.props('modelValue') as Todo[]).some((t) => t.id === 'deferred-existing'))!
+
+    // 确保我们找到了正确的 draggable
+    expect(deferredDraggable.props('modelValue')[0].id).toBe('deferred-existing')
+
+    const deferredAt = deferredDraggable.props('modelValue')[0].deferredAt
+
+    // 模拟将 subtask 拖入「稍后处理」列表
+    await deferredDraggable.vm.$emit('update:modelValue', [
+      {
+        ...mockTodos[0],
+        id: 'deferred-existing',
+        title: 'Deferred Item',
+        deferredAt,
+        completed: false,
+      },
+      {
+        ...mockTodos[0],
+        id: 'subtask',
+        title: 'Sub Task',
+        parentId: 'parent',
+        completed: false,
+      },
+    ])
+
+    // 验证是否触发了状态设置
+    expect(setTodoDeferredSpy).toHaveBeenCalledWith('subtask', true)
+  })
 })
