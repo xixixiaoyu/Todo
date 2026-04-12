@@ -96,12 +96,6 @@ const children = computed(() => {
 const dragChildren = computed({
   get: () => children.value,
   set: (val) => {
-    // Clear deferredAt if an item is dragged into a subtask list
-    for (const todo of val) {
-      if (todo.deferredAt && !todo.completed) {
-        void store.setTodoDeferred(todo.id, false)
-      }
-    }
     store.reorderTodos(
       val.map((t) => t.id),
       props.todo.id,

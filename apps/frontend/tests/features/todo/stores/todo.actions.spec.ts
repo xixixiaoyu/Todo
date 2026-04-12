@@ -447,6 +447,30 @@ describe('useTodoStore - Actions', () => {
       const result = await store.updateTodo('non-existent', 'New Title')
       expect(result).toBe(false)
     })
+
+    it('should clear deferredAt when a deferred todo becomes a subtask via updateTodo', async () => {
+      store.todos = [
+        {
+          id: '1',
+          title: 'Task 1',
+          completed: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          order: 0,
+          version: 0,
+          pomodoroCount: 0,
+          parentId: null,
+          deferredAt: new Date(),
+        },
+      ]
+
+      await store.updateTodo('1', undefined, 'parent-1')
+
+      const t1 = store.todos.find((t) => t.id === '1')
+      expect(t1?.parentId).toBe('parent-1')
+      expect(t1?.deferredAt).toBeUndefined()
+    })
   })
 
   describe('togglePin', () => {
@@ -758,6 +782,30 @@ describe('useTodoStore - Actions', () => {
       expect(t1?.order).toBe(1)
       expect(t2?.order).toBe(0)
       expect(store.error).toBeNull()
+    })
+
+    it('should clear deferredAt when a deferred todo becomes a subtask', () => {
+      store.todos = [
+        {
+          id: '1',
+          title: 'Task 1',
+          completed: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isPinned: false,
+          order: 0,
+          version: 0,
+          pomodoroCount: 0,
+          parentId: null,
+          deferredAt: new Date(),
+        },
+      ]
+
+      store.reorderTodos(['1'], 'parent-1')
+
+      const t1 = store.todos.find((t) => t.id === '1')
+      expect(t1?.parentId).toBe('parent-1')
+      expect(t1?.deferredAt).toBeUndefined()
     })
   })
 

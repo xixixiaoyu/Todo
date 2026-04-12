@@ -365,6 +365,9 @@ export function createTodoMutations(deps: TodoMutationDeps): {
     }
     if (parentId !== undefined) {
       todo.parentId = parentId
+      if (parentId && todo.deferredAt) {
+        todo.deferredAt = undefined
+      }
     }
 
     todo.updatedAt = new Date()
