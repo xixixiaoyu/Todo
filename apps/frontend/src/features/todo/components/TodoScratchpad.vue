@@ -200,6 +200,17 @@ const copyText = async (text: string) => {
   }
 }
 
+const selectAllText = (event: MouseEvent) => {
+  const target = event.target as HTMLElement
+  const selection = window.getSelection()
+  if (selection) {
+    const range = document.createRange()
+    range.selectNodeContents(target)
+    selection.removeAllRanges()
+    selection.addRange(range)
+  }
+}
+
 const openImagePreview = (url: string) => {
   previewImageUrl.value = url
 }
@@ -541,7 +552,7 @@ onUnmounted(() => {
                 </div>
                 <p
                   class="text-sm leading-relaxed whitespace-pre-wrap break-words text-foreground/90 selection:bg-primary/20 select-text cursor-text"
-                  @dblclick="startEditing(item)"
+                  @dblclick="selectAllText"
                 >
                   {{ item.content }}
                 </p>
