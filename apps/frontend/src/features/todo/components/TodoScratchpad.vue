@@ -540,7 +540,7 @@ onUnmounted(() => {
                   </div>
                 </div>
                 <p
-                  class="text-sm leading-relaxed whitespace-pre-wrap break-words text-foreground/90 selection:bg-primary/20"
+                  class="text-sm leading-relaxed whitespace-pre-wrap break-words text-foreground/90 selection:bg-primary/20 select-text cursor-text"
                   @dblclick="startEditing(item)"
                 >
                   {{ item.content }}
