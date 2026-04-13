@@ -85,4 +85,10 @@ export const common = {
   success: '操作成功',
   settings: '设置',
   versionUpdated: '应用已更新，请刷新页面以加载最新版本',
+  upload: {
+    avatar: '上传头像',
+    avatar_success: '头像上传成功',
+    avatar_failed: '头像上传失败',
+    unsupported_file: '不支持的文件类型',
+  },
 } as const

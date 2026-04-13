@@ -85,4 +85,10 @@ export const common = {
   success: 'Success',
   settings: 'Settings',
   versionUpdated: 'App updated. Please refresh the page to load the latest version.',
+  upload: {
+    avatar: 'Upload Avatar',
+    avatar_success: 'Avatar uploaded successfully',
+    avatar_failed: 'Failed to upload avatar',
+    unsupported_file: 'Unsupported file type',
+  },
 } as const

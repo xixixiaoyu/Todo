@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   Snowflake,
@@ -13,6 +14,7 @@ import {
   HardDrive,
   Cloud,
   ClipboardPaste,
+  Upload,
 } from 'lucide-vue-next'
 import ThemeToggle from './ThemeToggle.vue'
 import ThemeColorPicker from './ThemeColorPicker.vue'
@@ -31,13 +33,56 @@ import { useTodoStore } from '../stores/todo'
 import { useAuthStore } from '../../auth/stores/auth'
 import { useRouter } from 'vue-router'
 import { nativeService } from '@/services/native'
+import { useToast } from '@/composables/useToast'
 
 const { t, locale } = useI18n()
 const todoStore = useTodoStore()
 const authStore = useAuthStore()
 const router = useRouter()
+const toast = useToast()
 
 const isWails = () => nativeService.platform === 'wails'
+
+const avatarUrl = computed(() => {
+  let avatar = authStore.user?.avatar
+  if (!avatar) return null
+  if (avatar.startsWith('http') || avatar.startsWith('data:')) return avatar
+
+  // 兼容旧路径 /public/avatars/ -> /api/public/avatars/
+  if (avatar.startsWith('/public/')) {
+    avatar = `/api${avatar}`
+  }
+
+  // 处理本地路径 /api/public/avatars/...
+  const apiBase =
+    import.meta.env.VITE_API_BASE_URL ||
+    (import.meta.env.IS_WAILS ? 'http://localhost:3000/api' : '/api')
+  const baseUrl = apiBase.replace(/\/api$/, '')
+  return `${baseUrl}${avatar}`
+})
+
+const fileInputRef = ref<HTMLInputElement | null>(null)
+
+const triggerAvatarUpload = () => {
+  fileInputRef.value?.click()
+}
+
+const handleAvatarChange = async (event: Event) => {
+  const input = event.target as HTMLInputElement
+  if (!input.files?.length) return
+
+  const file = input.files[0]
+  const success = await authStore.uploadAvatar(file)
+
+  if (success) {
+    toast.success(t('common.upload.avatar_success'))
+  } else {
+    toast.error(t('common.upload.avatar_failed'))
+  }
+
+  // 重置 input 以允许再次选择同一文件
+  input.value = ''
+}
 
 const toggleLanguage = () => {
   const newLocale = locale.value === 'zh-CN' ? 'en-US' : 'zh-CN'
@@ -304,9 +349,9 @@ const openAiAssistant = () => {
             class="relative h-9 w-9 overflow-hidden rounded-[18px] border-border/70 bg-card/90 transition-all hover:bg-accent md:h-10 md:w-10 md:rounded-xl group/user"
           >
             <div
-              v-if="authStore.user?.avatar"
+              v-if="avatarUrl"
               class="w-full h-full bg-cover bg-center transition-transform duration-300 group-hover/user:scale-110"
-              :style="{ backgroundImage: `url(${authStore.user.avatar})` }"
+              :style="{ backgroundImage: `url(${avatarUrl})` }"
             ></div>
             <div
               v-else
@@ -332,6 +377,11 @@ const openAiAssistant = () => {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+          <DropdownMenuItem class="rounded-lg cursor-pointer" @click="triggerAvatarUpload">
+            <Upload class="mr-2 h-4 w-4" />
+            <span>{{ t('common.upload.avatar') }}</span>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem
             class="rounded-lg cursor-pointer text-error focus:text-error focus:bg-error/10"
             @click="void authStore.logout()"
@@ -356,6 +406,15 @@ const openAiAssistant = () => {
         <TooltipContent>{{ t('login.title') }}</TooltipContent>
       </Tooltip>
     </div>
+
+    <!-- 隐藏的文件输入框用于上传头像 -->
+    <input
+      ref="fileInputRef"
+      type="file"
+      accept="image/*"
+      class="hidden"
+      @change="handleAvatarChange"
+    />
   </header>
 </template>
 

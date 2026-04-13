@@ -75,4 +75,18 @@ export const authApi = {
     })
     return data
   },
+
+  /**
+   * 上传用户头像
+   */
+  async uploadAvatar(file: File): Promise<ApiResponse<User>> {
+    const formData = new FormData()
+    formData.append('file', file)
+    const { data } = await httpClient.post<ApiResponse<User>>('/users/avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    return data
+  },
 }

@@ -212,7 +212,28 @@ export const useAuthStore = defineStore(
     }
 
     /**
-     * 请求密码重置
+     * 上传用户头像
+     */
+    async function uploadAvatar(file: File): Promise<boolean> {
+      loading.value = true
+      error.value = null
+
+      try {
+        const response = await authApi.uploadAvatar(file)
+        const updatedUser = unwrapApiResponse(response)
+        user.value = updatedUser
+        persistAuthState()
+        return true
+      } catch (e: unknown) {
+        handleApiError(e, 'upload.avatar_failed')
+        return false
+      } finally {
+        loading.value = false
+      }
+    }
+
+    /**
+     * 刷新访问令牌
      */
     async function forgotPassword(email: string): Promise<boolean> {
       loading.value = true
@@ -372,6 +393,7 @@ export const useAuthStore = defineStore(
       hydrateFromStorage,
       login,
       register,
+      uploadAvatar,
       forgotPassword,
       resetPassword,
       logout,

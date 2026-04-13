@@ -70,13 +70,23 @@ async function bootstrap() {
   )
 
   const staticRoot = join(__dirname, '..', 'public')
-  if (existsSync(staticRoot)) {
-    await register(fastifyStatic, {
-      root: staticRoot,
-      prefix: '/public/',
-      decorateReply: false,
-    })
+  if (!existsSync(staticRoot)) {
+    const { mkdirSync } = await import('fs')
+    mkdirSync(staticRoot, { recursive: true })
   }
+
+  await register(fastifyStatic, {
+    root: staticRoot,
+    prefix: '/api/public/',
+    decorateReply: false,
+  })
+
+  // 兼容旧路径 /public/
+  await register(fastifyStatic, {
+    root: staticRoot,
+    prefix: '/public/',
+    decorateReply: false,
+  })
 
   // 设置全局路由前缀
   app.setGlobalPrefix('api')
@@ -88,7 +98,7 @@ async function bootstrap() {
         defaultSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
         scriptSrc: ["'self'"],
-        imgSrc: ["'self'", 'data:', 'https:'],
+        imgSrc: ["'self'", 'data:', 'https:', 'http:'],
         upgradeInsecureRequests: null,
       },
     },

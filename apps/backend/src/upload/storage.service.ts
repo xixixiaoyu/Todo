@@ -8,7 +8,9 @@ import {
 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { randomUUID } from 'crypto'
-import { extname } from 'path'
+import { extname, join } from 'path'
+import { existsSync, mkdirSync } from 'fs'
+import { writeFile } from 'fs/promises'
 
 export interface UploadResult {
   key: string
@@ -67,6 +69,35 @@ export class StorageService implements OnModuleInit {
   }
 
   /**
+   * 上传文件到本地存储
+   */
+  async uploadLocal(file: UploadedFile, folder = 'uploads'): Promise<UploadResult> {
+    const ext = extname(file.originalname)
+    const filename = `${randomUUID()}${ext}`
+    const key = `${folder}/${filename}`
+
+    // 使用相对于当前文件的路径，确保在不同环境下一致
+    // __dirname 是 apps/backend/src/upload
+    const publicDir = join(__dirname, '..', '..', 'public', folder)
+    const filePath = join(publicDir, filename)
+
+    if (!existsSync(publicDir)) {
+      mkdirSync(publicDir, { recursive: true })
+    }
+
+    await writeFile(filePath, file.buffer)
+    this.logger.log(`文件本地上传成功: ${key}`)
+
+    return {
+      key,
+      url: `/api/public/${key}`,
+      bucket: 'local',
+      size: file.size,
+      mimetype: file.mimetype,
+    }
+  }
+
+  /**
    * 上传文件到 S3
    */
   async upload(file: UploadedFile, folder = 'uploads'): Promise<UploadResult> {
@@ -99,6 +130,27 @@ export class StorageService implements OnModuleInit {
    */
   async uploadMany(files: UploadedFile[], folder = 'uploads'): Promise<UploadResult[]> {
     return Promise.all(files.map((file) => this.upload(file, folder)))
+  }
+
+  /**
+   * 删除本地存储文件
+   */
+  async deleteLocal(key: string): Promise<void> {
+    const filename = key.split('/').pop()
+    const folder = key.split('/').slice(0, -1).join('/')
+    if (!filename) return
+
+    const filePath = join(__dirname, '..', '..', 'public', folder, filename)
+
+    try {
+      if (existsSync(filePath)) {
+        const { unlink } = await import('fs/promises')
+        await unlink(filePath)
+        this.logger.log(`文件本地删除成功: ${key}`)
+      }
+    } catch (error) {
+      this.logger.error(`文件本地删除失败: ${key}`, (error as Error).stack)
+    }
   }
 
   /**

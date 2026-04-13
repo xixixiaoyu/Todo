@@ -14,6 +14,11 @@ export const ALLOWED_UPLOAD_MIME_TYPES = [
 ] as const
 
 export const ALLOWED_UPLOAD_EXTENSIONS = [
+  'jpg',
+  'jpeg',
+  'png',
+  'gif',
+  'webp',
   'pdf',
   'docx',
   'xls',

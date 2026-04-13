@@ -67,10 +67,18 @@ export class UsersService {
    * 更新用户信息
    */
   async update(id: number, data: Prisma.UserUpdateInput) {
-    return this.prisma.user.update({
+    const user = await this.prisma.user.update({
       where: { id },
       data,
     })
+    return formatUser(user as unknown as PrismaUser)
+  }
+
+  /**
+   * 更新用户头像
+   */
+  async updateAvatar(id: number, avatarUrl: string): Promise<User> {
+    return this.update(id, { avatar: avatarUrl })
   }
 
   /**
