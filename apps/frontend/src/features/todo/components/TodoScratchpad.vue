@@ -322,7 +322,7 @@ onUnmounted(() => {
             <textarea
               ref="newNoteTextareaRef"
               v-model="newNoteContent"
-              class="w-full flex-1 bg-transparent border-none focus:ring-0 text-sm resize-none min-h-[120px] placeholder:text-muted-foreground/50"
+              class="w-full flex-1 bg-transparent border-none focus:ring-0 text-sm resize-none min-h-[120px] max-h-[300px] overflow-y-auto placeholder:text-muted-foreground/50 custom-scrollbar"
               :placeholder="t('todo.scratchpad.placeholder')"
               @keydown.esc="cancelAddNew"
               @keydown.meta.enter="confirmAddNew"
@@ -460,7 +460,7 @@ onUnmounted(() => {
                 </div>
                 <textarea
                   v-model="editContent"
-                  class="w-full bg-background/50 rounded-lg p-2 text-sm resize-none min-h-[100px] border-none focus:ring-1 focus:ring-primary/30"
+                  class="w-full bg-background/50 rounded-lg p-2 text-sm resize-none min-h-[100px] max-h-[300px] overflow-y-auto border-none focus:ring-1 focus:ring-primary/30 custom-scrollbar"
                   @keydown.esc="cancelEditing"
                   @keydown.meta.enter="saveEditing(item.id)"
                   @keydown.ctrl.enter="saveEditing(item.id)"
@@ -535,27 +535,29 @@ onUnmounted(() => {
                 </div>
               </div>
               <div v-else class="space-y-3">
-                <div
-                  v-if="item.image"
-                  class="relative rounded-lg overflow-hidden border border-border/20 bg-muted/20 cursor-zoom-in group/card-img"
-                  @dblclick="openImagePreview(item.image)"
-                >
-                  <img
-                    :src="item.image"
-                    class="w-full h-auto object-contain max-h-[200px] transition-transform duration-500 group-hover/card-img:scale-105"
-                  />
+                <div class="space-y-3 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
                   <div
-                    class="absolute inset-0 bg-black/0 group-hover/card-img:bg-black/5 transition-colors flex items-center justify-center opacity-0 group-hover/card-img:opacity-100"
+                    v-if="item.image"
+                    class="relative rounded-lg overflow-hidden border border-border/20 bg-muted/20 cursor-zoom-in group/card-img"
+                    @dblclick="openImagePreview(item.image)"
                   >
-                    <Maximize2 :size="16" class="text-white drop-shadow-md" />
+                    <img
+                      :src="item.image"
+                      class="w-full h-auto object-contain max-h-[200px] transition-transform duration-500 group-hover/card-img:scale-105"
+                    />
+                    <div
+                      class="absolute inset-0 bg-black/0 group-hover/card-img:bg-black/5 transition-colors flex items-center justify-center opacity-0 group-hover/card-img:opacity-100"
+                    >
+                      <Maximize2 :size="16" class="text-white drop-shadow-md" />
+                    </div>
                   </div>
+                  <p
+                    class="text-sm leading-relaxed whitespace-pre-wrap break-words text-foreground/90 selection:bg-primary/20 select-text cursor-text"
+                    @dblclick="selectAllText"
+                  >
+                    {{ item.content }}
+                  </p>
                 </div>
-                <p
-                  class="text-sm leading-relaxed whitespace-pre-wrap break-words text-foreground/90 selection:bg-primary/20 select-text cursor-text"
-                  @dblclick="selectAllText"
-                >
-                  {{ item.content }}
-                </p>
                 <!-- Linked Todo Tag -->
                 <div class="flex flex-wrap gap-1 mt-2 items-center justify-between">
                   <div v-if="item.todoId" class="flex gap-1">
@@ -687,12 +689,35 @@ textarea:focus {
   outline: none;
 }
 
-/* Custom Scrollbar for Textarea */
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar,
 textarea::-webkit-scrollbar {
   width: 4px;
 }
+
+.custom-scrollbar::-webkit-scrollbar-track,
+textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb,
 textarea::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.1);
   border-radius: 10px;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb,
+.dark textarea::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover,
+textarea::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+.dark textarea::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 </style>
