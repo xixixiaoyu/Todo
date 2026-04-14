@@ -81,11 +81,24 @@ export class StorageService implements OnModuleInit {
     const publicDir = join(__dirname, '..', '..', 'public', folder)
     const filePath = join(publicDir, filename)
 
-    if (!existsSync(publicDir)) {
-      mkdirSync(publicDir, { recursive: true })
+    try {
+      if (!existsSync(publicDir)) {
+        mkdirSync(publicDir, { recursive: true })
+      }
+    } catch (error) {
+      this.logger.error(
+        `无法创建上传目录: ${publicDir}. 权限不足或路径不存在。`,
+        (error as Error).stack,
+      )
+      throw new ServiceUnavailableException('upload.DIRECTORY_CREATION_FAILED')
     }
 
-    await writeFile(filePath, file.buffer)
+    try {
+      await writeFile(filePath, file.buffer)
+    } catch (error) {
+      this.logger.error(`无法写入文件: ${filePath}. 权限不足。`, (error as Error).stack)
+      throw new ServiceUnavailableException('upload.FILE_WRITE_FAILED')
+    }
     this.logger.log(`文件本地上传成功: ${key}`)
 
     return {

@@ -458,7 +458,13 @@ GOACCESS_REPORT_BIND=${GOACCESS_REPORT_BIND:-127.0.0.1}
 NPM_ADMIN_BIND=${NPM_ADMIN_BIND:-127.0.0.1}
 NPM_ADMIN_PORT=${NPM_ADMIN_PORT:-81}
 
-echo "✅ 部署完成！"
+# 修正上传目录权限
+  echo "🔧 正在修正上传目录权限..."
+  if "${DOCKER[@]}" volume inspect todo_lumina_backend_uploads >/dev/null 2>&1; then
+    "${DOCKER[@]}" run --rm -v todo_lumina_backend_uploads:/data alpine chown -R 1001:1001 /data
+  fi
+
+  echo "✅ 部署完成！"
 echo "🌐 前端访问地址: http://服务器IP"
 echo "📊 后端 API 地址: http://服务器IP/api"
 if [ "$GOACCESS_REPORT_BIND" = "127.0.0.1" ]; then
