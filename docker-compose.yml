@@ -123,6 +123,8 @@ services:
       THROTTLE_MEDIUM_LIMIT: ${THROTTLE_MEDIUM_LIMIT:-50}
       THROTTLE_LONG_TTL: ${THROTTLE_LONG_TTL:-60000}
       THROTTLE_LONG_LIMIT: ${THROTTLE_LONG_LIMIT:-100}
+    volumes:
+      - lumina_backend_uploads:/app/dist/apps/backend/public
     healthcheck:
       test:
         [
@@ -230,6 +232,7 @@ networks:
 volumes:
   lumina_postgres_data:
   lumina_redis_data:
+  lumina_backend_uploads:
   lumina_frontend_logs:
   lumina_goaccess_report:
   lumina_npm_data:
