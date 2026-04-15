@@ -179,7 +179,7 @@ function toggleDeferredSection(): void {
         </div>
       </div>
 
-      <div v-show="todos.length > 0" class="min-h-[100px]">
+      <div v-show="todos.length > 0" class="min-h-[100px] flex flex-col gap-2 md:gap-2.5 pb-12">
         <draggable
           v-if="props.filter !== 'trash'"
           v-model="dragList"
@@ -190,9 +190,9 @@ function toggleDeferredSection(): void {
           chosen-class="scale-[1.02]"
           drag-class="rotate-1"
           :class="[
-            'space-y-1.5 md:space-y-2 transition-all duration-300',
+            'flex flex-col gap-2 md:gap-2.5 transition-all duration-300',
             {
-              'min-h-[64px] border-2 border-dashed border-primary/10 rounded-[20px] bg-primary/[0.02] flex items-center justify-center mb-4 group/dropzone':
+              'min-h-[64px] border-2 border-dashed border-primary/10 rounded-[20px] bg-primary/[0.02] flex items-center justify-center group/dropzone':
                 activeTodos.length === 0 && shouldShowDeferredSection,
             },
           ]"
@@ -232,13 +232,9 @@ function toggleDeferredSection(): void {
           </template>
         </draggable>
 
-        <div
-          v-if="shouldShowDeferredSection"
-          class="pb-6"
-          :class="{ 'pt-3': activeTodos.length > 0 }"
-        >
+        <div v-if="shouldShowDeferredSection">
           <section
-            class="rounded-[20px] border border-primary/10 bg-primary/[0.03] px-2 py-2 md:rounded-[18px] md:px-3 md:py-3"
+            class="rounded-[20px] border border-primary/10 bg-primary/[0.03] px-2 pb-2 md:rounded-[18px] md:px-3 md:pb-3"
           >
             <Button
               variant="ghost"
@@ -283,7 +279,7 @@ function toggleDeferredSection(): void {
                 ghost-class="opacity-50"
                 chosen-class="scale-[1.02]"
                 drag-class="rotate-1"
-                class="space-y-1.5 md:space-y-2"
+                class="flex flex-col gap-2 md:gap-2.5"
                 :animation="200"
                 @start="store.setDragging(true)"
                 @end="store.setDragging(false)"

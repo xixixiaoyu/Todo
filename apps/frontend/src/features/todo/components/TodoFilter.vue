@@ -49,7 +49,7 @@ async function handleClearTrash() {
 
 <template>
   <div
-    class="mb-3 md:mb-4 flex items-center justify-between md:justify-center relative min-h-10 gap-1.5 md:gap-2"
+    class="mb-2 md:mb-3 flex items-center justify-between md:justify-center relative min-h-10 gap-1.5 md:gap-2"
   >
     <!-- 中间切换卡 -->
     <Tabs

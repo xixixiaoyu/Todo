@@ -104,7 +104,7 @@ const openAiAssistant = () => {
 
 <template>
   <header
-    class="mb-3 md:mb-5 flex items-center justify-between transition-all duration-300 select-none"
+    class="mb-2 md:mb-3 flex items-center justify-between transition-all duration-300 select-none"
     style="--wails-draggable: drag"
     @dblclick="handleDblClick"
   >

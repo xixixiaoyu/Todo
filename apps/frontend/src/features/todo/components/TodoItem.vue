@@ -263,7 +263,7 @@ watch(
 </script>
 
 <template>
-  <div class="flex flex-col">
+  <div class="flex flex-col gap-2 md:gap-2.5">
     <div
       class="group relative flex items-center gap-1.5 rounded-[16px] border transition-all duration-200 hover:shadow-[0_6px_18px_rgba(0,0,0,0.04)] md:gap-2.5 md:rounded-[var(--todo-radius-soft)] md:hover:shadow-md md:hover:shadow-black/5"
       :class="[
@@ -372,10 +372,9 @@ watch(
 
     <!-- Subtasks List (Recursive) -->
     <div
-      v-if="(level || 0) < 2"
+      v-if="(level || 0) < 2 && (hasChildren || store.isDragging)"
       ref="subtaskListRef"
-      class="flex flex-col ml-[32px] md:ml-[32px] overflow-hidden"
-      :class="[hasChildren ? 'mt-2 gap-2' : 'mt-1']"
+      class="flex flex-col ml-8 overflow-hidden"
     >
       <draggable
         v-model="dragChildren"
@@ -385,7 +384,7 @@ watch(
         :animation="200"
         ghost-class="opacity-50"
         chosen-class="scale-[1.01]"
-        class="w-full flex flex-col gap-1.5 min-h-[8px]"
+        class="w-full flex flex-col gap-2 md:gap-2.5 min-h-[4px]"
         @start="
           () => {
             hapticSelectionStart()

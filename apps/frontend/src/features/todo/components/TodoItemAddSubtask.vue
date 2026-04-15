@@ -59,7 +59,7 @@ async function handleSubmit() {
 <template>
   <div
     ref="containerRef"
-    class="flex items-center gap-2 px-4 py-2.5 ml-10 border-l-2 border-primary/25"
+    class="flex items-center gap-2 px-4 py-1.5 md:py-2 ml-8 border-l-2 border-primary/25"
   >
     <TooltipProvider :delay-duration="0">
       <Tooltip :open="showTooltip">
@@ -72,7 +72,7 @@ async function handleSubmit() {
               v-model="newTitle"
               name="new-subtask"
               type="text"
-              class="h-9 w-full bg-background text-[var(--todo-font-meta)] placeholder:text-[var(--todo-font-caption)]"
+              class="h-8 md:h-9 w-full bg-background text-[var(--todo-font-meta)] placeholder:text-[var(--todo-font-caption)]"
               :placeholder="t('todo.subtaskPlaceholder')"
               @keydown.enter="handleSubmit"
               @keydown.esc="emit('cancel')"

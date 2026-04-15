@@ -113,8 +113,8 @@ const currentViewComponent = computed(() => {
 const direction = ref(0) // 1: next, -1: prev
 
 const getInputContainerLayout = (visible: boolean) => ({
-  height: visible ? (isMobile.value ? 48 : 52) : 0,
-  marginBottom: visible ? (isMobile.value ? 4 : 20) : 0,
+  height: visible ? (isMobile.value ? 40 : 48) : 0,
+  marginBottom: visible ? (isMobile.value ? 4 : 16) : 0,
   opacity: visible ? 1 : 0,
 })
 
@@ -497,10 +497,10 @@ function onFireworksComplete() {
   --todo-font-meta: 13px;
   --todo-font-caption: 12px;
   --todo-control-primary-height: 48px;
-  --todo-control-secondary-height: 40px;
-  --todo-segment-height: 46px;
-  --todo-item-height: 64px;
-  --todo-item-child-height: 56px;
+  --todo-control-secondary-height: 38px;
+  --todo-segment-height: 42px;
+  --todo-item-height: 52px;
+  --todo-item-child-height: 44px;
   --todo-radius-soft: 14px;
 }
 
@@ -510,11 +510,11 @@ function onFireworksComplete() {
     --todo-font-body: 14px;
     --todo-font-meta: 12px;
     --todo-font-caption: 11px;
-    --todo-control-primary-height: 44px;
-    --todo-control-secondary-height: 32px;
-    --todo-segment-height: 44px;
-    --todo-item-height: 56px;
-    --todo-item-child-height: 50px;
+    --todo-control-primary-height: 40px;
+    --todo-control-secondary-height: 30px;
+    --todo-segment-height: 38px;
+    --todo-item-height: 48px;
+    --todo-item-child-height: 40px;
     --todo-radius-soft: 16px;
   }
 }
