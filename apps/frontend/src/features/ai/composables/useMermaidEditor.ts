@@ -12,12 +12,7 @@ const isRendering = ref(false)
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
-const DEFAULT_MERMAID_TEMPLATE = `graph TD
-  A[开始] --> B{选择操作}
-  B -- 操作1 --> C[结果1]
-  B -- 操作2 --> D[结果2]
-  C --> E[结束]
-  D --> E`
+const DEFAULT_MERMAID_TEMPLATE = ''
 
 /**
  * Mermaid 编辑器核心 Composable
@@ -48,7 +43,9 @@ export function useMermaidEditor(options: { debounceMs?: number } = {}) {
 
   const openEditor = (initialCode?: string) => {
     const finalCode =
-      initialCode !== undefined && initialCode !== '' ? initialCode : DEFAULT_MERMAID_TEMPLATE
+      initialCode !== undefined && initialCode.trim() !== ''
+        ? initialCode
+        : DEFAULT_MERMAID_TEMPLATE
     code.value = finalCode
     isOpen.value = true
     // 立即渲染，无防抖

@@ -50,6 +50,17 @@ describe('useMermaidEditor', () => {
     expect(mermaidRender.renderMermaidSvg).toHaveBeenCalledTimes(1)
   })
 
+  it('openEditor 不传参数应该使用默认的空模板', async () => {
+    vi.mocked(mermaidRender.renderMermaidSvg).mockResolvedValue({ svg: '', error: null })
+
+    const { isOpen, code, openEditor } = useMermaidEditor()
+
+    openEditor()
+
+    expect(isOpen.value).toBe(true)
+    expect(code.value).toBe('')
+  })
+
   it('updateCode 应该带防抖地渲染新代码', async () => {
     const mockSvg = '<svg>new</svg>'
     vi.mocked(mermaidRender.renderMermaidSvg).mockResolvedValue({ svg: mockSvg, error: null })
