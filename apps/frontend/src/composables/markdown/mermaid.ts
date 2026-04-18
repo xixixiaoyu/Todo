@@ -85,7 +85,7 @@ export async function initializeMermaid(theme: 'default' | 'dark' = 'default') {
       useMaxWidth: false,
       htmlLabels: true,
       curve: 'basis', // 使用更平滑的曲线
-      padding: 15,
+      padding: 10,
     },
     sequence: {
       useMaxWidth: false,
@@ -163,6 +163,10 @@ export async function processMermaidQueue(queue: MermaidQueueItem[]) {
             item.code,
           )}">
             <div class="mermaid-zoom-controls">
+              <button class="mermaid-zoom-btn" data-action="edit" title="编辑图表">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path><path d="m15 5 4 4"></path></svg>
+              </button>
+              <div class="mermaid-zoom-divider"></div>
               <button class="mermaid-zoom-btn" data-action="copy" title="复制源码">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
               </button>

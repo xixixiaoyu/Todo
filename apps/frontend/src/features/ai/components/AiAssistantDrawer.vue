@@ -8,6 +8,8 @@ import AiAssistantHeader from '@/features/ai/components/AiAssistantHeader.vue'
 import AiAssistantToolbar from '@/features/ai/components/AiAssistantToolbar.vue'
 import AiAssistantInput from '@/features/ai/components/AiAssistantInput.vue'
 import AiAssistantHistoryOverlay from '@/features/ai/components/AiAssistantHistoryOverlay.vue'
+import MermaidEditorDialog from '@/features/ai/components/MermaidEditorDialog.vue'
+import { useMermaidEditor } from '@/features/ai/composables/useMermaidEditor'
 import { useChat } from '@/features/ai/composables/useChat'
 import { useAIConfig } from '@/features/ai/composables/useAIConfig'
 import { useAiAssistantAttachments } from '@/features/ai/composables/useAiAssistantAttachments'
@@ -76,6 +78,8 @@ const {
   updateTeachingQuizAnswer,
   getTeachingQuizSnapshot,
 } = useChat()
+
+const { openEditor: openMermaidEditor } = useMermaidEditor()
 
 const isCopying = ref(false)
 const copyError = async () => {
@@ -324,6 +328,7 @@ defineOptions({
         @toggle-secondary-model="toggleSecondaryModel"
         @select-preset="handleSelectPreset"
         @open-settings="openSettings"
+        @open-mermaid-editor="openMermaidEditor()"
         @trigger-file-upload="triggerUpload"
         @navigate-previous="navigateToPrevious"
         @stop-generating="stopGenerating"
@@ -373,6 +378,9 @@ defineOptions({
         @select="handleSelectSession"
         @new-chat="handleNewChat"
       />
+
+      <!-- Mermaid 编辑器对话框 -->
+      <MermaidEditorDialog />
     </div>
   </ResizableDrawer>
 </template>

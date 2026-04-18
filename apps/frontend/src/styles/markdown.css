@@ -495,6 +495,20 @@
   color: hsl(var(--muted-foreground));
 }
 
+.mermaid-zoom-btn:hover {
+  background-color: hsl(var(--primary) / 0.1);
+  color: hsl(var(--foreground));
+}
+
+.dark .mermaid-zoom-btn:hover {
+  background-color: hsl(var(--primary) / 0.2);
+  color: hsl(var(--foreground));
+}
+
+.mermaid-zoom-btn[data-action='edit']:hover {
+  @apply text-primary;
+}
+
 .mermaid-zoom-divider {
   @apply mx-1 h-4 w-px self-center;
   background-color: hsl(var(--border));
@@ -508,32 +522,30 @@
   color: hsl(var(--muted-foreground));
 }
 
-.mermaid-zoom-btn:hover {
-  background-color: hsl(var(--primary) / 0.08);
-  color: hsl(var(--foreground));
-}
-
-.dark .mermaid-zoom-btn:hover {
-  background-color: hsl(var(--primary) / 0.16);
-  color: hsl(var(--foreground));
-}
-
+/* 图表画布 */
 .mermaid-diagram {
-  @apply flex min-h-[200px] items-center justify-center overflow-hidden p-6;
-  --mermaid-scale: 1;
+  @apply relative flex h-full w-full select-none items-center justify-center p-6 transition-transform duration-200;
+  min-height: 160px;
+  max-height: 600px;
+  cursor: grab;
+  --mermaid-scale: 0.9;
   --mermaid-translate-x: 0px;
   --mermaid-translate-y: 0px;
+  transform: translate(var(--mermaid-translate-x), var(--mermaid-translate-y))
+    scale(var(--mermaid-scale));
+}
+
+.mermaid-diagram:active {
+  cursor: grabbing;
 }
 
 .mermaid-diagram svg {
-  @apply max-w-full h-auto min-w-[300px] transition-transform duration-150 ease-out cursor-grab select-none;
-  transform: scale(var(--mermaid-scale))
-    translate(var(--mermaid-translate-x), var(--mermaid-translate-y));
-  transform-origin: center;
+  @apply h-auto w-auto max-w-[95%] max-h-full;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.05));
 }
 
-.mermaid-diagram svg:active {
-  @apply cursor-grabbing transition-none;
+.dark .mermaid-diagram svg {
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.25));
 }
 
 /* 允许 Mermaid 内部样式生效，仅做必要的对比度修正 */
@@ -545,17 +557,18 @@
   @apply flex items-center justify-center text-center;
 }
 
+.mermaid-loading,
+.mermaid-error {
+  @apply flex flex-col items-center justify-center gap-3 p-12 text-center text-sm font-medium transition-all;
+}
+
 .mermaid-loading {
-  @apply text-sm;
   color: hsl(var(--muted-foreground));
 }
 
 .mermaid-error {
-  @apply my-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600;
-}
-
-.dark .mermaid-error {
-  @apply bg-red-900/20 text-red-400;
+  @apply rounded-xl border-destructive/20 bg-destructive/5 text-destructive;
+  border: 1px dashed hsl(var(--destructive) / 0.2);
 }
 
 /* Markdown 错误 */

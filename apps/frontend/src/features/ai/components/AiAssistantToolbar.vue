@@ -13,6 +13,7 @@ import {
   Blocks,
   ChevronLeft,
   Square,
+  Presentation,
 } from 'lucide-vue-next'
 import AiAssistantToolbarDiscussionMenu from '@/features/ai/components/AiAssistantToolbarDiscussionMenu.vue'
 import AiAssistantToolbarPresetMenu from '@/features/ai/components/AiAssistantToolbarPresetMenu.vue'
@@ -53,6 +54,7 @@ const emit = defineEmits<{
   (e: 'triggerFileUpload'): void
   (e: 'navigatePrevious'): void
   (e: 'stopGenerating'): void
+  (e: 'openMermaidEditor'): void
 }>()
 
 const { t } = useI18n()
@@ -195,6 +197,17 @@ const newChatTitle = computed(() => `${t('ai.newChat')} (${shortcutHint})`)
             @select-primary-model="(id) => emit('selectPrimaryModel', id)"
             @toggle-secondary-model="(id) => emit('toggleSecondaryModel', id)"
           />
+
+          <!-- Mermaid 编辑器 -->
+          <button
+            :class="[
+              'toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-muted-foreground active:scale-95',
+            ]"
+            :title="t('ai.mermaidOpenEditor')"
+            @click="emit('openMermaidEditor')"
+          >
+            <Presentation :size="16" />
+          </button>
 
           <!-- MCP 工具 -->
           <button

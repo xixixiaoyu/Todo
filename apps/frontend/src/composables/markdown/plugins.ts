@@ -9,9 +9,10 @@ import hljs from 'highlight.js'
 import katex from 'katex'
 import { getLanguageDisplayName, stableHash } from './utils'
 import type { MermaidQueueItem } from './mermaid'
+import { mermaidLanguage } from './mermaid-hljs'
 
 // 注册 mermaid 为普通文本，防止 highlight.js 报错
-hljs.registerLanguage('mermaid', () => ({ contains: [] }))
+hljs.registerLanguage('mermaid', mermaidLanguage)
 hljs.registerLanguage('asciimath', () => ({ contains: [] }))
 hljs.registerLanguage('ascii-math', () => ({ contains: [] }))
 hljs.registerLanguage('mathml', () => ({ contains: [] }))
