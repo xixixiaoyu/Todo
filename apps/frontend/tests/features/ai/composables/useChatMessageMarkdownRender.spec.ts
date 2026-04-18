@@ -53,7 +53,7 @@ describe('useChatMessageMarkdownRender', () => {
     zoomInBtn.click()
 
     const diagram = container.querySelector('.mermaid-diagram') as HTMLElement
-    expect(diagram.style.getPropertyValue('--mermaid-scale')).toBe('1.15')
+    expect(diagram.style.getPropertyValue('--mermaid-scale')).toBe('1.05')
   })
 
   it('should copy mermaid source by data-action', async () => {

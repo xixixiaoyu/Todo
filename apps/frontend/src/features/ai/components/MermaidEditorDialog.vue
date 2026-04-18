@@ -43,7 +43,7 @@ const { gsap } = useGsap()
 
 watch(isOpen, (newVal) => {
   if (newVal) {
-    nextTick(() => {
+    void nextTick(() => {
       if (!dialogRef.value) return
       gsap.fromTo(
         dialogRef.value,

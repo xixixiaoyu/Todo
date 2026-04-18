@@ -27,7 +27,7 @@ const updateInteractions = () => {
 watch(
   () => props.svgHtml,
   () => {
-    nextTick(updateInteractions)
+    void nextTick(updateInteractions)
   },
 )
 

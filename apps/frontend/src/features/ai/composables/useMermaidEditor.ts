@@ -52,7 +52,7 @@ export function useMermaidEditor(options: { debounceMs?: number } = {}) {
     code.value = finalCode
     isOpen.value = true
     // 立即渲染，无防抖
-    render(finalCode)
+    void render(finalCode)
   }
 
   const closeEditor = () => {
@@ -72,14 +72,14 @@ export function useMermaidEditor(options: { debounceMs?: number } = {}) {
     }
 
     debounceTimer = setTimeout(() => {
-      render(newCode)
+      void render(newCode)
     }, debounceMs)
   }
 
   // 监听主题变化，自动重绘
   watch(themeState, () => {
     if (isOpen.value) {
-      render(code.value)
+      void render(code.value)
     }
   })
 

@@ -131,8 +131,8 @@ describe('TodoView animation timing', () => {
     const spacingSetCall = setSpy.mock.calls.find(([, vars]) => {
       if (!vars || typeof vars !== 'object') return false
       return (
-        (vars as { marginBottom?: number }).marginBottom === 20 &&
-        (vars as { height?: number }).height === 52
+        (vars as { marginBottom?: number }).marginBottom === 16 &&
+        (vars as { height?: number }).height === 48
       )
     })
 

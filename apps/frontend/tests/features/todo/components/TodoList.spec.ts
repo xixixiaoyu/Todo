@@ -1,3 +1,4 @@
+import { nextTick } from 'vue'
 import { describe, it, expect, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createI18n } from 'vue-i18n'
@@ -475,7 +476,8 @@ describe('TodoList', () => {
   })
 
   it('should call setTodoDeferred(false) when an item is dragged into a subtask list', async () => {
-    const setTodoDeferredSpy = vi.spyOn(useTodoStore(), 'setTodoDeferred')
+    const store = useTodoStore()
+    const setTodoDeferredSpy = vi.spyOn(store, 'setTodoDeferred')
 
     const wrapper = mount(TodoList, {
       props: {
@@ -506,6 +508,11 @@ describe('TodoList', () => {
     const parentItem = wrapper
       .findAllComponents(TodoItem)
       .find((c) => c.props('todo').id === 'parent')!
+
+    // 模拟拖拽状态，使 TodoItem 内部的子任务容器 visible
+    store.isDragging = true
+    await nextTick()
+
     // 找到父任务内部的 draggable（子任务容器）
     const subtaskDraggable = parentItem.findComponent({ name: 'draggable' })
 
