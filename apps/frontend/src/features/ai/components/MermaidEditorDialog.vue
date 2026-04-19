@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, type CSSProperties } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-vue-next'
 import { useMermaidEditor } from '../composables/useMermaidEditor'
 import { useResizable } from '@/composables/useResizable'
 import { useWindowSize } from '@/composables/useWindowSize'
@@ -19,6 +20,9 @@ const isMobile = computed(() => windowWidth.value < 640)
 
 const { isOpen, code, svgHtml, error, isRendering, closeEditor, updateCode } = useMermaidEditor()
 
+// 左侧面板折叠状态
+const isLeftPanelCollapsed = ref(false)
+
 // 只有在打开时才处理 ESC
 useEscClose(isOpen, closeEditor)
 
@@ -33,9 +37,20 @@ const {
   maxWidth: () => windowWidth.value - 300,
 })
 
-const leftPanelStyle = computed(() => ({
-  width: isMobile.value ? '100%' : `${leftWidth.value}px`,
-}))
+const leftPanelStyle = computed((): CSSProperties => {
+  if (isMobile.value) return { width: '100%' }
+  if (isLeftPanelCollapsed.value) {
+    return {
+      width: '0px',
+      padding: '0px',
+      opacity: '0',
+      pointerEvents: 'none',
+    }
+  }
+  return {
+    width: `${leftWidth.value}px`,
+  }
+})
 
 // 动画
 const dialogRef = ref<HTMLElement | null>(null)
@@ -97,7 +112,7 @@ const copySvg = async () => {
       >
         <div
           ref="dialogRef"
-          class="relative flex h-[90vh] w-[95vw] flex-col overflow-hidden rounded-xl border border-border bg-background shadow-2xl"
+          class="relative flex h-[95vh] w-[98vw] flex-col overflow-hidden rounded-xl border border-border bg-background shadow-2xl"
         >
           <!-- Header -->
           <header class="flex h-14 items-center justify-between border-b border-border px-6">
@@ -120,6 +135,21 @@ const copySvg = async () => {
                 </svg>
               </div>
               <h2 class="text-lg font-semibold tracking-tight">{{ t('ai.mermaidEditorTitle') }}</h2>
+
+              <!-- 左侧面板折叠切换 -->
+              <Button
+                v-if="!isMobile"
+                variant="ghost"
+                size="icon"
+                class="ml-2 h-8 w-8 text-muted-foreground hover:bg-muted hover:text-foreground"
+                :title="
+                  isLeftPanelCollapsed ? t('ai.mermaidExpandSource') : t('ai.mermaidCollapseSource')
+                "
+                @click="isLeftPanelCollapsed = !isLeftPanelCollapsed"
+              >
+                <PanelLeftOpen v-if="isLeftPanelCollapsed" :size="18" />
+                <PanelLeftClose v-else :size="18" />
+              </Button>
             </div>
             <button
               class="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
@@ -146,8 +176,12 @@ const copySvg = async () => {
             <!-- Desktop: Split Layout -->
             <div v-if="!isMobile" class="flex h-full w-full overflow-hidden">
               <!-- Editor Panel -->
-              <div :style="leftPanelStyle" class="flex flex-col overflow-hidden p-4">
-                <div class="mb-2 flex items-center justify-between px-1">
+              <div
+                :style="leftPanelStyle"
+                class="flex flex-col overflow-hidden transition-all duration-300 ease-in-out"
+                :class="isLeftPanelCollapsed ? 'p-0' : 'p-4'"
+              >
+                <div class="mb-2 flex items-center justify-between px-1 whitespace-nowrap">
                   <span
                     class="text-xs font-medium text-muted-foreground uppercase tracking-wider"
                     >{{ t('ai.mermaidEditorCodeLabel') }}</span
@@ -160,6 +194,7 @@ const copySvg = async () => {
 
               <!-- Resizer -->
               <div
+                v-if="!isLeftPanelCollapsed"
                 class="group relative flex w-1 cursor-ew-resize items-center justify-center bg-border transition-colors hover:bg-primary/50"
                 :class="{ 'bg-primary': isResizing }"
                 @mousedown="startResize"

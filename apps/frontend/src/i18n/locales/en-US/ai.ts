@@ -224,6 +224,8 @@ export const ai = {
   mermaidRenderError: 'Diagram render failed',
   mermaidEmptyCode: 'Enter Mermaid syntax to preview',
   mermaidOpenEditor: 'Open Mermaid Editor',
+  mermaidCollapseSource: 'Collapse Source',
+  mermaidExpandSource: 'Expand Source',
   teachingMode: 'Teaching Mode',
   teachingPlaceholder: 'Type what you want to learn…',
   teachingQuizTitle: 'Interactive Q&A',

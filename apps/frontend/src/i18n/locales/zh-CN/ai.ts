@@ -210,6 +210,8 @@ export const ai = {
   mermaidRenderError: '图表渲染失败',
   mermaidEmptyCode: '输入 Mermaid 语法以预览',
   mermaidOpenEditor: '打开 Mermaid 编辑器',
+  mermaidCollapseSource: '折叠源码',
+  mermaidExpandSource: '展开源码',
   teachingMode: '教学模式',
   teachingPlaceholder: '输入你想学的主题…',
   teachingQuizTitle: '互动问答',
