@@ -109,7 +109,7 @@ describe('MermaidEditorDialog', () => {
         stubs: { Teleport: true },
       },
     })
-    await wrapper.find('header button').trigger('click')
+    await wrapper.find('button[aria-label="Close editor"]').trigger('click')
     expect(mockEditorState.closeEditor).toHaveBeenCalled()
   })
 })

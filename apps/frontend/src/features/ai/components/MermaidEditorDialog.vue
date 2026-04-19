@@ -153,6 +153,7 @@ const copySvg = async () => {
             </div>
             <button
               class="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              aria-label="Close editor"
               @click="closeEditor"
             >
               <svg
