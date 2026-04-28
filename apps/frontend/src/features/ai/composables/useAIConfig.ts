@@ -23,7 +23,7 @@ export interface AIConfig {
   temperature: number
   systemPrompt: string
   thinkingMode: ThinkingMode
-  thinkingEffort: 'low' | 'medium' | 'high'
+  thinkingEffort: 'low' | 'medium' | 'high' | 'max'
   todoAssistant: boolean
   discussionMode: boolean
   discussionModelIds: readonly string[]
@@ -45,7 +45,7 @@ export interface AIPreset {
   model: string
   systemPrompt: string
   temperature: number
-  thinkingEffort?: 'low' | 'medium' | 'high'
+  thinkingEffort?: 'low' | 'medium' | 'high' | 'max'
   todoAssistant: boolean
   skillIds?: readonly string[]
 }
@@ -576,7 +576,8 @@ function normalizePreset(raw: unknown): AIPreset | null {
   const thinkingEffort =
     item.thinkingEffort === 'low' ||
     item.thinkingEffort === 'medium' ||
-    item.thinkingEffort === 'high'
+    item.thinkingEffort === 'high' ||
+    item.thinkingEffort === 'max'
       ? item.thinkingEffort
       : undefined
   const todoAssistant = !!item.todoAssistant
@@ -606,7 +607,7 @@ const DEFAULT_CONFIG: AIConfig = {
   temperature: 0.6,
   systemPrompt: i18n.global.t('ai.defaultSystemPrompt'),
   thinkingMode: aiThinkingMode.value, // 使用初始值
-  thinkingEffort: 'high',
+  thinkingEffort: 'max',
   todoAssistant: false,
   discussionMode: false,
   discussionModelIds: [],
@@ -785,7 +786,7 @@ function isConfigMatchPreset(cfg: AIConfig, preset: AIPreset): boolean {
     preset.model === cfg.model &&
     preset.systemPrompt === cfg.systemPrompt &&
     Math.abs(preset.temperature - cfg.temperature) < 0.001 &&
-    (preset.thinkingEffort || 'high') === cfg.thinkingEffort &&
+    (preset.thinkingEffort || 'max') === cfg.thinkingEffort &&
     isSkillSetMatched
   )
 }
@@ -904,7 +905,7 @@ export function useAIConfig() {
       model: preset.model,
       systemPrompt: preset.systemPrompt,
       temperature: preset.temperature,
-      thinkingEffort: preset.thinkingEffort || 'high',
+      thinkingEffort: preset.thinkingEffort || 'max',
       todoAssistant: preset.todoAssistant,
       skillIds: presetSkillIds,
     }
@@ -949,7 +950,7 @@ export function useAIConfig() {
           model: updatedPreset.model,
           systemPrompt: updatedPreset.systemPrompt,
           temperature: updatedPreset.temperature,
-          thinkingEffort: updatedPreset.thinkingEffort || 'high',
+          thinkingEffort: updatedPreset.thinkingEffort || 'max',
           todoAssistant: updatedPreset.todoAssistant,
           skillIds: presetSkillIds,
         }
@@ -1070,7 +1071,8 @@ export function useAIConfig() {
           const thinkingEffort =
             raw.thinkingEffort === 'low' ||
             raw.thinkingEffort === 'medium' ||
-            raw.thinkingEffort === 'high'
+            raw.thinkingEffort === 'high' ||
+            raw.thinkingEffort === 'max'
               ? raw.thinkingEffort
               : undefined
           return {

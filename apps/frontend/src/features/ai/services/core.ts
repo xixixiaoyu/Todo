@@ -174,15 +174,16 @@ export async function getAIStreamResponse(
       requestBody.tool_choice = toolChoice || 'auto'
     }
 
-    // 适配 OpenRouter 的推理参数
+    // 推理参数：DeepSeek 原生 reasoning_effort（顶层）+ OpenRouter reasoning（兼容）
     if (thinkingMode === 'enabled') {
+      requestBody.reasoning_effort = options.thinkingEffort || thinkingEffort || 'max'
       requestBody.reasoning = {
         enabled: true,
-        effort: options.thinkingEffort || thinkingEffort || 'high',
+        effort: options.thinkingEffort || thinkingEffort || 'max',
       }
     }
 
-    // 兼容 DeepSeek 等模型的 thinking 参数
+    // DeepSeek 模型的 thinking 参数
     requestBody.thinking = {
       type: thinkingMode,
     }
@@ -347,7 +348,7 @@ export async function fetchNonStreamResponse(
     model: string
     temperature?: number
     top_p?: number
-    thinkingEffort?: 'low' | 'medium' | 'high'
+    thinkingEffort?: 'low' | 'medium' | 'high' | 'max'
   },
   messages: AIChatCompletionMessage[],
   thinkingMode?: string,
@@ -363,9 +364,10 @@ export async function fetchNonStreamResponse(
   }
 
   if (thinkingMode === 'enabled') {
+    requestBody.reasoning_effort = config.thinkingEffort || 'max'
     requestBody.reasoning = {
       enabled: true,
-      effort: config.thinkingEffort || 'high',
+      effort: config.thinkingEffort || 'max',
     }
   }
 

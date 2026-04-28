@@ -199,7 +199,7 @@ export interface AIRequestOptions {
   systemPrompt?: string
   assistantMode?: AssistantMode
   thinkingMode?: 'enabled' | 'disabled'
-  thinkingEffort?: 'low' | 'medium' | 'high'
+  thinkingEffort?: 'low' | 'medium' | 'high' | 'max'
   contextSummary?: string
   memorySnapshot?: string[]
   skills?: AISkill[]

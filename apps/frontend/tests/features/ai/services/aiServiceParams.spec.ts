@@ -112,7 +112,8 @@ describe('aiService - Request Parameters', () => {
       const callArgs = fetchMock.mock.calls[0]
       const requestBody = JSON.parse(callArgs[1]?.body as string)
 
-      expect(requestBody.reasoning).toEqual({ enabled: true, effort: 'high' })
+      expect(requestBody.reasoning_effort).toBe('max')
+      expect(requestBody.reasoning).toEqual({ enabled: true, effort: 'max' })
     })
 
     it('should allow overriding reasoning effort', async () => {
@@ -146,6 +147,7 @@ describe('aiService - Request Parameters', () => {
       const callArgs = fetchMock.mock.calls[0]
       const requestBody = JSON.parse(callArgs[1]?.body as string)
 
+      expect(requestBody.reasoning_effort).toBe('low')
       expect(requestBody.reasoning).toEqual({ enabled: true, effort: 'low' })
     })
 

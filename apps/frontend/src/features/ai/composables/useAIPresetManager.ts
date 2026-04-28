@@ -56,7 +56,7 @@ export function useAIPresetManager(): {
     model: '',
     systemPrompt: '',
     temperature: 0.6,
-    thinkingEffort: 'high',
+    thinkingEffort: 'max',
     todoAssistant: false,
     skillIds: [],
   })
@@ -100,7 +100,7 @@ export function useAIPresetManager(): {
       model: preset.model,
       systemPrompt: preset.systemPrompt,
       temperature: preset.temperature,
-      thinkingEffort: preset.thinkingEffort || 'high',
+      thinkingEffort: preset.thinkingEffort || 'max',
       todoAssistant: preset.todoAssistant,
       skillIds: preset.skillIds ? [...preset.skillIds] : [],
     }
