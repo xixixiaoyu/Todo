@@ -371,8 +371,9 @@ export async function fetchNonStreamResponse(
     }
   }
 
-  if (thinkingMode) {
-    requestBody.thinking = { type: thinkingMode }
+  // DeepSeek 模型的 thinking 参数
+  requestBody.thinking = {
+    type: thinkingMode,
   }
 
   const response = await fetch(buildApiUrl(config.baseUrl), {
