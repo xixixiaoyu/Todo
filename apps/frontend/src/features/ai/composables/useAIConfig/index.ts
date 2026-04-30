@@ -164,13 +164,13 @@ watch(
   ([newConfig, newPresets]) => {
     // 如果当前激活的预设仍然匹配，保持不变
     if (activePresetId.value) {
-      const currentPreset = (newPresets as AIPreset[]).find((p) => p.id === activePresetId.value)
-      if (currentPreset && isConfigMatchPreset(newConfig as AIConfig, currentPreset)) {
+      const currentPreset = newPresets.find((p) => p.id === activePresetId.value)
+      if (currentPreset && isConfigMatchPreset(newConfig, currentPreset)) {
         return
       }
     }
 
-    const matchingId = findMatchingPreset(newConfig as AIConfig, newPresets as AIPreset[])
+    const matchingId = findMatchingPreset(newConfig, newPresets)
     if (activePresetId.value !== matchingId) {
       activePresetId.value = matchingId
     }
