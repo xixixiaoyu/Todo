@@ -3,9 +3,12 @@ import { renderMermaidSvg } from '@/composables/markdown/mermaid-render'
 import { getCurrentTheme } from '@/composables/markdown/utils'
 import { useTheme } from '@/composables/useTheme'
 
-// 模块级单例状态
-const isOpen = ref(false)
-const code = ref('')
+const STORAGE_KEY_CODE = 'lumina:mermaid-editor:code'
+const STORAGE_KEY_OPEN = 'lumina:mermaid-editor:isOpen'
+
+// 模块级单例状态（从 localStorage 恢复）
+const isOpen = ref(localStorage.getItem(STORAGE_KEY_OPEN) === 'true')
+const code = ref(localStorage.getItem(STORAGE_KEY_CODE) ?? '')
 const svgHtml = ref('')
 const error = ref<string | null>(null)
 const isRendering = ref(false)
@@ -13,6 +16,11 @@ const isRendering = ref(false)
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
 const DEFAULT_MERMAID_TEMPLATE = ''
+
+/** 将 code 持久化到 localStorage */
+const persistCode = (val: string) => localStorage.setItem(STORAGE_KEY_CODE, val)
+/** 将 isOpen 持久化到 localStorage */
+const persistOpen = (val: boolean) => localStorage.setItem(STORAGE_KEY_OPEN, String(val))
 
 /**
  * Mermaid 编辑器核心 Composable
@@ -45,9 +53,11 @@ export function useMermaidEditor(options: { debounceMs?: number } = {}) {
     const finalCode =
       initialCode !== undefined && initialCode.trim() !== ''
         ? initialCode
-        : DEFAULT_MERMAID_TEMPLATE
+        : code.value || DEFAULT_MERMAID_TEMPLATE
     code.value = finalCode
     isOpen.value = true
+    persistCode(finalCode)
+    persistOpen(true)
     // 立即渲染，无防抖
     void render(finalCode)
   }
@@ -55,6 +65,7 @@ export function useMermaidEditor(options: { debounceMs?: number } = {}) {
   const closeEditor = () => {
     isOpen.value = false
     error.value = null
+    persistOpen(false)
     if (debounceTimer) {
       clearTimeout(debounceTimer)
       debounceTimer = null
@@ -63,6 +74,7 @@ export function useMermaidEditor(options: { debounceMs?: number } = {}) {
 
   const updateCode = (newCode: string) => {
     code.value = newCode
+    persistCode(newCode)
 
     if (debounceTimer) {
       clearTimeout(debounceTimer)
@@ -85,6 +97,11 @@ export function useMermaidEditor(options: { debounceMs?: number } = {}) {
       clearTimeout(debounceTimer)
     }
   })
+
+  // 页面刷新后恢复：如果编辑器曾经打开且有代码，自动重新渲染
+  if (isOpen.value && code.value.trim()) {
+    void render(code.value)
+  }
 
   return {
     isOpen,

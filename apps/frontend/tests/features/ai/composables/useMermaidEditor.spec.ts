@@ -20,6 +20,10 @@ describe('useMermaidEditor', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.useFakeTimers()
+    localStorage.clear()
+    // 重置单例状态，确保测试隔离
+    const { closeEditor } = useMermaidEditor()
+    closeEditor()
   })
 
   it('初始状态应该是关闭的且为空', () => {
@@ -50,10 +54,28 @@ describe('useMermaidEditor', () => {
     expect(mermaidRender.renderMermaidSvg).toHaveBeenCalledTimes(1)
   })
 
-  it('openEditor 不传参数应该使用默认的空模板', async () => {
+  it('openEditor 不传参数时应保留已有代码', async () => {
     vi.mocked(mermaidRender.renderMermaidSvg).mockResolvedValue({ svg: '', error: null })
 
-    const { isOpen, code, openEditor } = useMermaidEditor()
+    const { isOpen, code, openEditor, closeEditor } = useMermaidEditor()
+    openEditor('graph TD; A-->B')
+    expect(code.value).toBe('graph TD; A-->B')
+
+    closeEditor()
+    expect(isOpen.value).toBe(false)
+
+    // 重新打开时不传参，应保留上次代码
+    openEditor()
+    expect(isOpen.value).toBe(true)
+    expect(code.value).toBe('graph TD; A-->B')
+  })
+
+  it('openEditor 不传参数且无历史代码时应使用空模板', async () => {
+    vi.mocked(mermaidRender.renderMermaidSvg).mockResolvedValue({ svg: '', error: null })
+
+    const { isOpen, code, openEditor, updateCode } = useMermaidEditor()
+    // 确保无历史代码
+    updateCode('')
 
     openEditor()
 
@@ -90,5 +112,16 @@ describe('useMermaidEditor', () => {
 
     expect(isOpen.value).toBe(false)
     expect(error.value).toBeNull()
+  })
+
+  it('code 和 isOpen 变更时应持久化到 localStorage', () => {
+    const { openEditor, closeEditor } = useMermaidEditor()
+
+    openEditor('graph TD; X-->Y')
+    expect(localStorage.getItem('lumina:mermaid-editor:code')).toBe('graph TD; X-->Y')
+    expect(localStorage.getItem('lumina:mermaid-editor:isOpen')).toBe('true')
+
+    closeEditor()
+    expect(localStorage.getItem('lumina:mermaid-editor:isOpen')).toBe('false')
   })
 })
