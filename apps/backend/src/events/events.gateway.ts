@@ -37,7 +37,8 @@ import { TokenService } from '../auth/token.service'
         allowedOrigins.includes(origin) ||
         origin === 'null' ||
         origin.startsWith('wails://') ||
-        origin.startsWith('http://wails.localhost')
+        origin.startsWith('http://wails.localhost') ||
+        origin.startsWith('https://wails.localhost')
       ) {
         callback(null, true)
       } else {

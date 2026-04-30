@@ -1,14 +1,13 @@
 import axios from 'axios'
 import i18n from '@/i18n'
 import { useAuthStore } from '@/features/auth/stores/auth'
+import { getApiBaseUrl } from '@/api/config'
 
 /**
  * HTTP 客户端实例
  */
 export const httpClient = axios.create({
-  baseURL:
-    import.meta.env.VITE_API_BASE_URL ||
-    (import.meta.env.IS_WAILS ? 'http://localhost:3000/api' : '/api'),
+  baseURL: getApiBaseUrl(),
   timeout: 10000,
   withCredentials: true,
   headers: {

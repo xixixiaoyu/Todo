@@ -55,6 +55,7 @@ async function bootstrap() {
             'http://localhost:5173',
             'wails://localhost',
             'http://wails.localhost',
+            'https://wails.localhost',
           ],
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',

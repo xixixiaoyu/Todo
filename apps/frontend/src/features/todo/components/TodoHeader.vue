@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { getServerBaseUrl } from '@/api/config'
 import {
   Snowflake,
   Clover,
@@ -54,10 +55,7 @@ const avatarUrl = computed(() => {
   }
 
   // 处理本地路径 /api/public/avatars/...
-  const apiBase =
-    import.meta.env.VITE_API_BASE_URL ||
-    (import.meta.env.IS_WAILS ? 'http://localhost:3000/api' : '/api')
-  const baseUrl = apiBase.replace(/\/api$/, '')
+  const baseUrl = getServerBaseUrl()
   return `${baseUrl}${avatar}`
 })
 

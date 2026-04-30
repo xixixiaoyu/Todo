@@ -1,6 +1,7 @@
 import { ref, type Ref } from 'vue'
 import { io, Socket } from 'socket.io-client'
 import { useAuthStore } from '@/features/auth/stores/auth'
+import { getServerBaseUrl } from '@/api/config'
 import {
   isSocketAuthError,
   isTransientSocketError,
@@ -59,7 +60,7 @@ export function useSocket(): UseSocketReturn {
   const initSocket = () => {
     if (socketInstance) return socketInstance
 
-    const socketURL = window.location.origin
+    const socketURL = import.meta.env.IS_WAILS ? getServerBaseUrl() : window.location.origin
 
     socketInstance = io(`${socketURL}/events`, {
       withCredentials: true,
