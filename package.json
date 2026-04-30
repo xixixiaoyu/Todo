@@ -76,20 +76,20 @@
     "pm2:backend": "pnpm --filter @lumina/backend pm2:start"
   },
   "devDependencies": {
-    "@eslint/js": "9.39.2",
-    "@vitest/coverage-v8": "4.1.0",
+    "@eslint/js": "10.0.1",
+    "@vitest/coverage-v8": "4.1.2",
     "cross-env": "10.1.0",
-    "eslint": "9.39.2",
+    "eslint": "10.1.0",
     "eslint-config-prettier": "10.1.8",
-    "eslint-plugin-prettier": "5.5.4",
-    "eslint-plugin-vue": "10.6.2",
+    "eslint-plugin-prettier": "5.5.5",
+    "eslint-plugin-vue": "10.8.0",
     "husky": "9.1.7",
-    "lint-staged": "16.2.7",
-    "prettier": "3.7.4",
-    "turbo": "2.7.2",
-    "typescript": "5.9.3",
-    "typescript-eslint": "8.50.1",
-    "vitest": "4.1.0"
+    "lint-staged": "16.4.0",
+    "prettier": "3.8.1",
+    "turbo": "2.9.3",
+    "typescript": "6.0.2",
+    "typescript-eslint": "8.58.0",
+    "vitest": "4.1.2"
   },
   "lint-staged": {
     "apps/frontend/**/*.{ts,tsx,vue}": [
