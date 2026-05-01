@@ -1,4 +1,4 @@
-import { mkdir, rm, readFile } from 'node:fs/promises'
+import { mkdir, rm, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
@@ -62,8 +62,6 @@ describe('FileStore', () => {
     const defaultValue: TestData = { version: 1, items: [] }
     const store = new FileStore(testDir, 'broken.json', defaultValue)
 
-    // 写入非法 JSON
-    const { writeFile } = await import('node:fs/promises')
     await writeFile(join(testDir, 'broken.json'), 'not valid json', 'utf-8')
 
     const data = await store.read()

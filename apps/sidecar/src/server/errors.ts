@@ -1,4 +1,5 @@
 import type { Context } from 'hono'
+import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import { logger } from '../utils/logger'
 
 /**
@@ -20,7 +21,7 @@ export function errorHandler(err: Error, c: Context) {
       statusCode: status,
       timestamp: new Date().toISOString(),
     },
-    status as 200 | 201 | 400 | 404 | 500,
+    status as ContentfulStatusCode,
   )
 }
 

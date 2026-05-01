@@ -22,11 +22,15 @@ export class McpConnectionManager {
       await this.disconnect(serverId)
     }
 
-    const client = new Client({ name: 'lumina-sidecar-mcp-client', version: '1.0.0' }, {
+    // requestTimeout 在 SDK 类型定义中缺失，但运行时支持
+    const clientOptions: ConstructorParameters<typeof Client>[1] & { requestTimeout?: number } = {
       capabilities: {},
-      // requestTimeout 在部分 SDK 版本的类型定义中缺失，但运行时支持
-      requestTimeout: 300000,
-    } as ConstructorParameters<typeof Client>[1])
+      requestTimeout: 300_000,
+    }
+    const client = new Client(
+      { name: 'lumina-sidecar-mcp-client', version: '1.0.0' },
+      clientOptions as ConstructorParameters<typeof Client>[1],
+    )
 
     try {
       const connectPromise = client.connect(transport)

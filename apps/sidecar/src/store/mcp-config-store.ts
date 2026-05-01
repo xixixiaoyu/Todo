@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import { FileStore } from './file-store'
 import type { McpServerConfig, McpServersConfig, LocalHttpConfig } from '../types'
-import type { McpTransportType } from '@lumina/shared'
+import type { McpTransportType, StdioConfig } from '@lumina/shared'
 
 const DEFAULT_CONFIG: McpServersConfig = { version: 1, servers: [] }
 
@@ -31,7 +31,7 @@ export class McpConfigStore {
     name: string
     description?: string
     transport: McpTransportType
-    config: Record<string, unknown>
+    config: StdioConfig | LocalHttpConfig
     enabled?: boolean
   }): Promise<McpServerConfig> {
     const data = await this.store.read()
