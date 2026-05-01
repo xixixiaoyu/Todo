@@ -2,7 +2,7 @@ import { serve } from '@hono/node-server'
 import { loadConfig } from './config'
 import { createApp } from './server/app'
 import { createMcpRoutes } from './routes/mcp'
-import { health as healthRoutes } from './routes/health'
+import { createHealthRoutes } from './routes/health'
 import { McpConfigStore } from './store/mcp-config-store'
 import { McpClient } from './mcp/mcp-client'
 import { findFreePort } from './utils/port'
@@ -23,7 +23,7 @@ async function main() {
   const app = createApp()
 
   // 注册路由
-  app.route('/sidecar/health', healthRoutes)
+  app.route('/sidecar/health', createHealthRoutes(configStore, mcpClient))
   app.route('/sidecar/mcp', createMcpRoutes(configStore, mcpClient))
 
   // 启动 HTTP server

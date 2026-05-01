@@ -7,7 +7,9 @@ import { logger } from '../utils/logger'
 export function errorHandler(err: Error, c: Context) {
   logger.error(`Unhandled error: ${err.message}`, err.stack)
 
-  const status = (err as unknown as { status?: number }).status || 500
+  // 兼容 Hono HTTPException (status) 和自定义 SidecarError (statusCode)
+  const status =
+    (err as { statusCode?: number }).statusCode || (err as { status?: number }).status || 500
   const message = err.message || 'Internal Server Error'
 
   return c.json(
@@ -18,7 +20,7 @@ export function errorHandler(err: Error, c: Context) {
       statusCode: status,
       timestamp: new Date().toISOString(),
     },
-    status as 500,
+    status as 200 | 201 | 400 | 404 | 500,
   )
 }
 

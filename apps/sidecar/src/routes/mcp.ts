@@ -1,10 +1,11 @@
 import { Hono } from 'hono'
-import type { McpServerResponse, McpToolResponse, ToolCallResult } from '@lumina/shared'
+import type { McpToolResponse } from '@lumina/shared'
+import { CreateLocalMcpServerSchema, UpdateLocalMcpServerSchema } from '@lumina/shared'
 import { McpConfigStore } from '../store/mcp-config-store'
 import { McpClient } from '../mcp/mcp-client'
 import { toServerResponse } from '../types'
 import { NotFoundError, ValidationError } from '../server/errors'
-import type { McpServerConfig } from '../types'
+import { logger } from '../utils/logger'
 
 /**
  * 创建 MCP 路由，注入 store 和 client
@@ -38,15 +39,17 @@ export function createMcpRoutes(configStore: McpConfigStore, mcpClient: McpClien
   // POST /mcp/servers — 创建
   mcp.post('/servers', async (c) => {
     const body = await c.req.json()
-    if (!body.name || !body.transport || !body.config) {
-      throw new ValidationError('name, transport, and config are required')
+    const parsed = CreateLocalMcpServerSchema.safeParse(body)
+    if (!parsed.success) {
+      const firstIssue = parsed.error.issues[0]
+      throw new ValidationError(firstIssue?.message || 'Invalid request body')
     }
     const server = await configStore.create({
-      name: body.name,
-      description: body.description,
-      transport: body.transport,
-      config: body.config,
-      enabled: body.enabled,
+      name: parsed.data.name,
+      description: parsed.data.description,
+      transport: parsed.data.transport,
+      config: parsed.data.config,
+      enabled: parsed.data.enabled,
     })
     return c.json(
       {
@@ -62,15 +65,20 @@ export function createMcpRoutes(configStore: McpConfigStore, mcpClient: McpClien
   mcp.put('/servers/:id', async (c) => {
     const { id } = c.req.param()
     const body = await c.req.json()
+    const parsed = UpdateLocalMcpServerSchema.safeParse(body)
+    if (!parsed.success) {
+      const firstIssue = parsed.error.issues[0]
+      throw new ValidationError(firstIssue?.message || 'Invalid request body')
+    }
 
     // 如果更新了 transport/config，先断开现有连接
-    if (body.transport || body.config) {
+    if (parsed.data.transport || parsed.data.config) {
       if (mcpClient.isConnected(id)) {
         await mcpClient.disconnect(id)
       }
     }
 
-    const server = await configStore.update(id, body)
+    const server = await configStore.update(id, parsed.data)
     if (!server) throw new NotFoundError('MCP server', id)
 
     return c.json({
@@ -187,7 +195,7 @@ export function createMcpRoutes(configStore: McpConfigStore, mcpClient: McpClien
         allTools.push(...tools.map((t) => ({ ...t, serverId: server.id })))
       } catch (error) {
         // 单个服务器失败不影响其他
-        console.error(`Failed to list tools for server ${server.id}: ${error}`)
+        logger.error(`Failed to list tools for server ${server.id}: ${error}`)
       }
     }
 

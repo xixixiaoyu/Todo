@@ -127,6 +127,7 @@ func (m *Manager) Start(ctx context.Context) (*SidecarInfo, error) {
 
 	m.mu.Lock()
 	m.status = StatusRunning
+	m.restartAttempts = 0 // 成功启动后重置计数器
 	m.mu.Unlock()
 
 	m.emit("sidecar:started", map[string]any{

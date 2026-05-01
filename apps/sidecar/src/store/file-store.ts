@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir } from 'node:fs/promises'
+import { readFile, writeFile, mkdir, rename, unlink } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { logger } from '../utils/logger'
 
@@ -37,14 +37,12 @@ export class FileStore<T> {
     await writeFile(tmpPath, content, 'utf-8')
 
     // rename 是原子操作（同文件系统）
-    const { rename } = await import('node:fs/promises')
     try {
       await rename(tmpPath, this.filePath)
     } catch {
       // 某些平台 rename 可能失败（跨设备），fallback 到直接写入
       await writeFile(this.filePath, content, 'utf-8')
       try {
-        const { unlink } = await import('node:fs/promises')
         await unlink(tmpPath)
       } catch {
         // 忽略清理失败

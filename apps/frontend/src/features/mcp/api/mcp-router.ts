@@ -1,5 +1,6 @@
 import type { AxiosInstance } from 'axios'
 import httpClient from '@/api'
+import { unwrapApiResponse } from '@lumina/shared'
 import type {
   McpServerResponse,
   CreateMcpServerDto,
@@ -7,7 +8,6 @@ import type {
   McpToolResponse,
   ToolCallResult,
   ApiResponse,
-  unwrapApiResponse,
 } from '@lumina/shared'
 import type { SidecarClient } from '@/api/sidecar'
 
@@ -21,7 +21,8 @@ function selectClient(
   sidecarClient: SidecarClient | null,
 ): AxiosInstance {
   if (sidecarAvailable && sidecarClient) {
-    return sidecarClient as unknown as AxiosInstance
+    // sidecarClient 是 SidecarClient 类型，本质上是 AxiosInstance
+    return sidecarClient as AxiosInstance
   }
   return httpClient
 }

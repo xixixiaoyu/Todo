@@ -1,22 +1,35 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
+import { ref, computed } from 'vue'
 import { useMcpStore } from '@/features/mcp/stores/mcp'
-import { mcpApi, McpTransportType, type McpServerResponse } from '@/features/mcp/api/mcp'
+import { McpTransportType, type McpServerResponse } from '@lumina/shared'
 
-vi.mock('@/features/mcp/api/mcp', () => ({
-  mcpApi: {
-    getServers: vi.fn(),
-    updateServer: vi.fn(),
-    connect: vi.fn(),
-    disconnect: vi.fn(),
-    createServer: vi.fn(),
-    deleteServer: vi.fn(),
-    getTools: vi.fn(),
-  },
-  McpTransportType: {
-    STDIO: 'stdio',
-    HTTP: 'http',
-  },
+// 在 hoisted 中创建 mock 函数以便测试中引用
+const mockApiFunctions = vi.hoisted(() => ({
+  getServers: vi.fn(),
+  getServer: vi.fn(),
+  createServer: vi.fn(),
+  updateServer: vi.fn(),
+  deleteServer: vi.fn(),
+  getTools: vi.fn(),
+  callTool: vi.fn(),
+  connect: vi.fn(),
+  disconnect: vi.fn(),
+  getAllTools: vi.fn(),
+}))
+
+vi.mock('@/composables/useSidecar', () => ({
+  useSidecar: () => ({
+    isAvailable: ref(false),
+    sidecarPort: ref(null),
+    sidecarClient: computed(() => null),
+    sidecarInfo: ref(null),
+    restart: vi.fn(),
+  }),
+}))
+
+vi.mock('@/features/mcp/api/mcp-router', () => ({
+  createMcpApi: () => mockApiFunctions,
 }))
 
 const baseServer: McpServerResponse = {
@@ -41,10 +54,10 @@ describe('useMcpStore', () => {
   })
 
   it('should reconnect after runtime config update when already connected', async () => {
-    vi.mocked(mcpApi.getServers).mockResolvedValue([baseServer])
-    vi.mocked(mcpApi.connect).mockResolvedValue()
-    vi.mocked(mcpApi.disconnect).mockResolvedValue()
-    vi.mocked(mcpApi.updateServer).mockResolvedValue({
+    mockApiFunctions.getServers.mockResolvedValue([baseServer])
+    mockApiFunctions.connect.mockResolvedValue(undefined)
+    mockApiFunctions.disconnect.mockResolvedValue(undefined)
+    mockApiFunctions.updateServer.mockResolvedValue({
       ...baseServer,
       config: {
         command: 'node',
@@ -54,7 +67,7 @@ describe('useMcpStore', () => {
 
     const store = useMcpStore()
     await store.fetchServers()
-    vi.mocked(mcpApi.connect).mockClear()
+    mockApiFunctions.connect.mockClear()
 
     await store.updateServer('s1', {
       config: {
@@ -63,40 +76,40 @@ describe('useMcpStore', () => {
       },
     })
 
-    expect(mcpApi.disconnect).toHaveBeenCalledTimes(1)
-    expect(mcpApi.connect).toHaveBeenCalledTimes(1)
+    expect(mockApiFunctions.disconnect).toHaveBeenCalledTimes(1)
+    expect(mockApiFunctions.connect).toHaveBeenCalledTimes(1)
     expect(store.connectionStates.s1).toBe(true)
   })
 
   it('should disconnect after update when server becomes disabled', async () => {
-    vi.mocked(mcpApi.getServers).mockResolvedValue([baseServer])
-    vi.mocked(mcpApi.connect).mockResolvedValue()
-    vi.mocked(mcpApi.disconnect).mockResolvedValue()
-    vi.mocked(mcpApi.updateServer).mockResolvedValue({
+    mockApiFunctions.getServers.mockResolvedValue([baseServer])
+    mockApiFunctions.connect.mockResolvedValue(undefined)
+    mockApiFunctions.disconnect.mockResolvedValue(undefined)
+    mockApiFunctions.updateServer.mockResolvedValue({
       ...baseServer,
       enabled: false,
     })
 
     const store = useMcpStore()
     await store.fetchServers()
-    vi.mocked(mcpApi.connect).mockClear()
+    mockApiFunctions.connect.mockClear()
 
     await store.updateServer('s1', { enabled: false })
 
-    expect(mcpApi.disconnect).toHaveBeenCalledTimes(1)
-    expect(mcpApi.connect).not.toHaveBeenCalled()
+    expect(mockApiFunctions.disconnect).toHaveBeenCalledTimes(1)
+    expect(mockApiFunctions.connect).not.toHaveBeenCalled()
     expect(store.connectionStates.s1).toBe(false)
   })
 
   it('should connect after enabling a previously disabled server', async () => {
-    const disabledServer = {
+    const disabledServer: McpServerResponse = {
       ...baseServer,
       enabled: false,
     }
-    vi.mocked(mcpApi.getServers).mockResolvedValue([disabledServer])
-    vi.mocked(mcpApi.connect).mockResolvedValue()
-    vi.mocked(mcpApi.disconnect).mockResolvedValue()
-    vi.mocked(mcpApi.updateServer).mockResolvedValue({
+    mockApiFunctions.getServers.mockResolvedValue([disabledServer])
+    mockApiFunctions.connect.mockResolvedValue(undefined)
+    mockApiFunctions.disconnect.mockResolvedValue(undefined)
+    mockApiFunctions.updateServer.mockResolvedValue({
       ...disabledServer,
       enabled: true,
     })
@@ -106,43 +119,43 @@ describe('useMcpStore', () => {
 
     await store.updateServer('s1', { enabled: true })
 
-    expect(mcpApi.disconnect).not.toHaveBeenCalled()
-    expect(mcpApi.connect).toHaveBeenCalledTimes(1)
+    expect(mockApiFunctions.disconnect).not.toHaveBeenCalled()
+    expect(mockApiFunctions.connect).toHaveBeenCalledTimes(1)
     expect(store.connectionStates.s1).toBe(true)
   })
 
   it('toggleActive should not duplicate connect/disconnect calls', async () => {
-    const disabledServer = {
+    const disabledServer: McpServerResponse = {
       ...baseServer,
       enabled: false,
     }
-    vi.mocked(mcpApi.getServers).mockResolvedValue([disabledServer])
-    vi.mocked(mcpApi.connect).mockResolvedValue()
-    vi.mocked(mcpApi.disconnect).mockResolvedValue()
-    vi.mocked(mcpApi.updateServer).mockResolvedValue({
+    mockApiFunctions.getServers.mockResolvedValue([disabledServer])
+    mockApiFunctions.connect.mockResolvedValue(undefined)
+    mockApiFunctions.disconnect.mockResolvedValue(undefined)
+    mockApiFunctions.updateServer.mockResolvedValue({
       ...disabledServer,
       enabled: true,
     })
 
     const store = useMcpStore()
     await store.fetchServers()
-    vi.mocked(mcpApi.connect).mockClear()
+    mockApiFunctions.connect.mockClear()
 
     await store.toggleActive('s1')
 
-    expect(mcpApi.updateServer).toHaveBeenCalledWith('s1', { enabled: true })
-    expect(mcpApi.connect).toHaveBeenCalledTimes(1)
-    expect(mcpApi.disconnect).not.toHaveBeenCalled()
+    expect(mockApiFunctions.updateServer).toHaveBeenCalledWith('s1', { enabled: true })
+    expect(mockApiFunctions.connect).toHaveBeenCalledTimes(1)
+    expect(mockApiFunctions.disconnect).not.toHaveBeenCalled()
   })
 
   it('should not auto-connect enabled servers when fetchServers disables autoConnect', async () => {
-    vi.mocked(mcpApi.getServers).mockResolvedValue([baseServer])
-    vi.mocked(mcpApi.connect).mockResolvedValue()
+    mockApiFunctions.getServers.mockResolvedValue([baseServer])
+    mockApiFunctions.connect.mockResolvedValue(undefined)
 
     const store = useMcpStore()
     await store.fetchServers({ autoConnect: false })
 
-    expect(mcpApi.connect).not.toHaveBeenCalled()
+    expect(mockApiFunctions.connect).not.toHaveBeenCalled()
     expect(store.connectionStates.s1).toBe(false)
     expect(store.servers).toHaveLength(1)
   })
