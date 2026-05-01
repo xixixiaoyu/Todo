@@ -118,7 +118,7 @@ const timeAgo = (timestamp: number): string => {
   const date = new Date(timestamp)
   const thisYear = new Date().getFullYear()
   if (date.getFullYear() === thisYear) {
-    return `${date.getMonth() + 1}月${date.getDate()}日`
+    return `${date.getMonth() + 1}/${date.getDate()}`
   }
   return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`
 }
