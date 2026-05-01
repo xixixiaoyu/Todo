@@ -104,6 +104,7 @@ export const todo = {
   remoteSourceHint: '展示当前账号待办，并保持云同步',
   scratchpad: {
     title: '暂存箱',
+    titlePlaceholder: '输入标题...',
     placeholder: '点击此处粘贴文字或图片...',
     empty: '暂无内容',
     emptyDesc: '这里是你的临时灵感中转站，内容仅保存在本地',
@@ -119,6 +120,15 @@ export const todo = {
     selectTodo: '选择关联的待办事项',
     searchTodo: '搜索待办...',
     linkedTodo: '关联至',
+    deleted: '笔记已删除',
+    undo: '撤销',
+    searchPlaceholder: '搜索笔记...',
+    noResults: '没有匹配的笔记',
+    justNow: '刚刚',
+    minutesAgo: '{n} 分钟前',
+    hoursAgo: '{n} 小时前',
+    yesterday: '昨天',
+    daysAgo: '{n} 天前',
   },
   imageTaskExtraction: {
     title: '从图片中识别任务',

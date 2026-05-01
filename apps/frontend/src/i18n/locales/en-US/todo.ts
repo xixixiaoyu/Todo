@@ -105,6 +105,7 @@ export const todo = {
   remoteSourceHint: 'Show account todos with cloud synchronization',
   scratchpad: {
     title: 'Scratchpad',
+    titlePlaceholder: 'Enter title...',
     placeholder: 'Paste text or images here...',
     empty: 'Nothing here',
     emptyDesc: 'Your temporary inspiration hub. Content is saved locally only.',
@@ -120,6 +121,15 @@ export const todo = {
     selectTodo: 'Select a todo to link',
     searchTodo: 'Search todos...',
     linkedTodo: 'Linked to',
+    deleted: 'Note deleted',
+    undo: 'Undo',
+    searchPlaceholder: 'Search notes...',
+    noResults: 'No matching notes',
+    justNow: 'Just now',
+    minutesAgo: '{n}m ago',
+    hoursAgo: '{n}h ago',
+    yesterday: 'Yesterday',
+    daysAgo: '{n}d ago',
   },
   imageTaskExtraction: {
     title: 'Extract Tasks from Image',

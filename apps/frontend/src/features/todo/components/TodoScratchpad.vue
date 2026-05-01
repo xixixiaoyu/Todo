@@ -38,37 +38,50 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 interface ScratchpadItem {
   id: string
   type: 'text' | 'image'
+  title?: string
   content: string
-  image?: string // 添加可选的图片字段支持图文混排
+  image?: string
   createdAt: number
-  color?: string
+  color?: ColorToken
   todoId?: string
 }
 
 const { t } = useI18n()
-const { success } = useToast()
+const { success, info, removeToast } = useToast()
 const todoStore = useTodoStore()
 const items = useLocalStorage<ScratchpadItem[]>('lumina-scratchpad-items', [])
 const showClearDialog = ref(false)
 const editingId = ref<string | null>(null)
+const editTitle = ref('')
 const editContent = ref('')
 const editImage = ref<string | undefined>(undefined)
 const editTodoId = ref<string | undefined>(undefined)
 const previewImageUrl = ref<string | null>(null)
 const isAddingNew = ref(false)
+const newNoteTitle = ref('')
 const newNoteContent = ref('')
 const newNoteImage = ref<string | undefined>(undefined)
 const newNoteTodoId = ref<string | undefined>(undefined)
 const newNoteTextareaRef = ref<HTMLTextAreaElement | null>(null)
 const todoSearchQuery = ref('')
+const scratchpadSearchQuery = ref('')
 
-const COLORS = [
-  'bg-amber-50/50 dark:bg-amber-900/20',
-  'bg-blue-50/50 dark:bg-blue-900/20',
-  'bg-emerald-50/50 dark:bg-emerald-900/20',
-  'bg-rose-50/50 dark:bg-rose-900/20',
-  'bg-purple-50/50 dark:bg-purple-900/20',
-]
+const COLOR_TOKENS = ['amber', 'blue', 'emerald', 'rose', 'purple'] as const
+type ColorToken = (typeof COLOR_TOKENS)[number]
+
+const COLOR_CLASS_MAP: Record<ColorToken, string> = {
+  amber: 'bg-amber-50/50 dark:bg-amber-900/20',
+  blue: 'bg-blue-50/50 dark:bg-blue-900/20',
+  emerald: 'bg-emerald-50/50 dark:bg-emerald-900/20',
+  rose: 'bg-rose-50/50 dark:bg-rose-900/20',
+  purple: 'bg-purple-50/50 dark:bg-purple-900/20',
+}
+
+const cardColorClass = (token?: ColorToken): string =>
+  token ? COLOR_CLASS_MAP[token] : 'bg-card/50'
+
+const getRandomColorToken = (): ColorToken =>
+  COLOR_TOKENS[Math.floor(Math.random() * COLOR_TOKENS.length)]
 
 const filteredTodos = computed(() => {
   const query = todoSearchQuery.value.toLowerCase()
@@ -78,7 +91,37 @@ const filteredTodos = computed(() => {
     .slice(0, 10)
 })
 
-const getRandomColor = () => COLORS[Math.floor(Math.random() * COLORS.length)]
+const filteredItems = computed(() => {
+  const query = scratchpadSearchQuery.value.toLowerCase().trim()
+  if (!query) return items.value
+  return items.value.filter(
+    (item) =>
+      (item.title || '').toLowerCase().includes(query) ||
+      item.content.toLowerCase().includes(query),
+  )
+})
+
+const timeAgo = (timestamp: number): string => {
+  const now = Date.now()
+  const diff = now - timestamp
+  const seconds = Math.floor(diff / 1000)
+  const minutes = Math.floor(seconds / 60)
+  const hours = Math.floor(minutes / 60)
+  const days = Math.floor(hours / 24)
+
+  if (seconds < 60) return t('todo.scratchpad.justNow')
+  if (minutes < 60) return t('todo.scratchpad.minutesAgo', { n: minutes })
+  if (hours < 24) return t('todo.scratchpad.hoursAgo', { n: hours })
+  if (days === 1) return t('todo.scratchpad.yesterday')
+  if (days < 7) return t('todo.scratchpad.daysAgo', { n: days })
+
+  const date = new Date(timestamp)
+  const thisYear = new Date().getFullYear()
+  if (date.getFullYear() === thisYear) {
+    return `${date.getMonth() + 1}月${date.getDate()}日`
+  }
+  return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`
+}
 
 const handlePaste = (event: ClipboardEvent) => {
   const clipboardData = event.clipboardData
@@ -121,14 +164,21 @@ const handlePaste = (event: ClipboardEvent) => {
   }
 }
 
-const addItem = (type: 'text' | 'image', content: string, todoId?: string, image?: string) => {
+const addItem = (
+  type: 'text' | 'image',
+  content: string,
+  todoId?: string,
+  image?: string,
+  title?: string,
+) => {
   const newItem: ScratchpadItem = {
     id: crypto.randomUUID(),
     type,
+    title: title || undefined,
     content,
     image,
     createdAt: Date.now(),
-    color: getRandomColor(),
+    color: getRandomColorToken(),
     todoId,
   }
   items.value.unshift(newItem)
@@ -136,6 +186,7 @@ const addItem = (type: 'text' | 'image', content: string, todoId?: string, image
 
 const startAddNew = () => {
   isAddingNew.value = true
+  newNoteTitle.value = ''
   newNoteContent.value = ''
   newNoteImage.value = undefined
   newNoteTodoId.value = undefined
@@ -146,20 +197,28 @@ const startAddNew = () => {
 
 const cancelAddNew = () => {
   isAddingNew.value = false
+  newNoteTitle.value = ''
   newNoteContent.value = ''
   newNoteImage.value = undefined
   newNoteTodoId.value = undefined
 }
 
 const confirmAddNew = () => {
-  if (newNoteContent.value.trim() || newNoteImage.value) {
-    addItem('text', newNoteContent.value.trim(), newNoteTodoId.value, newNoteImage.value)
+  if (newNoteContent.value.trim() || newNoteImage.value || newNoteTitle.value.trim()) {
+    addItem(
+      'text',
+      newNoteContent.value.trim(),
+      newNoteTodoId.value,
+      newNoteImage.value,
+      newNoteTitle.value.trim(),
+    )
   }
   cancelAddNew()
 }
 
 const startEditing = (item: ScratchpadItem) => {
   editingId.value = item.id
+  editTitle.value = item.title || ''
   editContent.value = item.content
   editImage.value = item.image
   editTodoId.value = item.todoId
@@ -167,6 +226,7 @@ const startEditing = (item: ScratchpadItem) => {
 
 const cancelEditing = () => {
   editingId.value = null
+  editTitle.value = ''
   editContent.value = ''
   editImage.value = undefined
   editTodoId.value = undefined
@@ -174,7 +234,8 @@ const cancelEditing = () => {
 
 const saveEditing = (id: string) => {
   const item = items.value.find((i) => i.id === id)
-  if (item && (editContent.value.trim() || editImage.value)) {
+  if (item && (editContent.value.trim() || editImage.value || editTitle.value.trim())) {
+    item.title = editTitle.value.trim() || undefined
     item.content = editContent.value.trim()
     item.image = editImage.value
     item.todoId = editTodoId.value
@@ -183,7 +244,18 @@ const saveEditing = (id: string) => {
 }
 
 const removeItem = (id: string) => {
-  items.value = items.value.filter((item) => item.id !== id)
+  const index = items.value.findIndex((item) => item.id === id)
+  if (index === -1) return
+  const removed = items.value.splice(index, 1)[0]
+
+  const undoAction = {
+    label: t('todo.scratchpad.undo'),
+    onClick: () => {
+      items.value.splice(index, 0, removed)
+      removeToast(toastId)
+    },
+  }
+  const toastId = info(t('todo.scratchpad.deleted'), 0, undoAction)
 }
 
 const clearAll = () => {
@@ -229,20 +301,29 @@ const jumpToTodo = (todoId: string) => {
   todoStore.searchQuery = getTodoTitle(todoId)
 }
 
+const onTodoSearchOpen = (open: boolean) => {
+  if (open) todoSearchQuery.value = ''
+}
+
 onMounted(() => {
   window.addEventListener('paste', handlePaste)
 
-  // 简单的迁移逻辑：将旧的 type: 'image' 转换为统一的笔记格式
+  // 迁移逻辑：将旧格式迁移到新格式
   items.value = items.value.map((item) => {
+    let updated = { ...item }
+
+    // 迁移旧 type: 'image' 为统一笔记格式
     if (item.type === 'image' && item.content.startsWith('data:image/')) {
-      return {
-        ...item,
-        type: 'text',
-        image: item.content,
-        content: '',
-      }
+      updated = { ...updated, type: 'text', image: item.content, content: '' }
     }
-    return item
+
+    // 迁移旧颜色字符串为 token
+    if (typeof item.color === 'string' && !COLOR_TOKENS.includes(item.color as ColorToken)) {
+      const token = COLOR_TOKENS.find((t) => (item.color as string).includes(t))
+      updated = { ...updated, color: token }
+    }
+
+    return updated
   })
 })
 
@@ -268,6 +349,12 @@ onUnmounted(() => {
           <Plus :size="16" />
           {{ t('todo.scratchpad.add') }}
         </Button>
+        <Input
+          v-if="items.length > 0"
+          v-model="scratchpadSearchQuery"
+          :placeholder="t('todo.scratchpad.searchPlaceholder')"
+          class="h-8 w-[160px] text-xs rounded-xl"
+        />
         <Button
           v-if="items.length > 0"
           variant="ghost"
@@ -298,6 +385,15 @@ onUnmounted(() => {
         </div>
       </div>
 
+      <!-- Search No Results -->
+      <div
+        v-if="items.length > 0 && filteredItems.length === 0 && !isAddingNew"
+        class="flex flex-col items-center justify-center h-[300px] text-center space-y-3"
+      >
+        <Search :size="32" class="text-muted-foreground/30" />
+        <p class="text-sm text-muted-foreground">{{ t('todo.scratchpad.noResults') }}</p>
+      </div>
+
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-8">
         <!-- New Note Input Card -->
         <Card
@@ -319,10 +415,16 @@ onUnmounted(() => {
                 <X :size="12" />
               </Button>
             </div>
+            <input
+              v-model="newNoteTitle"
+              type="text"
+              class="w-full bg-transparent border-none text-sm font-semibold placeholder:text-muted-foreground/40 focus:outline-none"
+              :placeholder="t('todo.scratchpad.titlePlaceholder')"
+            />
             <textarea
               ref="newNoteTextareaRef"
               v-model="newNoteContent"
-              class="w-full flex-1 bg-transparent border-none focus:ring-0 text-sm resize-none min-h-[120px] max-h-[300px] overflow-y-auto placeholder:text-muted-foreground/50 custom-scrollbar"
+              class="w-full flex-1 bg-transparent border-none focus:ring-0 text-sm resize-none min-h-[100px] max-h-[300px] overflow-y-auto placeholder:text-muted-foreground/50 custom-scrollbar"
               :placeholder="t('todo.scratchpad.placeholder')"
               @keydown.esc="cancelAddNew"
               @keydown.meta.enter="confirmAddNew"
@@ -331,7 +433,7 @@ onUnmounted(() => {
 
             <!-- Todo Association Selector -->
             <div class="flex items-center gap-2">
-              <Popover>
+              <Popover @update:open="onTodoSearchOpen">
                 <PopoverTrigger as-child>
                   <Button
                     variant="ghost"
@@ -396,10 +498,10 @@ onUnmounted(() => {
         </Card>
 
         <Card
-          v-for="item in items"
+          v-for="item in filteredItems"
           :key="item.id"
-          class="group relative overflow-hidden border-border/40 backdrop-blur-sm transition-all hover:shadow-lg hover:-translate-y-1"
-          :class="[item.color || 'bg-card/50']"
+          class="group relative overflow-hidden border-border/40 backdrop-blur-sm transition-all hover:shadow-lg"
+          :class="cardColorClass(item.color)"
         >
           <CardContent class="p-4">
             <!-- Unified Note Item -->
@@ -409,7 +511,7 @@ onUnmounted(() => {
                   class="flex items-center gap-2 text-[10px] font-medium text-muted-foreground/60"
                 >
                   <component :is="item.image ? ImageIcon : Type" :size="12" />
-                  <span>{{ new Date(item.createdAt).toLocaleString() }}</span>
+                  <span>{{ timeAgo(item.createdAt) }}</span>
                 </div>
                 <div
                   class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -458,9 +560,15 @@ onUnmounted(() => {
                     <X :size="12" />
                   </Button>
                 </div>
+                <input
+                  v-model="editTitle"
+                  type="text"
+                  class="w-full bg-background/50 rounded-lg px-2 py-1.5 text-sm font-semibold border-none focus:ring-1 focus:ring-primary/30"
+                  :placeholder="t('todo.scratchpad.titlePlaceholder')"
+                />
                 <textarea
                   v-model="editContent"
-                  class="w-full bg-background/50 rounded-lg p-2 text-sm resize-none min-h-[100px] max-h-[300px] overflow-y-auto border-none focus:ring-1 focus:ring-primary/30 custom-scrollbar"
+                  class="w-full bg-background/50 rounded-lg p-2 text-sm resize-none min-h-[80px] max-h-[300px] overflow-y-auto border-none focus:ring-1 focus:ring-primary/30 custom-scrollbar"
                   @keydown.esc="cancelEditing"
                   @keydown.meta.enter="saveEditing(item.id)"
                   @keydown.ctrl.enter="saveEditing(item.id)"
@@ -468,7 +576,7 @@ onUnmounted(() => {
 
                 <!-- Todo Association Selector in Edit Mode -->
                 <div class="flex items-center gap-2">
-                  <Popover>
+                  <Popover @update:open="onTodoSearchOpen">
                     <PopoverTrigger as-child>
                       <Button
                         variant="ghost"
@@ -551,6 +659,12 @@ onUnmounted(() => {
                       <Maximize2 :size="16" class="text-white drop-shadow-md" />
                     </div>
                   </div>
+                  <h3
+                    v-if="item.title"
+                    class="text-sm font-semibold leading-snug text-foreground/90"
+                  >
+                    {{ item.title }}
+                  </h3>
                   <p
                     class="text-sm leading-relaxed whitespace-pre-wrap break-words text-foreground/90 selection:bg-primary/20 select-text cursor-text"
                     @dblclick="selectAllText"
@@ -571,7 +685,7 @@ onUnmounted(() => {
                     </Badge>
                   </div>
                   <div v-else class="opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Popover>
+                    <Popover @update:open="onTodoSearchOpen">
                       <PopoverTrigger as-child>
                         <Button
                           variant="ghost"
