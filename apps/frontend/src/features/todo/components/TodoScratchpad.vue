@@ -255,7 +255,7 @@ const removeItem = (id: string) => {
       removeToast(toastId)
     },
   }
-  const toastId = info(t('todo.scratchpad.deleted'), 0, undoAction)
+  const toastId = info(t('todo.scratchpad.deleted'), 5000, undoAction)
 }
 
 const clearAll = () => {
