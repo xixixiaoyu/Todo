@@ -3,29 +3,56 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/url"
 	"strings"
+
+	"lumina-wails/sidecar"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // App struct
 type App struct {
-	ctx context.Context
+	ctx     context.Context
+	sidecar *sidecar.Manager
 }
 
 // NewApp creates a new App struct
 func NewApp() *App {
-	return &App{}
+	cfg, err := sidecar.ResolveSidecarConfig()
+	if err != nil {
+		// Sidecar is optional — log warning but don't fail
+		slog.Warn("sidecar config resolution failed, sidecar disabled", "error", err)
+		return &App{}
+	}
+	return &App{
+		sidecar: sidecar.NewManager(cfg),
+	}
 }
 
 // startup is called when the app starts. The context is saved
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+
+	if a.sidecar != nil {
+		a.sidecar.SetEventEmitter(&sidecar.WailsEmitter{Ctx: ctx})
+		// Start Sidecar asynchronously — don't block app startup
+		go func() {
+			if _, err := a.sidecar.Start(ctx); err != nil {
+				slog.Error("sidecar failed to start", "error", err)
+			}
+		}()
+	}
 }
 
 func (a *App) shutdown(_ context.Context) {
+	if a.sidecar != nil {
+		if err := a.sidecar.Stop(); err != nil {
+			slog.Error("sidecar shutdown error", "error", err)
+		}
+	}
 	a.ctx = nil
 }
 
@@ -164,4 +191,20 @@ func (a *App) ShowNotification(title, message string) {
 		"title":   title,
 		"message": message,
 	})
+}
+
+// GetSidecarInfo returns the current Sidecar state to the frontend.
+func (a *App) GetSidecarInfo() *sidecar.SidecarInfo {
+	if a.sidecar == nil {
+		return &sidecar.SidecarInfo{Status: sidecar.StatusStopped}
+	}
+	return a.sidecar.Info()
+}
+
+// RestartSidecar restarts the Sidecar process.
+func (a *App) RestartSidecar() error {
+	if a.sidecar == nil {
+		return fmt.Errorf("sidecar is not available")
+	}
+	return a.sidecar.Restart()
 }

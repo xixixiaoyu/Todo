@@ -88,4 +88,25 @@ export const system = {
       window.runtime.WindowToggleMaximise()
     }
   },
+
+  /**
+   * 获取 Sidecar 状态信息
+   */
+  getSidecarInfo: () => callGo<SidecarInfo>('main.App.GetSidecarInfo'),
+
+  /**
+   * 重启 Sidecar 进程
+   */
+  restartSidecar: () => callGo<void>('main.App.RestartSidecar'),
+}
+
+/**
+ * Sidecar 状态信息（与 Go 层 SidecarInfo 对应）
+ */
+export interface SidecarInfo {
+  status: 'stopped' | 'starting' | 'running' | 'errored'
+  port: number
+  url: string
+  pid: number
+  error: string
 }

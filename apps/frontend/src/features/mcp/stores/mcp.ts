@@ -1,18 +1,26 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { mcpApi } from '../api/mcp'
+import { createMcpApi } from '../api/mcp-router'
+import { useSidecar } from '@/composables/useSidecar'
 import type {
   McpServerResponse,
   CreateMcpServerDto,
   UpdateMcpServerDto,
   McpToolResponse,
-} from '../api/mcp'
+} from '@lumina/shared'
 
 /**
  * MCP Store
  * 管理前端 MCP 服务器配置和状态
+ * 自动根据 Sidecar 可用性路由到本地或远程
  */
 export const useMcpStore = defineStore('mcp', () => {
+  const { isAvailable: sidecarAvailable, sidecarClient } = useSidecar()
+
+  const mcpApi = createMcpApi(() => ({
+    isAvailable: sidecarAvailable.value,
+    client: sidecarClient.value,
+  }))
   const servers = ref<McpServerResponse[]>([])
   const isLoading = ref(false)
   const error = ref<string | null>(null)

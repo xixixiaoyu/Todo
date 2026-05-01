@@ -1,3 +1,6 @@
 # Wails Build Artifacts
 build/bin/
 frontend/
+
+# Sidecar cache (downloaded Node.js runtimes)
+.cache/

@@ -196,6 +196,24 @@
         "prisma.config.*",
         "vitest.config.*"
       ]
+    },
+    "@lumina/sidecar#build": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "package.json", "tsconfig.json", "tsup.config.*"],
+      "outputs": ["dist/**"]
+    },
+    "@lumina/sidecar#dev": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true,
+      "inputs": ["src/**", "package.json", "tsconfig.json", "tsup.config.*"]
+    },
+    "@lumina/sidecar#type-check": {
+      "inputs": ["src/**", "package.json", "tsconfig.json"]
+    },
+    "@lumina/sidecar#test": {
+      "inputs": ["src/**", "tests/**", "package.json", "tsconfig.json", "vitest.config.*"],
+      "outputs": ["coverage/**"]
     }
   }
 }

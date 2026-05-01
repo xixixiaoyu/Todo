@@ -9,6 +9,7 @@ on:
     paths:
       - 'apps/wails/**'
       - 'apps/frontend/**'
+      - 'apps/sidecar/**'
       - 'packages/shared/**'
       - 'package.json'
       - 'pnpm-lock.yaml'
@@ -69,6 +70,21 @@ jobs:
 
       - name: 安装依赖
         run: pnpm install --frozen-lockfile
+
+      - name: 构建共享包
+        run: pnpm --filter @lumina/shared build
+
+      - name: 构建 Sidecar 应用
+        run: pnpm --filter @lumina/sidecar build
+
+      - name: 下载 Node.js 运行时 (Unix)
+        if: runner.os != 'Windows'
+        run: cd apps/wails && ./scripts/download-node.sh
+
+      - name: 下载 Node.js 运行时 (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: cd apps/wails; .\scripts\download-node.ps1
 
       - name: 生成构建元数据 (Unix)
         if: runner.os != 'Windows'
@@ -160,6 +176,15 @@ jobs:
         if: runner.os == 'Linux'
         run: pnpm wails:build
 
+      - name: 组装 Sidecar 到构建产物 (Unix)
+        if: runner.os != 'Windows'
+        run: cd apps/wails && ./scripts/assemble-sidecar.sh
+
+      - name: 组装 Sidecar 到构建产物 (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: cd apps/wails; .\scripts\assemble-sidecar.ps1
+
       - name: 校验 macOS 签名与公证配置
         if: runner.os == 'macOS' && github.ref_type == 'tag'
         env:
@@ -248,7 +273,8 @@ jobs:
         run: |
           mkdir -p artifacts
           test -f apps/wails/build/bin/Lumina
-          tar -C apps/wails/build/bin -czf "artifacts/$PACKAGE_NAME" Lumina
+          test -d apps/wails/build/bin/sidecar
+          tar -C apps/wails/build/bin -czf "artifacts/$PACKAGE_NAME" Lumina sidecar
 
       - name: 签名 macOS DMG 安装器
         if: runner.os == 'macOS'

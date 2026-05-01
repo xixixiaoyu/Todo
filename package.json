@@ -68,10 +68,12 @@
     "docker:dev:clean": "docker compose -f docker-compose.dev.yml down -v --rmi local",
     "docker:prune": "docker system prune -f --volumes",
     "wails:dev": "cd apps/wails && wails dev",
-    "wails:build": "cd apps/wails && wails build -trimpath -clean -ldflags \"-s -w\"",
+    "wails:build": "pnpm sidecar:build && cd apps/wails && wails build -trimpath -clean -ldflags \"-s -w\" && ./scripts/assemble-sidecar.sh",
     "wails:kill": "./scripts/close-app.sh",
     "wails:install": "./scripts/deploy-app.sh",
     "wails:deploy": "pnpm wails:kill && pnpm wails:build && pnpm wails:install",
+    "sidecar:build": "pnpm --filter @lumina/shared build && pnpm --filter @lumina/sidecar build",
+    "sidecar:dev": "pnpm --filter @lumina/shared build && pnpm --filter @lumina/sidecar dev",
     "tag:refresh": "./scripts/refresh-tag.sh",
     "pm2:backend": "pnpm --filter @lumina/backend pm2:start"
   },

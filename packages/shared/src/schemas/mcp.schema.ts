@@ -96,15 +96,12 @@ export type CreateMcpServerDto = z.infer<typeof CreateMcpServerSchema>
 export type UpdateMcpServerDto = z.infer<typeof UpdateMcpServerSchema>
 
 /**
- * HTTP Transport 配置 Schema
+ * HTTP Transport 基础配置 Schema（不含 URL 安全校验）
+ * 用于组合出不同安全策略的 HTTP 配置
  */
-export const HttpConfigSchema = z.object({
-  url: z
-    .string()
-    .url('Invalid URL format')
-    .refine(isAllowedMcpHttpUrl, 'Only public http(s) MCP URLs are allowed'),
+export const HttpConfigBaseSchema = z.object({
+  url: z.string().url('Invalid URL format'),
   headers: z.record(z.string()).optional(),
-  // OAuth / Bearer Token 支持
   auth: z
     .object({
       type: z.enum(['bearer', 'api_key', 'oauth']),
@@ -115,7 +112,37 @@ export const HttpConfigSchema = z.object({
     .optional(),
 })
 
+/**
+ * 桌面端 HTTP URL 校验 — 仅验证协议，允许 localhost / private IP
+ */
+function isLocalMcpHttpUrl(data: { url: string }): boolean {
+  try {
+    const parsed = new URL(data.url)
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+/**
+ * HTTP Transport 配置 Schema（服务端 — 拦截私有地址）
+ */
+export const HttpConfigSchema = HttpConfigBaseSchema.refine(
+  (data) => isAllowedMcpHttpUrl(data.url),
+  'Only public http(s) MCP URLs are allowed',
+)
+
 export type HttpConfig = z.infer<typeof HttpConfigSchema>
+
+/**
+ * HTTP Transport 配置 Schema（桌面端 — 允许 localhost / private IP）
+ */
+export const LocalHttpConfigSchema = HttpConfigBaseSchema.refine(
+  isLocalMcpHttpUrl,
+  'Only http(s) MCP URLs are allowed',
+)
+
+export type LocalHttpConfig = z.infer<typeof LocalHttpConfigSchema>
 
 /**
  * 创建 MCP Server 配置的基础对象 Schema
@@ -170,6 +197,63 @@ export const UpdateMcpServerSchema = McpServerBaseSchema.partial()
       })
     }
   })
+
+/**
+ * 桌面端 MCP Server 配置基础 Schema（使用 LocalHttpConfigSchema）
+ */
+export const LocalMcpServerBaseSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(100),
+  description: z.string().max(500).optional(),
+  transport: z.enum([McpTransportType.STDIO, McpTransportType.HTTP]),
+  config: z.union([StdioConfigSchema, LocalHttpConfigSchema]),
+  enabled: z.boolean().optional().default(true),
+})
+
+/**
+ * 桌面端验证 Transport 和 Config 是否匹配
+ */
+const validateLocalTransportConfig = (data: Record<string, unknown>) => {
+  if (!data.transport || !data.config) return true
+  if (data.transport === McpTransportType.STDIO) {
+    return StdioConfigSchema.safeParse(data.config).success
+  }
+  if (data.transport === McpTransportType.HTTP) {
+    return LocalHttpConfigSchema.safeParse(data.config).success
+  }
+  return false
+}
+
+/**
+ * 桌面端创建 MCP Server 配置 Schema
+ */
+export const CreateLocalMcpServerSchema = LocalMcpServerBaseSchema.refine(
+  validateLocalTransportConfig,
+  { message: 'Config must match the transport type', path: ['config'] },
+)
+
+export type CreateLocalMcpServerDto = z.infer<typeof CreateLocalMcpServerSchema>
+
+/**
+ * 桌面端更新 MCP Server 配置 Schema
+ */
+export const UpdateLocalMcpServerSchema = LocalMcpServerBaseSchema.partial()
+  .refine(validateLocalTransportConfig, {
+    message: 'Config must match the transport type',
+    path: ['config'],
+  })
+  .superRefine((data, ctx) => {
+    const hasTransport = data.transport !== undefined
+    const hasConfig = data.config !== undefined
+    if (hasTransport !== hasConfig) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['config'],
+        message: 'transport and config must be provided together when updating runtime config',
+      })
+    }
+  })
+
+export type UpdateLocalMcpServerDto = z.infer<typeof UpdateLocalMcpServerSchema>
 
 /**
  * 调用工具 Schema

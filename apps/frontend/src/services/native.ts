@@ -1,4 +1,4 @@
-import { isWails, system } from '@/lib/wails'
+import { isWails, system, type SidecarInfo } from '@/lib/wails'
 import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics'
 import { Capacitor } from '@capacitor/core'
 
@@ -110,6 +110,25 @@ export const nativeService = {
   async toggleMaximise() {
     if (isWails()) {
       system.toggleMaximise()
+    }
+  },
+
+  /**
+   * 获取 Sidecar 状态信息 (Wails 特有)
+   */
+  async getSidecarInfo(): Promise<SidecarInfo | null> {
+    if (isWails()) {
+      return system.getSidecarInfo()
+    }
+    return null
+  },
+
+  /**
+   * 重启 Sidecar 进程 (Wails 特有)
+   */
+  async restartSidecar(): Promise<void> {
+    if (isWails()) {
+      return system.restartSidecar()
     }
   },
 }
