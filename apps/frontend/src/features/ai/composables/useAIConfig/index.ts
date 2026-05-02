@@ -86,6 +86,7 @@ function loadConfig(): AIConfig {
       return {
         ...DEFAULT_CONFIG,
         ...parsed,
+        thinkingEffort: 'max',
         discussionModelIds: normalizeIdList(parsed.discussionModelIds),
         discussionPrimaryModelId:
           typeof parsed.discussionPrimaryModelId === 'string' &&
@@ -362,7 +363,7 @@ export function useAIConfig() {
       model: config.value.model,
       systemPrompt: config.value.systemPrompt,
       temperature: config.value.temperature,
-      thinkingEffort: config.value.thinkingEffort,
+      thinkingEffort: 'max',
       todoAssistant: config.value.todoAssistant,
       skillIds: config.value.skillIds,
     }
