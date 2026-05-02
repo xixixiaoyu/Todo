@@ -397,7 +397,7 @@ function onFireworksComplete() {
                   gsap.killTweensOf(element)
                   gsap.set(element, {
                     opacity: 0,
-                    x: direction * 15,
+                    x: direction * 10,
                     scale: 0.98,
                     filter: 'blur(4px)',
                     willChange: 'transform, opacity, filter',
@@ -411,8 +411,8 @@ function onFireworksComplete() {
                     x: 0,
                     scale: 1,
                     filter: 'blur(0px)',
-                    duration: 0.4,
-                    ease: 'power3.out',
+                    duration: 0.25,
+                    ease: 'power2.out',
                     onComplete: () => {
                       gsap.set(el, { clearProps: 'willChange,filter' })
                       done()
@@ -428,10 +428,10 @@ function onFireworksComplete() {
                   gsap.set(element, { willChange: 'transform, opacity, filter' })
                   gsap.to(element, {
                     opacity: 0,
-                    x: -direction * 15,
+                    x: -direction * 10,
                     scale: 0.98,
                     filter: 'blur(4px)',
-                    duration: 0.25,
+                    duration: 0.2,
                     ease: 'power2.in',
                     onComplete: () => {
                       gsap.set(element, { clearProps: 'willChange,filter' })
