@@ -71,24 +71,26 @@ export function useSidecar() {
 
   function startHealthCheck() {
     if (healthCheckTimer) return
-    healthCheckTimer = setInterval(async () => {
-      const healthy = await probeHealth()
-      if (!healthy && isAvailable.value) {
-        isAvailable.value = false
-        // 尝试重新获取信息
-        try {
-          const info = (await system.getSidecarInfo()) as SidecarInfo | null
-          if (info?.status === 'running' && info.port) {
-            sidecarPort.value = info.port
-            sidecarInfo.value = info
-            isAvailable.value = await probeHealth()
+    healthCheckTimer = setInterval(() => {
+      void (async () => {
+        const healthy = await probeHealth()
+        if (!healthy && isAvailable.value) {
+          isAvailable.value = false
+          // 尝试重新获取信息
+          try {
+            const info = (await system.getSidecarInfo()) as SidecarInfo | null
+            if (info?.status === 'running' && info.port) {
+              sidecarPort.value = info.port
+              sidecarInfo.value = info
+              isAvailable.value = await probeHealth()
+            }
+          } catch {
+            // Sidecar 可能已崩溃
           }
-        } catch {
-          // Sidecar 可能已崩溃
+        } else if (healthy && !isAvailable.value) {
+          isAvailable.value = true
         }
-      } else if (healthy && !isAvailable.value) {
-        isAvailable.value = true
-      }
+      })()
     }, HEALTH_CHECK_INTERVAL)
   }
 
@@ -104,7 +106,7 @@ export function useSidecar() {
   }
 
   onMounted(() => {
-    init()
+    void init()
   })
 
   onUnmounted(() => {

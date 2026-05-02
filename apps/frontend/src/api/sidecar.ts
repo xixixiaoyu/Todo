@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios, { type AxiosInstance } from 'axios'
 
 /**
  * 创建 Sidecar 专用 HTTP 客户端
