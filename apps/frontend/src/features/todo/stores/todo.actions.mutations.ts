@@ -3,6 +3,9 @@ import { toDate } from './todo.dates'
 import { generateTodoId, isDuplicateTodo } from './todo.actions.common'
 import type { Todo } from './todo.types'
 
+/** 标题最大字符数，与 @lumina/shared TodoSchema.title 保持一致 */
+const MAX_TITLE_LENGTH = 500
+
 type TodoMutationDeps = {
   todos: Ref<Todo[]>
   loading: Ref<boolean>
@@ -102,7 +105,10 @@ export function createTodoMutations(deps: TodoMutationDeps): {
     const trimmedTitle = title.trim()
     if (!trimmedTitle) return null
 
-    if (isDuplicate(trimmedTitle, parentId)) {
+    // 防御性截断：确保标题不超过后端 schema 的 500 字符限制
+    const safeTitle = trimmedTitle.slice(0, MAX_TITLE_LENGTH)
+
+    if (isDuplicate(safeTitle, parentId)) {
       deps.error.value = 'todo.duplicate'
       return null
     }
@@ -124,7 +130,7 @@ export function createTodoMutations(deps: TodoMutationDeps): {
 
       const newTodo: Todo = {
         id: id || generateTodoId(),
-        title: trimmedTitle,
+        title: safeTitle,
         completed: false,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -174,9 +180,12 @@ export function createTodoMutations(deps: TodoMutationDeps): {
         const trimmedTitle = title.trim()
         if (!trimmedTitle || isDuplicate(trimmedTitle, parentId)) continue
 
+        // 防御性截断
+        const safeTitle = trimmedTitle.slice(0, MAX_TITLE_LENGTH)
+
         const newTodo: Todo = {
           id: generateTodoId(),
-          title: trimmedTitle,
+          title: safeTitle,
           completed: false,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -361,7 +370,8 @@ export function createTodoMutations(deps: TodoMutationDeps): {
       deps.error.value = 'todo.titleEmpty'
       return false
     }
-    const targetTitle = trimmedTitle || todo.title
+    // 防御性截断：确保标题不超过后端 schema 的 500 字符限制
+    const targetTitle = (trimmedTitle || todo.title).slice(0, MAX_TITLE_LENGTH)
     const targetParentId = parentId !== undefined ? parentId : todo.parentId
 
     if (targetTitle === todo.title && targetParentId === todo.parentId) return true

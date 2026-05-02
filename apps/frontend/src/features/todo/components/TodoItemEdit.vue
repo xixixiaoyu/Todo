@@ -46,6 +46,7 @@ defineExpose({
               name="edit-todo"
               :model-value="modelValue"
               type="text"
+              maxlength="500"
               class="h-10 w-full bg-background text-foreground text-[var(--todo-font-body)] focus-visible:ring-primary/20 placeholder:text-[var(--todo-font-meta)]"
               :placeholder="t('todo.editPlaceholder')"
               @update:model-value="emit('update:modelValue', $event as string)"
