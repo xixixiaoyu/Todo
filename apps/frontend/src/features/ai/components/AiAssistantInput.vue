@@ -143,8 +143,17 @@ const adjustTextareaHeight = () => {
   const textarea = textareaRef.value
   if (!textarea) return
 
-  // 使用更稳健的方式重置高度以获取准确的 scrollHeight
-  // 先设为 auto 以允许它收缩到内容大小
+  // 空内容时固定单行高度，避免 placeholder 干扰 scrollHeight 导致高度跳动
+  const isEmpty = !textarea.value.trim()
+  if (isEmpty) {
+    textarea.style.height = `${MIN_HEIGHT.value}px`
+    textarea.style.maxHeight = `${MIN_HEIGHT.value}px`
+    textarea.style.overflowY = 'hidden'
+    return
+  }
+
+  // 有内容时按 scrollHeight 自适应，支持换行自动撑高
+  textarea.style.maxHeight = `${MAX_HEIGHT}px`
   textarea.style.height = 'auto'
   const scrollHeight = textarea.scrollHeight
 
@@ -289,6 +298,7 @@ defineExpose({
           'ai-assistant-textarea flex-1 resize-none bg-transparent text-foreground outline-none transition-colors',
           isMobile ? 'px-2 py-1' : 'px-2 py-1.5',
         ]"
+        :style="{ minHeight: `${MIN_HEIGHT}px` }"
         @input="(e) => emit('update:modelValue', (e.target as HTMLTextAreaElement).value)"
         @keydown.exact="handleKeydown"
         @keydown.enter.shift.exact="handleNewline"
