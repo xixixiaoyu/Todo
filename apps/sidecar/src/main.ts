@@ -3,7 +3,9 @@ import { loadConfig } from './config'
 import { createApp } from './server/app'
 import { createMcpRoutes } from './routes/mcp'
 import { createHealthRoutes } from './routes/health'
+import { createWorkspaceRoutes } from './routes/workspaces'
 import { McpConfigStore } from './store/mcp-config-store'
+import { WorkspaceStore } from './store/workspace-store'
 import { McpClient } from './mcp/mcp-client'
 import { findFreePort } from './utils/port'
 import { logger } from './utils/logger'
@@ -15,16 +17,20 @@ async function main() {
   // 分配端口
   const port = config.port || (await findFreePort(config.host))
 
-  // 初始化 MCP 服务
-  const mcpClient = new McpClient()
+  // 初始化存储
   const configStore = new McpConfigStore(config.dataDir)
+  const workspaceStore = new WorkspaceStore(config.dataDir)
 
-  // 创建 Hono app
-  const app = createApp()
+  // 初始化 MCP 服务（注入 workspace 守卫）
+  const mcpClient = new McpClient(workspaceStore)
+
+  // 创建 Hono app（含鉴权中间件）
+  const app = createApp({ authToken: config.authToken, port })
 
   // 注册路由
   app.route('/sidecar/health', createHealthRoutes(configStore, mcpClient))
   app.route('/sidecar/mcp', createMcpRoutes(configStore, mcpClient))
+  app.route('/sidecar/workspaces', createWorkspaceRoutes(workspaceStore))
 
   // 启动 HTTP server
   serve({ fetch: app.fetch, port, hostname: config.host }, (info) => {

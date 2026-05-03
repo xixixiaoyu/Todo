@@ -1,9 +1,9 @@
 import type { McpTransportType, StdioConfig, McpToolResponse, ToolCallResult } from '@lumina/shared'
 import type { LocalHttpConfig } from '../types'
+import type { WorkspaceStore } from '../store/workspace-store'
 import { McpConnectionManager } from './connection-manager'
 import { McpToolRegistry } from './tool-registry'
 import { McpTransportFactory } from './transport-factory'
-import { logger } from '../utils/logger'
 
 /**
  * MCP Client 门面 — 组合 connection-manager + tool-registry + transport-factory
@@ -14,10 +14,10 @@ export class McpClient {
   private readonly toolRegistry: McpToolRegistry
   private readonly transportFactory: McpTransportFactory
 
-  constructor() {
+  constructor(workspaceStore: WorkspaceStore) {
     this.connectionManager = new McpConnectionManager()
     this.toolRegistry = new McpToolRegistry(this.connectionManager)
-    this.transportFactory = new McpTransportFactory()
+    this.transportFactory = new McpTransportFactory(workspaceStore)
   }
 
   async connect(

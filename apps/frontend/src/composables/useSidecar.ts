@@ -8,6 +8,8 @@ export interface SidecarInfo {
   url: string
   pid: number
   error: string
+  /** 宿主下发的 Bearer Token，每次 Start/Restart 刷新 */
+  token: string
 }
 
 export interface SidecarState {
@@ -26,17 +28,20 @@ const HEALTH_CHECK_INTERVAL = 30_000
 export function useSidecar() {
   const isAvailable = ref(false)
   const sidecarPort = ref<number | null>(null)
+  const sidecarToken = ref<string | null>(null)
   const sidecarInfo = ref<SidecarInfo | null>(null)
   const sidecarClient = computed(() =>
-    sidecarPort.value ? createSidecarClient(sidecarPort.value) : null,
+    sidecarPort.value && sidecarToken.value
+      ? createSidecarClient(sidecarPort.value, sidecarToken.value)
+      : null,
   )
 
   let healthCheckTimer: ReturnType<typeof setInterval> | null = null
 
   async function probeHealth(): Promise<boolean> {
-    if (!sidecarPort.value) return false
+    if (!sidecarPort.value || !sidecarToken.value) return false
     try {
-      const client = createSidecarClient(sidecarPort.value)
+      const client = createSidecarClient(sidecarPort.value, sidecarToken.value)
       const res = await client.get('/health', { timeout: 3000 })
       return res.data?.success === true
     } catch {
@@ -49,12 +54,13 @@ export function useSidecar() {
 
     try {
       const info = (await system.getSidecarInfo()) as SidecarInfo | null
-      if (!info || info.status !== 'running' || !info.port) {
+      if (!info || info.status !== 'running' || !info.port || !info.token) {
         isAvailable.value = false
         return
       }
 
       sidecarPort.value = info.port
+      sidecarToken.value = info.token
       sidecarInfo.value = info
 
       const healthy = await probeHealth()
@@ -76,11 +82,12 @@ export function useSidecar() {
         const healthy = await probeHealth()
         if (!healthy && isAvailable.value) {
           isAvailable.value = false
-          // 尝试重新获取信息
+          // 尝试重新获取信息（token 可能已随重启轮换）
           try {
             const info = (await system.getSidecarInfo()) as SidecarInfo | null
-            if (info?.status === 'running' && info.port) {
+            if (info?.status === 'running' && info.port && info.token) {
               sidecarPort.value = info.port
+              sidecarToken.value = info.token
               sidecarInfo.value = info
               isAvailable.value = await probeHealth()
             }

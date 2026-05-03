@@ -15,7 +15,12 @@ import (
 
 // spawnProcess starts the Sidecar Node.js process.
 // It returns the running exec.Cmd and the extracted port from stdout.
-func spawnProcess(ctx context.Context, cfg SidecarConfig, port int) (*exec.Cmd, int, error) {
+// The authToken is injected via SIDECAR_AUTH_TOKEN env var; empty token aborts startup.
+func spawnProcess(ctx context.Context, cfg SidecarConfig, port int, authToken string) (*exec.Cmd, int, error) {
+	if authToken == "" {
+		return nil, 0, fmt.Errorf("sidecar auth token is required")
+	}
+
 	args := []string{cfg.EntryPath, "--port", fmt.Sprintf("%d", port)}
 
 	cmd := exec.CommandContext(ctx, cfg.NodePath, args...)
@@ -34,13 +39,14 @@ func spawnProcess(ctx context.Context, cfg SidecarConfig, port int) (*exec.Cmd, 
 	// Redirect stderr to parent stderr for logging
 	cmd.Stderr = os.Stderr
 
-	// Minimal environment
+	// Minimal environment; SIDECAR_AUTH_TOKEN is injected for Bearer auth.
 	cmd.Env = []string{
 		"PATH=" + os.Getenv("PATH"),
 		"HOME=" + os.Getenv("HOME"),
 		"USER=" + os.Getenv("USER"),
 		"NODE_ENV=production",
 		fmt.Sprintf("SIDECAR_PORT=%d", port),
+		"SIDECAR_AUTH_TOKEN=" + authToken,
 	}
 
 	if err := cmd.Start(); err != nil {

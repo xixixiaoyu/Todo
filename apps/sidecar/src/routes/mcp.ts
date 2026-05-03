@@ -16,7 +16,7 @@ export function createMcpRoutes(configStore: McpConfigStore, mcpClient: McpClien
   // GET /mcp/servers — 列出所有配置
   mcp.get('/servers', async (c) => {
     const servers = await configStore.findAll()
-    const responses = servers.map(toServerResponse)
+    const responses = servers.map((s) => toServerResponse(s))
     return c.json({
       success: true,
       data: responses,

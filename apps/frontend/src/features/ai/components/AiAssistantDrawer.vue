@@ -176,6 +176,7 @@ const {
   handleAskSelection,
   handleTeachingSubmit,
   handleTeachingSubmitBatch,
+  handleNovelContinue,
 } = useAiAssistantComposer({
   assistantInputRef: assistantInputRef as unknown as typeof assistantInputRef,
   config,
@@ -258,6 +259,7 @@ defineOptions({
           @transfer-selection="modelValue = true"
           @teaching-submit="handleTeachingSubmit"
           @teaching-submit-batch="handleTeachingSubmitBatch"
+          @continue-novel="handleNovelContinue"
         />
       </div>
 

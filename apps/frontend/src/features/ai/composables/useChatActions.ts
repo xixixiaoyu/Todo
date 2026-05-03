@@ -9,7 +9,7 @@ import {
   type AIRequestOptions,
   type ToolCall,
 } from '@/features/ai/services/aiService'
-import { useChatState } from './useChatState'
+import { useChatState, novelBatchRemaining } from './useChatState'
 import { useChatMemory } from './useChatMemory'
 import { useChatHistory } from './useChatHistory'
 import { getAIThinkingMode, getAIConfig, getAISkills } from './useAIConfig'
@@ -275,6 +275,11 @@ export function useChatActions(options: AIRequestOptions = {}) {
           })
           return sendMessage('', undefined, undefined, true, iteration + 1)
         }
+
+        // 小说模式自动补章：若仍有剩余章节，自动发送"继续"
+        if (novelBatchRemaining.value > 0) {
+          return sendMessage(t('ai.novelContinueHint'))
+        }
       } else {
         const { messagesForRequest, contextSummary } = await buildContextCompression(
           chatHistory.value,
@@ -341,6 +346,11 @@ export function useChatActions(options: AIRequestOptions = {}) {
             localToolHandlers,
           })
           return sendMessage('', undefined, undefined, true, iteration + 1)
+        }
+
+        // 小说模式自动补章：若仍有剩余章节，自动发送"继续"
+        if (novelBatchRemaining.value > 0) {
+          return sendMessage(t('ai.novelContinueHint'))
         }
       }
     } catch (err) {

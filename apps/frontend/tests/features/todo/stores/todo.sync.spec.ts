@@ -677,4 +677,66 @@ describe('Todo Store Sync', () => {
     expect(store.todos.some((todo) => todo.title === 'Local Base')).toBe(true)
     expect(store.todos.some((todo) => todo.id === 'remote-race')).toBe(false)
   })
+
+  it('should clamp over-length titles to 500 chars before sync and write back locally', async () => {
+    const store = await createRemoteStore()
+
+    // 早期版本 / 导入 / 粘贴场景：模拟 IndexedDB 中已存在的超长脏数据
+    await store.addTodo('placeholder')
+    const dirty = store.todos[0]
+    const originalTitle = 'x'.repeat(600)
+    dirty.title = originalTitle
+    dirty.syncStatus = 'pending'
+
+    vi.mocked(todoApi.sync).mockResolvedValue({
+      success: true,
+      data: {
+        synced: [],
+        deletedIds: [],
+        acceptedIds: [dirty.id],
+        conflicts: [],
+        serverTime: new Date().toISOString(),
+      } as SyncResponse,
+      timestamp: new Date().toISOString(),
+    } as Awaited<ReturnType<typeof todoApi.sync>>)
+
+    await store.sync()
+
+    const sentPayload = vi.mocked(todoApi.sync).mock.calls[0]?.[0]
+    const sentTodo = sentPayload?.todos.find((todo) => todo.id === dirty.id)
+
+    // 出站 payload 不能超限
+    expect(sentTodo?.title.length).toBe(500)
+    expect(sentTodo?.title.endsWith('\u2026')).toBe(true)
+
+    // 本地回写：下次不再带出脏数据
+    expect(dirty.title.length).toBe(500)
+    expect(dirty.title).not.toBe(originalTitle)
+  })
+
+  it('should not modify titles at or below the sync length limit', async () => {
+    const store = await createRemoteStore()
+
+    await store.addTodo('placeholder')
+    const todo = store.todos[0]
+    const exactTitle = 'y'.repeat(500)
+    todo.title = exactTitle
+    todo.syncStatus = 'pending'
+
+    vi.mocked(todoApi.sync).mockResolvedValue({
+      success: true,
+      data: {
+        synced: [],
+        deletedIds: [],
+        acceptedIds: [todo.id],
+        conflicts: [],
+        serverTime: new Date().toISOString(),
+      } as SyncResponse,
+      timestamp: new Date().toISOString(),
+    } as Awaited<ReturnType<typeof todoApi.sync>>)
+
+    await store.sync()
+
+    expect(todo.title).toBe(exactTitle)
+  })
 })

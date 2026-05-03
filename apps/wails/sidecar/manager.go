@@ -28,6 +28,9 @@ type SidecarInfo struct {
 	URL    string        `json:"url"`
 	PID    int           `json:"pid"`
 	Error  string        `json:"error"`
+	// Token is a per-process Bearer credential the frontend MUST send on
+	// every Sidecar HTTP request. Rotated on each Start/Restart.
+	Token string `json:"token"`
 }
 
 // EventEmitter decouples the Manager from the Wails runtime for testability.
@@ -52,6 +55,7 @@ type Manager struct {
 	status  SidecarStatus
 	port    int
 	pid     int
+	token   string
 	lastErr string
 	ctx     context.Context
 	wg      sync.WaitGroup
@@ -87,6 +91,13 @@ func (m *Manager) Start(ctx context.Context) (*SidecarInfo, error) {
 	m.lastErr = ""
 	m.mu.Unlock()
 
+	// Generate a fresh Bearer token for this process lifecycle.
+	token, err := generateToken()
+	if err != nil {
+		m.setStatus(StatusErrored, fmt.Sprintf("token generation failed: %v", err))
+		return m.Info(), err
+	}
+
 	// Allocate a port
 	port, err := findAvailablePort()
 	if err != nil {
@@ -95,7 +106,7 @@ func (m *Manager) Start(ctx context.Context) (*SidecarInfo, error) {
 	}
 
 	// Spawn the Sidecar process
-	cmd, actualPort, err := spawnProcess(ctx, m.config, port)
+	cmd, actualPort, err := spawnProcess(ctx, m.config, port, token)
 	if err != nil {
 		m.setStatus(StatusErrored, fmt.Sprintf("process spawn failed: %v", err))
 		return m.Info(), err
@@ -108,6 +119,7 @@ func (m *Manager) Start(ctx context.Context) (*SidecarInfo, error) {
 	m.cmd = cmd
 	m.port = actualPort
 	m.pid = pid
+	m.token = token
 	m.ctx = ctx
 	m.mu.Unlock()
 
@@ -157,6 +169,7 @@ func (m *Manager) Stop() error {
 	m.status = StatusStopped
 	m.port = 0
 	m.pid = 0
+	m.token = ""
 	m.cmd = nil
 	m.mu.Unlock()
 
@@ -194,6 +207,7 @@ func (m *Manager) info() *SidecarInfo {
 		URL:    m.baseURL(),
 		PID:    m.pid,
 		Error:  m.lastErr,
+		Token:  m.token,
 	}
 }
 

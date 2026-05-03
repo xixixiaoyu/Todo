@@ -109,6 +109,37 @@ describe('AllExceptionsFilter', () => {
     expect(jsonResult.message).toBe('common.VALIDATION_ERROR')
   })
 
+  it('should log structured issues for Zod validation failures', () => {
+    const warnSpy = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined)
+
+    const mockZodError = {
+      issues: [
+        {
+          message: 'Too big: expected string to have <=500 characters',
+          path: ['todos', 0, 'title'],
+        },
+      ],
+    }
+    class MockZodException extends HttpException {
+      constructor() {
+        super('Validation Failed', HttpStatus.BAD_REQUEST)
+      }
+      name = 'ZodValidationException'
+      getZodError() {
+        return mockZodError
+      }
+    }
+
+    filter.catch(new MockZodException(), mockArgumentsHost as ArgumentsHost)
+
+    expect(warnSpy).toHaveBeenCalledTimes(1)
+    const warnMessage = warnSpy.mock.calls[0][0] as string
+    expect(warnMessage).toContain('Zod validation failed')
+    expect(warnMessage).toContain('POST /test')
+    expect(warnMessage).toContain('todos.0.title')
+    expect(warnMessage).toContain('expected string to have <=500 characters')
+  })
+
   it('should handle unknown errors as internal server error', () => {
     const exception = new Error('Database connection failed')
     filter.catch(exception, mockArgumentsHost as ArgumentsHost)

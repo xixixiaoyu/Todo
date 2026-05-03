@@ -1,8 +1,9 @@
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'
-import { basename } from 'node:path'
 import { McpTransportType, type StdioConfig } from '@lumina/shared'
 import type { LocalHttpConfig } from '../types'
+import type { WorkspaceStore } from '../store/workspace-store'
+import { assertPathAllowed } from '../security/workspace-guard'
 import { logger } from '../utils/logger'
 
 /**
@@ -13,8 +14,11 @@ import { logger } from '../utils/logger'
  * - 允许 localhost / private IP（桌面场景，用户即 admin）
  * - 允许任意 stdio 命令（无白名单限制）
  * - 保留 env 过滤（防御性，非安全关键）
+ * - **cwd 必须落在 WorkspaceStore 维护的白名单内**
  */
 export class McpTransportFactory {
+  constructor(private readonly workspaceStore: WorkspaceStore) {}
+
   async createTransport(
     serverId: string,
     transportType: McpTransportType,
@@ -31,12 +35,18 @@ export class McpTransportFactory {
     throw new Error(`Unsupported transport type: ${transportType}`)
   }
 
-  private createStdioTransport(serverId: string, config: StdioConfig): Transport {
+  private async createStdioTransport(serverId: string, config: StdioConfig): Promise<Transport> {
     const command = config.command.trim()
     const args = config.args || []
 
     if (command.includes(' ')) {
       throw new Error('MCP stdio command must not include spaces, please pass args separately')
+    }
+
+    // cwd 沙箱校验：仅允许起动在白名单内的子目录
+    if (config.cwd) {
+      const roots = await this.workspaceStore.getRoots()
+      assertPathAllowed(config.cwd, roots, 'MCP stdio cwd')
     }
 
     // 包名纠错：@upstash/context7 -> @upstash/context7-mcp
@@ -80,7 +90,7 @@ export class McpTransportFactory {
     }
 
     logger.info(
-      `Spawning MCP server: ${command} (args: ${normalizedArgs.length}) (CWD: ${config.cwd || 'default'})`,
+      `Spawning MCP server (${serverId}): ${command} (args: ${normalizedArgs.length}) (CWD: ${config.cwd || 'default'})`,
     )
 
     return new StdioClientTransport({

@@ -11,6 +11,9 @@ const currentDiscussionSteps = ref<DiscussionStep[]>([])
 const currentTodoActions = ref<ProposedTodoChange[]>([])
 const currentAssistantMessageId = ref<string | null>(null)
 
+// 小说模式批量章节剩余计数（自动补章）
+export const novelBatchRemaining = ref(0)
+
 // 加载/生成状态
 const isGenerating = ref(false)
 const isLoading = ref(false)
@@ -29,6 +32,7 @@ export function _resetChatState() {
   currentDiscussionSteps.value = []
   currentTodoActions.value = []
   currentAssistantMessageId.value = null
+  novelBatchRemaining.value = 0
   isGenerating.value = false
   isLoading.value = false
   error.value = null
@@ -139,5 +143,6 @@ export function useChatState() {
     clearError,
     updateTeachingQuizAnswer,
     getTeachingQuizSnapshot,
+    novelBatchRemaining,
   }
 }

@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useWindowSize } from '@vueuse/core'
-import { Pencil, Copy, Check } from 'lucide-vue-next'
+import { Pencil, Copy, Check, ArrowRight } from 'lucide-vue-next'
 import type { ChatMessage } from '@/features/ai/composables/useChat'
 import type { TeachingQuizKind } from '@/features/ai/services/aiService'
 import ImageLoadingState from './ImageLoadingState.vue'
@@ -45,6 +45,7 @@ const emit = defineEmits<{
     e: 'teaching-submit-batch',
     payload: Array<{ quizId: string; kind: TeachingQuizKind; answer: string | string[] }>,
   ): void
+  (e: 'continue-novel', count: number): void
 }>()
 
 const { t } = useI18n()
@@ -421,6 +422,27 @@ defineExpose({
                 v-if="message.novelWorldview && message.novelWorldview.length > 0"
                 :settings="message.novelWorldview"
               />
+
+              <!-- Novel Continue Buttons -->
+              <div
+                v-if="!isStreaming && !isUser && message.novelChapterMeta"
+                class="mt-3 flex items-center justify-center gap-1.5"
+              >
+                <button
+                  v-for="count in [1, 3, 5]"
+                  :key="count"
+                  type="button"
+                  class="group flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium transition-all active:scale-[0.98] border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary/30"
+                  @click="emit('continue-novel', count)"
+                >
+                  <ArrowRight
+                    :size="13"
+                    class="transition-transform duration-200 group-hover:translate-x-0.5"
+                  />
+                  <span>{{ t(`ai.novelContinue${count}`) }}</span>
+                </button>
+              </div>
+
               <div
                 v-if="
                   (!message.novelWorldview || message.novelWorldview.length === 0) &&

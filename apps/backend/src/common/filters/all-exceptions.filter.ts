@@ -59,6 +59,19 @@ export class AllExceptionsFilter implements ExceptionFilter {
       const zodError = exceptionWithZod.getZodError()
       errors = {}
 
+      // 结构化日志：将字段级错误落盘，方便从 docker logs 直接定位哪个字段、哪条记录违约，
+      // 无需再找用户要浏览器端的响应 body。
+      const issuesBrief = zodError.issues.map((issue) => ({
+        path: issue.path.join('.'),
+        message: issue.message,
+      }))
+      const requestId = request.id ?? request.headers?.['x-request-id']
+      this.logger.warn(
+        `Zod validation failed: ${request.method} ${url}${
+          requestId ? ` [reqId=${String(requestId)}]` : ''
+        } issues=${JSON.stringify(issuesBrief)}`,
+      )
+
       zodError.issues.forEach((issue) => {
         const path = issue.path.join('.')
         const key = issue.message

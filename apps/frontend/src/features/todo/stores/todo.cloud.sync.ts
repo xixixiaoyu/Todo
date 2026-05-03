@@ -15,6 +15,21 @@ import { cloneTodo } from './todo.dates'
 const SYNC_COOLDOWN_MS = 2_000
 const MAX_RETRYABLE_SYNC_RETRIES = 1
 
+/**
+ * Shared contract cap (see packages/shared/src/schemas/todo.schema.ts `TodoSchema.title`).
+ * 历史脏数据（早期版本/粘贴/导入）可能突破 UI 层 maxlength 约束，
+ * 故在同步出站前做最后一道兜底，防止整批 payload 被 400 拒绝导致死循环。
+ */
+const MAX_SYNC_TITLE_LENGTH = 500
+const TITLE_TRUNCATION_SUFFIX = '…'
+
+function clampTitleForSync(title: string): string {
+  if (title.length <= MAX_SYNC_TITLE_LENGTH) return title
+  return (
+    title.slice(0, MAX_SYNC_TITLE_LENGTH - TITLE_TRUNCATION_SUFFIX.length) + TITLE_TRUNCATION_SUFFIX
+  )
+}
+
 function isRetryableSyncError(error: unknown): boolean {
   if (!isAxiosError(error)) return false
   if (!error.response) return true
@@ -49,6 +64,14 @@ export function createTodoCloudSyncActions(deps: TodoCloudDataDeps): {
 
     try {
       const pendingTodos = deps.todos.value.filter((todo) => todo.syncStatus !== 'synced')
+
+      // 出站兜底：将超长 title 截断到共享契约上限，并回写本地状态
+      // —— 避免历史脏数据导致 /api/todos/sync 整批 400 死循环。
+      pendingTodos.forEach((todo) => {
+        const clamped = clampTitleForSync(todo.title)
+        if (clamped !== todo.title) todo.title = clamped
+      })
+
       const pendingTodoIds = pendingTodos.map((todo) => todo.id)
       const syncSnapshots = new Map(
         pendingTodos.map((todo) => [todo.id, new Date(todo.updatedAt).getTime()]),

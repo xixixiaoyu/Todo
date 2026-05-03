@@ -1,6 +1,8 @@
 import { nextTick, ref, type Ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { ParsedFile } from '@/composables/useFileParsing'
 import type { AIConfig } from '@/features/ai/composables/useAIConfig'
+import { novelBatchRemaining } from '@/features/ai/composables/useChatState'
 
 type AssistantInputApi = {
   adjustHeight: () => void
@@ -22,6 +24,7 @@ export function useAiAssistantComposer(params: {
   getTeachingQuizSnapshot: (quizId: string) => unknown
 }) {
   const chatInput = ref('')
+  const { t } = useI18n()
 
   const adjustInputHeight = async () => {
     await nextTick()
@@ -100,6 +103,16 @@ export function useAiAssistantComposer(params: {
     await params.sendMessage(`[TEACHING_ANSWERS]\n${JSON.stringify(enriched)}`)
   }
 
+  const handleNovelContinue = async (count: number) => {
+    if (params.isGenerating.value) return
+    const message = count === 1 ? t('ai.novelContinueHint') : t('ai.novelContinueMsg', { count })
+    chatInput.value = message
+    await adjustInputHeight()
+    // 自动补章：设置剩余计数（handleSend 会触发 sendMessage，响应完后由 useChatActions 自动补全）
+    novelBatchRemaining.value = count
+    await handleSend()
+  }
+
   return {
     chatInput,
     handleSend,
@@ -108,5 +121,6 @@ export function useAiAssistantComposer(params: {
     handleAskSelection,
     handleTeachingSubmit,
     handleTeachingSubmitBatch,
+    handleNovelContinue,
   }
 }

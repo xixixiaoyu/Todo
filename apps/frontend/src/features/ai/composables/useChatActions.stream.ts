@@ -14,6 +14,7 @@ import type { ProposedTodoChange } from '@/features/todo/stores/todo'
 import type { AIConfig } from './useAIConfig'
 import type { ChatSession } from './useChatHistory'
 import { buildTeachingFallbackQuiz, stripTodoIdsFromText } from './useChatActions.utils'
+import { novelBatchRemaining as novelBatchRemainingRef } from './useChatState'
 
 function buildAssistantMessage(params: {
   id: string
@@ -128,6 +129,13 @@ function finalizeCompletedResponse(params: {
   const parsed = parseAssistantBlocks(params.currentAIResponse.value, {
     enableTodoActions: params.aiConfig.todoAssistant,
   })
+
+  // 小说模式自动补章：从原始响应中统计已生成的章节数，扣减剩余计数
+  if (novelBatchRemainingRef.value > 0) {
+    const chapterMatches = params.currentAIResponse.value.match(/\[NOVEL_CHAPTER_START\]/g)
+    const generatedCount = chapterMatches ? chapterMatches.length : 0
+    novelBatchRemainingRef.value = Math.max(0, novelBatchRemainingRef.value - generatedCount)
+  }
 
   const teachingQuizzes: TeachingQuiz[] | undefined =
     parsed.teachingQuizzes ||

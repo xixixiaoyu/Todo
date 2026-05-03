@@ -109,4 +109,6 @@ export interface SidecarInfo {
   url: string
   pid: number
   error: string
+  /** 宿主下发的 Bearer Token，每次 Start/Restart 刷新 */
+  token: string
 }

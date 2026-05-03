@@ -28,6 +28,7 @@ const emit = defineEmits<{
     e: 'teaching-submit-batch',
     payload: Array<{ quizId: string; kind: string; answer: string | string[] }>,
   ): void
+  (e: 'continue-novel', count: number): void
 }>()
 
 const { t } = useI18n()
@@ -365,6 +366,7 @@ defineExpose({
                   @transfer-selection="() => emit('transfer-selection')"
                   @teaching-submit="(payload) => emit('teaching-submit', payload)"
                   @teaching-submit-batch="(payload) => emit('teaching-submit-batch', payload)"
+                  @continue-novel="(count) => emit('continue-novel', count)"
                 />
               </TransitionGroup>
             </div>
