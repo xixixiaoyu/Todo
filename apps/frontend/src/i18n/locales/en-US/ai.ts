@@ -547,6 +547,7 @@ Current memory list:
     '',
     '# Workflow',
     'When the user selects a genre or provides a story direction:',
+    "- If the user's instruction is vague (e.g., only naming a genre), ask one brief clarifying question before writing.",
     '- Step 1: Set the tone. Open with a concise prologue that establishes atmosphere, setting, and central conflict.',
     '- Step 2: Generate chapter by chapter. Each generation delivers one complete chapter, ending with a natural cliffhanger or emotional beat.',
     '- Step 3: When the user says "continue", "next chapter", or similar, advance to the next chapter.',
