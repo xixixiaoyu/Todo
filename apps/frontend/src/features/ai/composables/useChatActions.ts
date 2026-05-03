@@ -17,9 +17,16 @@ import { useTodoStore } from '@/features/todo/stores/todo'
 import { useAuthStore } from '@/features/auth/stores/auth'
 import { createContextCompression } from './useChatActions.contextCompression'
 import { executeToolCalls } from './useChatActions.toolCalls'
-import { createStreamChunkHandler } from './useChatActions.stream'
+import {
+  createStreamChunkHandler,
+  type NovelPersistPayload,
+  type TeachingPersistPayload,
+} from './useChatActions.stream'
 import { prepareRuntimeCapabilities } from './useChatActions.runtime'
 import { resolveSkillContext } from '@/features/ai/services/aiService'
+import { httpClient } from '@/api'
+import { useQueryClient } from '@tanstack/vue-query'
+import { useNovelDraftStore } from '@/features/novel/stores/novelDraftStore'
 
 const MAX_RETRIES = 3
 
@@ -56,6 +63,120 @@ export function useChatActions(options: AIRequestOptions = {}) {
   } = useChatHistory()
   const todoStore = useTodoStore()
   const authStore = useAuthStore()
+  const novelDraftStore = useNovelDraftStore()
+
+  // 惰性获取 queryClient：避免在无 Vue 注入上下文的测试环境中崩溃
+  let queryClient: ReturnType<typeof useQueryClient> | null = null
+  try {
+    queryClient = useQueryClient()
+  } catch {
+    // 非 Vue setup 上下文（如测试），跳过
+  }
+
+  // 教学模式：AI 评估后自动持久化测验记录与学习进度
+  async function onTeachingPersist(payload: TeachingPersistPayload) {
+    const persistTasks: Promise<unknown>[] = []
+
+    for (const a of payload.assessments) {
+      persistTasks.push(
+        httpClient
+          .post('/teaching/quizzes', {
+            quizId: a.quizId,
+            stem: a.stem,
+            kind: a.kind,
+            userAnswer: a.userAnswer,
+            result: a.result,
+            mastery: a.mastery,
+            feedback: a.feedback,
+            nextFocus: a.nextFocus,
+          })
+          .catch((e) => console.warn('[TeachingPersist] quiz record save failed:', e)),
+      )
+
+      // 同时更新学习进度：从 stem 中提取概念名（取前两个词或截断）
+      const concept = a.stem ? a.stem.slice(0, 40) : a.quizId
+      const correctCount = a.result === 'correct' ? 1 : 0
+      persistTasks.push(
+        httpClient
+          .put('/teaching/progress', {
+            concept,
+            masteryLevel: a.mastery,
+            quizCount: 1,
+            correctCount,
+          })
+          .catch((e) => console.warn('[TeachingPersist] progress update failed:', e)),
+      )
+    }
+
+    await Promise.allSettled(persistTasks)
+    if (queryClient) {
+      void queryClient.invalidateQueries({ queryKey: ['teaching', 'quizzes'] })
+      void queryClient.invalidateQueries({ queryKey: ['teaching', 'progress'] })
+      void queryClient.invalidateQueries({ queryKey: ['teaching', 'overview'] })
+    }
+  }
+
+  // 小说模式：AI 生成完成后自动持久化章节/角色/世界观
+  async function onNovelPersist(payload: NovelPersistPayload) {
+    const draftId = novelDraftStore.activeDraftId
+    if (!draftId) return
+
+    const persistTasks: Promise<unknown>[] = []
+    const currentChapterIndex = payload.chapter?.chapterIndex ?? 1
+
+    if (payload.chapter) {
+      persistTasks.push(
+        httpClient
+          .put(`/novel/drafts/${draftId}/chapters`, {
+            chapterIndex: payload.chapter.chapterIndex,
+            title: payload.chapter.title,
+            content: '', // 章节内容由后续流式文本填入，这里先占位
+          })
+          .catch((e) => console.warn('[NovelPersist] chapter upsert failed:', e)),
+      )
+    }
+
+    if (payload.characters) {
+      for (const char of payload.characters) {
+        persistTasks.push(
+          httpClient
+            .put(`/novel/drafts/${draftId}/characters`, {
+              characterId: char.id,
+              name: char.name,
+              role: char.role,
+              traits: char.traits,
+              motivation: char.motivation,
+              backstory: char.backstory,
+              firstChapter: currentChapterIndex,
+            })
+            .catch((e) => console.warn('[NovelPersist] character upsert failed:', e)),
+        )
+      }
+    }
+
+    if (payload.worldviews) {
+      for (const setting of payload.worldviews) {
+        persistTasks.push(
+          httpClient
+            .put(`/novel/drafts/${draftId}/worldviews`, {
+              settingId: setting.id,
+              category: setting.category,
+              name: setting.name,
+              description: setting.description,
+              firstChapter: currentChapterIndex,
+            })
+            .catch((e) => console.warn('[NovelPersist] worldview upsert failed:', e)),
+        )
+      }
+    }
+
+    await Promise.allSettled(persistTasks)
+    // 使小说相关查询缓存失效，下次访问自动刷新
+    if (queryClient) {
+      void queryClient.invalidateQueries({ queryKey: ['novel', 'drafts', draftId] })
+      void queryClient.invalidateQueries({ queryKey: ['novel', 'drafts'] })
+    }
+  }
 
   const { buildContextCompression } = createContextCompression({
     currentSession,
@@ -207,6 +328,8 @@ export function useChatActions(options: AIRequestOptions = {}) {
         resetStreamingState,
         todoStore,
         t,
+        onNovelPersist,
+        onTeachingPersist,
       })
 
       if (aiConfig.discussionMode && aiConfig.discussionModelIds.length > 0) {

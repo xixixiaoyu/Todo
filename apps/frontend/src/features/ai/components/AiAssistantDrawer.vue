@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useWindowSize, onKeyStroke } from '@vueuse/core'
+import { useRouter } from 'vue-router'
 import ResizableDrawer from '@/components/ResizableDrawer.vue'
 import ChatMessageList from '@/features/ai/components/ChatMessageList.vue'
 import AISettingsDialog from '@/features/ai/components/AISettingsDialog.vue'
@@ -18,12 +19,14 @@ import { useAiAssistantModes } from '@/features/ai/composables/useAiAssistantMod
 import { useAiAssistantPanels } from '@/features/ai/composables/useAiAssistantPanels'
 import { useAiAssistantComposer } from '@/features/ai/composables/useAiAssistantComposer'
 import { useTodoStore } from '@/features/todo/stores/todo'
+import { useNovelDraftStore } from '@/features/novel/stores/novelDraftStore'
 import { useI18n } from 'vue-i18n'
 import { useResizable } from '@/composables/useResizable'
 import { useToast } from '@/composables/useToast'
-import { AlertCircle, X, Copy, Check } from 'lucide-vue-next'
+import { AlertCircle, X, Copy, Check, BookOpen, GraduationCap } from 'lucide-vue-next'
 
 const { t } = useI18n()
+const router = useRouter()
 const { success: showToast } = useToast()
 const modelValue = defineModel<boolean>({ required: true })
 
@@ -100,6 +103,23 @@ const copyError = async () => {
 }
 
 const todoStore = useTodoStore()
+const novelDraftStore = useNovelDraftStore()
+
+const isNovelActive = computed(() => isNovelEnabled.value && !!novelDraftStore.activeDraftId)
+
+function navigateToBookshelf() {
+  void router.push('/novel')
+}
+
+function navigateToDraft() {
+  if (novelDraftStore.activeDraftId) {
+    void router.push(`/novel/${novelDraftStore.activeDraftId}`)
+  }
+}
+
+function navigateToTeachingDashboard() {
+  void router.push('/teaching')
+}
 const isMaximized = computed({
   get: () => todoStore.isMaximized,
   set: (val) => todoStore.setMaximized(val),
@@ -248,9 +268,51 @@ defineOptions({
 
       <!-- 主内容区域 -->
       <div class="relative flex-1 min-h-0 flex flex-col">
+        <!-- 小说模式：当前作品指示条 -->
+        <div
+          v-if="isNovelActive"
+          class="mx-4 mt-3 flex items-center gap-2 rounded-xl border border-primary/15 bg-primary/5 px-3 py-2"
+        >
+          <BookOpen :size="13" class="text-primary/60 shrink-0" />
+          <button
+            type="button"
+            class="flex-1 truncate text-left text-xs font-medium text-foreground/80 transition-colors hover:text-primary"
+            @click="navigateToDraft"
+          >
+            {{
+              t('ai.novelActiveDraftIndicator', { title: novelDraftStore.activeDraftTitle ?? '' })
+            }}
+          </button>
+          <button
+            type="button"
+            class="shrink-0 rounded-lg px-2 py-1 text-[10px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            @click="navigateToBookshelf"
+          >
+            {{ t('ai.novelBookshelf') }}
+          </button>
+        </div>
+
+        <!-- 教学模式：学习仪表盘入口 -->
+        <div
+          v-if="isTeachingEnabled"
+          class="mx-4 mt-3 flex items-center gap-2 rounded-xl border border-primary/15 bg-primary/5 px-3 py-2"
+        >
+          <GraduationCap :size="13" class="text-primary/60 shrink-0" />
+          <span class="flex-1 truncate text-xs font-medium text-foreground/80">
+            {{ t('ai.teachingMode') }}
+          </span>
+          <button
+            type="button"
+            class="shrink-0 rounded-lg px-2 py-1 text-[10px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            @click="navigateToTeachingDashboard"
+          >
+            {{ t('ai.teachingDashboard') }}
+          </button>
+        </div>
         <ChatMessageList
           :messages="messages"
           :is-maximized="isMaximized"
+          :is-novel-mode="isNovelEnabled"
           @regenerate="regenerateMessage"
           @delete="deleteMessage"
           @edit="editAndResendMessage"

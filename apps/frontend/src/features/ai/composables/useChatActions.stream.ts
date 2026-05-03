@@ -16,6 +16,28 @@ import type { ChatSession } from './useChatHistory'
 import { buildTeachingFallbackQuiz, stripTodoIdsFromText } from './useChatActions.utils'
 import { novelBatchRemaining as novelBatchRemainingRef } from './useChatState'
 
+export interface NovelPersistPayload {
+  draftId: string
+  chapter?: NovelChapterMeta
+  characters?: NovelCharacterCard[]
+  worldviews?: NovelWorldviewSetting[]
+}
+
+export interface TeachingAssessmentWithContext {
+  quizId: string
+  result: string
+  mastery: string
+  feedback: string
+  nextFocus?: string
+  stem: string
+  kind: string
+  userAnswer: string | string[]
+}
+
+export interface TeachingPersistPayload {
+  assessments: TeachingAssessmentWithContext[]
+}
+
 function buildAssistantMessage(params: {
   id: string
   content: string
@@ -125,6 +147,8 @@ function finalizeCompletedResponse(params: {
     setProposedChanges: (assistantMessageId: string, proposedActions: ProposedTodoChange[]) => void
   }
   t: (key: string, params?: Record<string, unknown>) => string
+  onNovelPersist?: (payload: NovelPersistPayload) => void | Promise<void>
+  onTeachingPersist?: (payload: TeachingPersistPayload) => void | Promise<void>
 }) {
   const parsed = parseAssistantBlocks(params.currentAIResponse.value, {
     enableTodoActions: params.aiConfig.todoAssistant,
@@ -196,6 +220,99 @@ function finalizeCompletedResponse(params: {
     void params.extractAndStoreMemories(newHistory)
   }
 
+  // 小说模式：自动持久化章节/角色/世界观
+  if (
+    params.aiConfig.assistantMode === 'novel' &&
+    params.onNovelPersist &&
+    (novelChapterMeta ||
+      (novelCharacters && novelCharacters.length > 0) ||
+      (novelWorldview && novelWorldview.length > 0))
+  ) {
+    const payload: NovelPersistPayload = { draftId: '' }
+    // draftId 由调用方通过 onNovelPersist 闭包注入
+    if (novelChapterMeta) payload.chapter = novelChapterMeta
+    if (novelCharacters && novelCharacters.length > 0) payload.characters = novelCharacters
+    if (novelWorldview && novelWorldview.length > 0) payload.worldviews = novelWorldview
+    void params.onNovelPersist(payload)
+  }
+
+  // 教学模式：自动持久化评估记录与学习进度
+  if (
+    params.aiConfig.assistantMode === 'teaching' &&
+    params.onTeachingPersist &&
+    teachingAssessments &&
+    teachingAssessments.length > 0 &&
+    params.generationSessionId
+  ) {
+    const session = params.sessions.value.find((s) => s.id === params.generationSessionId)
+    const messages = session?.messages ?? []
+    const enriched: TeachingAssessmentWithContext[] = []
+
+    for (const assessment of teachingAssessments) {
+      // 从历史消息中提取原始测验数据（stem, kind）和用户答案
+      let stem = ''
+      let kind = 'short_answer'
+      let userAnswer: string | string[] = ''
+
+      for (let i = messages.length - 1; i >= 0; i--) {
+        const msg = messages[i]
+        if (msg.role !== 'user') continue
+        const content = msg.content
+
+        // 尝试匹配 [TEACHING_ANSWERS] 批量格式
+        const batchMatch = content.match(/^\[TEACHING_ANSWERS\]\s*\n(.+)$/s)
+        if (batchMatch) {
+          try {
+            const batch = JSON.parse(batchMatch[1])
+            if (Array.isArray(batch)) {
+              for (const item of batch) {
+                if (item.quizId === assessment.quizId || item.quiz?.id === assessment.quizId) {
+                  stem = item.quiz?.stem || ''
+                  kind = item.kind || item.quiz?.kind || 'short_answer'
+                  userAnswer = item.answer || ''
+                }
+              }
+            }
+          } catch {
+            /* 格式不合法，跳过 */
+          }
+          break
+        }
+
+        // 尝试匹配 [TEACHING_ANSWER] 单题格式
+        const singleMatch = content.match(/^\[TEACHING_ANSWER\]\s*\n(.+)$/s)
+        if (singleMatch) {
+          try {
+            const item = JSON.parse(singleMatch[1])
+            if (item.quizId === assessment.quizId || item.quiz?.id === assessment.quizId) {
+              stem = item.quiz?.stem || ''
+              kind = item.kind || item.quiz?.kind || 'short_answer'
+              userAnswer = item.answer || ''
+            }
+          } catch {
+            /* 格式不合法，跳过 */
+          }
+          break
+        }
+      }
+
+      enriched.push({
+        quizId: assessment.quizId,
+        result: assessment.result,
+        mastery: assessment.mastery,
+        feedback: assessment.feedback,
+        nextFocus: assessment.nextFocus,
+        stem,
+        kind,
+        userAnswer,
+      })
+    }
+
+    if (enriched.length > 0) {
+      void params.onTeachingPersist({ assessments: enriched })
+    }
+  }
+
   params.resetStreamingState()
   params.isGenerating.value = false
 }
@@ -247,6 +364,8 @@ export function createStreamChunkHandler(params: {
     setProposedChanges: (assistantMessageId: string, proposedActions: ProposedTodoChange[]) => void
   }
   t: (key: string, params?: Record<string, unknown>) => string
+  onNovelPersist?: (payload: NovelPersistPayload) => void | Promise<void>
+  onTeachingPersist?: (payload: TeachingPersistPayload) => void | Promise<void>
 }) {
   return (chunk: string) => {
     if (chunk === '[DONE]') {
@@ -268,6 +387,8 @@ export function createStreamChunkHandler(params: {
           resetStreamingState: params.resetStreamingState,
           todoStore: params.todoStore,
           t: params.t,
+          onNovelPersist: params.onNovelPersist,
+          onTeachingPersist: params.onTeachingPersist,
         })
       } else {
         params.resetStreamingState()

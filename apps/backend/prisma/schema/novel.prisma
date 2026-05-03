@@ -1,0 +1,73 @@
+model NovelDraft {
+  id          String   @id @default(uuid())
+  title       String
+  genre       String?
+  tone        String?
+  protagonist String?
+  status      String   @default("draft")
+  userId      Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chapters    NovelChapter[]
+  characters  NovelCharacter[]
+  worldviews  NovelWorldview[]
+
+  @@index([userId])
+  @@map("novel_drafts")
+}
+
+model NovelChapter {
+  id           String     @id @default(uuid())
+  draftId      String
+  chapterIndex Int
+  title        String
+  content      String
+  wordCount    Int        @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  draft        NovelDraft @relation(fields: [draftId], references: [id], onDelete: Cascade)
+
+  @@unique([draftId, chapterIndex])
+  @@index([draftId])
+  @@map("novel_chapters")
+}
+
+model NovelCharacter {
+  id           String     @id @default(uuid())
+  draftId      String
+  characterId  String
+  name         String
+  role         String
+  traits       Json
+  motivation   String?
+  backstory    String?
+  firstChapter Int
+  lastChapter  Int
+  version      Int        @default(1)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  draft        NovelDraft @relation(fields: [draftId], references: [id], onDelete: Cascade)
+
+  @@unique([draftId, characterId])
+  @@index([draftId])
+  @@map("novel_characters")
+}
+
+model NovelWorldview {
+  id           String     @id @default(uuid())
+  draftId      String
+  settingId    String
+  category     String
+  name         String
+  description  String
+  firstChapter Int
+  version      Int        @default(1)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  draft        NovelDraft @relation(fields: [draftId], references: [id], onDelete: Cascade)
+
+  @@unique([draftId, settingId])
+  @@index([draftId])
+  @@map("novel_worldviews")
+}

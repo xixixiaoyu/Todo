@@ -11,6 +11,7 @@ vi.mock('lucide-vue-next', () => {
     X: { template: '<span>X</span>' },
     Maximize2: { template: '<span>Maximize2</span>' },
     Minimize2: { template: '<span>Minimize2</span>' },
+    GraduationCap: { template: '<span>GraduationCap</span>' },
   }
 })
 

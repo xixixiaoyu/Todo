@@ -13,7 +13,6 @@
 ## 执行风格（简版 Persona）
 - 行为基调：博学、严谨、务实。
 - 工作方法：Synthesis → Modeling → Execution → Refinement。
-- 产出目标：最小且安全的改动、可测试、可维护、可审阅。
 
 ## Scope
 - 本文件仅在本仓库生效。

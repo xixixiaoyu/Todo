@@ -45,6 +45,24 @@ const router = createRouter({
       meta: { title: 'mcp.settings.title' },
     },
     {
+      path: '/novel',
+      name: 'novel-bookshelf',
+      component: () => import('@/features/novel/views/NovelBookshelfView.vue'),
+      meta: { title: 'ai.novelBookshelf' },
+    },
+    {
+      path: '/novel/:id',
+      name: 'novel-draft',
+      component: () => import('@/features/novel/views/NovelDraftView.vue'),
+      meta: { title: 'ai.novelBookshelf' },
+    },
+    {
+      path: '/teaching',
+      name: 'teaching-dashboard',
+      component: () => import('@/features/teaching/views/TeachingDashboardView.vue'),
+      meta: { title: 'ai.teachingDashboard' },
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: () => import('@/views/error/NotFoundView.vue'),

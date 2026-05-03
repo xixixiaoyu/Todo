@@ -29,6 +29,7 @@ const props = defineProps<{
   isLast?: boolean
   isPrevTool?: boolean
   isNextTool?: boolean
+  isNovelMode?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -425,7 +426,7 @@ defineExpose({
 
               <!-- Novel Continue Buttons -->
               <div
-                v-if="!isStreaming && !isUser && message.novelChapterMeta"
+                v-if="!isStreaming && !isUser && (message.novelChapterMeta || isNovelMode)"
                 class="mt-3 flex items-center justify-center gap-1.5"
               >
                 <button

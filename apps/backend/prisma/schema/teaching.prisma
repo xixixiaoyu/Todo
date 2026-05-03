@@ -1,0 +1,35 @@
+model LearningProgress {
+  id           String   @id @default(uuid())
+  userId       Int
+  concept      String
+  masteryLevel String   @default("novice")
+  lastQuizAt   DateTime @default(now())
+  quizCount    Int      @default(0)
+  correctCount Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, concept])
+  @@index([userId])
+  @@map("learning_progress")
+}
+
+model QuizRecord {
+  id         String   @id @default(uuid())
+  userId     Int
+  quizId     String
+  stem       String
+  kind       String
+  userAnswer Json
+  result     String
+  mastery    String
+  feedback   String
+  nextFocus  String?
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("quiz_records")
+}

@@ -14,6 +14,7 @@ import { useChatHistory } from '@/features/ai/composables/useChatHistory'
 const props = defineProps<{
   messages: ChatMessageType[]
   isMaximized?: boolean
+  isNovelMode?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -359,6 +360,7 @@ defineExpose({
                     '--index': index,
                     transitionDelay: isSwitchingSession ? `${Math.min(index, 10) * 0.05}s` : '0s',
                   }"
+                  :is-novel-mode="props.isNovelMode"
                   @regenerate="(id) => emit('regenerate', id)"
                   @delete="(id) => emit('delete', id)"
                   @edit="(content) => emit('edit', msg.id, content)"
