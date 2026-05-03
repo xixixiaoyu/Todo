@@ -1,7 +1,20 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["package.json", "pnpm-lock.yaml", "tsconfig.base.json"],
-  "globalEnv": ["NODE_ENV", "VITE_*", "WAILS"],
+  "globalEnv": [
+    "NODE_ENV",
+    "VITE_*",
+    "WAILS",
+    "PORT",
+    "DATABASE_URL",
+    "REDIS_*",
+    "JWT_*",
+    "THROTTLE_*",
+    "LOG_LEVEL",
+    "CORS_ORIGIN",
+    "AI_*",
+    "UPLOAD_*"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

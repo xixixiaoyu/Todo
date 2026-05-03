@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { httpClient } from '@/api'
+import { unwrapApiResponse } from '@lumina/shared'
 import type {
   CreateNovelDraft,
   UpdateNovelDraft,
@@ -7,6 +8,7 @@ import type {
   UpdateNovelChapter,
   UpsertNovelCharacter,
   UpsertNovelWorldview,
+  ApiResponse,
 } from '@lumina/shared'
 
 const NOVEL_STALE_TIME = 5 * 60 * 1000
@@ -37,7 +39,13 @@ export function useCreateDraft() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: CreateNovelDraft) =>
-      httpClient.post('/novel/drafts', data).then((r) => r.data),
+      httpClient
+        .post('/novel/drafts', data)
+        .then((r) =>
+          unwrapApiResponse<{ id: string; title: string }>(
+            r.data as ApiResponse<{ id: string; title: string }>,
+          ),
+        ),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['novel', 'drafts'] })
     },

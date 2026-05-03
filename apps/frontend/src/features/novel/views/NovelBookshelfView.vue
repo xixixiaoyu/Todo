@@ -5,15 +5,19 @@ import { useI18n } from 'vue-i18n'
 import { Plus, BookOpen, Trash2 } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { useNovelDrafts, useCreateDraft, useDeleteDraft } from '@/features/novel/api/novelApi'
+import { useNovelDraftStore } from '@/features/novel/stores/novelDraftStore'
+import { useToast } from '@/composables/useToast'
 import type { NovelGenre } from '@lumina/shared'
 import { cn } from '@/lib/utils'
 
 const router = useRouter()
 const { t } = useI18n()
+const { error: showError } = useToast()
 
 const { data: drafts, isLoading } = useNovelDrafts()
 const createDraft = useCreateDraft()
 const deleteDraft = useDeleteDraft()
+const draftStore = useNovelDraftStore()
 
 const showCreateDialog = ref(false)
 const newTitle = ref('')
@@ -32,18 +36,30 @@ const genres: { value: NovelGenre; label: string }[] = [
 
 async function handleCreate() {
   if (!newTitle.value.trim()) return
-  await createDraft.mutateAsync({
-    title: newTitle.value.trim(),
-    genre: newGenre.value ?? undefined,
-  })
-  showCreateDialog.value = false
-  newTitle.value = ''
-  newGenre.value = null
+  try {
+    const draft = await createDraft.mutateAsync({
+      title: newTitle.value.trim(),
+      genre: newGenre.value ?? undefined,
+    })
+    showCreateDialog.value = false
+    newTitle.value = ''
+    newGenre.value = null
+    if (draft?.id) {
+      draftStore.setActiveDraft(draft.id, draft.title)
+      void router.push(`/novel/${draft.id}`)
+    }
+  } catch {
+    showError(t('common.error.requestFailed'))
+  }
 }
 
 async function handleDelete(id: string, title: string) {
   if (!window.confirm(t('ai.novelDeleteConfirm', { title }))) return
-  await deleteDraft.mutateAsync(id)
+  try {
+    await deleteDraft.mutateAsync(id)
+  } catch {
+    showError(t('common.error.requestFailed'))
+  }
 }
 
 function openDraft(id: string) {
