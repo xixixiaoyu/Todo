@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useWindowSize } from '@vueuse/core'
+import { Pencil, Copy, Check } from 'lucide-vue-next'
 import type { ChatMessage } from '@/features/ai/composables/useChat'
 import type { TeachingQuizKind } from '@/features/ai/services/aiService'
 import ImageLoadingState from './ImageLoadingState.vue'
@@ -19,6 +20,7 @@ import ChatMessageUser from './ChatMessageUser.vue'
 import TeachingQuizPanel from './TeachingQuizPanel.vue'
 import TeachingLearningReport from './TeachingLearningReport.vue'
 import { useChatMessageImagePreview } from '@/features/ai/composables/useChatMessageImagePreview'
+import { useCopyToClipboard } from '@/features/ai/composables/useCopyToClipboard'
 
 const props = defineProps<{
   message: ChatMessage
@@ -52,6 +54,8 @@ const { previewImageUrl, openImage, closePreview } = useChatMessageImagePreview(
 // 编辑状态
 const isEditing = ref(false)
 
+const { isCopied, copy: copyToClipboard } = useCopyToClipboard()
+
 // 开启编辑
 function startEdit() {
   if (!isUser.value) return
@@ -70,6 +74,13 @@ function saveEdit(content: string) {
     emit('edit', trimmed)
   }
   isEditing.value = false
+}
+
+async function copyUserContent() {
+  const success = await copyToClipboard(props.message.content)
+  if (!success) {
+    console.warn(t('ai.copyFailed'))
+  }
 }
 
 const isUser = computed(() => props.message.role === 'user')
@@ -227,10 +238,8 @@ defineExpose({
               v-if="isUser"
               :content="message.content"
               :is-editing="isEditing"
-              :is-mobile="isMobile"
               @save="saveEdit"
               @cancel="cancelEdit"
-              @start-edit="startEdit"
             />
 
             <!-- AI 消息内容 -->
@@ -349,6 +358,48 @@ defineExpose({
               @delete="emit('delete', message.id)"
             />
           </template>
+        </div>
+      </Transition>
+
+      <!-- 用户消息操作按钮（气泡外） -->
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="translate-y-1 opacity-0"
+        enter-to-class="translate-y-0 opacity-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="translate-y-0 opacity-100"
+        leave-to-class="translate-y-1 opacity-0"
+      >
+        <div
+          v-if="isUser && !isEditing && hasContent && !isStreaming"
+          class="mt-1.5 flex justify-end gap-1"
+        >
+          <button
+            type="button"
+            class="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground/80 transition-all hover:bg-primary/10 hover:text-primary active:scale-95"
+            :aria-label="isCopied ? t('ai.copied') : t('ai.copy')"
+            :title="isCopied ? t('ai.copied') : t('ai.copy')"
+            @click="copyUserContent"
+          >
+            <Check
+              v-if="isCopied"
+              :size="13"
+              class="text-green-600 dark:text-green-400"
+              aria-hidden="true"
+            />
+            <Copy v-else :size="13" aria-hidden="true" />
+            <span>{{ isCopied ? t('ai.copied') : t('ai.copy') }}</span>
+          </button>
+          <button
+            type="button"
+            class="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground/80 transition-all hover:bg-primary/10 hover:text-primary active:scale-95"
+            :aria-label="t('ai.edit')"
+            :title="t('ai.edit')"
+            @click="startEdit"
+          >
+            <Pencil :size="13" aria-hidden="true" />
+            <span>{{ t('ai.edit') }}</span>
+          </button>
         </div>
       </Transition>
     </div>

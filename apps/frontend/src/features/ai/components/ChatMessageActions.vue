@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Copy, Check, RefreshCw, Trash2 } from 'lucide-vue-next'
+import { useCopyToClipboard } from '@/features/ai/composables/useCopyToClipboard'
 
 const props = defineProps<{
   content: string
@@ -13,7 +14,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-const isCopied = ref(false)
+const { isCopied, copy: copyToClipboard } = useCopyToClipboard()
 
 const windowWidth = ref(window.innerWidth)
 const isMobile = computed(() => windowWidth.value < 640)
@@ -31,14 +32,9 @@ onUnmounted(() => {
 })
 
 async function copyContent() {
-  try {
-    await navigator.clipboard.writeText(props.content)
-    isCopied.value = true
-    setTimeout(() => {
-      isCopied.value = false
-    }, 2000)
-  } catch {
-    console.warn(t('common.error.requestFailed'))
+  const success = await copyToClipboard(props.content)
+  if (!success) {
+    console.warn(t('ai.copyFailed'))
   }
 }
 </script>

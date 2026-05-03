@@ -29,6 +29,7 @@ export const ai = {
   thoughtProcess: '思考过程',
   copy: '复制',
   copied: '已复制',
+  copyFailed: '复制失败',
   structuredBlockWarningTitle: '结构化输出解析异常',
   structuredBlockWarningDesc: '部分结构化块格式不合法，已忽略。可复制诊断信息用于排查。',
   structuredBlockCopyDiagnostics: '复制诊断信息',

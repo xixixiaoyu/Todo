@@ -37,6 +37,7 @@ export const ai = {
   thoughtProcess: 'Thought Process',
   copy: 'Copy',
   copied: 'Copied',
+  copyFailed: 'Copy failed',
   structuredBlockWarningTitle: 'Structured output issue',
   structuredBlockWarningDesc:
     'Some structured blocks were invalid and have been ignored. You can copy diagnostics for debugging.',
