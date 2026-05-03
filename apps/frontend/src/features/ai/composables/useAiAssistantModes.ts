@@ -4,6 +4,7 @@ import {
   saveAIThinkingMode,
   type AIConfig,
 } from '@/features/ai/composables/useAIConfig'
+import type { NovelGenre } from '@/features/ai/services/types'
 
 export function useAiAssistantModes(params: {
   config: Ref<AIConfig>
@@ -26,6 +27,30 @@ export function useAiAssistantModes(params: {
         ? { todoAssistant: false, discussionMode: false, enableImageGeneration: false }
         : {}),
     })
+  }
+
+  const isNovelEnabled = computed(() => params.config.value.assistantMode === 'novel')
+
+  const toggleNovelMode = () => {
+    const isNovel = params.config.value.assistantMode === 'novel'
+    params.updateConfig({
+      assistantMode: isNovel ? 'default' : 'novel',
+      ...(!isNovel
+        ? { todoAssistant: false, discussionMode: false, enableImageGeneration: false }
+        : {}),
+    })
+  }
+
+  const updateNovelGenre = (genre: NovelGenre | null) => {
+    params.updateConfig({ novelGenre: genre })
+  }
+
+  const updateNovelTone = (tone: string) => {
+    params.updateConfig({ novelTone: tone })
+  }
+
+  const updateNovelProtagonistHint = (hint: string) => {
+    params.updateConfig({ novelProtagonistHint: hint })
   }
 
   const isTodoAssistantEnabled = computed(() => params.config.value.todoAssistant)
@@ -88,6 +113,11 @@ export function useAiAssistantModes(params: {
     toggleThinkingMode,
     isTeachingEnabled,
     toggleTeachingMode,
+    isNovelEnabled,
+    toggleNovelMode,
+    updateNovelGenre,
+    updateNovelTone,
+    updateNovelProtagonistHint,
     isTodoAssistantEnabled,
     toggleTodoAssistant,
     isDiscussionEnabled,

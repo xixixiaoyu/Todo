@@ -54,6 +54,9 @@ const mockConfig = ref<AIConfig>({
   contextCompressionTriggerChars: 24000,
   contextCompressionModelId: null,
   skillIds: [],
+  novelGenre: null,
+  novelTone: '',
+  novelProtagonistHint: '',
 })
 
 const mockPresets = ref<AIPreset[]>([])
@@ -196,6 +199,9 @@ describe('AISettingsDialog', () => {
       contextCompressionTriggerChars: 24000,
       contextCompressionModelId: null,
       skillIds: [],
+      novelGenre: null,
+      novelTone: '',
+      novelProtagonistHint: '',
     }
     mockPresets.value = []
     mockSkills.value = []

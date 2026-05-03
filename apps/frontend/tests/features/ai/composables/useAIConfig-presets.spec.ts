@@ -367,6 +367,9 @@ describe('useAIConfig - Presets', () => {
         thinkingEffort: 'max',
         todoAssistant: true,
         skillIds: [],
+        novelGenre: null,
+        novelTone: '',
+        novelProtagonistHint: '',
       })
     })
 

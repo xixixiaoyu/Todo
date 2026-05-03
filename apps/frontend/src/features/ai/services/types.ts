@@ -129,7 +129,48 @@ export interface AISkillRuntimeAvailability {
   missingSecrets?: string[]
 }
 
-export type AssistantMode = 'default' | 'teaching'
+export type AssistantMode = 'default' | 'teaching' | 'novel'
+
+export type NovelGenre =
+  | 'fantasy'
+  | 'sci_fi'
+  | 'romance'
+  | 'thriller'
+  | 'wuxia'
+  | 'literary'
+  | 'horror'
+  | 'cyberpunk'
+
+export type NovelCharacterRole = 'protagonist' | 'deuteragonist' | 'antagonist' | 'supporting'
+
+export type NovelWorldviewCategory =
+  | 'geography'
+  | 'culture'
+  | 'magic_system'
+  | 'technology'
+  | 'politics'
+  | 'history'
+
+export interface NovelCharacterCard {
+  id: string
+  name: string
+  role: NovelCharacterRole
+  traits: string[]
+  motivation?: string
+  backstory?: string
+}
+
+export interface NovelWorldviewSetting {
+  id: string
+  category: NovelWorldviewCategory
+  name: string
+  description: string
+}
+
+export interface NovelChapterMeta {
+  chapterIndex: number
+  title: string
+}
 
 export type TeachingQuizKind = 'single_choice' | 'multi_choice' | 'short_answer'
 
@@ -137,7 +178,13 @@ export type TeachingAssessmentResult = 'correct' | 'partial' | 'incorrect'
 
 export type TeachingMasteryLevel = 'novice' | 'developing' | 'proficient'
 
-export type StructuredBlockKind = 'todo_actions' | 'teaching_quiz' | 'teaching_assessment'
+export type StructuredBlockKind =
+  | 'todo_actions'
+  | 'teaching_quiz'
+  | 'teaching_assessment'
+  | 'novel_character'
+  | 'novel_worldview'
+  | 'novel_chapter'
 
 export interface StructuredBlockError {
   block: StructuredBlockKind
@@ -183,6 +230,9 @@ export interface ChatMessage {
   todoActionsProcessed?: 'applied' | 'discarded' // AI 建议的处理状态
   teachingQuizzes?: TeachingQuiz[]
   teachingAssessments?: TeachingAssessment[]
+  novelCharacters?: NovelCharacterCard[]
+  novelWorldview?: NovelWorldviewSetting[]
+  novelChapterMeta?: NovelChapterMeta
   structuredBlockErrors?: StructuredBlockError[]
   pendingStructuredBlocks?: StructuredBlockKind[]
   isStreaming?: boolean
@@ -198,6 +248,9 @@ export interface AIRequestOptions {
   maxTokens?: number
   systemPrompt?: string
   assistantMode?: AssistantMode
+  novelGenre?: NovelGenre | null
+  novelTone?: string
+  novelProtagonistHint?: string
   thinkingMode?: 'enabled' | 'disabled'
   thinkingEffort?: 'low' | 'medium' | 'high' | 'max'
   contextSummary?: string

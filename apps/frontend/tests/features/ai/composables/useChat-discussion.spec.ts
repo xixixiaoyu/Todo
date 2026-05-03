@@ -86,6 +86,9 @@ vi.mock('@/features/ai/composables/useAIConfig', () => ({
     contextCompressionTriggerChars: 24000,
     contextCompressionModelId: null,
     skillIds: [],
+    novelGenre: null,
+    novelTone: '',
+    novelProtagonistHint: '',
   })),
   getAIThinkingMode: vi.fn(() => 'enabled'),
   getAISkills: vi.fn(() => []),
@@ -136,6 +139,9 @@ describe('useChat - Discussion Mode', () => {
       contextCompressionTriggerChars: 24000,
       contextCompressionModelId: null,
       skillIds: [],
+      novelGenre: null,
+      novelTone: '',
+      novelProtagonistHint: '',
     } as AIConfig)
 
     mockGetMultiModelDiscussionStream.mockImplementation(
@@ -196,6 +202,9 @@ describe('useChat - Discussion Mode', () => {
       contextCompressionTriggerChars: 24000,
       contextCompressionModelId: null,
       skillIds: ['skill-tavily'],
+      novelGenre: null,
+      novelTone: '',
+      novelProtagonistHint: '',
     } as AIConfig)
     vi.mocked(getAISkills).mockReturnValue([
       {
@@ -240,6 +249,9 @@ describe('useChat - Discussion Mode', () => {
       contextCompressionTriggerChars: 24000,
       contextCompressionModelId: null,
       skillIds: [],
+      novelGenre: null,
+      novelTone: '',
+      novelProtagonistHint: '',
     } as AIConfig)
     vi.mocked(mcpApi.getAllTools).mockResolvedValueOnce([
       {

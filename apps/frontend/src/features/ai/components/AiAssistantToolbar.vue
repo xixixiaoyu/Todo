@@ -24,6 +24,7 @@ defineProps<{
   isGenerating: boolean
   isThinkingEnabled: boolean
   isTeachingEnabled: boolean
+  isNovelEnabled: boolean
   isTodoAssistantEnabled: boolean
   isDiscussionEnabled: boolean
   isImageGenerationEnabled: boolean
@@ -44,6 +45,7 @@ const emit = defineEmits<{
   (e: 'openHistory'): void
   (e: 'toggleThinking'): void
   (e: 'toggleTeaching'): void
+  (e: 'toggleNovel'): void
   (e: 'toggleTodo'): void
   (e: 'toggleDiscussion'): void
   (e: 'toggleImageGen'): void
@@ -179,9 +181,11 @@ const newChatTitle = computed(() => `${t('ai.newChat')} (${shortcutHint})`)
           <AiAssistantToolbarModesMenu
             :is-mobile="isMobile"
             :is-teaching-enabled="isTeachingEnabled"
+            :is-novel-enabled="isNovelEnabled"
             :is-todo-assistant-enabled="isTodoAssistantEnabled"
             :is-image-generation-enabled="isImageGenerationEnabled"
             @toggle-teaching="emit('toggleTeaching')"
+            @toggle-novel="emit('toggleNovel')"
             @toggle-todo="emit('toggleTodo')"
             @toggle-image-gen="emit('toggleImageGen')"
           />

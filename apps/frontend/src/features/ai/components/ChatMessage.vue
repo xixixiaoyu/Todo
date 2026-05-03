@@ -19,6 +19,8 @@ import ChatMessageMarkdown from './ChatMessageMarkdown.vue'
 import ChatMessageUser from './ChatMessageUser.vue'
 import TeachingQuizPanel from './TeachingQuizPanel.vue'
 import TeachingLearningReport from './TeachingLearningReport.vue'
+import NovelCharacterCardPanel from './NovelCharacterCardPanel.vue'
+import NovelWorldviewPanel from './NovelWorldviewPanel.vue'
 import { useChatMessageImagePreview } from '@/features/ai/composables/useChatMessageImagePreview'
 import { useCopyToClipboard } from '@/features/ai/composables/useCopyToClipboard'
 
@@ -126,6 +128,33 @@ const isTodoActionsPending = computed(() => {
   return pendingStructuredBlocks.value.includes('todo_actions')
 })
 
+const isNovelCharactersPending = computed(() => {
+  if (!isStreaming.value) return false
+  if (props.message.novelCharacters && props.message.novelCharacters.length > 0) return false
+  return pendingStructuredBlocks.value.includes('novel_character')
+})
+
+const isNovelWorldviewPending = computed(() => {
+  if (!isStreaming.value) return false
+  if (props.message.novelWorldview && props.message.novelWorldview.length > 0) return false
+  return pendingStructuredBlocks.value.includes('novel_worldview')
+})
+
+const isNovelChapterPending = computed(() => {
+  if (!isStreaming.value) return false
+  if (props.message.novelChapterMeta) return false
+  return pendingStructuredBlocks.value.includes('novel_chapter')
+})
+
+const isNovelContent = computed(() => {
+  if (isUser.value) return false
+  return !!(
+    props.message.novelCharacters ||
+    props.message.novelWorldview ||
+    props.message.novelChapterMeta
+  )
+})
+
 const markdownRef = ref<InstanceType<typeof ChatMessageMarkdown>>()
 
 defineExpose({
@@ -215,6 +244,7 @@ defineExpose({
                 : isImageGenerating
                   ? 'border-none bg-transparent shadow-none p-0'
                   : 'ai-chat-message--assistant border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] text-foreground shadow-sm',
+            isNovelContent ? 'novel-mode' : '',
             isEditing
               ? 'w-full !bg-card !text-foreground ring-2 ring-primary/20 border-primary'
               : '',
@@ -348,6 +378,110 @@ defineExpose({
                   ></div>
                 </div>
               </div>
+
+              <!-- Novel Character Cards -->
+              <NovelCharacterCardPanel
+                v-if="message.novelCharacters && message.novelCharacters.length > 0"
+                :characters="message.novelCharacters"
+              />
+              <div
+                v-if="
+                  (!message.novelCharacters || message.novelCharacters.length === 0) &&
+                  isNovelCharactersPending
+                "
+                data-test="novel-characters-loading"
+                class="group relative mt-3 overflow-hidden rounded-2xl border border-ai-message-border/80 bg-gradient-to-br from-background/50 via-ai-message-bg/70 to-ai-message-bg/60 p-3 text-xs text-muted-foreground backdrop-blur-md"
+              >
+                <div
+                  class="structured-skeleton-sheen pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent [background-size:200%_100%]"
+                ></div>
+                <div class="relative flex items-center gap-2.5">
+                  <span class="relative flex h-2 w-2">
+                    <span
+                      class="structured-skeleton-dot-halo absolute inline-flex h-full w-full rounded-full bg-primary/35"
+                    ></span>
+                    <span class="relative inline-flex h-2 w-2 rounded-full bg-primary/80"></span>
+                  </span>
+                  <span class="font-medium text-foreground/80">{{
+                    t('ai.novelCharacterGenerating')
+                  }}</span>
+                </div>
+                <div class="relative mt-2.5 space-y-2">
+                  <div
+                    class="structured-skeleton-line h-2 w-[78%] rounded-full bg-foreground/10"
+                  ></div>
+                  <div
+                    class="structured-skeleton-line structured-skeleton-line-alt h-2 w-[52%] rounded-full bg-foreground/10"
+                  ></div>
+                </div>
+              </div>
+
+              <!-- Novel Worldview Settings -->
+              <NovelWorldviewPanel
+                v-if="message.novelWorldview && message.novelWorldview.length > 0"
+                :settings="message.novelWorldview"
+              />
+              <div
+                v-if="
+                  (!message.novelWorldview || message.novelWorldview.length === 0) &&
+                  isNovelWorldviewPending
+                "
+                data-test="novel-worldview-loading"
+                class="group relative mt-3 overflow-hidden rounded-2xl border border-ai-message-border/80 bg-gradient-to-br from-background/50 via-ai-message-bg/70 to-ai-message-bg/60 p-3 text-xs text-muted-foreground backdrop-blur-md"
+              >
+                <div
+                  class="structured-skeleton-sheen pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent [background-size:200%_100%]"
+                ></div>
+                <div class="relative flex items-center gap-2.5">
+                  <span class="relative flex h-2 w-2">
+                    <span
+                      class="structured-skeleton-dot-halo absolute inline-flex h-full w-full rounded-full bg-primary/35"
+                    ></span>
+                    <span class="relative inline-flex h-2 w-2 rounded-full bg-primary/80"></span>
+                  </span>
+                  <span class="font-medium text-foreground/80">{{
+                    t('ai.novelWorldviewGenerating')
+                  }}</span>
+                </div>
+                <div class="relative mt-2.5 space-y-2">
+                  <div
+                    class="structured-skeleton-line h-2 w-[74%] rounded-full bg-foreground/10"
+                  ></div>
+                  <div
+                    class="structured-skeleton-line structured-skeleton-line-alt h-2 w-[48%] rounded-full bg-foreground/10"
+                  ></div>
+                </div>
+              </div>
+
+              <!-- Novel Chapter Loading -->
+              <div
+                v-if="isNovelChapterPending"
+                data-test="novel-chapter-loading"
+                class="group relative mt-3 overflow-hidden rounded-2xl border border-ai-message-border/80 bg-gradient-to-br from-background/50 via-ai-message-bg/70 to-ai-message-bg/60 p-3 text-xs text-muted-foreground backdrop-blur-md"
+              >
+                <div
+                  class="structured-skeleton-sheen pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent [background-size:200%_100%]"
+                ></div>
+                <div class="relative flex items-center gap-2.5">
+                  <span class="relative flex h-2 w-2">
+                    <span
+                      class="structured-skeleton-dot-halo absolute inline-flex h-full w-full rounded-full bg-primary/35"
+                    ></span>
+                    <span class="relative inline-flex h-2 w-2 rounded-full bg-primary/80"></span>
+                  </span>
+                  <span class="font-medium text-foreground/80">{{
+                    t('ai.novelChapterGenerating')
+                  }}</span>
+                </div>
+                <div class="relative mt-2.5 space-y-2">
+                  <div
+                    class="structured-skeleton-line h-2 w-[64%] rounded-full bg-foreground/10"
+                  ></div>
+                  <div
+                    class="structured-skeleton-line structured-skeleton-line-alt h-2 w-[42%] rounded-full bg-foreground/10"
+                  ></div>
+                </div>
+              </div>
             </template>
 
             <!-- 操作按钮（AI 消息内部） -->
@@ -457,5 +591,18 @@ defineExpose({
     opacity: 0.28;
     transform: scaleX(1);
   }
+}
+
+/* === Novel Mode Reading Typography === */
+.novel-mode :deep(p) {
+  font-size: 0.9375rem;
+  line-height: 1.85;
+  margin-bottom: 1.25em;
+  text-indent: 2em;
+  color: hsl(var(--foreground) / 0.88);
+}
+
+.novel-mode :deep(p:first-child) {
+  text-indent: 0;
 }
 </style>

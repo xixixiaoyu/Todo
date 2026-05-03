@@ -39,6 +39,8 @@ const {
   toggleThinkingMode,
   isTeachingEnabled,
   toggleTeachingMode,
+  isNovelEnabled,
+  toggleNovelMode,
   isTodoAssistantEnabled,
   toggleTodoAssistant,
   isDiscussionEnabled,
@@ -307,6 +309,7 @@ defineOptions({
         :is-generating="isGenerating"
         :is-thinking-enabled="isThinkingEnabled"
         :is-teaching-enabled="isTeachingEnabled"
+        :is-novel-enabled="isNovelEnabled"
         :is-todo-assistant-enabled="isTodoAssistantEnabled"
         :is-discussion-enabled="isDiscussionEnabled"
         :is-image-generation-enabled="isImageGenerationEnabled"
@@ -324,6 +327,7 @@ defineOptions({
         @toggle-todo="toggleTodoAssistant"
         @toggle-discussion="toggleDiscussionMode"
         @toggle-image-gen="toggleImageGeneration"
+        @toggle-novel="toggleNovelMode"
         @select-primary-model="selectPrimaryModel"
         @toggle-secondary-model="toggleSecondaryModel"
         @select-preset="handleSelectPreset"
@@ -342,6 +346,7 @@ defineOptions({
             :is-discussion-enabled="isDiscussionEnabled"
             :is-thinking-enabled="isThinkingEnabled"
             :is-teaching-enabled="isTeachingEnabled"
+            :is-novel-enabled="isNovelEnabled"
             :selected-images="selectedImages"
             :parsed-files="parsedFiles"
             :is-generating="isGenerating"
@@ -357,6 +362,7 @@ defineOptions({
             @toggle-image-gen="toggleImageGeneration"
             @toggle-thinking="toggleThinkingMode"
             @toggle-teaching="toggleTeachingMode"
+            @toggle-novel="toggleNovelMode"
           />
         </template>
       </AiAssistantToolbar>

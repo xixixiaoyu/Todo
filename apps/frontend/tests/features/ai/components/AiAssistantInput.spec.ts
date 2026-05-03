@@ -34,6 +34,7 @@ const defaultProps = {
   selectedImages: [],
   parsedFiles: [],
   isGenerating: false,
+  isNovelEnabled: false,
   error: null,
 }
 

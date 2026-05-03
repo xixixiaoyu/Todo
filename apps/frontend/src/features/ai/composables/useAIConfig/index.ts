@@ -74,6 +74,9 @@ const DEFAULT_CONFIG: AIConfig = {
   contextCompressionTriggerChars: 24000,
   contextCompressionModelId: null,
   skillIds: [],
+  novelGenre: null,
+  novelTone: '',
+  novelProtagonistHint: '',
 }
 
 // ─── Load Config ───────────────────────────────────────────────────
@@ -250,6 +253,9 @@ export function useAIConfig() {
       thinkingEffort: preset.thinkingEffort || 'max',
       todoAssistant: preset.todoAssistant,
       skillIds: presetSkillIds,
+      novelGenre: preset.novelGenre ?? null,
+      novelTone: preset.novelTone ?? '',
+      novelProtagonistHint: preset.novelProtagonistHint ?? '',
     }
   }
 
@@ -261,6 +267,9 @@ export function useAIConfig() {
       ...preset,
       id: generateId(),
       skillIds: normalizeIdList(preset.skillIds),
+      novelGenre: preset.novelGenre ?? null,
+      novelTone: preset.novelTone ?? '',
+      novelProtagonistHint: preset.novelProtagonistHint ?? '',
     }
     presets.value.push(newPreset)
     return newPreset
@@ -295,6 +304,9 @@ export function useAIConfig() {
           thinkingEffort: updatedPreset.thinkingEffort || 'max',
           todoAssistant: updatedPreset.todoAssistant,
           skillIds: presetSkillIds,
+          novelGenre: updatedPreset.novelGenre ?? null,
+          novelTone: updatedPreset.novelTone ?? '',
+          novelProtagonistHint: updatedPreset.novelProtagonistHint ?? '',
         }
       }
     }
@@ -318,6 +330,9 @@ export function useAIConfig() {
       thinkingEffort: config.value.thinkingEffort,
       todoAssistant: config.value.todoAssistant,
       skillIds: config.value.skillIds,
+      novelGenre: config.value.novelGenre,
+      novelTone: config.value.novelTone,
+      novelProtagonistHint: config.value.novelProtagonistHint,
     })
 
     activePresetId.value = presetId
@@ -366,6 +381,9 @@ export function useAIConfig() {
       thinkingEffort: 'max',
       todoAssistant: config.value.todoAssistant,
       skillIds: config.value.skillIds,
+      novelGenre: config.value.novelGenre,
+      novelTone: config.value.novelTone,
+      novelProtagonistHint: config.value.novelProtagonistHint,
     }
   }
 

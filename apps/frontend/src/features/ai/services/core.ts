@@ -155,6 +155,9 @@ export async function getAIStreamResponse(
     skills,
     activeSkills,
     skillRuntimeAvailability,
+    aiConfig.novelGenre,
+    aiConfig.novelTone,
+    aiConfig.novelProtagonistHint,
   )
   const sanitizedMessages = sanitizeRequestMessages(messagesWithSystemPrompts)
 

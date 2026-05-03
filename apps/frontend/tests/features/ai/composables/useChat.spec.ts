@@ -144,6 +144,9 @@ vi.mock('@/features/ai/composables/useAIConfig', () => ({
     contextCompressionTriggerChars: 24000,
     contextCompressionModelId: null,
     skillIds: [],
+    novelGenre: null,
+    novelTone: '',
+    novelProtagonistHint: '',
   })),
   getAIThinkingMode: vi.fn(() => 'disabled'),
   getAISkills: vi.fn(() => []),
@@ -196,6 +199,9 @@ describe('useChat', () => {
       contextCompressionTriggerChars: 24000,
       contextCompressionModelId: null,
       skillIds: [],
+      novelGenre: null,
+      novelTone: '',
+      novelProtagonistHint: '',
     })
     vi.mocked(getAISkills).mockReturnValue([])
     mockUpdateSessionMessages.mockImplementation((sessionId, messages) => {
@@ -572,6 +578,9 @@ describe('useChat', () => {
         contextCompressionTriggerChars: 24000,
         contextCompressionModelId: null,
         skillIds: ['skill-1'],
+        novelGenre: null,
+        novelTone: '',
+        novelProtagonistHint: '',
       })
       vi.mocked(getAISkills).mockReturnValue([
         {
@@ -628,6 +637,9 @@ describe('useChat', () => {
         contextCompressionTriggerChars: 24000,
         contextCompressionModelId: null,
         skillIds: ['skill-tavily'],
+        novelGenre: null,
+        novelTone: '',
+        novelProtagonistHint: '',
       })
       vi.mocked(getAISkills).mockReturnValue([
         {
@@ -690,6 +702,9 @@ describe('useChat', () => {
         contextCompressionTriggerChars: 10,
         contextCompressionModelId: null,
         skillIds: [],
+        novelGenre: null,
+        novelTone: '',
+        novelProtagonistHint: '',
       })
 
       mockCurrentSession.value = {
@@ -782,6 +797,9 @@ describe('useChat', () => {
         contextCompressionTriggerChars: 24000,
         contextCompressionModelId: null,
         skillIds: [],
+        novelGenre: null,
+        novelTone: '',
+        novelProtagonistHint: '',
       })
 
       mockGetAIStreamResponse.mockImplementation(

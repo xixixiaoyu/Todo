@@ -4,6 +4,9 @@ import type {
   ChatMessage,
   TeachingAssessment,
   TeachingQuiz,
+  NovelCharacterCard,
+  NovelWorldviewSetting,
+  NovelChapterMeta,
 } from '@/features/ai/services/aiService'
 import type { ProposedTodoChange } from '@/features/todo/stores/todo'
 import { parseAssistantBlocks } from '@/features/ai/services/aiService'
@@ -71,6 +74,9 @@ export function useChat(options: AIRequestOptions = {}) {
         const actions: ProposedTodoChange[] | undefined = parsed.todoActions
         const teachingQuizzes: TeachingQuiz[] | undefined = parsed.teachingQuizzes
         const teachingAssessments: TeachingAssessment[] | undefined = parsed.teachingAssessments
+        const novelCharacters: NovelCharacterCard[] | undefined = parsed.novelCharacters
+        const novelWorldview: NovelWorldviewSetting[] | undefined = parsed.novelWorldview
+        const novelChapterMeta: NovelChapterMeta | undefined = parsed.novelChapterMeta
         const structuredBlockErrors = parsed.errors.length > 0 ? [...parsed.errors] : undefined
         const pendingStructuredBlocks =
           parsed.pendingStructuredBlocks.length > 0
@@ -91,6 +97,9 @@ export function useChat(options: AIRequestOptions = {}) {
             : undefined,
           teachingQuizzes,
           teachingAssessments,
+          novelCharacters,
+          novelWorldview,
+          novelChapterMeta,
           structuredBlockErrors,
           pendingStructuredBlocks,
           isStreaming: isGenerating.value,

@@ -1,5 +1,15 @@
 export type ThinkingMode = 'enabled' | 'disabled'
-export type AssistantMode = 'default' | 'teaching'
+export type AssistantMode = 'default' | 'teaching' | 'novel'
+
+export type NovelGenre =
+  | 'fantasy'
+  | 'sci_fi'
+  | 'romance'
+  | 'thriller'
+  | 'wuxia'
+  | 'literary'
+  | 'horror'
+  | 'cyberpunk'
 
 export interface AIConfig {
   assistantMode: AssistantMode
@@ -21,6 +31,9 @@ export interface AIConfig {
   contextCompressionTriggerChars: number
   contextCompressionModelId: string | null
   skillIds: readonly string[]
+  novelGenre: NovelGenre | null
+  novelTone: string
+  novelProtagonistHint: string
 }
 
 export interface AIPreset {
@@ -34,6 +47,9 @@ export interface AIPreset {
   thinkingEffort?: 'low' | 'medium' | 'high' | 'max'
   todoAssistant: boolean
   skillIds?: readonly string[]
+  novelGenre?: NovelGenre | null
+  novelTone?: string
+  novelProtagonistHint?: string
 }
 
 export type ExternalSkillSourcePayload = {

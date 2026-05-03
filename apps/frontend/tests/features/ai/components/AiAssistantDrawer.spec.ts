@@ -36,6 +36,7 @@ vi.mock('lucide-vue-next', () => {
     'Blocks',
     'LayoutGrid',
     'Presentation',
+    'BookOpen',
   ]
   const mockIcons: Record<string, { template: string }> = {}
   icons.forEach((icon) => {

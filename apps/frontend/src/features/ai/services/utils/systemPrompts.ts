@@ -427,6 +427,9 @@ export function injectSystemPrompts(
   skillCatalog: AISkill[] = [],
   activeSkills: AISkill[] = [],
   skillRuntimeAvailability: AISkillRuntimeAvailability[] = [],
+  novelGenre?: string | null,
+  novelTone?: string,
+  novelProtagonistHint?: string,
 ): AIChatCompletionMessage[] {
   const result: AIChatCompletionMessage[] = []
   let documentCharsUsed = 0
@@ -450,6 +453,28 @@ export function injectSystemPrompts(
         ? formatTemplate(progressTemplate, { progress })
         : `[Teaching Progress]\n${progress}`
       systemBlocks.push({ content })
+    }
+  }
+
+  if (assistantMode === 'novel') {
+    const novelPrompt = getRawLocaleMessage('ai.novelModeSystemPrompt')
+    if (novelPrompt) {
+      systemBlocks.push({ content: novelPrompt })
+    }
+
+    if (novelGenre) {
+      const genreContextTemplate = getRawLocaleMessage('ai.novelGenreContext')
+      if (genreContextTemplate) {
+        const tone = novelTone || t('common.none') || 'None'
+        const hint = novelProtagonistHint || t('common.none') || 'None'
+        systemBlocks.push({
+          content: formatTemplate(genreContextTemplate, {
+            genre: novelGenre,
+            tone,
+            protagonistHint: hint,
+          }),
+        })
+      }
     }
   }
 

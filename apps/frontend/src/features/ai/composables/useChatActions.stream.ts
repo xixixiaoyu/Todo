@@ -6,6 +6,9 @@ import {
   type DiscussionStep,
   type TeachingAssessment,
   type TeachingQuiz,
+  type NovelCharacterCard,
+  type NovelWorldviewSetting,
+  type NovelChapterMeta,
 } from '@/features/ai/services/aiService'
 import type { ProposedTodoChange } from '@/features/todo/stores/todo'
 import type { AIConfig } from './useAIConfig'
@@ -21,6 +24,9 @@ function buildAssistantMessage(params: {
   todoActions?: ProposedTodoChange[]
   teachingQuizzes?: TeachingQuiz[]
   teachingAssessments?: TeachingAssessment[]
+  novelCharacters?: NovelCharacterCard[]
+  novelWorldview?: NovelWorldviewSetting[]
+  novelChapterMeta?: NovelChapterMeta
   structuredBlockErrors?: ChatMessage['structuredBlockErrors']
   pendingStructuredBlocks?: ChatMessage['pendingStructuredBlocks']
 }): ChatMessage {
@@ -34,6 +40,9 @@ function buildAssistantMessage(params: {
     todoActions: params.todoActions,
     teachingQuizzes: params.teachingQuizzes,
     teachingAssessments: params.teachingAssessments,
+    novelCharacters: params.novelCharacters,
+    novelWorldview: params.novelWorldview,
+    novelChapterMeta: params.novelChapterMeta,
     structuredBlockErrors: params.structuredBlockErrors,
     pendingStructuredBlocks: params.pendingStructuredBlocks,
     createdAt: new Date(),
@@ -49,6 +58,9 @@ function buildCompletedAssistantMessage(params: {
   todoActions: ProposedTodoChange[]
   teachingQuizzes?: TeachingQuiz[]
   teachingAssessments?: TeachingAssessment[]
+  novelCharacters?: NovelCharacterCard[]
+  novelWorldview?: NovelWorldviewSetting[]
+  novelChapterMeta?: NovelChapterMeta
   structuredBlockErrors?: ChatMessage['structuredBlockErrors']
   pendingStructuredBlocks?: ChatMessage['pendingStructuredBlocks']
 }): ChatMessage {
@@ -61,6 +73,9 @@ function buildCompletedAssistantMessage(params: {
     todoActions: params.todoActions.length > 0 ? [...params.todoActions] : undefined,
     teachingQuizzes: params.teachingQuizzes,
     teachingAssessments: params.teachingAssessments,
+    novelCharacters: params.novelCharacters,
+    novelWorldview: params.novelWorldview,
+    novelChapterMeta: params.novelChapterMeta,
     structuredBlockErrors: params.structuredBlockErrors,
     pendingStructuredBlocks: params.pendingStructuredBlocks,
   })
@@ -120,6 +135,9 @@ function finalizeCompletedResponse(params: {
       ? buildTeachingFallbackQuiz(parsed.cleanText, params.assistantMessageId, params.t)
       : undefined)
   const teachingAssessments: TeachingAssessment[] | undefined = parsed.teachingAssessments
+  const novelCharacters: NovelCharacterCard[] | undefined = parsed.novelCharacters
+  const novelWorldview: NovelWorldviewSetting[] | undefined = parsed.novelWorldview
+  const novelChapterMeta: NovelChapterMeta | undefined = parsed.novelChapterMeta
 
   params.currentAIResponse.value = parsed.cleanText
   if (params.aiConfig.todoAssistant && params.currentAIResponse.value) {
@@ -153,6 +171,9 @@ function finalizeCompletedResponse(params: {
     todoActions: params.currentTodoActions.value,
     teachingQuizzes,
     teachingAssessments,
+    novelCharacters,
+    novelWorldview,
+    novelChapterMeta,
     structuredBlockErrors,
     pendingStructuredBlocks,
   })

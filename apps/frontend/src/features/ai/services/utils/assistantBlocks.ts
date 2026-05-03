@@ -8,6 +8,11 @@ import type {
   TeachingQuizKind,
   StructuredBlockError,
   StructuredBlockKind,
+  NovelCharacterCard,
+  NovelCharacterRole,
+  NovelWorldviewSetting,
+  NovelWorldviewCategory,
+  NovelChapterMeta,
 } from '../types'
 
 export interface TaggedBlock {
@@ -80,6 +85,9 @@ export interface ParsedAssistantBlocks {
   todoActions?: ProposedTodoChange[]
   teachingQuizzes?: TeachingQuiz[]
   teachingAssessments?: TeachingAssessment[]
+  novelCharacters?: NovelCharacterCard[]
+  novelWorldview?: NovelWorldviewSetting[]
+  novelChapterMeta?: NovelChapterMeta
   errors: StructuredBlockError[]
   pendingStructuredBlocks: StructuredBlockKind[]
 }
@@ -190,6 +198,115 @@ function normalizeTeachingAssessments(parsed: unknown): TeachingAssessment[] | n
     .filter((x): x is TeachingAssessment => !!x)
   if (normalized.length === 0) return null
   return normalized
+}
+
+function normalizeNovelCharacterRole(value: unknown): NovelCharacterRole | null {
+  if (
+    value === 'protagonist' ||
+    value === 'deuteragonist' ||
+    value === 'antagonist' ||
+    value === 'supporting'
+  )
+    return value
+  return null
+}
+
+function normalizeNovelCharacterCard(value: unknown): NovelCharacterCard | null {
+  if (!isRecord(value)) return null
+  const id = value.id
+  const name = value.name
+  const role = normalizeNovelCharacterRole(value.role)
+  if (!isNonEmptyString(id) || !isNonEmptyString(name) || !role) return null
+
+  const traits = Array.isArray(value.traits)
+    ? value.traits.filter((t): t is string => typeof t === 'string')
+    : []
+
+  const motivation = typeof value.motivation === 'string' ? value.motivation : undefined
+  const backstory = typeof value.backstory === 'string' ? value.backstory : undefined
+
+  return {
+    id,
+    name,
+    role,
+    traits,
+    ...(motivation ? { motivation } : {}),
+    ...(backstory ? { backstory } : {}),
+  }
+}
+
+function normalizeNovelCharacterCards(parsed: unknown): NovelCharacterCard[] | null {
+  const characters = (() => {
+    if (Array.isArray(parsed)) return parsed
+    if (isRecord(parsed) && Array.isArray(parsed.characters)) return parsed.characters
+    return null
+  })()
+  if (!characters) return null
+
+  const normalized = characters
+    .map(normalizeNovelCharacterCard)
+    .filter((x): x is NovelCharacterCard => !!x)
+  if (normalized.length === 0) return null
+  return normalized
+}
+
+const NOVEL_WORLDVIEW_CATEGORIES: readonly NovelWorldviewCategory[] = [
+  'geography',
+  'culture',
+  'magic_system',
+  'technology',
+  'politics',
+  'history',
+]
+
+function normalizeNovelWorldviewCategory(value: unknown): NovelWorldviewCategory | null {
+  if (
+    typeof value === 'string' &&
+    NOVEL_WORLDVIEW_CATEGORIES.includes(value as NovelWorldviewCategory)
+  )
+    return value as NovelWorldviewCategory
+  return null
+}
+
+function normalizeNovelWorldviewSetting(value: unknown): NovelWorldviewSetting | null {
+  if (!isRecord(value)) return null
+  const id = value.id
+  const category = normalizeNovelWorldviewCategory(value.category)
+  const name = value.name
+  const description = value.description
+  if (
+    !isNonEmptyString(id) ||
+    !category ||
+    !isNonEmptyString(name) ||
+    !isNonEmptyString(description)
+  )
+    return null
+
+  return { id, category, name, description }
+}
+
+function normalizeNovelWorldviewSettings(parsed: unknown): NovelWorldviewSetting[] | null {
+  const settings = (() => {
+    if (Array.isArray(parsed)) return parsed
+    if (isRecord(parsed) && Array.isArray(parsed.settings)) return parsed.settings
+    return null
+  })()
+  if (!settings) return null
+
+  const normalized = settings
+    .map(normalizeNovelWorldviewSetting)
+    .filter((x): x is NovelWorldviewSetting => !!x)
+  if (normalized.length === 0) return null
+  return normalized
+}
+
+function normalizeNovelChapterMeta(parsed: unknown): NovelChapterMeta | null {
+  if (!isRecord(parsed)) return null
+  const chapterIndex = parsed.chapterIndex
+  const title = parsed.title
+  if (typeof chapterIndex !== 'number' || !isNonEmptyString(title)) return null
+
+  return { chapterIndex, title }
 }
 
 function normalizeTodoActions(parsed: unknown): ProposedTodoChange[] | null {
@@ -362,11 +479,71 @@ export function parseAssistantBlocks(
         ) || undefined
       : undefined
 
+  const novelCharacterRes = stripTaggedBlocks(
+    teachingAssessmentRes.text,
+    '[NOVEL_CHARACTER_START]',
+    '[NOVEL_CHARACTER_END]',
+  )
+  if (novelCharacterRes.hasPartialStart) {
+    errors.push({ block: 'novel_character', code: 'partial_block' })
+    pendingStructuredBlocks.add('novel_character')
+  }
+  const novelCharacters =
+    novelCharacterRes.inners.length > 0
+      ? parseLastValidJsonBlock(
+          novelCharacterRes.inners,
+          normalizeNovelCharacterCards,
+          'novel_character',
+          errors,
+        ) || undefined
+      : undefined
+
+  const novelWorldviewRes = stripTaggedBlocks(
+    novelCharacterRes.text,
+    '[NOVEL_WORLDVIEW_START]',
+    '[NOVEL_WORLDVIEW_END]',
+  )
+  if (novelWorldviewRes.hasPartialStart) {
+    errors.push({ block: 'novel_worldview', code: 'partial_block' })
+    pendingStructuredBlocks.add('novel_worldview')
+  }
+  const novelWorldview =
+    novelWorldviewRes.inners.length > 0
+      ? parseLastValidJsonBlock(
+          novelWorldviewRes.inners,
+          normalizeNovelWorldviewSettings,
+          'novel_worldview',
+          errors,
+        ) || undefined
+      : undefined
+
+  const novelChapterRes = stripTaggedBlocks(
+    novelWorldviewRes.text,
+    '[NOVEL_CHAPTER_START]',
+    '[NOVEL_CHAPTER_END]',
+  )
+  if (novelChapterRes.hasPartialStart) {
+    errors.push({ block: 'novel_chapter', code: 'partial_block' })
+    pendingStructuredBlocks.add('novel_chapter')
+  }
+  const novelChapterMeta =
+    novelChapterRes.inners.length > 0
+      ? parseLastValidJsonBlock(
+          novelChapterRes.inners,
+          normalizeNovelChapterMeta,
+          'novel_chapter',
+          errors,
+        ) || undefined
+      : undefined
+
   return {
-    cleanText: normalizeText(teachingAssessmentRes.text),
+    cleanText: normalizeText(novelChapterRes.text),
     ...(todoActions ? { todoActions } : {}),
     ...(teachingQuizzes ? { teachingQuizzes } : {}),
     ...(teachingAssessments ? { teachingAssessments } : {}),
+    ...(novelCharacters ? { novelCharacters } : {}),
+    ...(novelWorldview ? { novelWorldview } : {}),
+    ...(novelChapterMeta ? { novelChapterMeta } : {}),
     errors,
     pendingStructuredBlocks: Array.from(pendingStructuredBlocks),
   }

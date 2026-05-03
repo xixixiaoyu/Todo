@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { GraduationCap, Clover, LayoutGrid, Check, ChevronDown } from 'lucide-vue-next'
+import { GraduationCap, Clover, LayoutGrid, Check, ChevronDown, BookOpen } from 'lucide-vue-next'
 import AiLuminaIcon from './AiLuminaIcon.vue'
 import {
   DropdownMenu,
@@ -14,6 +14,7 @@ import { computed } from 'vue'
 const props = defineProps<{
   isMobile: boolean
   isTeachingEnabled: boolean
+  isNovelEnabled: boolean
   isTodoAssistantEnabled: boolean
   isImageGenerationEnabled: boolean
 }>()
@@ -22,6 +23,7 @@ const open = defineModel<boolean>('open', { default: false })
 
 const emit = defineEmits<{
   (e: 'toggleTeaching'): void
+  (e: 'toggleNovel'): void
   (e: 'toggleTodo'): void
   (e: 'toggleImageGen'): void
 }>()
@@ -32,6 +34,7 @@ const hover = useHoverPopover({ open })
 const activeModesCount = computed(() => {
   let count = 0
   if (props.isTeachingEnabled) count++
+  if (props.isNovelEnabled) count++
   if (props.isTodoAssistantEnabled) count++
   if (props.isImageGenerationEnabled) count++
   return count
@@ -77,6 +80,19 @@ const activeModesCount = computed(() => {
         class="z-[251] min-w-[200px] p-1"
       >
         <div @mouseenter="hover.clear" @mouseleave="hover.onMouseLeave">
+          <!-- Novel Mode -->
+          <DropdownMenuItem
+            class="flex w-full items-center justify-between gap-2 px-3 py-2 text-xs"
+            :class="{ 'bg-accent/50 text-primary': isNovelEnabled }"
+            @click.stop="emit('toggleNovel')"
+          >
+            <div class="flex items-center gap-2">
+              <BookOpen :size="14" />
+              <span>{{ t('ai.novelMode') }}</span>
+            </div>
+            <Check v-if="isNovelEnabled" :size="12" class="text-primary" />
+          </DropdownMenuItem>
+
           <!-- Todo Assistant -->
           <DropdownMenuItem
             class="flex w-full items-center justify-between gap-2 px-3 py-2 text-xs"

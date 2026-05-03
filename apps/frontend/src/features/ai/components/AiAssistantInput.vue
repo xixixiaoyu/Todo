@@ -9,6 +9,7 @@ import {
   Users,
   GraduationCap,
   Send,
+  BookOpen,
 } from 'lucide-vue-next'
 import type { ParsedFile } from '@/composables/useFileParsing'
 import AiAssistantInputAttachments from '@/features/ai/components/AiAssistantInputAttachments.vue'
@@ -22,6 +23,7 @@ const props = defineProps<{
   isDiscussionEnabled: boolean
   isThinkingEnabled: boolean
   isTeachingEnabled: boolean
+  isNovelEnabled: boolean
   selectedImages: string[]
   parsedFiles: ParsedFile[]
   isGenerating: boolean
@@ -41,6 +43,7 @@ const emit = defineEmits<{
   (e: 'toggleImageGen'): void
   (e: 'toggleThinking'): void
   (e: 'toggleTeaching'): void
+  (e: 'toggleNovel'): void
 }>()
 
 const { t } = useI18n()
@@ -53,6 +56,13 @@ const fileInputId = useId()
 const showSlashCommands = ref(false)
 const selectedCommandIndex = ref(0)
 const slashCommands = computed(() => [
+  {
+    id: 'novel',
+    title: t('ai.novelMode'),
+    icon: BookOpen,
+    active: props.isNovelEnabled,
+    action: () => emit('toggleNovel'),
+  },
   {
     id: 'todo',
     title: t('ai.todoAssistant'),
@@ -292,7 +302,9 @@ defineExpose({
               ? t('ai.imagePromptPlaceholder')
               : isTeachingEnabled
                 ? t('ai.teachingPlaceholder')
-                : t('ai.placeholder')
+                : isNovelEnabled
+                  ? t('ai.novelPlaceholder')
+                  : t('ai.placeholder')
         "
         :class="[
           'ai-assistant-textarea flex-1 resize-none bg-transparent text-foreground outline-none transition-colors',
