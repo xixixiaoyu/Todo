@@ -7,7 +7,7 @@ export const RecurrenceRuleSchema = z.enum(['DAILY', 'WEEKDAYS', 'WEEKLY', 'MONT
  */
 export const TodoSchema = z.object({
   id: z.string().uuid(),
-  title: z.string().min(1).max(500),
+  title: z.string().min(1).max(1000),
   completed: z.boolean().default(false),
   order: z.number().int().default(0),
   isPinned: z.boolean().default(false),

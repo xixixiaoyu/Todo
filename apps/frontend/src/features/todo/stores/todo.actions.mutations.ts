@@ -4,7 +4,7 @@ import { generateTodoId, isDuplicateTodo } from './todo.actions.common'
 import type { Todo } from './todo.types'
 
 /** 标题最大字符数，与 @lumina/shared TodoSchema.title 保持一致 */
-const MAX_TITLE_LENGTH = 500
+const MAX_TITLE_LENGTH = 1000
 
 type TodoMutationDeps = {
   todos: Ref<Todo[]>
@@ -105,7 +105,7 @@ export function createTodoMutations(deps: TodoMutationDeps): {
     const trimmedTitle = title.trim()
     if (!trimmedTitle) return null
 
-    // 防御性截断：确保标题不超过后端 schema 的 500 字符限制
+    // 防御性截断：确保标题不超过后端 schema 的 1000 字符限制
     const safeTitle = trimmedTitle.slice(0, MAX_TITLE_LENGTH)
 
     if (isDuplicate(safeTitle, parentId)) {
@@ -370,7 +370,7 @@ export function createTodoMutations(deps: TodoMutationDeps): {
       deps.error.value = 'todo.titleEmpty'
       return false
     }
-    // 防御性截断：确保标题不超过后端 schema 的 500 字符限制
+    // 防御性截断：确保标题不超过后端 schema 的 1000 字符限制
     const targetTitle = (trimmedTitle || todo.title).slice(0, MAX_TITLE_LENGTH)
     const targetParentId = parentId !== undefined ? parentId : todo.parentId
 

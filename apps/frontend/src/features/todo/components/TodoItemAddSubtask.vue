@@ -72,7 +72,7 @@ async function handleSubmit() {
               v-model="newTitle"
               name="new-subtask"
               type="text"
-              maxlength="500"
+              maxlength="1000"
               class="h-8 md:h-9 w-full bg-background text-[var(--todo-font-meta)] placeholder:text-[var(--todo-font-caption)]"
               :placeholder="t('todo.subtaskPlaceholder')"
               @keydown.enter="handleSubmit"
