@@ -19,7 +19,7 @@ export interface AIConfig {
   temperature: number
   systemPrompt: string
   thinkingMode: ThinkingMode
-  thinkingEffort: 'low' | 'medium' | 'high' | 'max'
+  thinkingEffort: 'low' | 'medium' | 'high'
   todoAssistant: boolean
   discussionMode: boolean
   discussionModelIds: readonly string[]
@@ -44,7 +44,7 @@ export interface AIPreset {
   model: string
   systemPrompt: string
   temperature: number
-  thinkingEffort?: 'low' | 'medium' | 'high' | 'max'
+  thinkingEffort?: 'low' | 'medium' | 'high'
   todoAssistant: boolean
   skillIds?: readonly string[]
   novelGenre?: NovelGenre | null

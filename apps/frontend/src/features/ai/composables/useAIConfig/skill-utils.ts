@@ -449,8 +449,7 @@ export function normalizePreset(raw: unknown): AIPreset | null {
   const thinkingEffort =
     item.thinkingEffort === 'low' ||
     item.thinkingEffort === 'medium' ||
-    item.thinkingEffort === 'high' ||
-    item.thinkingEffort === 'max'
+    item.thinkingEffort === 'high'
       ? item.thinkingEffort
       : undefined
   const todoAssistant = !!item.todoAssistant
@@ -487,7 +486,7 @@ export function isConfigMatchPreset(cfg: AIConfig, preset: AIPreset): boolean {
     preset.model === cfg.model &&
     preset.systemPrompt === cfg.systemPrompt &&
     Math.abs(preset.temperature - cfg.temperature) < 0.001 &&
-    (preset.thinkingEffort || 'max') === cfg.thinkingEffort &&
+    (preset.thinkingEffort || 'high') === cfg.thinkingEffort &&
     isSkillSetMatched
   )
 }

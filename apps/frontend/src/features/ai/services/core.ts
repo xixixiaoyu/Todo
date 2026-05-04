@@ -179,10 +179,10 @@ export async function getAIStreamResponse(
 
     // 推理参数：DeepSeek 原生 reasoning_effort（顶层）+ OpenRouter reasoning（兼容）
     if (thinkingMode === 'enabled') {
-      requestBody.reasoning_effort = options.thinkingEffort || thinkingEffort || 'max'
+      requestBody.reasoning_effort = options.thinkingEffort || thinkingEffort || 'high'
       requestBody.reasoning = {
         enabled: true,
-        effort: options.thinkingEffort || thinkingEffort || 'max',
+        effort: options.thinkingEffort || thinkingEffort || 'high',
       }
     }
 
@@ -351,7 +351,7 @@ export async function fetchNonStreamResponse(
     model: string
     temperature?: number
     top_p?: number
-    thinkingEffort?: 'low' | 'medium' | 'high' | 'max'
+    thinkingEffort?: 'low' | 'medium' | 'high'
   },
   messages: AIChatCompletionMessage[],
   thinkingMode?: string,
@@ -367,10 +367,10 @@ export async function fetchNonStreamResponse(
   }
 
   if (thinkingMode === 'enabled') {
-    requestBody.reasoning_effort = config.thinkingEffort || 'max'
+    requestBody.reasoning_effort = config.thinkingEffort || 'high'
     requestBody.reasoning = {
       enabled: true,
-      effort: config.thinkingEffort || 'max',
+      effort: config.thinkingEffort || 'high',
     }
   }
 

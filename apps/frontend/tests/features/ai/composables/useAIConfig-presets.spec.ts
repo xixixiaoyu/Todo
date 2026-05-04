@@ -364,7 +364,7 @@ describe('useAIConfig - Presets', () => {
         model: 'defaults-model',
         temperature: 0.9,
         systemPrompt: 'Defaults prompt',
-        thinkingEffort: 'max',
+        thinkingEffort: 'high',
         todoAssistant: true,
         skillIds: [],
         novelGenre: null,

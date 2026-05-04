@@ -95,7 +95,7 @@ export async function pushPresets(presets: AIPreset[]): Promise<void> {
   const syncData: AIPresetSync[] = presets.map(
     ({ apiKey: _, updatedAt, thinkingEffort, skillIds, ...rest }) => ({
       ...rest,
-      thinkingEffort: thinkingEffort ?? 'max',
+      thinkingEffort: thinkingEffort ?? 'high',
       skillIds: (skillIds ?? []) as string[],
       updatedAt: updatedAt ?? now,
     }),

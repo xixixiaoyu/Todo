@@ -69,7 +69,7 @@ const DEFAULT_CONFIG: AIConfig = {
   temperature: 0.6,
   systemPrompt: i18n.global.t('ai.defaultSystemPrompt'),
   thinkingMode: aiThinkingMode.value,
-  thinkingEffort: 'max',
+  thinkingEffort: 'high',
   todoAssistant: false,
   discussionMode: false,
   discussionModelIds: [],
@@ -96,7 +96,7 @@ function loadConfig(): AIConfig {
       return {
         ...DEFAULT_CONFIG,
         ...parsed,
-        thinkingEffort: 'max',
+        thinkingEffort: 'high',
         discussionModelIds: normalizeIdList(parsed.discussionModelIds),
         discussionPrimaryModelId:
           typeof parsed.discussionPrimaryModelId === 'string' &&
@@ -265,7 +265,7 @@ export function useAIConfig() {
       model: preset.model,
       systemPrompt: preset.systemPrompt,
       temperature: preset.temperature,
-      thinkingEffort: preset.thinkingEffort || 'max',
+      thinkingEffort: preset.thinkingEffort || 'high',
       todoAssistant: preset.todoAssistant,
       skillIds: presetSkillIds,
       novelGenre: preset.novelGenre ?? null,
@@ -317,7 +317,7 @@ export function useAIConfig() {
           model: updatedPreset.model,
           systemPrompt: updatedPreset.systemPrompt,
           temperature: updatedPreset.temperature,
-          thinkingEffort: updatedPreset.thinkingEffort || 'max',
+          thinkingEffort: updatedPreset.thinkingEffort || 'high',
           todoAssistant: updatedPreset.todoAssistant,
           skillIds: presetSkillIds,
           novelGenre: updatedPreset.novelGenre ?? null,
@@ -395,7 +395,7 @@ export function useAIConfig() {
       model: config.value.model,
       systemPrompt: config.value.systemPrompt,
       temperature: config.value.temperature,
-      thinkingEffort: 'max',
+      thinkingEffort: 'high',
       todoAssistant: config.value.todoAssistant,
       skillIds: config.value.skillIds,
       novelGenre: config.value.novelGenre,
@@ -448,8 +448,7 @@ export function useAIConfig() {
           const thinkingEffort =
             raw.thinkingEffort === 'low' ||
             raw.thinkingEffort === 'medium' ||
-            raw.thinkingEffort === 'high' ||
-            raw.thinkingEffort === 'max'
+            raw.thinkingEffort === 'high'
               ? raw.thinkingEffort
               : undefined
           return {
