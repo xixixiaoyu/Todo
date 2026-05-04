@@ -57,13 +57,6 @@ const showSlashCommands = ref(false)
 const selectedCommandIndex = ref(0)
 const slashCommands = computed(() => [
   {
-    id: 'novel',
-    title: t('ai.novelMode'),
-    icon: BookOpen,
-    active: props.isNovelEnabled,
-    action: () => emit('toggleNovel'),
-  },
-  {
     id: 'todo',
     title: t('ai.todoAssistant'),
     icon: Clover,
@@ -90,6 +83,13 @@ const slashCommands = computed(() => [
     icon: Users,
     active: props.isDiscussionEnabled,
     action: () => emit('toggleDiscussion'),
+  },
+  {
+    id: 'novel',
+    title: t('ai.novelMode'),
+    icon: BookOpen,
+    active: props.isNovelEnabled,
+    action: () => emit('toggleNovel'),
   },
 ])
 

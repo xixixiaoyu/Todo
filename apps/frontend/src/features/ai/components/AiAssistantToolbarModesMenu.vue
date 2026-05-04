@@ -80,19 +80,6 @@ const activeModesCount = computed(() => {
         class="z-[251] min-w-[200px] p-1"
       >
         <div @mouseenter="hover.clear" @mouseleave="hover.onMouseLeave">
-          <!-- Novel Mode -->
-          <DropdownMenuItem
-            class="flex w-full items-center justify-between gap-2 px-3 py-2 text-xs"
-            :class="{ 'bg-accent/50 text-primary': isNovelEnabled }"
-            @click.stop="emit('toggleNovel')"
-          >
-            <div class="flex items-center gap-2">
-              <BookOpen :size="14" />
-              <span>{{ t('ai.novelMode') }}</span>
-            </div>
-            <Check v-if="isNovelEnabled" :size="12" class="text-primary" />
-          </DropdownMenuItem>
-
           <!-- Todo Assistant -->
           <DropdownMenuItem
             class="flex w-full items-center justify-between gap-2 px-3 py-2 text-xs"
@@ -133,6 +120,19 @@ const activeModesCount = computed(() => {
               <span>{{ t('ai.enableImageGeneration') }}</span>
             </div>
             <Check v-if="isImageGenerationEnabled" :size="12" class="text-primary" />
+          </DropdownMenuItem>
+
+          <!-- Novel Mode -->
+          <DropdownMenuItem
+            class="flex w-full items-center justify-between gap-2 px-3 py-2 text-xs"
+            :class="{ 'bg-accent/50 text-primary': isNovelEnabled }"
+            @click.stop="emit('toggleNovel')"
+          >
+            <div class="flex items-center gap-2">
+              <BookOpen :size="14" />
+              <span>{{ t('ai.novelMode') }}</span>
+            </div>
+            <Check v-if="isNovelEnabled" :size="12" class="text-primary" />
           </DropdownMenuItem>
         </div>
       </DropdownMenuContent>
