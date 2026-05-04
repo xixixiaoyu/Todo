@@ -48,8 +48,8 @@ async function handleCreate() {
       draftStore.setActiveDraft(draft.id, draft.title)
       void router.push(`/novel/${draft.id}`)
     }
-  } catch {
-    showError(t('common.error.requestFailed'))
+  } catch (e) {
+    showError(t(resolveErrorKey(e)))
   }
 }
 
@@ -57,9 +57,20 @@ async function handleDelete(id: string, title: string) {
   if (!window.confirm(t('ai.novelDeleteConfirm', { title }))) return
   try {
     await deleteDraft.mutateAsync(id)
-  } catch {
-    showError(t('common.error.requestFailed'))
+  } catch (e) {
+    showError(t(resolveErrorKey(e)))
   }
+}
+
+/**
+ * 根据错误状态码选择提示文案：
+ * - 401 → loginRequired（路由守卫为主拦截，此处作为并发/token 过期场景的兑底）
+ * - 其他 → requestFailed
+ */
+function resolveErrorKey(e: unknown): string {
+  const status = (e as { response?: { status?: number } })?.response?.status
+  if (status === 401) return 'auth.loginRequired'
+  return 'common.error.requestFailed'
 }
 
 function openDraft(id: string) {

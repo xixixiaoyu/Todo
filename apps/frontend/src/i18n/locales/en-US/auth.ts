@@ -15,6 +15,7 @@ export const login = {
 
 export const auth = {
   INVALID_CREDENTIALS: 'Invalid email or password',
+  loginRequired: 'Please sign in to use this feature',
 } as const
 
 export const register = {

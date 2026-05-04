@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
 import { LoginSchema } from '@lumina/shared'
@@ -13,8 +13,23 @@ import PasswordInput from '@/components/auth/PasswordInput.vue'
 import { PrimaryButton } from '@/components/ui/button'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const { t } = useI18n()
+
+/**
+ * 解析登录后回跳目标：仅接受同源相对路径，避免开放重定向
+ */
+function resolveRedirectTarget(): string {
+  const raw = route.query.redirect
+  const candidate = Array.isArray(raw) ? raw[0] : raw
+  if (typeof candidate !== 'string') return '/'
+  // 必须以 / 开头且不能是 //（协议相对 URL）
+  if (!candidate.startsWith('/') || candidate.startsWith('//')) return '/'
+  // 已登录用户不应回到鉴权相关页面
+  if (/^\/(login|register|forgot-password|reset-password)(\/|\?|#|$)/.test(candidate)) return '/'
+  return candidate
+}
 
 onMounted(() => {
   authStore.clearError()
@@ -46,7 +61,7 @@ const copyError = async () => {
 const onSubmit = handleSubmit(async (values) => {
   const success = await authStore.login(values)
   if (success) {
-    await router.push('/')
+    await router.push(resolveRedirectTarget())
   } else if (authStore.fieldErrors) {
     setErrors(authStore.fieldErrors)
   }

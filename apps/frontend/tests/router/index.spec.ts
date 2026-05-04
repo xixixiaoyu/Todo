@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { createPinia, setActivePinia } from 'pinia'
 import router from '@/router/index'
 import i18n from '@/i18n'
+import { useAuthStore } from '@/features/auth/stores/auth'
 
 // Mock the components to speed up tests and avoid loading heavy dependencies
 vi.mock('@/features/todo/TodoView.vue', () => ({
@@ -21,11 +23,23 @@ vi.mock('@/features/auth/views/ResetPasswordView.vue', () => ({
 vi.mock('@/views/error/NotFoundView.vue', () => ({
   default: { name: 'NotFoundView', template: '<div></div>' },
 }))
+vi.mock('@/features/mcp/views/McpSettingsView.vue', () => ({
+  default: { name: 'McpSettingsView', template: '<div></div>' },
+}))
+vi.mock('@/features/novel/views/NovelBookshelfView.vue', () => ({
+  default: { name: 'NovelBookshelfView', template: '<div></div>' },
+}))
+vi.mock('@/features/novel/views/NovelDraftView.vue', () => ({
+  default: { name: 'NovelDraftView', template: '<div></div>' },
+}))
+vi.mock('@/features/teaching/views/TeachingDashboardView.vue', () => ({
+  default: { name: 'TeachingDashboardView', template: '<div></div>' },
+}))
 
 describe('Router Title', () => {
   beforeEach(() => {
+    setActivePinia(createPinia())
     vi.clearAllMocks()
-    // Mock document.title
     document.title = ''
   })
 
@@ -50,5 +64,61 @@ describe('Router Title', () => {
     const appName = t('common.appName')
     const registerTitle = t('register.title')
     expect(document.title).toBe(`${registerTitle} - ${appName}`)
+  })
+})
+
+describe('Router Auth Guard', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    localStorage.clear()
+  })
+
+  it('未登录访问 /novel 应跳转登录页并携带 redirect 参数', async () => {
+    const auth = useAuthStore()
+    auth.token = null
+
+    await router.push('/novel')
+
+    expect(router.currentRoute.value.path).toBe('/login')
+    expect(router.currentRoute.value.query.redirect).toBe('/novel')
+  })
+
+  it('未登录访问 /novel/:id 应携带完整原路径作为 redirect', async () => {
+    const auth = useAuthStore()
+    auth.token = null
+
+    await router.push('/novel/abc-123')
+
+    expect(router.currentRoute.value.path).toBe('/login')
+    expect(router.currentRoute.value.query.redirect).toBe('/novel/abc-123')
+  })
+
+  it('未登录访问 /teaching 应被拦截', async () => {
+    const auth = useAuthStore()
+    auth.token = null
+
+    await router.push('/teaching')
+
+    expect(router.currentRoute.value.path).toBe('/login')
+    expect(router.currentRoute.value.query.redirect).toBe('/teaching')
+  })
+
+  it('已登录访问受保护路由应正常进入', async () => {
+    const auth = useAuthStore()
+    auth.token = 'fake-jwt-token'
+
+    await router.push('/novel')
+
+    expect(router.currentRoute.value.path).toBe('/novel')
+  })
+
+  it('Todo 主页（/）未登录也能访问（匿名模式）', async () => {
+    const auth = useAuthStore()
+    auth.token = null
+
+    await router.push('/')
+
+    expect(router.currentRoute.value.path).toBe('/')
   })
 })

@@ -15,6 +15,7 @@ export const login = {
 
 export const auth = {
   INVALID_CREDENTIALS: '邮箱或密码错误',
+  loginRequired: '请先登录后再使用该功能',
 } as const
 
 export const register = {

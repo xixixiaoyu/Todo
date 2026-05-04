@@ -1,5 +1,8 @@
 import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router'
+import type { RouteLocationNormalized } from 'vue-router'
 import i18n from '@/i18n'
+import { useAuthStore } from '@/features/auth/stores/auth'
+import { useToast } from '@/composables/useToast'
 
 /**
  * 应用路由配置
@@ -42,25 +45,25 @@ const router = createRouter({
       path: '/settings/mcp',
       name: 'mcp-settings',
       component: () => import('@/features/mcp/views/McpSettingsView.vue'),
-      meta: { title: 'mcp.settings.title' },
+      meta: { title: 'mcp.settings.title', requiresAuth: true },
     },
     {
       path: '/novel',
       name: 'novel-bookshelf',
       component: () => import('@/features/novel/views/NovelBookshelfView.vue'),
-      meta: { title: 'ai.novelBookshelf' },
+      meta: { title: 'ai.novelBookshelf', requiresAuth: true },
     },
     {
       path: '/novel/:id',
       name: 'novel-draft',
       component: () => import('@/features/novel/views/NovelDraftView.vue'),
-      meta: { title: 'ai.novelBookshelf' },
+      meta: { title: 'ai.novelBookshelf', requiresAuth: true },
     },
     {
       path: '/teaching',
       name: 'teaching-dashboard',
       component: () => import('@/features/teaching/views/TeachingDashboardView.vue'),
-      meta: { title: 'ai.teachingDashboard' },
+      meta: { title: 'ai.teachingDashboard', requiresAuth: true },
     },
     {
       path: '/:pathMatch(.*)*',
@@ -84,6 +87,28 @@ router.beforeEach((to) => {
   } else {
     // 如果没有特定标题，则使用完整应用名称，保持与 index.html 一致
     document.title = fullAppName
+  }
+})
+
+/**
+ * 认证守卫：拦截 meta.requiresAuth 的路由
+ * - 未登录 → 跳 /login?redirect=<原路径>，并 toast 提示
+ * - 已登录 → 放行
+ * Todo 主页（/）支持匿名模式，故不加守卫
+ */
+router.beforeEach((to: RouteLocationNormalized) => {
+  if (!to.meta.requiresAuth) return true
+
+  const authStore = useAuthStore()
+  if (authStore.isAuthenticated) return true
+
+  const { t } = i18n.global
+  const { warning } = useToast()
+  warning(t('auth.loginRequired'))
+
+  return {
+    path: '/login',
+    query: { redirect: to.fullPath },
   }
 })
 
