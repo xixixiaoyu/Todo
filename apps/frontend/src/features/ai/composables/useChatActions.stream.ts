@@ -159,10 +159,12 @@ function finalizeCompletedResponse(params: {
   })
 
   // 小说模式自动补章：从原始响应中统计已生成的章节数，扣减剩余计数
+  // 保底扣减 1：即使模型未严格按 [NOVEL_CHAPTER_START] 格式输出，也按“一轮一章”兜底，防止死循环
   if (novelBatchRemainingRef.value > 0) {
     const chapterMatches = params.currentAIResponse.value.match(/\[NOVEL_CHAPTER_START\]/g)
     const generatedCount = chapterMatches ? chapterMatches.length : 0
-    novelBatchRemainingRef.value = Math.max(0, novelBatchRemainingRef.value - generatedCount)
+    const decrement = Math.max(1, generatedCount)
+    novelBatchRemainingRef.value = Math.max(0, novelBatchRemainingRef.value - decrement)
   }
 
   const teachingQuizzes: TeachingQuiz[] | undefined =
@@ -325,8 +327,12 @@ function finalizeCompletedResponse(params: {
     }
   }
 
+  // 若即将自动补章，保持 isGenerating 为 true，避免 UI 在“已完成 → 再次发起”之间闪动
+  const willAutoContinueNovel =
+    params.aiConfig.assistantMode === 'novel' && novelBatchRemainingRef.value > 0
+
   params.resetStreamingState()
-  params.isGenerating.value = false
+  params.isGenerating.value = willAutoContinueNovel
 }
 
 function finalizeAbortedResponse(params: {

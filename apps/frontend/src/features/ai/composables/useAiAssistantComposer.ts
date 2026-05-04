@@ -105,7 +105,9 @@ export function useAiAssistantComposer(params: {
 
   const handleNovelContinue = async (count: number) => {
     if (params.isGenerating.value) return
-    const message = count === 1 ? t('ai.novelContinueHint') : t('ai.novelContinueMsg', { count })
+    // 统一每轮只要求 AI 生成一章：通过自动补章循环实现多章，
+    // 避免模型在同一条响应中输出多章正文与结构化块交错，导致章节文本拼接在角色/世界观面板上方不断生长而引发布局抖动
+    const message = t('ai.novelContinueHint')
     chatInput.value = message
     await adjustInputHeight()
     // 自动补章：设置剩余计数（handleSend 会触发 sendMessage，响应完后由 useChatActions 自动补全）

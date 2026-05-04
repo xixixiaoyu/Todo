@@ -525,7 +525,6 @@ Current memory list:
   novelContinue1: '1 ch',
   novelContinue3: '3 ch',
   novelContinue5: '5 ch',
-  novelContinueMsg: 'Continue, generate the next {count} chapters in one go',
   novelToneLabel: 'Tone',
   novelProtagonistHintLabel: 'Protagonist',
   novelProtagonistHintPlaceholder: 'Describe your ideal protagonist (optional)',

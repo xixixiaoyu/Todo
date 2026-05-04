@@ -508,7 +508,6 @@ export const ai = {
   novelContinue1: '1 章',
   novelContinue3: '3 章',
   novelContinue5: '5 章',
-  novelContinueMsg: '继续，一次性生成下面{count}章',
   novelToneLabel: '文风',
   novelProtagonistHintLabel: '主角设定',
   novelProtagonistHintPlaceholder: '描述你心中的主角（可选）',
