@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed, type Component } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { GraduationCap, Clover, LayoutGrid, Check, ChevronDown, BookOpen } from 'lucide-vue-next'
 import AiLuminaIcon from './AiLuminaIcon.vue'
@@ -9,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useHoverPopover } from '@/features/ai/composables/useHoverPopover'
-import { computed } from 'vue'
+import { useAiModeItems, type AiModeId } from '@/features/ai/composables/useAiModeItems'
 
 const props = defineProps<{
   isMobile: boolean
@@ -31,14 +32,33 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const hover = useHoverPopover({ open })
 
-const activeModesCount = computed(() => {
-  let count = 0
-  if (props.isTeachingEnabled) count++
-  if (props.isNovelEnabled) count++
-  if (props.isTodoAssistantEnabled) count++
-  if (props.isImageGenerationEnabled) count++
-  return count
+// Toolbar 下拉不包含「多模型协同讨论」（该模式在 Toolbar 有独立入口），
+// 故仅注入四项 inputs，useAiModeItems 会自动按统一顺序输出。
+const modeItems = useAiModeItems({
+  todo: { active: () => props.isTodoAssistantEnabled, toggle: () => emit('toggleTodo') },
+  teaching: { active: () => props.isTeachingEnabled, toggle: () => emit('toggleTeaching') },
+  draw: { active: () => props.isImageGenerationEnabled, toggle: () => emit('toggleImageGen') },
+  novel: { active: () => props.isNovelEnabled, toggle: () => emit('toggleNovel') },
 })
+
+// Toolbar 下拉按模式 id 映射的图标（绘图使用品牌自定义 AiLuminaIcon）
+// 仅包含本组件实际渲染的模式，discuss 由 Toolbar 独立入口处理
+const MODE_ICON: Partial<Record<AiModeId, Component>> = {
+  todo: Clover,
+  teaching: GraduationCap,
+  draw: AiLuminaIcon,
+  novel: BookOpen,
+}
+
+// 激活状态下的额外图标动画类（保留原有视觉效果）
+const iconAnimClass = (id: AiModeId, active: boolean): string => {
+  if (!active) return ''
+  if (id === 'todo') return 'animate-spin-slow'
+  if (id === 'draw') return 'animate-pulse-slow'
+  return ''
+}
+
+const activeModesCount = computed(() => modeItems.value.filter((m) => m.active).length)
 </script>
 
 <template>
@@ -80,59 +100,22 @@ const activeModesCount = computed(() => {
         class="z-[251] min-w-[200px] p-1"
       >
         <div @mouseenter="hover.clear" @mouseleave="hover.onMouseLeave">
-          <!-- Todo Assistant -->
           <DropdownMenuItem
+            v-for="mode in modeItems"
+            :key="mode.id"
             class="flex w-full items-center justify-between gap-2 px-3 py-2 text-xs"
-            :class="{ 'bg-accent/50 text-primary': isTodoAssistantEnabled }"
-            @click.stop="emit('toggleTodo')"
+            :class="{ 'bg-accent/50 text-primary': mode.active }"
+            @click.stop="mode.toggle()"
           >
             <div class="flex items-center gap-2">
-              <Clover :size="14" :class="{ 'animate-spin-slow': isTodoAssistantEnabled }" />
-              <span>{{ t('ai.todoAssistant') }}</span>
-            </div>
-            <Check v-if="isTodoAssistantEnabled" :size="12" class="text-primary" />
-          </DropdownMenuItem>
-
-          <!-- Teaching Mode -->
-          <DropdownMenuItem
-            class="flex w-full items-center justify-between gap-2 px-3 py-2 text-xs"
-            :class="{ 'bg-accent/50 text-primary': isTeachingEnabled }"
-            @click.stop="emit('toggleTeaching')"
-          >
-            <div class="flex items-center gap-2">
-              <GraduationCap :size="14" />
-              <span>{{ t('ai.teachingMode') }}</span>
-            </div>
-            <Check v-if="isTeachingEnabled" :size="12" class="text-primary" />
-          </DropdownMenuItem>
-
-          <!-- Image Gen -->
-          <DropdownMenuItem
-            class="flex w-full items-center justify-between gap-2 px-3 py-2 text-xs"
-            :class="{ 'bg-accent/50 text-primary': isImageGenerationEnabled }"
-            @click.stop="emit('toggleImageGen')"
-          >
-            <div class="flex items-center gap-2">
-              <AiLuminaIcon
+              <component
+                :is="MODE_ICON[mode.id]"
                 :size="14"
-                :class="{ 'animate-pulse-slow': isImageGenerationEnabled }"
+                :class="iconAnimClass(mode.id, mode.active)"
               />
-              <span>{{ t('ai.enableImageGeneration') }}</span>
+              <span>{{ mode.title }}</span>
             </div>
-            <Check v-if="isImageGenerationEnabled" :size="12" class="text-primary" />
-          </DropdownMenuItem>
-
-          <!-- Novel Mode -->
-          <DropdownMenuItem
-            class="flex w-full items-center justify-between gap-2 px-3 py-2 text-xs"
-            :class="{ 'bg-accent/50 text-primary': isNovelEnabled }"
-            @click.stop="emit('toggleNovel')"
-          >
-            <div class="flex items-center gap-2">
-              <BookOpen :size="14" />
-              <span>{{ t('ai.novelMode') }}</span>
-            </div>
-            <Check v-if="isNovelEnabled" :size="12" class="text-primary" />
+            <Check v-if="mode.active" :size="12" class="text-primary" />
           </DropdownMenuItem>
         </div>
       </DropdownMenuContent>

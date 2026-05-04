@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { ref, nextTick, watch, computed, useId, onMounted, onUnmounted } from 'vue'
+import { ref, nextTick, watch, computed, useId, onMounted, onUnmounted, type Component } from 'vue'
 import { useWindowSize } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import {
   AlertCircle,
   Image as ImageIcon,
   Clover,
-  Users,
   GraduationCap,
   Send,
   BookOpen,
@@ -15,12 +14,12 @@ import type { ParsedFile } from '@/composables/useFileParsing'
 import AiAssistantInputAttachments from '@/features/ai/components/AiAssistantInputAttachments.vue'
 import AiAssistantInputSlashCommands from '@/features/ai/components/AiAssistantInputSlashCommands.vue'
 import { AI_UPLOAD_ACCEPT } from '@/features/ai/constants/attachments'
+import { useAiModeItems, type AiModeId } from '@/features/ai/composables/useAiModeItems'
 
 const props = defineProps<{
   modelValue: string
   isImageGenerationEnabled: boolean
   isTodoAssistantEnabled: boolean
-  isDiscussionEnabled: boolean
   isThinkingEnabled: boolean
   isTeachingEnabled: boolean
   isNovelEnabled: boolean
@@ -39,7 +38,6 @@ const emit = defineEmits<{
   (e: 'handleFileUpload', event: Event): void
   (e: 'paste', event: ClipboardEvent): void
   (e: 'toggleTodo'): void
-  (e: 'toggleDiscussion'): void
   (e: 'toggleImageGen'): void
   (e: 'toggleThinking'): void
   (e: 'toggleTeaching'): void
@@ -55,43 +53,31 @@ const fileInputId = useId()
 // 快捷指令相关
 const showSlashCommands = ref(false)
 const selectedCommandIndex = ref(0)
-const slashCommands = computed(() => [
-  {
-    id: 'todo',
-    title: t('ai.todoAssistant'),
-    icon: Clover,
-    active: props.isTodoAssistantEnabled,
-    action: () => emit('toggleTodo'),
-  },
-  {
-    id: 'teaching',
-    title: t('ai.teachingMode'),
-    icon: GraduationCap,
-    active: props.isTeachingEnabled,
-    action: () => emit('toggleTeaching'),
-  },
-  {
-    id: 'draw',
-    title: t('ai.enableImageGeneration'),
-    icon: ImageIcon,
-    active: props.isImageGenerationEnabled,
-    action: () => emit('toggleImageGen'),
-  },
-  {
-    id: 'discuss',
-    title: t('ai.discussionMode'),
-    icon: Users,
-    active: props.isDiscussionEnabled,
-    action: () => emit('toggleDiscussion'),
-  },
-  {
-    id: 'novel',
-    title: t('ai.novelMode'),
-    icon: BookOpen,
-    active: props.isNovelEnabled,
-    action: () => emit('toggleNovel'),
-  },
-])
+
+// slash 菜单中每个模式对应的图标（与 Toolbar 下拉可能不同，由各入口自定义）
+// 多模型协同讨论 (discuss) 在 Toolbar 有独立入口，故不在 slash 菜单重复曝露
+const SLASH_COMMAND_ICON: Partial<Record<AiModeId, Component>> = {
+  todo: Clover,
+  teaching: GraduationCap,
+  draw: ImageIcon,
+  novel: BookOpen,
+}
+
+const modeItems = useAiModeItems({
+  todo: { active: () => props.isTodoAssistantEnabled, toggle: () => emit('toggleTodo') },
+  teaching: { active: () => props.isTeachingEnabled, toggle: () => emit('toggleTeaching') },
+  draw: { active: () => props.isImageGenerationEnabled, toggle: () => emit('toggleImageGen') },
+  novel: { active: () => props.isNovelEnabled, toggle: () => emit('toggleNovel') },
+})
+
+const slashCommands = computed(() =>
+  modeItems.value
+    .map((m) => {
+      const icon = SLASH_COMMAND_ICON[m.id]
+      return icon ? { id: m.id, title: m.title, icon, active: m.active, action: m.toggle } : null
+    })
+    .filter((x): x is NonNullable<typeof x> => x != null),
+)
 
 const handleSlashCommand = (index: number) => {
   slashCommands.value[index].action()
