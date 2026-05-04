@@ -132,7 +132,7 @@ function normalizeTodoActions(todoActions: ProposedTodoChange[]): ProposedTodoCh
   }))
 }
 
-function finalizeCompletedResponse(params: {
+export function finalizeCompletedResponse(params: {
   aiConfig: AIConfig
   assistantMessageId: string
   currentAIResponse: Ref<string>

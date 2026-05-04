@@ -46,7 +46,8 @@ export function useChat(options: AIRequestOptions = {}) {
     // 检查是否需要显示流式消息
     // 条件：正在生成中，或者有未保存的响应内容（正文、思考内容、推理详情、讨论步骤）
     // 注意：hasUnsavedResponse 分支处理流式完成后的短暂窗口：
-    //   - finalizeCompletedResponse 执行顺序为 addSessionMessage → resetStreamingState → isGenerating=false
+    //   - finalizeCompletedResponse 执行顺序为 addSessionMessage → resetStreamingState → isGenerating
+    //     （小说模式自动补章时 isGenerating 保持 true，其余场景设为 false）
     //   - Vue 响应式更新时序可能导致 chatHistory 已更新但 currentAIResponse 尚未清空
     //   - 此分支确保在状态完全同步前，用户仍能看到响应内容
     const streamingId = currentAssistantMessageId.value || 'streaming-response'

@@ -430,23 +430,21 @@ defineExpose({
                 :settings="message.novelWorldview"
               />
 
-              <!-- Novel Continue Buttons -->
+              <!-- Novel Continue Button -->
               <div
                 v-if="!isStreaming && !isUser && (message.novelChapterMeta || isNovelMode)"
-                class="mt-3 flex items-center justify-center gap-1.5"
+                class="mt-3 flex items-center justify-center"
               >
                 <button
-                  v-for="count in [1, 3, 5]"
-                  :key="count"
                   type="button"
                   class="group flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium transition-all active:scale-[0.98] border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary/30"
-                  @click="emit('continue-novel', count)"
+                  @click="emit('continue-novel', 1)"
                 >
                   <ArrowRight
                     :size="13"
                     class="transition-transform duration-200 group-hover:translate-x-0.5"
                   />
-                  <span>{{ t(`ai.novelContinue${count}`) }}</span>
+                  <span>{{ t('ai.novelContinueHint') }}</span>
                 </button>
               </div>
 
