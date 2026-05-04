@@ -41,6 +41,18 @@ export function useAiAssistantModes(params: {
     })
   }
 
+  const isTranslationEnabled = computed(() => params.config.value.assistantMode === 'translation')
+
+  const toggleTranslationMode = () => {
+    const isTranslation = isTranslationEnabled.value
+    params.updateConfig({
+      assistantMode: isTranslation ? 'default' : 'translation',
+      ...(isTranslation
+        ? {}
+        : { todoAssistant: false, discussionMode: false, enableImageGeneration: false }),
+    })
+  }
+
   const updateNovelGenre = (genre: NovelGenre | null) => {
     params.updateConfig({ novelGenre: genre })
   }
@@ -118,6 +130,8 @@ export function useAiAssistantModes(params: {
     updateNovelGenre,
     updateNovelTone,
     updateNovelProtagonistHint,
+    isTranslationEnabled,
+    toggleTranslationMode,
     isTodoAssistantEnabled,
     toggleTodoAssistant,
     isDiscussionEnabled,

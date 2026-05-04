@@ -130,7 +130,7 @@ export interface AISkillRuntimeAvailability {
   missingSecrets?: string[]
 }
 
-export type AssistantMode = 'default' | 'teaching' | 'novel'
+export type AssistantMode = 'default' | 'teaching' | 'novel' | 'translation'
 
 export type NovelGenre =
   | 'fantasy'

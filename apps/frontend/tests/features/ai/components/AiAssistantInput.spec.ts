@@ -35,6 +35,7 @@ const defaultProps = {
   parsedFiles: [],
   isGenerating: false,
   isNovelEnabled: false,
+  isTranslationEnabled: false,
   error: null,
 }
 

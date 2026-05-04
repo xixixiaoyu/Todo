@@ -1,7 +1,15 @@
 <script setup lang="ts">
 import { computed, type Component } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { GraduationCap, Clover, LayoutGrid, Check, ChevronDown, BookOpen } from 'lucide-vue-next'
+import {
+  GraduationCap,
+  Clover,
+  LayoutGrid,
+  Check,
+  ChevronDown,
+  BookOpen,
+  Languages,
+} from 'lucide-vue-next'
 import AiLuminaIcon from './AiLuminaIcon.vue'
 import {
   DropdownMenu,
@@ -18,6 +26,7 @@ const props = defineProps<{
   isNovelEnabled: boolean
   isTodoAssistantEnabled: boolean
   isImageGenerationEnabled: boolean
+  isTranslationEnabled: boolean
 }>()
 
 const open = defineModel<boolean>('open', { default: false })
@@ -27,6 +36,7 @@ const emit = defineEmits<{
   (e: 'toggleNovel'): void
   (e: 'toggleTodo'): void
   (e: 'toggleImageGen'): void
+  (e: 'toggleTranslation'): void
 }>()
 
 const { t } = useI18n()
@@ -39,6 +49,10 @@ const modeItems = useAiModeItems({
   teaching: { active: () => props.isTeachingEnabled, toggle: () => emit('toggleTeaching') },
   draw: { active: () => props.isImageGenerationEnabled, toggle: () => emit('toggleImageGen') },
   novel: { active: () => props.isNovelEnabled, toggle: () => emit('toggleNovel') },
+  translation: {
+    active: () => props.isTranslationEnabled,
+    toggle: () => emit('toggleTranslation'),
+  },
 })
 
 // Toolbar 下拉按模式 id 映射的图标（绘图使用品牌自定义 AiLuminaIcon）
@@ -48,6 +62,7 @@ const MODE_ICON: Partial<Record<AiModeId, Component>> = {
   teaching: GraduationCap,
   draw: AiLuminaIcon,
   novel: BookOpen,
+  translation: Languages,
 }
 
 // 激活状态下的额外图标动画类（保留原有视觉效果）

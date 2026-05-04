@@ -9,6 +9,7 @@ import {
   GraduationCap,
   Send,
   BookOpen,
+  Languages,
 } from 'lucide-vue-next'
 import type { ParsedFile } from '@/composables/useFileParsing'
 import AiAssistantInputAttachments from '@/features/ai/components/AiAssistantInputAttachments.vue'
@@ -23,6 +24,7 @@ const props = defineProps<{
   isThinkingEnabled: boolean
   isTeachingEnabled: boolean
   isNovelEnabled: boolean
+  isTranslationEnabled: boolean
   selectedImages: string[]
   parsedFiles: ParsedFile[]
   isGenerating: boolean
@@ -42,6 +44,7 @@ const emit = defineEmits<{
   (e: 'toggleThinking'): void
   (e: 'toggleTeaching'): void
   (e: 'toggleNovel'): void
+  (e: 'toggleTranslation'): void
 }>()
 
 const { t } = useI18n()
@@ -61,6 +64,7 @@ const SLASH_COMMAND_ICON: Partial<Record<AiModeId, Component>> = {
   teaching: GraduationCap,
   draw: ImageIcon,
   novel: BookOpen,
+  translation: Languages,
 }
 
 const modeItems = useAiModeItems({
@@ -68,6 +72,10 @@ const modeItems = useAiModeItems({
   teaching: { active: () => props.isTeachingEnabled, toggle: () => emit('toggleTeaching') },
   draw: { active: () => props.isImageGenerationEnabled, toggle: () => emit('toggleImageGen') },
   novel: { active: () => props.isNovelEnabled, toggle: () => emit('toggleNovel') },
+  translation: {
+    active: () => props.isTranslationEnabled,
+    toggle: () => emit('toggleTranslation'),
+  },
 })
 
 const slashCommands = computed(() =>

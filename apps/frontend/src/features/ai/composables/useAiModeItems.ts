@@ -1,7 +1,7 @@
 import { computed, type ComputedRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-export type AiModeId = 'todo' | 'teaching' | 'draw' | 'discuss' | 'novel'
+export type AiModeId = 'todo' | 'teaching' | 'draw' | 'discuss' | 'novel' | 'translation'
 
 /**
  * AI 模式在菜单中的统一展示顺序（单一事实源）。
@@ -14,6 +14,7 @@ export const AI_MODE_ORDER: readonly AiModeId[] = [
   'draw',
   'discuss',
   'novel',
+  'translation',
 ] as const
 
 const TITLE_KEY: Record<AiModeId, string> = {
@@ -22,6 +23,7 @@ const TITLE_KEY: Record<AiModeId, string> = {
   draw: 'ai.enableImageGeneration',
   discuss: 'ai.discussionMode',
   novel: 'ai.novelMode',
+  translation: 'ai.translationMode',
 }
 
 export interface AiModeDescriptor {

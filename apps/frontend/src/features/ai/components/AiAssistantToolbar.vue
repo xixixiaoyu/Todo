@@ -28,6 +28,7 @@ defineProps<{
   isTodoAssistantEnabled: boolean
   isDiscussionEnabled: boolean
   isImageGenerationEnabled: boolean
+  isTranslationEnabled: boolean
   currentPresetName: string
   presets: AIPreset[]
   config: AIConfig
@@ -49,6 +50,7 @@ const emit = defineEmits<{
   (e: 'toggleTodo'): void
   (e: 'toggleDiscussion'): void
   (e: 'toggleImageGen'): void
+  (e: 'toggleTranslation'): void
   (e: 'selectPrimaryModel', id: string): void
   (e: 'toggleSecondaryModel', id: string): void
   (e: 'selectPreset', id: string): void
@@ -184,10 +186,12 @@ const newChatTitle = computed(() => `${t('ai.newChat')} (${shortcutHint})`)
             :is-novel-enabled="isNovelEnabled"
             :is-todo-assistant-enabled="isTodoAssistantEnabled"
             :is-image-generation-enabled="isImageGenerationEnabled"
+            :is-translation-enabled="isTranslationEnabled"
             @toggle-teaching="emit('toggleTeaching')"
             @toggle-novel="emit('toggleNovel')"
             @toggle-todo="emit('toggleTodo')"
             @toggle-image-gen="emit('toggleImageGen')"
+            @toggle-translation="emit('toggleTranslation')"
           />
 
           <!-- 多模型协同讨论 -->

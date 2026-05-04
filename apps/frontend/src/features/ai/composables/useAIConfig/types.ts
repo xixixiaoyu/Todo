@@ -1,5 +1,5 @@
 export type ThinkingMode = 'enabled' | 'disabled'
-export type AssistantMode = 'default' | 'teaching' | 'novel'
+export type AssistantMode = 'default' | 'teaching' | 'novel' | 'translation'
 
 export type NovelGenre =
   | 'fantasy'
