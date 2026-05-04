@@ -229,6 +229,7 @@ export interface ChatMessage {
   discussionSteps?: DiscussionStep[]
   todoActions?: import('@/features/todo/stores/todo').ProposedTodoChange[] // AI 建议的 Todo 变更
   todoActionsProcessed?: 'applied' | 'discarded' // AI 建议的处理状态
+  todoActionsParseError?: boolean
   teachingQuizzes?: TeachingQuiz[]
   teachingAssessments?: TeachingAssessment[]
   novelCharacters?: NovelCharacterCard[]

@@ -304,12 +304,20 @@ export const useTodoStore = defineStore(
       activeProposedChangeSetId,
     })
 
-    async function applyProposedChanges(setId?: string): Promise<void> {
+    async function applyProposedChanges(
+      setId?: string,
+      selectedActionIds?: Set<string>,
+    ): Promise<void> {
       const targetId = setId ?? activeProposedChangeSetId.value ?? undefined
       if (!targetId) return
 
-      const changes = proposedChangeSets.value[targetId] ?? []
+      let changes = proposedChangeSets.value[targetId] ?? []
       if (changes.length === 0) return
+
+      if (selectedActionIds) {
+        changes = changes.filter((c) => selectedActionIds.has(c.id))
+        if (changes.length === 0) return
+      }
 
       await applyProposedTodoChanges(changes, todos.value, actions)
 

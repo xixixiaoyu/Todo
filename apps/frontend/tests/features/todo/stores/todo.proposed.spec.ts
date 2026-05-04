@@ -101,4 +101,81 @@ describe('todo.proposed', () => {
 
     expect(actions.addTodo).not.toHaveBeenCalled()
   })
+
+  it('should only apply selected actions when selectedActionIds is provided', async () => {
+    const actions: ProposedTodoActions = {
+      addTodo: vi.fn(async () => 'todo-new'),
+      updateTodo: vi.fn(async () => true),
+      deleteTodo: vi.fn(async () => {}),
+      toggleTodo: vi.fn(async () => {}),
+      togglePin: vi.fn(async () => {}),
+    }
+
+    const allChanges = [
+      { id: 'a1', type: 'add' as const, data: { title: 'New Task' } },
+      { id: 'a2', type: 'toggle' as const, data: { id: 'existing-1' } },
+      { id: 'a3', type: 'pin' as const, data: { id: 'existing-2' } },
+    ]
+
+    // 只选择 a1 和 a3
+    const selected = new Set(['a1', 'a3'])
+    const filteredChanges = allChanges.filter((c) => selected.has(c.id))
+
+    await applyProposedTodoChanges(filteredChanges, [], actions)
+
+    // a1 (add) 应该被调用
+    expect(actions.addTodo).toHaveBeenCalledTimes(1)
+    expect(actions.addTodo).toHaveBeenCalledWith('New Task', null)
+    // a3 (pin) 应该被调用
+    expect(actions.togglePin).toHaveBeenCalledTimes(1)
+    expect(actions.togglePin).toHaveBeenCalledWith('existing-2')
+    // a2 (toggle) 不应该被调用
+    expect(actions.toggleTodo).not.toHaveBeenCalled()
+    expect(actions.updateTodo).not.toHaveBeenCalled()
+    expect(actions.deleteTodo).not.toHaveBeenCalled()
+  })
+
+  it('should silently skip when selected set results in empty changes', async () => {
+    const actions: ProposedTodoActions = {
+      addTodo: vi.fn(async () => 'todo-1'),
+      updateTodo: vi.fn(async () => true),
+      deleteTodo: vi.fn(async () => {}),
+      toggleTodo: vi.fn(async () => {}),
+      togglePin: vi.fn(async () => {}),
+    }
+
+    // 空数组 → 应该静默跳过
+    await applyProposedTodoChanges([], [], actions)
+
+    expect(actions.addTodo).not.toHaveBeenCalled()
+    expect(actions.updateTodo).not.toHaveBeenCalled()
+    expect(actions.deleteTodo).not.toHaveBeenCalled()
+    expect(actions.toggleTodo).not.toHaveBeenCalled()
+    expect(actions.togglePin).not.toHaveBeenCalled()
+  })
+
+  it('should apply all changes when fully selected (equivalent to old behavior)', async () => {
+    const actions: ProposedTodoActions = {
+      addTodo: vi.fn(async (title: string) => (title === 'A' ? 'new-a' : 'new-b')),
+      updateTodo: vi.fn(async () => true),
+      deleteTodo: vi.fn(async () => {}),
+      toggleTodo: vi.fn(async () => {}),
+      togglePin: vi.fn(async () => {}),
+    }
+
+    const allChanges = [
+      { id: 'c1', type: 'add' as const, data: { title: 'A' } },
+      { id: 'c2', type: 'add' as const, data: { title: 'B' } },
+      { id: 'c3', type: 'toggle' as const, data: { id: 'new-a' } },
+    ]
+
+    // 全选（等价于旧行为）
+    const fullSelection = new Set(['c1', 'c2', 'c3'])
+    const filtered = allChanges.filter((c) => fullSelection.has(c.id))
+
+    await applyProposedTodoChanges(filtered, [], actions)
+
+    expect(actions.addTodo).toHaveBeenCalledTimes(2)
+    expect(actions.toggleTodo).toHaveBeenCalledTimes(1)
+  })
 })

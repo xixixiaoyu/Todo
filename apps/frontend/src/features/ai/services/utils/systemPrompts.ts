@@ -18,6 +18,10 @@ import { buildSkillManifest, getSkillPath } from './skills'
 
 const t = i18n.global.t
 
+const MAX_RECENT_ROOTS = 15
+const MAX_OTHER_ROOTS = 50
+const RECENT_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
+
 function getLocaleValue(): string {
   const l = i18n.global.locale as unknown
   if (typeof l === 'string') return l
@@ -227,14 +231,38 @@ function formatTodoItems(todos: Todo[]): string {
     return (a.order ?? 0) - (b.order ?? 0)
   }
 
-  roots.sort(sortFn)
   roots.forEach((root) => {
     if (root.children.length > 0) {
       root.children.sort(sortFn)
     }
   })
 
+  // 区段分类
+  const now = Date.now()
+  const pinnedRoots: TodoWithChildren[] = []
+  const recentRoots: TodoWithChildren[] = []
+  const otherRoots: TodoWithChildren[] = []
+
+  for (const root of roots) {
+    if (root.isPinned) {
+      pinnedRoots.push(root)
+    } else if (root.updatedAt && now - new Date(root.updatedAt).getTime() < RECENT_WINDOW_MS) {
+      recentRoots.push(root)
+    } else {
+      otherRoots.push(root)
+    }
+  }
+
+  pinnedRoots.sort(sortFn)
+  recentRoots.sort(sortFn)
+  otherRoots.sort(sortFn)
+
+  const visibleRecent = recentRoots.slice(0, MAX_RECENT_ROOTS)
+  const otherTruncated = otherRoots.length > MAX_OTHER_ROOTS
+  const visibleOther = otherTruncated ? otherRoots.slice(0, MAX_OTHER_ROOTS) : otherRoots
+
   const lines: string[] = []
+
   const traverse = (item: TodoWithChildren, depth: number) => {
     const indent = '  '.repeat(depth)
     const pinIcon = item.isPinned ? '📌 ' : ''
@@ -242,7 +270,39 @@ function formatTodoItems(todos: Todo[]): string {
     item.children.forEach((child) => traverse(child, depth + 1))
   }
 
-  roots.forEach((root) => traverse(root, 0))
+  // 总览摘要
+  lines.push(
+    `[待办总览: ${pendingTodos.length} 项，${pinnedRoots.length} 个置顶，${visibleRecent.length} 个最近活跃]`,
+  )
+  lines.push('')
+
+  // 置顶区段
+  if (pinnedRoots.length > 0) {
+    lines.push('━━ 置顶 ━━')
+    pinnedRoots.forEach((root) => traverse(root, 0))
+    lines.push('')
+  }
+
+  // 近期活跃区段
+  if (visibleRecent.length > 0) {
+    lines.push('━━ 近期活跃 (最近 7 天) ━━')
+    visibleRecent.forEach((root) => traverse(root, 0))
+    lines.push('')
+  }
+
+  // 其他待办区段
+  if (visibleOther.length > 0) {
+    lines.push('━━ 其他待办 ━━')
+    visibleOther.forEach((root) => traverse(root, 0))
+    if (otherTruncated) {
+      const remaining = otherRoots.length - MAX_OTHER_ROOTS
+      const hint =
+        getRawLocaleMessage('ai.todoListTruncatedHint') ??
+        (t('ai.todoListTruncatedHint', { remaining }) as string)
+      lines.push(formatTemplate(hint, { remaining }))
+    }
+  }
+
   return lines.join('\n')
 }
 
@@ -531,20 +591,26 @@ export function injectSystemPrompts(
   }
 
   if (todoAssistant) {
+    // 块 A：角色与能力（一次性注入）
+    systemBlocks.push({
+      content: (getRawLocaleMessage('ai.todoAssistantRolePrompt') ??
+        t('ai.todoAssistantRolePrompt')) as string,
+    })
+
+    // 块 B：待办快照 + 输出规范（每轮注入当前 todoList）
     const todoStore = useTodoStore()
     const todoList = formatTodoItems(todoStore.todos)
     const pendingCount = todoStore.todos.filter((t) => !t.completed && !t.deletedAt).length
 
     systemBlocks.push({
-      content: (() => {
-        const params = {
-          count: pendingCount,
-          todoList: todoList || t('common.none') || 'None',
-        }
-        const raw = getRawLocaleMessage('ai.todoAssistantPrompt')
-        if (raw) return formatTemplate(raw, params)
-        return t('ai.todoAssistantPrompt', params) as string
-      })(),
+      content: formatTemplate(
+        (getRawLocaleMessage('ai.todoAssistantContextPrompt') ??
+          t('ai.todoAssistantContextPrompt', {
+            count: pendingCount,
+            todoList: todoList || 'None',
+          })) as string,
+        { count: pendingCount, todoList: todoList || t('common.none') || 'None' },
+      ),
     })
   }
 

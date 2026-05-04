@@ -45,6 +45,7 @@ function buildAssistantMessage(params: {
   reasoningDetails?: string
   discussionSteps?: DiscussionStep[]
   todoActions?: ProposedTodoChange[]
+  todoActionsParseError?: boolean
   teachingQuizzes?: TeachingQuiz[]
   teachingAssessments?: TeachingAssessment[]
   novelCharacters?: NovelCharacterCard[]
@@ -61,6 +62,7 @@ function buildAssistantMessage(params: {
     reasoning_details: params.reasoningDetails,
     discussionSteps: params.discussionSteps,
     todoActions: params.todoActions,
+    todoActionsParseError: params.todoActionsParseError,
     teachingQuizzes: params.teachingQuizzes,
     teachingAssessments: params.teachingAssessments,
     novelCharacters: params.novelCharacters,
@@ -79,6 +81,7 @@ function buildCompletedAssistantMessage(params: {
   reasoningDetails: string
   discussionSteps: DiscussionStep[]
   todoActions: ProposedTodoChange[]
+  todoActionsParseError?: boolean
   teachingQuizzes?: TeachingQuiz[]
   teachingAssessments?: TeachingAssessment[]
   novelCharacters?: NovelCharacterCard[]
@@ -94,6 +97,7 @@ function buildCompletedAssistantMessage(params: {
     reasoningDetails: params.reasoningDetails || undefined,
     discussionSteps: params.discussionSteps.length > 0 ? [...params.discussionSteps] : undefined,
     todoActions: params.todoActions.length > 0 ? [...params.todoActions] : undefined,
+    todoActionsParseError: params.todoActionsParseError,
     teachingQuizzes: params.teachingQuizzes,
     teachingAssessments: params.teachingAssessments,
     novelCharacters: params.novelCharacters,
@@ -194,6 +198,13 @@ function finalizeCompletedResponse(params: {
       ? ([...parsed.pendingStructuredBlocks] as ChatMessage['pendingStructuredBlocks'])
       : undefined
 
+  const todoActionsParseError =
+    params.aiConfig.todoAssistant === true &&
+    !parsed.todoActions &&
+    parsed.errors.some((e) => e.block === 'todo_actions')
+      ? true
+      : undefined
+
   const assistantMessage = buildCompletedAssistantMessage({
     assistantMessageId: params.assistantMessageId,
     content: params.currentAIResponse.value,
@@ -201,6 +212,7 @@ function finalizeCompletedResponse(params: {
     reasoningDetails: params.currentReasoningDetails.value,
     discussionSteps: params.currentDiscussionSteps.value,
     todoActions: params.currentTodoActions.value,
+    todoActionsParseError,
     teachingQuizzes,
     teachingAssessments,
     novelCharacters,

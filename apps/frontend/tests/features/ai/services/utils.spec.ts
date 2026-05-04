@@ -29,6 +29,15 @@ vi.mock('@/i18n', () => ({
         if (key === 'ai.todoAssistantPrompt') {
           return `Context: ${params.count} tasks\n${params.todoList}`
         }
+        if (key === 'ai.todoAssistantRolePrompt') {
+          return 'ai.todoAssistantRolePrompt'
+        }
+        if (key === 'ai.todoAssistantContextPrompt') {
+          return `ai.todoAssistantContextPrompt\n${params.count} tasks\n${params.todoList}`
+        }
+        if (key === 'ai.todoListTruncatedHint') {
+          return `…（还有 ${params.remaining} 项未列出，如需完整列表请告知）`
+        }
         if (key === 'ai.skillCatalogUserPrompt') {
           return `[skill-catalog]\n${params.skills}`
         }
@@ -275,6 +284,308 @@ describe('AI Utils - injectSystemPrompts', () => {
     expect(
       result.some((m) => typeof m.content === 'string' && m.content.includes('[skill-activation]')),
     ).toBe(false)
+  })
+
+  it('should output three sections in correct order: pinned, recent, other', () => {
+    const todoStore = useTodoStore()
+    const now = new Date()
+    const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)
+
+    const todos: Array<{
+      id: string
+      title: string
+      completed: boolean
+      order: number
+      version: number
+      pomodoroCount: number
+      isPinned: boolean
+      createdAt: Date
+      updatedAt: Date
+    }> = [
+      {
+        id: 'p1',
+        title: 'Pinned Task',
+        completed: false,
+        order: 0,
+        version: 0,
+        pomodoroCount: 0,
+        isPinned: true,
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: 'r1',
+        title: 'Recent Task',
+        completed: false,
+        order: 1,
+        version: 0,
+        pomodoroCount: 0,
+        isPinned: false,
+        createdAt: now,
+        updatedAt: threeDaysAgo,
+      },
+      {
+        id: 'o1',
+        title: 'Old Task',
+        completed: false,
+        order: 2,
+        version: 0,
+        pomodoroCount: 0,
+        isPinned: false,
+        createdAt: new Date('2025-01-01'),
+        updatedAt: new Date('2025-01-01'),
+      },
+    ]
+
+    todoStore.todos = todos as unknown as typeof todoStore.todos
+    const result = injectSystemPrompts([], '', true, 'default')
+    const systemMessage = result.find((m) => m.role === 'system' && typeof m.content === 'string')
+    const content = systemMessage?.content as string
+
+    // 三个区段标题
+    expect(content).toContain('━━ 置顶 ━━')
+    expect(content).toContain('━━ 近期活跃 (最近 7 天) ━━')
+    expect(content).toContain('━━ 其他待办 ━━')
+
+    // 顺序：置顶 → 近期活跃 → 其他
+    const pinnedIdx = content.indexOf('━━ 置顶 ━━')
+    const recentIdx = content.indexOf('━━ 近期活跃 (最近 7 天) ━━')
+    const otherIdx = content.indexOf('━━ 其他待办 ━━')
+    expect(pinnedIdx).toBeLessThan(recentIdx)
+    expect(recentIdx).toBeLessThan(otherIdx)
+
+    // 总览摘要
+    expect(content).toContain('[待办总览: 3 项，1 个置顶，1 个最近活跃]')
+  })
+
+  it('should not trigger soft cap when other section has 50 or fewer roots', () => {
+    const todoStore = useTodoStore()
+    const todos: Array<{
+      id: string
+      title: string
+      completed: boolean
+      order: number
+      version: number
+      pomodoroCount: number
+      isPinned: boolean
+      createdAt: Date
+      updatedAt: Date
+    }> = []
+
+    for (let i = 1; i <= 50; i++) {
+      todos.push({
+        id: String(i),
+        title: `Task ${i}`,
+        completed: false,
+        order: i,
+        version: 0,
+        pomodoroCount: 0,
+        isPinned: false,
+        createdAt: new Date('2025-01-01'),
+        updatedAt: new Date('2025-01-01'),
+      })
+    }
+
+    todoStore.todos = todos as unknown as typeof todoStore.todos
+    const result = injectSystemPrompts([], '', true, 'default')
+    const systemMessage = result.find((m) => m.role === 'system' && typeof m.content === 'string')
+    const content = systemMessage?.content as string
+
+    // 50 条全部出现，无截断提示
+    expect(content).toContain('Task 1')
+    expect(content).toContain('Task 50')
+    expect(content).not.toContain('还有')
+    expect(content).not.toContain('more items')
+  })
+
+  it('should truncate other section at 50 roots and show hint', () => {
+    const todoStore = useTodoStore()
+    const todos: Array<{
+      id: string
+      title: string
+      completed: boolean
+      order: number
+      version: number
+      pomodoroCount: number
+      isPinned: boolean
+      createdAt: Date
+      updatedAt: Date
+    }> = []
+
+    for (let i = 1; i <= 55; i++) {
+      todos.push({
+        id: String(i),
+        title: `Task ${i}`,
+        completed: false,
+        order: i,
+        version: 0,
+        pomodoroCount: 0,
+        isPinned: false,
+        createdAt: new Date('2025-01-01'),
+        updatedAt: new Date('2025-01-01'),
+      })
+    }
+
+    todoStore.todos = todos as unknown as typeof todoStore.todos
+    const result = injectSystemPrompts([], '', true, 'default')
+    const systemMessage = result.find((m) => m.role === 'system' && typeof m.content === 'string')
+    const content = systemMessage?.content as string
+
+    // 前 50 个出现
+    expect(content).toContain('Task 1')
+    expect(content).toContain('Task 50')
+    // 第 51-55 不出现
+    expect(content).not.toContain('Task 51')
+    expect(content).not.toContain('Task 55')
+    // 截断提示
+    expect(content).toContain('还有 5 项未列出')
+  })
+
+  it('should preserve subtree integrity: child nodes stay with parent', () => {
+    const todoStore = useTodoStore()
+    const todos: Array<{
+      id: string
+      title: string
+      completed: boolean
+      order: number
+      version: number
+      pomodoroCount: number
+      isPinned: boolean
+      parentId?: string
+      createdAt: Date
+      updatedAt: Date
+    }> = []
+
+    // 49 old roots + 1 old root with children
+    for (let i = 1; i <= 49; i++) {
+      todos.push({
+        id: `old-${i}`,
+        title: `Old ${i}`,
+        completed: false,
+        order: i,
+        version: 0,
+        pomodoroCount: 0,
+        isPinned: false,
+        createdAt: new Date('2025-01-01'),
+        updatedAt: new Date('2025-01-01'),
+      })
+    }
+
+    // 第 50 个 root 有一个子节点（都在"其他"区段）
+    todos.push({
+      id: 'old-50',
+      title: 'Old 50 with child',
+      completed: false,
+      order: 50,
+      version: 0,
+      pomodoroCount: 0,
+      isPinned: false,
+      createdAt: new Date('2025-01-01'),
+      updatedAt: new Date('2025-01-01'),
+    })
+    todos.push({
+      id: 'child-of-50',
+      title: 'Child of 50',
+      completed: false,
+      order: 0,
+      version: 0,
+      pomodoroCount: 0,
+      isPinned: false,
+      parentId: 'old-50',
+      createdAt: new Date('2025-01-01'),
+      updatedAt: new Date('2025-01-01'),
+    })
+
+    // 第 51 个 root（会被截断）
+    todos.push({
+      id: 'old-51',
+      title: 'Old 51 truncated',
+      completed: false,
+      order: 51,
+      version: 0,
+      pomodoroCount: 0,
+      isPinned: false,
+      createdAt: new Date('2025-01-01'),
+      updatedAt: new Date('2025-01-01'),
+    })
+
+    todoStore.todos = todos as unknown as typeof todoStore.todos
+    const result = injectSystemPrompts([], '', true, 'default')
+    const systemMessage = result.find((m) => m.role === 'system' && typeof m.content === 'string')
+    const content = systemMessage?.content as string
+
+    // 第 50 个 root 及其子节点都在（子树完整）
+    expect(content).toContain('Old 50 with child')
+    expect(content).toContain('Child of 50')
+    // 第 51 个 root 不在
+    expect(content).not.toContain('Old 51 truncated')
+    // 截断提示
+    expect(content).toContain('还有 1 项未列出')
+  })
+
+  it('should inject two separate prompt blocks when todoAssistant is enabled', () => {
+    const todoStore = useTodoStore()
+    todoStore.todos = [
+      {
+        id: '1',
+        title: 'Test Task',
+        completed: false,
+        order: 1,
+        version: 0,
+        pomodoroCount: 0,
+        isPinned: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]
+
+    const result = injectSystemPrompts([], '', true, 'default')
+    const systemMessage = result.find((m) => m.role === 'system' && typeof m.content === 'string')
+    const content = systemMessage?.content as string
+
+    // 应该包含 role prompt 和 context prompt 两块内容
+    expect(content).toContain('ai.todoAssistantRolePrompt')
+    expect(content).toContain('ai.todoAssistantContextPrompt')
+  })
+
+  it('should not inject todo blocks when todoAssistant is false', () => {
+    const todoStore = useTodoStore()
+    todoStore.todos = [
+      {
+        id: '1',
+        title: 'Test Task',
+        completed: false,
+        order: 1,
+        version: 0,
+        pomodoroCount: 0,
+        isPinned: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]
+
+    const result = injectSystemPrompts([], 'Base prompt', false, 'default')
+    const systemMessage = result.find((m) => m.role === 'system' && typeof m.content === 'string')
+    const content = systemMessage?.content as string
+
+    // 不应包含任何待办助手相关 prompt
+    expect(content).toBeDefined()
+    expect(content).not.toContain('ai.todoAssistantRolePrompt')
+    expect(content).not.toContain('ai.todoAssistantContextPrompt')
+    expect(content).not.toContain('ai.todoAssistantPrompt')
+  })
+
+  it('should handle empty todo list without error', () => {
+    const todoStore = useTodoStore()
+    todoStore.todos = []
+
+    const result = injectSystemPrompts([], '', true, 'default')
+    const systemMessage = result.find((m) => m.role === 'system' && typeof m.content === 'string')
+    const content = systemMessage?.content as string
+
+    expect(content).toContain('ai.todoAssistantRolePrompt')
+    expect(content).toContain('ai.todoAssistantContextPrompt')
+    expect(content).toContain('0')
   })
 
   it('should inject skill runtime availability payload when provided', () => {

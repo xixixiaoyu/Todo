@@ -2,7 +2,7 @@
 import { computed, ref, watch, onMounted, nextTick, toRef, onBeforeUnmount } from 'vue'
 import VChart from 'vue-echarts'
 import { useDark, useResizeObserver } from '@vueuse/core'
-import { Check, X, Maximize2, Minimize2, Move } from 'lucide-vue-next'
+import { Check, X, Maximize2, Minimize2, Move, AlertCircle } from 'lucide-vue-next'
 import AiLuminaIcon from '@/features/ai/components/AiLuminaIcon.vue'
 import type { ProposedTodoChange } from '@/features/todo/stores/todo'
 import { useTodoStore } from '@/features/todo/stores/todo'
@@ -18,6 +18,7 @@ const props = defineProps<{
   actions: ProposedTodoChange[]
   messageId?: string
   processedStatus?: 'applied' | 'discarded'
+  parseError?: boolean
 }>()
 
 const todoStore = useTodoStore()
@@ -35,6 +36,47 @@ const isDiscarded = ref(props.processedStatus === 'discarded')
 const isReady = ref(false)
 const containerRef = ref<HTMLElement | null>(null)
 const vChartRef = ref<InstanceType<typeof VChart> | null>(null)
+const showActionList = ref(false)
+
+const selectedActionIds = ref<Set<string>>(new Set())
+
+// 初始化/重置全选
+function initSelection() {
+  selectedActionIds.value = new Set(props.actions.map((a) => a.id))
+}
+
+watch(
+  () => props.actions,
+  () => {
+    initSelection()
+  },
+  { immediate: true },
+)
+
+const allSelected = computed(() => {
+  if (props.actions.length === 0) return false
+  return props.actions.every((a) => selectedActionIds.value.has(a.id))
+})
+
+const selectedCount = computed(() => selectedActionIds.value.size)
+
+function toggleSelectAll() {
+  if (allSelected.value) {
+    selectedActionIds.value = new Set()
+  } else {
+    selectedActionIds.value = new Set(props.actions.map((a) => a.id))
+  }
+}
+
+function toggleAction(id: string) {
+  const next = new Set(selectedActionIds.value)
+  if (next.has(id)) {
+    next.delete(id)
+  } else {
+    next.add(id)
+  }
+  selectedActionIds.value = next
+}
 
 // 使用 ResizeObserver 确保容器尺寸就绪后再初始化图表，并添加防抖优化性能
 const debouncedResize = debounce(() => {
@@ -104,10 +146,10 @@ function updateMessageStatus(status: 'applied' | 'discarded') {
 }
 
 const stats = computed(() => {
-  const counts = { add: 0, update: 0, delete: 0, toggle: 0, pin: 0 }
+  const counts: Record<string, number> = { add: 0, update: 0, delete: 0, toggle: 0, pin: 0 }
   props.actions.forEach((a) => {
     if (a.type in counts) {
-      counts[a.type as keyof typeof counts]++
+      counts[a.type]++
     }
   })
   return counts
@@ -117,15 +159,20 @@ const hasChanges = computed(
   () => props.actions.length > 0 && !isApplied.value && !isDiscarded.value,
 )
 
+function actionLabel(type: string): string {
+  const key = `todo.actionType.${type}` as const
+  return (t(key) as string) || type
+}
+
 async function handleApply() {
   if (isApplying.value || isDiscarding.value) return
   isApplying.value = true
   try {
     if (props.messageId) {
       todoStore.setProposedChanges(props.messageId, props.actions)
-      await todoStore.applyProposedChanges(props.messageId)
+      await todoStore.applyProposedChanges(props.messageId, selectedActionIds.value)
     } else {
-      await todoStore.applyProposedChanges()
+      await todoStore.applyProposedChanges(undefined, selectedActionIds.value)
     }
     isApplied.value = true
     updateMessageStatus('applied')
@@ -176,7 +223,7 @@ const chartOptions = computed(() => ({
       right: '25%',
       symbolSize: 8,
       initialTreeDepth: -1,
-      roam: true, // 开启缩放和平移
+      roam: true,
       label: {
         position: 'left',
         verticalAlign: 'middle',
@@ -201,7 +248,6 @@ const chartOptions = computed(() => ({
         label: {
           position: 'right',
           align: 'left',
-          // 增加叶子节点的内边距，防止文字溢出
           padding: [0, 10, 0, 0],
         },
       },
@@ -214,7 +260,26 @@ const chartOptions = computed(() => ({
 </script>
 
 <template>
+  <!-- 解析错误状态 -->
   <div
+    v-if="parseError"
+    class="mt-4 mb-2 overflow-hidden rounded-2xl border border-destructive/20 bg-destructive/[0.03] shadow-sm"
+  >
+    <div class="flex items-center gap-3 px-3 py-3">
+      <div
+        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive"
+      >
+        <AlertCircle :size="16" />
+      </div>
+      <p class="text-xs text-muted-foreground leading-relaxed">
+        {{ t('ai.todoParseError') }}
+      </p>
+    </div>
+  </div>
+
+  <!-- 正常状态 -->
+  <div
+    v-else
     class="mt-4 mb-2 overflow-hidden rounded-2xl border border-primary/10 bg-primary/[0.03] shadow-sm transition-all duration-300 hover:shadow-md group/preview"
     :class="isExpanded ? 'ring-2 ring-primary/20' : ''"
   >
@@ -321,6 +386,65 @@ const chartOptions = computed(() => ({
       </div>
     </div>
 
+    <!-- 可折叠勾选列表 -->
+    <div v-if="hasChanges" class="border-t border-primary/5 bg-primary/[0.01]">
+      <!-- Toggle行动列表 -->
+      <button
+        type="button"
+        class="flex w-full items-center justify-between px-3 py-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+        @click="showActionList = !showActionList"
+      >
+        <span class="font-medium">
+          {{ showActionList ? t('todo.hideActionDetails') : t('todo.showActionDetails') }}
+          ({{ props.actions.length }})
+        </span>
+      </button>
+
+      <!-- 勾选列表 -->
+      <div v-if="showActionList" class="px-3 pb-2 space-y-1 max-h-48 overflow-y-auto">
+        <!-- 全选/取消全选 -->
+        <label
+          class="flex items-center gap-2 py-0.5 text-[11px] font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+        >
+          <input
+            type="checkbox"
+            :checked="allSelected"
+            class="h-3.5 w-3.5 rounded border-primary/30 text-primary focus:ring-primary/30 cursor-pointer"
+            @change="toggleSelectAll"
+          />
+          <span>{{ allSelected ? t('todo.deselectAll') : t('todo.selectAll') }}</span>
+        </label>
+
+        <!-- 逐条勾选 -->
+        <label
+          v-for="action in actions"
+          :key="action.id"
+          class="flex items-center gap-2 py-0.5 text-[11px] cursor-pointer hover:bg-primary/[0.04] rounded px-1 -mx-1 transition-colors"
+        >
+          <input
+            type="checkbox"
+            :checked="selectedActionIds.has(action.id)"
+            class="h-3.5 w-3.5 rounded border-primary/30 text-primary focus:ring-primary/30 cursor-pointer"
+            @change="toggleAction(action.id)"
+          />
+          <span
+            class="text-[9px] px-1 rounded-sm font-bold shrink-0"
+            :class="{
+              'bg-success/20 text-success': action.type === 'add',
+              'bg-primary/20 text-primary': action.type === 'update' || action.type === 'toggle',
+              'bg-destructive/20 text-destructive': action.type === 'delete',
+              'bg-yellow-500/20 text-yellow-600': action.type === 'pin',
+            }"
+          >
+            {{ actionLabel(action.type) }}
+          </span>
+          <span class="truncate text-muted-foreground">
+            {{ action.data.title || action.data.id }}
+          </span>
+        </label>
+      </div>
+    </div>
+
     <!-- Quick Actions (Only if has changes) -->
     <div
       v-if="hasChanges"
@@ -343,7 +467,7 @@ const chartOptions = computed(() => ({
       <Button
         size="sm"
         class="h-9 gap-2 rounded-xl px-4 text-[12px] font-bold shadow-md shadow-primary/10 transition-all active:scale-95"
-        :disabled="isApplying || isDiscarding"
+        :disabled="isApplying || isDiscarding || selectedCount === 0"
         @click="handleApply"
       >
         <Check v-if="!isApplying" :size="14" stroke-width="3" />
@@ -351,7 +475,7 @@ const chartOptions = computed(() => ({
           v-else
           class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white"
         ></span>
-        {{ t('common.apply') }}
+        {{ t('todo.applySelected', { n: selectedCount }) }}
       </Button>
     </div>
   </div>

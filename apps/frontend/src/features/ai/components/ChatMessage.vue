@@ -345,9 +345,15 @@ defineExpose({
                 </div>
               </div>
 
+              <!-- AI 待办建议解析错误 -->
+              <ChatVisualizerPreview
+                v-if="message.todoActionsParseError && !isStreaming"
+                :actions="[]"
+                :parse-error="true"
+              />
               <!-- AI 建议的思维导图预览 -->
               <ChatVisualizerPreview
-                v-if="message.todoActions && message.todoActions.length > 0"
+                v-else-if="message.todoActions && message.todoActions.length > 0"
                 :actions="message.todoActions"
                 :message-id="message.id"
                 :processed-status="message.todoActionsProcessed"
