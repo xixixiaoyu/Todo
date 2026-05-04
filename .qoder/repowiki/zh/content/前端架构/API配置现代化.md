@@ -5,10 +5,13 @@
 - [apps/backend/src/app.module.ts](file://apps/backend/src/app.module.ts)
 - [apps/frontend/src/api/config.ts](file://apps/frontend/src/api/config.ts)
 - [apps/frontend/src/api/index.ts](file://apps/frontend/src/api/index.ts)
-- [apps/backend/nest-cli.json](file://apps/backend/nest-cli.json)
-- [apps/frontend/package.json](file://apps/frontend/package.json)
+- [apps/frontend/src/api/unwrap.ts](file://apps/frontend/src/api/unwrap.ts)
 - [apps/frontend/src/api/sidecar.ts](file://apps/frontend/src/api/sidecar.ts)
 - [apps/frontend/src/api/upload.ts](file://apps/frontend/src/api/upload.ts)
+- [apps/backend/src/common/interceptors/transform.interceptor.ts](file://apps/backend/src/common/interceptors/transform.interceptor.ts)
+- [packages/shared/src/dto/common.dto.ts](file://packages/shared/src/dto/common.dto.ts)
+- [apps/backend/nest-cli.json](file://apps/backend/nest-cli.json)
+- [apps/frontend/package.json](file://apps/frontend/package.json)
 - [apps/backend/src/common/throttling/index.ts](file://apps/backend/src/common/throttling/index.ts)
 - [apps/backend/src/common/filters/all-exceptions.filter.ts](file://apps/backend/src/common/filters/all-exceptions.filter.ts)
 - [apps/backend/src/auth/auth.module.ts](file://apps/backend/src/auth/auth.module.ts)
@@ -17,7 +20,16 @@
 - [apps/backend/src/todos/todos.controller.ts](file://apps/backend/src/todos/todos.controller.ts)
 - [apps/backend/src/todos/todos.dto.ts](file://apps/backend/src/todos/todos.dto.ts)
 - [apps/backend/src/common/throttling/throttling.constants.ts](file://apps/backend/src/common/throttling/throttling.constants.ts)
+- [apps/frontend/src/features/novel/api/novelApi.ts](file://apps/frontend/src/features/novel/api/novelApi.ts)
+- [apps/frontend/src/features/teaching/api/teachingApi.ts](file://apps/frontend/src/features/teaching/api/teachingApi.ts)
 </cite>
+
+## 更新摘要
+**变更内容**
+- 新增统一API响应处理系统，提供标准化的响应解包机制
+- 实现后端统一响应包装，消除前端手动解包的需要
+- 新增共享的API响应类型定义和错误处理机制
+- 扩展前端API客户端功能，支持更丰富的HTTP方法
 
 ## 目录
 1. [简介](#简介)
@@ -25,20 +37,24 @@
 3. [核心组件](#核心组件)
 4. [架构概览](#架构概览)
 5. [详细组件分析](#详细组件分析)
-6. [依赖关系分析](#依赖关系分析)
-7. [性能考虑](#性能考虑)
-8. [故障排除指南](#故障排除指南)
-9. [结论](#结论)
+6. [统一API响应处理系统](#统一api响应处理系统)
+7. [依赖关系分析](#依赖关系分析)
+8. [性能考虑](#性能考虑)
+9. [故障排除指南](#故障排除指南)
+10. [结论](#结论)
 
 ## 简介
 
 本项目是一个现代化的Todo应用，采用前后端分离架构，专注于API配置的现代化实践。项目实现了统一的API配置管理、智能的环境变量处理、完善的错误处理机制，以及高效的前端API客户端设计。
+
+**最新更新**：系统现已引入统一API响应处理系统，通过apps/frontend/src/api/unwrap.ts提供getJson、postJson、putJson、patchJson、deleteJson等辅助函数，集中处理后端统一响应包装，消除前端手动解包的需要。
 
 该系统的核心特点包括：
 - 统一的API基础URL配置，支持多种部署模式
 - 智能的环境变量解析和优先级处理
 - 完善的错误处理和国际化支持
 - 现代化的前端API客户端设计
+- 统一的API响应处理机制
 - 可扩展的模块化架构
 
 ## 项目结构
@@ -50,29 +66,33 @@ graph TB
 subgraph "前端应用 (Frontend)"
 FE1[Vue 3 应用]
 FE2[API 客户端]
-FE3[Wails 模式]
-FE4[Web 模式]
+FE3[统一响应处理]
+FE4[Wails 模式]
+FE5[Web 模式]
 end
 subgraph "后端服务 (Backend)"
 BE1[NestJS 应用]
 BE2[认证模块]
 BE3[Todos 模块]
-BE4[中间件层]
+BE4[统一响应拦截器]
 end
-subgraph "侧车服务 (Sidecar)"
-SC1[独立进程]
-SC2[MCP 连接]
-SC3[工具注册]
+subgraph "共享包 (Shared)"
+SH1[API 响应类型]
+SH2[错误处理]
+SH3[分页支持]
 end
 FE1 --> FE2
-FE2 --> BE1
-FE3 --> SC1
-SC1 --> BE1
+FE2 --> FE3
+FE3 --> BE1
+FE4 --> BE1
+BE1 --> BE4
+BE4 --> SH1
 ```
 
 **图表来源**
 - [apps/backend/src/app.module.ts:28-146](file://apps/backend/src/app.module.ts#L28-L146)
 - [apps/frontend/src/api/config.ts:1-47](file://apps/frontend/src/api/config.ts#L1-L47)
+- [apps/frontend/src/api/unwrap.ts:1-30](file://apps/frontend/src/api/unwrap.ts#L1-L30)
 
 **章节来源**
 - [apps/backend/src/app.module.ts:1-160](file://apps/backend/src/app.module.ts#L1-L160)
@@ -149,13 +169,14 @@ ResponseInterceptor --> TokenManager
 
 ## 架构概览
 
-系统采用现代化的三层架构设计：
+系统采用现代化的三层架构设计，现已集成了统一的API响应处理机制：
 
 ```mermaid
 graph TB
 subgraph "表现层 (Presentation Layer)"
 UI[Vue 3 前端]
 API[API 客户端]
+UNWRAP[统一响应处理]
 SIDE[Sidecar 客户端]
 end
 subgraph "应用层 (Application Layer)"
@@ -163,17 +184,19 @@ AUTH[认证服务]
 TODO[Todos 服务]
 MAIL[邮件服务]
 UPLOAD[文件上传]
-end
+SHARED[共享类型定义]
+END
 subgraph "数据层 (Data Layer)"
 PRISMA[Prisma ORM]
 REDIS[Redis 缓存]
 DB[(数据库)]
-end
+END
 UI --> API
-API --> AUTH
-API --> TODO
-API --> MAIL
-API --> UPLOAD
+API --> UNWRAP
+UNWRAP --> AUTH
+UNWRAP --> TODO
+UNWRAP --> MAIL
+UNWRAP --> UPLOAD
 SIDE --> AUTH
 AUTH --> PRISMA
 TODO --> PRISMA
@@ -181,11 +204,13 @@ MAIL --> REDIS
 UPLOAD --> REDIS
 PRISMA --> DB
 REDIS --> DB
+SHARED --> UNWRAP
 ```
 
 **图表来源**
 - [apps/backend/src/app.module.ts:28-146](file://apps/backend/src/app.module.ts#L28-L146)
 - [apps/frontend/src/api/index.ts:1-198](file://apps/frontend/src/api/index.ts#L1-L198)
+- [apps/frontend/src/api/unwrap.ts:1-30](file://apps/frontend/src/api/unwrap.ts#L1-L30)
 
 ## 详细组件分析
 
@@ -356,9 +381,140 @@ Sidecar->>Sidecar : 本地快速响应
 **章节来源**
 - [apps/frontend/src/api/sidecar.ts:1-20](file://apps/frontend/src/api/sidecar.ts#L1-L20)
 
+## 统一API响应处理系统
+
+**新增功能**：系统现已实现统一的API响应处理机制，通过apps/frontend/src/api/unwrap.ts提供标准化的响应解包功能。
+
+### 后端统一响应包装
+
+后端通过TransformInterceptor将所有成功响应统一包装为标准格式：
+
+```mermaid
+sequenceDiagram
+participant Controller as 控制器
+participant Interceptor as TransformInterceptor
+participant Service as 服务层
+participant Response as HTTP响应
+Controller->>Service : 调用业务逻辑
+Service-->>Controller : 返回原始数据
+Controller->>Interceptor : 原始响应
+Interceptor->>Interceptor : 包装为 {success, data, timestamp}
+Interceptor-->>Response : 返回统一格式
+```
+
+**图表来源**
+- [apps/backend/src/common/interceptors/transform.interceptor.ts:18-29](file://apps/backend/src/common/interceptors/transform.interceptor.ts#L18-L29)
+
+### 前端统一响应解包
+
+前端通过unwrap.ts提供标准化的响应解包函数：
+
+```mermaid
+flowchart TD
+A[HTTP 响应] --> B{检查 success 字段}
+B --> |存在且为 true| C[直接返回 data]
+B --> |存在但为 false| D[抛出 ApiError]
+B --> |不存在| E[兼容旧格式，直接返回 data]
+C --> F[返回纯净数据]
+D --> G[抛出带状态码的错误]
+E --> F
+```
+
+**图表来源**
+- [apps/frontend/src/api/unwrap.ts:11-29](file://apps/frontend/src/api/unwrap.ts#L11-L29)
+- [packages/shared/src/dto/common.dto.ts:64-72](file://packages/shared/src/dto/common.dto.ts#L64-L72)
+
+### API响应类型定义
+
+共享包提供了完整的API响应类型定义：
+
+```mermaid
+classDiagram
+class ApiSuccessResponse {
++success : true
++data : T
++timestamp : string
+}
+class ApiErrorResponse {
++success : false
++data : null
++message : string
++errors : Record~string, string~
++statusCode : number
++timestamp : string
+}
+class ApiResponse {
+<<union>>
+}
+class ApiError {
++statusCode : number
++errors : Record~string, string~
++timestamp : string
++constructor(response)
+}
+ApiSuccessResponse --> ApiResponse
+ApiErrorResponse --> ApiResponse
+ApiError --> ApiErrorResponse
+```
+
+**图表来源**
+- [packages/shared/src/dto/common.dto.ts:4-34](file://packages/shared/src/dto/common.dto.ts#L4-L34)
+- [packages/shared/src/dto/common.dto.ts:40-52](file://packages/shared/src/dto/common.dto.ts#L40-L52)
+
+### 前端API使用示例
+
+多个前端模块已开始使用统一的响应处理系统：
+
+```mermaid
+graph TB
+subgraph "前端API模块"
+NOVEL[小说API]
+TEACHING[教学API]
+AUTH[认证API]
+TODO[Todos API]
+end
+subgraph "统一响应处理"
+GETJSON[getJson]
+POSTJSON[postJson]
+PUTJSON[putJson]
+PATCHJSON[patchJson]
+DELETEJSON[deleteJson]
+END
+subgraph "共享类型"
+RESPONSE[ApiResponse]
+ERROR[ApiError]
+END
+NOVEL --> GETJSON
+NOVEL --> POSTJSON
+NOVEL --> PUTJSON
+NOVEL --> PATCHJSON
+NOVEL --> DELETEJSON
+TEACHING --> GETJSON
+TEACHING --> POSTJSON
+TEACHING --> PUTJSON
+AUTH --> GETJSON
+AUTH --> POSTJSON
+TODO --> GETJSON
+GETJSON --> RESPONSE
+POSTJSON --> RESPONSE
+PUTJSON --> RESPONSE
+PATCHJSON --> RESPONSE
+DELETEJSON --> RESPONSE
+RESPONSE --> ERROR
+```
+
+**图表来源**
+- [apps/frontend/src/features/novel/api/novelApi.ts:1-178](file://apps/frontend/src/features/novel/api/novelApi.ts#L1-L178)
+- [apps/frontend/src/features/teaching/api/teachingApi.ts:1-111](file://apps/frontend/src/features/teaching/api/teachingApi.ts#L1-L111)
+
+**章节来源**
+- [apps/frontend/src/api/unwrap.ts:1-30](file://apps/frontend/src/api/unwrap.ts#L1-L30)
+- [packages/shared/src/dto/common.dto.ts:1-99](file://packages/shared/src/dto/common.dto.ts#L1-L99)
+- [apps/backend/src/common/interceptors/transform.interceptor.ts:1-29](file://apps/backend/src/common/interceptors/transform.interceptor.ts#L1-L29)
+
 ## 依赖关系分析
 
-系统采用了模块化的依赖管理策略：
+系统采用了模块化的依赖管理策略，现已集成了统一的响应处理机制：
 
 ```mermaid
 graph TB
@@ -368,29 +524,35 @@ VUE[Vue 3.5.26]
 PINIA[Pinia 3.0.4]
 I18N[vue-i18n 11.2.7]
 SOCKET[socket.io-client 4.8.3]
-end
+UNWRAP[unwrap.ts]
+END
 subgraph "后端依赖"
 NEST[@nestjs/*]
 PRISMA[prisma 5.x]
 REDIS[redis 4.x]
 BULL[bullmq 1.x]
 PASSPORT[@nestjs/passport]
-end
+TRANSFORM[TransformInterceptor]
+END
 subgraph "共享包"
 SHARED[@lumina/shared]
 SCHEMA[Zod Schema]
-end
-AX --> SHARED
-VUE --> PINIA
-NEST --> PRISMA
-NEST --> REDIS
-NEST --> BULL
-SHARED --> SCHEMA
+APIRESPONSE[ApiResponse类型]
+APIERROR[ApiError类]
+END
+AX --> UNWRAP
+UNWRAP --> APIRESPONSE
+UNWRAP --> APIERROR
+NEST --> TRANSFORM
+TRANSFORM --> APIRESPONSE
+SHARED --> APIRESPONSE
+SHARED --> APIERROR
 ```
 
 **图表来源**
 - [apps/frontend/package.json:31-70](file://apps/frontend/package.json#L31-L70)
 - [apps/backend/nest-cli.json:1-11](file://apps/backend/nest-cli.json#L1-L11)
+- [apps/frontend/src/api/unwrap.ts:1-3](file://apps/frontend/src/api/unwrap.ts#L1-L3)
 
 **章节来源**
 - [apps/frontend/package.json:1-105](file://apps/frontend/package.json#L1-L105)
@@ -398,24 +560,27 @@ SHARED --> SCHEMA
 
 ## 性能考虑
 
-系统在多个层面实现了性能优化：
+系统在多个层面实现了性能优化，统一响应处理机制进一步提升了性能：
 
 ### 前端性能优化
 - **智能缓存策略**：内存中缓存活跃令牌，减少localStorage访问
 - **并发控制**：防并发令牌刷新，避免重复请求
 - **懒加载**：按需加载API模块和组件
 - **压缩传输**：启用Gzip/Brotli压缩
+- **响应解包优化**：统一的响应解包减少重复代码
 
 ### 后端性能优化
 - **连接池管理**：Redis连接池复用
 - **队列处理**：BullMQ异步任务处理
 - **缓存策略**：多级缓存架构
 - **限流保护**：多维度速率限制
+- **统一响应包装**：减少重复的响应格式化代码
 
 ### 网络优化
 - **HTTP/2支持**：提升连接效率
 - **CDN集成**：静态资源CDN加速
 - **预加载策略**：关键资源预加载
+- **响应缓存**：统一的响应格式便于缓存
 
 ## 故障排除指南
 
@@ -434,6 +599,29 @@ SHARED --> SCHEMA
    
    # 测试前端API
    curl -I http://localhost:5173/api/health
+   ```
+
+#### 统一响应处理问题
+1. **检查响应格式**
+   - 验证后端TransformInterceptor是否正常工作
+   - 确认响应包含success、data、timestamp字段
+   - 检查旧格式响应的兼容性
+
+2. **调试API响应**
+   ```typescript
+   // 检查响应结构
+   const response = await getJson('/api/endpoint')
+   console.log('Response structure:', response)
+   
+   // 检查错误处理
+   try {
+     const data = await getJson('/api/endpoint')
+   } catch (error) {
+     if (error instanceof ApiError) {
+       console.log('Status code:', error.statusCode)
+       console.log('Message:', error.message)
+     }
+   }
    ```
 
 #### 认证问题
@@ -461,6 +649,7 @@ SHARED --> SCHEMA
 **章节来源**
 - [apps/backend/src/common/filters/all-exceptions.filter.ts:1-137](file://apps/backend/src/common/filters/all-exceptions.filter.ts#L1-L137)
 - [apps/backend/src/common/throttling/throttling.constants.ts:162-197](file://apps/backend/src/common/throttling/throttling.constants.ts#L162-L197)
+- [apps/frontend/src/api/unwrap.ts:1-30](file://apps/frontend/src/api/unwrap.ts#L1-L30)
 
 ## 结论
 
@@ -472,6 +661,7 @@ SHARED --> SCHEMA
 - **高性能架构**：多级缓存、异步处理和连接池优化
 - **安全可靠**：多维度速率限制和令牌管理
 - **可扩展性**：模块化设计和清晰的依赖关系
+- **标准化响应**：统一的API响应格式和解包机制
 
 ### 技术亮点
 - 前后端分离的现代化架构
@@ -479,5 +669,8 @@ SHARED --> SCHEMA
 - 完善的TypeScript类型系统
 - 企业级的错误处理机制
 - 高效的性能监控和优化
+- 统一的API响应处理系统
+
+**最新更新**：新增的统一API响应处理系统显著提升了开发效率和代码质量，通过标准化的响应解包机制消除了前端重复代码，提供了更好的错误处理和类型安全性。
 
 该系统为构建大规模、高可用的API服务提供了完整的解决方案，适合企业级应用开发参考和扩展。
