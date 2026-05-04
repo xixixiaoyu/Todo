@@ -10,7 +10,6 @@ model User {
   updatedAt            DateTime         @updatedAt
   mcpServers           McpServer[]
   todos                Todo[]
-  novelDrafts          NovelDraft[]
   learningProgress     LearningProgress[]
   quizRecords          QuizRecord[]
   aiMemory             AiMemory?

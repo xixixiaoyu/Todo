@@ -16,13 +16,6 @@ import type { ChatSession } from './useChatHistory'
 import { buildTeachingFallbackQuiz, stripTodoIdsFromText } from './useChatActions.utils'
 import { novelBatchRemaining as novelBatchRemainingRef } from './useChatState'
 
-export interface NovelPersistPayload {
-  draftId: string
-  chapter?: NovelChapterMeta
-  characters?: NovelCharacterCard[]
-  worldviews?: NovelWorldviewSetting[]
-}
-
 export interface TeachingAssessmentWithContext {
   quizId: string
   result: string
@@ -151,7 +144,6 @@ export function finalizeCompletedResponse(params: {
     setProposedChanges: (assistantMessageId: string, proposedActions: ProposedTodoChange[]) => void
   }
   t: (key: string, params?: Record<string, unknown>) => string
-  onNovelPersist?: (payload: NovelPersistPayload) => void | Promise<void>
   onTeachingPersist?: (payload: TeachingPersistPayload) => void | Promise<void>
 }) {
   const parsed = parseAssistantBlocks(params.currentAIResponse.value, {
@@ -232,22 +224,6 @@ export function finalizeCompletedResponse(params: {
     const session = params.sessions.value.find((s) => s.id === params.generationSessionId)
     const newHistory = session?.messages ?? []
     void params.extractAndStoreMemories(newHistory)
-  }
-
-  // 小说模式：自动持久化章节/角色/世界观
-  if (
-    params.aiConfig.assistantMode === 'novel' &&
-    params.onNovelPersist &&
-    (novelChapterMeta ||
-      (novelCharacters && novelCharacters.length > 0) ||
-      (novelWorldview && novelWorldview.length > 0))
-  ) {
-    const payload: NovelPersistPayload = { draftId: '' }
-    // draftId 由调用方通过 onNovelPersist 闭包注入
-    if (novelChapterMeta) payload.chapter = novelChapterMeta
-    if (novelCharacters && novelCharacters.length > 0) payload.characters = novelCharacters
-    if (novelWorldview && novelWorldview.length > 0) payload.worldviews = novelWorldview
-    void params.onNovelPersist(payload)
   }
 
   // 教学模式：自动持久化评估记录与学习进度
@@ -382,7 +358,6 @@ export function createStreamChunkHandler(params: {
     setProposedChanges: (assistantMessageId: string, proposedActions: ProposedTodoChange[]) => void
   }
   t: (key: string, params?: Record<string, unknown>) => string
-  onNovelPersist?: (payload: NovelPersistPayload) => void | Promise<void>
   onTeachingPersist?: (payload: TeachingPersistPayload) => void | Promise<void>
 }) {
   return (chunk: string) => {
@@ -405,7 +380,6 @@ export function createStreamChunkHandler(params: {
           resetStreamingState: params.resetStreamingState,
           todoStore: params.todoStore,
           t: params.t,
-          onNovelPersist: params.onNovelPersist,
           onTeachingPersist: params.onTeachingPersist,
         })
       } else {

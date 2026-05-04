@@ -26,7 +26,7 @@ const showTabBar = computed(() => {
   ]
   if (hiddenPaths.some((p) => path.startsWith(p))) return false
   // 404 catch-all 也不显示
-  if (path !== '/' && !path.startsWith('/novel') && !path.startsWith('/teaching')) return false
+  if (path !== '/' && !path.startsWith('/teaching')) return false
   return true
 })
 

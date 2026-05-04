@@ -26,12 +26,6 @@ vi.mock('@/views/error/NotFoundView.vue', () => ({
 vi.mock('@/features/mcp/views/McpSettingsView.vue', () => ({
   default: { name: 'McpSettingsView', template: '<div></div>' },
 }))
-vi.mock('@/features/novel/views/NovelBookshelfView.vue', () => ({
-  default: { name: 'NovelBookshelfView', template: '<div></div>' },
-}))
-vi.mock('@/features/novel/views/NovelDraftView.vue', () => ({
-  default: { name: 'NovelDraftView', template: '<div></div>' },
-}))
 vi.mock('@/features/teaching/views/TeachingDashboardView.vue', () => ({
   default: { name: 'TeachingDashboardView', template: '<div></div>' },
 }))
@@ -74,27 +68,17 @@ describe('Router Auth Guard', () => {
     localStorage.clear()
   })
 
-  it('未登录访问 /novel 应跳转登录页并携带 redirect 参数', async () => {
+  it('未登录访问 /teaching 应携带完整原路径作为 redirect', async () => {
     const auth = useAuthStore()
     auth.token = null
 
-    await router.push('/novel')
+    await router.push('/teaching')
 
     expect(router.currentRoute.value.path).toBe('/login')
-    expect(router.currentRoute.value.query.redirect).toBe('/novel')
+    expect(router.currentRoute.value.query.redirect).toBe('/teaching')
   })
 
-  it('未登录访问 /novel/:id 应携带完整原路径作为 redirect', async () => {
-    const auth = useAuthStore()
-    auth.token = null
-
-    await router.push('/novel/abc-123')
-
-    expect(router.currentRoute.value.path).toBe('/login')
-    expect(router.currentRoute.value.query.redirect).toBe('/novel/abc-123')
-  })
-
-  it('未登录访问 /teaching 应被拦截', async () => {
+  it('未登录访问其他受保护路由也应被拦截', async () => {
     const auth = useAuthStore()
     auth.token = null
 
@@ -108,9 +92,9 @@ describe('Router Auth Guard', () => {
     const auth = useAuthStore()
     auth.token = 'fake-jwt-token'
 
-    await router.push('/novel')
+    await router.push('/teaching')
 
-    expect(router.currentRoute.value.path).toBe('/novel')
+    expect(router.currentRoute.value.path).toBe('/teaching')
   })
 
   it('Todo 主页（/）未登录也能访问（匿名模式）', async () => {

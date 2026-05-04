@@ -38,11 +38,11 @@ describe('@/api/unwrap', () => {
       }),
     )
 
-    const list = await getJson<Array<{ id: string; title: string }>>('/novel/drafts')
+    const list = await getJson<Array<{ id: string; title: string }>>('/teaching/overview')
 
     expect(Array.isArray(list)).toBe(true)
     expect(list).toEqual([{ id: 'd1', title: 'A' }])
-    expect(mockedGet).toHaveBeenCalledWith('/novel/drafts')
+    expect(mockedGet).toHaveBeenCalledWith('/teaching/overview')
   })
 
   it('getJson 遇到 ApiErrorResponse 时抛出 ApiError，携带 statusCode', async () => {
@@ -75,12 +75,12 @@ describe('@/api/unwrap', () => {
       }),
     )
 
-    const draft = await postJson<{ id: string; title: string }>('/novel/drafts', {
+    const draft = await postJson<{ id: string; title: string }>('/teaching/overview', {
       title: 'Hello',
     })
 
     expect(draft).toEqual({ id: 'new-1', title: 'Hello' })
-    expect(mockedPost).toHaveBeenCalledWith('/novel/drafts', { title: 'Hello' })
+    expect(mockedPost).toHaveBeenCalledWith('/teaching/overview', { title: 'Hello' })
   })
 
   it('putJson 透传 body 并解包', async () => {
@@ -113,12 +113,12 @@ describe('@/api/unwrap', () => {
       }),
     )
 
-    const draft = await patchJson<{ id: string; title: string }>('/novel/drafts/d1', {
+    const draft = await patchJson<{ id: string; title: string }>('/teaching/overview/123', {
       title: 'renamed',
     })
 
     expect(draft).toEqual({ id: 'd1', title: 'renamed' })
-    expect(mockedPatch).toHaveBeenCalledWith('/novel/drafts/d1', { title: 'renamed' })
+    expect(mockedPatch).toHaveBeenCalledWith('/teaching/overview/123', { title: 'renamed' })
   })
 
   it('deleteJson 透传 id 至删除路径', async () => {
@@ -130,9 +130,9 @@ describe('@/api/unwrap', () => {
       }),
     )
 
-    await deleteJson('/novel/drafts/d1')
+    await deleteJson('/teaching/overview/123')
 
-    expect(mockedDelete).toHaveBeenCalledWith('/novel/drafts/d1')
+    expect(mockedDelete).toHaveBeenCalledWith('/teaching/overview/123')
   })
 
   it('getJson 兼容无 success 字段的旧格式响应，直接取 data', async () => {

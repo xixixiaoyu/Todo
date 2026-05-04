@@ -19,7 +19,6 @@ import { UploadModule } from './upload'
 import { TodosModule } from './todos/todos.module'
 import { ScheduledTasksModule } from './scheduled-tasks'
 import { McpModule } from './mcp/mcp.module'
-import { NovelModule } from './novel/novel.module'
 import { TeachingModule } from './teaching/teaching.module'
 import { SkillSourcesModule } from './skill-sources/skill-sources.module'
 import { AiSyncModule } from './ai-sync/ai-sync.module'
@@ -147,7 +146,6 @@ import { AppThrottlerGuard, RedisThrottlerStorage, createGlobalThrottlerOptions 
     TodosModule, // 待办事项模块
     ScheduledTasksModule, // 定时任务模块
     McpModule, // MCP 模块
-    NovelModule, // 小说模块
     TeachingModule, // 教学模式模块
   ],
   providers: [

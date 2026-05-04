@@ -85,7 +85,6 @@ export const common = {
   success: 'Success',
   nav: {
     todo: 'Todo',
-    novel: 'Novel',
     teaching: 'Learn',
   },
   settings: 'Settings',

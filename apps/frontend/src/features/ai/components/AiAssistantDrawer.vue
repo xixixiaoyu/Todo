@@ -20,11 +20,10 @@ import { useAiAssistantModes } from '@/features/ai/composables/useAiAssistantMod
 import { useAiAssistantPanels } from '@/features/ai/composables/useAiAssistantPanels'
 import { useAiAssistantComposer } from '@/features/ai/composables/useAiAssistantComposer'
 import { useTodoStore } from '@/features/todo/stores/todo'
-import { useNovelDraftStore } from '@/features/novel/stores/novelDraftStore'
 import { useI18n } from 'vue-i18n'
 import { useResizable } from '@/composables/useResizable'
 import { useToast } from '@/composables/useToast'
-import { AlertCircle, X, Copy, Check, BookOpen, GraduationCap } from 'lucide-vue-next'
+import { AlertCircle, X, Copy, Check, GraduationCap } from 'lucide-vue-next'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -106,19 +105,6 @@ const copyError = async () => {
 }
 
 const todoStore = useTodoStore()
-const novelDraftStore = useNovelDraftStore()
-
-const isNovelActive = computed(() => isNovelEnabled.value && !!novelDraftStore.activeDraftId)
-
-function navigateToBookshelf() {
-  void router.push('/novel')
-}
-
-function navigateToDraft() {
-  if (novelDraftStore.activeDraftId) {
-    void router.push(`/novel/${novelDraftStore.activeDraftId}`)
-  }
-}
 
 function navigateToTeachingDashboard() {
   void router.push('/teaching')
@@ -276,30 +262,6 @@ defineOptions({
 
         <!-- 非翻译模式：保持原有内容 -->
         <template v-else>
-          <!-- 小说模式：当前作品指示条 -->
-          <div
-            v-if="isNovelActive"
-            class="mx-4 mt-3 flex items-center gap-2 rounded-xl border border-primary/15 bg-primary/5 px-3 py-2"
-          >
-            <BookOpen :size="13" class="text-primary/60 shrink-0" />
-            <button
-              type="button"
-              class="flex-1 truncate text-left text-xs font-medium text-foreground/80 transition-colors hover:text-primary"
-              @click="navigateToDraft"
-            >
-              {{
-                t('ai.novelActiveDraftIndicator', { title: novelDraftStore.activeDraftTitle ?? '' })
-              }}
-            </button>
-            <button
-              type="button"
-              class="shrink-0 rounded-lg px-2 py-1 text-[10px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              @click="navigateToBookshelf"
-            >
-              {{ t('ai.novelBookshelf') }}
-            </button>
-          </div>
-
           <!-- 教学模式：学习仪表盘入口 -->
           <div
             v-if="isTeachingEnabled"

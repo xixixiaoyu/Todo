@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { ListTodo, BookOpen, GraduationCap } from 'lucide-vue-next'
+import { ListTodo, GraduationCap } from 'lucide-vue-next'
 import { usePomodoroStore } from '@/features/todo/stores/pomodoro'
 
 const route = useRoute()
@@ -14,7 +14,7 @@ const isVisible = computed(() => !pomodoroStore.isMiniMode)
 
 const tabs = [
   { id: 'todo', path: '/', icon: ListTodo, label: 'common.nav.todo' },
-  { id: 'novel', path: '/novel', icon: BookOpen, label: 'common.nav.novel' },
+
   { id: 'teaching', path: '/teaching', icon: GraduationCap, label: 'common.nav.teaching' },
 ] as const
 

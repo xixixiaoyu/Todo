@@ -48,18 +48,6 @@ const router = createRouter({
       meta: { title: 'mcp.settings.title', requiresAuth: true },
     },
     {
-      path: '/novel',
-      name: 'novel-bookshelf',
-      component: () => import('@/features/novel/views/NovelBookshelfView.vue'),
-      meta: { title: 'ai.novelBookshelf', requiresAuth: true },
-    },
-    {
-      path: '/novel/:id',
-      name: 'novel-draft',
-      component: () => import('@/features/novel/views/NovelDraftView.vue'),
-      meta: { title: 'ai.novelBookshelf', requiresAuth: true },
-    },
-    {
       path: '/teaching',
       name: 'teaching-dashboard',
       component: () => import('@/features/teaching/views/TeachingDashboardView.vue'),

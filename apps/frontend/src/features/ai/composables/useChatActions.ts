@@ -17,16 +17,11 @@ import { useTodoStore } from '@/features/todo/stores/todo'
 import { useAuthStore } from '@/features/auth/stores/auth'
 import { createContextCompression } from './useChatActions.contextCompression'
 import { executeToolCalls } from './useChatActions.toolCalls'
-import {
-  createStreamChunkHandler,
-  type NovelPersistPayload,
-  type TeachingPersistPayload,
-} from './useChatActions.stream'
+import { createStreamChunkHandler, type TeachingPersistPayload } from './useChatActions.stream'
 import { prepareRuntimeCapabilities } from './useChatActions.runtime'
 import { resolveSkillContext } from '@/features/ai/services/aiService'
 import { httpClient } from '@/api'
 import { useQueryClient } from '@tanstack/vue-query'
-import { useNovelDraftStore } from '@/features/novel/stores/novelDraftStore'
 
 const MAX_RETRIES = 3
 
@@ -63,7 +58,6 @@ export function useChatActions(options: AIRequestOptions = {}) {
   } = useChatHistory()
   const todoStore = useTodoStore()
   const authStore = useAuthStore()
-  const novelDraftStore = useNovelDraftStore()
 
   // 惰性获取 queryClient：避免在无 Vue 注入上下文的测试环境中崩溃
   let queryClient: ReturnType<typeof useQueryClient> | null = null
@@ -113,68 +107,6 @@ export function useChatActions(options: AIRequestOptions = {}) {
       void queryClient.invalidateQueries({ queryKey: ['teaching', 'quizzes'] })
       void queryClient.invalidateQueries({ queryKey: ['teaching', 'progress'] })
       void queryClient.invalidateQueries({ queryKey: ['teaching', 'overview'] })
-    }
-  }
-
-  // 小说模式：AI 生成完成后自动持久化章节/角色/世界观
-  async function onNovelPersist(payload: NovelPersistPayload) {
-    const draftId = novelDraftStore.activeDraftId
-    if (!draftId) return
-
-    const persistTasks: Promise<unknown>[] = []
-    const currentChapterIndex = payload.chapter?.chapterIndex ?? 1
-
-    if (payload.chapter) {
-      persistTasks.push(
-        httpClient
-          .put(`/novel/drafts/${draftId}/chapters`, {
-            chapterIndex: payload.chapter.chapterIndex,
-            title: payload.chapter.title,
-            content: '', // 章节内容由后续流式文本填入，这里先占位
-          })
-          .catch((e) => console.warn('[NovelPersist] chapter upsert failed:', e)),
-      )
-    }
-
-    if (payload.characters) {
-      for (const char of payload.characters) {
-        persistTasks.push(
-          httpClient
-            .put(`/novel/drafts/${draftId}/characters`, {
-              characterId: char.id,
-              name: char.name,
-              role: char.role,
-              traits: char.traits,
-              motivation: char.motivation,
-              backstory: char.backstory,
-              firstChapter: currentChapterIndex,
-            })
-            .catch((e) => console.warn('[NovelPersist] character upsert failed:', e)),
-        )
-      }
-    }
-
-    if (payload.worldviews) {
-      for (const setting of payload.worldviews) {
-        persistTasks.push(
-          httpClient
-            .put(`/novel/drafts/${draftId}/worldviews`, {
-              settingId: setting.id,
-              category: setting.category,
-              name: setting.name,
-              description: setting.description,
-              firstChapter: currentChapterIndex,
-            })
-            .catch((e) => console.warn('[NovelPersist] worldview upsert failed:', e)),
-        )
-      }
-    }
-
-    await Promise.allSettled(persistTasks)
-    // 使小说相关查询缓存失效，下次访问自动刷新
-    if (queryClient) {
-      void queryClient.invalidateQueries({ queryKey: ['novel', 'drafts', draftId] })
-      void queryClient.invalidateQueries({ queryKey: ['novel', 'drafts'] })
     }
   }
 
@@ -328,7 +260,6 @@ export function useChatActions(options: AIRequestOptions = {}) {
         resetStreamingState,
         todoStore,
         t,
-        onNovelPersist,
         onTeachingPersist,
       })
 
