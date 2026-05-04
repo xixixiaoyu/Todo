@@ -22,6 +22,7 @@ import { McpModule } from './mcp/mcp.module'
 import { NovelModule } from './novel/novel.module'
 import { TeachingModule } from './teaching/teaching.module'
 import { SkillSourcesModule } from './skill-sources/skill-sources.module'
+import { AiSyncModule } from './ai-sync/ai-sync.module'
 import { AppThrottlerGuard, RedisThrottlerStorage, createGlobalThrottlerOptions } from './common'
 
 /**
@@ -142,6 +143,7 @@ import { AppThrottlerGuard, RedisThrottlerStorage, createGlobalThrottlerOptions 
     EventsModule, // WebSocket 模块
     UploadModule, // 文件上传模块
     SkillSourcesModule, // 技能外部来源代理模块
+    AiSyncModule, // AI 数据同步模块
     TodosModule, // 待办事项模块
     ScheduledTasksModule, // 定时任务模块
     McpModule, // MCP 模块

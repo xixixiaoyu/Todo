@@ -1,0 +1,38 @@
+// AI 数据服务端同步模型
+//
+// 同步策略: server-as-truth，前端 API 优先加载，localStorage 降级
+
+model AiMemory {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  memories  Json     /// string[] — 记忆字符串数组 (max 100 items, each ≤200 chars)
+  enabled   Boolean  @default(true)
+  threshold Int      @default(30)
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId])
+  @@map("ai_memories")
+}
+
+model AiSkill {
+  id        String   @id @default(uuid())
+  userId    Int
+  skillData Json     /// AISkill 完整对象（不含 runtime secrets）
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("ai_skills")
+}
+
+model AiPreset {
+  id         String   @id @default(uuid())
+  userId     Int
+  presetData Json     /// AIPreset 骨架（不含 apiKey）
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("ai_presets")
+}

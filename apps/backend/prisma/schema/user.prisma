@@ -13,6 +13,9 @@ model User {
   novelDrafts          NovelDraft[]
   learningProgress     LearningProgress[]
   quizRecords          QuizRecord[]
+  aiMemory             AiMemory?
+  aiSkills             AiSkill[]
+  aiPresets            AiPreset[]
 
   @@map("users")
 }

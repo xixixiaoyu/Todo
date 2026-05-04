@@ -2,6 +2,7 @@ import { ref } from 'vue'
 import i18n from '@/i18n'
 import { getAIStaticResponse } from '@/features/ai/services/aiService'
 import { getAIConfig, getAIPresets } from './useAIConfig'
+import { fetchMemories, pushMemories } from '@/features/ai/services/aiSyncService'
 import {
   AI_STORAGE_SCOPE_CHANGE_EVENT,
   getAiScopedStorageItem,
@@ -84,6 +85,12 @@ const lastError = ref<string | null>(null)
 
 function persistMemories(nextMemories: string[]): void {
   setAiScopedStorageItem(MEMORY_STORAGE_KEY, JSON.stringify(nextMemories))
+  // 双写到服务端，失败静默
+  pushMemories({
+    memories: nextMemories,
+    enabled: isMemoryEnabled.value,
+    threshold: autoCompressThreshold.value,
+  }).catch(() => {})
 }
 
 function reloadMemoryState(): void {
@@ -302,6 +309,11 @@ export function useMemory() {
   const toggleMemory = (enabled: boolean) => {
     isMemoryEnabled.value = enabled
     setAiScopedStorageItem(MEMORY_ENABLED_KEY, String(enabled))
+    pushMemories({
+      memories: memories.value,
+      enabled,
+      threshold: autoCompressThreshold.value,
+    }).catch(() => {})
   }
 
   /**
@@ -310,6 +322,32 @@ export function useMemory() {
   const updateAutoCompressThreshold = (value: number) => {
     autoCompressThreshold.value = normalizeThreshold(value)
     setAiScopedStorageItem(MEMORY_THRESHOLD_KEY, String(autoCompressThreshold.value))
+    pushMemories({
+      memories: memories.value,
+      enabled: isMemoryEnabled.value,
+      threshold: autoCompressThreshold.value,
+    }).catch(() => {})
+  }
+
+  /**
+   * 从服务端同步记忆数据（API 优先 → localStorage 降级）
+   * 登录后由 auth store 调用
+   */
+  const syncFromServer = async () => {
+    const remote = await fetchMemories()
+    if (!remote) return // API 不可用，保持 localStorage 数据
+
+    // 服务端数据覆盖本地
+    memories.value = remote.memories
+    isMemoryEnabled.value = remote.enabled
+    autoCompressThreshold.value = normalizeThreshold(remote.threshold)
+    isCompressing.value = false
+    lastError.value = null
+
+    // 写回 localStorage 作为缓存
+    setAiScopedStorageItem(MEMORY_STORAGE_KEY, JSON.stringify(remote.memories))
+    setAiScopedStorageItem(MEMORY_ENABLED_KEY, String(remote.enabled))
+    setAiScopedStorageItem(MEMORY_THRESHOLD_KEY, String(normalizeThreshold(remote.threshold)))
   }
 
   /**
@@ -372,6 +410,7 @@ export function useMemory() {
     compressMemories,
     updateAutoCompressThreshold,
     getMemoryModelOptions,
+    syncFromServer,
     exportMemories,
     importMemories,
   }
@@ -382,4 +421,12 @@ export function useMemory() {
  */
 export function _resetMemory() {
   reloadMemoryState()
+}
+
+/**
+ * 从服务端同步记忆数据（登录时由 auth store 调用）
+ */
+export function syncMemoryFromServer() {
+  const { syncFromServer } = useMemory()
+  void syncFromServer()
 }

@@ -110,6 +110,7 @@ vi.mock('@/features/ai/composables/useMemory', () => ({
     getMemoryModelOptions: vi.fn(() => ({})),
     compressMemories: vi.fn(),
     updateAutoCompressThreshold: vi.fn(),
+    syncFromServer: vi.fn(),
     exportMemories: vi.fn(() => '[]'),
     importMemories: vi.fn(),
   })),

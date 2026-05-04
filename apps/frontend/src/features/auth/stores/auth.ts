@@ -169,6 +169,14 @@ export const useAuthStore = defineStore(
         await todoStore.mergeOnLogin(payload.user.id)
         requestAnonymousAiMigration(payload.user.id)
 
+        // 触发 AI 数据服务端同步（fire-and-forget，动态 import 避免循环依赖）
+        const { syncMemoryFromServer } = await import('@/features/ai/composables/useMemory')
+        const { syncSkillsFromServer, syncPresetsFromServer } =
+          await import('@/features/ai/composables/useAIConfig')
+        void syncMemoryFromServer()
+        void syncSkillsFromServer()
+        void syncPresetsFromServer()
+
         return true
       } catch (e: unknown) {
         handleApiError(e, 'login.failed')
@@ -201,6 +209,14 @@ export const useAuthStore = defineStore(
         const todoStore = useTodoStore()
         await todoStore.mergeOnLogin(payload.user.id)
         requestAnonymousAiMigration(payload.user.id)
+
+        // 触发 AI 数据服务端同步（fire-and-forget，动态 import 避免循环依赖）
+        const { syncMemoryFromServer } = await import('@/features/ai/composables/useMemory')
+        const { syncSkillsFromServer, syncPresetsFromServer } =
+          await import('@/features/ai/composables/useAIConfig')
+        void syncMemoryFromServer()
+        void syncSkillsFromServer()
+        void syncPresetsFromServer()
 
         return true
       } catch (e: unknown) {

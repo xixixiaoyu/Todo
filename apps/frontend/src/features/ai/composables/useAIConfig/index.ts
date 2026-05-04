@@ -28,6 +28,13 @@ import {
   loadSkills,
   loadActivePresetId,
 } from './storage'
+import {
+  fetchSkills as fetchSkillsFromServer,
+  pushSkills as pushSkillsToServer,
+  fetchPresets as fetchPresetsFromServer,
+  pushPresets as pushPresetsToServer,
+} from '@/features/ai/services/aiSyncService'
+import type { AISkillSync, AIPresetSync } from '@lumina/shared'
 
 // ─── Thinking Mode ─────────────────────────────────────────────────
 
@@ -142,12 +149,20 @@ watch(
 
 // 监听配置变化自动保存
 watch(config, (newConfig) => saveConfig(newConfig), { deep: true })
-watch(presets, (newPresets) => savePresets(newPresets), { deep: true })
+watch(
+  presets,
+  (newPresets) => {
+    savePresets(newPresets)
+    void pushPresetsToServer(newPresets)
+  },
+  { deep: true },
+)
 watch(
   () => JSON.stringify(skills.value),
   (serializedSkills) => {
     const nextSkills = JSON.parse(serializedSkills) as AISkill[]
     saveSkills(nextSkills)
+    void pushSkillsToServer(nextSkills)
 
     const skillIds = nextSkills.map((item) => item.id)
     const validIds = new Set(skillIds)
@@ -757,6 +772,62 @@ export function getAIPresets(): AIPreset[] {
 
 export function getAISkills(): AISkill[] {
   return skills.value
+}
+
+// ─── Server Sync Helpers ───────────────────────────────────────────
+
+/**
+ * 合并服务端 Skills 与本地 runtime secrets
+ */
+function mergeRuntime(remote: AISkillSync[], local: AISkill[]): AISkill[] {
+  const localMap = new Map(local.map((s) => [s.id, s]))
+  return remote.map(
+    (r) =>
+      ({
+        ...r,
+        runtime: localMap.get(r.id)?.runtime,
+      }) as AISkill,
+  )
+}
+
+/**
+ * 合并服务端 Presets 与本地 apiKey
+ */
+function mergeApiKeys(remote: AIPresetSync[], local: AIPreset[]): AIPreset[] {
+  const localMap = new Map(local.map((p) => [p.id, p]))
+  return remote.map(
+    (r) =>
+      ({
+        ...r,
+        apiKey: localMap.get(r.id)?.apiKey ?? '',
+      }) as AIPreset,
+  )
+}
+
+/**
+ * 从服务端同步 Skills（登录时调用）
+ * Step 1: 拉取服务端数据（不含 runtime）
+ * Step 2: 与本地 runtime 合并
+ */
+export async function syncSkillsFromServer(): Promise<void> {
+  const remote = await fetchSkillsFromServer()
+  if (!remote) return
+
+  const merged = mergeRuntime(remote, skills.value)
+  skills.value = merged
+}
+
+/**
+ * 从服务端同步 Presets（登录时调用）
+ * Step 1: 拉取服务端骨架（不含 apiKey）
+ * Step 2: 与本地 apiKey 合并
+ */
+export async function syncPresetsFromServer(): Promise<void> {
+  const remote = await fetchPresetsFromServer()
+  if (!remote) return
+
+  const merged = mergeApiKeys(remote, presets.value)
+  presets.value = merged
 }
 
 // ─── Re-export Types ───────────────────────────────────────────────

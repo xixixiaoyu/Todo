@@ -14,6 +14,7 @@ export * from './schemas/todo.schema'
 export * from './schemas/mcp.schema'
 export * from './schemas/novel.schema'
 export * from './schemas/teaching.schema'
+export * from './schemas/ai-sync.schema'
 export * from './schemas/i18n-keys'
 
 // 通用响应类型
