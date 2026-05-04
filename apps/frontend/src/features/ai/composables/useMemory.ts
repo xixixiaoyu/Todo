@@ -7,7 +7,6 @@ import {
   AI_STORAGE_SCOPE_CHANGE_EVENT,
   getAiScopedStorageItem,
   setAiScopedStorageItem,
-  removeAiScopedStorageItem,
 } from './aiStorageScope'
 
 const { t } = i18n.global
@@ -15,6 +14,7 @@ const { t } = i18n.global
 const MEMORY_STORAGE_KEY = 'ai-memories'
 const MEMORY_ENABLED_KEY = 'ai-memory-enabled'
 const MEMORY_THRESHOLD_KEY = 'ai-memory-threshold'
+const MEMORY_UPDATED_AT_KEY = 'ai-memory-updated-at'
 const MAX_MEMORIES = 100
 const MAX_MEMORY_CHARS = 200
 const DEFAULT_THRESHOLD = 30
@@ -72,6 +72,11 @@ function loadThresholdFromStorage(): number {
   return normalizeThreshold(getAiScopedStorageItem(MEMORY_THRESHOLD_KEY))
 }
 
+function loadMemoryUpdatedAtFromStorage(): string | undefined {
+  const raw = getAiScopedStorageItem(MEMORY_UPDATED_AT_KEY)
+  return raw || undefined
+}
+
 function stripMarkdownCodeFence(input: string): string {
   return input.replace(/^```(?:json)?\s*|\s*```$/g, '').trim()
 }
@@ -80,16 +85,21 @@ function stripMarkdownCodeFence(input: string): string {
 const memories = ref<string[]>(loadMemoriesFromStorage())
 const isMemoryEnabled = ref(loadMemoryEnabledFromStorage())
 const autoCompressThreshold = ref(loadThresholdFromStorage())
+const memoryUpdatedAt = ref<string | undefined>(loadMemoryUpdatedAtFromStorage())
 const isCompressing = ref(false)
 const lastError = ref<string | null>(null)
 
 function persistMemories(nextMemories: string[]): void {
+  const now = new Date().toISOString()
+  memoryUpdatedAt.value = now
   setAiScopedStorageItem(MEMORY_STORAGE_KEY, JSON.stringify(nextMemories))
+  setAiScopedStorageItem(MEMORY_UPDATED_AT_KEY, now)
   // 双写到服务端，失败静默
   pushMemories({
     memories: nextMemories,
     enabled: isMemoryEnabled.value,
     threshold: autoCompressThreshold.value,
+    updatedAt: now,
   }).catch(() => {})
 }
 
@@ -97,6 +107,7 @@ function reloadMemoryState(): void {
   memories.value = loadMemoriesFromStorage()
   isMemoryEnabled.value = loadMemoryEnabledFromStorage()
   autoCompressThreshold.value = loadThresholdFromStorage()
+  memoryUpdatedAt.value = loadMemoryUpdatedAtFromStorage()
   isCompressing.value = false
   lastError.value = null
 }
@@ -296,11 +307,20 @@ export function useMemory() {
   }
 
   /**
-   * 清空所有记忆
+   * 清空所有记忆并同步到服务端
    */
   const clearMemories = () => {
     memories.value = []
-    removeAiScopedStorageItem(MEMORY_STORAGE_KEY)
+    const now = new Date().toISOString()
+    memoryUpdatedAt.value = now
+    setAiScopedStorageItem(MEMORY_STORAGE_KEY, JSON.stringify([]))
+    setAiScopedStorageItem(MEMORY_UPDATED_AT_KEY, now)
+    pushMemories({
+      memories: [],
+      enabled: isMemoryEnabled.value,
+      threshold: autoCompressThreshold.value,
+      updatedAt: now,
+    }).catch(() => {})
   }
 
   /**
@@ -309,10 +329,14 @@ export function useMemory() {
   const toggleMemory = (enabled: boolean) => {
     isMemoryEnabled.value = enabled
     setAiScopedStorageItem(MEMORY_ENABLED_KEY, String(enabled))
+    const now = new Date().toISOString()
+    memoryUpdatedAt.value = now
+    setAiScopedStorageItem(MEMORY_UPDATED_AT_KEY, now)
     pushMemories({
       memories: memories.value,
       enabled,
       threshold: autoCompressThreshold.value,
+      updatedAt: now,
     }).catch(() => {})
   }
 
@@ -322,32 +346,70 @@ export function useMemory() {
   const updateAutoCompressThreshold = (value: number) => {
     autoCompressThreshold.value = normalizeThreshold(value)
     setAiScopedStorageItem(MEMORY_THRESHOLD_KEY, String(autoCompressThreshold.value))
+    const now = new Date().toISOString()
+    memoryUpdatedAt.value = now
+    setAiScopedStorageItem(MEMORY_UPDATED_AT_KEY, now)
     pushMemories({
       memories: memories.value,
       enabled: isMemoryEnabled.value,
       threshold: autoCompressThreshold.value,
+      updatedAt: now,
     }).catch(() => {})
   }
 
   /**
-   * 从服务端同步记忆数据（API 优先 → localStorage 降级）
-   * 登录后由 auth store 调用
+   * 合并本地与远端记忆：语义去重并集
+   */
+  const mergeMemories = (localList: string[], remoteList: string[]): string[] => {
+    const merged = [...localList]
+    for (const m of remoteList) {
+      const trimmed = normalizeMemoryEntry(m)
+      if (!trimmed) continue
+      if (!findSimilarMemory(trimmed, merged)) {
+        merged.push(trimmed)
+      }
+    }
+    return merged.slice(-MAX_MEMORIES)
+  }
+
+  /**
+   * 从服务端同步记忆数据（登录后由 auth store 调用）
+   * 合并策略：语义去重并集，updatedAt 较新者的 enabled/threshold 生效
    */
   const syncFromServer = async () => {
     const remote = await fetchMemories()
     if (!remote) return // API 不可用，保持 localStorage 数据
 
-    // 服务端数据覆盖本地
-    memories.value = remote.memories
-    isMemoryEnabled.value = remote.enabled
-    autoCompressThreshold.value = normalizeThreshold(remote.threshold)
+    // 语义去重并集
+    const mergedMemories = mergeMemories(memories.value, remote.memories)
+    memories.value = mergedMemories
+
+    // updatedAt 仲裁 enabled / threshold
+    const localTime = memoryUpdatedAt.value ? new Date(memoryUpdatedAt.value).getTime() : 0
+    const remoteTime = remote.updatedAt ? new Date(remote.updatedAt).getTime() : 0
+    if (remoteTime >= localTime) {
+      isMemoryEnabled.value = remote.enabled
+      autoCompressThreshold.value = normalizeThreshold(remote.threshold)
+    }
+
     isCompressing.value = false
     lastError.value = null
 
-    // 写回 localStorage 作为缓存
-    setAiScopedStorageItem(MEMORY_STORAGE_KEY, JSON.stringify(remote.memories))
-    setAiScopedStorageItem(MEMORY_ENABLED_KEY, String(remote.enabled))
-    setAiScopedStorageItem(MEMORY_THRESHOLD_KEY, String(normalizeThreshold(remote.threshold)))
+    // 写回 localStorage
+    const now = new Date().toISOString()
+    memoryUpdatedAt.value = now
+    setAiScopedStorageItem(MEMORY_STORAGE_KEY, JSON.stringify(mergedMemories))
+    setAiScopedStorageItem(MEMORY_ENABLED_KEY, String(isMemoryEnabled.value))
+    setAiScopedStorageItem(MEMORY_THRESHOLD_KEY, String(autoCompressThreshold.value))
+    setAiScopedStorageItem(MEMORY_UPDATED_AT_KEY, now)
+
+    // 推送合并结果到服务端
+    pushMemories({
+      memories: mergedMemories,
+      enabled: isMemoryEnabled.value,
+      threshold: autoCompressThreshold.value,
+      updatedAt: now,
+    }).catch(() => {})
   }
 
   /**

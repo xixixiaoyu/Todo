@@ -17,10 +17,13 @@ export class AiPresetService {
     const records = await this.prisma.aiPreset.findMany({
       where: { userId },
       orderBy: { updatedAt: 'desc' },
-      select: { id: true, presetData: true },
+      select: { id: true, presetData: true, updatedAt: true },
     })
 
-    return records.map((r) => r.presetData as AIPresetSync)
+    return records.map((r) => ({
+      ...(r.presetData as AIPresetSync),
+      updatedAt: r.updatedAt.toISOString(),
+    }))
   }
 
   /**
@@ -49,6 +52,6 @@ export class AiPresetService {
       }
     })
 
-    return [...presets]
+    return this.findAll(userId)
   }
 }

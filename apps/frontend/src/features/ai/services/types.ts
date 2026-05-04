@@ -111,6 +111,7 @@ export interface AISkill {
   path?: string
   resources?: string[]
   allowImplicitInvocation?: boolean
+  updatedAt?: string
   runtime?: AISkillRuntime
 }
 

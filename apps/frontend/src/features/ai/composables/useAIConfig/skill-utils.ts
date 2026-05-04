@@ -429,6 +429,7 @@ export function createStoredSkill(skill: Omit<AISkill, 'id'>): AISkill {
   return {
     id: generateId(),
     ...skill,
+    updatedAt: skill.updatedAt ?? new Date().toISOString(),
   }
 }
 
@@ -467,6 +468,7 @@ export function normalizePreset(raw: unknown): AIPreset | null {
     ...(thinkingEffort ? { thinkingEffort } : {}),
     todoAssistant,
     skillIds: normalizeIdList(item.skillIds),
+    ...(typeof item.updatedAt === 'string' ? { updatedAt: item.updatedAt } : {}),
   }
 }
 

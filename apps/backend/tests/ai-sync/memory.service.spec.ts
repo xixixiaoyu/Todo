@@ -26,21 +26,33 @@ describe('AiMemoryService', () => {
 
     const result = await service.get(1)
 
-    expect(result).toEqual({ memories: [], enabled: false, threshold: 30 })
+    expect(result).toEqual({ memories: [], enabled: false, threshold: 30, updatedAt: undefined })
   })
 
-  it('should return stored memory data', async () => {
-    const stored = { memories: ['User likes TypeScript'], enabled: true, threshold: 50 }
+  it('should return stored memory data with updatedAt', async () => {
+    const updatedAt = new Date('2025-06-15T10:00:00.000Z')
+    const stored = {
+      memories: ['User likes TypeScript'],
+      enabled: true,
+      threshold: 50,
+      updatedAt,
+    }
     mockPrisma.aiMemory.findUnique.mockResolvedValue(stored)
 
     const result = await service.get(1)
 
-    expect(result).toEqual(stored)
+    expect(result).toEqual({
+      memories: ['User likes TypeScript'],
+      enabled: true,
+      threshold: 50,
+      updatedAt: updatedAt.toISOString(),
+    })
   })
 
-  it('should create new memory record on upsert', async () => {
+  it('should create new memory record on upsert and return updatedAt', async () => {
+    const updatedAt = new Date('2025-06-15T10:00:00.000Z')
     const data = { memories: ['New memory'], enabled: true, threshold: 40 }
-    mockPrisma.aiMemory.upsert.mockResolvedValue(data)
+    mockPrisma.aiMemory.upsert.mockResolvedValue({ ...data, updatedAt })
 
     const result = await service.upsert(1, data)
 
@@ -48,17 +60,18 @@ describe('AiMemoryService', () => {
       where: { userId: 1 },
       create: { userId: 1, ...data },
       update: data,
-      select: { memories: true, enabled: true, threshold: true },
+      select: { memories: true, enabled: true, threshold: true, updatedAt: true },
     })
-    expect(result).toEqual(data)
+    expect(result).toEqual({ ...data, updatedAt: updatedAt.toISOString() })
   })
 
-  it('should update existing memory record', async () => {
+  it('should update existing memory record and return updatedAt', async () => {
+    const updatedAt = new Date('2025-06-15T10:00:00.000Z')
     const data = { memories: ['Updated'], enabled: false, threshold: 20 }
-    mockPrisma.aiMemory.upsert.mockResolvedValue(data)
+    mockPrisma.aiMemory.upsert.mockResolvedValue({ ...data, updatedAt })
 
     const result = await service.upsert(1, data)
 
-    expect(result).toEqual(data)
+    expect(result).toEqual({ ...data, updatedAt: updatedAt.toISOString() })
   })
 })

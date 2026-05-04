@@ -8,7 +8,16 @@ import {
   _resetAIConfig,
   aiThinkingMode,
   getAIThinkingMode,
+  syncSkillsFromServer,
+  syncPresetsFromServer,
 } from '@/features/ai/composables/useAIConfig'
+
+vi.mock('@/features/ai/services/aiSyncService', () => ({
+  fetchSkills: vi.fn().mockResolvedValue(null),
+  pushSkills: vi.fn().mockResolvedValue(undefined),
+  fetchPresets: vi.fn().mockResolvedValue(null),
+  pushPresets: vi.fn().mockResolvedValue(undefined),
+}))
 
 function createByteStream(chunks: Uint8Array[]): ReadableStream<Uint8Array> {
   return new ReadableStream<Uint8Array>({
@@ -985,6 +994,182 @@ describe('useAIConfig - Core', () => {
       ).rejects.toThrow('File too large')
       expect(textSpy).not.toHaveBeenCalled()
       expect(arrayBufferSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('syncSkillsFromServer', () => {
+    it('should merge local and remote skills by id, keeping newer updatedAt', async () => {
+      const { fetchSkills, pushSkills } = await import('@/features/ai/services/aiSyncService')
+      vi.mocked(fetchSkills).mockResolvedValue([
+        {
+          id: 's1',
+          name: 'Remote Skill 1',
+          prompt: 'Remote prompt 1',
+          updatedAt: '2025-06-15T10:00:00.000Z',
+        },
+        {
+          id: 's3',
+          name: 'Remote Skill 3',
+          prompt: 'Remote prompt 3',
+          updatedAt: '2025-06-15T10:00:00.000Z',
+        },
+      ])
+      vi.mocked(pushSkills).mockResolvedValue(undefined)
+
+      const { skills } = useAIConfig()
+
+      // Directly set local skills with known IDs for merge-by-id testing
+      skills.value = [
+        {
+          id: 's1',
+          name: 'Local Skill 1',
+          prompt: 'Local prompt 1 (newer)',
+          updatedAt: '2025-07-01T00:00:00.000Z',
+        },
+        {
+          id: 's2',
+          name: 'Local Skill 2',
+          prompt: 'Local prompt 2',
+          updatedAt: '2025-06-01T00:00:00.000Z',
+        },
+      ]
+
+      await syncSkillsFromServer()
+
+      // s1: local is newer → keep local
+      const s1 = skills.value.find((s) => s.id === 's1')
+      expect(s1?.prompt).toBe('Local prompt 1 (newer)')
+
+      // s2: only local → kept
+      expect(skills.value.find((s) => s.id === 's2')).toBeTruthy()
+
+      // s3: only remote → added
+      const s3 = skills.value.find((s) => s.id === 's3')
+      expect(s3?.name).toBe('Remote Skill 3')
+    })
+
+    it('should keep local runtime when remote is newer', async () => {
+      const { fetchSkills, pushSkills } = await import('@/features/ai/services/aiSyncService')
+      vi.mocked(fetchSkills).mockResolvedValue([
+        {
+          id: 's1',
+          name: 'Remote Name',
+          prompt: 'Remote prompt (newer)',
+          updatedAt: '2025-09-01T00:00:00.000Z',
+        },
+      ])
+      vi.mocked(pushSkills).mockResolvedValue(undefined)
+
+      const { skills } = useAIConfig()
+      skills.value = [
+        {
+          id: 's1',
+          name: 'Local Name',
+          prompt: 'Local prompt (older)',
+          updatedAt: '2025-06-01T00:00:00.000Z',
+          runtime: {
+            type: 'mcp',
+            tool: { name: 'test-tool', description: '', parameters: {} },
+            target: { toolName: 'test-tool', serverId: 'test-server' },
+          },
+        },
+      ]
+
+      await syncSkillsFromServer()
+
+      // Remote data (newer) wins for name/prompt, but local runtime is kept
+      const s1 = skills.value[0]
+      expect(s1.name).toBe('Remote Name')
+      expect(s1.prompt).toBe('Remote prompt (newer)')
+      expect(s1.runtime).toMatchObject({
+        type: 'mcp',
+        target: { toolName: 'test-tool', serverId: 'test-server' },
+      })
+    })
+  })
+
+  describe('syncPresetsFromServer', () => {
+    it('should merge local and remote presets by id, keeping newer updatedAt', async () => {
+      const { fetchPresets, pushPresets } = await import('@/features/ai/services/aiSyncService')
+      vi.mocked(fetchPresets).mockResolvedValue([
+        {
+          id: 'p1',
+          name: 'Remote Preset 1',
+          baseUrl: 'https://api.remote.com',
+          model: 'remote-model',
+          systemPrompt: '',
+          temperature: 0.7,
+          thinkingEffort: 'max' as const,
+          todoAssistant: false,
+          skillIds: [],
+          updatedAt: '2025-08-01T00:00:00.000Z',
+        },
+      ])
+      vi.mocked(pushPresets).mockResolvedValue(undefined)
+
+      const { presets } = useAIConfig()
+      presets.value = [
+        {
+          id: 'p1',
+          name: 'Local Preset 1',
+          baseUrl: 'https://api.local.com',
+          model: 'local-model',
+          systemPrompt: '',
+          temperature: 0.7,
+          todoAssistant: false,
+          apiKey: 'sk-local-key',
+          updatedAt: '2025-07-01T00:00:00.000Z',
+        },
+      ]
+
+      await syncPresetsFromServer()
+
+      // Remote is newer → remote data wins for display fields
+      const p1 = presets.value[0]
+      expect(p1.name).toBe('Remote Preset 1')
+      expect(p1.baseUrl).toBe('https://api.remote.com')
+      // But local apiKey is preserved
+      expect(p1.apiKey).toBe('sk-local-key')
+    })
+
+    it('should keep local data when local updatedAt is newer', async () => {
+      const { fetchPresets, pushPresets } = await import('@/features/ai/services/aiSyncService')
+      vi.mocked(fetchPresets).mockResolvedValue([
+        {
+          id: 'p1',
+          name: 'Old Remote Name',
+          baseUrl: 'https://api.remote.com',
+          model: 'remote-model',
+          systemPrompt: '',
+          temperature: 0.7,
+          thinkingEffort: 'max' as const,
+          todoAssistant: false,
+          skillIds: [],
+          updatedAt: '2025-01-01T00:00:00.000Z',
+        },
+      ])
+      vi.mocked(pushPresets).mockResolvedValue(undefined)
+
+      const { presets } = useAIConfig()
+      presets.value = [
+        {
+          id: 'p1',
+          name: 'Newer Local Name',
+          baseUrl: 'https://api.local.com',
+          model: 'local-model',
+          systemPrompt: '',
+          temperature: 0.7,
+          todoAssistant: false,
+          apiKey: 'sk-local-key',
+          updatedAt: '2025-07-01T00:00:00.000Z',
+        },
+      ]
+
+      await syncPresetsFromServer()
+
+      // Local is newer → local data preserved
+      expect(presets.value[0].name).toBe('Newer Local Name')
+      expect(presets.value[0].baseUrl).toBe('https://api.local.com')
     })
   })
 })

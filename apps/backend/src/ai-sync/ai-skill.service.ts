@@ -17,10 +17,13 @@ export class AiSkillService {
     const records = await this.prisma.aiSkill.findMany({
       where: { userId },
       orderBy: { updatedAt: 'desc' },
-      select: { id: true, skillData: true },
+      select: { id: true, skillData: true, updatedAt: true },
     })
 
-    return records.map((r) => r.skillData as AISkillSync)
+    return records.map((r) => ({
+      ...(r.skillData as AISkillSync),
+      updatedAt: r.updatedAt.toISOString(),
+    }))
   }
 
   /**
@@ -28,10 +31,8 @@ export class AiSkillService {
    */
   async upsertAll(userId: number, skills: readonly AISkillSync[]): Promise<AISkillSync[]> {
     await this.prisma.$transaction(async (tx) => {
-      // 删除旧数据
       await tx.aiSkill.deleteMany({ where: { userId } })
 
-      // 批量写入新数据
       if (skills.length > 0) {
         await tx.aiSkill.createMany({
           data: skills.map((skill) => ({
@@ -43,6 +44,6 @@ export class AiSkillService {
       }
     })
 
-    return [...skills]
+    return this.findAll(userId)
   }
 }

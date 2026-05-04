@@ -50,6 +50,7 @@ export interface AIPreset {
   novelGenre?: NovelGenre | null
   novelTone?: string
   novelProtagonistHint?: string
+  updatedAt?: string
 }
 
 export type ExternalSkillSourcePayload = {

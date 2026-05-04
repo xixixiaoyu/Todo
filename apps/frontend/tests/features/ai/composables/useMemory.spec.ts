@@ -9,6 +9,11 @@ vi.mock('@/features/ai/services/aiService', () => ({
   getAIStaticResponse: vi.fn(),
 }))
 
+vi.mock('@/features/ai/services/aiSyncService', () => ({
+  fetchMemories: vi.fn().mockResolvedValue(null),
+  pushMemories: vi.fn().mockResolvedValue(undefined),
+}))
+
 describe('useMemory', () => {
   beforeEach(() => {
     localStorage.clear()
@@ -224,6 +229,61 @@ describe('useMemory', () => {
       expect(memories.value).toHaveLength(100)
       expect(memories.value[0]).toBe('Memory 50')
       expect(memories.value[99]).toBe('Memory 149')
+    })
+  })
+
+  describe('syncFromServer', () => {
+    it('should merge local and remote memories (union + semantic dedup)', async () => {
+      const { fetchMemories } = await import('@/features/ai/services/aiSyncService')
+      const { pushMemories } = await import('@/features/ai/services/aiSyncService')
+
+      const mockedFetch = fetchMemories as ReturnType<typeof vi.fn>
+      const mockedPush = pushMemories as ReturnType<typeof vi.fn>
+
+      // Setup local data
+      const { memories, addMemories } = useMemory()
+      addMemories(['Local memory 1', 'Local memory 2'])
+
+      mockedFetch.mockResolvedValue({
+        memories: ['Local memory 1', 'Remote memory A'],
+        enabled: false,
+        threshold: 50,
+        updatedAt: '2025-06-15T10:00:00.000Z',
+      })
+      mockedPush.mockResolvedValue(undefined)
+
+      const { syncFromServer } = useMemory()
+      await syncFromServer()
+
+      // Should have union: Local memory 1 (dedup'd), Local memory 2, Remote memory A
+      expect(memories.value).toContain('Local memory 1')
+      expect(memories.value).toContain('Local memory 2')
+      expect(memories.value).toContain('Remote memory A')
+      expect(memories.value.length).toBe(3)
+    })
+
+    it('should keep local settings when remote has no newer updatedAt', async () => {
+      const { fetchMemories } = await import('@/features/ai/services/aiSyncService')
+      const mockedFetch = fetchMemories as ReturnType<typeof vi.fn>
+
+      const { isMemoryEnabled, autoCompressThreshold, toggleMemory, updateAutoCompressThreshold } =
+        useMemory()
+      toggleMemory(true)
+      updateAutoCompressThreshold(40)
+
+      mockedFetch.mockResolvedValue({
+        memories: [],
+        enabled: false,
+        threshold: 60,
+        updatedAt: '2020-01-01T00:00:00.000Z', // older than local (which was just set to now)
+      })
+
+      const { syncFromServer } = useMemory()
+      await syncFromServer()
+
+      // Local settings should be kept since they're newer
+      expect(isMemoryEnabled.value).toBe(true)
+      expect(autoCompressThreshold.value).toBe(40)
     })
   })
 })

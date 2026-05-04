@@ -1,7 +1,7 @@
 /**
  * AI 数据服务端同步 HTTP 层
  *
- * 同步策略: server-as-truth — 加载时 API 优先，失败回退 localStorage
+ * 同步策略: 多端合并 — 加载时 API 优先，基于 updatedAt 做冲突仲裁，失败回退 localStorage
  *
  * 安全边界:
  * - AISkill.runtime 不出客户端（含 API secrets）
@@ -69,7 +69,11 @@ export async function fetchSkills(): Promise<AISkillSync[] | null> {
  * 全量推送 Skills 到服务端（自动剥离 runtime）
  */
 export async function pushSkills(skills: AISkill[]): Promise<void> {
-  const syncData: AISkillSync[] = skills.map(({ runtime: _, ...rest }) => rest)
+  const now = new Date().toISOString()
+  const syncData: AISkillSync[] = skills.map(({ runtime: _, updatedAt, ...rest }) => ({
+    ...rest,
+    updatedAt: updatedAt ?? now,
+  }))
   await safePut<AISkillSync[]>('/ai/skills', syncData)
 }
 
@@ -87,6 +91,14 @@ export async function fetchPresets(): Promise<AIPresetSync[] | null> {
  * 全量推送 Presets 到服务端（自动剥离 apiKey）
  */
 export async function pushPresets(presets: AIPreset[]): Promise<void> {
-  const syncData: AIPresetSync[] = presets.map(({ apiKey: _, ...rest }) => rest as AIPresetSync)
+  const now = new Date().toISOString()
+  const syncData: AIPresetSync[] = presets.map(
+    ({ apiKey: _, updatedAt, thinkingEffort, skillIds, ...rest }) => ({
+      ...rest,
+      thinkingEffort: thinkingEffort ?? 'max',
+      skillIds: (skillIds ?? []) as string[],
+      updatedAt: updatedAt ?? now,
+    }),
+  )
   await safePut<AIPresetSync[]>('/ai/presets', syncData)
 }

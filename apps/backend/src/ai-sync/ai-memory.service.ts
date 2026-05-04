@@ -6,6 +6,7 @@ const DEFAULT_MEMORY_DATA: AIMemoryData = {
   memories: [],
   enabled: false,
   threshold: 30,
+  updatedAt: undefined,
 }
 
 /**
@@ -22,7 +23,7 @@ export class AiMemoryService {
   async get(userId: number): Promise<AIMemoryData> {
     const record = await this.prisma.aiMemory.findUnique({
       where: { userId },
-      select: { memories: true, enabled: true, threshold: true },
+      select: { memories: true, enabled: true, threshold: true, updatedAt: true },
     })
 
     if (!record) return { ...DEFAULT_MEMORY_DATA }
@@ -31,6 +32,7 @@ export class AiMemoryService {
       memories: record.memories as string[],
       enabled: record.enabled,
       threshold: record.threshold,
+      updatedAt: record.updatedAt.toISOString(),
     }
   }
 
@@ -51,13 +53,14 @@ export class AiMemoryService {
         enabled: data.enabled,
         threshold: data.threshold,
       },
-      select: { memories: true, enabled: true, threshold: true },
+      select: { memories: true, enabled: true, threshold: true, updatedAt: true },
     })
 
     return {
       memories: record.memories as string[],
       enabled: record.enabled,
       threshold: record.threshold,
+      updatedAt: record.updatedAt.toISOString(),
     }
   }
 }

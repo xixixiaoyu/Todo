@@ -285,6 +285,7 @@ export function useAIConfig() {
       novelGenre: preset.novelGenre ?? null,
       novelTone: preset.novelTone ?? '',
       novelProtagonistHint: preset.novelProtagonistHint ?? '',
+      updatedAt: preset.updatedAt ?? new Date().toISOString(),
     }
     presets.value.push(newPreset)
     return newPreset
@@ -378,6 +379,7 @@ export function useAIConfig() {
       ...preset,
       id: generateId(),
       name: `${preset.name}${i18n.global.t('ai.copySuffix')}`,
+      updatedAt: new Date().toISOString(),
     }
     presets.value.push(newPreset)
     return newPreset
@@ -777,57 +779,89 @@ export function getAISkills(): AISkill[] {
 // ─── Server Sync Helpers ───────────────────────────────────────────
 
 /**
- * 合并服务端 Skills 与本地 runtime secrets
+ * 合并服务端与本地 Skills：以 id 为键并集合并，同 id 保留 updatedAt 较新者，runtime 始终以本地为准
  */
-function mergeRuntime(remote: AISkillSync[], local: AISkill[]): AISkill[] {
-  const localMap = new Map(local.map((s) => [s.id, s]))
-  return remote.map(
-    (r) =>
-      ({
+function mergeSkills(remote: AISkillSync[], local: AISkill[]): AISkill[] {
+  const mergedMap = new Map<string, AISkill>()
+
+  // 先放入所有本地 skill
+  for (const s of local) {
+    mergedMap.set(s.id, { ...s })
+  }
+
+  // 合并远端 skill
+  for (const r of remote) {
+    const existing = mergedMap.get(r.id)
+    const remoteTime = r.updatedAt ? new Date(r.updatedAt).getTime() : 0
+    const localTime = existing?.updatedAt ? new Date(existing.updatedAt).getTime() : 0
+
+    if (!existing || remoteTime > localTime) {
+      // 远端无此项，或远端版本更新：采用远端数据，但保留本地 runtime
+      mergedMap.set(r.id, {
         ...r,
-        runtime: localMap.get(r.id)?.runtime,
-      }) as AISkill,
-  )
+        runtime: existing?.runtime,
+      })
+    }
+    // 否则保留本地版本（含 runtime）
+  }
+
+  return Array.from(mergedMap.values())
 }
 
 /**
- * 合并服务端 Presets 与本地 apiKey
+ * 合并服务端与本地 Presets：以 id 为键并集合并，同 id 保留 updatedAt 较新者，apiKey 始终以本地为准
  */
-function mergeApiKeys(remote: AIPresetSync[], local: AIPreset[]): AIPreset[] {
-  const localMap = new Map(local.map((p) => [p.id, p]))
-  return remote.map(
-    (r) =>
-      ({
+function mergePresets(remote: AIPresetSync[], local: AIPreset[]): AIPreset[] {
+  const mergedMap = new Map<string, AIPreset>()
+
+  // 先放入所有本地 preset
+  for (const p of local) {
+    mergedMap.set(p.id, { ...p })
+  }
+
+  // 合并远端 preset
+  for (const r of remote) {
+    const existing = mergedMap.get(r.id)
+    const remoteTime = r.updatedAt ? new Date(r.updatedAt).getTime() : 0
+    const localTime = existing?.updatedAt ? new Date(existing.updatedAt).getTime() : 0
+
+    if (!existing || remoteTime > localTime) {
+      // 远端无此项，或远端版本更新：采用远端数据，但保留本地 apiKey
+      mergedMap.set(r.id, {
         ...r,
-        apiKey: localMap.get(r.id)?.apiKey ?? '',
-      }) as AIPreset,
-  )
+        apiKey: existing?.apiKey ?? '',
+      })
+    }
+    // 否则保留本地版本（含 apiKey）
+  }
+
+  return Array.from(mergedMap.values())
 }
 
 /**
  * 从服务端同步 Skills（登录时调用）
- * Step 1: 拉取服务端数据（不含 runtime）
- * Step 2: 与本地 runtime 合并
+ * 合并策略：以 id 为键并集合并，同 id 保留 updatedAt 较新者，runtime 始终以本地为准
+ * 合并后写回 localStorage 并推送服务端
  */
 export async function syncSkillsFromServer(): Promise<void> {
   const remote = await fetchSkillsFromServer()
   if (!remote) return
 
-  const merged = mergeRuntime(remote, skills.value)
-  skills.value = merged
+  const merged = mergeSkills(remote, skills.value)
+  skills.value = merged // watcher 自动触发 saveSkills + pushSkillsToServer
 }
 
 /**
  * 从服务端同步 Presets（登录时调用）
- * Step 1: 拉取服务端骨架（不含 apiKey）
- * Step 2: 与本地 apiKey 合并
+ * 合并策略：以 id 为键并集合并，同 id 保留 updatedAt 较新者，apiKey 始终以本地为准
+ * 合并后写回 localStorage 并推送服务端
  */
 export async function syncPresetsFromServer(): Promise<void> {
   const remote = await fetchPresetsFromServer()
   if (!remote) return
 
-  const merged = mergeApiKeys(remote, presets.value)
-  presets.value = merged
+  const merged = mergePresets(remote, presets.value)
+  presets.value = merged // watcher 自动触发 savePresets + pushPresetsToServer
 }
 
 // ─── Re-export Types ───────────────────────────────────────────────
