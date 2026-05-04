@@ -30,6 +30,15 @@ vi.mock('@/features/ai/composables/useAiAnonymousMigration', () => ({
   requestAnonymousAiMigration: vi.fn(),
 }))
 
+vi.mock('@/features/ai/composables/useMemory', () => ({
+  syncMemoryFromServer: vi.fn(),
+}))
+
+vi.mock('@/features/ai/composables/useAIConfig', () => ({
+  syncSkillsFromServer: vi.fn(),
+  syncPresetsFromServer: vi.fn(),
+}))
+
 describe('useAuthStore', () => {
   let store: ReturnType<typeof useAuthStore>
 
@@ -51,6 +60,7 @@ describe('useAuthStore', () => {
     setActivePinia(createPinia())
     store = useAuthStore()
     vi.clearAllMocks()
+    vi.mocked(authApi.refreshToken).mockReset()
     localStorage.clear()
   })
 
@@ -362,7 +372,7 @@ describe('useAuthStore', () => {
       store.refreshToken = 'invalid-token'
       store.token = 'access-token'
 
-      vi.mocked(authApi.refreshToken).mockRejectedValue({ response: { status: 401 } })
+      vi.mocked(authApi.refreshToken).mockRejectedValueOnce({ response: { status: 401 } })
       vi.mocked(authApi.logout).mockResolvedValue({
         success: true,
         data: { message: 'Logged out' },
@@ -383,7 +393,7 @@ describe('useAuthStore', () => {
       store.user = mockUser
 
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-      vi.mocked(authApi.refreshToken).mockRejectedValue(new Error('Network error'))
+      vi.mocked(authApi.refreshToken).mockRejectedValueOnce(new Error('Network error'))
 
       const result = await store.refreshAccessToken()
 
@@ -404,13 +414,18 @@ describe('useAuthStore', () => {
       store.token = 'access-token'
       store.user = mockUser
 
-      vi.mocked(authApi.refreshToken)
-        .mockRejectedValueOnce({ response: { status: 503 } })
-        .mockResolvedValueOnce({
+      let refreshCallCount = 0
+      vi.mocked(authApi.refreshToken).mockImplementation(() => {
+        refreshCallCount += 1
+        if (refreshCallCount === 1) {
+          return Promise.reject({ response: { status: 503 } })
+        }
+        return Promise.resolve({
           success: true,
           data: mockAuthResponse,
           timestamp: new Date().toISOString(),
         })
+      })
 
       const result = await store.refreshAccessToken()
 
