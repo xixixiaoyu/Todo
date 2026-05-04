@@ -2,24 +2,12 @@
 import { useI18n } from 'vue-i18n'
 import { Check, X, Minus } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
+import type { QuizRecordResponse } from '@/features/teaching/api/teachingApi'
 
 const { t } = useI18n()
 
-interface QuizRecord {
-  id: string
-  quizId: string
-  stem: string
-  kind: string
-  userAnswer: unknown
-  result: string
-  mastery: string
-  feedback: string
-  nextFocus?: string | null
-  createdAt: string
-}
-
 defineProps<{
-  records: QuizRecord[]
+  records: QuizRecordResponse[]
   isLoading?: boolean
 }>()
 

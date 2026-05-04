@@ -158,3 +158,10 @@ export type CreateNovelChapter = z.infer<typeof CreateNovelChapterSchema>
 export type UpdateNovelChapter = z.infer<typeof UpdateNovelChapterSchema>
 export type UpsertNovelCharacter = z.infer<typeof UpsertNovelCharacterSchema>
 export type UpsertNovelWorldview = z.infer<typeof UpsertNovelWorldviewSchema>
+
+// ---- Inferred response types (前端 API 层直接 import，避免手写重复) ----
+
+export type NovelDraftResponse = z.infer<typeof NovelDraftResponseSchema>
+export type NovelChapterResponse = z.infer<typeof NovelChapterResponseSchema>
+export type NovelCharacterResponse = z.infer<typeof NovelCharacterResponseSchema>
+export type NovelWorldviewResponse = z.infer<typeof NovelWorldviewResponseSchema>

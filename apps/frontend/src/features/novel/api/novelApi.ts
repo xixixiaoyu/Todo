@@ -1,25 +1,36 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import { httpClient } from '@/api'
-import { unwrapApiResponse } from '@lumina/shared'
+import { getJson, postJson, putJson, patchJson, deleteJson } from '@/api/unwrap'
 import type {
-  CreateNovelDraft,
-  UpdateNovelDraft,
   CreateNovelChapter,
+  CreateNovelDraft,
   UpdateNovelChapter,
+  UpdateNovelDraft,
   UpsertNovelCharacter,
   UpsertNovelWorldview,
-  ApiResponse,
+  NovelDraftResponse,
+  NovelChapterResponse,
+  NovelCharacterResponse,
+  NovelWorldviewResponse,
 } from '@lumina/shared'
 
 const NOVEL_STALE_TIME = 5 * 60 * 1000
 const NOVEL_GC_TIME = 30 * 60 * 1000
+
+// ---- Re-export response types for downstream consumers ----
+
+export type {
+  NovelDraftResponse,
+  NovelChapterResponse,
+  NovelCharacterResponse,
+  NovelWorldviewResponse,
+} from '@lumina/shared'
 
 // ---- Drafts ----
 
 export function useNovelDrafts() {
   return useQuery({
     queryKey: ['novel', 'drafts'],
-    queryFn: () => httpClient.get('/novel/drafts').then((r) => r.data),
+    queryFn: () => getJson<NovelDraftResponse[]>('/novel/drafts'),
     staleTime: NOVEL_STALE_TIME,
     gcTime: NOVEL_GC_TIME,
   })
@@ -28,7 +39,7 @@ export function useNovelDrafts() {
 export function useNovelDraft(id: string) {
   return useQuery({
     queryKey: ['novel', 'drafts', id],
-    queryFn: () => httpClient.get(`/novel/drafts/${id}`).then((r) => r.data),
+    queryFn: () => getJson<NovelDraftResponse>(`/novel/drafts/${id}`),
     staleTime: NOVEL_STALE_TIME,
     gcTime: NOVEL_GC_TIME,
     enabled: !!id,
@@ -38,14 +49,7 @@ export function useNovelDraft(id: string) {
 export function useCreateDraft() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (data: CreateNovelDraft) =>
-      httpClient
-        .post('/novel/drafts', data)
-        .then((r) =>
-          unwrapApiResponse<{ id: string; title: string }>(
-            r.data as ApiResponse<{ id: string; title: string }>,
-          ),
-        ),
+    mutationFn: (data: CreateNovelDraft) => postJson<NovelDraftResponse>('/novel/drafts', data),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['novel', 'drafts'] })
     },
@@ -56,7 +60,7 @@ export function useUpdateDraft() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateNovelDraft }) =>
-      httpClient.patch(`/novel/drafts/${id}`, data).then((r) => r.data),
+      patchJson<NovelDraftResponse>(`/novel/drafts/${id}`, data),
     onSuccess: (_data, vars) => {
       void qc.invalidateQueries({ queryKey: ['novel', 'drafts'] })
       void qc.invalidateQueries({ queryKey: ['novel', 'drafts', vars.id] })
@@ -67,7 +71,7 @@ export function useUpdateDraft() {
 export function useDeleteDraft() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => httpClient.delete(`/novel/drafts/${id}`).then((r) => r.data),
+    mutationFn: (id: string) => deleteJson<{ id: string } | null>(`/novel/drafts/${id}`),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['novel', 'drafts'] })
     },
@@ -79,7 +83,7 @@ export function useDeleteDraft() {
 export function useNovelChapters(draftId: string) {
   return useQuery({
     queryKey: ['novel', 'drafts', draftId, 'chapters'],
-    queryFn: () => httpClient.get(`/novel/drafts/${draftId}/chapters`).then((r) => r.data),
+    queryFn: () => getJson<NovelChapterResponse[]>(`/novel/drafts/${draftId}/chapters`),
     staleTime: NOVEL_STALE_TIME,
     gcTime: NOVEL_GC_TIME,
     enabled: !!draftId,
@@ -89,8 +93,7 @@ export function useNovelChapters(draftId: string) {
 export function useNovelChapter(draftId: string, chapterId: string) {
   return useQuery({
     queryKey: ['novel', 'drafts', draftId, 'chapters', chapterId],
-    queryFn: () =>
-      httpClient.get(`/novel/drafts/${draftId}/chapters/${chapterId}`).then((r) => r.data),
+    queryFn: () => getJson<NovelChapterResponse>(`/novel/drafts/${draftId}/chapters/${chapterId}`),
     staleTime: NOVEL_STALE_TIME,
     gcTime: NOVEL_GC_TIME,
     enabled: !!draftId && !!chapterId,
@@ -101,7 +104,7 @@ export function useUpsertChapter() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ draftId, data }: { draftId: string; data: CreateNovelChapter }) =>
-      httpClient.put(`/novel/drafts/${draftId}/chapters`, data).then((r) => r.data),
+      putJson<NovelChapterResponse>(`/novel/drafts/${draftId}/chapters`, data),
     onSuccess: (_data, vars) => {
       void qc.invalidateQueries({ queryKey: ['novel', 'drafts', vars.draftId, 'chapters'] })
       void qc.invalidateQueries({ queryKey: ['novel', 'drafts'] })
@@ -120,8 +123,7 @@ export function useUpdateChapter() {
       draftId: string
       chapterId: string
       data: UpdateNovelChapter
-    }) =>
-      httpClient.patch(`/novel/drafts/${draftId}/chapters/${chapterId}`, data).then((r) => r.data),
+    }) => patchJson<NovelChapterResponse>(`/novel/drafts/${draftId}/chapters/${chapterId}`, data),
     onSuccess: (_data, vars) => {
       void qc.invalidateQueries({ queryKey: ['novel', 'drafts', vars.draftId, 'chapters'] })
     },
@@ -133,7 +135,7 @@ export function useUpdateChapter() {
 export function useNovelCharacters(draftId: string) {
   return useQuery({
     queryKey: ['novel', 'drafts', draftId, 'characters'],
-    queryFn: () => httpClient.get(`/novel/drafts/${draftId}/characters`).then((r) => r.data),
+    queryFn: () => getJson<NovelCharacterResponse[]>(`/novel/drafts/${draftId}/characters`),
     staleTime: NOVEL_STALE_TIME,
     gcTime: NOVEL_GC_TIME,
     enabled: !!draftId,
@@ -144,7 +146,7 @@ export function useUpsertCharacter() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ draftId, data }: { draftId: string; data: UpsertNovelCharacter }) =>
-      httpClient.put(`/novel/drafts/${draftId}/characters`, data).then((r) => r.data),
+      putJson<NovelCharacterResponse>(`/novel/drafts/${draftId}/characters`, data),
     onSuccess: (_data, vars) => {
       void qc.invalidateQueries({ queryKey: ['novel', 'drafts', vars.draftId, 'characters'] })
     },
@@ -156,7 +158,7 @@ export function useUpsertCharacter() {
 export function useNovelWorldviews(draftId: string) {
   return useQuery({
     queryKey: ['novel', 'drafts', draftId, 'worldviews'],
-    queryFn: () => httpClient.get(`/novel/drafts/${draftId}/worldviews`).then((r) => r.data),
+    queryFn: () => getJson<NovelWorldviewResponse[]>(`/novel/drafts/${draftId}/worldviews`),
     staleTime: NOVEL_STALE_TIME,
     gcTime: NOVEL_GC_TIME,
     enabled: !!draftId,
@@ -167,7 +169,7 @@ export function useUpsertWorldview() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ draftId, data }: { draftId: string; data: UpsertNovelWorldview }) =>
-      httpClient.put(`/novel/drafts/${draftId}/worldviews`, data).then((r) => r.data),
+      putJson<NovelWorldviewResponse>(`/novel/drafts/${draftId}/worldviews`, data),
     onSuccess: (_data, vars) => {
       void qc.invalidateQueries({ queryKey: ['novel', 'drafts', vars.draftId, 'worldviews'] })
     },

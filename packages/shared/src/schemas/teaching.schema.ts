@@ -88,3 +88,9 @@ export type SaveQuizRecord = z.infer<typeof SaveQuizRecordSchema>
 export type BatchSaveQuizRecord = z.infer<typeof BatchSaveQuizRecordSchema>
 export type UpsertLearningProgress = z.infer<typeof UpsertLearningProgressSchema>
 export type BatchUpsertLearningProgress = z.infer<typeof BatchUpsertLearningProgressSchema>
+
+// ---- Inferred response types (前端 API 层直接 import，避免手写重复) ----
+
+export type QuizRecordResponse = z.infer<typeof QuizRecordResponseSchema>
+export type LearningProgressResponse = z.infer<typeof LearningProgressResponseSchema>
+export type TeachingOverviewResponse = z.infer<typeof TeachingOverviewResponseSchema>

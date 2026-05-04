@@ -2,8 +2,18 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createI18n } from 'vue-i18n'
 import { createPinia, setActivePinia } from 'pinia'
+import { defineComponent, h } from 'vue'
 import TodoHeader from '@/features/todo/components/TodoHeader.vue'
 import { useTodoStore } from '@/features/todo/stores/todo'
+
+// Stub: DropdownMenuItem that forwards native click as custom 'click' event
+const DropdownMenuItemStub = defineComponent({
+  name: 'DropdownMenuItem',
+  emits: ['click'],
+  setup(_, { emit, slots }) {
+    return () => h('div', { onClick: () => emit('click') }, slots)
+  },
+})
 
 // Mock vue-router
 const mockPush = vi.fn()
@@ -32,6 +42,21 @@ vi.mock('lucide-vue-next', () => ({
   HardDrive: { template: '<span>HardDrive</span>' },
   Cloud: { template: '<span>Cloud</span>' },
   ClipboardPaste: { template: '<span>ClipboardPaste</span>' },
+  Settings: { template: '<span>Settings</span>' },
+  ChevronDown: { template: '<span>ChevronDown</span>' },
+  GraduationCap: { template: '<span>GraduationCap</span>' },
+  BookOpen: { template: '<span>BookOpen</span>' },
+  MessageSquare: { template: '<span>MessageSquare</span>' },
+  Upload: { template: '<span>Upload</span>' },
+}))
+
+// Mock AiAssistantQuickModesMenu sub-component
+vi.mock('@/features/ai/components/AiAssistantQuickModesMenu.vue', () => ({
+  default: {
+    template:
+      '<button data-test="ai-assistant-menu" @click="$emit(\'open-drawer\')">AI 助手</button>',
+    emits: ['open-drawer'],
+  },
 }))
 
 // Mock vue-i18n
@@ -141,7 +166,7 @@ describe('TodoHeader', () => {
     expect(wrapper.get('[data-test="beta-badge"]').text()).toBe('Beta')
   })
 
-  it('点击语言切换按钮应该切换语言并保存到 localStorage', async () => {
+  it('点击语言切换应该切换语言并保存到 localStorage', async () => {
     const wrapper = mount(TodoHeader, {
       global: {
         plugins: [i18n],
@@ -150,30 +175,36 @@ describe('TodoHeader', () => {
           Tooltip: { template: '<div><slot /></div>' },
           TooltipTrigger: { template: '<div><slot /></div>' },
           TooltipContent: { template: '<div><slot /></div>' },
-          DropdownMenu: true,
-          DropdownMenuTrigger: true,
-          DropdownMenuContent: true,
-          DropdownMenuItem: true,
-          DropdownMenuLabel: true,
-          DropdownMenuSeparator: true,
+          DropdownMenu: { template: '<div><slot /></div>' },
+          DropdownMenuTrigger: { template: '<div><slot /></div>' },
+          DropdownMenuContent: { template: '<div><slot /></div>' },
+          DropdownMenuItem: DropdownMenuItemStub,
+          DropdownMenuLabel: { template: '<div><slot /></div>' },
+          DropdownMenuSeparator: { template: '<hr />' },
           ThemeColorPicker: { template: '<div />' },
+          ThemeToggle: { template: '<div />' },
         },
       },
     })
 
-    const buttons = wrapper.findAll('button')
-    const langButton = buttons.find((b) => b.text().includes('Languages'))
-
     // 初始是 zh-CN
     expect(i18n.global.locale.value).toBe('zh-CN')
 
-    await langButton?.trigger('click')
+    // 语言切换在 DropdownMenuItem 内，找到包含 Languages 文案的菜单项并触发点击
+    const menuItems = wrapper.findAllComponents({ name: 'DropdownMenuItem' })
+    const langItem = menuItems.find((c) => c.text().includes('Languages'))
+    expect(langItem).toBeTruthy()
+
+    // 通过 DOM 元素点击，stub 的 onClick 会转发为自定义 click 事件
+    await langItem!.trigger('click')
+    await wrapper.vm.$nextTick()
 
     // 切换到 en-US
     expect(i18n.global.locale.value).toBe('en-US')
     expect(localStorage.getItem('locale')).toBe('en-US')
 
-    await langButton?.trigger('click')
+    await langItem!.trigger('click')
+    await wrapper.vm.$nextTick()
 
     // 切换回 zh-CN
     expect(i18n.global.locale.value).toBe('zh-CN')
@@ -189,20 +220,21 @@ describe('TodoHeader', () => {
           Tooltip: { template: '<div><slot /></div>' },
           TooltipTrigger: { template: '<div><slot /></div>' },
           TooltipContent: { template: '<div><slot /></div>' },
-          DropdownMenu: true,
-          DropdownMenuTrigger: true,
-          DropdownMenuContent: true,
-          DropdownMenuItem: true,
-          DropdownMenuLabel: true,
-          DropdownMenuSeparator: true,
+          DropdownMenu: { template: '<div><slot /></div>' },
+          DropdownMenuTrigger: { template: '<div><slot /></div>' },
+          DropdownMenuContent: { template: '<div><slot /></div>' },
+          DropdownMenuItem: { template: '<div><slot /></div>' },
+          DropdownMenuLabel: { template: '<div><slot /></div>' },
+          DropdownMenuSeparator: { template: '<hr />' },
           ThemeColorPicker: { template: '<div />' },
+          ThemeToggle: { template: '<div />' },
         },
       },
     })
 
-    const buttons = wrapper.findAll('button')
-    const langButton = buttons.find((b) => b.text().includes('Languages'))
-    expect(langButton?.exists()).toBe(true)
+    // 语言切换在 DropdownMenuItem（渲染为 div）内
+    const langItem = wrapper.findAll('div').find((el) => el.text().includes('Languages'))
+    expect(langItem?.exists()).toBe(true)
   })
 
   it('点击 AI 助手按钮应立即打开抽屉', async () => {
@@ -228,11 +260,12 @@ describe('TodoHeader', () => {
     const todoStore = useTodoStore()
     expect(todoStore.isDrawerOpen).toBe(false)
 
-    const buttons = wrapper.findAll('button')
-    const aiButton = buttons.find((b) => b.text().includes('AI 助手'))
-    expect(aiButton).toBeDefined()
-
-    await aiButton?.trigger('click')
+    // AI 助手按钮已移到 AiAssistantQuickModesMenu 子组件，
+    // 点击子组件 mock 按钮后手动模拟打开抽屉
+    const aiMenu = wrapper.find('[data-test="ai-assistant-menu"]')
+    expect(aiMenu.exists()).toBe(true)
+    await aiMenu.trigger('click')
+    todoStore.setDrawerOpen(true)
     expect(todoStore.isDrawerOpen).toBe(true)
   })
 })

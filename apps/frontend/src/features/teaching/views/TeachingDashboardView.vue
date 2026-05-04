@@ -5,10 +5,10 @@ import { useI18n } from 'vue-i18n'
 import { ArrowLeft, GraduationCap, Download, Sparkles } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/composables/useToast'
-import { httpClient } from '@/api'
+import { getJson } from '@/api/unwrap'
 import { useTeachingOverview, useQuizRecords, useLearningProgress } from '../api/teachingApi'
 import { useAIConfig } from '@/features/ai/composables/useAIConfig'
-import { useAiAssistantModes } from '@/features/ai/composables/useAiAssistantModes'
+import { useTodoStore } from '@/features/todo/stores/todo'
 import QuizHistoryList from '../components/QuizHistoryList.vue'
 import KnowledgeGraph from '../components/KnowledgeGraph.vue'
 import { cn } from '@/lib/utils'
@@ -17,8 +17,8 @@ const router = useRouter()
 const { t } = useI18n()
 const { success: showToast } = useToast()
 
-const { config, updateConfig } = useAIConfig()
-const { toggleTeachingMode } = useAiAssistantModes({ config, updateConfig })
+const { switchToMode } = useAIConfig()
+const todoStore = useTodoStore()
 
 const { data: overview } = useTeachingOverview()
 const { data: quizRecords, isLoading: quizzesLoading } = useQuizRecords()
@@ -57,15 +57,19 @@ const masteryBarColor = (level: string) => {
   return map[level] || 'bg-gray-400'
 }
 
+/**
+ * 继续学习：强制切换 AI 助手为 teaching 模式并打开抽屉，
+ * 再跳回主面板，避免 toggle 不小心关掉已开启的教学模式。
+ */
 function handleContinueLearning() {
-  toggleTeachingMode()
+  switchToMode('teaching')
+  todoStore.setDrawerOpen(true)
   void router.push('/')
 }
 
 async function handleExport() {
   try {
-    const res = await httpClient.get('/teaching/export')
-    const exportData = res.data?.data ?? res.data
+    const exportData = await getJson<unknown>('/teaching/export')
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -169,7 +173,7 @@ function goBack() {
 
     <!-- Knowledge Graph -->
     <div class="mb-6">
-      <KnowledgeGraph :progress="progressData" :is-loading="progressLoading" />
+      <KnowledgeGraph :progress="progressData ?? []" :is-loading="progressLoading" />
     </div>
 
     <!-- Quiz History -->
@@ -177,7 +181,7 @@ function goBack() {
       <h3 class="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         {{ t('ai.teachingQuizHistory') }}
       </h3>
-      <QuizHistoryList :records="quizRecords" :is-loading="quizzesLoading" />
+      <QuizHistoryList :records="quizRecords ?? []" :is-loading="quizzesLoading" />
     </div>
   </div>
 </template>

@@ -4,7 +4,6 @@ import { useI18n } from 'vue-i18n'
 import { getServerBaseUrl } from '@/api/config'
 import {
   Snowflake,
-  Clover,
   Languages,
   Network,
   List,
@@ -16,10 +15,12 @@ import {
   Cloud,
   ClipboardPaste,
   Upload,
+  Settings,
 } from 'lucide-vue-next'
 import ThemeToggle from './ThemeToggle.vue'
 import ThemeColorPicker from './ThemeColorPicker.vue'
 import TodoBetaBadge from './TodoBetaBadge.vue'
+import AiAssistantQuickModesMenu from '@/features/ai/components/AiAssistantQuickModesMenu.vue'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
@@ -93,11 +94,6 @@ const handleDblClick = () => {
     void nativeService.toggleMaximise()
   }
 }
-
-const openAiAssistant = () => {
-  if (todoStore.isDrawerOpen) return
-  todoStore.setDrawerOpen(true)
-}
 </script>
 
 <template>
@@ -120,19 +116,8 @@ const openAiAssistant = () => {
       </h1>
     </div>
     <div class="flex items-center gap-1 md:gap-2">
-      <!-- AI Assistant - Highlight Feature -->
-      <Button
-        variant="ghost"
-        size="sm"
-        class="h-8 rounded-[18px] border border-primary/15 bg-primary/10 px-3 text-primary shadow-none transition-all duration-300 gap-1.5 font-semibold hover:bg-primary/15 md:h-9 md:rounded-xl md:px-3 group/ai touch-manipulation"
-        @click.stop="openAiAssistant"
-      >
-        <Clover
-          :size="14"
-          class="md:w-4 md:h-4 transition-transform group-hover/ai:rotate-12 group-hover/ai:scale-110"
-        />
-        <span class="text-[var(--todo-font-meta)] tracking-[0.02em]">{{ t('ai.assistant') }}</span>
-      </Button>
+      <!-- AI Assistant - Split Button（主入口 + 模式快捷菜单，桌面端悬浮自动弹出） -->
+      <AiAssistantQuickModesMenu />
 
       <div class="hidden md:block mx-1 h-6 w-px bg-border/40"></div>
 
@@ -274,23 +259,40 @@ const openAiAssistant = () => {
       </DropdownMenu>
 
       <div class="hidden md:flex items-center gap-2">
-        <ThemeToggle />
-
-        <ThemeColorPicker />
-
-        <Tooltip>
-          <TooltipTrigger as-child>
+        <!-- 偏好设置折叠菜单：主题明暗 / 主题色 / 语言 统一收纳，降低顶栏视觉密度 -->
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
             <Button
               variant="outline"
               size="icon"
               class="h-10 w-10 rounded-xl bg-card border-border hover:bg-accent"
-              @click="toggleLanguage"
+              :title="t('common.settings')"
+              :aria-label="t('common.settings')"
             >
-              <Languages :size="18" />
+              <Settings :size="18" />
             </Button>
-          </TooltipTrigger>
-          <TooltipContent>{{ t('common.toggleLanguage') }}</TooltipContent>
-        </Tooltip>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" class="w-56 rounded-xl p-2">
+            <DropdownMenuLabel
+              class="text-[var(--todo-font-caption)] text-muted-foreground font-normal"
+            >
+              {{ t('common.settings') }}
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <div class="flex items-center justify-between px-2 py-1.5">
+              <span class="text-[var(--todo-font-meta)]">{{ t('common.theme.label') }}</span>
+              <ThemeToggle />
+            </div>
+            <div class="flex items-center justify-between px-2 py-1.5">
+              <span class="text-[var(--todo-font-meta)]">{{ t('common.themeColor.label') }}</span>
+              <ThemeColorPicker />
+            </div>
+            <DropdownMenuItem class="rounded-lg cursor-pointer" @click="toggleLanguage">
+              <Languages class="mr-2 h-4 w-4" />
+              <span>{{ locale === 'zh-CN' ? 'English' : '中文' }}</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div class="mx-0.5 hidden h-6 w-px bg-border/40 md:mx-1 md:block"></div>

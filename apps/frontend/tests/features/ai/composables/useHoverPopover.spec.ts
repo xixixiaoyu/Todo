@@ -22,7 +22,7 @@ function stubMatchMedia(canHover: boolean) {
 const TestHoverPopover = defineComponent({
   setup() {
     const open = ref(false)
-    const hover = useHoverPopover({ open, delayMs: 50 })
+    const hover = useHoverPopover({ open, closeDelayMs: 50 })
 
     return {
       open,

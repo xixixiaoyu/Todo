@@ -6,7 +6,7 @@ import {
   migrateLegacySkillRuntime,
 } from '@/features/ai/services/aiService'
 import type { AISkill } from '@/features/ai/services/types'
-import type { AIConfig, AIPreset } from './types'
+import type { AIConfig, AIPreset, AssistantMode } from './types'
 import { AI_THINKING_MODE_STORAGE_KEY, STORAGE_KEY } from './types'
 import {
   normalizeIdList,
@@ -221,6 +221,20 @@ export function useAIConfig() {
   const activePreset = computed(
     () => presets.value.find((p) => p.id === activePresetId.value) ?? null,
   )
+
+  /**
+   * 强制切换 AI 助手到指定模式，同时关闭其他互斥模式标志。
+   * 比 toggle 更安全——不会因重复点击而意外关闭已激活的模式。
+   */
+  function switchToMode(mode: AssistantMode): void {
+    config.value = {
+      ...config.value,
+      assistantMode: mode,
+      todoAssistant: false,
+      discussionMode: false,
+      enableImageGeneration: false,
+    }
+  }
 
   /**
    * 更新配置
@@ -726,6 +740,7 @@ export function useAIConfig() {
   return {
     config: readonly(config),
     updateConfig,
+    switchToMode,
     resetConfig,
     isConfigValid,
     DEFAULT_CONFIG,

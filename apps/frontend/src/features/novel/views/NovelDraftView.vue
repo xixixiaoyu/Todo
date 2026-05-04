@@ -11,6 +11,8 @@ import {
   useNovelWorldviews,
 } from '@/features/novel/api/novelApi'
 import { useNovelDraftStore } from '@/features/novel/stores/novelDraftStore'
+import { useTodoStore } from '@/features/todo/stores/todo'
+import { useAIConfig } from '@/features/ai/composables/useAIConfig'
 import NovelCharacterDashboard from '@/features/novel/components/NovelCharacterDashboard.vue'
 import NovelWorldviewDashboard from '@/features/novel/components/NovelWorldviewDashboard.vue'
 import NovelExportButton from '@/features/novel/components/NovelExportButton.vue'
@@ -20,6 +22,8 @@ const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
 const draftStore = useNovelDraftStore()
+const todoStore = useTodoStore()
+const { switchToMode } = useAIConfig()
 
 const draftId = computed(() => route.params.id as string)
 const activeChapterIndex = ref(1)
@@ -40,11 +44,16 @@ const currentChapter = computed(() => {
 
 const isLoading = computed(() => draftLoading.value || chaptersLoading.value)
 
+/**
+ * 继续创作：激活当前草稿，切换 AI 助手为小说模式并打开抽屉，
+ * 再跳回主面板，确保用户直接落在小说创作对话界面。
+ */
 function handleContinueWriting() {
-  if (draft.value) {
-    draftStore.setActiveDraft(draft.value.id, draft.value.title)
-    void router.push('/')
-  }
+  if (!draft.value) return
+  draftStore.setActiveDraft(draft.value.id, draft.value.title)
+  switchToMode('novel')
+  todoStore.setDrawerOpen(true)
+  void router.push('/')
 }
 
 function goBack() {

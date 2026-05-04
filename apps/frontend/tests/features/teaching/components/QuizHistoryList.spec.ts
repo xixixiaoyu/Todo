@@ -16,6 +16,7 @@ vi.mock('lucide-vue-next', () => ({
 
 const makeRecord = (overrides: Record<string, unknown> = {}) => ({
   id: 'r1',
+  userId: 1,
   quizId: 'q1',
   stem: 'What is 1+1?',
   kind: 'single_choice',

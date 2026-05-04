@@ -94,6 +94,7 @@ const mockConfig = ref({
   skillIds: [],
 })
 
+const mockSwitchToMode = vi.fn()
 const mockUpdateConfig = vi.fn()
 const mockToggleTeachingMode = vi.fn()
 
@@ -101,6 +102,7 @@ vi.mock('@/features/ai/composables/useAIConfig', () => ({
   useAIConfig: () => ({
     config: mockConfig,
     updateConfig: mockUpdateConfig,
+    switchToMode: mockSwitchToMode,
   }),
 }))
 
@@ -193,14 +195,14 @@ describe('TeachingDashboardView', () => {
     expect(wrapper.find('[data-test="knowledge-graph"]').exists()).toBe(true)
   })
 
-  it('has continue learning button that toggles teaching mode', async () => {
+  it('has continue learning button that switches to teaching mode', async () => {
     const wrapper = mount(TeachingDashboardView)
     const continueBtn = wrapper
       .findAll('button')
       .find((b) => b.text().includes('ai.teachingContinueLearning'))
     expect(continueBtn).toBeTruthy()
     await continueBtn!.trigger('click')
-    expect(mockToggleTeachingMode).toHaveBeenCalled()
+    expect(mockSwitchToMode).toHaveBeenCalledWith('teaching')
   })
 
   it('has export button', () => {

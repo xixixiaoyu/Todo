@@ -34,6 +34,24 @@ export interface ApiErrorResponse {
 export type ApiResponse<T = unknown> = ApiSuccessResponse<T> | ApiErrorResponse
 
 /**
+ * API 错误，携带后端返回的 statusCode / message / errors。
+ * 允许消费方按状态码精确处理（如 401 跳登录、422 表单标红）。
+ */
+export class ApiError extends Error {
+  readonly statusCode: number
+  readonly errors?: Record<string, string>
+  readonly timestamp: string
+
+  constructor(response: ApiErrorResponse) {
+    super(response.message)
+    this.name = 'ApiError'
+    this.statusCode = response.statusCode
+    this.errors = response.errors
+    this.timestamp = response.timestamp
+  }
+}
+
+/**
  * 类型守卫：判断是否为成功响应
  */
 export function isApiSuccess<T>(response: ApiResponse<T>): response is ApiSuccessResponse<T> {
@@ -41,7 +59,7 @@ export function isApiSuccess<T>(response: ApiResponse<T>): response is ApiSucces
 }
 
 /**
- * 解包响应；若为错误响应则抛出带 message 的 Error
+ * 解包响应；若为错误响应则抛出 ApiError（携带 statusCode / errors）。
  */
 export function unwrapApiResponse<T>(response: ApiResponse<T>): T {
   if (typeof (response as { success?: unknown }).success !== 'boolean') {
@@ -50,7 +68,7 @@ export function unwrapApiResponse<T>(response: ApiResponse<T>): T {
   if (response.success) {
     return response.data
   }
-  throw new Error(response.message)
+  throw new ApiError(response)
 }
 
 /**
