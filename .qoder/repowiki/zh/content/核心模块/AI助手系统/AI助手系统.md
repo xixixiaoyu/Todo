@@ -26,6 +26,8 @@
 - [apps/frontend/src/features/ai/components/NovelGenreSelector.vue](file://apps/frontend/src/features/ai/components/NovelGenreSelector.vue)
 - [apps/frontend/src/features/ai/components/NovelWorldviewPanel.vue](file://apps/frontend/src/features/ai/components/NovelWorldviewPanel.vue)
 - [apps/frontend/src/features/ai/components/ChatMessage.vue](file://apps/frontend/src/features/ai/components/ChatMessage.vue)
+- [apps/frontend/src/features/ai/components/ChatMessageThinking.vue](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue)
+- [apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue](file://apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue)
 - [apps/frontend/src/features/ai/composables/useChatState.ts](file://apps/frontend/src/features/ai/composables/useChatState.ts)
 - [apps/backend/src/ai-sync/ai-sync.module.ts](file://apps/backend/src/ai-sync/ai-sync.module.ts)
 - [apps/backend/src/ai-sync/ai-sync.controller.ts](file://apps/backend/src/ai-sync/ai-sync.controller.ts)
@@ -33,14 +35,16 @@
 - [apps/backend/src/ai-sync/ai-skill.service.ts](file://apps/backend/src/ai-sync/ai-skill.service.ts)
 - [apps/backend/src/ai-sync/ai-preset.service.ts](file://apps/backend/src/ai-sync/ai-preset.service.ts)
 - [packages/shared/src/schemas/ai-sync.schema.ts](file://packages/shared/src/schemas/ai-sync.schema.ts)
+- [apps/frontend/src/features/ai/services/utils/systemPrompts.ts](file://apps/frontend/src/features/ai/services/utils/systemPrompts.ts)
 </cite>
 
 ## 更新摘要
 **所做更改**
-- 新增AI流式传输功能增强，显著改进novel模式自动续写逻辑
-- 新增针对novel模式自动续写的270行综合测试，覆盖多种场景
-- 简化novel模式的持久化逻辑，提升流式传输稳定性和用户体验
-- 增强流式响应处理的可靠性和状态管理
+- 新增AIChatCompletionMessage类型的reasoning_content字段支持，实现推理内容显示功能
+- 改进AI助手快速模式菜单的统一胶囊设计，提供更好的用户体验
+- 增强AI对话消息的序列化逻辑，支持助手角色内容结构
+- 优化推理内容优先级处理，实现reasoning_details优先于reasoning_content的显示策略
+- 完善推理内容的序列化和传输边界处理
 
 ## 目录
 1. [简介](#简介)
@@ -64,14 +68,11 @@
 - 上下文压缩算法与记忆管理策略
 - 与MCP工具系统的集成方式
 - 前端组件的交互设计、状态管理与实时对话处理
-- **新增** 增强的AI流式传输功能与novel模式自动续写逻辑
-- **新增** 针对novel模式的270行综合测试
-- **新增** 简化的novel模式持久化逻辑
-- **新增** AI翻译功能与智能语言检测
-- **新增** 统一的AI模式管理API
-- **新增** AI数据同步功能（记忆、技能、预设）
-- **新增** 小说写作助手组件体系
-- **新增** 改进的消息操作功能与状态持久化
+- **新增** AIChatCompletionMessage类型的reasoning_content字段支持
+- **新增** 改进的AI助手快速模式菜单统一胶囊设计
+- **新增** 增强的AI对话消息序列化逻辑
+- **新增** 推理内容优先级处理机制
+- **新增** 推理内容的序列化和传输边界处理
 
 ## 项目结构
 AI助手系统主要由前端Vue组合式函数与组件、AI服务层、MCP工具接口、**AI数据同步服务**和**AI翻译服务**五部分构成，采用模块化与可插拔的设计，便于扩展与维护。
@@ -83,6 +84,8 @@ Drawer["AiAssistantDrawer.vue"]
 Input["AiAssistantInput.vue"]
 MsgList["ChatMessageList.vue"]
 Translation["TranslationPanel.vue"]
+QuickModes["AiAssistantQuickModesMenu.vue"]
+Thinking["ChatMessageThinking.vue"]
 ChatState["useChatState.ts"]
 Chat["useChat.ts"]
 Actions["useChatActions.ts"]
@@ -98,6 +101,7 @@ Types["services/types.ts"]
 Utils["services/utils.ts"]
 Entry["services/aiService.ts"]
 TranslationSvc["services/translation.ts"]
+SystemPrompts["utils/systemPrompts.ts"]
 end
 subgraph "MCP工具系统"
 MCPPkg["@lumina/shared"]
@@ -131,14 +135,11 @@ Input --> Chat
 Drawer --> Input
 Drawer --> MsgList
 Drawer --> Translation
+Drawer --> QuickModes
+QuickModes --> Thinking
 Translation --> TranslationSvc
 TranslationSvc --> Core
-Modes --> ModeItems
-ModeItems --> Config
-Sync --> SyncCtrl
-SyncCtrl --> SyncMem
-SyncCtrl --> SyncSkill
-SyncCtrl --> SyncPreset
+SystemPrompts --> Types
 MsgComponent --> CharPanel
 MsgComponent --> WorldviewPanel
 ```
@@ -148,6 +149,8 @@ MsgComponent --> WorldviewPanel
 - [apps/frontend/src/features/ai/components/AiAssistantInput.vue:1-345](file://apps/frontend/src/features/ai/components/AiAssistantInput.vue#L1-L345)
 - [apps/frontend/src/features/ai/components/ChatMessageList.vue:1-492](file://apps/frontend/src/features/ai/components/ChatMessageList.vue#L1-L492)
 - [apps/frontend/src/features/ai/components/TranslationPanel.vue:1-278](file://apps/frontend/src/features/ai/components/TranslationPanel.vue#L1-L278)
+- [apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue:1-158](file://apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue#L1-L158)
+- [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:1-303](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L1-L303)
 - [apps/frontend/src/features/ai/composables/useChatState.ts:1-149](file://apps/frontend/src/features/ai/composables/useChatState.ts#L1-L149)
 - [apps/frontend/src/features/ai/composables/useChat.ts:1-136](file://apps/frontend/src/features/ai/composables/useChat.ts#L1-L136)
 - [apps/frontend/src/features/ai/composables/useChatActions.ts:1-544](file://apps/frontend/src/features/ai/composables/useChatActions.ts#L1-L544)
@@ -158,11 +161,12 @@ MsgComponent --> WorldviewPanel
 - [apps/frontend/src/features/ai/composables/useAiAssistantModes.ts:1-145](file://apps/frontend/src/features/ai/composables/useAiAssistantModes.ts#L1-L145)
 - [apps/frontend/src/features/ai/composables/useAiModeItems.ts:1-63](file://apps/frontend/src/features/ai/composables/useAiModeItems.ts#L1-L63)
 - [apps/frontend/src/features/ai/services/core.ts:1-445](file://apps/frontend/src/features/ai/services/core.ts#L1-L445)
-- [apps/frontend/src/features/ai/services/types.ts:1-287](file://apps/frontend/src/features/ai/services/types.ts#L1-L287)
+- [apps/frontend/src/features/ai/services/types.ts:1-292](file://apps/frontend/src/features/ai/services/types.ts#L1-L292)
 - [apps/frontend/src/features/ai/services/utils.ts:1-10](file://apps/frontend/src/features/ai/services/utils.ts#L1-L10)
 - [apps/frontend/src/features/ai/services/translation.ts:1-54](file://apps/frontend/src/features/ai/services/translation.ts#L1-L54)
 - [apps/frontend/src/features/mcp/api/mcp.ts:1-108](file://apps/frontend/src/features/mcp/api/mcp.ts#L1-L108)
 - [apps/frontend/src/features/ai/services/aiSyncService.ts:1-41](file://apps/frontend/src/features/ai/services/aiSyncService.ts#L1-L41)
+- [apps/frontend/src/features/ai/services/utils/systemPrompts.ts:459-483](file://apps/frontend/src/features/ai/services/utils/systemPrompts.ts#L459-L483)
 - [apps/backend/src/ai-sync/ai-sync.controller.ts:1-84](file://apps/backend/src/ai-sync/ai-sync.controller.ts#L1-L84)
 - [apps/backend/src/ai-sync/ai-memory.service.ts:1-64](file://apps/backend/src/ai-sync/ai-memory.service.ts#L1-L64)
 - [apps/backend/src/ai-sync/ai-skill.service.ts:1-49](file://apps/backend/src/ai-sync/ai-skill.service.ts#L1-L49)
@@ -175,7 +179,7 @@ MsgComponent --> WorldviewPanel
 **章节来源**
 - [apps/frontend/src/features/ai/services/aiService.ts:1-6](file://apps/frontend/src/features/ai/services/aiService.ts#L1-L6)
 - [apps/frontend/src/features/ai/services/core.ts:1-445](file://apps/frontend/src/features/ai/services/core.ts#L1-L445)
-- [apps/frontend/src/features/ai/services/types.ts:1-287](file://apps/frontend/src/features/ai/services/types.ts#L1-L287)
+- [apps/frontend/src/features/ai/services/types.ts:1-292](file://apps/frontend/src/features/ai/services/types.ts#L1-L292)
 - [apps/frontend/src/features/ai/services/utils.ts:1-10](file://apps/frontend/src/features/ai/services/utils.ts#L1-L10)
 - [apps/frontend/src/features/ai/composables/useAIConfig.ts:1-800](file://apps/frontend/src/features/ai/composables/useAIConfig.ts#L1-L800)
 - [apps/frontend/src/features/ai/composables/useChat.ts:1-136](file://apps/frontend/src/features/ai/composables/useChat.ts#L1-L136)
@@ -194,6 +198,9 @@ MsgComponent --> WorldviewPanel
 - [apps/frontend/src/features/ai/composables/useAiModeItems.ts:1-63](file://apps/frontend/src/features/ai/composables/useAiModeItems.ts#L1-L63)
 - [apps/frontend/src/features/ai/composables/useAiAssistantModes.ts:1-145](file://apps/frontend/src/features/ai/composables/useAiAssistantModes.ts#L1-L145)
 - [apps/frontend/src/features/ai/components/TranslationPanel.vue:1-278](file://apps/frontend/src/features/ai/components/TranslationPanel.vue#L1-L278)
+- [apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue:1-158](file://apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue#L1-L158)
+- [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:1-303](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L1-L303)
+- [apps/frontend/src/features/ai/services/utils/systemPrompts.ts:459-483](file://apps/frontend/src/features/ai/services/utils/systemPrompts.ts#L459-L483)
 - [apps/backend/src/ai-sync/ai-sync.controller.ts:1-84](file://apps/backend/src/ai-sync/ai-sync.controller.ts#L1-L84)
 - [apps/backend/src/ai-sync/ai-memory.service.ts:1-64](file://apps/backend/src/ai-sync/ai-memory.service.ts#L1-L64)
 - [apps/backend/src/ai-sync/ai-skill.service.ts:1-49](file://apps/backend/src/ai-sync/ai-skill.service.ts#L1-L49)
@@ -208,10 +215,23 @@ MsgComponent --> WorldviewPanel
   - 实现流式与非流式请求、SSE解析、工具调用聚合、推理内容抽取、请求中断与信号管理。
 - 类型系统（types.ts）
   - 定义消息、工具、推理细节、技能、结构化块等核心类型，支撑前后端一致的数据契约。
-- **新增** 增强的流式传输处理（useChatActions.stream.ts）
-  - 实现novel模式自动续写逻辑，处理章节标记统计与剩余章节计数
-  - 提供流式响应的最终处理与状态管理
-  - 支持教学模式的自动持久化功能
+- **新增** AIChatCompletionMessage类型的reasoning_content字段支持
+  - 新增AIChatCompletionMessage接口，支持assistant角色的reasoning_content字段
+  - 实现推理内容的序列化和传输边界处理
+  - 优化推理内容优先级处理，reasoning_details优先于reasoning_content显示
+- **新增** 改进的快速模式菜单统一胶囊设计（AiAssistantQuickModesMenu.vue）
+  - 采用统一胶囊设计（主按钮 + 分割线 + 辅助chevron）
+  - 柔和背景 + 圆角边框，hover时加深效果
+  - 支持细pointer设备的悬停延迟弹出和触屏设备的点击响应
+  - 集成所有AI模式的统一入口管理
+- **新增** 增强的对话消息序列化逻辑（systemPrompts.ts）
+  - 实现sanitizeRequestMessages函数，支持reasoning_content字段的序列化
+  - 优化助手角色内容结构的处理逻辑
+  - 确保传输边界的安全性和完整性
+- **新增** 推理内容显示组件（ChatMessageThinking.vue）
+  - 支持reasoning_details和thinkingContent的优先级显示
+  - 实现智能折叠和展开逻辑
+  - 提供流畅的动画过渡效果
 - **新增** AI翻译服务（translation.ts）
   - 提供智能语言检测与实时翻译功能，支持中英文双向翻译，包含错误处理与API调用。
 - **新增** 统一模式管理API（useAiModeItems.ts）
@@ -244,8 +264,10 @@ MsgComponent --> WorldviewPanel
 
 **章节来源**
 - [apps/frontend/src/features/ai/services/core.ts:1-445](file://apps/frontend/src/features/ai/services/core.ts#L1-L445)
-- [apps/frontend/src/features/ai/services/types.ts:1-287](file://apps/frontend/src/features/ai/services/types.ts#L1-L287)
-- [apps/frontend/src/features/ai/composables/useChatActions.stream.ts:1-411](file://apps/frontend/src/features/ai/composables/useChatActions.stream.ts#L1-L411)
+- [apps/frontend/src/features/ai/services/types.ts:276-292](file://apps/frontend/src/features/ai/services/types.ts#L276-L292)
+- [apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue:25-41](file://apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue#L25-L41)
+- [apps/frontend/src/features/ai/services/utils/systemPrompts.ts:459-483](file://apps/frontend/src/features/ai/services/utils/systemPrompts.ts#L459-L483)
+- [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:56-63](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L56-L63)
 - [apps/frontend/src/features/ai/services/translation.ts:1-54](file://apps/frontend/src/features/ai/services/translation.ts#L1-L54)
 - [apps/frontend/src/features/ai/composables/useAiModeItems.ts:1-63](file://apps/frontend/src/features/ai/composables/useAiModeItems.ts#L1-L63)
 - [apps/frontend/src/features/ai/components/TranslationPanel.vue:1-278](file://apps/frontend/src/features/ai/components/TranslationPanel.vue#L1-L278)
@@ -268,11 +290,12 @@ MsgComponent --> WorldviewPanel
 - [apps/frontend/src/features/ai/components/ChatMessage.vue:390-449](file://apps/frontend/src/features/ai/components/ChatMessage.vue#L390-L449)
 
 ## 架构总览
-AI助手系统采用"前端组合式函数 + AI服务层 + MCP工具系统 + AI数据同步 + AI翻译服务"的分层架构。前端负责交互与状态，AI服务层负责与大模型通信与工具编排，MCP提供外部工具能力，**AI数据同步模块提供服务器端持久化**，**AI翻译服务提供独立的语言处理能力**。**新增的增强流式传输处理模块**提供novel模式的自动续写功能和稳定的流式响应管理。
+AI助手系统采用"前端组合式函数 + AI服务层 + MCP工具系统 + AI数据同步 + AI翻译服务"的分层架构。前端负责交互与状态，AI服务层负责与大模型通信与工具编排，MCP提供外部工具能力，**AI数据同步模块提供服务器端持久化**，**AI翻译服务提供独立的语言处理能力**。**新增的推理内容显示功能**通过reasoning_content字段实现，**改进的快速模式菜单**提供统一的胶囊设计，**增强的序列化逻辑**确保消息内容的完整性和安全性。
 
 ```mermaid
 sequenceDiagram
 participant U as "用户"
+participant QM as "AiAssistantQuickModesMenu.vue"
 participant D as "AiAssistantDrawer.vue"
 participant T as "TranslationPanel.vue"
 participant C as "useChatActions.ts"
@@ -281,6 +304,8 @@ participant CC as "contextCompression"
 participant R as "runtime"
 participant CS as "useChatState.ts"
 participant M as "MCP API"
+U->>QM : 点击快速模式菜单
+QM->>D : 打开AI助手抽屉
 U->>D : 切换到翻译模式
 D->>T : 渲染翻译面板
 U->>T : 输入文本并点击翻译
@@ -303,6 +328,7 @@ C-->>D : 更新消息列表/状态
 ```
 
 **图表来源**
+- [apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue:79-87](file://apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue#L79-L87)
 - [apps/frontend/src/features/ai/components/AiAssistantDrawer.vue:274-275](file://apps/frontend/src/features/ai/components/AiAssistantDrawer.vue#L274-L275)
 - [apps/frontend/src/features/ai/components/TranslationPanel.vue:69-85](file://apps/frontend/src/features/ai/components/TranslationPanel.vue#L69-L85)
 - [apps/frontend/src/features/ai/composables/useChatActions.stream.ts:128-312](file://apps/frontend/src/features/ai/composables/useChatActions.stream.ts#L128-L312)
@@ -314,70 +340,172 @@ C-->>D : 更新消息列表/状态
 
 ## 详细组件分析
 
-### 增强的流式传输处理系统
+### 推理内容显示系统
 
-#### novel模式自动续写逻辑
-**新增** 增强的流式传输处理模块实现了novel模式的智能自动续写功能，通过综合测试确保稳定性和可靠性。
+#### reasoning_content字段支持
+**新增** AIChatCompletionMessage类型的reasoning_content字段支持，实现推理内容的完整显示功能。
 
-- **章节标记统计**
-  - 使用正则表达式`/\[NOVEL\_CHAPTER\_START\]/g`统计章节标记数量
-  - 如果找到章节标记，按实际生成的章节数量扣减剩余计数
-  - 如果没有章节标记，采用保底策略按"一轮一章"扣减，防止死循环
+- **类型定义增强**
+  - AIChatCompletionMessage接口新增assistant角色的reasoning_content字段
+  - 支持字符串格式的推理内容，用于私有链路思维过程
+  - 与reasoning_details字段形成互补，提供完整的推理内容支持
 
-- **剩余章节管理**
-  - `novelBatchRemaining`全局状态管理剩余章节数量
-  - 自动续写逻辑在流式响应完成时触发
-  - 确保不会出现负数计数，保持状态一致性
+- **序列化逻辑优化**
+  - sanitizeRequestMessages函数支持reasoning_content字段的序列化
+  - 确保传输边界的安全性，移除额外字段
+  - 保持reasoning_details的优先显示策略
 
-- **状态保持与UI优化**
-  - 当还有剩余章节时，保持`isGenerating`状态为true
-  - 避免UI在"已完成 → 再次发起"之间闪烁
-  - 提升用户体验的连续性
+- **显示优先级处理**
+  - ChatMessageThinking组件优先显示reasoning_details
+  - 当reasoning_details不存在时回退到thinkingContent
+  - reasoning_content主要用于内部传输，不直接显示给用户
 
 ```mermaid
 flowchart TD
-Start(["开始: finalizeCompletedResponse"]) --> CheckMode{"是否为novel模式?"}
-CheckMode --> |否| ProcessNormal["正常处理流程"]
-CheckMode --> |是| CheckRemaining{"novelBatchRemaining > 0?"}
-CheckRemaining --> |否| ProcessNormal
-CheckRemaining --> |是| CountMarkers["统计章节标记数量"]
-CountMarkers --> CalcDecrement["计算扣减数量<br/>max(1, generatedCount)"]
-CalcDecrement --> UpdateCounter["更新novelBatchRemaining<br/>max(0, remaining - decrement)"]
-UpdateCounter --> CheckAutoContinue{"是否还有剩余章节?"}
-CheckAutoContinue --> |是| KeepGenerating["保持isGenerating为true"]
-CheckAutoContinue --> |否| ResetGenerating["设置isGenerating为false"]
-KeepGenerating --> ProcessNormal
-ResetGenerating --> ProcessNormal
-ProcessNormal --> End(["结束"])
+Start(["开始: 推理内容处理"]) --> CheckReasoning{"检查推理内容类型"}
+CheckReasoning --> |reasoning_details| ShowDetails["显示reasoning_details"]
+CheckReasoning --> |thinkingContent| ShowThinking["显示thinkingContent"]
+CheckReasoning --> |reasoning_content| TransportOnly["仅传输，不显示"]
+ShowDetails --> Render["渲染Markdown内容"]
+ShowThinking --> Render
+TransportOnly --> Sanitize["序列化处理"]
+Sanitize --> Send["发送到AI服务"]
+Render --> End(["结束"])
+Send --> End
 ```
 
 **图表来源**
-- [apps/frontend/src/features/ai/composables/useChatActions.stream.ts:153-160](file://apps/frontend/src/features/ai/composables/useChatActions.stream.ts#L153-L160)
-- [apps/frontend/src/features/ai/composables/useChatActions.stream.ts:307-311](file://apps/frontend/src/features/ai/composables/useChatActions.stream.ts#L307-L311)
-- [apps/frontend/src/features/ai/composables/useChatActions.ts:333-336](file://apps/frontend/src/features/ai/composables/useChatActions.ts#L333-L336)
-- [apps/frontend/src/features/ai/composables/useChatActions.ts:405-408](file://apps/frontend/src/features/ai/composables/useChatActions.ts#L405-L408)
+- [apps/frontend/src/features/ai/services/types.ts:276-292](file://apps/frontend/src/features/ai/services/types.ts#L276-L292)
+- [apps/frontend/src/features/ai/services/utils/systemPrompts.ts:459-483](file://apps/frontend/src/features/ai/services/utils/systemPrompts.ts#L459-L483)
+- [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:56-63](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L56-L63)
 
-#### 流式响应处理增强
-**新增** 增强的流式响应处理提供了更稳定的流式传输体验：
+#### 推理内容序列化处理
+**新增** 增强的推理内容序列化逻辑，确保消息内容的完整性和安全性。
 
-- **最终响应处理**
-  - `finalizeCompletedResponse`: 处理流式响应完成后的最终状态
-  - 支持章节标记解析与novel模式自动续写
-  - 处理教学模式的自动持久化功能
+- **传输边界处理**
+  - sanitizeRequestMessages函数确保reasoning_content字段正确序列化
+  - 移除聊天消息中的额外字段（如id、createdAt等）
+  - 保持消息结构的简洁性和安全性
 
-- **中止响应处理**
-  - `finalizeAbortedResponse`: 处理流式响应中断的情况
-  - 保持响应状态的一致性
+- **助手角色内容结构**
+  - 优化assistant角色的消息结构处理
+  - 支持tool_calls和reasoning_content字段的组合
+  - 确保工具调用信息的完整传递
 
-- **流式块处理器**
-  - `createStreamChunkHandler`: 创建流式响应处理器
-  - 支持'[DONE]'和'[ABORTED]'特殊标记
-  - 实时更新响应状态和内容
+- **安全检查机制**
+  - 验证reasoning_content字段的存在性和有效性
+  - 确保传输内容符合AI服务的期望格式
+  - 防止恶意内容的注入和传播
 
 **章节来源**
-- [apps/frontend/src/features/ai/composables/useChatActions.stream.ts:128-312](file://apps/frontend/src/features/ai/composables/useChatActions.stream.ts#L128-L312)
-- [apps/frontend/src/features/ai/composables/useChatActions.stream.ts:314-340](file://apps/frontend/src/features/ai/composables/useChatActions.stream.ts#L314-L340)
-- [apps/frontend/src/features/ai/composables/useChatActions.stream.ts:342-410](file://apps/frontend/src/features/ai/composables/useChatActions.stream.ts#L342-L410)
+- [apps/frontend/src/features/ai/services/types.ts:276-292](file://apps/frontend/src/features/ai/services/types.ts#L276-L292)
+- [apps/frontend/src/features/ai/services/utils/systemPrompts.ts:459-483](file://apps/frontend/src/features/ai/services/utils/systemPrompts.ts#L459-L483)
+- [apps/frontend/tests/features/ai/services/aiServiceCleaning.spec.ts:90-175](file://apps/frontend/tests/features/ai/services/aiServiceCleaning.spec.ts#L90-L175)
+
+### 改进的快速模式菜单系统
+
+#### 统一胶囊设计
+**新增** 改进的AI助手快速模式菜单，提供统一的胶囊设计和更好的用户体验。
+
+- **设计理念**
+  - 主按钮（左侧）：Clover图标 + "AI助手"文案，点击打开Drawer
+  - 分割线：垂直细线分隔主按钮与chevron
+  - Chevron（右侧）：下拉箭头，提示"有菜单"
+  - 整体容器：柔和背景 + 圆角边框的胶囊，hover时加深
+
+- **交互特性**
+  - 点击主按钮：打开AI助手Drawer
+  - 悬浮chevron（仅fine pointer设备）：延迟150ms弹出模式菜单，延迟200ms收起
+  - 点击chevron：手动切换菜单开合（无需等待hover延迟）
+  - 菜单项点击：打开Drawer + 切到对应模式（已激活则仅开Drawer，避免误关）
+
+- **移动端适配**
+  - useHoverPopover内置(hover: hover)检测
+  - 触屏设备仅响应点击，自动降级
+  - 响应式设计，支持不同屏幕尺寸
+
+```mermaid
+flowchart TD
+Start(["用户点击快速模式菜单"]) --> ClickMain["点击主按钮"]
+ClickMain --> OpenDrawer["打开AI助手抽屉"]
+OpenDrawer --> HoverChevron["悬浮chevron"]
+HoverChevron --> Delay150ms["延迟150ms"]
+Delay150ms --> ShowMenu["显示模式菜单"]
+ShowMenu --> HoverLeave["鼠标离开"]
+HoverLeave --> Delay200ms["延迟200ms"]
+Delay200ms --> HideMenu["隐藏菜单"]
+ClickChevron["点击chevron"] --> ToggleMenu["切换菜单开合"]
+ToggleMenu --> OpenDrawer
+MenuClick["点击菜单项"] --> OpenDrawer2["打开抽屉"]
+OpenDrawer2 --> SwitchMode["切换到对应模式"]
+SwitchMode --> CloseMenu["关闭菜单"]
+```
+
+**图表来源**
+- [apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue:25-41](file://apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue#L25-L41)
+- [apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue:79-87](file://apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue#L79-L87)
+
+#### 模式图标集成
+**新增** 快速模式菜单的图标集成，提供直观的视觉识别。
+
+- **图标映射**
+  - todo: Clover图标
+  - teaching: GraduationCap图标
+  - draw: AiLuminaIcon图标
+  - discuss: MessageSquare图标
+  - novel: BookOpen图标
+  - translation: Languages图标
+
+- **视觉反馈**
+  - 激活模式：高亮显示，显示小圆点指示
+  - 悬停效果：图标颜色变化，背景高亮
+  - 响应式尺寸：支持移动端和桌面端的不同尺寸
+
+**章节来源**
+- [apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue:67-74](file://apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue#L67-L74)
+- [apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue:132-155](file://apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue#L132-L155)
+
+### 增强的推理内容显示组件
+
+#### 智能优先级处理
+**新增** ChatMessageThinking组件的推理内容智能优先级处理，优化用户体验。
+
+- **优先级策略**
+  - reasoning_details > thinkingContent > reasoning_content
+  - reasoning_details用于向用户显示的结构化推理内容
+  - thinkingContent用于传统的思考过程显示
+  - reasoning_content仅用于内部传输，不直接显示
+
+- **自动折叠逻辑**
+  - AI开始输出正文内容：立即折叠思考区域
+  - 只有思考内容且流式结束：3秒延迟后自动折叠
+  - 思考内容稳定（非流式状态）：保持展开状态
+  - 用户交互：点击标题或按钮手动切换展开/折叠
+
+- **动画效果**
+  - 流式状态：闪烁效果提示思考进行中
+  - 展开/折叠：平滑的过渡动画
+  - 移动端适配：简化动画效果，提升性能
+
+```mermaid
+stateDiagram-v2
+[*] --> 未展开
+未展开 --> 展开 : 点击标题
+展开 --> 未展开 : 点击标题
+展开 --> 自动折叠 : AI开始输出正文
+展开 --> 自动折叠 : 流式结束且只有思考内容
+自动折叠 --> 未展开 : 3秒延迟后
+展开 --> 展开 : 用户手动展开
+```
+
+**图表来源**
+- [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:65-100](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L65-L100)
+- [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:114-197](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L114-L197)
+
+**章节来源**
+- [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:56-63](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L56-L63)
+- [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:65-100](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L65-L100)
+- [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:114-197](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L114-L197)
 
 ### AI翻译系统
 
@@ -731,6 +859,7 @@ Runtime --> MCP_API : "获取工具/调用"
 - 抽屉式布局与面板
   - AiAssistantDrawer集中管理设置、历史、预设、讨论模式等，支持最大化与侧边栏尺寸调整。
   - **新增** 翻译模式面板与配置选项，支持独立的翻译界面。
+  - **新增** 快速模式菜单，提供统一的胶囊设计入口。
 - 输入增强
   - AiAssistantInput支持斜杠命令（待办/教学/绘图/讨论模式切换、翻译模式）、粘贴、文件上传、自适应高度与移动端优化。
 - 消息列表
@@ -742,13 +871,18 @@ Runtime --> MCP_API : "获取工具/调用"
 - **新增** 小说消息组件
   - 支持角色卡面板、世界观面板、章节元数据的显示
   - 提供继续按钮，支持手动触发下一章生成
+- **新增** 推理内容显示
+  - ChatMessageThinking组件支持推理内容的智能显示和管理
+  - 优化推理内容的优先级处理和用户体验
 
 ```mermaid
 graph LR
-Drawer["AiAssistantDrawer.vue"] --> Toolbar["工具栏/预设/模式切换"]
+QuickModes["AiAssistantQuickModesMenu.vue"] --> Drawer["AiAssistantDrawer.vue"]
+Drawer --> Toolbar["工具栏/预设/模式切换"]
 Drawer --> Input["AiAssistantInput.vue"]
 Drawer --> List["ChatMessageList.vue"]
 Drawer --> Translation["TranslationPanel.vue"]
+QuickModes --> Thinking["ChatMessageThinking.vue"]
 Input --> Actions["useChatActions.ts"]
 List --> Actions
 Translation --> TranslationSvc["translation.ts"]
@@ -761,10 +895,12 @@ Stream --> State
 ```
 
 **图表来源**
+- [apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue:79-87](file://apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue#L79-L87)
 - [apps/frontend/src/features/ai/components/AiAssistantDrawer.vue:274-275](file://apps/frontend/src/features/ai/components/AiAssistantDrawer.vue#L274-L275)
 - [apps/frontend/src/features/ai/components/AiAssistantInput.vue:70-79](file://apps/frontend/src/features/ai/components/AiAssistantInput.vue#L70-L79)
 - [apps/frontend/src/features/ai/components/ChatMessageList.vue:1-492](file://apps/frontend/src/features/ai/components/ChatMessageList.vue#L1-L492)
 - [apps/frontend/src/features/ai/components/TranslationPanel.vue:1-278](file://apps/frontend/src/features/ai/components/TranslationPanel.vue#L1-L278)
+- [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:1-303](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L1-L303)
 - [apps/frontend/src/features/ai/composables/useChatActions.ts:1-544](file://apps/frontend/src/features/ai/composables/useChatActions.ts#L1-L544)
 - [apps/frontend/src/features/ai/composables/useChatState.ts:1-149](file://apps/frontend/src/features/ai/composables/useChatState.ts#L1-L149)
 - [apps/frontend/src/features/ai/composables/useChatActions.stream.ts:1-411](file://apps/frontend/src/features/ai/composables/useChatActions.stream.ts#L1-L411)
@@ -777,6 +913,8 @@ Stream --> State
 - [apps/frontend/src/features/ai/components/AiAssistantInput.vue:1-345](file://apps/frontend/src/features/ai/components/AiAssistantInput.vue#L1-L345)
 - [apps/frontend/src/features/ai/components/ChatMessageList.vue:1-492](file://apps/frontend/src/features/ai/components/ChatMessageList.vue#L1-L492)
 - [apps/frontend/src/features/ai/components/ChatMessage.vue:390-449](file://apps/frontend/src/features/ai/components/ChatMessage.vue#L390-L449)
+- [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:1-303](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L1-L303)
+- [apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue:1-158](file://apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue#L1-L158)
 
 ## AI数据同步系统
 
@@ -939,7 +1077,7 @@ TranslationSvc --> Utils
 - [apps/frontend/src/features/ai/composables/useAIConfig/types.ts:1-37](file://apps/frontend/src/features/ai/composables/useAIConfig/types.ts#L1-L37)
 - [apps/frontend/src/features/ai/composables/useAiAssistantModes.ts:44-54](file://apps/frontend/src/features/ai/composables/useAiAssistantModes.ts#L44-L54)
 - [apps/frontend/src/features/ai/services/core.ts:1-445](file://apps/frontend/src/features/ai/services/core.ts#L1-L445)
-- [apps/frontend/src/features/ai/services/types.ts:1-287](file://apps/frontend/src/features/ai/services/types.ts#L1-L287)
+- [apps/frontend/src/features/ai/services/types.ts:1-292](file://apps/frontend/src/features/ai/services/types.ts#L1-L292)
 - [apps/frontend/src/features/ai/services/utils.ts:1-10](file://apps/frontend/src/features/ai/services/utils.ts#L1-L10)
 
 **章节来源**
@@ -1042,7 +1180,9 @@ MsgComponent --> WorldviewPanel
   - AiAssistantDrawer聚合useChat与useAIConfig，形成UI与业务逻辑的桥接；useChatActions依赖useChatState、useChatHistory、useChatMemory与runtime工具集。
   - **新增** aiSyncService与后端同步模块紧密集成。
   - **新增** TranslationPanel与translation服务深度集成。
-  - **新增** useChatActions.stream提供增强的流式传输处理。
+  - **新增** AiAssistantQuickModesMenu提供统一的快速模式入口。
+  - **新增** ChatMessageThinking组件处理推理内容显示。
+  - **新增** systemPrompts.ts提供增强的序列化逻辑。
 - 外部依赖
   - MCP API封装@lumina/shared与HTTP客户端，提供工具枚举与调用；AI服务依赖浏览器fetch与SSE Reader。
   - **新增** 后端使用Prisma ORM进行数据持久化。
@@ -1050,10 +1190,12 @@ MsgComponent --> WorldviewPanel
   - 通过组合式函数与模块化导入避免循环依赖；工具调用在useChatActions中集中处理，降低跨模块耦合。
   - **新增** useAiModeItems提供统一的模式管理，避免各组件间的模式状态不一致。
   - **新增** useChatState提供全局状态管理，支持novel模式的自动续写功能。
+  - **新增** reasoning_content字段支持推理内容的完整显示。
 
 ```mermaid
 graph TB
-Drawer["AiAssistantDrawer.vue"] --> Chat["useChat.ts"]
+QuickModes["AiAssistantQuickModesMenu.vue"] --> Chat["useChat.ts"]
+Drawer["AiAssistantDrawer.vue"] --> Chat
 Chat --> Actions["useChatActions.ts"]
 Actions --> Stream["useChatActions.stream.ts"]
 Actions --> State["useChatState.ts"]
@@ -1072,9 +1214,12 @@ SyncCtrl --> SyncSkill["AiSkillService"]
 SyncCtrl --> SyncPreset["AiPresetService"]
 ModeItems["useAiModeItems.ts"] --> Config["useAIConfig.ts"]
 Modes["useAiAssistantModes.ts"] --> ModeItems
+Thinking["ChatMessageThinking.vue"] --> Types
+SystemPrompts["utils/systemPrompts.ts"] --> Types
 ```
 
 **图表来源**
+- [apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue:1-158](file://apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue#L1-L158)
 - [apps/frontend/src/features/ai/components/AiAssistantDrawer.vue:1-475](file://apps/frontend/src/features/ai/components/AiAssistantDrawer.vue#L1-L475)
 - [apps/frontend/src/features/ai/composables/useChat.ts:1-136](file://apps/frontend/src/features/ai/composables/useChat.ts#L1-L136)
 - [apps/frontend/src/features/ai/composables/useChatActions.ts:1-544](file://apps/frontend/src/features/ai/composables/useChatActions.ts#L1-L544)
@@ -1083,11 +1228,13 @@ Modes["useAiAssistantModes.ts"] --> ModeItems
 - [apps/frontend/src/features/ai/composables/useChatActions.runtime.ts:1-100](file://apps/frontend/src/features/ai/composables/useChatActions.runtime.ts#L1-L100)
 - [apps/frontend/src/features/mcp/api/mcp.ts:1-108](file://apps/frontend/src/features/mcp/api/mcp.ts#L1-L108)
 - [apps/frontend/src/features/ai/services/core.ts:1-445](file://apps/frontend/src/features/ai/services/core.ts#L1-L445)
-- [apps/frontend/src/features/ai/services/types.ts:1-287](file://apps/frontend/src/features/ai/services/types.ts#L1-L287)
+- [apps/frontend/src/features/ai/services/types.ts:1-292](file://apps/frontend/src/features/ai/services/types.ts#L1-L292)
 - [apps/frontend/src/features/ai/services/aiSyncService.ts:1-41](file://apps/frontend/src/features/ai/services/aiSyncService.ts#L1-L41)
 - [apps/frontend/src/features/ai/services/translation.ts:1-54](file://apps/frontend/src/features/ai/services/translation.ts#L1-L54)
 - [apps/frontend/src/features/ai/composables/useAiModeItems.ts:1-63](file://apps/frontend/src/features/ai/composables/useAiModeItems.ts#L1-L63)
 - [apps/frontend/src/features/ai/composables/useAiAssistantModes.ts:1-145](file://apps/frontend/src/features/ai/composables/useAiAssistantModes.ts#L1-L145)
+- [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:1-303](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L1-L303)
+- [apps/frontend/src/features/ai/services/utils/systemPrompts.ts:459-483](file://apps/frontend/src/features/ai/services/utils/systemPrompts.ts#L459-L483)
 - [apps/backend/src/ai-sync/ai-sync.controller.ts:1-84](file://apps/backend/src/ai-sync/ai-sync.controller.ts#L1-L84)
 - [apps/backend/src/ai-sync/ai-memory.service.ts:1-64](file://apps/backend/src/ai-sync/ai-memory.service.ts#L1-L64)
 - [apps/backend/src/ai-sync/ai-skill.service.ts:1-49](file://apps/backend/src/ai-sync/ai-skill.service.ts#L1-L49)
@@ -1103,6 +1250,8 @@ Modes["useAiAssistantModes.ts"] --> ModeItems
 - [apps/frontend/src/features/ai/composables/useAiAssistantModes.ts:1-145](file://apps/frontend/src/features/ai/composables/useAiAssistantModes.ts#L1-L145)
 - [apps/frontend/src/features/ai/composables/useChatActions.stream.ts:1-411](file://apps/frontend/src/features/ai/composables/useChatActions.stream.ts#L1-L411)
 - [apps/frontend/src/features/ai/composables/useChatState.ts:1-149](file://apps/frontend/src/features/ai/composables/useChatState.ts#L1-L149)
+- [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:1-303](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L1-L303)
+- [apps/frontend/src/features/ai/services/utils/systemPrompts.ts:459-483](file://apps/frontend/src/features/ai/services/utils/systemPrompts.ts#L459-L483)
 - [apps/backend/src/ai-sync/ai-sync.controller.ts:1-84](file://apps/backend/src/ai-sync/ai-sync.controller.ts#L1-L84)
 
 ## 性能考量
@@ -1114,6 +1263,14 @@ Modes["useAiAssistantModes.ts"] --> ModeItems
   - 工具结果截断与错误兜底，避免超长内容污染上下文；本地工具优先执行，降低网络延迟。
 - 缓存与复用
   - 会话级压缩任务缓存与去重，避免重复计算；预设与配置持久化减少初始化成本。
+- **新增** 推理内容显示优化
+  - reasoning_details优先显示策略，减少不必要的内容处理
+  - ChatMessageThinking组件的智能折叠逻辑，避免频繁的DOM操作
+  - 推理内容的序列化处理，确保传输效率
+- **新增** 快速模式菜单性能
+  - 统一胶囊设计减少复杂的布局计算
+  - hover延迟机制避免频繁的菜单显示/隐藏操作
+  - 响应式设计适配不同设备的性能需求
 - **新增** 增强的流式传输处理
   - novel模式自动续写逻辑优化，减少不必要的状态切换
   - 章节标记统计采用高效正则表达式，避免性能瓶颈
@@ -1134,6 +1291,14 @@ Modes["useAiAssistantModes.ts"] --> ModeItems
   - 校验工具参数JSON合法性；检查本地处理器与MCP服务器可达性；查看工具返回内容长度截断日志。
 - 上下文压缩异常
   - 确认摘要模型预设可用；检查摘要untilMessageId是否与当前会话一致；观察后台任务状态。
+- **新增** 推理内容显示问题
+  - 检查reasoning_details和thinkingContent的优先级处理逻辑
+  - 验证reasoning_content字段的序列化和传输边界处理
+  - 确认ChatMessageThinking组件的自动折叠和展开逻辑
+- **新增** 快速模式菜单问题
+  - 检查AiAssistantQuickModesMenu组件的hover延迟和点击响应逻辑
+  - 验证模式切换时的状态同步和UI更新
+  - 确认移动端降级机制的正常工作
 - **新增** 增强流式传输处理问题
   - 检查novelBatchRemaining状态是否正确更新
   - 验证章节标记正则表达式匹配是否正常
@@ -1155,12 +1320,14 @@ Modes["useAiAssistantModes.ts"] --> ModeItems
 - [apps/frontend/src/features/ai/composables/useChatActions.contextCompression.ts:136-140](file://apps/frontend/src/features/ai/composables/useChatActions.contextCompression.ts#L136-L140)
 - [apps/frontend/src/features/ai/composables/useChatActions.stream.ts:153-160](file://apps/frontend/src/features/ai/composables/useChatActions.stream.ts#L153-L160)
 - [apps/frontend/src/features/ai/components/AiAssistantDrawer.vue:84-98](file://apps/frontend/src/features/ai/components/AiAssistantDrawer.vue#L84-L98)
+- [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:65-100](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L65-L100)
+- [apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue:79-87](file://apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue#L79-L87)
 - [apps/backend/src/ai-sync/ai-preset.service.ts:30-36](file://apps/backend/src/ai-sync/ai-preset.service.ts#L30-L36)
 - [apps/frontend/src/features/ai/services/translation.ts:35-49](file://apps/frontend/src/features/ai/services/translation.ts#L35-L49)
 - [apps/frontend/src/features/ai/components/TranslationPanel.vue:76-84](file://apps/frontend/src/features/ai/components/TranslationPanel.vue#L76-L84)
 
 ## 结论
-Lumina Todo的AI助手系统通过清晰的分层设计与模块化组合，实现了从对话编排、上下文压缩、工具调用到前端交互的完整闭环。**新增的增强流式传输处理模块**显著提升了novel模式的自动续写功能，通过270行综合测试确保了稳定性和可靠性；**简化的novel模式持久化逻辑**改善了用户体验，减少了状态管理的复杂性；**新增的AI翻译功能**提供了独立的语言处理能力，支持智能语言检测、实时翻译和历史持久化；**统一的AI模式管理API**确保了所有模式菜单入口的一致性和可维护性；**增强的AI助手模式管理**支持翻译模式与其他模式的互斥切换；**新增的AI数据同步功能**提供了服务器端持久化能力，确保用户配置和创作数据的一致性；**小说写作助手系统**扩展了AI助手的应用场景，提供了专业的创作辅助工具；**改进的消息操作功能**增强了用户体验，支持更丰富的交互操作。其预设配置与运行时能力准备机制，使得系统具备良好的可扩展性与可维护性；流式渲染与智能滚动提升了用户体验；MCP工具集成进一步增强了系统能力边界。建议在生产环境中持续关注上下文压缩阈值与工具调用超时策略，确保稳定性与性能平衡；同时关注翻译功能的API配置和错误处理机制，确保翻译服务的可靠性。
+Lumina Todo的AI助手系统通过清晰的分层设计与模块化组合，实现了从对话编排、上下文压缩、工具调用到前端交互的完整闭环。**新增的推理内容显示功能**通过reasoning_content字段实现完整的推理内容支持，优化了推理内容的优先级处理和显示策略；**改进的快速模式菜单**提供统一的胶囊设计，提升了用户体验和交互效率；**增强的序列化逻辑**确保了消息内容的完整性和安全性，支持助手角色内容结构的正确处理。其预设配置与运行时能力准备机制，使得系统具备良好的可扩展性与可维护性；流式渲染与智能滚动提升了用户体验；MCP工具集成进一步增强了系统能力边界。建议在生产环境中持续关注推理内容的显示效果和性能优化，确保推理内容的正确处理和高效传输；同时关注快速模式菜单的用户体验和移动端适配，确保不同设备上的良好表现；继续完善AI数据同步和翻译功能的配置管理，确保系统的稳定性和可靠性。
 
 ## 附录
 
@@ -1178,6 +1345,12 @@ Lumina Todo的AI助手系统通过清晰的分层设计与模块化组合，实�
 - 上下文压缩
   - 路径：useChatActions.contextCompression.buildContextCompression
   - 注意：阈值、摘要模型预设、会话边界
+- **新增** 推理内容显示
+  - 路径：ChatMessageThinking -> reasoning_details优先显示策略
+  - 注意：推理内容的优先级处理和智能折叠逻辑
+- **新增** 快速模式菜单
+  - 路径：AiAssistantQuickModesMenu -> 统一胶囊设计和hover延迟机制
+  - 注意：移动端降级和响应式设计
 - **新增** 增强流式传输处理
   - 路径：useChatActions.stream.finalizeCompletedResponse -> useChatState.novelBatchRemaining
   - 注意：章节标记统计、自动续写逻辑、状态保持
@@ -1198,6 +1371,8 @@ Lumina Todo的AI助手系统通过清晰的分层设计与模块化组合，实�
 - [apps/frontend/src/features/ai/services/core.ts:115-340](file://apps/frontend/src/features/ai/services/core.ts#L115-L340)
 - [apps/frontend/src/features/ai/composables/useChatActions.toolCalls.ts:30-172](file://apps/frontend/src/features/ai/composables/useChatActions.toolCalls.ts#L30-L172)
 - [apps/frontend/src/features/ai/composables/useChatActions.contextCompression.ts:150-259](file://apps/frontend/src/features/ai/composables/useChatActions.contextCompression.ts#L150-L259)
+- [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:56-63](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L56-L63)
+- [apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue:25-41](file://apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue#L25-L41)
 - [apps/frontend/src/features/ai/services/aiSyncService.ts:1-41](file://apps/frontend/src/features/ai/services/aiSyncService.ts#L1-L41)
 - [apps/backend/src/ai-sync/ai-sync.controller.ts:1-84](file://apps/backend/src/ai-sync/ai-sync.controller.ts#L1-L84)
 - [apps/frontend/src/features/ai/services/translation.ts:8-53](file://apps/frontend/src/features/ai/services/translation.ts#L8-L53)
