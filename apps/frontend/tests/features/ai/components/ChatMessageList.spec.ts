@@ -155,4 +155,64 @@ describe('ChatMessageList - performance windowing', () => {
 
     expect(streamingScrollSpy).toHaveBeenCalled()
   })
+
+  it('keeps streaming auto-scroll for discussion step updates with stable length', async () => {
+    scrollToBottomSpy.mockClear()
+    setStreamingModeSpy.mockClear()
+    streamingScrollSpy.mockClear()
+
+    const wrapper = mount(ChatMessageList, {
+      props: {
+        messages: [
+          {
+            id: 'streaming-2',
+            role: 'assistant' as const,
+            content: '',
+            discussionSteps: [
+              {
+                modelId: 'planner',
+                modelName: 'Planner',
+                status: 'thinking' as const,
+                content: 'step 1',
+              },
+            ],
+            isStreaming: true,
+          },
+        ],
+      },
+      global: {
+        stubs: {
+          Transition: false,
+          TransitionGroup: false,
+          ChatMessage: { template: '<div class="msg" />' },
+          ChatSuggestions: { template: '<div />' },
+          ChatMinimap: { template: '<div />' },
+          AiLuminaIcon: { template: '<div />' },
+        },
+      },
+    })
+
+    await wrapper.setProps({
+      messages: [
+        {
+          id: 'streaming-2',
+          role: 'assistant' as const,
+          content: '',
+          discussionSteps: [
+            {
+              modelId: 'planner',
+              modelName: 'Planner',
+              status: 'done' as const,
+              content: 'step 1 complete',
+            },
+          ],
+          isStreaming: true,
+        },
+      ],
+    })
+    await nextTick()
+    await nextTick()
+
+    expect(streamingScrollSpy).toHaveBeenCalled()
+  })
 })

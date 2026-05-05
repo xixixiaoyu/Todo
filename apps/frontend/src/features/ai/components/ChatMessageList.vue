@@ -46,6 +46,7 @@ onMounted(() => {
   setStreamingMode(!!lastMessage?.isStreaming)
 
   void nextTick(() => {
+    if (isSwitchingSession.value) return
     scrollToBottom('instant')
   })
 })
@@ -64,6 +65,22 @@ const visibleMessageIds = computed(() => visibleMessages.value.map((message) => 
 const hiddenCount = computed(() =>
   Math.max(0, props.messages.length - visibleMessages.value.length),
 )
+
+function getStreamingScrollSignature(message?: ChatMessageType) {
+  if (!message) return ''
+
+  return JSON.stringify({
+    content: message.content,
+    thinkingContent: message.thinkingContent,
+    reasoningDetails: message.reasoning_details,
+    discussionSteps:
+      message.discussionSteps?.map((step) => ({
+        modelId: step.modelId,
+        status: step.status,
+        content: step.content,
+      })) ?? [],
+  })
+}
 
 // 使用智能滚动 Composable
 const {
@@ -116,6 +133,7 @@ watch(currentSessionId, () => {
  */
 function handleSessionEntering() {
   void nextTick(() => {
+    if (!isSwitchingSession.value) return
     scrollToBottom('instant')
   })
 }
@@ -210,6 +228,7 @@ watch(
       setStreamingMode(!!lastMsg?.isStreaming)
 
       void nextTick(() => {
+        if (isSwitchingSession.value) return
         scrollToBottom('instant')
       })
     }
@@ -239,22 +258,16 @@ watch(
 
 // 专门监听流式消息的内容变化以触发滚动
 watch(
-  [
-    () => props.messages[props.messages.length - 1]?.content,
-    () => props.messages[props.messages.length - 1]?.thinkingContent,
-    () => props.messages[props.messages.length - 1]?.reasoning_details,
-    () => props.messages[props.messages.length - 1]?.discussionSteps?.length,
-  ],
-  (newVals, oldVals) => {
+  () => getStreamingScrollSignature(props.messages[props.messages.length - 1]),
+  (newSignature, oldSignature) => {
     if (isSwitchingSession.value) return
 
     const lastMsg = props.messages[props.messages.length - 1]
     if (lastMsg?.isStreaming) {
-      // 检查是否有任何内容发生了实际变化
-      const hasChanged = newVals.some((val, i) => val !== oldVals[i])
-      if (hasChanged) {
+      if (newSignature !== oldSignature) {
         // 使用 nextTick 确保 DOM 已更新，内容高度已反映到 scrollHeight
         void nextTick(() => {
+          if (isSwitchingSession.value) return
           streamingScroll()
         })
       }

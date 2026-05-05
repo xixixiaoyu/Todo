@@ -321,8 +321,9 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
 
     // 滚动事件监听
     el.addEventListener('scroll', throttledScrollHandler, { passive: true })
-    // 仅记录真正表达滚动意图的交互，避免普通点击误伤自动滚动。
+    // 同时覆盖滚轮、触摸和拖动滚动条这三类常见手动滚动入口。
     el.addEventListener('wheel', markUserScrollIntent, { passive: true })
+    el.addEventListener('mousedown', markUserScrollIntent, { passive: true })
     el.addEventListener('touchmove', markUserScrollIntent, { passive: true })
 
     // 初始化状态
@@ -366,6 +367,7 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
     if (el) {
       el.removeEventListener('scroll', throttledScrollHandler)
       el.removeEventListener('wheel', markUserScrollIntent)
+      el.removeEventListener('mousedown', markUserScrollIntent)
       el.removeEventListener('touchmove', markUserScrollIntent)
       gsap.killTweensOf(el)
     }

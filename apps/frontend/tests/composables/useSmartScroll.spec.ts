@@ -212,6 +212,29 @@ describe('useSmartScroll', () => {
     expect(vm.isUserScrolledUp).toBe(true)
   })
 
+  it('should treat scrollbar drag intent as manual scroll input', async () => {
+    const wrapper = mount(createTestComponent({ userScrollSensitivity: 5 }))
+    const vm = wrapper.vm as unknown as UnwrappedSmartScroll
+
+    await nextTick()
+    vi.runAllTimers()
+
+    const scrollHandler = getEventHandler('scroll')
+    const mouseDownHandler = getEventHandler('mousedown')
+
+    scrollContainer.scrollTop = 500
+    scrollHandler({} as Event)
+    vi.runAllTimers()
+
+    mouseDownHandler({} as Event)
+    scrollContainer.scrollTop = 400
+    scrollHandler({} as Event)
+    vi.runAllTimers()
+
+    expect(vm.isAutoScrollEnabled).toBe(false)
+    expect(vm.isUserScrolledUp).toBe(true)
+  })
+
   it('should keep auto-scroll enabled for upward layout shifts without user intent', async () => {
     const wrapper = mount(createTestComponent({ userScrollSensitivity: 5 }))
     const vm = wrapper.vm as unknown as UnwrappedSmartScroll
