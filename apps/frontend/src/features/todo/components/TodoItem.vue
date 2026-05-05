@@ -305,7 +305,11 @@ watch(
 </script>
 
 <template>
-  <div class="flex flex-col gap-2 md:gap-2.5">
+  <div
+    class="flex flex-col gap-2 md:gap-2.5"
+    @dragenter.prevent="handleDragEnter"
+    @dragleave="handleDragLeave"
+  >
     <div
       class="group relative flex items-center gap-1.5 rounded-[16px] border transition-all duration-200 hover:shadow-[0_6px_18px_rgba(0,0,0,0.04)] md:gap-2.5 md:rounded-[var(--todo-radius-soft)] md:hover:shadow-md md:hover:shadow-black/5"
       :class="[
@@ -318,8 +322,6 @@ watch(
         },
         { 'ring-2 ring-primary/20': isDragHovering && hasChildren },
       ]"
-      @dragenter.prevent="handleDragEnter"
-      @dragleave="handleDragLeave"
     >
       <!-- Left: Drag & Expand & Checkbox -->
       <div class="flex items-center gap-1 md:gap-2">
@@ -429,7 +431,14 @@ watch(
         :animation="200"
         ghost-class="opacity-50"
         chosen-class="scale-[1.01]"
-        class="w-full flex flex-col gap-2 md:gap-2.5 min-h-[4px]"
+        class="w-full flex flex-col gap-2 md:gap-2.5"
+        :class="[
+          {
+            'min-h-[40px] rounded-lg border-2 border-dashed border-primary/20 bg-primary/[0.04]':
+              isDragHovering && !hasChildren,
+          },
+          { 'min-h-[4px]': !isDragHovering || hasChildren },
+        ]"
         @start="
           () => {
             hapticSelectionStart()
