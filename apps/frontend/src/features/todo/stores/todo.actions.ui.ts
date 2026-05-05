@@ -10,6 +10,7 @@ type TodoUiDeps = {
   deferredSectionExpandedPreference: Ref<boolean | null>
   isDrawerOpen: Ref<boolean>
   isMaximized: Ref<boolean>
+  isAppFullscreen: Ref<boolean>
   isSilencingToast: Ref<boolean>
   error: Ref<string | null>
   filteredTodos: ComputedRef<Todo[]>
@@ -21,6 +22,7 @@ type TodoUiDeps = {
 export function createTodoUiActions(deps: TodoUiDeps): {
   setDrawerOpen: (open: boolean) => void
   setMaximized: (maximized: boolean) => void
+  setAppFullscreen: (fullscreen: boolean) => void
   toggleDrawer: () => void
   setFilter: (newFilter: FilterType) => void
   setSearchQuery: (query: string) => void
@@ -38,6 +40,10 @@ export function createTodoUiActions(deps: TodoUiDeps): {
 
   function setMaximized(maximized: boolean): void {
     deps.isMaximized.value = maximized
+  }
+
+  function setAppFullscreen(fullscreen: boolean): void {
+    deps.isAppFullscreen.value = fullscreen
   }
 
   function toggleDrawer(): void {
@@ -96,6 +102,7 @@ export function createTodoUiActions(deps: TodoUiDeps): {
   return {
     setDrawerOpen,
     setMaximized,
+    setAppFullscreen,
     toggleDrawer,
     setFilter,
     setSearchQuery,

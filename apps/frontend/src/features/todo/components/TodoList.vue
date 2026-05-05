@@ -140,6 +140,12 @@ const isDeferredSectionExpanded = computed(
   () => store.deferredSectionExpandedPreference ?? activeTodos.value.length === 0,
 )
 
+const dragListClass = computed(() => [
+  store.isAppFullscreen
+    ? 'grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4'
+    : 'flex flex-col gap-2 md:gap-2.5',
+])
+
 function toggleDeferredSection(): void {
   store.setDeferredSectionExpandedPreference(!isDeferredSectionExpanded.value)
 }
@@ -190,7 +196,8 @@ function toggleDeferredSection(): void {
           chosen-class="scale-[1.02]"
           drag-class="rotate-1"
           :class="[
-            'flex flex-col gap-2 md:gap-2.5 transition-all duration-300',
+            ...dragListClass,
+            'transition-all duration-300',
             {
               'min-h-[64px] border-2 border-dashed border-primary/10 rounded-[20px] bg-primary/[0.02] flex items-center justify-center group/dropzone':
                 activeTodos.length === 0 && shouldShowDeferredSection,
@@ -279,7 +286,7 @@ function toggleDeferredSection(): void {
                 ghost-class="opacity-50"
                 chosen-class="scale-[1.02]"
                 drag-class="rotate-1"
-                class="flex flex-col gap-2 md:gap-2.5"
+                :class="dragListClass"
                 :animation="200"
                 @start="store.setDragging(true)"
                 @end="store.setDragging(false)"

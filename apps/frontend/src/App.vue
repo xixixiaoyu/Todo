@@ -69,7 +69,7 @@ const handleDblClick = () => {
         <RouterView />
       </main>
 
-      <BottomTabBar v-if="showTabBar" />
+      <BottomTabBar v-if="showTabBar && !todoStore.isAppFullscreen" />
 
       <ToastProvider />
       <AIAnonymousMigrationDialog />

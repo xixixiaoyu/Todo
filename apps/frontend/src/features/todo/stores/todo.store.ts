@@ -32,6 +32,7 @@ export const useTodoStore = defineStore(
     const error = ref<string | null>(null)
     const isDrawerOpen = ref(false)
     const isMaximized = ref(false)
+    const isAppFullscreen = ref(false)
     const isSilencingToast = ref(false)
     const isTrashLoaded = ref(false)
     const proposedChangeSets = ref<Record<string, ProposedTodoChange[]>>({})
@@ -247,6 +248,7 @@ export const useTodoStore = defineStore(
       sync,
       isDrawerOpen,
       isMaximized,
+      isAppFullscreen,
       isSilencingToast,
       isTrashLoaded,
       isRemoteSource,
@@ -336,6 +338,7 @@ export const useTodoStore = defineStore(
       error,
       isDrawerOpen,
       isMaximized,
+      isAppFullscreen,
       isSilencingToast,
       isTrashLoaded,
       isAllExpanded,
@@ -390,6 +393,7 @@ export const useTodoStore = defineStore(
         'syncOwnerId',
         'isDrawerOpen',
         'isMaximized',
+        'isAppFullscreen',
       ],
     },
   },

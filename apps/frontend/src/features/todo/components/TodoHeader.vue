@@ -16,6 +16,8 @@ import {
   ClipboardPaste,
   Upload,
   Settings,
+  Maximize2,
+  Minimize2,
 } from 'lucide-vue-next'
 import ThemeToggle from './ThemeToggle.vue'
 import ThemeColorPicker from './ThemeColorPicker.vue'
@@ -93,6 +95,7 @@ const handleDblClick = () => {
   if (isWails()) {
     void nativeService.toggleMaximise()
   }
+  todoStore.setAppFullscreen(!todoStore.isAppFullscreen)
 }
 </script>
 
@@ -243,6 +246,19 @@ const handleDblClick = () => {
             <span>{{ t('todo.statsMode') }}</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
+          <DropdownMenuItem
+            class="rounded-lg cursor-pointer"
+            @click="todoStore.setAppFullscreen(!todoStore.isAppFullscreen)"
+          >
+            <component
+              :is="todoStore.isAppFullscreen ? Minimize2 : Maximize2"
+              class="mr-2 h-4 w-4"
+            />
+            <span>{{
+              todoStore.isAppFullscreen ? t('common.minimize') : t('common.maximize')
+            }}</span>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <div class="flex items-center justify-between px-2 py-1">
             <span class="text-[var(--todo-font-meta)] text-muted-foreground">{{
               t('common.theme.label')
@@ -266,6 +282,25 @@ const handleDblClick = () => {
       </DropdownMenu>
 
       <div class="hidden md:flex items-center gap-2">
+        <!-- Fullscreen Toggle -->
+        <Tooltip>
+          <TooltipTrigger as-child>
+            <Button
+              variant="outline"
+              size="icon"
+              class="h-10 w-10 rounded-xl bg-card border-border hover:bg-accent"
+              :aria-label="todoStore.isAppFullscreen ? t('common.minimize') : t('common.maximize')"
+              @click="todoStore.setAppFullscreen(!todoStore.isAppFullscreen)"
+            >
+              <Minimize2 v-if="todoStore.isAppFullscreen" :size="18" />
+              <Maximize2 v-else :size="18" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {{ todoStore.isAppFullscreen ? t('common.minimize') : t('common.maximize') }}
+          </TooltipContent>
+        </Tooltip>
+
         <!-- 偏好设置折叠菜单：主题明暗 / 主题色 / 语言 统一收纳，降低顶栏视觉密度 -->
         <DropdownMenu>
           <DropdownMenuTrigger as-child>

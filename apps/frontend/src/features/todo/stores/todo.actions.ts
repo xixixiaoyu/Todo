@@ -21,6 +21,7 @@ export function createTodoActions(deps: {
   sync: () => Promise<void>
   isDrawerOpen: Ref<boolean>
   isMaximized: Ref<boolean>
+  isAppFullscreen: Ref<boolean>
   isSilencingToast: Ref<boolean>
   isTrashLoaded: Ref<boolean>
   isRemoteSource: Ref<boolean>
@@ -48,6 +49,7 @@ export function createTodoActions(deps: {
   reorderTodos: (orderedIds: string[], parentId?: string | null) => void
   setDrawerOpen: (open: boolean) => void
   setMaximized: (maximized: boolean) => void
+  setAppFullscreen: (fullscreen: boolean) => void
   toggleDrawer: () => void
   setFilter: (newFilter: FilterType) => void
   setSearchQuery: (query: string) => void
@@ -84,6 +86,7 @@ export function createTodoActions(deps: {
     deferredSectionExpandedPreference: deps.deferredSectionExpandedPreference,
     isDrawerOpen: deps.isDrawerOpen,
     isMaximized: deps.isMaximized,
+    isAppFullscreen: deps.isAppFullscreen,
     isSilencingToast: deps.isSilencingToast,
     error: deps.error,
     filteredTodos: deps.filteredTodos,
@@ -105,6 +108,7 @@ export function createTodoActions(deps: {
     ...mutationActions,
     ...aiActions,
     ...uiActions,
+    setAppFullscreen: uiActions.setAppFullscreen,
     setDragging: (dragging: boolean) => (deps.isDragging.value = dragging),
   }
 }

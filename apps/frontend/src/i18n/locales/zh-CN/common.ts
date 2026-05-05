@@ -40,6 +40,8 @@ export const common = {
   toggleLanguage: '切换语言',
   expand: '展开',
   collapse: '收起',
+  maximize: '全屏',
+  minimize: '退出全屏',
   error: {
     requestFailed: '请求失败',
     networkError: '网络错误，请稍后再试',
