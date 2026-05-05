@@ -242,6 +242,8 @@ export function buildTodoChartOptions(params: {
       {
         type: 'tree',
         data: treeData,
+        roam: true,
+        scaleLimit: { min: 0.3, max: 3 },
         initialTreeDepth: -1,
         top: '10%',
         left: '18%',
