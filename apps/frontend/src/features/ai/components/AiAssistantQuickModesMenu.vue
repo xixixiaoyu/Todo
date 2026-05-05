@@ -117,7 +117,7 @@ const handleActivate = (mode: { active: boolean; toggle: () => void }) => {
           :aria-label="t('ai.modes')"
           :title="t('ai.modes')"
           class="inline-flex h-8 w-6 items-center justify-center rounded-full border border-primary/10 bg-primary/5 text-primary/70 transition-all duration-300 hover:bg-primary/15 hover:text-primary md:h-9 md:w-7 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-          @mouseenter="hover.clear"
+          @mouseenter="hover.onMouseEnter"
         >
           <ChevronDown
             :size="12"
