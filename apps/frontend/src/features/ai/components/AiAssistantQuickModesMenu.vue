@@ -89,26 +89,26 @@ const handleActivate = (mode: { active: boolean; toggle: () => void }) => {
 
 <template>
   <div
-    class="flex items-center p-1 bg-muted/40 rounded-2xl border border-border/40 transition-all duration-300 hover:bg-muted/60 hover:border-border/60"
+    class="flex items-center p-0.5 bg-muted/40 rounded-[14px] border border-border/40 transition-all duration-300 hover:bg-muted/60 hover:border-border/60"
   >
     <!-- 主按钮：左侧主体 -->
     <button
       type="button"
-      class="h-8 md:h-9 flex items-center gap-2 px-3 rounded-xl text-muted-foreground hover:text-primary hover:bg-background shadow-none transition-all duration-300 group/ai"
+      class="h-7 md:h-8 flex items-center gap-1.5 px-2.5 rounded-[10px] text-muted-foreground hover:text-primary hover:bg-background shadow-none transition-all duration-300 group/ai"
       @click.stop="openAssistant"
     >
       <div
-        class="flex items-center justify-center w-5 h-5 md:w-6 md:h-6 rounded-lg bg-primary/10 text-primary transition-all duration-300 group-hover/ai:bg-primary/20"
+        class="flex items-center justify-center w-4.5 h-4.5 md:w-5 md:h-5 rounded-md bg-primary/10 text-primary transition-all duration-300 group-hover/ai:bg-primary/20"
       >
-        <Clover :size="14" class="md:h-4 md:w-4" />
+        <Clover :size="12" class="md:h-3.5 md:w-3.5" />
       </div>
-      <span class="text-xs md:text-[13px] font-medium tracking-tight">
+      <span class="text-[11px] md:text-xs font-semibold tracking-tight">
         {{ t('ai.assistant') }}
       </span>
     </button>
 
     <!-- 垂直分割线 -->
-    <div class="mx-0.5 w-px h-4 bg-border/60"></div>
+    <div class="mx-0.5 w-px h-3 bg-border/60"></div>
 
     <!-- 辅助 chevron：右侧触发区域 -->
     <DropdownMenu v-model:open="open" :modal="false">
@@ -117,12 +117,12 @@ const handleActivate = (mode: { active: boolean; toggle: () => void }) => {
           type="button"
           :aria-label="t('ai.modes')"
           :title="t('ai.modes')"
-          class="w-7 h-8 md:w-8 md:h-9 flex items-center justify-center rounded-xl text-muted-foreground hover:text-primary hover:bg-background transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          class="w-6 h-7 md:w-7 md:h-8 flex items-center justify-center rounded-[10px] text-muted-foreground hover:text-primary hover:bg-background transition-all duration-300 focus:outline-none"
           @mouseenter="hover.onMouseEnter"
           @mouseleave="hover.onMouseLeave"
         >
           <ChevronDown
-            :size="14"
+            :size="12"
             class="transition-transform duration-500"
             :class="{ 'rotate-180': open }"
           />
