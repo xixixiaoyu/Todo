@@ -401,6 +401,59 @@ describe('AISettingsDialog', () => {
     expect(syncConfigToPreset).toHaveBeenCalledWith('active-preset-id')
   })
 
+  it('enables save-as-preset when only thinking effort differs', async () => {
+    mockPresets.value = [
+      {
+        id: 'preset-1',
+        name: 'Preset 1',
+        baseUrl: 'https://api.example.com',
+        apiKey: 'test-key',
+        model: 'test-model',
+        systemPrompt: 'test-prompt',
+        temperature: 0.7,
+        thinkingEffort: 'high',
+        todoAssistant: false,
+        skillIds: [],
+      },
+    ]
+
+    const wrapper = mount(AISettingsDialog, {
+      props: {
+        modelValue: true,
+      },
+      global: {
+        stubs: {
+          teleport: true,
+          'transition-root': {
+            template: '<div><slot /></div>',
+          },
+          'transition-child': {
+            template: '<div><slot /></div>',
+          },
+        },
+      },
+    })
+
+    const saveButtonBefore = wrapper
+      .findAll('button')
+      .find((button) => button.text() === 'ai.saveAsPreset')
+    expect(saveButtonBefore).toBeTruthy()
+    expect(saveButtonBefore!.attributes('disabled')).toBeDefined()
+
+    const maxEffortButton = wrapper
+      .findAll('button')
+      .find((button) => button.text().includes('ai.reasoningEffortMax'))
+    expect(maxEffortButton).toBeTruthy()
+    await maxEffortButton!.trigger('click')
+    await wrapper.vm.$nextTick()
+
+    const saveButtonAfter = wrapper
+      .findAll('button')
+      .find((button) => button.text() === 'ai.saveAsPreset')
+    expect(saveButtonAfter).toBeTruthy()
+    expect(saveButtonAfter!.attributes('disabled')).toBeUndefined()
+  })
+
   it('auto-saves preset when closing in edit mode', async () => {
     const wrapper = mount(AISettingsDialog, {
       props: {
