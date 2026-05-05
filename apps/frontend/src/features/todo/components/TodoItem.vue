@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, useId } from 'vue'
+import { ref, computed, watch, useId, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import draggable from 'vuedraggable'
 import { ChevronDown, ChevronRight, GripVertical } from 'lucide-vue-next'
@@ -53,6 +53,10 @@ const emit = defineEmits<{
 const isBreakingDown = ref(false)
 const isAddingChild = ref(false)
 const showTooltip = ref(false)
+const isDragHovering = ref(false)
+const dragEnterCount = ref(0)
+const dragExpandTimer = ref<ReturnType<typeof setTimeout> | null>(null)
+const DRAG_EXPAND_DELAY = 500
 
 // --- Computed ---
 const isChild = computed(() => (props.level ?? 0) > 0)
@@ -187,8 +191,46 @@ function handleSubtaskAdded() {
   }
 }
 
+function handleDragEnter() {
+  if (!store.isDragging) return
+  dragEnterCount.value++
+
+  if (!isDragHovering.value) {
+    isDragHovering.value = true
+  }
+
+  // 悬停时延迟展开已折叠的父节点，避免拖拽经过时误触发
+  if (hasChildren.value && !isExpanded.value && !dragExpandTimer.value) {
+    dragExpandTimer.value = setTimeout(() => {
+      dragExpandTimer.value = null
+      store.toggleTodoExpansion(props.todo.id)
+    }, DRAG_EXPAND_DELAY)
+  }
+}
+
+function handleDragLeave() {
+  dragEnterCount.value--
+  void nextTick(() => {
+    if (dragEnterCount.value <= 0) {
+      dragEnterCount.value = 0
+      isDragHovering.value = false
+      if (dragExpandTimer.value) {
+        clearTimeout(dragExpandTimer.value)
+        dragExpandTimer.value = null
+      }
+    }
+  })
+}
+
 function handleDragEnd() {
   store.setDragging(false)
+  // 清理悬停状态
+  isDragHovering.value = false
+  dragEnterCount.value = 0
+  if (dragExpandTimer.value) {
+    clearTimeout(dragExpandTimer.value)
+    dragExpandTimer.value = null
+  }
   // Auto-expand collapsed parent when a child is dragged into it
   if (!isExpanded.value && hasChildren.value) {
     store.toggleTodoExpansion(props.todo.id)
@@ -207,7 +249,7 @@ watch(
 
 // 使用 GSAP 驱动的高性能高度展开动画，替代简单的 v-show
 watch(
-  [() => isExpanded.value || store.isDragging, subtaskListRef],
+  [() => isExpanded.value || isDragHovering.value, subtaskListRef],
   ([shouldShow, el], [_, oldEl]) => {
     if (!el) return
 
@@ -274,7 +316,10 @@ watch(
           'border-destructive/40 bg-destructive/[0.04] opacity-70 grayscale-[0.5]':
             todo.isProposedDelete,
         },
+        { 'ring-2 ring-primary/20': isDragHovering && hasChildren },
       ]"
+      @dragenter.prevent="handleDragEnter"
+      @dragleave="handleDragLeave"
     >
       <!-- Left: Drag & Expand & Checkbox -->
       <div class="flex items-center gap-1 md:gap-2">
