@@ -10,7 +10,6 @@ import {
   MessageSquare,
 } from 'lucide-vue-next'
 import AiLuminaIcon from '@/features/ai/components/AiLuminaIcon.vue'
-import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -88,37 +87,42 @@ const handleActivate = (mode: { active: boolean; toggle: () => void }) => {
 </script>
 
 <template>
-  <div class="flex items-center gap-1">
-    <!-- 主按钮：沿用既有独立胶囊样式 -->
-    <Button
-      variant="ghost"
-      size="sm"
-      class="h-8 rounded-[18px] border border-primary/15 bg-primary/10 px-3 text-primary shadow-none transition-all duration-300 gap-1.5 font-semibold hover:bg-primary/15 md:h-9 md:rounded-xl md:px-3 group/ai touch-manipulation"
+  <div
+    class="flex items-center p-1 bg-muted/40 rounded-2xl border border-border/40 transition-all duration-300 hover:bg-muted/60 hover:border-border/60"
+  >
+    <!-- 主按钮：左侧主体 -->
+    <button
+      type="button"
+      class="h-8 md:h-9 flex items-center gap-2 px-3 rounded-xl text-muted-foreground hover:text-primary hover:bg-background shadow-none transition-all duration-300 group/ai"
       @click.stop="openAssistant"
     >
-      <Clover
-        :size="14"
-        class="md:h-4 md:w-4 transition-transform duration-300 group-hover/ai:rotate-12 group-hover/ai:scale-110"
-      />
-      <span class="text-[var(--todo-font-meta)] tracking-[0.02em]">
+      <div
+        class="flex items-center justify-center w-5 h-5 md:w-6 md:h-6 rounded-lg bg-primary/10 text-primary transition-all duration-300 group-hover/ai:bg-primary/20"
+      >
+        <Clover :size="14" class="md:h-4 md:w-4" />
+      </div>
+      <span class="text-xs md:text-[13px] font-medium tracking-tight">
         {{ t('ai.assistant') }}
       </span>
-    </Button>
+    </button>
 
-    <!-- 辅助 chevron：窄胶囊，低饱和，提示「有菜单」 -->
+    <!-- 垂直分割线 -->
+    <div class="mx-0.5 w-px h-4 bg-border/60"></div>
+
+    <!-- 辅助 chevron：右侧触发区域 -->
     <DropdownMenu v-model:open="open" :modal="false">
       <DropdownMenuTrigger as-child>
         <button
           type="button"
           :aria-label="t('ai.modes')"
           :title="t('ai.modes')"
-          class="inline-flex h-8 w-6 items-center justify-center rounded-full border border-primary/10 bg-primary/5 text-primary/70 transition-all duration-300 hover:bg-primary/15 hover:text-primary md:h-9 md:w-7 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          class="w-7 h-8 md:w-8 md:h-9 flex items-center justify-center rounded-xl text-muted-foreground hover:text-primary hover:bg-background transition-all duration-300 focus:outline-none"
           @mouseenter="hover.onMouseEnter"
           @mouseleave="hover.onMouseLeave"
         >
           <ChevronDown
-            :size="12"
-            class="transition-transform duration-300"
+            :size="14"
+            class="transition-transform duration-500"
             :class="{ 'rotate-180': open }"
           />
         </button>
