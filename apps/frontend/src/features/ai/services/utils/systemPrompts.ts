@@ -353,11 +353,13 @@ function formatSkillRuntimeAvailabilityPayload(items: AISkillRuntimeAvailability
 
 function buildAssistantRequestFields(message: ChatMessage): {
   tool_calls?: ToolCall[]
+  reasoning_content?: string
 } {
   return {
     ...(message.tool_calls && message.tool_calls.length > 0
       ? { tool_calls: message.tool_calls }
       : {}),
+    ...(message.thinkingContent ? { reasoning_content: message.thinkingContent } : {}),
   }
 }
 
@@ -473,6 +475,9 @@ export function sanitizeRequestMessages(
       role: message.role,
       content: sanitizeMessageContent(message.content),
       ...(toolCalls ? { tool_calls: toolCalls } : {}),
+      ...(message.role === 'assistant' && message.reasoning_content
+        ? { reasoning_content: message.reasoning_content }
+        : {}),
     }
   })
 }

@@ -150,7 +150,7 @@ describe('aiService - Message Cleaning', () => {
     const toolMsg = sentMessages.find((message) => message.role === 'tool')
 
     expect(assistantMsg).toBeDefined()
-    expect(assistantMsg?.reasoning_content).toBeUndefined()
+    expect(assistantMsg?.reasoning_content).toBe('private chain of thought')
     expect(assistantMsg?.reasoning_details).toBeUndefined()
     expect(assistantMsg?.id).toBeUndefined()
     expect(assistantMsg?.createdAt).toBeUndefined()
