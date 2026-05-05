@@ -206,7 +206,7 @@ const handleDblClick = () => {
       </div>
 
       <!-- More Actions Dropdown for Mobile -->
-      <DropdownMenu>
+      <DropdownMenu :modal="false">
         <DropdownMenuTrigger as-child>
           <Button
             variant="ghost"
@@ -302,7 +302,7 @@ const handleDblClick = () => {
         </Tooltip>
 
         <!-- 偏好设置折叠菜单：主题明暗 / 主题色 / 语言 统一收纳，降低顶栏视觉密度 -->
-        <DropdownMenu>
+        <DropdownMenu :modal="false">
           <DropdownMenuTrigger as-child>
             <Button
               variant="outline"
