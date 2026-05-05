@@ -60,6 +60,7 @@ describe('useAIConfig - Core', () => {
         temperature: 0.7,
         systemPrompt: 'Test prompt',
         thinkingMode: 'enabled' as const,
+        thinkingEffort: 'max' as const,
         todoAssistant: true,
         discussionMode: true,
         discussionModelIds: ['1', '2'],
@@ -77,6 +78,23 @@ describe('useAIConfig - Core', () => {
         ...DEFAULT_CONFIG,
         ...savedConfig,
       })
+    })
+
+    it('should normalize legacy reasoning effort values to high', () => {
+      localStorage.setItem(
+        'ai-config',
+        JSON.stringify({
+          baseUrl: 'https://api.test.com',
+          apiKey: 'test-key',
+          model: 'test-model',
+          thinkingEffort: 'medium',
+        }),
+      )
+
+      _resetAIConfig()
+      const { config } = useAIConfig()
+
+      expect(config.value.thinkingEffort).toBe('high')
     })
 
     it('should merge saved config with defaults', () => {
@@ -426,6 +444,26 @@ describe('useAIConfig - Core', () => {
 
       expect(presets.value).toHaveLength(1)
       expect(presets.value[0].name).toBe('Valid')
+    })
+
+    it('should preserve max reasoning effort when importing presets', () => {
+      const { presets, importPresets } = useAIConfig()
+      const importData = [
+        {
+          name: 'Max Reasoning',
+          baseUrl: 'https://max.example.com',
+          apiKey: 'newkey',
+          model: 'newmodel',
+          systemPrompt: 'newprompt',
+          temperature: 0.7,
+          thinkingEffort: 'max',
+          todoAssistant: true,
+        },
+      ]
+
+      importPresets(JSON.stringify(importData))
+
+      expect(presets.value[0]?.thinkingEffort).toBe('max')
     })
   })
 
@@ -1130,6 +1168,45 @@ describe('useAIConfig - Core', () => {
       expect(p1.baseUrl).toBe('https://api.remote.com')
       // But local apiKey is preserved
       expect(p1.apiKey).toBe('sk-local-key')
+    })
+
+    it('should normalize legacy remote reasoning effort values to high', async () => {
+      const { fetchPresets, pushPresets } = await import('@/features/ai/services/aiSyncService')
+      vi.mocked(fetchPresets).mockResolvedValue([
+        {
+          id: 'p1',
+          name: 'Legacy Remote Preset',
+          baseUrl: 'https://api.remote.com',
+          model: 'remote-model',
+          systemPrompt: '',
+          temperature: 0.7,
+          thinkingEffort: 'medium' as unknown as 'high',
+          todoAssistant: false,
+          skillIds: [],
+          updatedAt: '2025-08-01T00:00:00.000Z',
+        },
+      ])
+      vi.mocked(pushPresets).mockResolvedValue(undefined)
+
+      const { presets } = useAIConfig()
+      presets.value = [
+        {
+          id: 'p1',
+          name: 'Local Preset',
+          baseUrl: 'https://api.local.com',
+          model: 'local-model',
+          systemPrompt: '',
+          temperature: 0.7,
+          thinkingEffort: 'max',
+          todoAssistant: false,
+          apiKey: 'sk-local-key',
+          updatedAt: '2025-07-01T00:00:00.000Z',
+        },
+      ]
+
+      await syncPresetsFromServer()
+
+      expect(presets.value[0]?.thinkingEffort).toBe('high')
     })
 
     it('should keep local data when local updatedAt is newer', async () => {

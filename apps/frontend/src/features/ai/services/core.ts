@@ -351,7 +351,7 @@ export async function fetchNonStreamResponse(
     model: string
     temperature?: number
     top_p?: number
-    thinkingEffort?: 'low' | 'medium' | 'high'
+    thinkingEffort?: 'high' | 'max'
   },
   messages: AIChatCompletionMessage[],
   thinkingMode?: string,

@@ -131,6 +131,14 @@ describe('AIPresetSyncSchema', () => {
     const result = AIPresetSyncSchema.safeParse({ ...validPreset, baseUrl: 'not-a-url' })
     expect(result.success).toBe(false)
   })
+
+  it('should accept preset with max reasoning effort', () => {
+    const result = AIPresetSyncSchema.safeParse({
+      ...validPreset,
+      thinkingEffort: 'max',
+    })
+    expect(result.success).toBe(true)
+  })
 })
 
 describe('AIPresetSyncListSchema', () => {

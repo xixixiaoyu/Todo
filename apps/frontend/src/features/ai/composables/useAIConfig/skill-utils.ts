@@ -6,13 +6,19 @@ import {
   isTrustedSkillSourceUrl,
 } from '@/features/ai/services/aiService'
 import type { AISkill } from '@/features/ai/services/types'
-import type { AIConfig, AIPreset, SkillArchivePayload } from './types'
+import type { AIConfig, AIPreset, ReasoningEffort, SkillArchivePayload } from './types'
 import { MAX_SKILL_FILE_BYTES, MAX_SKILL_ARCHIVE_BYTES } from './types'
 
 // ─── Encoding Utilities ────────────────────────────────────────────
 
 const utf8Encoder = new TextEncoder()
 const utf8Decoder = new TextDecoder()
+
+function normalizeReasoningEffort(value: unknown): ReasoningEffort | undefined {
+  if (value === 'max') return 'max'
+  if (value === 'high') return 'high'
+  return undefined
+}
 
 export function encodeUtf8(content: string): Uint8Array {
   return utf8Encoder.encode(content)
@@ -446,12 +452,7 @@ export function normalizePreset(raw: unknown): AIPreset | null {
   const model = typeof item.model === 'string' ? item.model : ''
   const systemPrompt = typeof item.systemPrompt === 'string' ? item.systemPrompt : ''
   const temperature = typeof item.temperature === 'number' ? item.temperature : 0.6
-  const thinkingEffort =
-    item.thinkingEffort === 'low' ||
-    item.thinkingEffort === 'medium' ||
-    item.thinkingEffort === 'high'
-      ? item.thinkingEffort
-      : undefined
+  const thinkingEffort = normalizeReasoningEffort(item.thinkingEffort)
   const todoAssistant = !!item.todoAssistant
 
   if (!id || !name || !baseUrl || !model) return null

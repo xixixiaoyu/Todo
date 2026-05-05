@@ -6,7 +6,7 @@ import {
   migrateLegacySkillRuntime,
 } from '@/features/ai/services/aiService'
 import type { AISkill } from '@/features/ai/services/types'
-import type { AIConfig, AIPreset, AssistantMode } from './types'
+import type { AIConfig, AIPreset, AssistantMode, ReasoningEffort } from './types'
 import { AI_THINKING_MODE_STORAGE_KEY, STORAGE_KEY } from './types'
 import {
   normalizeIdList,
@@ -86,6 +86,10 @@ const DEFAULT_CONFIG: AIConfig = {
   novelProtagonistHint: '',
 }
 
+function normalizeReasoningEffort(value: unknown): ReasoningEffort {
+  return value === 'max' ? 'max' : 'high'
+}
+
 // ─── Load Config ───────────────────────────────────────────────────
 
 function loadConfig(): AIConfig {
@@ -96,7 +100,7 @@ function loadConfig(): AIConfig {
       return {
         ...DEFAULT_CONFIG,
         ...parsed,
-        thinkingEffort: 'high',
+        thinkingEffort: normalizeReasoningEffort(parsed.thinkingEffort),
         discussionModelIds: normalizeIdList(parsed.discussionModelIds),
         discussionPrimaryModelId:
           typeof parsed.discussionPrimaryModelId === 'string' &&
@@ -279,7 +283,7 @@ export function useAIConfig() {
       model: preset.model,
       systemPrompt: preset.systemPrompt,
       temperature: preset.temperature,
-      thinkingEffort: preset.thinkingEffort || 'high',
+      thinkingEffort: normalizeReasoningEffort(preset.thinkingEffort),
       todoAssistant: preset.todoAssistant,
       skillIds: presetSkillIds,
       novelGenre: preset.novelGenre ?? null,
@@ -331,7 +335,7 @@ export function useAIConfig() {
           model: updatedPreset.model,
           systemPrompt: updatedPreset.systemPrompt,
           temperature: updatedPreset.temperature,
-          thinkingEffort: updatedPreset.thinkingEffort || 'high',
+          thinkingEffort: normalizeReasoningEffort(updatedPreset.thinkingEffort),
           todoAssistant: updatedPreset.todoAssistant,
           skillIds: presetSkillIds,
           novelGenre: updatedPreset.novelGenre ?? null,
@@ -409,7 +413,7 @@ export function useAIConfig() {
       model: config.value.model,
       systemPrompt: config.value.systemPrompt,
       temperature: config.value.temperature,
-      thinkingEffort: 'high',
+      thinkingEffort: config.value.thinkingEffort,
       todoAssistant: config.value.todoAssistant,
       skillIds: config.value.skillIds,
       novelGenre: config.value.novelGenre,
@@ -460,9 +464,7 @@ export function useAIConfig() {
           const apiKey = typeof raw.apiKey === 'string' ? raw.apiKey : ''
           const temperature = typeof raw.temperature === 'number' ? raw.temperature : 0.6
           const thinkingEffort =
-            raw.thinkingEffort === 'low' ||
-            raw.thinkingEffort === 'medium' ||
-            raw.thinkingEffort === 'high'
+            raw.thinkingEffort === 'high' || raw.thinkingEffort === 'max'
               ? raw.thinkingEffort
               : undefined
           return {
@@ -843,6 +845,7 @@ function mergePresets(remote: AIPresetSync[], local: AIPreset[]): AIPreset[] {
       // 远端无此项，或远端版本更新：采用远端数据，但保留本地 apiKey
       mergedMap.set(r.id, {
         ...r,
+        thinkingEffort: normalizeReasoningEffort(r.thinkingEffort),
         apiKey: existing?.apiKey ?? '',
       })
     }

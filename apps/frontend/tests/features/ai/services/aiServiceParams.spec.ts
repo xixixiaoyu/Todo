@@ -116,7 +116,7 @@ describe('aiService - Request Parameters', () => {
       expect(requestBody.reasoning).toEqual({ enabled: true, effort: 'high' })
     })
 
-    it('should allow overriding reasoning effort', async () => {
+    it('should allow overriding reasoning effort to max', async () => {
       const onChunk = vi.fn()
       const encoder = new TextEncoder()
 
@@ -140,15 +140,15 @@ describe('aiService - Request Parameters', () => {
 
       await getAIStreamResponse([], onChunk, undefined, undefined, {
         thinkingMode: 'enabled',
-        thinkingEffort: 'low',
+        thinkingEffort: 'max',
       })
 
       expect(fetchMock).toHaveBeenCalledTimes(1)
       const callArgs = fetchMock.mock.calls[0]
       const requestBody = JSON.parse(callArgs[1]?.body as string)
 
-      expect(requestBody.reasoning_effort).toBe('low')
-      expect(requestBody.reasoning).toEqual({ enabled: true, effort: 'low' })
+      expect(requestBody.reasoning_effort).toBe('max')
+      expect(requestBody.reasoning).toEqual({ enabled: true, effort: 'max' })
     })
 
     it('should preserve tool calls while stripping assistant reasoning fields', async () => {
