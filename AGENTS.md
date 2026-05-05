@@ -110,7 +110,7 @@ import { cn } from '@/lib/utils'
 - **动效**：必须使用 `useGsap`，动画包裹在 `ctx.add(() => { ... })` 内确保自动清理
 - **3D**：Three.js 实现高性能 3D 动效，兼顾渲染性能与电力效率
 - **样式**：Tailwind 原子化优先，动态 class 通过 `cn()` 合并
-- **A11y**：可键盘操作、可聚焦、可读 label，状态变化有可感知反馈
+- **A11y**：适度即可——保留 `focus-visible` 焦点环与无视觉文本元素的 `sr-only`/`aria-label`，不要求显式键盘导航
 
 ### 4.4 后端（NestJS 11 + Prisma + Redis + BullMQ）
 
