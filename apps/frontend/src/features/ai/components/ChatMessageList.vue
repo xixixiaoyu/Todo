@@ -72,9 +72,9 @@ const {
   isUserScrolledUp,
   isScrollable,
   scrollToBottom,
-  streamingScroll,
   setStreamingMode,
   enableAutoScroll,
+  streamingScroll,
 } = useSmartScroll({
   scrollContainer: containerRef,
   atBottomThreshold: 50,
@@ -198,6 +198,15 @@ watch(
     const isNewMessage = newLen > (oldLen || 0)
     if (isNewMessage) {
       const lastMsg = props.messages[newLen - 1]
+
+      // 关键：先重置粘附状态，再进入流式模式。
+      // 否则当用户此前上滑过（isSticking=false）时，setStreamingMode
+      // 会跳过 instant scroll，而紧接着到达的流式内容也会因
+      // isSticking=false 被 streamingScroll 中的决策函数阻塞。
+      isSticking.value = true
+      isAutoScrollEnabled.value = true
+      isUserScrolledUp.value = false
+
       setStreamingMode(!!lastMsg?.isStreaming)
 
       void nextTick(() => {
@@ -215,7 +224,8 @@ watch(
 
     setStreamingMode(!!isStreaming)
     if (isStreaming) {
-      streamingScroll()
+      // 流式开始时也直接用 instant scroll，确保立即定位
+      scrollToBottom('instant')
     } else if (props.messages.length > 0) {
       // 流式结束，确保最后一次平滑滚动
       setTimeout(() => {
@@ -235,7 +245,10 @@ watch(
 
     const lastMsg = props.messages[props.messages.length - 1]
     if (lastMsg?.isStreaming && newContent !== oldContent) {
-      streamingScroll()
+      // 使用 nextTick 确保 DOM 已更新，内容高度已反映到 scrollHeight
+      void nextTick(() => {
+        streamingScroll()
+      })
     }
   },
 )

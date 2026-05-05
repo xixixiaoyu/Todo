@@ -45,7 +45,7 @@ export function computeSmartScrollDecision(input: {
       }
     case 'content-change':
       return {
-        shouldScroll: input.atBottom && input.autoEnabled,
+        shouldScroll: (input.atBottom || input.sticking) && input.autoEnabled,
         instant: true,
       }
     case 'resize':
