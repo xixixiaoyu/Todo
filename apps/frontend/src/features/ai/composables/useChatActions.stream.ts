@@ -135,7 +135,7 @@ export function finalizeCompletedResponse(params: {
   currentTodoActions: Ref<ProposedTodoChange[]>
   sessions: Ref<ChatSession[]>
   generationSessionId: string | null
-  addSessionMessage: (sessionId: string, message: ChatMessage) => void
+  addSessionMessage: (sessionId: string, message: ChatMessage, immediate?: boolean) => void
   extractAndStoreMemories: (history: ChatMessage[]) => Promise<void> | void
   isMemoryEnabled: Ref<boolean>
   isGenerating: Ref<boolean>
@@ -217,7 +217,7 @@ export function finalizeCompletedResponse(params: {
   })
 
   if (params.generationSessionId) {
-    params.addSessionMessage(params.generationSessionId, assistantMessage)
+    params.addSessionMessage(params.generationSessionId, assistantMessage, true)
   }
 
   if (params.isMemoryEnabled.value && params.generationSessionId) {
@@ -303,12 +303,10 @@ export function finalizeCompletedResponse(params: {
     }
   }
 
-  // 若即将自动补章，保持 isGenerating 为 true，避免 UI 在“已完成 → 再次发起”之间闪动
-  const willAutoContinueNovel =
-    params.aiConfig.assistantMode === 'novel' && novelBatchRemainingRef.value > 0
-
+  // 重置流式状态；不保持 isGenerating 为 true，
+  // 否则 sendMessage 的顶部守卫 (isGenerating && !isToolIteration) 会拦截后续自动补章调用
   params.resetStreamingState()
-  params.isGenerating.value = willAutoContinueNovel
+  params.isGenerating.value = false
 }
 
 function finalizeAbortedResponse(params: {
@@ -318,7 +316,7 @@ function finalizeAbortedResponse(params: {
   currentReasoningDetails: Ref<string>
   currentDiscussionSteps: Ref<DiscussionStep[]>
   generationSessionId: string | null
-  addSessionMessage: (sessionId: string, message: ChatMessage) => void
+  addSessionMessage: (sessionId: string, message: ChatMessage, immediate?: boolean) => void
   resetStreamingState: () => void
   isGenerating: Ref<boolean>
   t: (key: string, params?: Record<string, unknown>) => string
@@ -332,7 +330,7 @@ function finalizeAbortedResponse(params: {
       discussionSteps: params.currentDiscussionSteps.value,
       t: params.t,
     })
-    params.addSessionMessage(params.generationSessionId, assistantMessage)
+    params.addSessionMessage(params.generationSessionId, assistantMessage, true)
   }
 
   params.resetStreamingState()
@@ -350,7 +348,7 @@ export function createStreamChunkHandler(params: {
   currentTodoActions: Ref<ProposedTodoChange[]>
   isGenerating: Ref<boolean>
   sessions: Ref<ChatSession[]>
-  addSessionMessage: (sessionId: string, message: ChatMessage) => void
+  addSessionMessage: (sessionId: string, message: ChatMessage, immediate?: boolean) => void
   extractAndStoreMemories: (history: ChatMessage[]) => Promise<void> | void
   isMemoryEnabled: Ref<boolean>
   resetStreamingState: () => void

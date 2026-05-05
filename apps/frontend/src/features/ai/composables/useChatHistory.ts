@@ -74,15 +74,17 @@ function loadSessions(): void {
     saveTimer = null
   }
 
-  sessions.value = []
-  currentSessionId.value = null
-  lastActiveSessionId.value = null
+  // 先计算新值，再原子赋值，避免中间空状态导致 chatHistory 暂时返回 []、
+  // 使得 messages computed 在 isGenerating 为 true 时只含流式临时消息而丢失用户消息
+  let newSessions: ChatSession[] = []
+  let newCurrentId: string | null = null
+  let newLastId: string | null = null
 
   try {
     const saved = getAiScopedStorageItem(SESSIONS_STORAGE_KEY)
     if (saved) {
       const parsed = JSON.parse(saved)
-      sessions.value = parsed.map((s: ChatSession) => ({
+      newSessions = parsed.map((s: ChatSession) => ({
         ...s,
         createdAt: new Date(s.createdAt),
         updatedAt: new Date(s.updatedAt),
@@ -96,28 +98,33 @@ function loadSessions(): void {
           images: msg.images,
         })),
       }))
-    }
 
-    // 加载当前会话 ID
-    const savedCurrentId = getAiScopedStorageItem(CURRENT_SESSION_KEY)
-    if (savedCurrentId && sessions.value.some((s) => s.id === savedCurrentId)) {
-      currentSessionId.value = savedCurrentId
-    } else if (sessions.value.length > 0) {
-      // 回退逻辑：优先选择最近更新的会话
-      const latestSession = [...sessions.value].sort(
-        (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime(),
-      )[0]
-      currentSessionId.value = latestSession.id
-    }
+      // 加载当前会话 ID
+      const savedCurrentId = getAiScopedStorageItem(CURRENT_SESSION_KEY)
+      if (savedCurrentId && newSessions.some((s) => s.id === savedCurrentId)) {
+        newCurrentId = savedCurrentId
+      } else if (newSessions.length > 0) {
+        // 回退逻辑：优先选择最近更新的会话
+        const latestSession = [...newSessions].sort(
+          (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime(),
+        )[0]
+        newCurrentId = latestSession.id
+      }
 
-    // 加载上一个激活的会话 ID
-    const savedLastId = getAiScopedStorageItem(LAST_ACTIVE_SESSION_KEY)
-    if (savedLastId && sessions.value.some((s) => s.id === savedLastId)) {
-      lastActiveSessionId.value = savedLastId
+      // 加载上一个激活的会话 ID
+      const savedLastId = getAiScopedStorageItem(LAST_ACTIVE_SESSION_KEY)
+      if (savedLastId && newSessions.some((s) => s.id === savedLastId)) {
+        newLastId = savedLastId
+      }
     }
-  } catch {
-    console.warn('加载会话历史失败')
+  } catch (e) {
+    console.warn('加载会话历史失败', e)
   }
+
+  // 原子赋值：仅在 currentSessionId 实际变化时，watch 才会触发 resetStreamingState
+  sessions.value = newSessions
+  currentSessionId.value = newCurrentId
+  lastActiveSessionId.value = newLastId
 }
 
 /**
@@ -321,8 +328,15 @@ export function useChatHistory() {
 
   /**
    * 更新会话消息
+   * @param sessionId 会话 ID
+   * @param messages 消息列表
+   * @param immediate 是否立即保存到存储
    */
-  function updateSessionMessages(sessionId: string, messages: ChatMessage[]): void {
+  function updateSessionMessages(
+    sessionId: string,
+    messages: ChatMessage[],
+    immediate = false,
+  ): void {
     const session = sessions.value.find((s) => s.id === sessionId)
     if (!session) return
 
@@ -338,17 +352,21 @@ export function useChatHistory() {
         session.title = title.slice(0, 100) // 限制标题长度，防止极端情况
       }
     }
+
+    if (immediate) {
+      saveSessions(true)
+    }
   }
 
   /**
    * 向指定会话添加单条消息
    */
-  function addSessionMessage(sessionId: string, message: ChatMessage): void {
+  function addSessionMessage(sessionId: string, message: ChatMessage, immediate = false): void {
     const session = sessions.value.find((s) => s.id === sessionId)
     if (!session) return
 
     const newMessages = [...session.messages, message]
-    updateSessionMessages(sessionId, newMessages)
+    updateSessionMessages(sessionId, newMessages, immediate)
   }
 
   function updateSessionContextSummary(

@@ -201,7 +201,7 @@ describe('finalizeCompletedResponse — novel auto-continue', () => {
   })
 
   describe('isGenerating flag for novel auto-continue', () => {
-    it('keeps isGenerating true when more novel chapters remain', () => {
+    it('sets isGenerating false when more novel chapters remain (allows auto-continue through guard)', () => {
       novelBatchRemaining.value = 3
       const isGenerating = ref(true)
       const currentAIResponse = ref('[NOVEL_CHAPTER_START]\nChapter 1')
@@ -215,7 +215,8 @@ describe('finalizeCompletedResponse — novel auto-continue', () => {
         }),
       )
 
-      expect(isGenerating.value).toBe(true)
+      // isGenerating 始终设为 false，避免 sendMessage 顶部守卫拦截后续自动补章
+      expect(isGenerating.value).toBe(false)
     })
 
     it('sets isGenerating false when last novel chapter completes', () => {
@@ -253,7 +254,7 @@ describe('finalizeCompletedResponse — novel auto-continue', () => {
       expect(isGenerating.value).toBe(false)
     })
 
-    it('keeps isGenerating true with floor decrement when no markers', () => {
+    it('sets isGenerating false with floor decrement when no markers', () => {
       novelBatchRemaining.value = 2
       const isGenerating = ref(true)
       const currentAIResponse = ref('Chapter without markers')
@@ -267,7 +268,8 @@ describe('finalizeCompletedResponse — novel auto-continue', () => {
         }),
       )
 
-      expect(isGenerating.value).toBe(true)
+      // isGenerating 始终设为 false，小说补章由 sendMessage 递归调用驱动
+      expect(isGenerating.value).toBe(false)
     })
   })
 })

@@ -50,7 +50,7 @@ export function useChatState() {
     get: () => currentSession.value?.messages ?? [],
     set: (messages: ChatMessage[]) => {
       const session = getOrCreateCurrentSession()
-      updateSessionMessages(session.id, messages)
+      updateSessionMessages(session.id, messages, true) // 立即保存，防止并发操作导致消息丢失
     },
   })
 

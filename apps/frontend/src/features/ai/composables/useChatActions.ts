@@ -160,7 +160,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
 
         // 使用捕获的会话 ID 进行更新
         if (generationSessionId) {
-          addSessionMessage(generationSessionId, aiMessage)
+          addSessionMessage(generationSessionId, aiMessage, true)
         }
       } else {
         throw new Error(t('ai.noImageGenerated'))

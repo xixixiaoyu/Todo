@@ -973,7 +973,7 @@ describe('useChat', () => {
 
       deleteMessage('m1')
 
-      expect(mockUpdateSessionMessages).toHaveBeenCalledWith('session-1', [msg2])
+      expect(mockUpdateSessionMessages).toHaveBeenCalledWith('session-1', [msg2], true)
       expect(messages.value).toHaveLength(1)
       expect(messages.value[0].id).toBe('m2')
     })
