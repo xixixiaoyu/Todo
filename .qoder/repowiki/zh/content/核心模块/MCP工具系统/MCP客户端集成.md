@@ -29,11 +29,11 @@
 
 ## 更新摘要
 **所做更改**
-- 新增Wails桌面应用集成章节，涵盖健康监控、进程管理、路径解析功能
-- 添加Sidecar进程管理器的详细架构说明
-- 更新前端集成指南，包含Wails原生API调用
-- 增强桌面应用功能的错误处理和重启机制
-- 完善跨平台路径解析和进程隔离机制
+- 新增2分钟超时机制，防止MCP服务卡死导致请求永久阻塞
+- 改进ToolCallResult类型的错误处理，增强错误传播机制
+- 完善前端API封装中的超时策略和错误处理
+- 更新连接管理器的请求超时配置
+- 增强工具调用的超时保护和错误恢复机制
 
 ## 目录
 1. [简介](#简介)
@@ -56,6 +56,8 @@
 - 前端 API 封装与 HTTP 客户端使用
 - 错误处理策略与安全限制
 - 连接池与缓存管理
+- **新增** 2分钟超时机制，防止MCP服务卡死导致请求永久阻塞
+- **新增** 改进的ToolCallResult错误处理，增强错误传播机制
 - **新增** Wails桌面应用集成，包括健康监控、进程管理、路径解析等桌面应用功能
 - API 调用示例与最佳实践
 
@@ -67,17 +69,17 @@ graph TB
 subgraph "后端"
 A["McpModule<br/>注册控制器与服务"]
 B["McpController<br/>REST 接口"]
-C["McpClientService<br/>门面：连接/工具/调用"]
+C["McpClientService<br/>门面：连接/工具/调用<br/>含2分钟超时机制"]
 D["McpServerConfigService<br/>配置 CRUD"]
 E["McpTransportFactory<br/>创建传输层"]
-F["McpConnectionManager<br/>连接生命周期"]
+F["McpConnectionManager<br/>连接生命周期<br/>含请求超时配置"]
 G["McpToolRegistry<br/>工具缓存"]
 end
 subgraph "共享"
-H["mcp.schema.ts<br/>DTO/Schema 定义"]
+H["mcp.schema.ts<br/>DTO/Schema 定义<br/>含ToolCallResult增强"]
 end
 subgraph "前端"
-I["mcp.ts<br/>HTTP 客户端封装"]
+I["mcp.ts<br/>HTTP 客户端封装<br/>含超时策略"]
 J["wails.ts<br/>Wails原生API封装"]
 K["useSidecar.ts<br/>Sidecar状态管理"]
 L["native.ts<br/>原生服务"]
@@ -144,15 +146,15 @@ O --> R
 - [apps/wails/sidecar/manager.go:47-69](file://apps/wails/sidecar/manager.go#L47-L69)
 
 ## 核心组件
-- McpClientService：统一门面，负责连接管理、工具发现与调用、连接状态查询与清理。
+- McpClientService：统一门面，负责连接管理、工具发现与调用、连接状态查询与清理。**新增** 2分钟超时机制保护工具调用。
 - McpController：提供 REST API，包括配置 CRUD、连接/断开、工具发现、工具调用等。
 - McpServerConfigService：用户维度的 MCP 服务器配置持久化与权限控制。
 - McpTransportFactory：根据传输类型创建 STDIO 或 HTTP 传输，内置安全检查与环境变量白名单。
-- McpConnectionManager：维护连接映射，负责连接生命周期与错误事件处理。
+- McpConnectionManager：维护连接映射，负责连接生命周期与错误事件处理。**新增** 请求超时配置。
 - McpToolRegistry：缓存工具清单，支持刷新与清理。
 - **新增** Wails桌面应用：提供原生桌面功能，包括进程管理、健康监控、路径解析。
 - **新增** Sidecar进程管理器：管理Node.js Sidecar进程的生命周期。
-- 前端 mcp.ts：对后端 API 的封装，提供统一的请求方法与超时配置。
+- 前端 mcp.ts：对后端 API 的封装，提供统一的请求方法与超时配置。**新增** 改进的错误处理。
 - **新增** 前端 wails.ts：Wails原生API封装，提供桌面应用功能。
 
 **章节来源**
@@ -167,16 +169,16 @@ O --> R
 - [apps/wails/sidecar/manager.go:47-146](file://apps/wails/sidecar/manager.go#L47-L146)
 
 ## 架构总览
-下图展示从前端到后端再到 MCP 服务器的整体调用链路与数据流，包括新增的Wails桌面应用集成。
+下图展示从前端到后端再到 MCP 服务器的整体调用链路与数据流，包括新增的Wails桌面应用集成和2分钟超时保护机制。
 
 ```mermaid
 sequenceDiagram
 participant FE as "前端 mcp.ts"
 participant CTRL as "McpController"
-participant SVC as "McpClientService"
+participant SVC as "McpClientService<br/>含2分钟超时"
 participant CFG as "McpServerConfigService"
 participant TMF as "McpTransportFactory"
-participant CM as "McpConnectionManager"
+participant CM as "McpConnectionManager<br/>含请求超时"
 participant TR as "McpToolRegistry"
 participant MCP as "MCP 服务器"
 FE->>CTRL : "GET /mcp/servers/ : id/tools"
@@ -199,9 +201,11 @@ SVC->>CM : "getConnection(id)"
 CM-->>SVC : "返回连接"
 SVC->>TR : "refreshTools(id)"
 TR-->>SVC : "确保工具存在"
+Note over SVC : "开始2分钟超时保护"
 SVC->>MCP : "client.callTool(name, args)"
-MCP-->>SVC : "返回结果"
-SVC-->>CTRL : "封装为 ToolCallResult"
+MCP-->>SVC : "返回结果或超时"
+Note over SVC : "超时保护机制"
+SVC-->>CTRL : "封装为ToolCallResult<br/>含isError标记"
 CTRL-->>FE : "返回结果"
 ```
 
@@ -223,7 +227,9 @@ CTRL-->>FE : "返回结果"
 - 关键点
   - 连接成功后预热工具注册表，减少首次调用延迟。
   - 工具调用前进行存在性校验，避免无效调用。
-  - 返回结果统一为 ToolCallResult，包含内容数组与错误标记。
+  - **新增** 2分钟超时保护机制，防止MCP服务卡死导致请求永久阻塞。
+  - **新增** ToolCallResult增强，包含isError布尔标记和内容数组。
+  - **新增** Promise.race超时机制，确保工具调用不会无限等待。
 
 ```mermaid
 classDiagram
@@ -249,9 +255,14 @@ class McpToolRegistry {
 +refreshTools(serverId) Promise~McpToolResponse[]~
 +clearCache(serverId) void
 }
+class ToolCallResult {
++content : Content[]
++isError? : boolean
+}
 McpClientService --> McpTransportFactory : "创建传输"
 McpClientService --> McpConnectionManager : "管理连接"
 McpClientService --> McpToolRegistry : "工具缓存"
+McpClientService --> ToolCallResult : "封装结果"
 ```
 
 **图表来源**
@@ -259,6 +270,7 @@ McpClientService --> McpToolRegistry : "工具缓存"
 - [apps/backend/src/mcp/core/mcp-transport.factory.ts:112-126](file://apps/backend/src/mcp/core/mcp-transport.factory.ts#L112-L126)
 - [apps/backend/src/mcp/core/mcp-connection.manager.ts:23-95](file://apps/backend/src/mcp/core/mcp-connection.manager.ts#L23-L95)
 - [apps/backend/src/mcp/core/mcp-tool.registry.ts:12-46](file://apps/backend/src/mcp/core/mcp-tool.registry.ts#L12-L46)
+- [packages/shared/src/schemas/mcp.schema.ts:291-303](file://packages/shared/src/schemas/mcp.schema.ts#L291-303)
 
 **章节来源**
 - [apps/backend/src/mcp/mcp-client.service.ts:30-123](file://apps/backend/src/mcp/mcp-client.service.ts#L30-L123)
@@ -338,6 +350,7 @@ J --> K["创建 StreamableHTTPClientTransport"]
 ### McpConnectionManager：连接生命周期
 - 维护 serverId -> ActiveConnection 映射。
 - 连接建立时设置超时、错误监听与关闭回调；断开时关闭 client 并清理缓存。
+- **新增** 请求超时配置，默认300秒，防止连接建立过程中的长时间阻塞。
 - 在模块销毁时自动断开所有连接，保证资源回收。
 
 ```mermaid
@@ -389,6 +402,9 @@ G --> I["记录错误并回退缓存"]
   - 调用：60 秒
 - 数据解包
   - 统一使用共享包的响应包装解包函数。
+- **新增** 错误处理改进
+  - 更好的错误信息传递
+  - 支持ToolCallResult的isError标记
 
 ```mermaid
 sequenceDiagram
@@ -485,7 +501,7 @@ stateDiagram-v2
 
 **图表来源**
 - [apps/wails/sidecar/manager.go:14-61](file://apps/wails/sidecar/manager.go#L14-L61)
-- [apps/wails/sidecar/manager.go:220-289](file://apps/wails/sidecar/manager.go#L220-289)
+- [apps/wails/sidecar/manager.go:220-289](file://apps/wails/sidecar/manager.go#L220-L289)
 
 **章节来源**
 - [apps/wails/sidecar/manager.go:47-289](file://apps/wails/sidecar/manager.go#L47-L289)
@@ -657,18 +673,23 @@ WS --> SC["SidecarComposable"]
   - 工具注册表缓存工具清单，减少频繁 listTools 请求。
 - 超时与节流
   - 前端针对工具发现与调用设置合理超时；后端对连接、工具发现、工具调用分别设置节流策略，防止抖动与滥用。
+  - **新增** 2分钟超时保护机制，防止MCP服务卡死导致请求永久阻塞。
 - 传输选择
   - HTTP 传输具备更好的网络鲁棒性；STDIO 适合本地可信进程，但受限于环境变量与命令白名单。
 - **新增** 进程管理优化
   - Sidecar进程采用进程组隔离，支持优雅终止和自动重启。
   - 健康监控使用指数退避算法，避免频繁重启造成系统压力。
   - 跨平台兼容性优化，Windows使用taskkill，Unix使用信号处理。
+- **新增** ToolCallResult增强
+  - 支持isError布尔标记，便于前端区分正常结果和错误状态。
+  - 内容数组结构更加灵活，支持多种数据类型。
 
 **章节来源**
 - [apps/backend/src/mcp/core/mcp-tool.registry.ts:12-46](file://apps/backend/src/mcp/core/mcp-tool.registry.ts#L12-L46)
 - [apps/backend/src/common/throttling/throttling.constants.ts:144-160](file://apps/backend/src/common/throttling/throttling.constants.ts#L144-L160)
 - [apps/frontend/src/features/mcp/api/mcp.ts:62-82](file://apps/frontend/src/features/mcp/api/mcp.ts#L62-L82)
 - [apps/wails/sidecar/manager.go:258-287](file://apps/wails/sidecar/manager.go#L258-L287)
+- [packages/shared/src/schemas/mcp.schema.ts:291-303](file://packages/shared/src/schemas/mcp.schema.ts#L291-303)
 
 ## 故障排查指南
 - 常见错误与定位
@@ -676,15 +697,21 @@ WS --> SC["SidecarComposable"]
   - "工具不存在"：确认工具名称拼写正确，或重新刷新工具缓存。
   - "STDIO 传输被禁用"：检查生产环境变量与命令白名单配置。
   - "HTTP 主机被阻止"：确认目标 URL 不是 localhost、.local 或私网地址。
+  - **新增** "MCP tool call timed out after 120s"：工具调用超过2分钟超时限制。
+  - **新增** "ToolCallResult isError=true"：工具返回错误状态，需要检查工具实现。
   - **新增** "Sidecar进程启动失败"：检查Node.js二进制文件路径和权限。
   - **新增** "Sidecar健康检查超时"：检查防火墙设置和端口占用情况。
   - **新增** "Wails应用无法启动"：检查前端资源打包和菜单配置。
 - 日志与监控
   - 后端日志包含连接、断开、工具刷新与调用的关键事件，便于定位问题。
+  - **新增** 2分钟超时日志，记录超时原因和调用参数。
+  - **新增** ToolCallResult错误日志，包含isError标记和内容详情。
   - **新增** Sidecar进程日志包含启动、停止、重启的详细信息。
   - **新增** Wails应用日志记录原生API调用和事件处理。
 - 测试参考
   - 单元测试覆盖了连接、工具发现与调用、断开等关键路径，可作为行为参考。
+  - **新增** 超时机制测试，验证2分钟超时保护的有效性。
+  - **新增** ToolCallResult错误处理测试，验证isError标记的正确传递。
   - **新增** Sidecar进程管理器包含完整的生命周期测试用例。
 
 **章节来源**
@@ -696,6 +723,8 @@ WS --> SC["SidecarComposable"]
 
 ## 结论
 该 MCP 客户端集成方案通过清晰的模块划分与安全约束，提供了稳定、可扩展的工具调用能力。后端以门面服务为核心，结合传输工厂、连接管理与工具缓存，实现了高效的工具发现与调用；前端提供统一 API 封装与合理的超时策略。配合节流与安全检查，整体具备良好的生产可用性。
+
+**新增的2分钟超时机制显著提升了系统的稳定性**，防止MCP服务卡死导致请求永久阻塞，确保系统能够及时响应超时错误并进行适当的错误处理。**改进的ToolCallResult类型增强了错误传播能力**，通过isError标记使前端能够准确区分正常结果和错误状态，提升了用户体验。
 
 **新增的Wails桌面应用集成为系统提供了原生桌面体验**，包括进程管理、健康监控、路径解析等功能。Sidecar进程管理器采用事件驱动模式，支持自动重启和优雅终止，确保系统的稳定性和可靠性。前端通过Wails原生API封装，实现了与桌面应用的无缝集成。
 
@@ -767,6 +796,8 @@ WS --> SC["SidecarComposable"]
 - 连接失败：后端记录错误并抛出异常，前端提示重试或检查配置。
 - 工具不存在：调用前校验失败，抛出"工具不存在"异常。
 - 传输被阻止：STDIO/HTTP 安全检查失败，抛出相应异常。
+- **新增** 工具调用超时：2分钟超时保护触发，抛出"工具调用超时"异常。
+- **新增** ToolCallResult错误：工具返回isError=true，前端显示错误内容。
 - **新增** Sidecar启动失败：进程启动或健康检查失败，返回详细错误信息。
 - **新增** 路径解析错误：可执行文件或Node.js二进制文件找不到，返回路径相关信息。
 - **新增** 进程终止错误：优雅终止失败，尝试强制终止并记录错误。
@@ -788,8 +819,18 @@ WS --> SC["SidecarComposable"]
   - 生产环境务必配置 STDIO 命令白名单；HTTP 仅使用公网 HTTPS 地址。
 - 超时与节流
   - 前端针对工具发现与调用设置合理超时；后端对高频接口设置节流，防止滥用。
+  - **新增** 2分钟超时保护机制，适用于可能长时间运行的工具调用。
 - 响应处理
   - 统一使用共享包的响应包装与解包，保证前后端一致性。
+  - **新增** ToolCallResult增强处理，支持isError标记和内容数组。
+- **新增** 超时机制最佳实践
+  - 工具调用设置合理的超时时间，平衡响应速度和执行完整性。
+  - 前端正确处理超时错误，提供友好的用户反馈。
+  - 后端记录超时日志，便于问题诊断和性能优化。
+- **新增** 错误处理最佳实践
+  - ToolCallResult的isError标记用于前端错误状态判断。
+  - 统一的错误信息格式，便于前端统一处理。
+  - 完善的错误日志记录，包含调用参数和错误详情。
 - **新增** 进程管理最佳实践
   - Sidecar进程采用进程组隔离，确保子进程正确终止。
   - 健康监控使用指数退避算法，避免频繁重启。

@@ -9,6 +9,7 @@
 - [apps/backend/src/mcp/core/mcp-connection.manager.ts](file://apps/backend/src/mcp/core/mcp-connection.manager.ts)
 - [apps/backend/src/mcp/core/mcp-transport.factory.ts](file://apps/backend/src/mcp/core/mcp-transport.factory.ts)
 - [apps/backend/src/mcp/core/mcp-tool.registry.ts](file://apps/backend/src/mcp/core/mcp-tool.registry.ts)
+- [apps/backend/src/common/throttling/throttling.constants.ts](file://apps/backend/src/common/throttling/throttling.constants.ts)
 - [packages/shared/src/schemas/mcp.schema.ts](file://packages/shared/src/schemas/mcp.schema.ts)
 - [apps/frontend/src/features/mcp/api/mcp.ts](file://apps/frontend/src/features/mcp/api/mcp.ts)
 - [apps/frontend/src/features/mcp/stores/mcp.ts](file://apps/frontend/src/features/mcp/stores/mcp.ts)
@@ -18,6 +19,12 @@
 - [apps/frontend/src/features/mcp/components/McpServerStdioConfig.vue](file://apps/frontend/src/features/mcp/components/McpServerStdioConfig.vue)
 - [apps/frontend/src/features/mcp/components/mcpServerForm.types.ts](file://apps/frontend/src/features/mcp/components/mcpServerForm.types.ts)
 </cite>
+
+## 更新摘要
+**所做更改**
+- 更新了性能考量章节，新增工具调用超时配置为120秒的说明
+- 更新了故障排除指南，补充了工具调用超时相关的故障排除步骤
+- 更新了最佳实践，增加了超时配置和性能调优建议
 
 ## 目录
 1. [简介](#简介)
@@ -72,7 +79,7 @@ BE_CLIENT --> SH_SCHEMA
 FE_API --> SH_SCHEMA
 ```
 
-图表来源
+**图表来源**
 - [apps/frontend/src/features/mcp/api/mcp.ts:16-107](file://apps/frontend/src/features/mcp/api/mcp.ts#L16-L107)
 - [apps/frontend/src/features/mcp/stores/mcp.ts:15-245](file://apps/frontend/src/features/mcp/stores/mcp.ts#L15-L245)
 - [apps/frontend/src/features/mcp/components/McpServerForm.vue:1-188](file://apps/frontend/src/features/mcp/components/McpServerForm.vue#L1-L188)
@@ -85,7 +92,7 @@ FE_API --> SH_SCHEMA
 - [apps/backend/src/mcp/core/mcp-tool.registry.ts:6-47](file://apps/backend/src/mcp/core/mcp-tool.registry.ts#L6-L47)
 - [packages/shared/src/schemas/mcp.schema.ts:1-220](file://packages/shared/src/schemas/mcp.schema.ts#L1-L220)
 
-章节来源
+**章节来源**
 - [apps/backend/src/mcp/mcp.controller.ts:40-208](file://apps/backend/src/mcp/mcp.controller.ts#L40-L208)
 - [apps/backend/src/mcp/mcp-server-config.service.ts:10-155](file://apps/backend/src/mcp/mcp-server-config.service.ts#L10-L155)
 - [apps/backend/src/mcp/mcp-client.service.ts:18-123](file://apps/backend/src/mcp/mcp-client.service.ts#L18-L123)
@@ -104,7 +111,7 @@ FE_API --> SH_SCHEMA
 - 前端状态管理：集中管理服务器列表、连接状态、连接中状态与错误信息。
 - 前端表单组件：分模块拆分基础信息、传输类型选择、STDIO/HTTP配置，支持动态切换与提交。
 
-章节来源
+**章节来源**
 - [apps/backend/src/mcp/mcp.controller.ts:40-208](file://apps/backend/src/mcp/mcp.controller.ts#L40-L208)
 - [apps/backend/src/mcp/mcp-server-config.service.ts:10-155](file://apps/backend/src/mcp/mcp-server-config.service.ts#L10-L155)
 - [apps/backend/src/mcp/mcp-client.service.ts:18-123](file://apps/backend/src/mcp/mcp-client.service.ts#L18-L123)
@@ -135,7 +142,7 @@ Ctrl->>Svc : 查询用户所有配置
 Svc-->>Ctrl : 返回配置列表
 Ctrl-->>API : 响应数据
 API-->>Store : 更新状态
-UI->>Store : 点击“连接”
+UI->>Store : 点击"连接"
 Store->>API : POST /mcp/servers/{id}/connect
 API->>Ctrl : 节流+鉴权
 Ctrl->>Svc : 校验权限并读取配置
@@ -151,7 +158,7 @@ Ctrl-->>API : 204 No Content
 API-->>Store : 更新连接状态
 ```
 
-图表来源
+**图表来源**
 - [apps/frontend/src/features/mcp/stores/mcp.ts:175-189](file://apps/frontend/src/features/mcp/stores/mcp.ts#L175-L189)
 - [apps/frontend/src/features/mcp/api/mcp.ts:89-98](file://apps/frontend/src/features/mcp/api/mcp.ts#L89-L98)
 - [apps/backend/src/mcp/mcp.controller.ts:141-148](file://apps/backend/src/mcp/mcp.controller.ts#L141-L148)
@@ -201,11 +208,11 @@ class McpServerConfigService {
 McpController --> McpServerConfigService : "依赖"
 ```
 
-图表来源
+**图表来源**
 - [apps/backend/src/mcp/mcp.controller.ts:40-208](file://apps/backend/src/mcp/mcp.controller.ts#L40-L208)
 - [apps/backend/src/mcp/mcp-server-config.service.ts:10-155](file://apps/backend/src/mcp/mcp-server-config.service.ts#L10-L155)
 
-章节来源
+**章节来源**
 - [apps/backend/src/mcp/mcp.controller.ts:40-208](file://apps/backend/src/mcp/mcp.controller.ts#L40-L208)
 - [apps/backend/src/mcp/mcp-server-config.service.ts:10-155](file://apps/backend/src/mcp/mcp-server-config.service.ts#L10-L155)
 
@@ -253,13 +260,13 @@ McpClientService --> McpConnectionManager : "管理连接"
 McpClientService --> McpToolRegistry : "工具缓存"
 ```
 
-图表来源
+**图表来源**
 - [apps/backend/src/mcp/mcp-client.service.ts:18-123](file://apps/backend/src/mcp/mcp-client.service.ts#L18-L123)
 - [apps/backend/src/mcp/core/mcp-transport.factory.ts:10-219](file://apps/backend/src/mcp/core/mcp-transport.factory.ts#L10-L219)
 - [apps/backend/src/mcp/core/mcp-connection.manager.ts:13-100](file://apps/backend/src/mcp/core/mcp-connection.manager.ts#L13-L100)
 - [apps/backend/src/mcp/core/mcp-tool.registry.ts:6-47](file://apps/backend/src/mcp/core/mcp-tool.registry.ts#L6-L47)
 
-章节来源
+**章节来源**
 - [apps/backend/src/mcp/mcp-client.service.ts:18-123](file://apps/backend/src/mcp/mcp-client.service.ts#L18-L123)
 - [apps/backend/src/mcp/core/mcp-transport.factory.ts:10-219](file://apps/backend/src/mcp/core/mcp-transport.factory.ts#L10-L219)
 - [apps/backend/src/mcp/core/mcp-connection.manager.ts:13-100](file://apps/backend/src/mcp/core/mcp-connection.manager.ts#L13-L100)
@@ -297,13 +304,13 @@ API-->>Store : 更新本地状态
 Store-->>Form : 刷新列表/状态
 ```
 
-图表来源
+**图表来源**
 - [apps/frontend/src/features/mcp/components/McpServerForm.vue:100-135](file://apps/frontend/src/features/mcp/components/McpServerForm.vue#L100-L135)
 - [apps/frontend/src/features/mcp/stores/mcp.ts:89-151](file://apps/frontend/src/features/mcp/stores/mcp.ts#L89-L151)
 - [apps/frontend/src/features/mcp/api/mcp.ts:36-47](file://apps/frontend/src/features/mcp/api/mcp.ts#L36-L47)
 - [apps/backend/src/mcp/mcp.controller.ts:51-92](file://apps/backend/src/mcp/mcp.controller.ts#L51-L92)
 
-章节来源
+**章节来源**
 - [apps/frontend/src/features/mcp/components/McpServerForm.vue:1-188](file://apps/frontend/src/features/mcp/components/McpServerForm.vue#L1-L188)
 - [apps/frontend/src/features/mcp/components/McpServerTransportSelector.vue:1-117](file://apps/frontend/src/features/mcp/components/McpServerTransportSelector.vue#L1-L117)
 - [apps/frontend/src/features/mcp/components/McpServerStdioConfig.vue:1-215](file://apps/frontend/src/features/mcp/components/McpServerStdioConfig.vue#L1-L215)
@@ -320,13 +327,13 @@ Store-->>Form : 刷新列表/状态
   - 工具调用Schema：工具名必填，参数可选默认空对象
 - 后端DTO基于共享Schema生成，确保前后端一致的输入输出约束。
 
-章节来源
+**章节来源**
 - [packages/shared/src/schemas/mcp.schema.ts:1-220](file://packages/shared/src/schemas/mcp.schema.ts#L1-L220)
 - [apps/backend/src/mcp/mcp.dto.ts:1-59](file://apps/backend/src/mcp/mcp.dto.ts#L1-L59)
 
 ### 服务器连接测试与状态监控
 - 连接测试：
-  - 前端点击“连接”触发POST /mcp/servers/{id}/connect
+  - 前端点击"连接"触发POST /mcp/servers/{id}/connect
   - 后端读取配置并通过客户端门面建立连接
   - 连接成功后预热工具注册表，便于后续工具发现
 - 状态监控：
@@ -334,7 +341,7 @@ Store-->>Form : 刷新列表/状态
   - 列表组件根据状态渲染不同颜色与提示
   - 断开连接时清理工具缓存并关闭底层连接
 
-章节来源
+**章节来源**
 - [apps/backend/src/mcp/mcp.controller.ts:141-148](file://apps/backend/src/mcp/mcp.controller.ts#L141-L148)
 - [apps/backend/src/mcp/mcp-client.service.ts:33-47](file://apps/backend/src/mcp/mcp-client.service.ts#L33-L47)
 - [apps/frontend/src/features/mcp/stores/mcp.ts:175-202](file://apps/frontend/src/features/mcp/stores/mcp.ts#L175-L202)
@@ -360,7 +367,7 @@ Save --> End(["结束"])
 Error --> End
 ```
 
-图表来源
+**图表来源**
 - [apps/frontend/src/features/mcp/components/McpServerForm.vue:100-135](file://apps/frontend/src/features/mcp/components/McpServerForm.vue#L100-L135)
 - [apps/frontend/src/features/mcp/components/McpServerStdioConfig.vue:68-75](file://apps/frontend/src/features/mcp/components/McpServerStdioConfig.vue#L68-L75)
 - [packages/shared/src/schemas/mcp.schema.ts:148-172](file://packages/shared/src/schemas/mcp.schema.ts#L148-L172)
@@ -391,14 +398,14 @@ BE_SVC --> SHARED
 BE_CLIENT --> SHARED
 ```
 
-图表来源
+**图表来源**
 - [apps/frontend/src/features/mcp/api/mcp.ts:1-12](file://apps/frontend/src/features/mcp/api/mcp.ts#L1-L12)
 - [apps/frontend/src/features/mcp/stores/mcp.ts:1-11](file://apps/frontend/src/features/mcp/stores/mcp.ts#L1-L11)
 - [apps/backend/src/mcp/mcp.controller.ts:19-29](file://apps/backend/src/mcp/mcp.controller.ts#L19-L29)
 - [apps/backend/src/mcp/mcp-client.service.ts:9-11](file://apps/backend/src/mcp/mcp-client.service.ts#L9-L11)
 - [packages/shared/src/schemas/mcp.schema.ts:1-12](file://packages/shared/src/schemas/mcp.schema.ts#L1-L12)
 
-章节来源
+**章节来源**
 - [apps/frontend/src/features/mcp/api/mcp.ts:1-12](file://apps/frontend/src/features/mcp/api/mcp.ts#L1-L12)
 - [apps/frontend/src/features/mcp/stores/mcp.ts:1-11](file://apps/frontend/src/features/mcp/stores/mcp.ts#L1-L11)
 - [apps/backend/src/mcp/mcp.controller.ts:19-29](file://apps/backend/src/mcp/mcp.controller.ts#L19-L29)
@@ -409,9 +416,12 @@ BE_CLIENT --> SHARED
 - 连接超时与请求超时：
   - 连接：5分钟（应对冷启动/大体积下载）
   - 工具发现：30秒
-  - 工具调用：60秒
+  - 工具调用：120秒（新增）
 - 节流保护：
   - 连接/断开、工具发现、工具调用均配置独立节流策略，防止滥用与资源争用
+  - MCP_CONNECTION_THROTTLE：短窗口1次，中窗口4次，长窗口10次
+  - MCP_TOOL_DISCOVERY_THROTTLE：短窗口2次，中窗口6次，长窗口20次
+  - MCP_TOOL_CALL_THROTTLE：短窗口2次，中窗口10次，长窗口30次
 - 工具缓存：
   - 工具注册表缓存工具清单，减少重复RPC调用
 - 连接复用：
@@ -419,10 +429,14 @@ BE_CLIENT --> SHARED
 - 前端动画与渲染：
   - 使用GSAP进行入场动画，注意在大量服务器时的性能影响，必要时可按需禁用
 
-章节来源
+**更新** 新增工具调用超时设置为120秒，以防止MCP服务卡死导致请求永久阻塞
+
+**章节来源**
 - [apps/frontend/src/features/mcp/api/mcp.ts:62-82](file://apps/frontend/src/features/mcp/api/mcp.ts#L62-L82)
+- [apps/backend/src/mcp/mcp-client.service.ts:13-14](file://apps/backend/src/mcp/mcp-client.service.ts#L13-L14)
 - [apps/backend/src/mcp/mcp.controller.ts:113-192](file://apps/backend/src/mcp/mcp.controller.ts#L113-L192)
 - [apps/backend/src/mcp/core/mcp-tool.registry.ts:12-42](file://apps/backend/src/mcp/core/mcp-tool.registry.ts#L12-L42)
+- [apps/backend/src/common/throttling/throttling.constants.ts:144-160](file://apps/backend/src/common/throttling/throttling.constants.ts#L144-L160)
 
 ## 故障排除指南
 - 连接失败
@@ -433,6 +447,10 @@ BE_CLIENT --> SHARED
   - 确认已连接目标服务器
   - 尝试手动触发工具刷新（工具发现接口）
   - 检查工具注册表缓存是否被清理
+- 工具调用超时
+  - 检查工具调用超时设置（默认120秒）
+  - 确认MCP服务器响应能力与网络延迟
+  - 调整工具调用超时参数以适应实际需求
 - STDIO相关问题
   - 命令包含空格会被拒绝，需拆分为command与args
   - 生产环境需配置允许命令列表，否则STDIO禁用
@@ -444,7 +462,9 @@ BE_CLIENT --> SHARED
   - 更新/删除操作会先校验所有权，越权将被拒绝
   - 私有/回环地址与localhost域名被阻断，避免内网探测风险
 
-章节来源
+**更新** 新增工具调用超时故障排除步骤
+
+**章节来源**
 - [apps/backend/src/mcp/core/mcp-transport.factory.ts:67-89](file://apps/backend/src/mcp/core/mcp-transport.factory.ts#L67-L89)
 - [apps/backend/src/mcp/core/mcp-transport.factory.ts:91-110](file://apps/backend/src/mcp/core/mcp-transport.factory.ts#L91-L110)
 - [apps/backend/src/mcp/mcp-client.service.ts:74-108](file://apps/backend/src/mcp/mcp-client.service.ts#L74-L108)
@@ -464,13 +484,13 @@ BE_CLIENT --> SHARED
 - 连接层面
   - 启用服务器在页面加载时自动连接，未启用则保持断开
   - 工具调用前确保已连接，必要时进行连接测试
-- 安全层面
-  - 严格限制HTTP URL为公网可达，禁止localhost与私网地址
-  - 使用Bearer Token或API Key进行认证，避免明文密码
 - 性能层面
   - 合理设置节流阈值，避免频繁连接/断开
   - 利用工具缓存减少重复RPC调用
   - 大量服务器时适当降低前端动画强度
+  - 根据实际业务需求调整工具调用超时时间（默认120秒）
+
+**更新** 新增工具调用超时配置的最佳实践建议
 
 ### 安全考虑
 - 传输工厂对HTTP URL进行协议与主机解析校验，阻断私有/回环地址
@@ -479,5 +499,9 @@ BE_CLIENT --> SHARED
 
 ### 性能调优建议
 - 合理设置连接超时与工具调用超时，平衡响应速度与稳定性
+  - 连接超时：5分钟（300,000ms）
+  - 工具发现超时：30秒（30,000ms）
+  - 工具调用超时：120秒（120,000ms）
 - 使用工具缓存与懒连接策略，减少不必要的RPC调用
 - 在高并发场景下调整节流参数，避免后端压力过大
+- 根据实际业务场景调整超时配置，确保满足业务需求
