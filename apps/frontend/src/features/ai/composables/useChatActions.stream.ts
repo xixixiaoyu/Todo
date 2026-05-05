@@ -12,7 +12,7 @@ import {
 } from '@/features/ai/services/aiService'
 import type { ProposedTodoChange } from '@/features/todo/stores/todo'
 import type { AIConfig } from './useAIConfig'
-import type { ChatSession } from './useChatHistory'
+import type { ChatSession, AddSessionMessageFn } from './useChatHistory'
 import { buildTeachingFallbackQuiz, stripTodoIdsFromText } from './useChatActions.utils'
 import { novelBatchRemaining as novelBatchRemainingRef } from './useChatState'
 
@@ -135,7 +135,7 @@ export function finalizeCompletedResponse(params: {
   currentTodoActions: Ref<ProposedTodoChange[]>
   sessions: Ref<ChatSession[]>
   generationSessionId: string | null
-  addSessionMessage: (sessionId: string, message: ChatMessage, immediate?: boolean) => void
+  addSessionMessage: AddSessionMessageFn
   extractAndStoreMemories: (history: ChatMessage[]) => Promise<void> | void
   isMemoryEnabled: Ref<boolean>
   isGenerating: Ref<boolean>
@@ -316,7 +316,7 @@ function finalizeAbortedResponse(params: {
   currentReasoningDetails: Ref<string>
   currentDiscussionSteps: Ref<DiscussionStep[]>
   generationSessionId: string | null
-  addSessionMessage: (sessionId: string, message: ChatMessage, immediate?: boolean) => void
+  addSessionMessage: AddSessionMessageFn
   resetStreamingState: () => void
   isGenerating: Ref<boolean>
   t: (key: string, params?: Record<string, unknown>) => string
@@ -348,7 +348,7 @@ export function createStreamChunkHandler(params: {
   currentTodoActions: Ref<ProposedTodoChange[]>
   isGenerating: Ref<boolean>
   sessions: Ref<ChatSession[]>
-  addSessionMessage: (sessionId: string, message: ChatMessage, immediate?: boolean) => void
+  addSessionMessage: AddSessionMessageFn
   extractAndStoreMemories: (history: ChatMessage[]) => Promise<void> | void
   isMemoryEnabled: Ref<boolean>
   resetStreamingState: () => void

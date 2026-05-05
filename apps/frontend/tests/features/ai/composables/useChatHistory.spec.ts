@@ -227,6 +227,26 @@ describe('useChatHistory', () => {
     expect(currentSessionId.value).toBe(s1.id)
   })
 
+  it('should atomically reload sessions preserving currentSessionId and messages', () => {
+    const { createSession, currentSessionId, sessions, addSessionMessage } = useChatHistory()
+    createSession()
+    const s2 = createSession() // s2 is now current
+
+    addSessionMessage(s2.id, { id: 'm1', role: 'user', content: 'hello' }, true)
+
+    const sessionCount = sessions.value.length
+    const currentId = currentSessionId.value
+
+    // 触发重载 — 原子化修复保证 currentSessionId 不会瞬态变为 null
+    _loadSessions()
+
+    expect(sessions.value).toHaveLength(sessionCount)
+    expect(currentSessionId.value).toBe(currentId)
+    const reloaded = sessions.value.find((s) => s.id === s2.id)
+    expect(reloaded?.messages).toHaveLength(1)
+    expect(reloaded?.messages[0].content).toBe('hello')
+  })
+
   it('should reload chat sessions when active user changes', () => {
     const user1Sessions = [
       {

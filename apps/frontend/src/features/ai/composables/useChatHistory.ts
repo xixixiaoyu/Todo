@@ -24,6 +24,13 @@ export interface ChatSession {
   isAutoTitle?: boolean
 }
 
+/** 向会话添加消息的函数签名 */
+export type AddSessionMessageFn = (
+  sessionId: string,
+  message: ChatMessage,
+  immediate?: boolean,
+) => void
+
 const SESSIONS_STORAGE_KEY = 'ai-chat-sessions'
 const CURRENT_SESSION_KEY = 'ai-chat-current-session'
 const LAST_ACTIVE_SESSION_KEY = 'ai-chat-last-active-session'
