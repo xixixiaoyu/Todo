@@ -10,6 +10,9 @@ import { McpTransportFactory } from './core/mcp-transport.factory'
 import { McpConnectionManager } from './core/mcp-connection.manager'
 import { McpToolRegistry } from './core/mcp-tool.registry'
 
+/** MCP 工具调用超时（2 分钟），防止 MCP 服务卡死导致请求永久阻塞 */
+const MCP_TOOL_CALL_TIMEOUT_MS = 120_000
+
 /**
  * MCP Client Service
  * 门面类：统一管理与 MCP Server 的交互
@@ -88,10 +91,21 @@ export class McpClientService {
 
       this.logger.log(`Executing tool "${toolName}" on server "${serverId}"...`)
 
-      const result = await connection.client.callTool({
-        name: toolName,
-        arguments: args,
+      let timeoutId: ReturnType<typeof setTimeout> | undefined
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new Error(`MCP tool call timed out after 120s`))
+        }, MCP_TOOL_CALL_TIMEOUT_MS)
       })
+
+      const result = await Promise.race([
+        connection.client.callTool({
+          name: toolName,
+          arguments: args,
+        }),
+        timeoutPromise,
+      ])
+      clearTimeout(timeoutId)
 
       this.logger.log(`Successfully executed tool "${toolName}" on server "${serverId}"`)
 

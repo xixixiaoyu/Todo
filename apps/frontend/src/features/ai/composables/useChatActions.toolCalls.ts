@@ -1,3 +1,4 @@
+import type { ToolCallResult } from '@/features/mcp/api/mcp'
 import {
   generateId,
   type ChatMessage,
@@ -40,7 +41,7 @@ export async function executeToolCalls(params: {
     serverId: string,
     toolName: string,
     args: Record<string, unknown>,
-  ) => Promise<{ content: unknown }>
+  ) => Promise<ToolCallResult>
 }) {
   const index = params.chatHistory.value.findIndex(
     (m) => m.id === params.assistantMessageId && m.role === 'assistant',
@@ -141,7 +142,16 @@ export async function executeToolCalls(params: {
 
     try {
       const result = await params.callMcpTool(mcpTool.serverId, mcpTool.toolName, toolArgs)
-      let contentStr = JSON.stringify(result.content)
+      let contentStr: string
+      if (result.isError) {
+        contentStr = `MCP Tool Error: ${JSON.stringify(result.content)}`
+        console.warn(
+          `[ToolCall] MCP tool "${mcpTool.toolName}" on server "${mcpTool.serverId}" returned isError=true:`,
+          result.content,
+        )
+      } else {
+        contentStr = JSON.stringify(result.content)
+      }
       contentStr = truncateToolContent(contentStr)
       params.chatHistory.value = [
         ...params.chatHistory.value,
