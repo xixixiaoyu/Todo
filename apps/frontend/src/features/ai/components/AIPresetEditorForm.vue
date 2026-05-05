@@ -28,6 +28,7 @@ const apiKeyId = useId()
 const modelId = useId()
 const systemPromptId = useId()
 const temperatureId = useId()
+const reasoningEffortId = useId()
 
 function toggleSkill(skillId: string) {
   const selected = new Set(form.value.skillIds || [])
@@ -196,6 +197,63 @@ const title = computed(() => (props.isCreating ? t('ai.createPreset') : t('ai.ed
           <span class="w-6 text-right font-mono text-xs text-muted-foreground">
             {{ form.temperature.toFixed(1) }}
           </span>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <div class="flex items-start justify-between gap-3">
+          <label :for="reasoningEffortId" class="text-xs text-muted-foreground">
+            {{ t('ai.reasoningEffortLabel') }}
+          </label>
+          <span
+            class="rounded-lg bg-primary/10 px-2 py-0.5 text-[10px] font-mono font-bold uppercase text-primary"
+          >
+            {{ form.thinkingEffort }}
+          </span>
+        </div>
+        <p class="text-[11px] leading-normal text-muted-foreground/80">
+          {{ t('ai.reasoningEffortHint') }}
+        </p>
+        <div
+          :id="reasoningEffortId"
+          class="grid grid-cols-2 gap-2"
+          role="radiogroup"
+          :aria-label="t('ai.reasoningEffortLabel')"
+        >
+          <button
+            type="button"
+            class="rounded-lg border px-3 py-2 text-left text-xs transition-all"
+            :class="
+              form.thinkingEffort === 'high'
+                ? 'border-primary/50 bg-primary/10'
+                : 'border-border bg-muted/20 hover:border-primary/30'
+            "
+            :aria-checked="form.thinkingEffort === 'high'"
+            role="radio"
+            @click="form.thinkingEffort = 'high'"
+          >
+            <p class="font-semibold text-foreground">{{ t('ai.reasoningEffortHigh') }}</p>
+            <p class="mt-0.5 text-[11px] text-muted-foreground">
+              {{ t('ai.reasoningEffortHighHint') }}
+            </p>
+          </button>
+          <button
+            type="button"
+            class="rounded-lg border px-3 py-2 text-left text-xs transition-all"
+            :class="
+              form.thinkingEffort === 'max'
+                ? 'border-primary/50 bg-primary/10'
+                : 'border-border bg-muted/20 hover:border-primary/30'
+            "
+            :aria-checked="form.thinkingEffort === 'max'"
+            role="radio"
+            @click="form.thinkingEffort = 'max'"
+          >
+            <p class="font-semibold text-foreground">{{ t('ai.reasoningEffortMax') }}</p>
+            <p class="mt-0.5 text-[11px] text-muted-foreground">
+              {{ t('ai.reasoningEffortMaxHint') }}
+            </p>
+          </button>
         </div>
       </div>
 
