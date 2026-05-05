@@ -39,6 +39,8 @@ vi.mock('lucide-vue-next', () => ({
   Fingerprint: { template: '<span>Fingerprint</span>' },
   BarChart3: { template: '<span>BarChart3</span>' },
   MoreHorizontal: { template: '<span>MoreHorizontal</span>' },
+  Maximize2: { template: '<span>Maximize2</span>' },
+  Minimize2: { template: '<span>Minimize2</span>' },
   HardDrive: { template: '<span>HardDrive</span>' },
   Cloud: { template: '<span>Cloud</span>' },
   ClipboardPaste: { template: '<span>ClipboardPaste</span>' },
