@@ -23,16 +23,17 @@ import { useHoverPopover } from '@/features/ai/composables/useHoverPopover'
 import { useTodoStore } from '@/features/todo/stores/todo'
 
 /**
- * AI 助手主入口 — 分离式设计（主按钮 + 辅助 chevron）。
+ * AI 助手主入口 — 统一胶囊设计（主按钮 + 分割线 + 辅助 chevron）。
  *
  * 视觉：
- *   - 主按钮：独立胶囊，承载「AI 助手」品牌感（与既有设计一致）
- *   - Chevron：紧贴主按钮的窄胶囊（w-6），降低饱和度的小箭头，作为「有菜单」的
- *     可发现性提示，不喧宾夺主
+ *   - 整体容器：柔和背景 + 圆角边框的胶囊，hover 时加深
+ *   - 主按钮（左侧）：Clover 图标 + "AI 助手" 文案，点击打开 Drawer
+ *   - 分割线：垂直细线分隔主按钮与 chevron
+ *   - Chevron（右侧）：下拉箭头，提示「有菜单」
  *
  * 交互：
  *   - 点击主按钮：打开 AI 助手 Drawer
- *   - 悬浮主按钮或 chevron（仅 fine pointer 设备）：延迟 200ms 弹出模式菜单，延迟 200ms 收起
+ *   - 悬浮 chevron（仅 fine pointer 设备）：延迟 150ms 弹出模式菜单，延迟 200ms 收起
  *   - 点击 chevron：手动切换菜单开合（无需等待 hover 延迟）
  *   - 菜单项点击：打开 Drawer + 切到对应模式（已激活则仅开 Drawer，避免误关）
  *
@@ -116,7 +117,7 @@ const handleActivate = (mode: { active: boolean; toggle: () => void }) => {
           type="button"
           :aria-label="t('ai.modes')"
           :title="t('ai.modes')"
-          class="w-7 h-8 md:w-8 md:h-9 flex items-center justify-center rounded-xl text-muted-foreground hover:text-primary hover:bg-background transition-all duration-300 focus:outline-none"
+          class="w-7 h-8 md:w-8 md:h-9 flex items-center justify-center rounded-xl text-muted-foreground hover:text-primary hover:bg-background transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
           @mouseenter="hover.onMouseEnter"
           @mouseleave="hover.onMouseLeave"
         >
