@@ -212,6 +212,37 @@ describe('useSmartScroll', () => {
     expect(vm.isUserScrolledUp).toBe(true)
   })
 
+  it('should disable auto-scroll after a single small swipe accumulated across frames', async () => {
+    const wrapper = mount(createTestComponent({ userScrollSensitivity: 5, atBottomThreshold: 2 }))
+    const vm = wrapper.vm as unknown as UnwrappedSmartScroll
+
+    await nextTick()
+    vi.runAllTimers()
+
+    const scrollHandler = getEventHandler('scroll')
+    const wheelHandler = getEventHandler('wheel')
+
+    scrollContainer.scrollTop = 500
+    scrollHandler({} as Event)
+    vi.runAllTimers()
+
+    wheelHandler({} as Event)
+
+    scrollContainer.scrollTop = 499
+    scrollHandler({} as Event)
+    vi.runAllTimers()
+
+    expect(vm.isAutoScrollEnabled).toBe(true)
+    expect(vm.isUserScrolledUp).toBe(false)
+
+    scrollContainer.scrollTop = 494
+    scrollHandler({} as Event)
+    vi.runAllTimers()
+
+    expect(vm.isAutoScrollEnabled).toBe(false)
+    expect(vm.isUserScrolledUp).toBe(true)
+  })
+
   it('should treat scrollbar drag intent as manual scroll input', async () => {
     const wrapper = mount(createTestComponent({ userScrollSensitivity: 5 }))
     const vm = wrapper.vm as unknown as UnwrappedSmartScroll

@@ -62,6 +62,7 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
   let resizeObserver: ResizeObserver | null = null
   let mutationObserver: MutationObserver | null = null
   let lastUserInteractionAt = 0
+  let accumulatedUserUpwardDelta = 0
 
   const USER_SCROLL_INTENT_WINDOW_MS = 180
 
@@ -103,6 +104,10 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
 
   const hasRecentUserScrollIntent = () => {
     return Date.now() - lastUserInteractionAt <= USER_SCROLL_INTENT_WINDOW_MS
+  }
+
+  const resetAccumulatedUserScroll = () => {
+    accumulatedUserUpwardDelta = 0
   }
 
   /**
@@ -224,30 +229,36 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
     const currentScrollTop = el.scrollTop
     const scrollDelta = currentScrollTop - lastScrollTop
     const atBottom = isAtBottom()
-
-    const effectiveUpwardThreshold =
-      isStreamingMode.value && isSticking.value
-        ? -userScrollSensitivity * 3
-        : -userScrollSensitivity
-    const isSignificantUpward = scrollDelta < effectiveUpwardThreshold
     const isLikelyUserScroll = hasRecentUserScrollIntent()
+    const isUpwardScroll = scrollDelta < 0
 
-    if (isProgrammaticScroll && !isSignificantUpward) {
+    if (isLikelyUserScroll && isUpwardScroll && !atBottom) {
+      accumulatedUserUpwardDelta += Math.abs(scrollDelta)
+    } else if (!isUpwardScroll || atBottom || !isLikelyUserScroll) {
+      resetAccumulatedUserScroll()
+    }
+
+    const shouldInterruptAutoScroll =
+      isLikelyUserScroll && !atBottom && accumulatedUserUpwardDelta >= userScrollSensitivity
+
+    if (isProgrammaticScroll && !shouldInterruptAutoScroll) {
       lastScrollTop = currentScrollTop
       return
     }
 
-    if (isSignificantUpward && isLikelyUserScroll && !atBottom) {
+    if (shouldInterruptAutoScroll) {
       // 只有检测到真实用户交互后，才中断自动滚动。
       // 这可以避免流式渲染、虚拟窗口切换或布局抖动造成的误判。
       isAutoScrollEnabled.value = false
       isSticking.value = false
       isUserScrolledUp.value = true
+      resetAccumulatedUserScroll()
     } else if (atBottom) {
       // 用户滚动到底部：恢复自动滚动
       isAutoScrollEnabled.value = true
       isSticking.value = true
       isUserScrolledUp.value = false
+      resetAccumulatedUserScroll()
     }
 
     lastScrollTop = currentScrollTop
@@ -264,6 +275,7 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
 
     if (isAtBottom()) {
       isUserScrolledUp.value = false
+      resetAccumulatedUserScroll()
     }
   }
 
@@ -388,6 +400,8 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
       clearTimeout(programmaticScrollTimer)
       programmaticScrollTimer = null
     }
+
+    resetAccumulatedUserScroll()
   }
 
   // === 公共 API ===
