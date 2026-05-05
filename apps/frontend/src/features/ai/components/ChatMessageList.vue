@@ -239,16 +239,25 @@ watch(
 
 // 专门监听流式消息的内容变化以触发滚动
 watch(
-  () => props.messages[props.messages.length - 1]?.content,
-  (newContent, oldContent) => {
+  [
+    () => props.messages[props.messages.length - 1]?.content,
+    () => props.messages[props.messages.length - 1]?.thinkingContent,
+    () => props.messages[props.messages.length - 1]?.reasoning_details,
+    () => props.messages[props.messages.length - 1]?.discussionSteps?.length,
+  ],
+  (newVals, oldVals) => {
     if (isSwitchingSession.value) return
 
     const lastMsg = props.messages[props.messages.length - 1]
-    if (lastMsg?.isStreaming && newContent !== oldContent) {
-      // 使用 nextTick 确保 DOM 已更新，内容高度已反映到 scrollHeight
-      void nextTick(() => {
-        streamingScroll()
-      })
+    if (lastMsg?.isStreaming) {
+      // 检查是否有任何内容发生了实际变化
+      const hasChanged = newVals.some((val, i) => val !== oldVals[i])
+      if (hasChanged) {
+        // 使用 nextTick 确保 DOM 已更新，内容高度已反映到 scrollHeight
+        void nextTick(() => {
+          streamingScroll()
+        })
+      }
     }
   },
 )

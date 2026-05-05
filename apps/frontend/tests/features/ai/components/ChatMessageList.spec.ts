@@ -5,6 +5,7 @@ import ChatMessageList from '@/features/ai/components/ChatMessageList.vue'
 
 const scrollToBottomSpy = vi.fn()
 const setStreamingModeSpy = vi.fn()
+const streamingScrollSpy = vi.fn()
 
 vi.mock('vue-i18n', async (importOriginal) => {
   const actual = await importOriginal<typeof import('vue-i18n')>()
@@ -24,10 +25,11 @@ vi.mock('lucide-vue-next', () => ({
 vi.mock('@/composables/useSmartScroll', () => ({
   useSmartScroll: () => ({
     isSticking: ref(true),
+    isAutoScrollEnabled: ref(true),
     isUserScrolledUp: ref(false),
     isScrollable: ref(true),
     scrollToBottom: scrollToBottomSpy,
-    streamingScroll: vi.fn(),
+    streamingScroll: streamingScrollSpy,
     setStreamingMode: setStreamingModeSpy,
     enableAutoScroll: vi.fn(),
   }),
@@ -43,6 +45,7 @@ describe('ChatMessageList - performance windowing', () => {
   it('renders only the tail window by default and can load older messages', async () => {
     scrollToBottomSpy.mockClear()
     setStreamingModeSpy.mockClear()
+    streamingScrollSpy.mockClear()
 
     const messages = Array.from({ length: 500 }).map((_, i) => ({
       id: `m-${i}`,
@@ -75,6 +78,7 @@ describe('ChatMessageList - performance windowing', () => {
   it('does not apply session entrance staggering on initial mount with persisted messages', async () => {
     scrollToBottomSpy.mockClear()
     setStreamingModeSpy.mockClear()
+    streamingScrollSpy.mockClear()
 
     const messages = [
       { id: 'm-1', role: 'assistant' as const, content: 'first', isStreaming: false },
@@ -104,5 +108,51 @@ describe('ChatMessageList - performance windowing', () => {
     expect(renderedMessages).toHaveLength(2)
     expect(renderedMessages[1].attributes('style')).toContain('transition-delay: 0s;')
     expect(scrollToBottomSpy).toHaveBeenCalledWith('instant')
+  })
+
+  it('keeps streaming auto-scroll for thinking updates before final content', async () => {
+    scrollToBottomSpy.mockClear()
+    setStreamingModeSpy.mockClear()
+    streamingScrollSpy.mockClear()
+
+    const wrapper = mount(ChatMessageList, {
+      props: {
+        messages: [
+          {
+            id: 'streaming-1',
+            role: 'assistant' as const,
+            content: '',
+            thinkingContent: 'step 1',
+            isStreaming: true,
+          },
+        ],
+      },
+      global: {
+        stubs: {
+          Transition: false,
+          TransitionGroup: false,
+          ChatMessage: { template: '<div class="msg" />' },
+          ChatSuggestions: { template: '<div />' },
+          ChatMinimap: { template: '<div />' },
+          AiLuminaIcon: { template: '<div />' },
+        },
+      },
+    })
+
+    await wrapper.setProps({
+      messages: [
+        {
+          id: 'streaming-1',
+          role: 'assistant' as const,
+          content: '',
+          thinkingContent: 'step 1\nstep 2',
+          isStreaming: true,
+        },
+      ],
+    })
+    await nextTick()
+    await nextTick()
+
+    expect(streamingScrollSpy).toHaveBeenCalled()
   })
 })

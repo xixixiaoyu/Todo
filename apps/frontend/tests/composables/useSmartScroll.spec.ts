@@ -73,6 +73,12 @@ describe('useSmartScroll', () => {
       : ReturnType<typeof useSmartScroll>[K]
   } & { containerRef: HTMLElement }
 
+  const getEventHandler = (eventName: string) => {
+    return (scrollContainer.addEventListener as Mock).mock.calls.find(
+      (call: unknown[]) => call[0] === eventName,
+    )?.[1] as EventListener
+  }
+
   it('should initialize with default values', () => {
     const wrapper = mount(createTestComponent())
     const vm = wrapper.vm as unknown as UnwrappedSmartScroll
@@ -188,10 +194,8 @@ describe('useSmartScroll', () => {
     await nextTick()
     vi.runAllTimers()
 
-    // Simulate scroll listener setup
-    const scrollHandler = (scrollContainer.addEventListener as Mock).mock.calls.find(
-      (call: unknown[]) => call[0] === 'scroll',
-    )?.[1] as EventListener
+    const scrollHandler = getEventHandler('scroll')
+    const wheelHandler = getEventHandler('wheel')
 
     // 1. 设置初始位置并触发一次滚动以更新 lastScrollTop
     scrollContainer.scrollTop = 500
@@ -199,12 +203,35 @@ describe('useSmartScroll', () => {
     vi.runAllTimers()
 
     // 2. 模拟用户向上滚动 (delta = -100)
+    wheelHandler({} as Event)
     scrollContainer.scrollTop = 400
     scrollHandler({} as Event)
     vi.runAllTimers()
 
     expect(vm.isAutoScrollEnabled).toBe(false)
     expect(vm.isUserScrolledUp).toBe(true)
+  })
+
+  it('should keep auto-scroll enabled for upward layout shifts without user intent', async () => {
+    const wrapper = mount(createTestComponent({ userScrollSensitivity: 5 }))
+    const vm = wrapper.vm as unknown as UnwrappedSmartScroll
+
+    await nextTick()
+    vi.runAllTimers()
+
+    const scrollHandler = getEventHandler('scroll')
+
+    scrollContainer.scrollTop = 500
+    scrollHandler({} as Event)
+    vi.runAllTimers()
+
+    // 模拟流式渲染或虚拟窗口切换造成的向上位移，但没有任何用户滚动意图。
+    scrollContainer.scrollTop = 400
+    scrollHandler({} as Event)
+    vi.runAllTimers()
+
+    expect(vm.isAutoScrollEnabled).toBe(true)
+    expect(vm.isUserScrolledUp).toBe(false)
   })
 
   it('should re-enable auto-scroll when user scrolls to bottom', async () => {
@@ -239,9 +266,8 @@ describe('useSmartScroll', () => {
     await nextTick()
     vi.runAllTimers()
 
-    const scrollHandler = (scrollContainer.addEventListener as Mock).mock.calls.find(
-      (call: unknown[]) => call[0] === 'scroll',
-    )?.[1] as EventListener
+    const scrollHandler = getEventHandler('scroll')
+    const wheelHandler = getEventHandler('wheel')
 
     // 1. 设置初始状态：在底部
     scrollContainer.scrollHeight = 1000
@@ -250,6 +276,7 @@ describe('useSmartScroll', () => {
     vm.scrollToBottom('instant') // lastScrollTop = 500, isProgrammaticScroll = true
 
     // 2. 模拟用户强行向上滚动
+    wheelHandler({} as Event)
     scrollContainer.scrollTop = 400 // 向上移动了 100
     // 此时 scrollDelta = 400 - 500 = -100
     // atBottom: offset = 1000 - 400 - 500 = 100. 100 > 10 + 2, 所以 atBottom = false

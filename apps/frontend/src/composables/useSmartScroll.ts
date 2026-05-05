@@ -61,6 +61,9 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
   let programmaticScrollTimer: ReturnType<typeof setTimeout> | null = null
   let resizeObserver: ResizeObserver | null = null
   let mutationObserver: MutationObserver | null = null
+  let lastUserInteractionAt = 0
+
+  const USER_SCROLL_INTENT_WINDOW_MS = 180
 
   // === 核心计算方法 ===
 
@@ -92,6 +95,14 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
       isProgrammaticScroll = false
       programmaticScrollTimer = null
     }, duration)
+  }
+
+  const markUserScrollIntent = () => {
+    lastUserInteractionAt = Date.now()
+  }
+
+  const hasRecentUserScrollIntent = () => {
+    return Date.now() - lastUserInteractionAt <= USER_SCROLL_INTENT_WINDOW_MS
   }
 
   /**
@@ -214,18 +225,21 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
     const scrollDelta = currentScrollTop - lastScrollTop
     const atBottom = isAtBottom()
 
-    // 关键修复：即使在程序化滚动期间，如果检测到明显的向上滚动（负 delta），
-    // 也判定为用户交互，从而中断自动滚动。
-    const isUpwardIntent = scrollDelta < -userScrollSensitivity
+    const effectiveUpwardThreshold =
+      isStreamingMode.value && isSticking.value
+        ? -userScrollSensitivity * 3
+        : -userScrollSensitivity
+    const isSignificantUpward = scrollDelta < effectiveUpwardThreshold
+    const isLikelyUserScroll = hasRecentUserScrollIntent()
 
-    if (isProgrammaticScroll && !isUpwardIntent) {
+    if (isProgrammaticScroll && !isSignificantUpward) {
       lastScrollTop = currentScrollTop
       return
     }
 
-    // 检测用户是否主动向上滚动
-    if (isUpwardIntent && !atBottom) {
-      // 用户向上滚动：立即禁用自动滚动和粘附模式
+    if (isSignificantUpward && isLikelyUserScroll && !atBottom) {
+      // 只有检测到真实用户交互后，才中断自动滚动。
+      // 这可以避免流式渲染、虚拟窗口切换或布局抖动造成的误判。
       isAutoScrollEnabled.value = false
       isSticking.value = false
       isUserScrolledUp.value = true
@@ -307,6 +321,9 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
 
     // 滚动事件监听
     el.addEventListener('scroll', throttledScrollHandler, { passive: true })
+    // 仅记录真正表达滚动意图的交互，避免普通点击误伤自动滚动。
+    el.addEventListener('wheel', markUserScrollIntent, { passive: true })
+    el.addEventListener('touchmove', markUserScrollIntent, { passive: true })
 
     // 初始化状态
     lastScrollTop = el.scrollTop
@@ -348,6 +365,8 @@ export function useSmartScroll(options: UseSmartScrollOptions) {
     const el = scrollContainer.value
     if (el) {
       el.removeEventListener('scroll', throttledScrollHandler)
+      el.removeEventListener('wheel', markUserScrollIntent)
+      el.removeEventListener('touchmove', markUserScrollIntent)
       gsap.killTweensOf(el)
     }
 
