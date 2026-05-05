@@ -74,7 +74,7 @@ const MODE_ICON: Record<AiModeId, Component> = {
 }
 
 const open = ref(false)
-const hover = useHoverPopover({ open, openDelayMs: 200, closeDelayMs: 200 })
+const hover = useHoverPopover({ open, openDelayMs: 150, closeDelayMs: 200 })
 
 const openAssistant = () => {
   if (!todoStore.isDrawerOpen) todoStore.setDrawerOpen(true)
@@ -88,11 +88,7 @@ const handleActivate = (mode: { active: boolean; toggle: () => void }) => {
 </script>
 
 <template>
-  <div
-    class="flex items-center gap-1"
-    @mouseenter="hover.onMouseEnter"
-    @mouseleave="hover.onMouseLeave"
-  >
+  <div class="flex items-center gap-1">
     <!-- 主按钮：沿用既有独立胶囊样式 -->
     <Button
       variant="ghost"
@@ -118,6 +114,7 @@ const handleActivate = (mode: { active: boolean; toggle: () => void }) => {
           :title="t('ai.modes')"
           class="inline-flex h-8 w-6 items-center justify-center rounded-full border border-primary/10 bg-primary/5 text-primary/70 transition-all duration-300 hover:bg-primary/15 hover:text-primary md:h-9 md:w-7 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
           @mouseenter="hover.onMouseEnter"
+          @mouseleave="hover.onMouseLeave"
         >
           <ChevronDown
             :size="12"
