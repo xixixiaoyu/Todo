@@ -10,12 +10,27 @@
 - [useWindowSize.ts](file://apps/frontend/src/composables/useWindowSize.ts)
 - [useTheme.ts](file://apps/frontend/src/composables/useTheme.ts)
 - [useToast.ts](file://apps/frontend/src/composables/useToast.ts)
+- [useGsap.ts](file://apps/frontend/src/composables/useGsap.ts)
 - [ResizableDrawer.vue](file://apps/frontend/src/components/ResizableDrawer.vue)
 - [AlertDialog.vue](file://apps/frontend/src/components/ui/alert-dialog/AlertDialog.vue)
 - [Popover.vue](file://apps/frontend/src/components/ui/popover/Popover.vue)
 - [Tabs.vue](file://apps/frontend/src/components/ui/tabs/Tabs.vue)
+- [TodoItem.vue](file://apps/frontend/src/features/todo/components/TodoItem.vue)
+- [TodoItemActions.vue](file://apps/frontend/src/features/todo/components/TodoItemActions.vue)
+- [TodoItemContent.vue](file://apps/frontend/src/features/todo/components/TodoItemContent.vue)
+- [TodoItemEdit.vue](file://apps/frontend/src/features/todo/components/TodoItemEdit.vue)
+- [TodoItemAddSubtask.vue](file://apps/frontend/src/features/todo/components/TodoItemAddSubtask.vue)
+- [TodoItemActionsDesktop.vue](file://apps/frontend/src/features/todo/components/TodoItemActionsDesktop.vue)
+- [TodoItemActionsMobileSheet.vue](file://apps/frontend/src/features/todo/components/TodoItemActionsMobileSheet.vue)
 - [index.ts](file://apps/frontend/src/composables/index.ts)
 </cite>
+
+## 更新摘要
+**所做更改**
+- 新增TodoItem组件拖拽悬停功能的详细分析
+- 扩展UI交互Hooks最佳实践章节，包含事件处理、状态管理和视觉反馈
+- 添加拖拽悬停计数器、延迟展开和状态管理的实现细节
+- 更新相关架构图和流程图以反映新的交互模式
 
 ## 目录
 1. [简介](#简介)
@@ -35,6 +50,7 @@
 - 触觉反馈：跨平台触觉反馈封装，适配原生设备
 - 可调整大小：拖拽调整宽度/高度，支持最小/最大限制与持久化
 - 智能滚动：自动粘附底部、流式更新优化、用户滚动检测与回流控制
+- **拖拽悬停：基于计数器的状态管理、延迟展开机制与视觉反馈**
 - 组件状态管理、事件处理与用户体验优化策略
 - 滚动位置记忆、视口检测与响应式交互
 - 触摸手势支持、键盘导航与无障碍访问
@@ -42,9 +58,10 @@
 
 ## 项目结构
 UI交互Hooks主要位于前端应用的组合式API目录中，并通过组件进行集成使用。关键文件分布如下：
-- 组合式API：useEscClose、useHaptics、useResizable、useSmartScroll、useWindowSize、useTheme、useToast
+- 组合式API：useEscClose、useHaptics、useResizable、useSmartScroll、useWindowSize、useTheme、useToast、useGsap
 - 内部工具：useSmartScroll.internals（滚动决策、RAF批处理与节流）
 - 示例组件：ResizableDrawer（抽屉+可调整大小+ESC关闭）、AlertDialog、Popover、Tabs（基于reka-ui）
+- **交互组件：TodoItem（拖拽悬停+智能展开）及其子组件**
 
 ```mermaid
 graph TB
@@ -57,31 +74,53 @@ E["useSmartScroll.internals.ts"]
 F["useWindowSize.ts"]
 G["useTheme.ts"]
 H["useToast.ts"]
+I["useGsap.ts"]
 end
 subgraph "UI组件"
-I["ResizableDrawer.vue"]
-J["AlertDialog.vue"]
-K["Popover.vue"]
-L["Tabs.vue"]
+J["ResizableDrawer.vue"]
+K["AlertDialog.vue"]
+L["Popover.vue"]
+M["Tabs.vue"]
 end
-I --> A
-I --> C
-I --> F
-J --> |"reka-ui"| M["AlertDialogRoot"]
-K --> |"reka-ui"| N["PopoverRoot"]
-L --> |"reka-ui"| O["TabsRoot"]
+subgraph "交互组件"
+N["TodoItem.vue"]
+O["TodoItemActions.vue"]
+P["TodoItemContent.vue"]
+Q["TodoItemEdit.vue"]
+R["TodoItemAddSubtask.vue"]
+S["TodoItemActionsDesktop.vue"]
+T["TodoItemActionsMobileSheet.vue"]
+end
+N --> A
+N --> C
+N --> F
+N --> I
+N --> B
+N --> H
+J --> A
+J --> C
+J --> F
+K --> |"reka-ui"| U["AlertDialogRoot"]
+L --> |"reka-ui"| V["PopoverRoot"]
+M --> |"reka-ui"| W["TabsRoot"]
 D --> E
 ```
 
 **图表来源**
 - [useEscClose.ts:1-66](file://apps/frontend/src/composables/useEscClose.ts#L1-L66)
+- [useHaptics.ts:1-62](file://apps/frontend/src/composables/useHaptics.ts#L1-L62)
 - [useResizable.ts:1-70](file://apps/frontend/src/composables/useResizable.ts#L1-L70)
 - [useSmartScroll.ts:1-442](file://apps/frontend/src/composables/useSmartScroll.ts#L1-L442)
 - [useSmartScroll.internals.ts:1-109](file://apps/frontend/src/composables/useSmartScroll.internals.ts#L1-L109)
+- [useWindowSize.ts:1-45](file://apps/frontend/src/composables/useWindowSize.ts#L1-L45)
+- [useTheme.ts:1-378](file://apps/frontend/src/composables/useTheme.ts#L1-L378)
+- [useToast.ts:1-87](file://apps/frontend/src/composables/useToast.ts#L1-L87)
+- [useGsap.ts:1-200](file://apps/frontend/src/composables/useGsap.ts#L1-L200)
 - [ResizableDrawer.vue:1-408](file://apps/frontend/src/components/ResizableDrawer.vue#L1-L408)
 - [AlertDialog.vue:1-16](file://apps/frontend/src/components/ui/alert-dialog/AlertDialog.vue#L1-L16)
 - [Popover.vue:1-20](file://apps/frontend/src/components/ui/popover/Popover.vue#L1-L20)
 - [Tabs.vue:1-16](file://apps/frontend/src/components/ui/tabs/Tabs.vue#L1-L16)
+- [TodoItem.vue:1-473](file://apps/frontend/src/features/todo/components/TodoItem.vue#L1-L473)
 
 **章节来源**
 - [index.ts:1-11](file://apps/frontend/src/composables/index.ts#L1-L11)
@@ -110,6 +149,12 @@ D --> E
   - 支持ResizeObserver/MutationObserver感知容器与内容变化
   - 提供滚动快照、阈值判断、程序化滚动标记
 
+- **拖拽悬停（TodoItem组件）**
+  - **基于计数器的状态管理：dragEnterCount确保嵌套拖拽的正确状态**
+  - **延迟展开机制：DRAG_EXPAND_DELAY避免拖拽经过时的误触发**
+  - **视觉反馈：isDragHovering控制悬停样式和边框效果**
+  - **状态清理：handleDragLeave和handleDragEnd确保资源释放**
+
 - 窗口尺寸（useWindowSize）
   - 响应式窗口宽高，支持移动端判断
   - 组件与非组件环境下分别处理生命周期
@@ -122,6 +167,11 @@ D --> E
   - 轻量提示队列，支持定时消失、暂停/恢复与动作按钮
   - 提供成功/错误/信息/警告类型别名方法
 
+- **动画驱动（useGsap）**
+  - **高性能动画：GSAP驱动的高度展开/折叠动画替代简单v-show**
+  - **状态感知：根据isExpanded和isDragHovering动态播放动画**
+  - **性能优化：使用ctx.add确保动画执行时机**
+
 **章节来源**
 - [useEscClose.ts:1-66](file://apps/frontend/src/composables/useEscClose.ts#L1-L66)
 - [useHaptics.ts:1-62](file://apps/frontend/src/composables/useHaptics.ts#L1-L62)
@@ -131,9 +181,11 @@ D --> E
 - [useWindowSize.ts:1-45](file://apps/frontend/src/composables/useWindowSize.ts#L1-L45)
 - [useTheme.ts:1-378](file://apps/frontend/src/composables/useTheme.ts#L1-L378)
 - [useToast.ts:1-87](file://apps/frontend/src/composables/useToast.ts#L1-L87)
+- [useGsap.ts:1-200](file://apps/frontend/src/composables/useGsap.ts#L1-L200)
+- [TodoItem.vue:194-238](file://apps/frontend/src/features/todo/components/TodoItem.vue#L194-L238)
 
 ## 架构总览
-UI交互Hooks围绕“状态驱动 + 事件节流 + 平台适配”的设计原则构建，内部通过RAF批处理与节流优化渲染性能，外部通过组件以声明式方式接入。
+UI交互Hooks围绕"状态驱动 + 事件节流 + 平台适配"的设计原则构建，内部通过RAF批处理与节流优化渲染性能，外部通过组件以声明式方式接入。新增的拖拽悬停功能进一步丰富了交互模式。
 
 ```mermaid
 graph TB
@@ -142,16 +194,19 @@ W["window/element 事件"]
 S["滚动事件"]
 R["鼠标拖拽事件"]
 K["键盘事件(ESC)"]
+D["拖拽悬停事件"]
 end
 subgraph "节流/批处理"
 T["createRafThrottle"]
 B["createRafBatcher"]
+G["GSAP动画引擎"]
 end
 subgraph "状态层"
 ST["isSticking/isAutoScrollEnabled/isUserScrolledUp"]
 SZ["width/height/isResizing"]
 TH["themeColor/theme/effectiveTheme"]
 TS["toasts"]
+DH["isDragHovering/dragEnterCount/dragExpandTimer"]
 end
 subgraph "平台适配"
 P["Capacitor Haptics"]
@@ -161,8 +216,10 @@ W --> T
 S --> T
 R --> B
 K --> B
+D --> DH
 T --> ST
 B --> SZ
+G --> DH
 P --> N
 N --> TH
 N --> TS
@@ -176,6 +233,8 @@ N --> TS
 - [useWindowSize.ts:1-45](file://apps/frontend/src/composables/useWindowSize.ts#L1-L45)
 - [useTheme.ts:1-378](file://apps/frontend/src/composables/useTheme.ts#L1-L378)
 - [useToast.ts:1-87](file://apps/frontend/src/composables/useToast.ts#L1-L87)
+- [useGsap.ts:1-200](file://apps/frontend/src/composables/useGsap.ts#L1-L200)
+- [TodoItem.vue:194-238](file://apps/frontend/src/features/todo/components/TodoItem.vue#L194-L238)
 
 ## 详细组件分析
 
@@ -303,6 +362,55 @@ S-->>U : "平滑/瞬时滚动到底部"
 - [useSmartScroll.ts:1-442](file://apps/frontend/src/composables/useSmartScroll.ts#L1-L442)
 - [useSmartScroll.internals.ts:1-109](file://apps/frontend/src/composables/useSmartScroll.internals.ts#L1-L109)
 
+### 拖拽悬停（TodoItem组件）
+- **更新** 新增拖拽悬停功能，体现UI交互Hooks的最佳实践
+
+- 实现要点
+  - **计数器状态管理：dragEnterCount确保嵌套拖拽的正确状态**
+  - **延迟展开机制：DRAG_EXPAND_DELAY避免拖拽经过时的误触发**
+  - **视觉反馈：isDragHovering控制悬停样式和边框效果**
+  - **状态清理：handleDragLeave和handleDragEnd确保资源释放**
+  - **事件处理：@dragenter/@dragleave/@dragover/@drop事件链**
+  - **动画集成：与GSAP动画系统协同工作**
+
+- 适用场景
+  - 任务列表拖拽排序、子任务管理、拖拽悬停反馈
+- 使用建议
+  - 合理设置DRAG_EXPAND_DELAY避免过短或过长的延迟
+  - 确保dragEnterCount的正确递增和递减
+  - 结合视觉反馈增强用户体验
+
+```mermaid
+sequenceDiagram
+participant U as "用户拖拽"
+participant TI as "TodoItem组件"
+participant DC as "dragEnterCount"
+participant DT as "dragExpandTimer"
+U->>TI : "dragenter"
+TI->>DC : "dragEnterCount++"
+TI->>TI : "isDragHovering = true"
+alt 有子任务且未展开
+TI->>DT : "setTimeout(DRAG_EXPAND_DELAY)"
+DT-->>TI : "到期后展开"
+end
+U->>TI : "dragleave"
+TI->>DC : "dragEnterCount--"
+TI->>TI : "nextTick检查"
+alt dragEnterCount <= 0
+TI->>TI : "isDragHovering = false"
+TI->>DT : "clearTimeout"
+end
+U->>TI : "dragend"
+TI->>TI : "清理所有状态"
+```
+
+**图表来源**
+- [TodoItem.vue:194-238](file://apps/frontend/src/features/todo/components/TodoItem.vue#L194-L238)
+
+**章节来源**
+- [TodoItem.vue:194-238](file://apps/frontend/src/features/todo/components/TodoItem.vue#L194-L238)
+- [TodoItem.vue:426-449](file://apps/frontend/src/features/todo/components/TodoItem.vue#L426-L449)
+
 ### 窗口尺寸与响应式（useWindowSize）
 - 实现要点
   - 响应式width/height，组件与非组件环境分别绑定/解绑
@@ -341,9 +449,29 @@ S-->>U : "平滑/瞬时滚动到底部"
 **章节来源**
 - [useToast.ts:1-87](file://apps/frontend/src/composables/useToast.ts#L1-L87)
 
+### 动画驱动（useGsap）
+- **更新** 新增GSAP动画系统的集成使用
+
+- 实现要点
+  - **高性能动画：GSAP驱动的高度展开/折叠动画替代简单v-show**
+  - **状态感知：根据isExpanded和isDragHovering动态播放动画**
+  - **性能优化：使用ctx.add确保动画执行时机**
+  - **动画控制：支持初始挂载和后续状态变化的动画播放**
+- 适用场景
+  - 列表展开/收起、模态框动画、复杂过渡效果
+- 使用建议
+  - 合理使用ctx.add避免动画冲突
+  - 注意动画完成后清理height样式
+
+**章节来源**
+- [useGsap.ts:1-200](file://apps/frontend/src/composables/useGsap.ts#L1-L200)
+- [TodoItem.vue:250-304](file://apps/frontend/src/features/todo/components/TodoItem.vue#L250-L304)
+
 ## 依赖关系分析
 - useSmartScroll依赖useSmartScroll.internals进行滚动决策与RAF批处理
-- ResizableDrawer同时依赖useEscClose与useResizable，形成“抽屉+可调整大小+ESC关闭”的完整交互
+- ResizableDrawer同时依赖useEscClose与useResizable，形成"抽屉+可调整大小+ESC关闭"的完整交互
+- **TodoItem组件集成了useHaptics、useGsap、useWindowSize、useToast等多个Hooks**
+- **TodoItemActions、TodoItemContent、TodoItemEdit等子组件提供完整的交互生态**
 - 组件层通过reka-ui桥接，保持与UI库的松耦合
 
 ```mermaid
@@ -352,6 +480,14 @@ U1["useSmartScroll.ts"] --> U2["useSmartScroll.internals.ts"]
 C1["ResizableDrawer.vue"] --> U3["useEscClose.ts"]
 C1 --> U4["useResizable.ts"]
 C1 --> U5["useWindowSize.ts"]
+T1["TodoItem.vue"] --> U6["useHaptics.ts"]
+T1 --> U7["useGsap.ts"]
+T1 --> U8["useWindowSize.ts"]
+T1 --> U9["useToast.ts"]
+T2["TodoItemActions.vue"] --> T3["TodoItemActionsDesktop.vue"]
+T2 --> T4["TodoItemActionsMobileSheet.vue"]
+T5["TodoItemContent.vue"] --> T6["TodoItemEdit.vue"]
+T7["TodoItemAddSubtask.vue"] --> U6
 UI1["AlertDialog.vue"] --> R1["reka-ui AlertDialogRoot"]
 UI2["Popover.vue"] --> R2["reka-ui PopoverRoot"]
 UI3["Tabs.vue"] --> R3["reka-ui TabsRoot"]
@@ -364,6 +500,16 @@ UI3["Tabs.vue"] --> R3["reka-ui TabsRoot"]
 - [useEscClose.ts:1-66](file://apps/frontend/src/composables/useEscClose.ts#L1-L66)
 - [useResizable.ts:1-70](file://apps/frontend/src/composables/useResizable.ts#L1-L70)
 - [useWindowSize.ts:1-45](file://apps/frontend/src/composables/useWindowSize.ts#L1-L45)
+- [useHaptics.ts:1-62](file://apps/frontend/src/composables/useHaptics.ts#L1-L62)
+- [useGsap.ts:1-200](file://apps/frontend/src/composables/useGsap.ts#L1-L200)
+- [useToast.ts:1-87](file://apps/frontend/src/composables/useToast.ts#L1-L87)
+- [TodoItem.vue:1-473](file://apps/frontend/src/features/todo/components/TodoItem.vue#L1-L473)
+- [TodoItemActions.vue:1-92](file://apps/frontend/src/features/todo/components/TodoItemActions.vue#L1-L92)
+- [TodoItemContent.vue:1-251](file://apps/frontend/src/features/todo/components/TodoItemContent.vue#L1-L251)
+- [TodoItemEdit.vue:1-102](file://apps/frontend/src/features/todo/components/TodoItemEdit.vue#L1-L102)
+- [TodoItemAddSubtask.vue:1-127](file://apps/frontend/src/features/todo/components/TodoItemAddSubtask.vue#L1-L127)
+- [TodoItemActionsDesktop.vue:1-225](file://apps/frontend/src/features/todo/components/TodoItemActionsDesktop.vue#L1-L225)
+- [TodoItemActionsMobileSheet.vue](file://apps/frontend/src/features/todo/components/TodoItemActionsMobileSheet.vue)
 - [AlertDialog.vue:1-16](file://apps/frontend/src/components/ui/alert-dialog/AlertDialog.vue#L1-L16)
 - [Popover.vue:1-20](file://apps/frontend/src/components/ui/popover/Popover.vue#L1-L20)
 - [Tabs.vue:1-16](file://apps/frontend/src/components/ui/tabs/Tabs.vue#L1-L16)
@@ -382,8 +528,13 @@ UI3["Tabs.vue"] --> R3["reka-ui TabsRoot"]
   - 拖拽时设置cursor与userSelect，减少布局抖动
 - 动画与过渡
   - 使用will-change与硬件加速友好的属性，减少主线程压力
-
-[本节为通用指导，无需特定文件来源]
+- **拖拽悬停优化**
+  - **使用dragEnterCount计数器避免重复触发**
+  - **DRAG_EXPAND_DELAY延迟避免误展开**
+  - **及时清理dragExpandTimer防止内存泄漏**
+- **动画性能**
+  - **GSAP动画使用ctx.add确保执行时机**
+  - **动画完成后清理内联样式避免布局问题**
 
 ## 故障排查指南
 - ESC键无效
@@ -398,17 +549,25 @@ UI3["Tabs.vue"] --> R3["reka-ui TabsRoot"]
 - 触觉反馈失败
   - 非原生平台会直接返回，属正常行为
   - 捕获异常并降级处理
+- **拖拽悬停问题**
+  - **检查dragEnterCount是否正确递增递减**
+  - **确认DRAG_EXPAND_DELAY设置合理**
+  - **验证isDragHovering状态同步更新**
+  - **确保handleDragLeave和handleDragEnd正确清理**
+- **动画异常**
+  - **检查GSAP ctx.add是否正确使用**
+  - **确认动画完成后样式清理**
 
 **章节来源**
 - [useEscClose.ts:1-66](file://apps/frontend/src/composables/useEscClose.ts#L1-L66)
 - [useResizable.ts:1-70](file://apps/frontend/src/composables/useResizable.ts#L1-L70)
 - [useSmartScroll.ts:1-442](file://apps/frontend/src/composables/useSmartScroll.ts#L1-L442)
 - [useHaptics.ts:1-62](file://apps/frontend/src/composables/useHaptics.ts#L1-L62)
+- [TodoItem.vue:194-238](file://apps/frontend/src/features/todo/components/TodoItem.vue#L194-L238)
+- [useGsap.ts:1-200](file://apps/frontend/src/composables/useGsap.ts#L1-L200)
 
 ## 结论
-UI交互Hooks通过“状态驱动 + 事件节流 + 平台适配”实现了稳定、流畅且可扩展的交互体验。结合组件层的声明式接入与无障碍设计，可在多端环境中提供一致的用户体验。建议在实际项目中遵循最佳实践，合理配置阈值与回调，持续关注性能与可维护性。
-
-[本节为总结，无需特定文件来源]
+UI交互Hooks通过"状态驱动 + 事件节流 + 平台适配"实现了稳定、流畅且可扩展的交互体验。新增的TodoItem拖拽悬停功能进一步完善了交互生态，体现了现代UI开发的最佳实践。结合组件层的声明式接入与无障碍设计，可在多端环境中提供一致的用户体验。建议在实际项目中遵循最佳实践，合理配置阈值与回调，持续关注性能与可维护性。
 
 ## 附录
 - 最佳实践清单
@@ -416,7 +575,7 @@ UI交互Hooks通过“状态驱动 + 事件节流 + 平台适配”实现了稳�
   - 触觉反馈：仅在原生平台启用，避免频繁触发
   - 可调整大小：结合localStorage持久化，合理设置min/max
   - 智能滚动：高频场景开启streamingInstant，设置合适阈值
+  - **拖拽悬停：使用计数器管理嵌套拖拽，合理设置延迟时间**
+  - **动画性能：使用GSAP优化复杂动画，注意资源清理**
   - 响应式：结合useWindowSize动态计算布局参数
   - 无障碍：为交互元素提供role/aria与键盘可达性
-
-[本节为通用指导，无需特定文件来源]

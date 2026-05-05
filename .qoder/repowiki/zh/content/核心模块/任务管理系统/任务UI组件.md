@@ -4,12 +4,12 @@
 **本文档引用的文件**
 - [TodoList.vue](file://apps/frontend/src/features/todo/components/TodoList.vue)
 - [TodoItem.vue](file://apps/frontend/src/features/todo/components/TodoItem.vue)
+- [TodoItemContent.vue](file://apps/frontend/src/features/todo/components/TodoItemContent.vue)
+- [TodoItemActions.vue](file://apps/frontend/src/features/todo/components/TodoItemActions.vue)
 - [TodoHeader.vue](file://apps/frontend/src/features/todo/components/TodoHeader.vue)
 - [TodoFilter.vue](file://apps/frontend/src/features/todo/components/TodoFilter.vue)
 - [TodoStatistics.vue](file://apps/frontend/src/features/todo/components/TodoStatistics.vue)
 - [PomodoroTimer.vue](file://apps/frontend/src/features/todo/components/PomodoroTimer.vue)
-- [TodoItemActions.vue](file://apps/frontend/src/features/todo/components/TodoItemActions.vue)
-- [TodoItemContent.vue](file://apps/frontend/src/features/todo/components/TodoItemContent.vue)
 - [TodoView.vue](file://apps/frontend/src/features/todo/TodoView.vue)
 - [pomodoro.ts](file://apps/frontend/src/features/todo/stores/pomodoro.ts)
 - [theme.css](file://apps/frontend/src/styles/theme.css)
@@ -67,7 +67,7 @@ PT --> PST
 **图表来源**
 - [TodoView.vue:1-522](file://apps/frontend/src/features/todo/TodoView.vue#L1-L522)
 - [TodoList.vue:1-316](file://apps/frontend/src/features/todo/components/TodoList.vue#L1-L316)
-- [TodoItem.vue:1-419](file://apps/frontend/src/features/todo/components/TodoItem.vue#L1-L419)
+- [TodoItem.vue:1-473](file://apps/frontend/src/features/todo/components/TodoItem.vue#L1-L473)
 - [TodoItemContent.vue:1-251](file://apps/frontend/src/features/todo/components/TodoItemContent.vue#L1-L251)
 - [TodoItemActions.vue:1-92](file://apps/frontend/src/features/todo/components/TodoItemActions.vue#L1-L92)
 - [TodoFilter.vue:1-204](file://apps/frontend/src/features/todo/components/TodoFilter.vue#L1-L204)
@@ -81,7 +81,7 @@ PT --> PST
 
 ## 核心组件
 - TodoList：负责任务列表渲染、空态展示、拖拽排序、稍后处理分组、deferredSection展开/折叠偏好记忆。
-- TodoItem：单个任务项的完整交互载体，包含展开/折叠、编辑、子任务、拖拽、动作面板、元信息徽章等。
+- TodoItem：单个任务项的完整交互载体，包含展开/折叠、编辑、子任务、拖拽、动作面板、元信息徽章等。**新增拖拽悬停检测系统**，包括isDragHovering状态管理、智能延迟展开功能、视觉反馈增强等重要用户体验改进。
 - TodoHeader：顶部导航与控制区，含视图切换、主题切换、语言切换、用户菜单、源切换等。
 - TodoFilter：过滤器与工具栏，支持搜索开关、回收站过滤、清空回收站、展开/折叠全部。
 - TodoStatistics：统计面板，集成ECharts展示完成率、周活跃度、专注时长等。
@@ -89,7 +89,7 @@ PT --> PST
 
 **章节来源**
 - [TodoList.vue:1-316](file://apps/frontend/src/features/todo/components/TodoList.vue#L1-L316)
-- [TodoItem.vue:1-419](file://apps/frontend/src/features/todo/components/TodoItem.vue#L1-L419)
+- [TodoItem.vue:1-473](file://apps/frontend/src/features/todo/components/TodoItem.vue#L1-L473)
 - [TodoHeader.vue:1-422](file://apps/frontend/src/features/todo/components/TodoHeader.vue#L1-L422)
 - [TodoFilter.vue:1-204](file://apps/frontend/src/features/todo/components/TodoFilter.vue#L1-L204)
 - [TodoStatistics.vue:1-342](file://apps/frontend/src/features/todo/components/TodoStatistics.vue#L1-L342)
@@ -165,6 +165,7 @@ DragDeferred --> End(["完成渲染"])
 ### TodoItem 组件分析
 - 设计模式：复合组件，内部组合TodoItemContent/TodoItemActions/TodoItemEdit/TodoItemAddSubtask，递归渲染子任务树。
 - 交互行为：点击勾选触发toggle事件；双击标题或点击编辑按钮进入编辑模式；拖拽开始/结束时自动展开父级；拖入子任务列表自动清除deferred状态。
+- **新增拖拽悬停检测系统**：通过isDragHovering状态管理、dragEnterCount计数器、dragExpandTimer智能延迟展开功能，提供更精确的拖拽反馈和用户体验。
 - 动画效果：使用GSAP驱动子任务展开/折叠的高度动画，避免v-show导致的布局抖动。
 - 可访问性：提供aria-label与键盘事件回调，支持屏幕阅读器识别。
 - 无障碍反馈：错误时通过toast与tooltip提示，提升可用性。
@@ -175,6 +176,11 @@ participant U as "用户"
 participant TI as "TodoItem"
 participant ST as "Todo Store"
 participant TI2 as "子任务 TodoItem"
+U->>TI : 拖拽进入/离开
+TI->>TI : handleDragEnter/handleDragLeave
+TI->>TI : 设置 isDragHovering = true/false
+TI->>TI : 智能延迟展开 (DRAG_EXPAND_DELAY = 500ms)
+TI->>ST : 展开/折叠父级
 U->>TI : 点击勾选
 TI->>TI : emit("toggle", id, completed)
 TI->>ST : 更新完成状态
@@ -187,12 +193,12 @@ TI->>ST : toggleTodoExpansion(id)
 ```
 
 **图表来源**
-- [TodoItem.vue:144-196](file://apps/frontend/src/features/todo/components/TodoItem.vue#L144-L196)
+- [TodoItem.vue:194-238](file://apps/frontend/src/features/todo/components/TodoItem.vue#L194-L238)
 - [TodoItemContent.vue:1-251](file://apps/frontend/src/features/todo/components/TodoItemContent.vue#L1-L251)
 - [TodoItemActions.vue:1-92](file://apps/frontend/src/features/todo/components/TodoItemActions.vue#L1-L92)
 
 **章节来源**
-- [TodoItem.vue:1-419](file://apps/frontend/src/features/todo/components/TodoItem.vue#L1-L419)
+- [TodoItem.vue:1-473](file://apps/frontend/src/features/todo/components/TodoItem.vue#L1-L473)
 - [TodoItemContent.vue:1-251](file://apps/frontend/src/features/todo/components/TodoItemContent.vue#L1-L251)
 - [TodoItemActions.vue:1-92](file://apps/frontend/src/features/todo/components/TodoItemActions.vue#L1-L92)
 
@@ -205,7 +211,7 @@ TI->>ST : toggleTodoExpansion(id)
 - [TodoHeader.vue:1-422](file://apps/frontend/src/features/todo/components/TodoHeader.vue#L1-L422)
 
 ### TodoFilter 组件分析
-- 筛选逻辑：基于FilterType切换“待办/已完成”，支持搜索开关、回收站过滤、清空回收站确认弹窗。
+- 筛选逻辑：基于FilterType切换"待办/已完成"，支持搜索开关、回收站过滤、清空回收站确认弹窗。
 - 工具栏：展开/折叠全部、搜索、回收站、清空回收站等工具按钮，提供Tooltip提示。
 - 事件通信：通过v-model与update:前缀事件双向绑定filter/showSearch/isDrawerOpen。
 
@@ -280,6 +286,7 @@ PT --> PS["Pomodoro Store"]
 - 拖拽与排序
   - TodoList/TodoItem通过computed setter在拖拽过程中即时修正deferred状态，避免脏数据。
   - vuedraggable启用ghost-class/chosen-class/drag-class提升拖拽反馈。
+  - **新增拖拽悬停检测系统**：通过智能延迟展开（DRAG_EXPAND_DELAY = 500ms）避免拖拽经过时误触发，提升拖拽体验。
 - 可访问性与无障碍
   - 提供aria-expanded、aria-controls、aria-label等属性，确保屏幕阅读器可用。
   - Tooltip/Popover提供延迟与焦点管理，避免干扰用户操作。
@@ -294,6 +301,7 @@ PT --> PS["Pomodoro Store"]
   - 症状：拖拽后deferred状态未正确清除或设置。
   - 排查：检查TodoList中dragList/draggable setter逻辑与TodoItem子任务列表setter逻辑。
   - 参考测试：TodoList.spec.ts验证拖拽时setTodoDeferred调用。
+  - **新增**：检查isDragHovering状态管理是否正常工作，dragEnterCount计数器是否正确递增递减。
 - 编辑模式无法保存
   - 症状：编辑后点击保存无响应。
   - 排查：确认TodoItem在handleSaveEdit中调用store.updateTodo并emit saveEdit；TodoView监听saveEdit事件。
@@ -312,7 +320,7 @@ PT --> PS["Pomodoro Store"]
 - [pomodoro.ts:247-265](file://apps/frontend/src/features/todo/stores/pomodoro.ts#L247-L265)
 
 ## 结论
-Lumina Todo的任务UI组件体系以清晰的职责划分、完善的事件通信与响应式数据绑定为基础，结合动画、可视化与主题系统，提供了良好的用户体验与可扩展性。建议后续在超大列表场景引入虚拟滚动、完善无障碍标签与键盘快捷键、加强错误边界与日志上报，持续提升稳定性与可维护性。
+Lumina Todo的任务UI组件体系以清晰的职责划分、完善的事件通信与响应式数据绑定为基础，结合动画、可视化与主题系统，提供了良好的用户体验与可扩展性。**新增的拖拽悬停检测系统显著提升了拖拽操作的精确性和用户体验**，通过智能延迟展开、状态管理和视觉反馈增强了交互的可靠性。建议后续在超大列表场景引入虚拟滚动、完善无障碍标签与键盘快捷键、加强错误边界与日志上报，持续提升稳定性与可维护性。
 
 [本节为总结，无需特定文件引用]
 
@@ -330,7 +338,7 @@ Lumina Todo的任务UI组件体系以清晰的职责划分、完善的事件通�
 - TodoView视图切换：自定义Transition钩子，使用GSAP实现位移、缩放与模糊的过渡效果。
 
 **章节来源**
-- [TodoItem.vue:209-262](file://apps/frontend/src/features/todo/components/TodoItem.vue#L209-L262)
+- [TodoItem.vue:250-304](file://apps/frontend/src/features/todo/components/TodoItem.vue#L250-L304)
 - [TodoView.vue:391-453](file://apps/frontend/src/features/todo/TodoView.vue#L391-L453)
 
 ### 无障碍访问支持
@@ -357,3 +365,30 @@ Lumina Todo的任务UI组件体系以清晰的职责划分、完善的事件通�
 **章节来源**
 - [TodoList.spec.ts:1-600](file://apps/frontend/tests/features/todo/components/TodoList.spec.ts#L1-L600)
 - [TodoItem.spec.ts:1-949](file://apps/frontend/tests/features/todo/components/TodoItem.spec.ts#L1-L949)
+
+### 拖拽悬停检测系统详解
+
+**新增功能概述**
+TodoItem组件新增了完整的拖拽悬停检测系统，显著提升了拖拽操作的用户体验和精确性。该系统包含以下关键特性：
+
+- **isDragHovering状态管理**：实时跟踪元素是否处于拖拽悬停状态
+- **dragEnterCount计数器**：精确管理多个dragenter/dragleave事件的配对
+- **智能延迟展开**：DRAG_EXPAND_DELAY = 500ms的延迟机制，避免误触发
+- **视觉反馈增强**：通过CSS类和边框效果提供直观的拖拽状态指示
+
+**技术实现细节**
+- 状态管理：通过ref创建isDragHovering、dragEnterCount、dragExpandTimer三个核心状态
+- 事件处理：handleDragEnter、handleDragLeave、handleDragEnd三个方法分别处理不同阶段的拖拽事件
+- 延迟机制：使用setTimeout实现500ms的智能延迟展开，避免拖拽经过时的误触发
+- 清理机制：确保dragExpandTimer在适当时机被清除，防止内存泄漏
+
+**用户体验改进**
+- 减少误操作：智能延迟避免拖拽经过时的意外展开
+- 更精确的反馈：视觉指示让用户清楚知道当前的拖拽状态
+- 平滑的交互：结合GSAP动画实现流畅的展开/折叠效果
+
+**章节来源**
+- [TodoItem.vue:52-59](file://apps/frontend/src/features/todo/components/TodoItem.vue#L52-L59)
+- [TodoItem.vue:194-238](file://apps/frontend/src/features/todo/components/TodoItem.vue#L194-L238)
+- [TodoItem.vue:319-324](file://apps/frontend/src/features/todo/components/TodoItem.vue#L319-L324)
+- [TodoItem.vue:436-441](file://apps/frontend/src/features/todo/components/TodoItem.vue#L436-L441)
