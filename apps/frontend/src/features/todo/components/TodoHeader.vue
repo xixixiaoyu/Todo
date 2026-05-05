@@ -260,7 +260,7 @@ const handleDblClick = () => {
             @click="toggleLanguage"
           >
             <Languages class="mr-2 h-4 w-4" />
-            <span>{{ locale === 'zh-CN' ? 'English' : '中文' }}</span>
+            <span>{{ locale === 'zh-CN' ? '中文' : 'English' }}</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -303,7 +303,7 @@ const handleDblClick = () => {
               @click="toggleLanguage"
             >
               <Languages class="mr-2 h-4 w-4" />
-              <span>{{ locale === 'zh-CN' ? 'English' : '中文' }}</span>
+              <span>{{ locale === 'zh-CN' ? '中文' : 'English' }}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
