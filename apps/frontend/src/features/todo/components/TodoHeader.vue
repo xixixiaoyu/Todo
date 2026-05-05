@@ -243,15 +243,22 @@ const handleDblClick = () => {
             <span>{{ t('todo.statsMode') }}</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <div class="flex items-center justify-between px-2 py-1.5">
-            <span class="text-[var(--todo-font-meta)]">{{ t('common.theme.label') }}</span>
-            <ThemeToggle />
+          <div class="flex items-center justify-between px-2 py-1">
+            <span class="text-[var(--todo-font-meta)] text-muted-foreground">{{
+              t('common.theme.label')
+            }}</span>
+            <ThemeToggle size="sm" />
           </div>
-          <div class="flex items-center justify-between px-2 py-1.5">
-            <span class="text-[var(--todo-font-meta)]">{{ t('common.themeColor.label') }}</span>
-            <ThemeColorPicker />
+          <div class="flex items-center justify-between px-2 py-1">
+            <span class="text-[var(--todo-font-meta)] text-muted-foreground">{{
+              t('common.themeColor.label')
+            }}</span>
+            <ThemeColorPicker size="sm" />
           </div>
-          <DropdownMenuItem class="rounded-lg cursor-pointer" @click="toggleLanguage">
+          <DropdownMenuItem
+            class="rounded-lg cursor-pointer text-[var(--todo-font-meta)]"
+            @click="toggleLanguage"
+          >
             <Languages class="mr-2 h-4 w-4" />
             <span>{{ locale === 'zh-CN' ? 'English' : '中文' }}</span>
           </DropdownMenuItem>
@@ -272,22 +279,29 @@ const handleDblClick = () => {
               <Settings :size="18" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" class="w-56 rounded-xl p-2">
+          <DropdownMenuContent align="end" class="w-52 rounded-xl p-2">
             <DropdownMenuLabel
               class="text-[var(--todo-font-caption)] text-muted-foreground font-normal"
             >
               {{ t('common.settings') }}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <div class="flex items-center justify-between px-2 py-1.5">
-              <span class="text-[var(--todo-font-meta)]">{{ t('common.theme.label') }}</span>
-              <ThemeToggle />
+            <div class="flex items-center justify-between px-2 py-1">
+              <span class="text-[var(--todo-font-meta)] text-muted-foreground">{{
+                t('common.theme.label')
+              }}</span>
+              <ThemeToggle size="sm" />
             </div>
-            <div class="flex items-center justify-between px-2 py-1.5">
-              <span class="text-[var(--todo-font-meta)]">{{ t('common.themeColor.label') }}</span>
-              <ThemeColorPicker />
+            <div class="flex items-center justify-between px-2 py-1">
+              <span class="text-[var(--todo-font-meta)] text-muted-foreground">{{
+                t('common.themeColor.label')
+              }}</span>
+              <ThemeColorPicker size="sm" />
             </div>
-            <DropdownMenuItem class="rounded-lg cursor-pointer" @click="toggleLanguage">
+            <DropdownMenuItem
+              class="rounded-lg cursor-pointer text-[var(--todo-font-meta)]"
+              @click="toggleLanguage"
+            >
               <Languages class="mr-2 h-4 w-4" />
               <span>{{ locale === 'zh-CN' ? 'English' : '中文' }}</span>
             </DropdownMenuItem>
@@ -365,7 +379,7 @@ const handleDblClick = () => {
             ></span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" class="w-56 rounded-xl p-2">
+        <DropdownMenuContent align="end" class="w-52 rounded-xl p-2">
           <DropdownMenuLabel class="font-normal">
             <div class="flex flex-col space-y-1">
               <p class="text-[var(--todo-font-meta)] font-medium leading-none">
@@ -377,13 +391,16 @@ const handleDblClick = () => {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem class="rounded-lg cursor-pointer" @click="triggerAvatarUpload">
+          <DropdownMenuItem
+            class="rounded-lg cursor-pointer text-[var(--todo-font-meta)]"
+            @click="triggerAvatarUpload"
+          >
             <Upload class="mr-2 h-4 w-4" />
             <span>{{ t('common.upload.avatar') }}</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            class="rounded-lg cursor-pointer text-error focus:text-error focus:bg-error/10"
+            class="rounded-lg cursor-pointer text-error focus:text-error focus:bg-error/10 text-[var(--todo-font-meta)]"
             @click="void authStore.logout()"
           >
             <LogOut class="mr-2 h-4 w-4" />

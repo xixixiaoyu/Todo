@@ -492,10 +492,10 @@ function onFireworksComplete() {
 }
 
 .todo-typography {
-  --todo-font-title: 19px;
-  --todo-font-body: 15px;
-  --todo-font-meta: 13px;
-  --todo-font-caption: 12px;
+  --todo-font-title: 18px;
+  --todo-font-body: 14px;
+  --todo-font-meta: 12px;
+  --todo-font-caption: 11px;
   --todo-control-primary-height: 48px;
   --todo-control-secondary-height: 38px;
   --todo-segment-height: 42px;
@@ -506,10 +506,10 @@ function onFireworksComplete() {
 
 @media (max-width: 767px) {
   .todo-typography {
-    --todo-font-title: 17px;
-    --todo-font-body: 14px;
-    --todo-font-meta: 12px;
-    --todo-font-caption: 11px;
+    --todo-font-title: 16px;
+    --todo-font-body: 13px;
+    --todo-font-meta: 11px;
+    --todo-font-caption: 10px;
     --todo-control-primary-height: 40px;
     --todo-control-secondary-height: 30px;
     --todo-segment-height: 38px;

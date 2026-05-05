@@ -4,6 +4,16 @@ import { useTheme } from '@/composables/useTheme'
 import { useI18n } from 'vue-i18n'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
+
+const props = withDefaults(
+  defineProps<{
+    size?: 'sm' | 'md' | 'lg'
+  }>(),
+  {
+    size: 'md',
+  },
+)
 
 const { theme, setTheme } = useTheme()
 const { t } = useI18n()
@@ -37,10 +47,19 @@ const getTitle = () => {
       <Button
         variant="outline"
         size="icon"
-        class="h-10 w-10 rounded-xl bg-card border-border hover:bg-accent"
+        :class="
+          cn(
+            'rounded-xl bg-card border-border hover:bg-accent transition-all',
+            props.size === 'sm' ? 'h-8 w-8' : props.size === 'lg' ? 'h-10 w-10' : 'h-9 w-9',
+          )
+        "
         @click="toggleTheme"
       >
-        <component :is="getIcon()" :size="18" class="transition-all" />
+        <component
+          :is="getIcon()"
+          :size="props.size === 'sm' ? 14 : props.size === 'lg' ? 18 : 16"
+          class="transition-all"
+        />
       </Button>
     </TooltipTrigger>
     <TooltipContent>

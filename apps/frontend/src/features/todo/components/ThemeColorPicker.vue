@@ -7,10 +7,20 @@ import { DEFAULT_THEME_COLOR, THEME_PRESETS, useTheme } from '@/composables/useT
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
 
 type ThemePreset = ThemePresetDefinition & {
   name: string
 }
+
+const props = withDefaults(
+  defineProps<{
+    size?: 'sm' | 'md' | 'lg'
+  }>(),
+  {
+    size: 'md',
+  },
+)
 
 const { t } = useI18n()
 const { themeColor, effectiveThemeColor, setThemeColor, resetThemeColor } = useTheme()
@@ -67,10 +77,15 @@ function reset() {
           <Button
             variant="outline"
             size="icon"
-            class="h-10 w-10 rounded-xl bg-card border-border hover:bg-accent"
+            :class="
+              cn(
+                'rounded-xl bg-card border-border hover:bg-accent transition-all',
+                props.size === 'sm' ? 'h-8 w-8' : props.size === 'lg' ? 'h-10 w-10' : 'h-9 w-9',
+              )
+            "
             :aria-label="t('common.themeColor.label')"
           >
-            <Palette :size="18" />
+            <Palette :size="props.size === 'sm' ? 14 : props.size === 'lg' ? 18 : 16" />
           </Button>
         </PopoverTrigger>
 
