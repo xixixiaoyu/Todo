@@ -3,13 +3,13 @@ import { computed, readonly, ref, watch } from 'vue'
 
 export type ThemePresetKey =
   | 'celadon'
-  | 'twilightAmber'
+  | 'wisteria'
   | 'mistBlue'
   | 'mossGreen'
   | 'lilacGray'
   | 'sunsetRose'
-  | 'graphite'
-  | 'indigo'
+  | 'autumnGold'
+  | 'warmOrange'
   | 'random'
 
 export type ThemePresetDefinition = {
@@ -55,13 +55,13 @@ type ThemeForeground = typeof LIGHT_FOREGROUND | typeof DARK_FOREGROUND
 
 export const THEME_PRESETS: ReadonlyArray<ThemePresetDefinition> = [
   { key: 'celadon', value: '#78958e', recommended: true },
-  { key: 'twilightAmber', value: '#9b8574' },
+  { key: 'wisteria', value: '#9570a3' },
   { key: 'mistBlue', value: '#728ba1', recommended: true },
-  { key: 'mossGreen', value: '#7c9585', recommended: true },
-  { key: 'lilacGray', value: '#948ac0', recommended: true },
-  { key: 'sunsetRose', value: '#ae8792' },
-  { key: 'graphite', value: '#647587' },
-  { key: 'indigo', value: '#4f6284' },
+  { key: 'mossGreen', value: '#7c9585' },
+  { key: 'lilacGray', value: '#786ea6', recommended: true },
+  { key: 'sunsetRose', value: '#9c6e76' },
+  { key: 'autumnGold', value: '#b0915e', recommended: true },
+  { key: 'warmOrange', value: '#bb7d5e', recommended: true },
   { key: 'random', value: RANDOM_THEME_VALUE },
 ] as const
 

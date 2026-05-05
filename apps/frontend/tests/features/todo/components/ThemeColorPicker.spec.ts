@@ -24,13 +24,13 @@ vi.mock('vue-i18n', () => ({
         'common.themeColor.recommended': '推荐',
         'common.themeColor.recommendedShort': '优选',
         'common.themeColor.presets.celadon': '青瓷',
-        'common.themeColor.presets.twilightAmber': '暮色',
+        'common.themeColor.presets.wisteria': '紫薇',
         'common.themeColor.presets.mistBlue': '薄雾',
         'common.themeColor.presets.mossGreen': '苔青',
-        'common.themeColor.presets.lilacGray': '丁香',
         'common.themeColor.presets.sunsetRose': '晚霞',
-        'common.themeColor.presets.graphite': '石墨',
-        'common.themeColor.presets.indigo': '靛青',
+        'common.themeColor.presets.lilacGray': '丁香',
+        'common.themeColor.presets.autumnGold': '秋叶',
+        'common.themeColor.presets.warmOrange': '暖橙',
         'common.themeColor.presets.random': '随机',
       }
 
@@ -80,7 +80,7 @@ describe('ThemeColorPicker', () => {
     expect(presetButtons[4]?.attributes('title')).toBe('丁香')
 
     const lilacDot = presetButtons[4]?.find('span[style]')
-    expect(lilacDot?.attributes('style')).toContain('#948ac0')
+    expect(lilacDot?.attributes('style')).toContain('#786ea6')
   })
 
   it('should mark audited presets as recommended', () => {
@@ -101,12 +101,41 @@ describe('ThemeColorPicker', () => {
       },
     })
 
-    expect(wrapper.findAll('[data-recommended="true"]')).toHaveLength(4)
+    expect(wrapper.findAll('[data-recommended="true"]')).toHaveLength(5)
     expect(wrapper.find('button[title="青瓷"] [data-recommended="true"]').text()).toBe('优选')
     expect(wrapper.html()).toContain('grid-cols-2')
     expect(wrapper.html()).toContain('sm:grid-cols-3')
     expect(wrapper.html()).toContain('absolute right-2.5 top-1.5')
     expect(wrapper.find('button[title="随机"] [data-recommended="true"]').exists()).toBe(false)
+  })
+
+  it('should include autumnGold and warmOrange as recommended warm tones', () => {
+    const mockedUseTheme = vi.mocked(useTheme)
+
+    mockedUseTheme.mockReturnValue(createUseThemeMock())
+
+    const wrapper = mount(ThemeColorPicker, {
+      global: {
+        stubs: {
+          Tooltip: { template: '<div><slot /></div>' },
+          TooltipTrigger: { template: '<div><slot /></div>' },
+          TooltipContent: { template: '<div><slot /></div>' },
+          Popover: { template: '<div><slot /></div>' },
+          PopoverTrigger: { template: '<div><slot /></div>' },
+          PopoverContent: { template: '<div><slot /></div>' },
+        },
+      },
+    })
+
+    const autumnButton = wrapper.find('button[title="秋叶"]')
+    expect(autumnButton.exists()).toBe(true)
+    expect(autumnButton.find('[data-recommended="true"]').exists()).toBe(true)
+    expect(autumnButton.find('span[style]').attributes('style')).toContain('#b0915e')
+
+    const orangeButton = wrapper.find('button[title="暖橙"]')
+    expect(orangeButton.exists()).toBe(true)
+    expect(orangeButton.find('[data-recommended="true"]').exists()).toBe(true)
+    expect(orangeButton.find('span[style]').attributes('style')).toContain('#bb7d5e')
   })
 
   it('should reflect the effective random theme color in the custom color input', async () => {
