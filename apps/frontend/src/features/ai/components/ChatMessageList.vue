@@ -201,7 +201,7 @@ watch(
       setStreamingMode(!!lastMsg?.isStreaming)
 
       void nextTick(() => {
-        scrollToBottom(lastMsg?.isStreaming ? 'instant' : 'smooth')
+        scrollToBottom('instant')
       })
     }
   },
