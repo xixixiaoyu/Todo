@@ -189,8 +189,8 @@ defineExpose({
             ? isEditing
               ? 'w-full max-w-full space-y-2'
               : isMobile
-                ? 'max-w-[88%] space-y-2'
-                : 'max-w-[76%] space-y-2'
+                ? 'flex flex-col items-end max-w-[88%] space-y-2'
+                : 'flex flex-col items-end max-w-[76%] space-y-2'
             : 'w-full space-y-2.5',
       ]"
       :style="
@@ -249,7 +249,9 @@ defineExpose({
             isNovelContent ? 'novel-mode' : '',
             isEditing
               ? 'w-full !bg-card !text-foreground ring-2 ring-primary/20 border-primary'
-              : '',
+              : isUser
+                ? 'w-fit'
+                : '',
           ]"
         >
           <!-- 正在生成图片时显示精致加载状态 -->

@@ -97,6 +97,14 @@ describe('ChatMessage', () => {
 
     expect(userWrapper.find('.ai-chat-message--user').exists()).toBe(true)
     expect(userWrapper.find('.ai-chat-user-text').exists()).toBe(true)
+
+    // Verify alignment and width constraints for user messages
+    const userMessageContainer = userWrapper.find('.flex-col.items-end')
+    expect(userMessageContainer.exists()).toBe(true)
+    expect(userMessageContainer.classes()).toContain('max-w-[76%]')
+
+    const userBubble = userWrapper.find('.ai-chat-message--user')
+    expect(userBubble.classes()).toContain('w-fit')
   })
 
   it('keeps image generation bubbles free of assistant padding classes', () => {
