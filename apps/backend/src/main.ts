@@ -50,6 +50,7 @@ async function bootstrap() {
   const defaultOrigins = [
     'http://localhost:5173',
     'wails://localhost',
+    'wails://wails',
     'http://wails.localhost',
     'https://wails.localhost',
   ]
