@@ -162,12 +162,22 @@ export const useAuthStore = defineStore(
 
         // 立即手动触发一次持久化同步，确保跨页面或刷新后能恢复
         persistAuthState()
+      } catch (e: unknown) {
+        handleApiError(e, 'login.failed')
+        return false
+      } finally {
+        loading.value = false
+      }
 
-        // 登录成功后触发数据合并同步
+      // 登录后的扩展同步不应阻断主登录流程。
+      // 即便这些步骤失败，用户也应先完成登录进入系统。
+      try {
         const { useTodoStore } = await import('@/features/todo/stores/todo')
         const todoStore = useTodoStore()
-        await todoStore.mergeOnLogin(payload.user.id)
-        requestAnonymousAiMigration(payload.user.id)
+        if (user.value?.id) {
+          await todoStore.mergeOnLogin(user.value.id)
+          requestAnonymousAiMigration(user.value.id)
+        }
 
         // 触发 AI 数据服务端同步（fire-and-forget，动态 import 避免循环依赖）
         const { syncMemoryFromServer } = await import('@/features/ai/composables/useMemory')
@@ -176,14 +186,13 @@ export const useAuthStore = defineStore(
         void syncMemoryFromServer()
         void syncSkillsFromServer()
         void syncPresetsFromServer()
-
-        return true
-      } catch (e: unknown) {
-        handleApiError(e, 'login.failed')
-        return false
+      } catch (syncError) {
+        console.warn('Post-login sync failed:', syncError)
       } finally {
         loading.value = false
       }
+
+      return true
     }
 
     /**
