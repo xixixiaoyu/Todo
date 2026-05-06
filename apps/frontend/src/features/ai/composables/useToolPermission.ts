@@ -1,114 +1,121 @@
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 
-export type PermissionMode = 'auto-approve' | 'ask' | 'deny'
+export type PermissionMode = 'operate' | 'ask' | 'read_only'
 
-export interface ToolPermissionState {
-  mode: PermissionMode
-  /** 工具级别的权限覆盖 */
-  toolOverrides: Record<string, PermissionMode>
+// ── 工具分类 ──
+const INFORMATION_TOOLS = new Set([
+  'agent_read_file',
+  'agent_ls',
+  'agent_grep',
+  'agent_find',
+  'read',
+  'grep',
+  'find',
+  'ls',
+  'web_search',
+  'web_fetch',
+])
+
+const SIDE_EFFECT_TOOLS = new Set([
+  'agent_write_file',
+  'agent_edit_file',
+  'agent_mkdir',
+  'agent_bash',
+  'agent_stage_files',
+  'write',
+  'edit',
+  'bash',
+  'computer',
+])
+
+function isInformationTool(name: string): boolean {
+  return INFORMATION_TOOLS.has(name)
 }
 
-const STORAGE_KEY = 'lumina_tool_permissions'
-
-function loadPersistedState(): ToolPermissionState {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw) as Partial<ToolPermissionState>
-      return {
-        mode: parsed.mode || 'ask',
-        toolOverrides: parsed.toolOverrides || {},
-      }
-    }
-  } catch {
-    // corrupted data
-  }
-  return { mode: 'ask', toolOverrides: {} }
+function isSideEffectTool(name: string): boolean {
+  return SIDE_EFFECT_TOOLS.has(name)
 }
 
-function persistState(state: ToolPermissionState): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-  } catch {
-    // storage full or unavailable
-  }
+// ── 决策 ──
+export interface PermissionDecision {
+  action: 'allow' | 'deny' | 'ask'
+  reason?: string
+  confirmId?: string
 }
 
-const SENSITIVE_CATEGORIES = new Set(['file_write', 'shell', 'delivery', 'task'])
-
-const state = ref<ToolPermissionState>(loadPersistedState())
-
-watch(
-  state,
-  (newState) => {
-    persistState(newState)
-  },
-  { deep: true },
-)
-
-export function useToolPermission() {
-  function getEffectiveMode(toolName: string, category?: string): PermissionMode {
-    // 工具级别覆盖优先
-    if (state.value.toolOverrides[toolName]) {
-      return state.value.toolOverrides[toolName]
-    }
-    // 敏感分类默认需要确认
-    if (category && SENSITIVE_CATEGORIES.has(category)) {
-      return state.value.mode
-    }
-    // 读取类操作默认放行（除非显式 deny）
-    if (state.value.mode === 'deny') return 'deny'
-    return 'auto-approve'
+export function classifyPermission(toolName: string, mode: PermissionMode): PermissionDecision {
+  // 信息工具始终允许
+  if (isInformationTool(toolName)) {
+    return { action: 'allow' }
   }
 
-  function classifyPermission(params: { toolName: string; category?: string }): {
-    action: 'allow' | 'deny' | 'ask'
-    message?: string
-  } {
-    const mode = getEffectiveMode(params.toolName, params.category)
+  // operate 模式：全放行
+  if (mode === 'operate') {
+    return { action: 'allow' }
+  }
 
-    if (mode === 'auto-approve') {
-      return { action: 'allow' }
-    }
-
-    if (mode === 'deny') {
+  // read_only 模式：拒绝副作用工具
+  if (mode === 'read_only') {
+    if (isSideEffectTool(toolName)) {
       return {
         action: 'deny',
-        message: `Tool "${params.toolName}" is blocked by current permission settings.`,
+        reason: `Tool "${toolName}" is blocked in read-only mode.`,
       }
     }
-
-    // mode === 'ask' — 需要用户确认
-    return {
-      action: 'ask',
-      message: `Allow "${params.toolName}" to execute?`,
-    }
+    // 未知工具在 read_only 下也拒绝
+    return { action: 'deny', reason: `Tool "${toolName}" is not allowed in read-only mode.` }
   }
 
-  function setMode(mode: PermissionMode): void {
-    state.value.mode = mode
+  // ask 模式：副作用工具需要确认
+  if (mode === 'ask' && isSideEffectTool(toolName)) {
+    return { action: 'ask', reason: `Allow "${toolName}" to execute?` }
   }
 
-  function setToolOverride(toolName: string, mode: PermissionMode | null): void {
-    if (mode === null) {
-      delete state.value.toolOverrides[toolName]
-    } else {
-      state.value.toolOverrides[toolName] = mode
-    }
-    // trigger reactivity
-    state.value = { ...state.value }
+  // ask 模式下未知工具也询问
+  if (mode === 'ask' && !isInformationTool(toolName)) {
+    return { action: 'ask', reason: `Allow "${toolName}"?` }
   }
 
-  function reset(): void {
-    state.value = { mode: 'ask', toolOverrides: {} }
-    localStorage.removeItem(STORAGE_KEY)
+  return { action: 'allow' }
+}
+
+// ── 持久化 ──
+const STORAGE_KEY = 'lumina_permission_mode'
+const DEFAULT_MODE: PermissionMode = 'ask'
+
+function loadMode(): PermissionMode {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (raw === 'operate' || raw === 'ask' || raw === 'read_only') return raw
+  } catch {
+    /* ignore */
+  }
+  return DEFAULT_MODE
+}
+
+function saveMode(mode: PermissionMode): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, mode)
+  } catch {
+    /* ignore */
+  }
+}
+
+// ── Composable ──
+const currentMode = ref<PermissionMode>(loadMode())
+
+watch(currentMode, saveMode)
+
+export function useToolPermission() {
+  const mode = computed(() => currentMode.value)
+
+  function setMode(m: PermissionMode): void {
+    currentMode.value = m
   }
 
-  return {
-    mode: state,
-    classifyPermission,
-    setMode,
-    setToolOverride,
-    reset,
+  function check(toolName: string): PermissionDecision {
+    return classifyPermission(toolName, currentMode.value)
   }
+
+  return { mode, setMode, check }
 }

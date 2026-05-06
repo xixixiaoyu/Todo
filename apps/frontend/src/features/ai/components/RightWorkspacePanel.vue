@@ -1,19 +1,25 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { FolderTree, Paperclip } from 'lucide-vue-next'
+import { FolderTree, Paperclip, PanelRightClose, PanelRightOpen, X } from 'lucide-vue-next'
 import SessionFileList from './SessionFileList.vue'
 import WorkspaceFileTree from './WorkspaceFileTree.vue'
+import axios from 'axios'
 
-defineProps<{
-  sessionId: string | null
+const props = defineProps<{
   workspacePath: string | null
   sidecarPort: number | null
   sidecarToken: string | null
-  backendUrl: string
-  authToken: string | null
 }>()
 
 const activeTab = ref<'session-files' | 'workspace'>('workspace')
+const collapsed = ref(false)
+const panelWidth = ref(260)
+const resizing = ref(false)
+
+// File preview state
+const previewFile = ref<{ path: string; name: string } | null>(null)
+const previewContent = ref<string | null>(null)
+const previewLoading = ref(false)
 
 const tabs = [
   { id: 'workspace' as const, label: '工作区', icon: FolderTree },
@@ -27,39 +33,131 @@ const tabsStyle = computed(() => {
     '--rwp-tab-slider-offset': idx === 0 ? '0px' : 'calc(100% + 2px)',
   }
 })
+
+// ── Resize ──
+function onResizeStart(e: PointerEvent) {
+  resizing.value = true
+  const startX = e.clientX
+  const startWidth = panelWidth.value
+
+  function onMove(ev: PointerEvent) {
+    const delta = startX - ev.clientX
+    const next = Math.max(180, Math.min(500, startWidth + delta))
+    panelWidth.value = next
+  }
+
+  function onUp() {
+    resizing.value = false
+    document.removeEventListener('pointermove', onMove)
+    document.removeEventListener('pointerup', onUp)
+  }
+
+  document.addEventListener('pointermove', onMove)
+  document.addEventListener('pointerup', onUp)
+}
+
+// ── File preview ──
+function onFileClick(filePath: string, fileName: string) {
+  previewFile.value = { path: filePath, name: fileName }
+  loadPreview(filePath)
+}
+
+async function loadPreview(filePath: string) {
+  if (!props.sidecarPort || !props.sidecarToken) return
+  previewLoading.value = true
+  previewContent.value = null
+  try {
+    const client = axios.create({
+      baseURL: `http://127.0.0.1:${props.sidecarPort}/sidecar`,
+      timeout: 5000,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${props.sidecarToken}`,
+      },
+    })
+    const { data } = await client.post('/fs/read', { filePath })
+    if (data.success) {
+      previewContent.value = data.data.content
+    } else {
+      previewContent.value = `Error: ${data.message || 'Failed to read file'}`
+    }
+  } catch (err) {
+    previewContent.value = `Error: ${err instanceof Error ? err.message : 'Request failed'}`
+  } finally {
+    previewLoading.value = false
+  }
+}
+
+function closePreview() {
+  previewFile.value = null
+  previewContent.value = null
+}
 </script>
 
 <template>
-  <aside class="rwp" :style="tabsStyle">
-    <!-- Tab 滑动条 -->
-    <div class="rwp-tabs">
-      <div class="rwp-tab-slider" />
-      <button
-        v-for="tab in tabs"
-        :key="tab.id"
-        :class="['rwp-tab', { 'rwp-tab--active': activeTab === tab.id }]"
-        @click="activeTab = tab.id"
-      >
-        <component :is="tab.icon" :size="13" />
-        <span>{{ tab.label }}</span>
-      </button>
-    </div>
+  <aside
+    class="rwp"
+    :class="{ 'rwp--collapsed': collapsed }"
+    :style="{ width: collapsed ? '0px' : panelWidth + 'px' }"
+  >
+    <!-- 拖拽手柄 -->
+    <div
+      class="rwp-handle"
+      :class="{ 'rwp-handle--active': resizing }"
+      @pointerdown.prevent="onResizeStart"
+    />
 
-    <!-- 内容区 -->
-    <div class="rwp-body">
-      <SessionFileList
-        v-if="activeTab === 'session-files'"
-        :session-id="sessionId"
-        :backend-url="backendUrl"
-        :auth-token="authToken"
-      />
-      <WorkspaceFileTree
-        v-else-if="activeTab === 'workspace' && workspacePath"
-        :workspace-path="workspacePath"
-        :sidecar-port="sidecarPort"
-        :sidecar-token="sidecarToken"
-      />
-    </div>
+    <!-- 折叠按钮 -->
+    <button
+      class="rwp-collapse-btn"
+      :title="collapsed ? '展开面板' : '折叠面板'"
+      @click="collapsed = !collapsed"
+    >
+      <PanelRightClose v-if="!collapsed" :size="13" />
+      <PanelRightOpen v-else :size="13" />
+    </button>
+
+    <template v-if="!collapsed">
+      <!-- Tab 滑动条 -->
+      <div class="rwp-tabs" :style="tabsStyle">
+        <div class="rwp-tab-slider" />
+        <button
+          v-for="tab in tabs"
+          :key="tab.id"
+          :class="['rwp-tab', { 'rwp-tab--active': activeTab === tab.id }]"
+          @click="activeTab = tab.id"
+        >
+          <component :is="tab.icon" :size="13" />
+          <span>{{ tab.label }}</span>
+        </button>
+      </div>
+
+      <!-- 内容区 -->
+      <div class="rwp-body">
+        <SessionFileList v-if="activeTab === 'session-files'" />
+        <WorkspaceFileTree
+          v-else-if="activeTab === 'workspace' && workspacePath"
+          :workspace-path="workspacePath"
+          :sidecar-port="sidecarPort"
+          :sidecar-token="sidecarToken"
+          @file-click="onFileClick"
+        />
+      </div>
+
+      <!-- 文件预览 -->
+      <div v-if="previewFile" class="rwp-preview">
+        <div class="rwp-preview-header">
+          <span class="rwp-preview-name">{{ previewFile.name }}</span>
+          <button class="rwp-preview-close" @click="closePreview">
+            <X :size="12" />
+          </button>
+        </div>
+        <div class="rwp-preview-body">
+          <div v-if="previewLoading" class="rwp-preview-loading">加载中...</div>
+          <pre v-else class="rwp-preview-content">{{ previewContent }}</pre>
+        </div>
+      </div>
+    </template>
   </aside>
 </template>
 
@@ -67,12 +165,68 @@ const tabsStyle = computed(() => {
 .rwp {
   display: flex;
   flex-direction: column;
-  width: 260px;
   flex-shrink: 0;
-  border-left: 1px solid hsl(var(--border) / 0.25);
-  background: hsl(var(--card) / 0.6);
+  position: relative;
+  border-left: 1px solid hsl(var(--border) / 0.2);
+  background: hsl(var(--card) / 0.5);
   backdrop-filter: blur(12px);
   overflow: hidden;
+  transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.rwp--collapsed {
+  border-left-color: transparent;
+}
+
+/* ── 拖拽手柄 ── */
+.rwp-handle {
+  position: absolute;
+  left: -3px;
+  top: 0;
+  bottom: 0;
+  width: 7px;
+  cursor: col-resize;
+  z-index: 10;
+  transition: background 0.15s;
+}
+
+.rwp-handle:hover,
+.rwp-handle--active {
+  background: hsl(var(--primary) / 0.2);
+}
+
+/* ── 折叠按钮 ── */
+.rwp-collapse-btn {
+  position: absolute;
+  top: 12px;
+  left: -14px;
+  z-index: 11;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 28px;
+  border: 1px solid hsl(var(--border) / 0.3);
+  border-right: none;
+  border-radius: 4px 0 0 4px;
+  background: hsl(var(--card));
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.rwp:hover .rwp-collapse-btn,
+.rwp--collapsed .rwp-collapse-btn {
+  opacity: 1;
+}
+
+.rwp--collapsed .rwp-collapse-btn {
+  left: auto;
+  right: -14px;
+  border: 1px solid hsl(var(--border) / 0.3);
+  border-left: none;
+  border-radius: 0 4px 4px 0;
 }
 
 /* ── Tab 滑动条 ── */
@@ -130,6 +284,71 @@ const tabsStyle = computed(() => {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding-bottom: 8px;
+}
+
+/* ── 文件预览 ── */
+.rwp-preview {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid hsl(var(--border) / 0.25);
+  background: hsl(var(--muted) / 0.2);
+  max-height: 40%;
+  flex-shrink: 0;
+}
+
+.rwp-preview-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border-bottom: 1px solid hsl(var(--border) / 0.15);
+  flex-shrink: 0;
+}
+
+.rwp-preview-name {
+  flex: 1;
+  font-size: 0.7rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rwp-preview-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+}
+
+.rwp-preview-close:hover {
+  background: hsl(var(--foreground) / 0.06);
+}
+
+.rwp-preview-body {
+  flex: 1;
+  overflow: auto;
+  padding: 8px 10px;
+}
+
+.rwp-preview-loading {
+  font-size: 0.7rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.rwp-preview-content {
+  font-family: ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
+  font-size: 0.7rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 0;
+  color: hsl(var(--foreground));
 }
 </style>

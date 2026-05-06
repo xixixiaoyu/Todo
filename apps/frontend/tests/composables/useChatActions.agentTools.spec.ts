@@ -7,7 +7,6 @@ import { AGENT_TOOL_NAMES } from '@lumina/shared'
 
 describe('buildAgentLocalToolHandlers', () => {
   let sidecarState: { port: number | null; token: string | null; isAvailable: boolean }
-  let backendState: { sessionId: string | null; authToken: string }
   let handlers: Map<string, (args: Record<string, unknown>) => string | Promise<string>>
 
   beforeEach(() => {
@@ -16,13 +15,8 @@ describe('buildAgentLocalToolHandlers', () => {
       token: 'test-token',
       isAvailable: true,
     }
-    backendState = {
-      sessionId: 'test-session-id',
-      authToken: 'test-backend-token',
-    }
     handlers = buildAgentLocalToolHandlers({
       sidecar: sidecarState,
-      backend: backendState,
     })
   })
 
@@ -36,7 +30,6 @@ describe('buildAgentLocalToolHandlers', () => {
   it('throws when sidecar is not available', async () => {
     const offlineHandlers = buildAgentLocalToolHandlers({
       sidecar: { port: null, token: null, isAvailable: false },
-      backend: backendState,
     })
 
     const handler = offlineHandlers.get(AGENT_TOOL_NAMES.READ_FILE)

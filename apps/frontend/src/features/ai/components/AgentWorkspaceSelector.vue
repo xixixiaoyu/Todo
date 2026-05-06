@@ -1,7 +1,24 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
-import { Bot, FolderOpen, Plus, X, Edit3 } from 'lucide-vue-next'
+import { ref, watch, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import {
+  FolderOpen,
+  Plus,
+  X,
+  ChevronDown,
+  Check,
+  Trash2,
+  ShieldCheck,
+  ShieldQuestion,
+  ShieldOff,
+} from 'lucide-vue-next'
 import { isWails, system } from '@/lib/wails'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import axios from 'axios'
 
 interface Workspace {
@@ -15,16 +32,27 @@ const props = defineProps<{
   sidecarPort: number | null
   sidecarToken: string | null
   selectedId: string | null
+  permissionMode?: 'operate' | 'ask' | 'read_only'
 }>()
 
 const emit = defineEmits<{
   (e: 'select', workspaceId: string | null, workspacePath: string | null): void
+  (e: 'cyclePermissionMode'): void
 }>()
+
+const { t } = useI18n()
 
 const workspaces = ref<Workspace[]>([])
 const loading = ref(false)
-const showPathInput = ref(false)
-const manualPath = ref('')
+const open = ref(false)
+
+const selectedWs = computed(() => workspaces.value.find((w) => w.id === props.selectedId) ?? null)
+
+const displayLabel = computed(() => {
+  if (loading.value) return t('ai.workspaceLoading')
+  if (workspaces.value.length === 0) return t('ai.workspaceSelectPrompt')
+  return selectedWs.value?.path ?? t('ai.workspaceSelectFallback')
+})
 
 function getClient() {
   if (!props.sidecarPort || !props.sidecarToken) return null
@@ -54,71 +82,63 @@ async function loadWorkspaces() {
   }
 }
 
-function onSelect(e: Event) {
-  const value = (e.target as HTMLSelectElement).value
-  const ws = workspaces.value.find((w) => w.id === value)
-  emit('select', value || null, ws?.path || null)
+function selectWorkspace(ws: Workspace) {
+  emit('select', ws.id, ws.path)
+  open.value = false
 }
 
 async function pickDirectory() {
-  console.warn('[AgentWorkspace] pickDirectory called, isWails:', isWails())
-  if (isWails()) {
-    try {
-      const dir = await system.openDirectoryDialog('选择工作目录')
-      console.warn('[AgentWorkspace] dialog returned:', dir)
-      if (dir && dir.trim()) {
-        await addWorkspace(dir.trim())
-      }
-    } catch (err) {
-      console.error('[AgentWorkspace] pickDirectory failed:', err)
+  if (!isWails()) return
+  try {
+    const dir = await system.openDirectoryDialog(t('ai.workspaceSelectDialog'))
+    if (dir && dir.trim()) {
+      await addWorkspace(dir.trim())
     }
-  } else {
-    showPathInput.value = !showPathInput.value
+  } catch (err) {
+    console.error('[AgentWorkspace] pickDirectory failed:', err)
   }
 }
 
 async function addWorkspace(dirPath: string) {
-  console.warn(
-    '[AgentWorkspace] addWorkspace:',
-    dirPath,
-    'port:',
-    props.sidecarPort,
-    'hasToken:',
-    !!props.sidecarToken,
-  )
   const client = getClient()
-  if (!client) {
-    console.error('[AgentWorkspace] no sidecar client (port or token missing)')
-    return
-  }
-  if (!dirPath.trim()) return
+  if (!client || !dirPath.trim()) return
   try {
     const res = await client.post('/workspaces', { path: dirPath.trim() })
-    console.warn('[AgentWorkspace] addWorkspace response:', res.data)
-    showPathInput.value = false
-    manualPath.value = ''
-    await loadWorkspaces()
+    if (res.data.success && res.data.data) {
+      const raw = res.data.data as Record<string, unknown>
+      if (typeof raw.id === 'string' && typeof raw.path === 'string') {
+        await loadWorkspaces()
+        emit('select', raw.id, raw.path)
+      }
+    }
   } catch (err) {
     console.error('[AgentWorkspace] addWorkspace failed:', err)
   }
 }
 
-async function addByPath() {
-  await addWorkspace(manualPath.value)
+function deselectWorkspace() {
+  emit('select', null, null)
 }
 
-async function removeWorkspace() {
-  if (!props.selectedId) return
+async function deleteWorkspace(wsId: string) {
   const client = getClient()
   if (!client) return
   try {
-    await client.delete(`/workspaces/${props.selectedId}`)
-    emit('select', null, null)
+    await client.delete(`/workspaces/${wsId}`)
+    if (props.selectedId === wsId) {
+      emit('select', null, null)
+    }
     await loadWorkspaces()
-  } catch {
-    // 删除失败
+  } catch (err) {
+    console.error('[AgentWorkspace] deleteWorkspace failed:', err)
   }
 }
+
+watch(workspaces, (list) => {
+  if (props.selectedId && !list.some((w) => w.id === props.selectedId)) {
+    emit('select', null, null)
+  }
+})
 
 watch(
   () => props.visible,
@@ -143,200 +163,242 @@ onMounted(() => {
 </script>
 
 <template>
-  <div v-if="visible" class="agent-workspace-bar">
-    <div class="agent-workspace-bar__inner">
-      <Bot :size="14" class="agent-workspace-bar__icon" />
+  <div v-if="visible" class="ws-bar">
+    <!-- Sidecar 不可用 -->
+    <div v-if="!sidecarPort || !sidecarToken" class="ws-row ws-row--muted">
+      <FolderOpen :size="14" class="ws-icon" />
+      <span class="ws-hint">{{ t('ai.workspaceDesktopRequired') }}</span>
+    </div>
 
-      <div v-if="loading" class="agent-workspace-bar__loading">加载工作区...</div>
+    <!-- 统一工作区行 -->
+    <div v-else class="ws-row">
+      <FolderOpen :size="14" class="ws-icon" />
 
-      <template v-else-if="workspaces.length === 0">
-        <span class="agent-workspace-bar__hint">尚未添加工作目录</span>
-        <button class="agent-workspace-bar__pick-btn" @click="pickDirectory">
-          <FolderOpen :size="13" />
-          <span>选择目录</span>
-        </button>
-        <div v-if="showPathInput" class="agent-workspace-bar__path-form">
-          <input
-            v-model="manualPath"
-            type="text"
-            placeholder="或输入绝对路径..."
-            class="agent-workspace-bar__path-input"
-            @keyup.enter="addByPath"
-          />
-          <button class="agent-workspace-bar__confirm-btn" @click="addByPath">确定</button>
-        </div>
-        <button
-          v-if="!showPathInput"
-          class="agent-workspace-bar__manual-btn"
-          title="手动输入路径"
-          @click="showPathInput = true"
+      <!-- 自定义下拉 -->
+      <DropdownMenu v-model:open="open" :modal="false">
+        <DropdownMenuTrigger as-child>
+          <button class="ws-trigger" :aria-label="t('ai.workspaceSelectPrompt')">
+            <span class="ws-trigger-label">{{ displayLabel }}</span>
+            <ChevronDown :size="12" class="ws-trigger-arrow" :class="{ 'rotate-180': open }" />
+          </button>
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent
+          side="bottom"
+          align="start"
+          :side-offset="4"
+          class="z-[252] min-w-[240px] max-w-[400px] p-1"
         >
-          <Edit3 :size="12" />
-        </button>
-      </template>
+          <DropdownMenuItem
+            v-for="ws in workspaces"
+            :key="ws.id"
+            class="flex w-full items-center justify-between gap-2 px-3 py-2 text-xs"
+            :class="{ 'bg-accent/50 text-primary': ws.id === selectedId }"
+            @click.stop="selectWorkspace(ws)"
+          >
+            <span class="truncate flex-1">{{ ws.path }}</span>
+            <button
+              class="flex h-5 w-5 items-center justify-center rounded opacity-30 hover:opacity-100 hover:bg-destructive/10 hover:text-destructive shrink-0"
+              title="删除此工作区"
+              @click.stop="deleteWorkspace(ws.id)"
+            >
+              <Trash2 :size="11" />
+            </button>
+            <Check v-if="ws.id === selectedId" :size="12" class="text-primary shrink-0" />
+          </DropdownMenuItem>
 
-      <template v-else>
-        <select class="agent-workspace-bar__select" :value="selectedId ?? ''" @change="onSelect">
-          <option value="" disabled>选择工作区...</option>
-          <option v-for="ws in workspaces" :key="ws.id" :value="ws.id">
-            {{ ws.path }}
-          </option>
-        </select>
+          <div
+            v-if="workspaces.length === 0"
+            class="px-3 py-4 text-xs text-muted-foreground text-center"
+          >
+            {{ t('ai.workspaceEmpty') }}
+          </div>
 
-        <button class="agent-workspace-bar__add-btn" title="添加工作目录" @click="pickDirectory">
-          <Plus :size="13" />
-        </button>
+          <div v-if="isWails()" class="border-t border-border/30 mt-1 pt-1">
+            <DropdownMenuItem
+              class="flex w-full items-center gap-2 px-3 py-2 text-xs text-muted-foreground"
+              @click.stop="pickDirectory"
+            >
+              <Plus :size="13" />
+              <span>{{ t('ai.workspaceAdd') }}</span>
+            </DropdownMenuItem>
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-        <button
-          v-if="selectedId"
-          class="agent-workspace-bar__remove-btn"
-          title="移除此工作区"
-          @click="removeWorkspace"
-        >
-          <X :size="12" />
-        </button>
-      </template>
+      <!-- 取消选中 -->
+      <button
+        v-if="selectedId"
+        class="ws-btn ws-btn--danger"
+        title="取消选中"
+        @click="deselectWorkspace"
+      >
+        <X :size="12" />
+      </button>
+
+      <!-- 分隔 -->
+      <span v-if="selectedId && permissionMode !== undefined" class="ws-sep" />
+
+      <!-- 权限模式 -->
+      <button
+        v-if="permissionMode !== undefined"
+        class="ws-perm"
+        @click="emit('cyclePermissionMode')"
+      >
+        <ShieldCheck v-if="permissionMode === 'operate'" :size="12" />
+        <ShieldQuestion v-else-if="permissionMode === 'ask'" :size="12" class="ws-perm-icon--ask" />
+        <ShieldOff v-else :size="12" class="ws-perm-icon--ro" />
+        <span class="ws-perm-label">
+          {{ permissionMode === 'operate' ? '自动' : permissionMode === 'ask' ? '询问' : '只读' }}
+        </span>
+      </button>
     </div>
   </div>
 </template>
 
 <style scoped>
-.agent-workspace-bar {
+.ws-bar {
   flex-shrink: 0;
-  border-bottom: 1px solid hsl(var(--border) / 0.25);
-  background: hsl(var(--ai-glass-bg));
+  margin: 0 12px;
 }
 
-.agent-workspace-bar__inner {
+/* ── 行 ── */
+.ws-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 14px;
+  padding: 5px 10px;
+  border: 1px solid hsl(var(--border) / 0.2);
+  border-radius: 8px;
+  background: hsl(var(--muted) / 0.15);
 }
 
-.agent-workspace-bar__icon {
-  color: hsl(var(--primary));
+.ws-row--muted {
+  opacity: 0.6;
+}
+
+.ws-icon {
+  color: hsl(var(--primary) / 0.55);
   flex-shrink: 0;
 }
 
-.agent-workspace-bar__loading,
-.agent-workspace-bar__hint {
+.ws-hint {
   font-size: 0.75rem;
   color: hsl(var(--muted-foreground));
 }
 
-.agent-workspace-bar__select {
-  flex: 1;
-  padding: 3px 8px;
-  font-size: 0.78rem;
-  border: 1px solid hsl(var(--border) / 0.5);
-  border-radius: 5px;
-  background: hsl(var(--background));
-  color: hsl(var(--foreground));
-  max-width: 340px;
-}
-
-.agent-workspace-bar__pick-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.75rem;
-  padding: 3px 10px;
-  border: 1px solid hsl(var(--primary) / 0.3);
-  border-radius: 5px;
-  color: hsl(var(--primary));
-  background: transparent;
-  cursor: pointer;
-  transition: background 0.15s;
-  margin-left: auto;
-}
-
-.agent-workspace-bar__pick-btn:hover {
-  background: hsl(var(--primary) / 0.08);
-}
-
-.agent-workspace-bar__path-form {
+/* ── 下拉触发器 ── */
+.ws-trigger {
   display: flex;
-  gap: 4px;
+  align-items: center;
+  gap: 6px;
   flex: 1;
-}
-
-.agent-workspace-bar__path-input {
-  flex: 1;
-  padding: 3px 8px;
-  font-size: 0.75rem;
-  border: 1px solid hsl(var(--border) / 0.5);
+  min-width: 0;
+  padding: 4px 10px;
+  border: 1px solid hsl(var(--border) / 0.3);
   border-radius: 5px;
-  background: hsl(var(--background));
-  color: hsl(var(--foreground));
-}
-
-.agent-workspace-bar__confirm-btn {
-  font-size: 0.72rem;
-  padding: 3px 10px;
-  border: 1px solid hsl(var(--primary) / 0.3);
-  border-radius: 5px;
-  background: transparent;
-  color: hsl(var(--primary));
+  background: hsl(var(--background) / 0.7);
   cursor: pointer;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.ws-trigger:hover {
+  border-color: hsl(var(--primary) / 0.3);
+}
+
+.ws-trigger:focus-visible {
+  border-color: hsl(var(--primary) / 0.5);
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.1);
+  outline: none;
+}
+
+.ws-trigger-label {
+  flex: 1;
+  text-align: left;
+  font-size: 0.75rem;
+  color: hsl(var(--foreground));
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.agent-workspace-bar__manual-btn {
+.ws-trigger-arrow {
+  color: hsl(var(--muted-foreground));
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+/* ── 按钮 ── */
+.ws-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 24px;
   height: 24px;
   border: none;
-  background: none;
-  color: hsl(var(--muted-foreground));
-  cursor: pointer;
   border-radius: 4px;
-}
-
-.agent-workspace-bar__manual-btn:hover {
-  color: hsl(var(--foreground));
-}
-
-.agent-workspace-bar__add-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border: 1px solid hsl(var(--border) / 0.3);
-  border-radius: 4px;
-  background: none;
+  background: transparent;
   color: hsl(var(--muted-foreground));
   cursor: pointer;
   flex-shrink: 0;
   transition:
-    color 0.15s,
-    background 0.15s;
+    background 0.15s,
+    color 0.15s;
 }
 
-.agent-workspace-bar__add-btn:hover {
-  color: hsl(var(--primary));
-  background: hsl(var(--primary) / 0.06);
+.ws-btn:hover {
+  background: hsl(var(--foreground) / 0.06);
+  color: hsl(var(--foreground));
 }
 
-.agent-workspace-bar__remove-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border: none;
-  background: none;
-  color: hsl(var(--muted-foreground));
-  cursor: pointer;
-  border-radius: 4px;
+.ws-btn--danger:hover {
+  background: hsl(var(--destructive) / 0.1);
+  color: hsl(var(--destructive));
+}
+
+.ws-sep {
+  width: 1px;
+  height: 16px;
+  background: hsl(var(--border) / 0.3);
   flex-shrink: 0;
 }
 
-.agent-workspace-bar__remove-btn:hover {
-  color: hsl(var(--destructive));
-  background: hsl(var(--destructive) / 0.08);
+/* ── 权限按钮 ── */
+.ws-perm {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border: 1px solid hsl(var(--border) / 0.2);
+  border-radius: 5px;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  font-size: 0.7rem;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ws-perm:hover {
+  background: hsl(var(--foreground) / 0.04);
+  border-color: hsl(var(--border) / 0.4);
+}
+
+.ws-perm-label {
+  font-size: 0.65rem;
+  font-weight: 500;
+}
+
+.ws-perm-icon--ask {
+  color: hsl(var(--primary));
+}
+
+.ws-perm-icon--ro {
+  color: hsl(var(--destructive) / 0.7);
 }
 </style>

@@ -71,8 +71,13 @@ function toggleDir(name: string) {
   expandedDirs.value = next
 }
 
+const emit = defineEmits<{
+  (e: 'file-click', filePath: string, fileName: string): void
+}>()
+
 function selectFile(name: string) {
   selectedName.value = name
+  emit('file-click', currentPath.value + '/' + name, name)
 }
 
 function fmtSize(bytes: number): string {
@@ -93,7 +98,7 @@ watch(
   },
 )
 watch([() => props.sidecarPort, () => props.sidecarToken], ([port, token]) => {
-  if (port && token && error.value) loadDir()
+  if (port && token && (error.value || entries.value.length === 0)) loadDir()
 })
 </script>
 
@@ -144,6 +149,7 @@ watch([() => props.sidecarPort, () => props.sidecarToken], ([port, token]) => {
           :sidecar-port="sidecarPort"
           :sidecar-token="sidecarToken"
           :depth="depth + 1"
+          @file-click="(path, name) => emit('file-click', path, name)"
         />
       </template>
     </template>

@@ -159,6 +159,7 @@ export async function getAIStreamResponse(
     aiConfig.novelTone,
     aiConfig.novelProtagonistHint,
     options.agentToolsEnabled,
+    options.agentWorkspacePath,
   )
   const sanitizedMessages = sanitizeRequestMessages(messagesWithSystemPrompts)
 

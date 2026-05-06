@@ -318,19 +318,13 @@ function getServerUrl(server: McpServerResponse): string {
       <span class="text-sm font-medium">{{ t('ai.addMcpServer') }}</span>
     </button>
 
-    <!-- 空状态卡片 (完全居中) -->
+    <!-- 空状态 -->
     <div
       v-else
-      class="flex flex-col items-center justify-center py-14 px-8 rounded-2xl border border-dashed border-border/40 bg-muted/5"
+      class="flex flex-col items-center justify-center py-16 px-8 rounded-2xl border border-dashed border-border/40 bg-muted/5"
     >
-      <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-5">
-        <Plus class="w-7 h-7 text-primary" />
-      </div>
-      <h3 class="text-base font-bold text-foreground/90 mb-2 tracking-tight">
-        {{ t('ai.mcpWelcomeTitle') || 'Config MCP Servers' }}
-      </h3>
-      <p class="text-sm text-muted-foreground/60 text-center max-w-[260px] mb-7 leading-relaxed">
-        {{ t('ai.mcpServerDescription') }}
+      <p class="text-sm text-muted-foreground/70 text-center max-w-[280px] mb-6 leading-relaxed">
+        {{ t('ai.mcpWelcomeHint') || '接入 MCP 工具，让 AI 触及更广阔的世界。' }}
       </p>
       <button
         class="group flex h-10 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-[0_2px_12px_hsl(var(--primary)_/_0.25)] transition-all duration-200 hover:shadow-[0_4px_16px_hsl(var(--primary)_/_0.35)] hover:-translate-y-0.5 active:translate-y-0"

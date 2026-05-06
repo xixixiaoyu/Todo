@@ -360,6 +360,7 @@ export async function getMultiModelDiscussionStream(
         aiConfig.novelTone,
         aiConfig.novelProtagonistHint,
         options.agentToolsEnabled,
+        options.agentWorkspacePath,
       )
 
       const response = await fetchNonStreamResponse(

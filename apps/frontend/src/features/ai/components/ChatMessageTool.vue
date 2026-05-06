@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { ChevronDown, Terminal, AlertCircle, Copy, Check, Activity } from 'lucide-vue-next'
+import { ChevronDown, Copy, Check } from 'lucide-vue-next'
 import type { ChatMessage } from '@/features/ai/composables/useChat'
-import { useGsap } from '@/composables/useGsap'
 
 const props = defineProps<{
   message: ChatMessage
@@ -11,12 +9,9 @@ const props = defineProps<{
   isNextTool?: boolean
 }>()
 
-const { t } = useI18n()
 const isExpanded = ref(false)
 const isCopied = ref(false)
-const { gsap } = useGsap()
 
-// 格式化 JSON 内容
 const formattedContent = computed(() => {
   try {
     const parsed = JSON.parse(props.message.content)
@@ -26,19 +21,28 @@ const formattedContent = computed(() => {
   }
 })
 
-// 判断是否是错误结果
-const isError = computed(() => {
-  return (
+const isError = computed(
+  () =>
     props.message.content.toLowerCase().includes('error:') ||
-    props.message.content.toLowerCase().includes('"iserror":true')
-  )
+    props.message.content.toLowerCase().includes('"iserror":true'),
+)
+
+const displayName = computed(() => {
+  const raw = props.message.toolName || 'agent_tool'
+  return raw
+    .replace(/^agent_/, '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase())
 })
 
-const toggleExpand = () => {
+const hasContent = computed(() => !!props.message.content)
+
+function toggleExpand() {
+  if (!hasContent.value) return
   isExpanded.value = !isExpanded.value
 }
 
-const copyToClipboard = async (e: MouseEvent) => {
+async function copyToClipboard(e: MouseEvent) {
   e.stopPropagation()
   try {
     await navigator.clipboard.writeText(formattedContent.value)
@@ -46,171 +50,237 @@ const copyToClipboard = async (e: MouseEvent) => {
     setTimeout(() => {
       isCopied.value = false
     }, 2000)
-  } catch (err) {
-    console.error('Failed to copy:', err)
+  } catch {
+    /* ignore */
   }
-}
-
-// 动画逻辑
-const onEnter = (el: Element) => {
-  gsap.fromTo(
-    el,
-    { height: 0, opacity: 0, y: -4 },
-    { height: 'auto', opacity: 1, y: 0, duration: 0.4, ease: 'back.out(1.2)' },
-  )
-}
-
-const onLeave = (el: Element) => {
-  gsap.to(el, { height: 0, opacity: 0, y: -4, duration: 0.3, ease: 'power2.in' })
 }
 </script>
 
 <template>
-  <div
-    class="mcp-tool-wrapper relative pl-12 group/tool select-none"
-    :class="[isPrevTool ? 'pt-0' : 'pt-1', isNextTool ? 'pb-0' : 'pb-1']"
-  >
-    <!-- Connecting Axis (精确对齐图标中心) -->
-    <div class="absolute left-[30px] top-0 h-full w-[2px] z-0">
-      <!-- Background Line -->
-      <div
-        class="h-full w-full bg-border/20 transition-colors duration-500 group-hover/tool:bg-primary/20"
-        :class="{
-          'rounded-t-full': !isPrevTool,
-          'rounded-b-full': !isNextTool,
-          'h-1/2 translate-y-1/2': !isPrevTool && isNextTool,
-          'h-1/2': isPrevTool && !isNextTool,
-          'h-full': isPrevTool && isNextTool,
-        }"
-      ></div>
-
-      <!-- Dot / Node -->
-      <div
-        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-1 w-1 rounded-full border border-background bg-border/60 transition-all duration-500 group-hover/tool:bg-primary/60 group-hover/tool:scale-110 z-10"
-        :class="{ 'bg-primary/40': isExpanded }"
-      ></div>
-    </div>
-
-    <!-- Main Container (材质增强) -->
+  <div class="tool-item group/tool" :class="{ 'mt-0': isPrevTool, 'mb-0': isNextTool }">
+    <!-- 主体 -->
     <div
-      class="inline-flex flex-col min-w-[180px] max-w-full rounded-[0.75rem] border border-border/30 bg-white/40 dark:bg-white/[0.02] backdrop-blur-md transition-all duration-500 hover:bg-white/60 dark:hover:bg-white/[0.04]"
+      class="tool-body"
       :class="{
-        'border-primary/20 bg-white/80 dark:bg-white/[0.06] shadow-sm ring-1 ring-primary/5':
-          isExpanded,
+        'tool-body--expanded': isExpanded && hasContent,
+        'tool-body--error': isError && hasContent,
       }"
     >
-      <!-- Header / Trigger -->
-      <div class="flex items-center gap-2.5 px-2.5 py-0.5 cursor-pointer" @click="toggleExpand">
-        <!-- Icon Shell (对齐轴线) -->
-        <div
-          class="flex h-6 w-6 items-center justify-center rounded-md transition-all duration-500"
-          :class="[
-            isError ? 'bg-destructive/5 text-destructive/60' : 'bg-primary/5 text-primary/60',
-            isExpanded ? 'scale-105 shadow-inner bg-primary/10 text-primary/80' : '',
-          ]"
+      <button class="tool-header" :class="{ 'cursor-default': !hasContent }" @click="toggleExpand">
+        <!-- 状态点 -->
+        <span
+          class="tool-dot"
+          :class="{
+            'tool-dot--pending': !hasContent,
+            'tool-dot--ok': hasContent && !isError,
+            'tool-dot--err': hasContent && isError,
+          }"
+        />
+
+        <!-- 工具名 -->
+        <span class="tool-name">{{ displayName }}</span>
+
+        <!-- 状态标签 -->
+        <span
+          class="tool-tag"
+          :class="{
+            'tool-tag--pending': !hasContent,
+            'tool-tag--ok': hasContent && !isError,
+          }"
         >
-          <Activity v-if="!isExpanded && !isError" :size="12" class="animate-pulse" />
-          <Terminal v-else-if="!isError" :size="12" />
-          <AlertCircle v-else :size="12" />
-        </div>
+          {{ hasContent ? 'done' : 'running' }}
+        </span>
 
-        <!-- Text Info -->
-        <div class="flex flex-col gap-0 overflow-hidden">
-          <div class="flex items-center gap-2">
-            <span
-              class="truncate text-[13px] font-medium tracking-tight text-foreground/70 leading-tight"
-            >
-              {{ message.toolName || t('ai.mcpToolResult') }}
-            </span>
-          </div>
-          <span
-            class="text-[10px] font-semibold tracking-wider text-muted-foreground/40 uppercase leading-none"
-          >
-            {{ isError ? t('ai.mcpToolError') : 'Success' }}
-          </span>
-        </div>
+        <span class="flex-1" />
 
-        <!-- Spacer -->
-        <div class="flex-1 min-w-[12px]"></div>
+        <!-- 展开 -->
+        <ChevronDown
+          v-if="hasContent"
+          :size="13"
+          class="tool-chevron"
+          :class="{ 'rotate-180': isExpanded }"
+        />
+      </button>
 
-        <!-- Arrow -->
-        <div
-          class="flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground/20 transition-all duration-500 hover:bg-primary/5 hover:text-primary/40"
-          :class="{ 'rotate-180 text-primary/40 bg-primary/5': isExpanded }"
-        >
-          <ChevronDown :size="13" stroke-width="2.5" />
+      <!-- 内容 -->
+      <div v-if="isExpanded && hasContent" class="tool-content">
+        <div class="tool-content-inner">
+          <button class="tool-copy" @click="copyToClipboard">
+            <Check v-if="isCopied" :size="11" class="text-emerald-500" />
+            <Copy v-else :size="11" />
+          </button>
+          <pre><code>{{ formattedContent }}</code></pre>
         </div>
       </div>
-
-      <!-- Expanded Content Area -->
-      <Transition :css="false" @enter="onEnter" @leave="onLeave">
-        <div v-if="isExpanded" class="overflow-hidden">
-          <div class="px-2 pb-2">
-            <div
-              class="relative overflow-hidden rounded-[0.75rem] bg-black/[0.01] dark:bg-white/[0.01] border border-border/10"
-            >
-              <!-- Copy Button -->
-              <button
-                class="absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-lg border border-border/20 bg-background/60 text-muted-foreground/60 backdrop-blur-md transition-all hover:bg-background hover:text-foreground active:scale-90 shadow-sm"
-                :title="t('ai.copy')"
-                @click="copyToClipboard"
-              >
-                <Check v-if="isCopied" :size="12" class="text-green-500/80" />
-                <Copy v-else :size="12" />
-              </button>
-
-              <!-- Code Content -->
-              <div class="max-h-[300px] overflow-auto p-3 font-mono text-[12.5px] leading-relaxed">
-                <pre
-                  class="text-foreground/50 selection:bg-primary/10"
-                ><code>{{ formattedContent }}</code></pre>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Transition>
     </div>
   </div>
 </template>
 
 <style scoped>
-.mcp-tool-wrapper {
-  perspective: 1000px;
+.tool-item {
+  min-height: 36px;
+  margin: 4px 0;
+}
+
+/* ── 主体 ── */
+.tool-body {
+  border: 1px solid hsl(var(--border) / 0.25);
+  border-radius: 10px;
+  background: hsl(var(--muted) / 0.2);
+  overflow: hidden;
+  transition:
+    border-color 0.3s,
+    background 0.3s;
+}
+
+.tool-body:hover {
+  border-color: hsl(var(--border) / 0.45);
+}
+
+.tool-body--expanded {
+  border-color: hsl(var(--border) / 0.4);
+  background: hsl(var(--muted) / 0.35);
+}
+
+.tool-body--error {
+  border-color: hsl(var(--destructive) / 0.2);
+}
+
+/* ── 头部 ── */
+.tool-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+/* ── 状态点 ── */
+.tool-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tool-dot--pending {
+  background: hsl(var(--muted-foreground) / 0.35);
+  animation: dot-pulse 2s ease-in-out infinite;
+}
+
+.tool-dot--ok {
+  background: hsl(var(--primary) / 0.5);
+}
+
+.tool-dot--err {
+  background: hsl(var(--destructive) / 0.5);
+}
+
+@keyframes dot-pulse {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ── 名称 ── */
+.tool-name {
+  font-size: 0.78rem;
+  font-weight: 450;
+  color: hsl(var(--foreground) / 0.75);
+  letter-spacing: -0.01em;
+}
+
+/* ── 状态标签 ── */
+.tool-tag {
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+.tool-tag--pending {
+  color: hsl(var(--muted-foreground) / 0.5);
+  background: hsl(var(--muted-foreground) / 0.06);
+}
+
+.tool-tag--ok {
+  color: hsl(var(--primary) / 0.55);
+  background: hsl(var(--primary) / 0.06);
+}
+
+/* ── 展开箭头 ── */
+.tool-chevron {
+  color: hsl(var(--muted-foreground) / 0.25);
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+
+/* ── 内容 ── */
+.tool-content {
+  padding: 0 12px 8px;
+}
+
+.tool-content-inner {
+  position: relative;
+  border-radius: 7px;
+  background: hsl(var(--background) / 0.5);
+  border: 1px solid hsl(var(--border) / 0.12);
+  overflow: hidden;
+}
+
+.tool-copy {
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: hsl(var(--muted-foreground) / 0.3);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tool-copy:hover {
+  background: hsl(var(--foreground) / 0.04);
+  color: hsl(var(--foreground) / 0.5);
 }
 
 pre {
+  margin: 0;
+  padding: 8px 12px;
+  max-height: 240px;
+  overflow: auto;
+  font-family: 'SF Mono', 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.68rem;
+  line-height: 1.55;
+  color: hsl(var(--foreground) / 0.5);
+  white-space: pre-wrap;
+  word-break: break-all;
   scrollbar-width: thin;
-  scrollbar-color: hsl(var(--border)) transparent;
+  scrollbar-color: hsl(var(--border) / 0.2) transparent;
 }
 
 pre::-webkit-scrollbar {
   width: 4px;
-  height: 4px;
 }
-
 pre::-webkit-scrollbar-thumb {
-  background: hsl(var(--border) / 0.4);
-  border-radius: 10px;
-}
-
-.animate-pulse {
-  animation: pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.4;
-    transform: scale(0.85);
-  }
-}
-
-/* 暖色调光影增强 */
-.dark .mcp-tool-wrapper :deep(.bg-\[\#fdfcfb\]) {
-  background-color: rgba(255, 255, 255, 0.03);
+  background: hsl(var(--border) / 0.3);
+  border-radius: 2px;
 }
 </style>

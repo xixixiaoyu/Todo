@@ -17,6 +17,7 @@ import { useTodoStore } from '@/features/todo/stores/todo'
 import { useAuthStore } from '@/features/auth/stores/auth'
 import { createContextCompression } from './useChatActions.contextCompression'
 import { executeToolCalls } from './useChatActions.toolCalls'
+import { useToolPermission } from './useToolPermission'
 import { createStreamChunkHandler, type TeachingPersistPayload } from './useChatActions.stream'
 import { prepareRuntimeCapabilities } from './useChatActions.runtime'
 import { resolveSkillContext } from '@/features/ai/services/aiService'
@@ -25,6 +26,14 @@ import { useSidecar } from '@/composables/useSidecar'
 import { useQueryClient } from '@tanstack/vue-query'
 
 const MAX_RETRIES = 3
+
+/**
+ * Agent 工具调用最大迭代轮数。
+ * 从 5 提升到 50 以支持复杂多步任务（如多文件重构、跨目录搜索）。
+ * 每轮涉及一次 LLM API 往返（约 3-5s），最坏情况耗时约 4 分钟。
+ * 后续可考虑做成用户可配置项。
+ */
+const MAX_TOOL_ITERATIONS = 50
 
 /**
  * 聊天动作逻辑 composable
@@ -60,6 +69,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
   const todoStore = useTodoStore()
   const authStore = useAuthStore()
   const { isAvailable: sidecarAvailable, sidecarPort, sidecarToken } = useSidecar()
+  const { mode: permissionMode } = useToolPermission()
 
   // 惰性获取 queryClient：避免在无 Vue 注入上下文的测试环境中崩溃
   let queryClient: ReturnType<typeof useQueryClient> | null = null
@@ -193,8 +203,6 @@ export function useChatActions(options: AIRequestOptions = {}) {
     isRetry = false,
     iteration = 0,
   ): Promise<void> {
-    const MAX_ITERATIONS = 5
-
     const isToolIteration =
       isRetry &&
       chatHistory.value.length > 0 &&
@@ -209,9 +217,18 @@ export function useChatActions(options: AIRequestOptions = {}) {
     )
       return
 
-    if (iteration >= MAX_ITERATIONS) {
+    if (iteration >= MAX_TOOL_ITERATIONS) {
       console.warn('Max iterations reached, stopping tool loop.')
       isGenerating.value = false
+      chatHistory.value = [
+        ...chatHistory.value,
+        {
+          id: generateId(),
+          role: 'assistant',
+          content: t('ai.maxToolIterationsReached', { count: MAX_TOOL_ITERATIONS }),
+          createdAt: new Date(),
+        },
+      ]
       return
     }
 
@@ -323,6 +340,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
             activeSkills: skillContext.activatedSkills,
             skillRuntimeAvailability,
             agentToolsEnabled,
+            agentWorkspacePath: aiConfig.agentWorkspacePath,
           },
           (toolCall) => {
             toolCalls.push(toolCall)
@@ -341,6 +359,10 @@ export function useChatActions(options: AIRequestOptions = {}) {
             mcpToolLookup,
             callMcpTool: mcpApi.callTool,
             localToolHandlers,
+            permissionMode: permissionMode.value,
+            onPermissionAsk: async (name) => {
+              return window.confirm(`Allow execution?\n\n${name}`) ? 'allow' : 'deny'
+            },
           })
           return sendMessage('', undefined, undefined, true, iteration + 1)
         }
@@ -404,6 +426,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
             activeSkills: activeSkillsForPrompt,
             skillRuntimeAvailability,
             agentToolsEnabled,
+            agentWorkspacePath: aiConfig.agentWorkspacePath,
           },
           (toolCall) => {
             toolCalls.push(toolCall)
@@ -421,6 +444,10 @@ export function useChatActions(options: AIRequestOptions = {}) {
             mcpToolLookup,
             callMcpTool: mcpApi.callTool,
             localToolHandlers,
+            permissionMode: permissionMode.value,
+            onPermissionAsk: async (name) => {
+              return window.confirm(`Allow execution?\n\n${name}`) ? 'allow' : 'deny'
+            },
           })
           return sendMessage('', undefined, undefined, true, iteration + 1)
         }

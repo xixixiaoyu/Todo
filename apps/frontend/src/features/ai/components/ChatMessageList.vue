@@ -5,7 +5,6 @@ import { ArrowDown } from 'lucide-vue-next'
 import { useWindowSize } from '@vueuse/core'
 import AiLuminaIcon from './AiLuminaIcon.vue'
 import ChatMessage from './ChatMessage.vue'
-import ChatSuggestions from './ChatSuggestions.vue'
 import ChatMinimap from './ChatMinimap.vue'
 import type { ChatMessage as ChatMessageType } from '@/features/ai/composables/useChat'
 import { useSmartScroll } from '@/composables/useSmartScroll'
@@ -341,19 +340,16 @@ defineExpose({
             </div>
           </div>
 
-          <h2
+          <p
             :class="[
-              'font-bold tracking-tight text-foreground',
-              isMobile ? 'mb-2 text-xl' : 'mb-3 text-2xl',
+              'max-w-md text-muted-foreground',
+              isMobile ? 'mb-6 text-base' : 'mb-10 text-lg',
             ]"
           >
             {{ t('ai.welcomeTitle') }}
-          </h2>
-          <p :class="['max-w-md text-muted-foreground', isMobile ? 'mb-6 text-sm' : 'mb-10']">
-            {{ t('ai.welcomeSubtitle') }}
           </p>
 
-          <ChatSuggestions @select="(text, options) => emit('select-suggestion', text, options)" />
+          <slot name="empty-actions" />
         </div>
 
         <!-- 消息列表 -->
@@ -495,36 +491,55 @@ defineExpose({
   transform: translateY(10px);
 }
 
-/* 极致纯净滚动条：平时隐形，滚动时极细显现 */
+/* 滚动条 — 通用色值，不依赖 CSS 变量解析 */
 .overflow-y-auto {
   scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
-  transition: scrollbar-color 0.3s;
-}
-
-.overflow-y-auto:hover {
-  scrollbar-color: hsl(var(--muted-foreground) / 0.1) transparent;
+  scrollbar-gutter: stable;
+  /* 中性灰半透明：亮色模式下可见，暗黑模式下也可见 */
+  scrollbar-color: rgba(128, 128, 128, 0.25) transparent;
 }
 
 .overflow-y-auto::-webkit-scrollbar {
-  width: 4px;
+  width: 6px !important;
+  height: 6px !important;
+  display: block !important;
 }
 
 .overflow-y-auto::-webkit-scrollbar-track {
-  background: transparent;
+  background: transparent !important;
+  border: none !important;
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb {
-  background: transparent;
-  border-radius: 10px;
-  transition: background 0.3s;
-}
-
-.overflow-y-auto:hover::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.15);
+  background-color: rgba(128, 128, 128, 0.25) !important;
+  border-radius: 3px !important;
+  border: 1px solid transparent !important;
+  background-clip: content-box !important;
+  min-height: 40px !important;
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.3) !important;
+  background-color: rgba(128, 128, 128, 0.45) !important;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:active {
+  background-color: rgba(128, 128, 128, 0.55) !important;
+}
+
+.overflow-y-auto::-webkit-scrollbar-corner {
+  background: transparent !important;
+}
+
+/* macOS overlay scrollbar 强制覆盖 */
+.overflow-y-auto::-webkit-scrollbar-track-piece {
+  background: transparent !important;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track-piece:start {
+  margin-top: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track-piece:end {
+  margin-bottom: 4px;
 }
 </style>

@@ -5,6 +5,7 @@ import {
   type DiscussionStep,
   type ToolCall,
 } from '@/features/ai/services/aiService'
+import { classifyPermission } from './useToolPermission'
 
 const MAX_TOOL_CONTENT_LENGTH = 15000
 
@@ -42,6 +43,11 @@ export async function executeToolCalls(params: {
     toolName: string,
     args: Record<string, unknown>,
   ) => Promise<ToolCallResult>
+  permissionMode?: 'operate' | 'ask' | 'read_only'
+  onPermissionAsk?: (
+    toolName: string,
+    toolArgs: Record<string, unknown>,
+  ) => Promise<'allow' | 'deny'>
 }) {
   const index = params.chatHistory.value.findIndex(
     (m) => m.id === params.assistantMessageId && m.role === 'assistant',
@@ -97,6 +103,42 @@ export async function executeToolCalls(params: {
     const localHandler = params.localToolHandlers?.get(aiToolName)
     if (localHandler) {
       try {
+        // 权限检查
+        if (params.permissionMode) {
+          const decision = classifyPermission(aiToolName, params.permissionMode)
+          if (decision.action === 'deny') {
+            params.chatHistory.value = [
+              ...params.chatHistory.value,
+              {
+                id: generateId(),
+                role: 'tool',
+                tool_call_id: call.id,
+                toolName: aiToolName,
+                content: `Blocked: ${decision.reason || 'Permission denied.'}`,
+                createdAt: new Date(),
+              },
+            ]
+            continue
+          }
+          if (decision.action === 'ask' && params.onPermissionAsk) {
+            const allowed = await params.onPermissionAsk(aiToolName, toolArgs)
+            if (allowed === 'deny') {
+              params.chatHistory.value = [
+                ...params.chatHistory.value,
+                {
+                  id: generateId(),
+                  role: 'tool',
+                  tool_call_id: call.id,
+                  toolName: aiToolName,
+                  content: 'User denied the tool execution.',
+                  createdAt: new Date(),
+                },
+              ]
+              continue
+            }
+          }
+        }
+
         let contentStr = await localHandler(toolArgs)
         contentStr = truncateToolContent(contentStr)
         params.chatHistory.value = [

@@ -1,6 +1,7 @@
 import axios, { type AxiosInstance } from 'axios'
 import type { Tool } from '@/features/ai/services/aiService'
 import { AGENT_TOOL_NAMES } from '@lumina/shared'
+import { useSessionFiles } from '@/features/ai/stores/sessionFiles'
 
 /**
  * Agent 工具定义（AI function calling 格式）
@@ -172,11 +173,6 @@ interface SidecarState {
   isAvailable: boolean
 }
 
-interface BackendSessionState {
-  sessionId: string | null
-  authToken: string
-}
-
 function createSidecarAxios(port: number, token: string): AxiosInstance {
   return axios.create({
     baseURL: `http://127.0.0.1:${port}/sidecar`,
@@ -203,7 +199,6 @@ function formatFileList(entries: Array<{ name: string; type: string; size: numbe
  */
 export function buildAgentLocalToolHandlers(params: {
   sidecar: SidecarState
-  backend: BackendSessionState
 }): Map<string, LocalToolHandler> {
   const handlers = new Map<string, LocalToolHandler>()
 
@@ -216,22 +211,6 @@ export function buildAgentLocalToolHandlers(params: {
 
   const sidecarPost = async (path: string, body: Record<string, unknown>): Promise<unknown> => {
     const client = getAxios()
-    const { data } = await client.post(path, body)
-    return data
-  }
-
-  const backendPost = async (path: string, body: Record<string, unknown>): Promise<unknown> => {
-    if (!params.backend.authToken) {
-      throw new Error('Authentication required for backend requests')
-    }
-    const client = axios.create({
-      baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
-      timeout: 10000,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${params.backend.authToken}`,
-      },
-    })
     const { data } = await client.post(path, body)
     return data
   }
@@ -259,19 +238,27 @@ export function buildAgentLocalToolHandlers(params: {
 
   // write_file handler
   handlers.set(AGENT_TOOL_NAMES.WRITE_FILE, async (args) => {
-    const result = await sidecarPost('/fs/write', {
-      filePath: args.filePath || args.file_path,
-      content: args.content,
-    })
+    const filePath = (args.filePath || args.file_path) as string
+    const result = await sidecarPost('/fs/write', { filePath, content: args.content })
     const r = result as { success?: boolean; data?: { message?: string }; message?: string }
-    if (r.success) return r.data?.message || 'File written successfully.'
+    if (r.success) {
+      try {
+        const { addFile } = useSessionFiles()
+        const fileName = filePath.split('/').pop() || filePath
+        addFile({ path: filePath, name: fileName, size: 0, source: 'write_file' })
+      } catch {
+        /* 非 Vue setup 上下文，跳过 */
+      }
+      return r.data?.message || 'File written successfully.'
+    }
     return `Error: ${r.message || 'Failed to write file'}`
   })
 
   // edit_file handler
   handlers.set(AGENT_TOOL_NAMES.EDIT_FILE, async (args) => {
+    const filePath = (args.filePath || args.file_path) as string
     const result = await sidecarPost('/fs/edit', {
-      filePath: args.filePath || args.file_path,
+      filePath,
       oldString: args.oldString || args.old_string,
       newString: args.newString || args.new_string,
       replaceAll: args.replaceAll ?? args.replace_all ?? false,
@@ -282,8 +269,18 @@ export function buildAgentLocalToolHandlers(params: {
       message?: string
     }
     if (r.success) {
-      const count = r.data?.replacements ?? 0
-      return r.data?.message || `Edit applied: ${count} replacement(s) made.`
+      try {
+        const { addFile } = useSessionFiles()
+        addFile({
+          path: filePath,
+          name: filePath.split('/').pop() || filePath,
+          size: 0,
+          source: 'edit_file',
+        })
+      } catch {
+        /* skip */
+      }
+      return r.data?.message || `Edit applied: ${r.data?.replacements ?? 0} replacement(s) made.`
     }
     return `Error: ${r.message || 'Failed to edit file'}`
   })
@@ -381,28 +378,21 @@ export function buildAgentLocalToolHandlers(params: {
     return `Error: ${r.message || 'Command execution failed'}`
   })
 
-  // stage_files handler — calls backend API
+  // stage_files handler — 本地注册会话文件
   handlers.set(AGENT_TOOL_NAMES.STAGE_FILES, async (args) => {
     const filepaths = (args.filepaths || (args.filePath ? [args.filePath] : null)) as
       | string[]
       | null
     if (!filepaths || filepaths.length === 0) return 'Error: filepaths is required'
     try {
-      const result = await backendPost('/api/agent/session-files', {
-        filepaths,
-        label: args.label,
-        sessionId: params.backend.sessionId,
-      })
-      const r = result as {
-        success?: boolean
-        data?: { files?: Array<{ label: string }> }
-        message?: string
+      const { addFile } = useSessionFiles()
+      const names: string[] = []
+      for (const fp of filepaths) {
+        const name = fp.split('/').pop() || fp
+        addFile({ path: fp, name, size: 0, source: 'stage_files' })
+        names.push(name)
       }
-      if (r.success && r.data?.files) {
-        const names = r.data.files.map((f) => f.label).join(', ')
-        return `Files staged to current session: ${names}`
-      }
-      return `Error: ${r.message || 'Failed to stage files'}`
+      return `Files staged to current session: ${names.join(', ')}`
     } catch (error) {
       return `Error: ${error instanceof Error ? error.message : String(error)}`
     }

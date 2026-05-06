@@ -2,7 +2,6 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useWindowSize } from '@vueuse/core'
-import { useSidecar } from '@/composables/useSidecar'
 import type { AIPreset, AIConfig } from '@/features/ai/composables/useAIConfig'
 import type { ChatSession } from '@/features/ai/composables/useChatHistory'
 import {
@@ -31,7 +30,7 @@ defineProps<{
   isDiscussionEnabled: boolean
   isImageGenerationEnabled: boolean
   isTranslationEnabled: boolean
-  isAgentEnabled: boolean
+  isAgentEnabled?: boolean
   currentPresetName: string
   presets: AIPreset[]
   config: AIConfig
@@ -66,8 +65,6 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-const { isAvailable: sidecarAvailable } = useSidecar()
-
 const { width: windowWidth } = useWindowSize()
 const isMobile = computed(() => windowWidth.value < 640)
 
@@ -211,9 +208,8 @@ const newChatTitle = computed(() => `${t('ai.newChat')} (${shortcutHint})`)
             @toggle-secondary-model="(id) => emit('toggleSecondaryModel', id)"
           />
 
-          <!-- Agent 模式（仅桌面端 Sidecar 可用时显示） -->
+          <!-- Agent 模式 -->
           <button
-            v-if="sidecarAvailable"
             :class="[
               'toolbar-btn flex items-center active:scale-95 rounded-full border shrink-0',
               isMobile ? 'h-8 w-8 justify-center' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',

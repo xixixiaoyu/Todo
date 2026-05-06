@@ -1,51 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
 import { File, FileCode, FileImage, FileArchive, FileText } from 'lucide-vue-next'
-import axios from 'axios'
+import { useSessionFiles } from '@/features/ai/stores/sessionFiles'
 
-interface SessionFile {
-  id: string
-  filePath: string
-  label: string
-  ext: string
-  size: number
-  createdAt: string
-}
-
-const props = defineProps<{
-  sessionId: string | null
-  backendUrl: string
-  authToken: string | null
-}>()
-
-const files = ref<SessionFile[]>([])
-const loading = ref(false)
-
-function getClient() {
-  if (!props.authToken) return null
-  return axios.create({
-    baseURL: props.backendUrl,
-    timeout: 5000,
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${props.authToken}` },
-  })
-}
-
-async function loadFiles() {
-  if (!props.sessionId) return
-  const client = getClient()
-  if (!client) return
-  loading.value = true
-  try {
-    const { data } = await client.get('/api/agent/session-files', {
-      params: { sessionId: props.sessionId },
-    })
-    if (data.success && data.data?.files) files.value = data.data.files
-  } catch (err) {
-    console.error('[SessionFileList] Failed to load files:', err)
-  } finally {
-    loading.value = false
-  }
-}
+const { files, recentFiles } = useSessionFiles()
 
 function fileIcon(ext: string) {
   if (['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'].includes(ext)) return FileImage
@@ -55,34 +12,35 @@ function fileIcon(ext: string) {
   return File
 }
 
+function fileName(filePath: string): string {
+  return filePath.split('/').pop() || filePath
+}
+
+function fileExt(filePath: string): string {
+  const name = fileName(filePath)
+  const dot = name.lastIndexOf('.')
+  return dot >= 0 ? name.slice(dot) : ''
+}
+
 function fmtSize(bytes: number): string {
+  if (!bytes) return ''
   if (bytes < 1024) return `${bytes}B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)}K`
   return `${(bytes / (1024 * 1024)).toFixed(1)}M`
 }
-
-watch(
-  () => props.sessionId,
-  () => {
-    if (props.sessionId) loadFiles()
-  },
-)
-onMounted(() => {
-  if (props.sessionId) loadFiles()
-})
 </script>
 
 <template>
   <div class="sfl">
-    <div v-if="loading" class="sfl-status">加载中...</div>
-
-    <div v-else-if="files.length === 0" class="sfl-status">暂无会话文件</div>
+    <div v-if="files.length === 0" class="sfl-status">
+      Agent 使用 agent_stage_files 或写入文件后会自动出现在这里
+    </div>
 
     <div v-else class="sfl-list">
-      <div v-for="file in files" :key="file.id" class="sfl-row">
-        <component :is="fileIcon(file.ext)" :size="14" class="sfl-icon" />
-        <span class="sfl-label" :title="file.filePath">{{ file.label }}</span>
-        <span v-if="file.size" class="sfl-size">{{ fmtSize(file.size) }}</span>
+      <div v-for="f in recentFiles" :key="f.path" class="sfl-row">
+        <component :is="fileIcon(fileExt(f.path))" :size="14" class="sfl-icon" />
+        <span class="sfl-label" :title="f.path">{{ fileName(f.path) }}</span>
+        <span v-if="f.size" class="sfl-size">{{ fmtSize(f.size) }}</span>
       </div>
     </div>
   </div>

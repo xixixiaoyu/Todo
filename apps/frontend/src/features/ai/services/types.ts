@@ -256,6 +256,7 @@ export interface AIRequestOptions {
   thinkingMode?: 'enabled' | 'disabled'
   thinkingEffort?: 'high' | 'max'
   agentToolsEnabled?: boolean
+  agentWorkspacePath?: string | null
   contextSummary?: string
   memorySnapshot?: string[]
   skills?: AISkill[]

@@ -14,6 +14,7 @@ import TranslationPanel from '@/features/ai/components/TranslationPanel.vue'
 import AgentWorkspaceSelector from '@/features/ai/components/AgentWorkspaceSelector.vue'
 import RightWorkspacePanel from '@/features/ai/components/RightWorkspacePanel.vue'
 import { useMermaidEditor } from '@/features/ai/composables/useMermaidEditor'
+import { useToolPermission, type PermissionMode } from '@/features/ai/composables/useToolPermission'
 import { useChat } from '@/features/ai/composables/useChat'
 import { useAIConfig } from '@/features/ai/composables/useAIConfig'
 import { useAiAssistantAttachments } from '@/features/ai/composables/useAiAssistantAttachments'
@@ -22,7 +23,6 @@ import { useAiAssistantModes } from '@/features/ai/composables/useAiAssistantMod
 import { useAiAssistantPanels } from '@/features/ai/composables/useAiAssistantPanels'
 import { useAiAssistantComposer } from '@/features/ai/composables/useAiAssistantComposer'
 import { useTodoStore } from '@/features/todo/stores/todo'
-import { useAuthStore } from '@/features/auth/stores/auth'
 import { useSidecar } from '@/composables/useSidecar'
 import { useI18n } from 'vue-i18n'
 import { useResizable } from '@/composables/useResizable'
@@ -67,15 +67,18 @@ const {
 })
 
 const { sidecarPort, sidecarToken } = useSidecar()
-const authStore = useAuthStore()
-const authToken = computed(() => authStore.token)
-
-const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+const { mode: permissionMode, setMode } = useToolPermission()
 
 const selectedWorkspacePath = computed(() => config.value.agentWorkspacePath)
 
+function cyclePermissionMode() {
+  const modes: PermissionMode[] = ['operate', 'ask', 'read_only']
+  const idx = modes.indexOf(permissionMode.value)
+  setMode(modes[(idx + 1) % modes.length])
+}
+
 // 会话历史管理
-const { lastActiveSession, switchSession, currentSessionId } = useChatHistory()
+const { lastActiveSession, switchSession } = useChatHistory()
 
 const navigateToPrevious = () => {
   if (!lastActiveSession.value) return
@@ -296,6 +299,18 @@ defineOptions({
                 {{ t('ai.teachingDashboard') }}
               </button>
             </div>
+            <!-- Agent 工作区（有消息时显示精简条） -->
+            <AgentWorkspaceSelector
+              v-if="isAgentEnabled && messages.length > 0"
+              :visible="true"
+              :sidecar-port="sidecarPort"
+              :sidecar-token="sidecarToken"
+              :selected-id="config.agentWorkspaceId"
+              :permission-mode="permissionMode"
+              @select="(id, path) => updateAgentWorkspace(id, path)"
+              @cycle-permission-mode="cyclePermissionMode"
+            />
+
             <ChatMessageList
               :messages="messages"
               :is-maximized="isMaximized"
@@ -309,7 +324,19 @@ defineOptions({
               @teaching-submit="handleTeachingSubmit"
               @teaching-submit-batch="handleTeachingSubmitBatch"
               @continue-novel="handleNovelContinue"
-            />
+            >
+              <template v-if="isAgentEnabled" #empty-actions>
+                <AgentWorkspaceSelector
+                  :visible="true"
+                  :sidecar-port="sidecarPort"
+                  :sidecar-token="sidecarToken"
+                  :selected-id="config.agentWorkspaceId"
+                  :permission-mode="permissionMode"
+                  @select="(id, path) => updateAgentWorkspace(id, path)"
+                  @cycle-permission-mode="cyclePermissionMode"
+                />
+              </template>
+            </ChatMessageList>
           </template>
 
           <!-- 错误提示 -->
@@ -422,25 +449,13 @@ defineOptions({
               />
             </template>
           </AiAssistantToolbar>
-
-          <!-- Agent 工作区选择器 -->
-          <AgentWorkspaceSelector
-            :visible="isAgentEnabled"
-            :sidecar-port="sidecarPort"
-            :sidecar-token="sidecarToken"
-            :selected-id="config.agentWorkspaceId"
-            @select="(id, path) => updateAgentWorkspace(id, path)"
-          />
         </div>
         <!-- 右侧工作区面板 -->
         <RightWorkspacePanel
           v-if="isAgentEnabled && selectedWorkspacePath"
-          :session-id="currentSessionId"
           :workspace-path="selectedWorkspacePath"
           :sidecar-port="sidecarPort"
           :sidecar-token="sidecarToken"
-          :backend-url="backendUrl"
-          :auth-token="authToken"
         />
       </div>
 

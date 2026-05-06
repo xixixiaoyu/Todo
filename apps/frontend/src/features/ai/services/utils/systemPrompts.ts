@@ -482,11 +482,20 @@ export function sanitizeRequestMessages(
   })
 }
 
-function buildAgentSystemPrompt(): string | null {
+function buildAgentSystemPrompt(workspacePath?: string | null): string | null {
   const locale = getLocaleValue()
   const isZh = locale.startsWith('zh')
 
   const parts: string[] = []
+
+  // 工作区路径
+  if (workspacePath) {
+    parts.push(
+      isZh
+        ? `## 当前工作目录\n\n你的工作目录是 \`${workspacePath}\`。所有文件操作（read_file、write_file、edit_file、ls、grep、find、mkdir）都应在此目录下进行。使用绝对路径。`
+        : `## Current Working Directory\n\nYour working directory is \`${workspacePath}\`. All file operations (read_file, write_file, edit_file, ls, grep, find, mkdir) should be performed within this directory. Use absolute paths.`,
+    )
+  }
 
   // 工具纪律（从 i18n 或内联回退）
   const disciplineKey = 'ai.agentToolDiscipline'
@@ -557,6 +566,7 @@ export function injectSystemPrompts(
   novelTone?: string,
   novelProtagonistHint?: string,
   agentToolsEnabled?: boolean,
+  agentWorkspacePath?: string | null,
   todoList?: string,
 ): AIChatCompletionMessage[] {
   const result: AIChatCompletionMessage[] = []
@@ -662,7 +672,7 @@ export function injectSystemPrompts(
 
   // Agent 工具能力注入（仅当 agent 工具注册时）
   if (agentToolsEnabled) {
-    const agentPrompt = buildAgentSystemPrompt()
+    const agentPrompt = buildAgentSystemPrompt(agentWorkspacePath)
     if (agentPrompt) {
       systemBlocks.push({ content: agentPrompt })
     }

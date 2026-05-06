@@ -105,10 +105,6 @@ export async function prepareRuntimeCapabilities(params: {
     const agentAiTools = AGENT_TOOL_DEFINITIONS
     const agentHandlers = buildAgentLocalToolHandlers({
       sidecar: params.sidecarState,
-      backend: {
-        sessionId: params.sessionId ?? null,
-        authToken: params.getAuthToken() || getToken() || '',
-      },
     })
 
     aiTools.push(...agentAiTools)

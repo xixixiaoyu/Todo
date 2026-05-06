@@ -250,11 +250,14 @@ export function useAIConfig() {
    * 更新配置
    */
   function updateConfig(partial: Partial<AIConfig>): void {
-    const merged: AIConfig = { ...config.value, ...partial }
+    // Normalize skillIds before applying
+    const normalized = { ...partial }
     if ('skillIds' in partial) {
-      merged.skillIds = normalizeIdList(partial.skillIds)
+      normalized.skillIds = normalizeIdList(partial.skillIds)
     }
-    config.value = merged
+    // Direct property mutation — avoids full-object replacement and
+    // keeps toggle feedback instant by touching only changed keys.
+    Object.assign(config.value, normalized)
   }
 
   /**
