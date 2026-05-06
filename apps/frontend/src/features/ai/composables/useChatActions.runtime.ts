@@ -14,6 +14,7 @@ import {
   type Tool,
 } from '@/features/ai/services/aiService'
 import type { McpToolResponse } from '@/features/mcp/api/mcp'
+import { AGENT_TOOL_DEFINITIONS, buildAgentLocalToolHandlers } from './useChatActions.agentTools'
 
 type SkillContext = {
   catalogSkills: AISkill[]
@@ -24,11 +25,21 @@ type LocalToolHandler = (args: Record<string, unknown>) => string | Promise<stri
 
 type McpApiClient = typeof import('@/features/mcp/api/mcp').mcpApi
 
+interface SidecarState {
+  port: number | null
+  token: string | null
+  isAvailable: boolean
+}
+
 export async function prepareRuntimeCapabilities(params: {
   aiConfig: AIConfig
   getAuthToken: () => string | null
   hydrateAuth: () => void
   skillContext: SkillContext
+  /** Sidecar state for agent file tools */
+  sidecarState?: SidecarState
+  /** Current session ID for stage_files backend registration */
+  sessionId?: string | null
 }): Promise<{
   mcpApi: McpApiClient
   mcpTools: McpToolResponse[]
@@ -37,6 +48,7 @@ export async function prepareRuntimeCapabilities(params: {
   localToolHandlers: Map<string, LocalToolHandler>
   activeSkillsForPrompt: AISkill[]
   skillRuntimeAvailability: AISkillRuntimeAvailability[]
+  agentToolsEnabled: boolean
 }> {
   params.hydrateAuth()
 
@@ -87,6 +99,26 @@ export async function prepareRuntimeCapabilities(params: {
     )
   }
 
+  const agentToolsEnabled = params.aiConfig.agentMode && params.sidecarState?.isAvailable === true
+
+  if (agentToolsEnabled && params.sidecarState) {
+    const agentAiTools = AGENT_TOOL_DEFINITIONS
+    const agentHandlers = buildAgentLocalToolHandlers({
+      sidecar: params.sidecarState,
+      backend: {
+        sessionId: params.sessionId ?? null,
+        authToken: params.getAuthToken() || getToken() || '',
+      },
+    })
+
+    aiTools.push(...agentAiTools)
+    agentHandlers.forEach((handler, name) => {
+      if (!localToolHandlers.has(name)) {
+        localToolHandlers.set(name, handler)
+      }
+    })
+  }
+
   return {
     mcpApi,
     mcpTools,
@@ -95,5 +127,6 @@ export async function prepareRuntimeCapabilities(params: {
     localToolHandlers,
     activeSkillsForPrompt,
     skillRuntimeAvailability,
+    agentToolsEnabled,
   }
 }

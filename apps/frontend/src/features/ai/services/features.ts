@@ -359,6 +359,7 @@ export async function getMultiModelDiscussionStream(
         aiConfig.novelGenre,
         aiConfig.novelTone,
         aiConfig.novelProtagonistHint,
+        options.agentToolsEnabled,
       )
 
       const response = await fetchNonStreamResponse(

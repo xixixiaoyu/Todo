@@ -89,6 +89,20 @@ func (a *App) ShowErrorDialog(title, message string) {
 	})
 }
 
+// OpenDirectoryDialog opens a native directory picker and returns the selected path
+func (a *App) OpenDirectoryDialog(title string) string {
+	if !a.ready() {
+		return ""
+	}
+	dir, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: title,
+	})
+	if err != nil {
+		return ""
+	}
+	return dir
+}
+
 // OpenBrowser opens the given URL in the system's default browser
 func (a *App) OpenBrowser(rawURL string) {
 	if !a.ready() {

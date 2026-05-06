@@ -263,4 +263,13 @@ export class EventsGateway
   broadcastToAll(event: string, data: unknown) {
     this.server.emit(event, data)
   }
+
+  /**
+   * 向指定 session 的房间发送消息
+   * 用于 Agent 异步任务的实时推送
+   */
+  sendToSession(sessionId: string, event: string, data: unknown) {
+    const room = `session:${sessionId}`
+    this.server.to(room).emit(event, data)
+  }
 }

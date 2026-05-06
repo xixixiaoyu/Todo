@@ -14,16 +14,25 @@ export interface CreateAppOptions {
 export function createApp(options: CreateAppOptions): Hono {
   const app = new Hono()
 
-  // CORS — 仅允许 Wails 来源
+  // CORS — 允许 Wails、本地开发来源
   app.use(
     '*',
     cors({
-      origin: [
-        'http://localhost:5173',
-        'wails://localhost',
-        'http://wails.localhost',
-        'https://wails.localhost',
-      ],
+      origin: (origin) => {
+        if (!origin) return null
+        // 允许所有 wails:// 协议来源（Wails 桌面端 WebView）
+        if (origin.startsWith('wails://')) return origin
+        // 允许本地开发服务器
+        if (
+          origin.startsWith('http://localhost:') ||
+          origin.startsWith('http://127.0.0.1:') ||
+          origin.startsWith('http://wails.localhost') ||
+          origin.startsWith('https://wails.localhost')
+        ) {
+          return origin
+        }
+        return null
+      },
     }),
   )
 

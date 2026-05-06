@@ -101,6 +101,27 @@ export function useAiAssistantModes(params: {
     })
   }
 
+  const isAgentEnabled = computed(() => params.config.value.agentMode)
+
+  const toggleAgentMode = () => {
+    const newValue = !params.config.value.agentMode
+    params.updateConfig({
+      agentMode: newValue,
+      ...(newValue
+        ? {
+            todoAssistant: false,
+            discussionMode: false,
+            enableImageGeneration: false,
+            assistantMode: 'default',
+          }
+        : { agentWorkspaceId: null, agentWorkspacePath: null }),
+    })
+  }
+
+  const updateAgentWorkspace = (workspaceId: string | null, workspacePath: string | null) => {
+    params.updateConfig({ agentWorkspaceId: workspaceId, agentWorkspacePath: workspacePath })
+  }
+
   const selectPrimaryModel = (presetId: string) => {
     params.updateConfig({
       discussionPrimaryModelId: presetId,
@@ -138,6 +159,9 @@ export function useAiAssistantModes(params: {
     toggleDiscussionMode,
     isImageGenerationEnabled,
     toggleImageGeneration,
+    isAgentEnabled,
+    toggleAgentMode,
+    updateAgentWorkspace,
     selectPrimaryModel,
     toggleSecondaryModel,
   }

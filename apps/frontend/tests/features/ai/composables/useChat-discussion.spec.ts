@@ -89,6 +89,9 @@ vi.mock('@/features/ai/composables/useAIConfig', () => ({
     novelGenre: null,
     novelTone: '',
     novelProtagonistHint: '',
+    agentMode: false,
+    agentWorkspaceId: null,
+    agentWorkspacePath: null,
   })),
   getAIThinkingMode: vi.fn(() => 'enabled'),
   getAISkills: vi.fn(() => []),
@@ -142,6 +145,9 @@ describe('useChat - Discussion Mode', () => {
       novelGenre: null,
       novelTone: '',
       novelProtagonistHint: '',
+      agentMode: false,
+      agentWorkspaceId: null,
+      agentWorkspacePath: null,
     } as AIConfig)
 
     mockGetMultiModelDiscussionStream.mockImplementation(
@@ -205,6 +211,9 @@ describe('useChat - Discussion Mode', () => {
       novelGenre: null,
       novelTone: '',
       novelProtagonistHint: '',
+      agentMode: false,
+      agentWorkspaceId: null,
+      agentWorkspacePath: null,
     } as AIConfig)
     vi.mocked(getAISkills).mockReturnValue([
       {
@@ -252,6 +261,9 @@ describe('useChat - Discussion Mode', () => {
       novelGenre: null,
       novelTone: '',
       novelProtagonistHint: '',
+      agentMode: false,
+      agentWorkspaceId: null,
+      agentWorkspacePath: null,
     } as AIConfig)
     vi.mocked(mcpApi.getAllTools).mockResolvedValueOnce([
       {

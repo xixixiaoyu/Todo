@@ -469,6 +469,7 @@ export const ai = {
   maxAttachmentsReached: '附件数量已达上限 {count}',
   novelMode: '小说模式',
   translationMode: '翻译模式',
+  agentMode: 'Agent 模式',
   translationInputPlaceholder: '粘贴或输入待翻译的文本...',
   translationResultPlaceholder: '翻译结果将显示在这里',
   translationTranslate: '翻译',

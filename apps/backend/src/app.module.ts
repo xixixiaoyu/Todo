@@ -22,6 +22,8 @@ import { McpModule } from './mcp/mcp.module'
 import { TeachingModule } from './teaching/teaching.module'
 import { SkillSourcesModule } from './skill-sources/skill-sources.module'
 import { AiSyncModule } from './ai-sync/ai-sync.module'
+import { SessionFileModule } from './agent/session-file'
+import { TaskQueueModule } from './agent/task-queue'
 import { AppThrottlerGuard, RedisThrottlerStorage, createGlobalThrottlerOptions } from './common'
 
 /**
@@ -147,6 +149,8 @@ import { AppThrottlerGuard, RedisThrottlerStorage, createGlobalThrottlerOptions 
     ScheduledTasksModule, // 定时任务模块
     McpModule, // MCP 模块
     TeachingModule, // 教学模式模块
+    SessionFileModule, // Agent Session 文件注册模块
+    TaskQueueModule, // Agent 异步任务队列模块
   ],
   providers: [
     // 全局速率限制守卫

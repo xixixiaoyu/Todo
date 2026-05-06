@@ -482,6 +482,67 @@ export function sanitizeRequestMessages(
   })
 }
 
+function buildAgentSystemPrompt(): string | null {
+  const locale = getLocaleValue()
+  const isZh = locale.startsWith('zh')
+
+  const parts: string[] = []
+
+  // 工具纪律（从 i18n 或内联回退）
+  const disciplineKey = 'ai.agentToolDiscipline'
+  const discipline = getRawLocaleMessage(disciplineKey)
+  if (discipline) {
+    parts.push(discipline)
+  } else {
+    parts.push(
+      isZh
+        ? '## 工具使用纪律\n\n当多个工具能完成同一件事时，优先使用成本最低、干扰最小的那个。不要在简单工具能解决问题的场景下启动重型工具。\n\n优先使用 agent_ 系列工具操作本地文件（read_file、write_file、edit_file、ls、grep、find、mkdir），它们是本机最直接的文件访问方式。'
+        : '## Tool Usage Discipline\n\nWhen multiple tools can accomplish the same task, prefer the one with the lowest cost and least disruption. Do not reach for heavy tools when simpler ones can do the job.\n\nPrefer agent_ tools for local file operations (read_file, write_file, edit_file, ls, grep, find, mkdir) — they are the most direct way to access local files.',
+    )
+  }
+
+  // 文件交付
+  const deliveryKey = 'ai.agentFileDelivery'
+  const delivery = getRawLocaleMessage(deliveryKey)
+  if (delivery) {
+    parts.push(delivery)
+  } else {
+    parts.push(
+      isZh
+        ? '## 文件交付\n\n当你创建、找到或需要交给用户的本地文件时，使用 agent_stage_files 登记文件。这将把文件注册到当前会话，用户可以在界面中看到文件卡片。\n\n- 只传真实存在的本机绝对路径\n- 不要只在文本里写文件路径\n- 不要判断具体平台如何展示，消费端会自动处理'
+        : '## File Delivery\n\nWhen you create, find, or receive local files that should reach the user, use agent_stage_files to register them. This assigns files to the current session so the user can see file cards in the UI.\n\n- Pass only real local absolute paths\n- Do not merely write file paths in text\n- Do not decide platform-specific display; consumers handle it',
+    )
+  }
+
+  // 失败处理
+  const failureKey = 'ai.agentFailureHandling'
+  const failure = getRawLocaleMessage(failureKey)
+  if (failure) {
+    parts.push(failure)
+  } else {
+    parts.push(
+      isZh
+        ? '## 失败处理\n\n方案失败时，先诊断原因再换方向：读错误信息、检查假设、尝试针对性修复。不要盲目重试同一动作，也不要一次失败就彻底放弃一个可行方案。'
+        : '## Failure Handling\n\nWhen an approach fails, diagnose why before switching tactics — read the error, check your assumptions, try a focused fix. Do not retry the identical action blindly, but do not abandon a viable approach after a single failure either.',
+    )
+  }
+
+  // 操作安全
+  const safetyKey = 'ai.agentActionSafety'
+  const safety = getRawLocaleMessage(safetyKey)
+  if (safety) {
+    parts.push(safety)
+  } else {
+    parts.push(
+      isZh
+        ? '## 操作安全\n\n执行操作前，考虑可逆性和影响范围。本地的、可撤销的操作可以直接执行。但对于难以撤销、影响外部系统、或可能造成破坏的操作（删除文件、发送消息到外部服务、修改他人可见的状态），先向用户确认再执行。暂停确认的代价很低，误操作的代价可能很高。'
+        : '## Action Safety\n\nBefore taking actions, consider reversibility and blast radius. Local, reversible actions can be taken freely. But for actions that are hard to reverse, affect external systems, or could be destructive (deleting files, sending messages to external services, modifying state visible to others), check with the user before proceeding. The cost of pausing to confirm is low; the cost of an unwanted action can be very high.',
+    )
+  }
+
+  return parts.length > 0 ? parts.join('\n\n') : null
+}
+
 export function injectSystemPrompts(
   messages: ChatMessage[],
   systemPrompt: string,
@@ -495,6 +556,8 @@ export function injectSystemPrompts(
   novelGenre?: string | null,
   novelTone?: string,
   novelProtagonistHint?: string,
+  agentToolsEnabled?: boolean,
+  todoList?: string,
 ): AIChatCompletionMessage[] {
   const result: AIChatCompletionMessage[] = []
   let documentCharsUsed = 0
@@ -551,13 +614,15 @@ export function injectSystemPrompts(
     })
   }
 
-  const { memories, isMemoryEnabled } = useMemory()
-  const currentMemories =
-    memorySnapshot && memorySnapshot.length > 0
-      ? memorySnapshot
-      : isMemoryEnabled.value
-        ? memories.value
-        : []
+  let currentMemories = memorySnapshot && memorySnapshot.length > 0 ? memorySnapshot : []
+  if (currentMemories.length === 0) {
+    try {
+      const { memories, isMemoryEnabled } = useMemory()
+      if (isMemoryEnabled.value) currentMemories = memories.value
+    } catch {
+      // not in Vue setup context, skip memory
+    }
+  }
 
   if (currentMemories.length > 0) {
     systemBlocks.push({
@@ -595,6 +660,14 @@ export function injectSystemPrompts(
     })
   }
 
+  // Agent 工具能力注入（仅当 agent 工具注册时）
+  if (agentToolsEnabled) {
+    const agentPrompt = buildAgentSystemPrompt()
+    if (agentPrompt) {
+      systemBlocks.push({ content: agentPrompt })
+    }
+  }
+
   if (todoAssistant) {
     // 块 A：角色与能力（一次性注入）
     systemBlocks.push({
@@ -603,18 +676,26 @@ export function injectSystemPrompts(
     })
 
     // 块 B：待办快照 + 输出规范（每轮注入当前 todoList）
-    const todoStore = useTodoStore()
-    const todoList = formatTodoItems(todoStore.todos)
-    const pendingCount = todoStore.todos.filter((t) => !t.completed && !t.deletedAt).length
+    let todoContent = todoList || ''
+    let pendingCount = 0
+    if (!todoContent) {
+      try {
+        const todoStore = useTodoStore()
+        todoContent = formatTodoItems(todoStore.todos)
+        pendingCount = todoStore.todos.filter((t) => !t.completed && !t.deletedAt).length
+      } catch {
+        todoContent = 'None'
+      }
+    }
 
     systemBlocks.push({
       content: formatTemplate(
         (getRawLocaleMessage('ai.todoAssistantContextPrompt') ??
           t('ai.todoAssistantContextPrompt', {
             count: pendingCount,
-            todoList: todoList || 'None',
+            todoList: todoContent || 'None',
           })) as string,
-        { count: pendingCount, todoList: todoList || t('common.none') || 'None' },
+        { count: pendingCount, todoList: todoContent || t('common.none') || 'None' },
       ),
     })
   }

@@ -42,7 +42,10 @@ import type { AISkillSync, AIPresetSync } from '@lumina/shared'
  * AI 思考模式状态
  */
 export const aiThinkingMode = ref<'enabled' | 'disabled'>(
-  (localStorage.getItem(AI_THINKING_MODE_STORAGE_KEY) as 'enabled' | 'disabled') || 'enabled',
+  (() => {
+    const raw = localStorage.getItem(AI_THINKING_MODE_STORAGE_KEY)
+    return raw === 'disabled' ? 'disabled' : 'enabled'
+  })(),
 )
 
 /**
@@ -84,6 +87,9 @@ const DEFAULT_CONFIG: AIConfig = {
   novelGenre: null,
   novelTone: '',
   novelProtagonistHint: '',
+  agentMode: false,
+  agentWorkspaceId: null,
+  agentWorkspacePath: null,
 }
 
 function normalizeReasoningEffort(value: unknown): ReasoningEffort {

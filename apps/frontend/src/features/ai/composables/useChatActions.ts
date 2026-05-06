@@ -21,6 +21,7 @@ import { createStreamChunkHandler, type TeachingPersistPayload } from './useChat
 import { prepareRuntimeCapabilities } from './useChatActions.runtime'
 import { resolveSkillContext } from '@/features/ai/services/aiService'
 import { httpClient } from '@/api'
+import { useSidecar } from '@/composables/useSidecar'
 import { useQueryClient } from '@tanstack/vue-query'
 
 const MAX_RETRIES = 3
@@ -58,6 +59,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
   } = useChatHistory()
   const todoStore = useTodoStore()
   const authStore = useAuthStore()
+  const { isAvailable: sidecarAvailable, sidecarPort, sidecarToken } = useSidecar()
 
   // 惰性获取 queryClient：避免在无 Vue 注入上下文的测试环境中崩溃
   let queryClient: ReturnType<typeof useQueryClient> | null = null
@@ -273,13 +275,25 @@ export function useChatActions(options: AIRequestOptions = {}) {
           selectedSkillIds: aiConfig.skillIds,
           autoActivateSelected: true,
         })
-        const { mcpApi, aiTools, mcpToolLookup, localToolHandlers, skillRuntimeAvailability } =
-          await prepareRuntimeCapabilities({
-            aiConfig,
-            getAuthToken: () => authStore.token,
-            hydrateAuth: () => authStore.hydrateFromStorage(),
-            skillContext,
-          })
+        const {
+          mcpApi,
+          aiTools,
+          mcpToolLookup,
+          localToolHandlers,
+          skillRuntimeAvailability,
+          agentToolsEnabled,
+        } = await prepareRuntimeCapabilities({
+          aiConfig,
+          getAuthToken: () => authStore.token,
+          hydrateAuth: () => authStore.hydrateFromStorage(),
+          skillContext,
+          sidecarState: {
+            port: sidecarPort.value,
+            token: sidecarToken.value,
+            isAvailable: sidecarAvailable.value,
+          },
+          sessionId: generationSessionId,
+        })
         const toolCalls: ToolCall[] = []
         let assistantThinking = ''
         let assistantReasoningDetails = ''
@@ -308,6 +322,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
             skills: skillContext.catalogSkills,
             activeSkills: skillContext.activatedSkills,
             skillRuntimeAvailability,
+            agentToolsEnabled,
           },
           (toolCall) => {
             toolCalls.push(toolCall)
@@ -351,11 +366,18 @@ export function useChatActions(options: AIRequestOptions = {}) {
           localToolHandlers,
           activeSkillsForPrompt,
           skillRuntimeAvailability,
+          agentToolsEnabled,
         } = await prepareRuntimeCapabilities({
           aiConfig,
           getAuthToken: () => authStore.token,
           hydrateAuth: () => authStore.hydrateFromStorage(),
           skillContext,
+          sidecarState: {
+            port: sidecarPort.value,
+            token: sidecarToken.value,
+            isAvailable: sidecarAvailable.value,
+          },
+          sessionId: generationSessionId,
         })
 
         const toolCalls: ToolCall[] = []
@@ -381,6 +403,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
             skills: skillContext.catalogSkills,
             activeSkills: activeSkillsForPrompt,
             skillRuntimeAvailability,
+            agentToolsEnabled,
           },
           (toolCall) => {
             toolCalls.push(toolCall)

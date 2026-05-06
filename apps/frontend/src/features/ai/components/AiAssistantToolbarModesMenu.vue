@@ -42,8 +42,6 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const hover = useHoverPopover({ open })
 
-// Toolbar 下拉不包含「多模型协同讨论」（该模式在 Toolbar 有独立入口），
-// 故仅注入四项 inputs，useAiModeItems 会自动按统一顺序输出。
 const modeItems = useAiModeItems({
   todo: { active: () => props.isTodoAssistantEnabled, toggle: () => emit('toggleTodo') },
   teaching: { active: () => props.isTeachingEnabled, toggle: () => emit('toggleTeaching') },
@@ -55,8 +53,6 @@ const modeItems = useAiModeItems({
   },
 })
 
-// Toolbar 下拉按模式 id 映射的图标（绘图使用品牌自定义 AiLuminaIcon）
-// 仅包含本组件实际渲染的模式，discuss 由 Toolbar 独立入口处理
 const MODE_ICON: Partial<Record<AiModeId, Component>> = {
   todo: Clover,
   teaching: GraduationCap,

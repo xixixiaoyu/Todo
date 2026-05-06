@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useWindowSize } from '@vueuse/core'
+import { useSidecar } from '@/composables/useSidecar'
 import type { AIPreset, AIConfig } from '@/features/ai/composables/useAIConfig'
 import type { ChatSession } from '@/features/ai/composables/useChatHistory'
 import {
@@ -14,6 +15,7 @@ import {
   ChevronLeft,
   Square,
   Presentation,
+  Bot,
 } from 'lucide-vue-next'
 import AiAssistantToolbarDiscussionMenu from '@/features/ai/components/AiAssistantToolbarDiscussionMenu.vue'
 import AiAssistantToolbarPresetMenu from '@/features/ai/components/AiAssistantToolbarPresetMenu.vue'
@@ -29,6 +31,7 @@ defineProps<{
   isDiscussionEnabled: boolean
   isImageGenerationEnabled: boolean
   isTranslationEnabled: boolean
+  isAgentEnabled: boolean
   currentPresetName: string
   presets: AIPreset[]
   config: AIConfig
@@ -51,6 +54,7 @@ const emit = defineEmits<{
   (e: 'toggleDiscussion'): void
   (e: 'toggleImageGen'): void
   (e: 'toggleTranslation'): void
+  (e: 'toggleAgent'): void
   (e: 'selectPrimaryModel', id: string): void
   (e: 'toggleSecondaryModel', id: string): void
   (e: 'selectPreset', id: string): void
@@ -62,6 +66,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const { isAvailable: sidecarAvailable } = useSidecar()
 
 const { width: windowWidth } = useWindowSize()
 const isMobile = computed(() => windowWidth.value < 640)
@@ -205,6 +210,29 @@ const newChatTitle = computed(() => `${t('ai.newChat')} (${shortcutHint})`)
             @select-primary-model="(id) => emit('selectPrimaryModel', id)"
             @toggle-secondary-model="(id) => emit('toggleSecondaryModel', id)"
           />
+
+          <!-- Agent 模式（仅桌面端 Sidecar 可用时显示） -->
+          <button
+            v-if="sidecarAvailable"
+            :class="[
+              'toolbar-btn flex items-center active:scale-95 rounded-full border shrink-0',
+              isMobile ? 'h-8 w-8 justify-center' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
+              isAgentEnabled
+                ? 'border-primary/30 bg-primary/15 text-primary shadow-[0_0_12px_hsl(var(--primary)_/_0.1)]'
+                : 'border-transparent text-muted-foreground',
+            ]"
+            :title="t('ai.agentMode')"
+            @click="emit('toggleAgent')"
+          >
+            <Bot
+              :size="14"
+              :class="[
+                'transition-all duration-300',
+                isAgentEnabled ? 'animate-pulse-slow scale-110' : '',
+              ]"
+            />
+            <span v-if="!isMobile" class="toolbar-text font-medium">{{ t('ai.agentMode') }}</span>
+          </button>
 
           <!-- Mermaid 编辑器 -->
           <button

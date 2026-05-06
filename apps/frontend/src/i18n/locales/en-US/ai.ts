@@ -485,6 +485,7 @@ Current memory list:
   uploadFile: 'Upload file (image or document)',
   novelMode: 'Novel Mode',
   translationMode: 'Translation',
+  agentMode: 'Agent Mode',
   translationInputPlaceholder: 'Paste or type text to translate...',
   translationResultPlaceholder: 'Translation will appear here',
   translationTranslate: 'Translate',

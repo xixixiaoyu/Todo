@@ -158,6 +158,7 @@ export async function getAIStreamResponse(
     aiConfig.novelGenre,
     aiConfig.novelTone,
     aiConfig.novelProtagonistHint,
+    options.agentToolsEnabled,
   )
   const sanitizedMessages = sanitizeRequestMessages(messagesWithSystemPrompts)
 
@@ -186,9 +187,9 @@ export async function getAIStreamResponse(
       }
     }
 
-    // DeepSeek 模型的 thinking 参数
-    requestBody.thinking = {
-      type: thinkingMode,
+    // DeepSeek 模型的 thinking 参数（仅在启用时发送）
+    if (thinkingMode === 'enabled') {
+      requestBody.thinking = { type: 'enabled' }
     }
 
     const response = await fetch(buildApiUrl(baseUrl), {
@@ -374,9 +375,9 @@ export async function fetchNonStreamResponse(
     }
   }
 
-  // DeepSeek 模型的 thinking 参数
-  requestBody.thinking = {
-    type: thinkingMode,
+  // DeepSeek 模型的 thinking 参数（仅在启用时发送）
+  if (thinkingMode === 'enabled') {
+    requestBody.thinking = { type: 'enabled' }
   }
 
   const response = await fetch(buildApiUrl(config.baseUrl), {

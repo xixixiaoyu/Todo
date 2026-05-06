@@ -3,6 +3,7 @@ package sidecar
 import (
 	"log/slog"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 )
@@ -14,31 +15,46 @@ type SidecarConfig struct {
 }
 
 // ResolveSidecarConfig resolves the Sidecar binary paths for the current OS.
-// Returns an error if required files are not found.
+// In production: uses the bundled Node binary next to the executable.
+// In dev mode: falls back to system "node" from PATH and the sidecar dist/ dir.
 func ResolveSidecarConfig() (SidecarConfig, error) {
 	exeDir, err := executableDir()
 	if err != nil {
 		return SidecarConfig{}, err
 	}
 
-	nodePath, err := nodeBinaryPath(exeDir)
-	if err != nil {
-		return SidecarConfig{}, err
-	}
-
+	bundledNodePath, _ := nodeBinaryPath(exeDir)
 	entryPath, err := sidecarEntryPath(exeDir)
 	if err != nil {
 		return SidecarConfig{}, err
 	}
 
-	// Verify files exist
+	// Try bundled Node first (production path)
+	nodePath := bundledNodePath
 	if _, err := os.Stat(nodePath); err != nil {
-		slog.Warn("sidecar node binary not found", "path", nodePath, "error", err)
-		return SidecarConfig{}, err
+		// Bundled Node not found — fall back to system node (dev mode)
+		slog.Info("sidecar bundled node not found, falling back to system node", "bundled", nodePath)
+		systemNode, lookupErr := exec.LookPath("node")
+		if lookupErr != nil {
+			slog.Warn("sidecar node binary not found (neither bundled nor system)", "error", lookupErr)
+			return SidecarConfig{}, lookupErr
+		}
+		nodePath = systemNode
 	}
-	if _, err := os.Stat(entryPath); err != nil {
-		slog.Warn("sidecar entry not found", "path", entryPath, "error", err)
-		return SidecarConfig{}, err
+
+	// Try bundled entry first, then fall back to the sidecar dist directory
+	if _, statErr := os.Stat(entryPath); statErr != nil {
+		slog.Info("sidecar bundled entry not found, trying dist fallback", "bundled", entryPath)
+		// In dev mode (wails dev), the CWD is apps/wails, sidecar dist is at ../sidecar/dist/sidecar.mjs
+		cwd, _ := os.Getwd()
+		distEntry := filepath.Join(cwd, "..", "sidecar", "dist", "sidecar.mjs")
+		if _, distErr := os.Stat(distEntry); distErr == nil {
+			entryPath = distEntry
+			slog.Info("sidecar using dist entry", "path", entryPath)
+		} else {
+			slog.Warn("sidecar entry not found", "bundled", entryPath, "dist", distEntry, "error", statErr)
+			return SidecarConfig{}, statErr
+		}
 	}
 
 	return SidecarConfig{

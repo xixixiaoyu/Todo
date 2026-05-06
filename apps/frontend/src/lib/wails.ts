@@ -98,6 +98,9 @@ export const system = {
    * 重启 Sidecar 进程
    */
   restartSidecar: () => callGo<void>('main.App.RestartSidecar'),
+
+  /** 打开原生目录选择器，返回选中的目录路径 */
+  openDirectoryDialog: (title: string) => callGo<string>('main.App.OpenDirectoryDialog', title),
 }
 
 /**

@@ -55,6 +55,9 @@ function createNovelAIConfig(): AIConfig {
     novelGenre: 'fantasy',
     novelTone: 'epic',
     novelProtagonistHint: 'a brave knight',
+    agentMode: false,
+    agentWorkspaceId: null,
+    agentWorkspacePath: null,
   }
 }
 
@@ -82,6 +85,9 @@ function createDefaultAIConfig(): AIConfig {
     novelGenre: null,
     novelTone: '',
     novelProtagonistHint: '',
+    agentMode: false,
+    agentWorkspaceId: null,
+    agentWorkspacePath: null,
   }
 }
 

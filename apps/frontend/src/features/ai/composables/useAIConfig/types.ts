@@ -35,6 +35,9 @@ export interface AIConfig {
   novelGenre: NovelGenre | null
   novelTone: string
   novelProtagonistHint: string
+  agentMode: boolean
+  agentWorkspaceId: string | null
+  agentWorkspacePath: string | null
 }
 
 export interface AIPreset {

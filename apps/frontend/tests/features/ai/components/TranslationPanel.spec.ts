@@ -53,6 +53,9 @@ const DEFAULT_CONFIG = {
   novelGenre: null,
   novelTone: '',
   novelProtagonistHint: '',
+  agentMode: false,
+  agentWorkspaceId: null,
+  agentWorkspacePath: null,
 }
 
 beforeEach(() => {
