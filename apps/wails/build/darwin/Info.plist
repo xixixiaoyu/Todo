@@ -5,22 +5,30 @@
         <string>APPL</string>
         <key>CFBundleName</key>
         <string>{{.Info.ProductName}}</string>
+        <key>CFBundleDisplayName</key>
+        <string>{{.Info.ProductName}}</string>
         <key>CFBundleExecutable</key>
         <string>{{.OutputFilename}}</string>
         <key>CFBundleIdentifier</key>
         <string>com.wails.{{.Name}}</string>
         <key>CFBundleVersion</key>
         <string>{{.Info.ProductVersion}}</string>
-        <key>CFBundleGetInfoString</key>
-        <string>{{.Info.Comments}}</string>
         <key>CFBundleShortVersionString</key>
         <string>{{.Info.ProductVersion}}</string>
+        <key>CFBundleGetInfoString</key>
+        <string>{{.Info.Comments}}</string>
         <key>CFBundleIconFile</key>
         <string>iconfile</string>
+        <key>CFBundleInfoDictionaryVersion</key>
+        <string>6.0</string>
         <key>LSMinimumSystemVersion</key>
-        <string>10.13.0</string>
+        <string>10.15.0</string>
+        <key>LSApplicationCategoryType</key>
+        <string>public.app-category.productivity</string>
         <key>NSHighResolutionCapable</key>
-        <string>true</string>
+        <true/>
+        <key>NSSupportsAutomaticGraphicsSwitching</key>
+        <true/>
         <key>NSHumanReadableCopyright</key>
         <string>{{.Info.Copyright}}</string>
         {{if .Info.FileAssociations}}
@@ -59,5 +67,16 @@
           {{end}}
         </array>
         {{end}}
+        <key>NSAppTransportSecurity</key>
+        <dict>
+            <key>NSAllowsLocalNetworking</key>
+            <true/>
+        </dict>
+        <key>NSAppleEventsUsageDescription</key>
+        <string>This application needs to control other applications to provide automation features.</string>
+        <key>NSCameraUsageDescription</key>
+        <string>This application may need camera access for scanning QR codes.</string>
+        <key>NSMicrophoneUsageDescription</key>
+        <string>This application may need microphone access for voice input.</string>
     </dict>
 </plist>

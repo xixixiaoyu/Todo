@@ -1,46 +1,65 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# ==============================================================================
+# close-app.sh — 安全关闭 Lumina 应用进程
+#
+# 优雅退出 → SIGTERM → SIGKILL 三级降级策略
+# ==============================================================================
 set -euo pipefail
 
 APP_NAME="Lumina"
-YELLOW='\033[1;33m'
+APP_BUNDLE="${APP_NAME}.app"
+
 GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 
 is_running() {
-  pgrep -x "$APP_NAME" > /dev/null || \
-  pgrep -f "${APP_NAME}.app/Contents/MacOS/${APP_NAME}" > /dev/null
+  pgrep -x "$APP_NAME" > /dev/null 2>&1 || \
+  pgrep -f "${APP_BUNDLE}/Contents/MacOS/" > /dev/null 2>&1 || \
+  pgrep -f "${APP_BUNDLE}/Contents/Resources/sidecar" > /dev/null 2>&1
 }
 
-if is_running; then
-  echo -e "${YELLOW}⚠️  检测到 ${APP_NAME} 正在运行，正在尝试关闭...${NC}"
-  # 即使 osascript 失败（如应用不支持 quit 事件），也继续执行后续逻辑
-  osascript -e "quit app \"$APP_NAME\"" > /dev/null 2>&1 || true
-  
-  COUNT=0
-  # 在 set -e 模式下，while 循环中的 condition 失败不会导致脚本退出
-  while is_running && [ $COUNT -lt 5 ]; do
-    sleep 1
-    ((COUNT++))
-  done
-  
-  if is_running; then
-    echo -e "${RED}🛑 应用未能响应关闭请求，正在强制终止...${NC}"
-    pkill -15 -x "$APP_NAME" || true
-    pkill -15 -f "${APP_NAME}.app/Contents/MacOS/${APP_NAME}" || true
-    sleep 1
-    
-    # 如果仍然运行，使用 SIGKILL
-    if is_running; then
-      pkill -9 -x "$APP_NAME" || true
-      pkill -9 -f "${APP_NAME}.app/Contents/MacOS/${APP_NAME}" || true
-      sleep 1
-    fi
-  fi
-  
-  if is_running; then
-     echo -e "${RED}❌ 无法关闭应用。${NC}"
-     exit 1
-  fi
-  echo -e "${GREEN}✅ 应用已关闭。${NC}"
+if ! is_running; then
+  echo -e "${GREEN}${APP_NAME} is not running.${NC}"
+  exit 0
 fi
+
+echo -e "${YELLOW}${APP_NAME} is running, attempting graceful shutdown...${NC}"
+
+# 1. 优雅退出（AppleScript）
+osascript -e "quit app \"$APP_NAME\"" > /dev/null 2>&1 || true
+
+COUNT=0
+while is_running && [ $COUNT -lt 10 ]; do
+  sleep 1
+  ((COUNT++))
+  echo "  Waiting... (${COUNT}/10)"
+done
+
+# 2. SIGTERM（15）
+if is_running; then
+  echo -e "${YELLOW}Graceful shutdown timed out, sending SIGTERM...${NC}"
+  pkill -15 -x "$APP_NAME" 2>/dev/null || true
+  pkill -15 -f "${APP_BUNDLE}/Contents/MacOS/" 2>/dev/null || true
+  # 也关闭 sidecar
+  pkill -15 -f "${APP_BUNDLE}/Contents/Resources/sidecar" 2>/dev/null || true
+  sleep 2
+fi
+
+# 3. SIGKILL（9）
+if is_running; then
+  echo -e "${RED}SIGTERM failed, force killing with SIGKILL...${NC}"
+  pkill -9 -x "$APP_NAME" 2>/dev/null || true
+  pkill -9 -f "${APP_BUNDLE}/Contents/MacOS/" 2>/dev/null || true
+  pkill -9 -f "${APP_BUNDLE}/Contents/Resources/sidecar" 2>/dev/null || true
+  sleep 1
+fi
+
+# 4. 最终检查
+if is_running; then
+  echo -e "${RED}Unable to close ${APP_NAME}. Please close it manually.${NC}"
+  exit 1
+fi
+
+echo -e "${GREEN}${APP_NAME} closed.${NC}"

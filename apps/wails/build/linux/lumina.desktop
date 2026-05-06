@@ -1,0 +1,17 @@
+[Desktop Entry]
+Type=Application
+Name=简思 (Lumina)
+Name[zh_CN]=简思
+Name[en]=Lumina
+Comment=简于形，深于思 — 高效纯粹的 AI 个人待办
+Comment[zh_CN]=简于形，深于思 — 高效纯粹的 AI 个人待办
+Comment[en]=A modern minimalist AI Todo application
+Exec=Lumina %U
+Icon=lumina
+Terminal=false
+StartupNotify=true
+Categories=Office;ProjectManagement;Utility;
+Keywords=todo;ai;productivity;task;待办;效率;
+MimeType=x-scheme-handler/lumina;
+StartupWMClass=Lumina
+X-GNOME-UsesNotifications=true

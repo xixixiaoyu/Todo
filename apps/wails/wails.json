@@ -13,9 +13,9 @@
     "email": "contact@lumina.app"
   },
   "info": {
-    "productName": "简思",
-    "productVersion": "1.0.0-beta.8",
-    "copyright": "Copyright © 2026",
-    "comments": "Lumina — A modern minimalist AI Todo application"
+    "productName": "简思 (Lumina)",
+    "productVersion": "1.0.0-beta.9",
+    "copyright": "Copyright © 2026 牧云 (Mu Yun)",
+    "comments": "简思 (Lumina) — A modern minimalist AI Todo application"
   }
 }

@@ -108,17 +108,71 @@ export default defineConfig(async (): Promise<UserConfig> => {
         },
         includeAssets: [
           'favicon.ico',
+          'logo.png',
           'apple-touch-icon-180x180.png',
           'pwa-64x64.png',
           'pwa-192x192.png',
           'pwa-512x512.png',
           'maskable-icon-512x512.png',
+          'offline.html',
         ],
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,ttf,json,webmanifest}'],
+          // 运行时缓存策略：API 请求 Network First，静态资源 Cache First
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/cdn\.jsdelivr\.net\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'cdn-cache',
+                expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              },
+            },
+            {
+              urlPattern: /\/api\/.*/i,
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'api-cache',
+                networkTimeoutSeconds: 10,
+                expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 },
+              },
+            },
+            {
+              urlPattern: /\.(?:png|jpg|jpeg|svg|gif|ico|webp)$/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'image-cache',
+                expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              },
+            },
+            {
+              urlPattern: /\.(?:woff2?|ttf|eot)$/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'font-cache',
+                expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              },
+            },
+          ],
+          // 离线回退页
+          navigationPreload: false,
+        },
         manifest: {
-          name: '简思',
+          id: '/',
+          name: '简思 (Lumina)',
           short_name: '简思',
           description: '简于形，深于思 — 高效纯粹的 AI 个人待办',
+          lang: 'zh-CN',
+          dir: 'ltr',
+          orientation: 'portrait-primary',
+          display: 'standalone',
+          display_override: ['standalone', 'minimal-ui', 'window-controls-overlay'],
+          background_color: '#ffffff',
           theme_color: '#ffffff',
+          categories: ['productivity', 'utilities'],
+          start_url: './',
+          scope: './',
+          iarc_rating_id: '',
           icons: [
             {
               src: 'pwa-64x64.png',
@@ -141,7 +195,33 @@ export default defineConfig(async (): Promise<UserConfig> => {
               type: 'image/png',
               purpose: 'maskable',
             },
+            {
+              src: 'apple-touch-icon-180x180.png',
+              sizes: '180x180',
+              type: 'image/png',
+              purpose: 'any',
+            },
           ],
+          shortcuts: [
+            {
+              name: '添加待办',
+              short_name: '添加',
+              description: '快速创建新待办事项',
+              url: './?action=add',
+              icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
+            },
+          ],
+          screenshots: [
+            {
+              src: 'pwa-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              form_factor: 'wide',
+              label: '简思主界面',
+            },
+          ],
+          related_applications: [],
+          prefer_related_applications: false,
         },
       }),
     ],

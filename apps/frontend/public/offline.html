@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>简思 — 当前离线</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei',
+          sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8f9fa;
+        color: #1a1a2e;
+        -webkit-font-smoothing: antialiased;
+      }
+      .container {
+        text-align: center;
+        padding: 2rem;
+        max-width: 360px;
+      }
+      .icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        line-height: 1;
+      }
+      h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+      }
+      p {
+        font-size: 0.95rem;
+        color: #6b7280;
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+      }
+      .retry-btn {
+        display: inline-block;
+        padding: 0.625rem 1.5rem;
+        background: #1a1a2e;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background 0.2s;
+      }
+      .retry-btn:hover {
+        background: #2d2d4a;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #1a1a2e;
+          color: #e5e7eb;
+        }
+        p {
+          color: #9ca3af;
+        }
+        .retry-btn {
+          background: #e5e7eb;
+          color: #1a1a2e;
+        }
+        .retry-btn:hover {
+          background: #f3f4f6;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="icon">🔌</div>
+      <h1>当前离线</h1>
+      <p>请检查网络连接后重试。应用数据已安全保存在本地。</p>
+      <button class="retry-btn" onclick="location.reload()">重新连接</button>
+    </div>
+  </body>
+</html>
