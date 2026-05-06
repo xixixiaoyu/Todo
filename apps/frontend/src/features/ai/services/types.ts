@@ -113,6 +113,8 @@ export interface AISkill {
   allowImplicitInvocation?: boolean
   updatedAt?: string
   runtime?: AISkillRuntime
+  /** 技能来源：builtin=内置, imported=手动导入, workspace=工作区发现, external=外部安装 */
+  source?: 'builtin' | 'imported' | 'workspace' | 'external'
 }
 
 export interface AISkillRuntimeAvailability {

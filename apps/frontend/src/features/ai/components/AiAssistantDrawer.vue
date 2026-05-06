@@ -16,6 +16,7 @@ import RightWorkspacePanel from '@/features/ai/components/RightWorkspacePanel.vu
 import LeftSessionSidebar from '@/features/ai/components/LeftSessionSidebar.vue'
 import { useMermaidEditor } from '@/features/ai/composables/useMermaidEditor'
 import { useToolPermission, type PermissionMode } from '@/features/ai/composables/useToolPermission'
+import { discoverWorkspaceSkills } from '@/features/ai/services/utils/skills.workspace'
 import { useChat } from '@/features/ai/composables/useChat'
 import { useAIConfig } from '@/features/ai/composables/useAIConfig'
 import { useAiAssistantAttachments } from '@/features/ai/composables/useAiAssistantAttachments'
@@ -69,6 +70,22 @@ const {
 
 const { sidecarPort, sidecarToken } = useSidecar()
 const { mode: permissionMode, setMode } = useToolPermission()
+
+async function handleWorkspaceSelect(id: string | null, path: string | null) {
+  updateAgentWorkspace(id, path)
+  // 发现工作区技能
+  if (path && sidecarPort.value && sidecarToken.value) {
+    try {
+      const discovered = await discoverWorkspaceSkills(path, sidecarPort.value, sidecarToken.value)
+      if (discovered.length > 0) {
+        const { addDiscoveredWorkspaceSkills } = useAIConfig()
+        addDiscoveredWorkspaceSkills(discovered)
+      }
+    } catch {
+      /* Sidecar unavailable */
+    }
+  }
+}
 
 const selectedWorkspacePath = computed(() => config.value.agentWorkspacePath)
 const workspacePanelCollapsed = ref(false)
@@ -324,7 +341,7 @@ defineOptions({
               :sidecar-token="sidecarToken"
               :selected-id="config.agentWorkspaceId"
               :permission-mode="permissionMode"
-              @select="(id, path) => updateAgentWorkspace(id, path)"
+              @select="(id, path) => handleWorkspaceSelect(id, path)"
               @cycle-permission-mode="cyclePermissionMode"
             />
 
@@ -349,7 +366,7 @@ defineOptions({
                   :sidecar-token="sidecarToken"
                   :selected-id="config.agentWorkspaceId"
                   :permission-mode="permissionMode"
-                  @select="(id, path) => updateAgentWorkspace(id, path)"
+                  @select="(id, path) => handleWorkspaceSelect(id, path)"
                   @cycle-permission-mode="cyclePermissionMode"
                 />
               </template>

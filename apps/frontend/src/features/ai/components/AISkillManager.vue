@@ -1,7 +1,18 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Plus, Check, Pencil, Trash2, Copy, ChevronLeft, Download, Upload } from 'lucide-vue-next'
+import {
+  Plus,
+  Check,
+  Pencil,
+  Trash2,
+  Copy,
+  ChevronLeft,
+  Download,
+  Upload,
+  Eye,
+} from 'lucide-vue-next'
+import SkillViewerOverlay from './SkillViewerOverlay.vue'
 import { useAIConfig, type AIConfig } from '@/features/ai/composables/useAIConfig'
 import type { AISkill } from '@/features/ai/services/types'
 import {
@@ -54,6 +65,7 @@ const pendingInstallSource = ref('')
 const pendingInstallCandidates = ref<string[]>([])
 const expectedSha256 = ref('')
 const showInstallConfirm = ref(false)
+const viewingSkill = ref<AISkill | null>(null)
 const isInstallingExternalSource = ref(false)
 const trustedHosts = getTrustedSkillSourceHosts()
 const recommendedDomesticSkillSource = 'https://skillhub.tencent.com/#featured'
@@ -144,6 +156,25 @@ function startCreateSkill() {
     allowImplicitInvocation: true,
     prompt: '',
   }
+}
+
+function sourceLabel(skill: AISkill): string {
+  switch (skill.source) {
+    case 'builtin':
+      return '内置'
+    case 'workspace':
+      return '工作区'
+    case 'external':
+      return '外部'
+    case 'imported':
+      return '导入'
+    default:
+      return ''
+  }
+}
+
+function viewSkill(skill: AISkill) {
+  viewingSkill.value = skill
 }
 
 function startEditSkill(skill: AISkill) {
@@ -591,7 +622,28 @@ async function installFromExternalSource() {
         >
           <div class="flex items-start justify-between gap-3">
             <div class="min-w-0">
-              <p class="truncate text-sm font-semibold text-foreground">{{ skill.name }}</p>
+              <div class="flex items-center gap-2">
+                <p
+                  class="truncate text-sm font-semibold text-foreground cursor-pointer hover:text-primary transition-colors"
+                  @click="viewSkill(skill)"
+                >
+                  {{ skill.name }}
+                </p>
+                <span
+                  v-if="sourceLabel(skill)"
+                  :class="[
+                    'inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold',
+                    sourceLabel(skill) === '内置'
+                      ? 'bg-muted-foreground/15 text-muted-foreground'
+                      : sourceLabel(skill) === '工作区'
+                        ? 'bg-blue-500/15 text-blue-600'
+                        : sourceLabel(skill) === '外部'
+                          ? 'bg-purple-500/15 text-purple-600'
+                          : 'bg-emerald-500/15 text-emerald-600',
+                  ]"
+                  >{{ sourceLabel(skill) }}</span
+                >
+              </div>
               <p v-if="skill.description" class="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
                 {{ skill.description }}
               </p>
@@ -604,6 +656,13 @@ async function installFromExternalSource() {
             </div>
 
             <div class="flex shrink-0 items-center gap-1">
+              <button
+                class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                title="查看"
+                @click="viewSkill(skill)"
+              >
+                <Eye :size="14" />
+              </button>
               <button
                 class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                 @click="startEditSkill(skill)"
@@ -723,4 +782,16 @@ async function installFromExternalSource() {
       </AlertDialogFooter>
     </AlertDialogContent>
   </AlertDialog>
+
+  <!-- Skill viewer overlay -->
+  <SkillViewerOverlay
+    :skill="viewingSkill"
+    @close="viewingSkill = null"
+    @edit="
+      (s) => {
+        viewingSkill = null
+        startEditSkill(s)
+      }
+    "
+  />
 </template>

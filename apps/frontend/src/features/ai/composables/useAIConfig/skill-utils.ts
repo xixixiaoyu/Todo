@@ -433,8 +433,9 @@ export function normalizeImportedSkill(raw: unknown): Omit<AISkill, 'id'> | null
 
 export function createStoredSkill(skill: Omit<AISkill, 'id'>): AISkill {
   return {
-    id: generateId(),
     ...skill,
+    source: skill.source || 'imported',
+    id: generateId(),
     updatedAt: skill.updatedAt ?? new Date().toISOString(),
   }
 }

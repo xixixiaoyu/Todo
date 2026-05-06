@@ -654,6 +654,17 @@ export function useAIConfig() {
     setSkillIds(Array.from(selected))
   }
 
+  /**
+   * 添加工作区发现的技能（去重：同 source + name 不重复）
+   */
+  function addDiscoveredWorkspaceSkills(newSkills: AISkill[]): void {
+    const existingNames = new Set(skills.value.map((s) => s.name))
+    const toAdd = newSkills.filter((s) => s.source === 'workspace' && !existingNames.has(s.name))
+    if (toAdd.length > 0) {
+      skills.value = [...skills.value, ...toAdd]
+    }
+  }
+
   function addSkill(skill: Omit<AISkill, 'id'>): AISkill {
     const normalizedAliases = normalizeSkillAliases(skill.aliases)
     const normalizedResources = normalizeSkillResources(skill.resources)
@@ -773,6 +784,7 @@ export function useAIConfig() {
     importSkillsFromExternalSource,
     skills,
     addSkill,
+    addDiscoveredWorkspaceSkills,
     updateSkill,
     deleteSkill,
     duplicateSkill,
