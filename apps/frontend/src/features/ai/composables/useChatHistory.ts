@@ -3,12 +3,24 @@ import i18n from '@/i18n'
 import { generateId } from '@/features/ai/services/aiService'
 import type { ChatMessage } from '@/features/ai/services/aiService'
 import { useMemory } from './useMemory'
+import { getAIConfig } from './useAIConfig'
+import { useToolPermission } from './useToolPermission'
 import {
   AI_STORAGE_SCOPE_CHANGE_EVENT,
   getAiScopedStorageItem,
   setAiScopedStorageItem,
   removeAiScopedStorageItem,
 } from './aiStorageScope'
+
+/** 会话创建时的配置快照，切换会话时恢复 */
+export interface SessionSnapshot {
+  model?: string
+  baseUrl?: string
+  permissionMode?: 'operate' | 'ask' | 'read_only'
+  skillIds?: readonly string[]
+  systemPrompt?: string
+  workspacePath?: string | null
+}
 
 export interface ChatSession {
   id: string
@@ -18,6 +30,7 @@ export interface ChatSession {
   contextSummaryUpdatedAt?: Date
   contextSummaryUntilMessageId?: string
   memorySnapshot?: string[] // 锁定在会话启动时的记忆快照
+  sessionSnapshot?: SessionSnapshot // 锁定在会话创建时的配置快照
   createdAt: Date
   updatedAt: Date
   isPinned?: boolean
@@ -305,6 +318,38 @@ export function useChatHistory() {
   /**
    * 创建新会话
    */
+  function takeSnapshot(): SessionSnapshot | undefined {
+    try {
+      const aiConfig = getAIConfig()
+      const { mode } = useToolPermission()
+      return {
+        model: aiConfig.model,
+        baseUrl: aiConfig.baseUrl,
+        permissionMode: mode.value,
+        skillIds: aiConfig.skillIds,
+        systemPrompt: aiConfig.systemPrompt,
+        workspacePath: aiConfig.agentWorkspacePath,
+      }
+    } catch {
+      return undefined
+    }
+  }
+
+  function applySnapshot(snapshot: SessionSnapshot): void {
+    try {
+      const aiConfig = getAIConfig()
+      const { setMode } = useToolPermission()
+      if (snapshot.model) aiConfig.model = snapshot.model
+      if (snapshot.baseUrl) aiConfig.baseUrl = snapshot.baseUrl
+      if (snapshot.permissionMode) setMode(snapshot.permissionMode)
+      if (snapshot.systemPrompt) aiConfig.systemPrompt = snapshot.systemPrompt
+      if (snapshot.skillIds !== undefined) aiConfig.skillIds = snapshot.skillIds
+      if (snapshot.workspacePath !== undefined) aiConfig.agentWorkspacePath = snapshot.workspacePath
+    } catch {
+      /* ignore */
+    }
+  }
+
   function createSession(): ChatSession {
     const { memories, isMemoryEnabled } = useMemory()
 
@@ -314,13 +359,14 @@ export function useChatHistory() {
       messages: [],
       memorySnapshot:
         isMemoryEnabled.value && memories.value.length > 0 ? [...memories.value] : undefined,
+      sessionSnapshot: takeSnapshot(),
       createdAt: new Date(),
       updatedAt: new Date(),
       isAutoTitle: true,
     }
     sessions.value.unshift(newSession)
     currentSessionId.value = newSession.id
-    saveSessions(true) // 创建新会话立即保存
+    saveSessions(true)
     return newSession
   }
 
@@ -328,8 +374,13 @@ export function useChatHistory() {
    * 切换到指定会话
    */
   function switchSession(sessionId: string): void {
-    if (sessions.value.some((s) => s.id === sessionId)) {
+    const session = sessions.value.find((s) => s.id === sessionId)
+    if (session) {
       currentSessionId.value = sessionId
+      // 恢复会话创建时的配置快照
+      if (session.sessionSnapshot) {
+        applySnapshot(session.sessionSnapshot)
+      }
     }
   }
 
