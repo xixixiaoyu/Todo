@@ -47,16 +47,19 @@ async function bootstrap() {
 
   // 1. 启用 CORS (使用 NestJS 标准方式，确保与异常过滤器集成)
   const corsOrigin = process.env.CORS_ORIGIN
+  const defaultOrigins = [
+    'http://localhost:5173',
+    'wails://localhost',
+    'http://wails.localhost',
+    'https://wails.localhost',
+  ]
+  const envOrigins = corsOrigin
+    ?.split(',')
+    .map((o) => o.trim())
+    .filter((o) => o.length > 0)
+  const allowedOrigins = Array.from(new Set([...(envOrigins || []), ...defaultOrigins]))
   app.enableCors({
-    origin:
-      corsOrigin === '*'
-        ? true
-        : corsOrigin?.split(',').map((o) => o.trim()) || [
-            'http://localhost:5173',
-            'wails://localhost',
-            'http://wails.localhost',
-            'https://wails.localhost',
-          ],
+    origin: corsOrigin === '*' ? true : allowedOrigins,
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders:
