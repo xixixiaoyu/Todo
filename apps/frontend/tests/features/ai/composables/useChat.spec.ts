@@ -554,6 +554,7 @@ describe('useChat', () => {
       )
 
       expect(assistantMessage?.content).toBe('')
+      expect(assistantMessage?.thinkingContent).toBe('Need to inspect the skill manifest first')
       expect(assistantMessage?.reasoning_details).toBe('Need to inspect the skill manifest first')
       expect(assistantMessage?.tool_calls?.[0]?.id).toBe('tc1')
     })

@@ -51,7 +51,9 @@ export async function executeToolCalls(params: {
     params.chatHistory.value[index] = {
       ...params.chatHistory.value[index],
       thinkingContent:
-        params.chatHistory.value[index].thinkingContent || params.assistantThinkingContent,
+        params.chatHistory.value[index].thinkingContent ||
+        params.assistantThinkingContent ||
+        params.assistantReasoningDetails,
       reasoning_details:
         params.chatHistory.value[index].reasoning_details || params.assistantReasoningDetails,
       discussionSteps: params.chatHistory.value[index].discussionSteps || params.discussionSteps,
@@ -65,7 +67,7 @@ export async function executeToolCalls(params: {
         id: params.assistantMessageId,
         role: 'assistant',
         content: '',
-        thinkingContent: params.assistantThinkingContent,
+        thinkingContent: params.assistantThinkingContent || params.assistantReasoningDetails,
         reasoning_details: params.assistantReasoningDetails,
         discussionSteps: params.discussionSteps,
         tool_calls: params.toolCalls,
