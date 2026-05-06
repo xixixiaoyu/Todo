@@ -3,7 +3,8 @@ import {
   getAIStreamResponse,
   getMultiModelDiscussionStream,
   getAIImageResponse,
-  abortCurrentRequest,
+  getSessionAbortSignal,
+  abortSessionRequest,
   generateId,
   type ChatMessage,
   type AIRequestOptions,
@@ -18,6 +19,8 @@ import { useAuthStore } from '@/features/auth/stores/auth'
 import { createContextCompression } from './useChatActions.contextCompression'
 import { executeToolCalls } from './useChatActions.toolCalls'
 import { useToolPermission } from './useToolPermission'
+import { useGenerationState } from '@/features/ai/stores/generationState'
+import { getStreamBuffer } from './useChatState'
 import { createStreamChunkHandler, type TeachingPersistPayload } from './useChatActions.stream'
 import { prepareRuntimeCapabilities } from './useChatActions.runtime'
 import { resolveSkillContext } from '@/features/ai/services/aiService'
@@ -43,10 +46,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
   const {
     chatHistory,
     currentAIResponse,
-    currentThinkingContent,
-    currentReasoningDetails,
     currentDiscussionSteps,
-    currentTodoActions,
     currentAssistantMessageId,
     isGenerating,
     error,
@@ -70,6 +70,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
   const authStore = useAuthStore()
   const { isAvailable: sidecarAvailable, sidecarPort, sidecarToken } = useSidecar()
   const { mode: permissionMode } = useToolPermission()
+  const { startGenerating: markGenerating, stopGenerating: markDone } = useGenerationState()
 
   // 惰性获取 queryClient：避免在无 Vue 注入上下文的测试环境中崩溃
   let queryClient: ReturnType<typeof useQueryClient> | null = null
@@ -135,8 +136,8 @@ export function useChatActions(options: AIRequestOptions = {}) {
     if (!prompt.trim() || isGenerating.value) return
 
     clearError()
-    isGenerating.value = true
-    const generationSessionId = currentSessionId.value || getOrCreateCurrentSession().id // 捕获发起生成的会话 ID
+    const generationSessionId = currentSessionId.value || getOrCreateCurrentSession().id
+    markGenerating(generationSessionId)
 
     // 创建用户消息
     const userMessage: ChatMessage = {
@@ -188,7 +189,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
       }
       error.value = errorMessage
     } finally {
-      isGenerating.value = false
+      markDone(generationSessionId)
       currentAssistantMessageId.value = null
     }
   }
@@ -219,7 +220,6 @@ export function useChatActions(options: AIRequestOptions = {}) {
 
     if (iteration >= MAX_TOOL_ITERATIONS) {
       console.warn('Max iterations reached, stopping tool loop.')
-      isGenerating.value = false
       chatHistory.value = [
         ...chatHistory.value,
         {
@@ -240,7 +240,13 @@ export function useChatActions(options: AIRequestOptions = {}) {
 
     clearError()
     resetStreamingState()
-    const generationSessionId = currentSessionId.value || getOrCreateCurrentSession().id // 捕获发起生成的会话 ID
+    const generationSessionId = currentSessionId.value || getOrCreateCurrentSession().id
+
+    // 标记此会话正在生成中
+    markGenerating(generationSessionId)
+
+    // 获取该会话的独立流式缓冲区
+    const buffer = getStreamBuffer(generationSessionId)
 
     if (!isRetry) {
       retryCount.value = 0
@@ -257,7 +263,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
       chatHistory.value = [...chatHistory.value, userMessage]
     }
 
-    isGenerating.value = true
+    markGenerating(generationSessionId)
     const assistantMessageId = generateId()
     currentAssistantMessageId.value = assistantMessageId
 
@@ -266,12 +272,12 @@ export function useChatActions(options: AIRequestOptions = {}) {
         aiConfig,
         assistantMessageId,
         generationSessionId,
-        currentAIResponse,
-        currentThinkingContent,
-        currentReasoningDetails,
-        currentDiscussionSteps,
-        currentTodoActions,
-        isGenerating,
+        currentAIResponse: buffer.response,
+        currentThinkingContent: buffer.thinking,
+        currentReasoningDetails: buffer.reasoning,
+        currentDiscussionSteps: buffer.discussionSteps,
+        currentTodoActions: buffer.todoActions,
+        onStreamDone: () => markDone(generationSessionId),
         sessions,
         addSessionMessage,
         extractAndStoreMemories,
@@ -325,11 +331,11 @@ export function useChatActions(options: AIRequestOptions = {}) {
           handleChunk,
           (thinking: string) => {
             assistantThinking += thinking
-            currentThinkingContent.value += thinking
+            buffer.thinking.value += thinking
           },
           (details: string) => {
             assistantReasoningDetails += details
-            currentReasoningDetails.value += details
+            buffer.reasoning.value += details
           },
           {
             ...options,
@@ -341,6 +347,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
             skillRuntimeAvailability,
             agentToolsEnabled,
             agentWorkspacePath: aiConfig.agentWorkspacePath,
+            abortSignal: getSessionAbortSignal(generationSessionId),
           },
           (toolCall) => {
             toolCalls.push(toolCall)
@@ -348,7 +355,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
         )
 
         if (toolCalls.length > 0) {
-          isGenerating.value = true
+          markGenerating(generationSessionId)
           await executeToolCalls({
             assistantMessageId,
             toolCalls,
@@ -411,11 +418,11 @@ export function useChatActions(options: AIRequestOptions = {}) {
           handleChunk,
           (thinking: string) => {
             assistantThinking += thinking
-            currentThinkingContent.value += thinking
+            buffer.thinking.value += thinking
           },
           (details: string) => {
             assistantReasoningDetails += details
-            currentReasoningDetails.value += details
+            buffer.reasoning.value += details
           },
           {
             ...options,
@@ -427,6 +434,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
             skillRuntimeAvailability,
             agentToolsEnabled,
             agentWorkspacePath: aiConfig.agentWorkspacePath,
+            abortSignal: getSessionAbortSignal(generationSessionId),
           },
           (toolCall) => {
             toolCalls.push(toolCall)
@@ -434,7 +442,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
         )
 
         if (toolCalls.length > 0) {
-          isGenerating.value = true
+          markGenerating(generationSessionId)
           await executeToolCalls({
             assistantMessageId,
             toolCalls,
@@ -464,17 +472,20 @@ export function useChatActions(options: AIRequestOptions = {}) {
       if (retryCount.value < MAX_RETRIES) {
         retryCount.value++
         console.warn(`Retrying ${retryCount.value}/${MAX_RETRIES}...`)
-        isGenerating.value = false
+        markDone(generationSessionId)
         await sendMessage(content, images, documents, true)
       } else {
-        isGenerating.value = false
+        markDone(generationSessionId)
         resetStreamingState()
       }
     }
   }
 
   function stopGenerating(): void {
-    abortCurrentRequest()
+    if (currentSessionId.value) {
+      abortSessionRequest(currentSessionId.value)
+      markDone(currentSessionId.value)
+    }
   }
 
   function clearHistory(): void {

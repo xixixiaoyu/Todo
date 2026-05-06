@@ -15,8 +15,10 @@ import { buildApiUrl, getHeaders, injectSystemPrompts, sanitizeRequestMessages }
 
 const t = i18n.global.t
 
-// 当前请求的 AbortController
-let abortController: AbortController | null = null
+// 每会话独立的 AbortController
+const sessionControllers = new Map<string, AbortController>()
+// 兼容旧 API：全局 controller（abortCurrentRequest 会清空所有）
+let globalController: AbortController | null = null
 
 function asReasoningText(value: unknown): string {
   if (typeof value === 'string') {
@@ -94,19 +96,32 @@ function resolveReasoningDetails(...candidates: unknown[]): string | undefined {
  * 获取当前请求的 AbortSignal，如果没有则创建新的
  */
 export function getAbortSignal(): AbortSignal {
-  if (!abortController) {
-    abortController = new AbortController()
+  if (!globalController) {
+    globalController = new AbortController()
   }
-  return abortController.signal
+  return globalController.signal
 }
 
-/**
- * 重置并获取新的 AbortSignal
- */
+export function getSessionAbortSignal(sessionId: string): AbortSignal {
+  let entry = sessionControllers.get(sessionId)
+  if (!entry) {
+    entry = new AbortController()
+    sessionControllers.set(sessionId, entry)
+  }
+  return entry.signal
+}
+
 export function resetAbortSignal(): AbortSignal {
   abortCurrentRequest()
-  abortController = new AbortController()
-  return abortController.signal
+  globalController = new AbortController()
+  return globalController.signal
+}
+
+export function resetSessionAbortSignal(sessionId: string): AbortSignal {
+  abortSessionRequest(sessionId)
+  const ctrl = new AbortController()
+  sessionControllers.set(sessionId, ctrl)
+  return ctrl.signal
 }
 
 /**
@@ -337,8 +352,8 @@ export async function getAIStreamResponse(
     }
     throw error
   } finally {
-    if (!usesExternalSignal && abortController?.signal === signal) {
-      abortController = null
+    if (!usesExternalSignal && globalController?.signal === signal) {
+      globalController = null
     }
   }
 }
@@ -435,15 +450,24 @@ export async function getAIStaticResponse(
  * 中断当前请求
  */
 export function abortCurrentRequest(): void {
-  if (abortController) {
-    abortController.abort()
-    abortController = null
+  if (globalController) {
+    globalController.abort()
+    globalController = null
+  }
+  for (const [, ctrl] of sessionControllers) {
+    ctrl.abort()
+  }
+  sessionControllers.clear()
+}
+
+export function abortSessionRequest(sessionId: string): void {
+  const ctrl = sessionControllers.get(sessionId)
+  if (ctrl) {
+    ctrl.abort()
+    sessionControllers.delete(sessionId)
   }
 }
 
-/**
- * 检查是否有正在进行的请求
- */
 export function isRequestInProgress(): boolean {
-  return abortController !== null
+  return globalController !== null || sessionControllers.size > 0
 }

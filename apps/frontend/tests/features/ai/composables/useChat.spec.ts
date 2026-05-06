@@ -12,7 +12,7 @@ import type { ChatSession } from '@/features/ai/composables/useChatHistory'
 import {
   getAIStreamResponse,
   getAIStaticResponse,
-  abortCurrentRequest,
+  abortSessionRequest,
   generateId,
 } from '@/features/ai/services/aiService'
 import type { ChatMessage, ToolCall } from '@/features/ai/services/aiService'
@@ -87,6 +87,8 @@ vi.mock('@/features/ai/services/aiService', async (importOriginal) => {
     getMultiModelDiscussionStream: vi.fn(),
     getAIStaticResponse: vi.fn().mockResolvedValue({ content: '[]' }),
     abortCurrentRequest: vi.fn(),
+    abortSessionRequest: vi.fn(),
+    getSessionAbortSignal: vi.fn(() => new AbortController().signal),
     generateId: vi.fn(() => 'generated-id'),
   }
 })
@@ -159,7 +161,7 @@ vi.mock('@/features/ai/composables/useAIConfig', () => ({
 describe('useChat', () => {
   const mockGetAIStreamResponse = vi.mocked(getAIStreamResponse)
   const mockGetAIStaticResponse = vi.mocked(getAIStaticResponse)
-  const mockAbortCurrentRequest = vi.mocked(abortCurrentRequest)
+  const mockAbortSessionRequest = vi.mocked(abortSessionRequest)
   const mockGenerateId = vi.mocked(generateId)
 
   // 类型定义辅助
@@ -856,10 +858,17 @@ describe('useChat', () => {
   })
 
   describe('stopGenerating', () => {
-    it('should call abortCurrentRequest', () => {
+    it('should call abortSessionRequest on current session', () => {
       const { stopGenerating } = useChat()
+      mockCurrentSession.value = {
+        id: 'test-session',
+        title: 'Test',
+        messages: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
       stopGenerating()
-      expect(mockAbortCurrentRequest).toHaveBeenCalled()
+      expect(mockAbortSessionRequest).toHaveBeenCalledWith('test-session')
     })
   })
 

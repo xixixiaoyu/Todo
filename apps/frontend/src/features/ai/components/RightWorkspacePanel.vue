@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { FolderTree, Paperclip, PanelRightClose, PanelRightOpen, X } from 'lucide-vue-next'
+import { FolderTree, Paperclip, X } from 'lucide-vue-next'
 import SessionFileList from './SessionFileList.vue'
 import WorkspaceFileTree from './WorkspaceFileTree.vue'
 import axios from 'axios'
@@ -9,10 +9,10 @@ const props = defineProps<{
   workspacePath: string | null
   sidecarPort: number | null
   sidecarToken: string | null
+  collapsed?: boolean
 }>()
 
 const activeTab = ref<'session-files' | 'workspace'>('workspace')
-const collapsed = ref(false)
 const panelWidth = ref(260)
 const resizing = ref(false)
 
@@ -107,16 +107,6 @@ function closePreview() {
       @pointerdown.prevent="onResizeStart"
     />
 
-    <!-- 折叠按钮 -->
-    <button
-      class="rwp-collapse-btn"
-      :title="collapsed ? '展开面板' : '折叠面板'"
-      @click="collapsed = !collapsed"
-    >
-      <PanelRightClose v-if="!collapsed" :size="13" />
-      <PanelRightOpen v-else :size="13" />
-    </button>
-
     <template v-if="!collapsed">
       <!-- Tab 滑动条 -->
       <div class="rwp-tabs" :style="tabsStyle">
@@ -193,40 +183,6 @@ function closePreview() {
 .rwp-handle:hover,
 .rwp-handle--active {
   background: hsl(var(--primary) / 0.2);
-}
-
-/* ── 折叠按钮 ── */
-.rwp-collapse-btn {
-  position: absolute;
-  top: 12px;
-  left: -14px;
-  z-index: 11;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 14px;
-  height: 28px;
-  border: 1px solid hsl(var(--border) / 0.3);
-  border-right: none;
-  border-radius: 4px 0 0 4px;
-  background: hsl(var(--card));
-  color: hsl(var(--muted-foreground));
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.15s;
-}
-
-.rwp:hover .rwp-collapse-btn,
-.rwp--collapsed .rwp-collapse-btn {
-  opacity: 1;
-}
-
-.rwp--collapsed .rwp-collapse-btn {
-  left: auto;
-  right: -14px;
-  border: 1px solid hsl(var(--border) / 0.3);
-  border-left: none;
-  border-radius: 0 4px 4px 0;
 }
 
 /* ── Tab 滑动条 ── */

@@ -105,7 +105,7 @@ function createBaseParams(overrides?: Partial<Parameters<typeof finalizeComplete
     addSessionMessage: vi.fn(),
     extractAndStoreMemories: vi.fn(),
     isMemoryEnabled: ref(false),
-    isGenerating: ref(false),
+    onStreamDone: vi.fn(),
     resetStreamingState: vi.fn(),
     todoStore: { setProposedChanges: vi.fn() },
     t: vi.fn((key: string) => key),
@@ -134,6 +134,7 @@ describe('finalizeCompletedResponse — novel auto-continue', () => {
         createBaseParams({
           aiConfig: createNovelAIConfig(),
           currentAIResponse,
+
           generationSessionId: null,
         }),
       )
@@ -151,6 +152,7 @@ describe('finalizeCompletedResponse — novel auto-continue', () => {
         createBaseParams({
           aiConfig: createNovelAIConfig(),
           currentAIResponse,
+
           generationSessionId: null,
         }),
       )
@@ -168,6 +170,7 @@ describe('finalizeCompletedResponse — novel auto-continue', () => {
         createBaseParams({
           aiConfig: createNovelAIConfig(),
           currentAIResponse,
+
           generationSessionId: null,
         }),
       )
@@ -183,6 +186,7 @@ describe('finalizeCompletedResponse — novel auto-continue', () => {
         createBaseParams({
           aiConfig: createNovelAIConfig(),
           currentAIResponse,
+
           generationSessionId: null,
         }),
       )
@@ -198,6 +202,7 @@ describe('finalizeCompletedResponse — novel auto-continue', () => {
         createBaseParams({
           aiConfig: createDefaultAIConfig(),
           currentAIResponse,
+
           generationSessionId: null,
         }),
       )
@@ -206,76 +211,80 @@ describe('finalizeCompletedResponse — novel auto-continue', () => {
     })
   })
 
-  describe('isGenerating flag for novel auto-continue', () => {
+  describe('onStreamDone callback for novel auto-continue', () => {
     it('sets isGenerating false when more novel chapters remain (allows auto-continue through guard)', () => {
       novelBatchRemaining.value = 3
-      const isGenerating = ref(true)
+      const onStreamDone = vi.fn()
       const currentAIResponse = ref('[NOVEL_CHAPTER_START]\nChapter 1')
 
       finalizeCompletedResponse(
         createBaseParams({
           aiConfig: createNovelAIConfig(),
           currentAIResponse,
-          isGenerating,
+          onStreamDone,
+
           generationSessionId: null,
         }),
       )
 
       // isGenerating 始终设为 false，避免 sendMessage 顶部守卫拦截后续自动补章
-      expect(isGenerating.value).toBe(false)
+      expect(onStreamDone).toHaveBeenCalled()
     })
 
     it('sets isGenerating false when last novel chapter completes', () => {
       novelBatchRemaining.value = 1
-      const isGenerating = ref(true)
+      const onStreamDone = vi.fn()
       const currentAIResponse = ref('[NOVEL_CHAPTER_START]\nFinal chapter')
 
       finalizeCompletedResponse(
         createBaseParams({
           aiConfig: createNovelAIConfig(),
           currentAIResponse,
-          isGenerating,
+          onStreamDone,
+
           generationSessionId: null,
         }),
       )
 
       expect(novelBatchRemaining.value).toBe(0)
-      expect(isGenerating.value).toBe(false)
+      expect(onStreamDone).toHaveBeenCalled()
     })
 
     it('sets isGenerating false in non-novel mode', () => {
       novelBatchRemaining.value = 0
-      const isGenerating = ref(true)
+      const onStreamDone = vi.fn()
       const currentAIResponse = ref('Default response')
 
       finalizeCompletedResponse(
         createBaseParams({
           aiConfig: createDefaultAIConfig(),
           currentAIResponse,
-          isGenerating,
+          onStreamDone,
+
           generationSessionId: null,
         }),
       )
 
-      expect(isGenerating.value).toBe(false)
+      expect(onStreamDone).toHaveBeenCalled()
     })
 
     it('sets isGenerating false with floor decrement when no markers', () => {
       novelBatchRemaining.value = 2
-      const isGenerating = ref(true)
+      const onStreamDone = vi.fn()
       const currentAIResponse = ref('Chapter without markers')
 
       finalizeCompletedResponse(
         createBaseParams({
           aiConfig: createNovelAIConfig(),
           currentAIResponse,
-          isGenerating,
+          onStreamDone,
+
           generationSessionId: null,
         }),
       )
 
       // isGenerating 始终设为 false，小说补章由 sendMessage 递归调用驱动
-      expect(isGenerating.value).toBe(false)
+      expect(onStreamDone).toHaveBeenCalled()
     })
   })
 })

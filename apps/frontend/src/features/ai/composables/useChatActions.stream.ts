@@ -138,8 +138,8 @@ export function finalizeCompletedResponse(params: {
   addSessionMessage: AddSessionMessageFn
   extractAndStoreMemories: (history: ChatMessage[]) => Promise<void> | void
   isMemoryEnabled: Ref<boolean>
-  isGenerating: Ref<boolean>
-  resetStreamingState: () => void
+  onStreamDone?: () => void
+  resetStreamingState: (sessionId?: string) => void
   todoStore: {
     setProposedChanges: (assistantMessageId: string, proposedActions: ProposedTodoChange[]) => void
   }
@@ -305,8 +305,8 @@ export function finalizeCompletedResponse(params: {
 
   // 重置流式状态；不保持 isGenerating 为 true，
   // 否则 sendMessage 的顶部守卫 (isGenerating && !isToolIteration) 会拦截后续自动补章调用
-  params.resetStreamingState()
-  params.isGenerating.value = false
+  params.resetStreamingState(params.generationSessionId || undefined)
+  params.onStreamDone?.()
 }
 
 function finalizeAbortedResponse(params: {
@@ -317,8 +317,8 @@ function finalizeAbortedResponse(params: {
   currentDiscussionSteps: Ref<DiscussionStep[]>
   generationSessionId: string | null
   addSessionMessage: AddSessionMessageFn
-  resetStreamingState: () => void
-  isGenerating: Ref<boolean>
+  resetStreamingState: (sessionId?: string) => void
+  onStreamDone?: () => void
   t: (key: string, params?: Record<string, unknown>) => string
 }) {
   if (params.currentAIResponse.value && params.generationSessionId) {
@@ -333,8 +333,8 @@ function finalizeAbortedResponse(params: {
     params.addSessionMessage(params.generationSessionId, assistantMessage, true)
   }
 
-  params.resetStreamingState()
-  params.isGenerating.value = false
+  params.resetStreamingState(params.generationSessionId || undefined)
+  params.onStreamDone?.()
 }
 
 export function createStreamChunkHandler(params: {
@@ -346,19 +346,23 @@ export function createStreamChunkHandler(params: {
   currentReasoningDetails: Ref<string>
   currentDiscussionSteps: Ref<DiscussionStep[]>
   currentTodoActions: Ref<ProposedTodoChange[]>
-  isGenerating: Ref<boolean>
+  onStreamDone?: () => void
   sessions: Ref<ChatSession[]>
   addSessionMessage: AddSessionMessageFn
   extractAndStoreMemories: (history: ChatMessage[]) => Promise<void> | void
   isMemoryEnabled: Ref<boolean>
-  resetStreamingState: () => void
+  resetStreamingState: (sessionId?: string) => void
   todoStore: {
     setProposedChanges: (assistantMessageId: string, proposedActions: ProposedTodoChange[]) => void
   }
   t: (key: string, params?: Record<string, unknown>) => string
   onTeachingPersist?: (payload: TeachingPersistPayload) => void | Promise<void>
 }) {
+  const initSessionId = params.generationSessionId
   return (chunk: string) => {
+    // 会话隔离：如果当前会话已经不是发起生成的那个，丢弃所有后续 chunk
+    if (initSessionId && params.generationSessionId !== initSessionId) return
+
     if (chunk === '[DONE]') {
       if (params.currentAIResponse.value) {
         finalizeCompletedResponse({
@@ -374,15 +378,15 @@ export function createStreamChunkHandler(params: {
           addSessionMessage: params.addSessionMessage,
           extractAndStoreMemories: params.extractAndStoreMemories,
           isMemoryEnabled: params.isMemoryEnabled,
-          isGenerating: params.isGenerating,
+          onStreamDone: params.onStreamDone,
           resetStreamingState: params.resetStreamingState,
           todoStore: params.todoStore,
           t: params.t,
           onTeachingPersist: params.onTeachingPersist,
         })
       } else {
-        params.resetStreamingState()
-        params.isGenerating.value = false
+        params.resetStreamingState(params.generationSessionId || undefined)
+        params.onStreamDone?.()
       }
       return
     }
@@ -397,7 +401,7 @@ export function createStreamChunkHandler(params: {
         generationSessionId: params.generationSessionId,
         addSessionMessage: params.addSessionMessage,
         resetStreamingState: params.resetStreamingState,
-        isGenerating: params.isGenerating,
+        onStreamDone: params.onStreamDone,
         t: params.t,
       })
       return

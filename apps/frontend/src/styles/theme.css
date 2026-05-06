@@ -1,5 +1,6 @@
 @layer base {
   :root {
+    color-scheme: light;
     --font-sans: 'LXGW WenKai Screen', 'LXGW WenKai', system-ui, -apple-system, sans-serif;
 
     /* 基础颜色 */
@@ -86,9 +87,13 @@
     --ai-chat-input-weight: 400;
     --ai-chat-placeholder: 32 5% 48%;
     --ai-chat-assistant-text: 32 10% 22%;
+    --scrollbar-thumb: hsl(32 5% 45% / 0.3);
+    --scrollbar-thumb-hover: hsl(32 5% 45% / 0.45);
+    --scrollbar-thumb-active: hsl(32 5% 45% / 0.55);
   }
 
   .dark {
+    color-scheme: dark;
     /* 基础颜色 - 柔和深邃的 Zinc 风格，降低极端对比度，营造舒适沉浸感 */
     --background: 240 5% 10%; /* 提升亮度，告别死黑，接近 Vercel Dark */
     --foreground: 240 5% 90%; /* 降低文字亮度至 90%，柔和护眼 */
@@ -138,6 +143,9 @@
     --ai-header-yellow: 32 60% 15%;
     --ai-chat-placeholder: 240 5% 54%;
     --ai-chat-assistant-text: 240 5% 92%;
+    --scrollbar-thumb: hsl(240 5% 60% / 0.35);
+    --scrollbar-thumb-hover: hsl(240 5% 60% / 0.5);
+    --scrollbar-thumb-active: hsl(240 5% 60% / 0.6);
   }
 
   /* 性能优化辅助类 */

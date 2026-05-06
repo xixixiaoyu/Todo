@@ -13,6 +13,7 @@ import MermaidEditorDialog from '@/features/ai/components/MermaidEditorDialog.vu
 import TranslationPanel from '@/features/ai/components/TranslationPanel.vue'
 import AgentWorkspaceSelector from '@/features/ai/components/AgentWorkspaceSelector.vue'
 import RightWorkspacePanel from '@/features/ai/components/RightWorkspacePanel.vue'
+import LeftSessionSidebar from '@/features/ai/components/LeftSessionSidebar.vue'
 import { useMermaidEditor } from '@/features/ai/composables/useMermaidEditor'
 import { useToolPermission, type PermissionMode } from '@/features/ai/composables/useToolPermission'
 import { useChat } from '@/features/ai/composables/useChat'
@@ -70,6 +71,8 @@ const { sidecarPort, sidecarToken } = useSidecar()
 const { mode: permissionMode, setMode } = useToolPermission()
 
 const selectedWorkspacePath = computed(() => config.value.agentWorkspacePath)
+const workspacePanelCollapsed = ref(false)
+const sessionSidebarCollapsed = ref(false)
 
 function cyclePermissionMode() {
   const modes: PermissionMode[] = ['operate', 'ask', 'read_only']
@@ -269,12 +272,26 @@ defineOptions({
     >
       <AiAssistantHeader
         :is-maximized="isMaximized"
+        :session-sidebar-collapsed="isAgentEnabled ? sessionSidebarCollapsed : undefined"
+        :workspace-collapsed="
+          isAgentEnabled && selectedWorkspacePath ? workspacePanelCollapsed : undefined
+        "
         @toggle-maximize="isMaximized = !isMaximized"
         @close="modelValue = false"
+        @toggle-session-sidebar="sessionSidebarCollapsed = !sessionSidebarCollapsed"
+        @toggle-workspace="workspacePanelCollapsed = !workspacePanelCollapsed"
       />
 
       <!-- 主内容区域 -->
       <div class="relative flex-1 min-h-0 flex flex-row">
+        <!-- 左侧会话列表 -->
+        <LeftSessionSidebar
+          v-if="isAgentEnabled"
+          :collapsed="sessionSidebarCollapsed"
+          @toggle="sessionSidebarCollapsed = !sessionSidebarCollapsed"
+          @new-chat="handleNewChat"
+          @switch-session="switchSession"
+        />
         <!-- 聊天列 -->
         <div class="relative flex-1 min-h-0 flex flex-col min-w-0">
           <!-- 翻译模式：替换聊天 UI -->
@@ -456,6 +473,8 @@ defineOptions({
           :workspace-path="selectedWorkspacePath"
           :sidecar-port="sidecarPort"
           :sidecar-token="sidecarToken"
+          :collapsed="workspacePanelCollapsed"
+          @toggle-collapse="workspacePanelCollapsed = !workspacePanelCollapsed"
         />
       </div>
 

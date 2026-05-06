@@ -208,7 +208,7 @@ describe('AiAssistantDrawer Navigation and Button States', () => {
     expect(newChatBtn?.attributes('disabled')).toBeUndefined()
   })
 
-  it('should disable "New Chat" button when generating', async () => {
+  it('should NOT disable "New Chat" button when generating', async () => {
     mockMessages.value = [{ id: '1', role: 'user', content: 'test' }]
     mockIsGenerating.value = true
 
@@ -217,7 +217,7 @@ describe('AiAssistantDrawer Navigation and Button States', () => {
     })
 
     const newChatBtn = wrapper.findAll('button').find((b) => b.text().includes('ai.newChat'))
-    expect(newChatBtn?.attributes('disabled')).toBeDefined()
+    expect(newChatBtn?.attributes('disabled')).toBeUndefined()
   })
 
   it('should show "Previous Session" button regardless of session count but disabled if no last active session', async () => {

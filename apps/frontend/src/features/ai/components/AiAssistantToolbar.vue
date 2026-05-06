@@ -95,7 +95,7 @@ const newChatTitle = computed(() => `${t('ai.newChat')} (${shortcutHint})`)
               isMobile ? 'h-8 px-2.5 gap-1' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
               '!border-primary/20 !bg-primary/10 !text-primary hover:!bg-primary/20 hover:!border-primary/30',
             ]"
-            :disabled="!hasHistory || isGenerating"
+            :disabled="!hasHistory"
             :title="newChatTitle"
             @click="emit('newChat')"
           >
