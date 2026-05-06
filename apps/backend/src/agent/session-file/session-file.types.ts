@@ -13,7 +13,7 @@ export interface SessionFile {
 export interface SessionFileCreateInput {
   sessionId: string
   filePath: string
-  label: string
+  label?: string
   mime?: string
   size?: number
   ext?: string

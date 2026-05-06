@@ -58,7 +58,7 @@ export class SessionFileController {
       const file = this.registry.register({
         sessionId,
         filePath: fp,
-        label: label || undefined,
+        ...(label?.trim() ? { label: label.trim() } : {}),
       })
       files.push(file)
     }
