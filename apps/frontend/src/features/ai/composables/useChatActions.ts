@@ -151,8 +151,11 @@ export function useChatActions(options: AIRequestOptions = {}) {
     // 立即更新到当前会话
     chatHistory.value = [...chatHistory.value, userMessage]
 
+    const buffer = getStreamBuffer(generationSessionId)
     currentAssistantMessageId.value = generateId()
+    buffer.assistantMessageId.value = currentAssistantMessageId.value
     currentAIResponse.value = t('ai.generatingImage')
+    buffer.response.value = currentAIResponse.value
 
     try {
       const aiConfig = getAIConfig()
@@ -191,6 +194,8 @@ export function useChatActions(options: AIRequestOptions = {}) {
     } finally {
       markDone(generationSessionId)
       currentAssistantMessageId.value = null
+      buffer.assistantMessageId.value = null
+      buffer.response.value = ''
     }
   }
 
@@ -266,6 +271,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
     markGenerating(generationSessionId)
     const assistantMessageId = generateId()
     currentAssistantMessageId.value = assistantMessageId
+    buffer.assistantMessageId.value = assistantMessageId
 
     try {
       const handleChunk = createStreamChunkHandler({

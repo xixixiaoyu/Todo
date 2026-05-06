@@ -376,6 +376,7 @@ defineExpose({
                   v-for="(msg, index) in visibleMessages"
                   :id="`chat-msg-${msg.id}`"
                   :key="msg.id"
+                  :data-message-role="msg.role"
                   class="scroll-mt-10"
                   :message="msg"
                   :is-last="index + windowStartIndex === messages.length - 1"
@@ -459,6 +460,19 @@ defineExpose({
 .message-list-leave-to {
   opacity: 0;
   transform: scale(0.98);
+}
+
+/* 工具消息不做位移动画，避免调用工具时出现“位移进来”的抖动感 */
+.message-list-enter-active[data-message-role='tool'],
+.message-list-leave-active[data-message-role='tool'],
+.message-list-move[data-message-role='tool'] {
+  transition: none;
+}
+
+.message-list-enter-from[data-message-role='tool'],
+.message-list-leave-to[data-message-role='tool'] {
+  opacity: 1;
+  transform: none;
 }
 
 /* 会话切换时的整体淡入淡出 */

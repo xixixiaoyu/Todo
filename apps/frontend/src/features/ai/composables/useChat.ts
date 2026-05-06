@@ -60,13 +60,12 @@ export function useChat(options: AIRequestOptions = {}) {
 
     if (isGenerating.value || hasUnsavedResponse) {
       const lastMessage = allMessages[allMessages.length - 1]
+      const isCurrentStreamingMessage =
+        !!lastMessage && lastMessage.id === streamingId && lastMessage.role === 'assistant'
 
       // 避免在流式结束瞬间产生重复
       // 检查：最后一条消息不是当前流式消息，且当前正在生成或有未保存的内容需要显示
-      if (
-        (!lastMessage || lastMessage.id !== streamingId) &&
-        (isGenerating.value || hasUnsavedResponse)
-      ) {
+      if (!isCurrentStreamingMessage && (isGenerating.value || hasUnsavedResponse)) {
         const aiConfig = getAIConfig()
         const parsed = parseAssistantBlocks(currentAIResponse.value, {
           enableTodoActions: aiConfig.todoAssistant,

@@ -64,6 +64,7 @@ async function copyToClipboard(e: MouseEvent) {
       :class="{
         'tool-body--expanded': isExpanded && hasContent,
         'tool-body--error': isError && hasContent,
+        'tool-body--running': !hasContent,
       }"
     >
       <button class="tool-header" :class="{ 'cursor-default': !hasContent }" @click="toggleExpand">
@@ -124,6 +125,7 @@ async function copyToClipboard(e: MouseEvent) {
 
 /* ── 主体 ── */
 .tool-body {
+  position: relative;
   border: 1px solid hsl(var(--border) / 0.25);
   border-radius: 10px;
   background: hsl(var(--muted) / 0.2);
@@ -140,6 +142,25 @@ async function copyToClipboard(e: MouseEvent) {
 .tool-body--expanded {
   border-color: hsl(var(--border) / 0.4);
   background: hsl(var(--muted) / 0.35);
+}
+
+.tool-body--running::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -35%;
+  width: 30%;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(var(--foreground) / 0.02) 35%,
+    hsl(var(--foreground) / 0.07) 50%,
+    hsl(var(--foreground) / 0.02) 65%,
+    transparent 100%
+  );
+  animation: tool-running-sheen 2.1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 .tool-body--error {
@@ -188,6 +209,23 @@ async function copyToClipboard(e: MouseEvent) {
   }
   50% {
     opacity: 1;
+  }
+}
+
+@keyframes tool-running-sheen {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  78% {
+    opacity: 0.75;
+  }
+  100% {
+    transform: translateX(470%);
+    opacity: 0;
   }
 }
 
@@ -282,5 +320,12 @@ pre::-webkit-scrollbar {
 pre::-webkit-scrollbar-thumb {
   background: hsl(var(--border) / 0.3);
   border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tool-dot--pending,
+  .tool-body--running::after {
+    animation: none;
+  }
 }
 </style>

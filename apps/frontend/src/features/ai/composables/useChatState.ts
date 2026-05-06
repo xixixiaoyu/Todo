@@ -40,26 +40,6 @@ function getOrCreateBuffer(sessionId: string): StreamBuffer {
   return buf
 }
 
-/** 将当前会话的流式视图切换到指定 sessionId 的缓冲区 */
-function switchToSession(sessionId: string | null) {
-  if (!sessionId) {
-    currentAIResponse.value = ''
-    currentThinkingContent.value = ''
-    currentReasoningDetails.value = ''
-    currentDiscussionSteps.value = []
-    currentTodoActions.value = []
-    currentAssistantMessageId.value = null
-    return
-  }
-  const buf = getOrCreateBuffer(sessionId)
-  currentAIResponse.value = buf.response.value
-  currentThinkingContent.value = buf.thinking.value
-  currentReasoningDetails.value = buf.reasoning.value
-  currentDiscussionSteps.value = buf.discussionSteps.value
-  currentTodoActions.value = buf.todoActions.value
-  currentAssistantMessageId.value = buf.assistantMessageId.value
-}
-
 /** 获取指定会话的流式缓冲区（用于写入操作） */
 export function getStreamBuffer(sessionId: string): StreamBuffer {
   return getOrCreateBuffer(sessionId)
@@ -128,11 +108,49 @@ export function useChatState() {
     () => currentSessionId.value !== null && activeIds.value.has(currentSessionId.value),
   )
 
-  // 监听当前会话变化，切换到对应会话的流式缓冲区
-  watch(currentSessionId, (newId) => {
-    switchToSession(newId)
+  // 仅在切换会话时清除错误状态，避免流式 chunk 更新把错误提示抹掉
+  watch(currentSessionId, () => {
     clearError()
   })
+
+  // 监听当前会话与其流式缓冲区变化，保持 UI 展示状态与 buffer 实时同步
+  watch(
+    () => {
+      const activeSessionId = currentSessionId.value
+      if (!activeSessionId) return null
+      const buf = getOrCreateBuffer(activeSessionId)
+      return [
+        activeSessionId,
+        buf.response.value,
+        buf.thinking.value,
+        buf.reasoning.value,
+        buf.discussionSteps.value,
+        buf.todoActions.value,
+        buf.assistantMessageId.value,
+      ] as const
+    },
+    (payload) => {
+      if (!payload) {
+        currentAIResponse.value = ''
+        currentThinkingContent.value = ''
+        currentReasoningDetails.value = ''
+        currentDiscussionSteps.value = []
+        currentTodoActions.value = []
+        currentAssistantMessageId.value = null
+        return
+      }
+
+      const [, response, thinking, reasoning, discussionSteps, todoActions, assistantMessageId] =
+        payload
+      currentAIResponse.value = response
+      currentThinkingContent.value = thinking
+      currentReasoningDetails.value = reasoning
+      currentDiscussionSteps.value = discussionSteps
+      currentTodoActions.value = todoActions
+      currentAssistantMessageId.value = assistantMessageId
+    },
+    { immediate: true },
+  )
 
   /**
    * 重置流式响应状态。sessionId 为空时重置当前会话

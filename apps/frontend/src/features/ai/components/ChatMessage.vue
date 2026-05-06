@@ -193,11 +193,7 @@ defineExpose({
                 : 'flex flex-col items-end max-w-[76%] space-y-2'
             : 'w-full space-y-2.5',
       ]"
-      :style="
-        !isUser && message.role !== 'tool'
-          ? { maxWidth: 'var(--ai-chat-content-max-width)' }
-          : undefined
-      "
+      :style="!isUser ? { maxWidth: 'var(--ai-chat-content-max-width)' } : undefined"
     >
       <!-- 多模型讨论过程 -->
       <ChatMessageDiscussion v-if="hasDiscussion" :steps="message.discussionSteps" />
@@ -225,9 +221,17 @@ defineExpose({
       </Transition>
 
       <Transition
-        enter-active-class="transition duration-200 cubic-bezier(0.2, 0, 0, 1)"
-        enter-from-class="transform translate-y-1.5 opacity-0"
-        enter-to-class="transform translate-y-0 opacity-100"
+        :enter-active-class="
+          message.role === 'tool'
+            ? 'transition-none'
+            : 'transition duration-200 cubic-bezier(0.2, 0, 0, 1)'
+        "
+        :enter-from-class="
+          message.role === 'tool' ? 'opacity-100' : 'transform translate-y-1.5 opacity-0'
+        "
+        :enter-to-class="
+          message.role === 'tool' ? 'opacity-100' : 'transform translate-y-0 opacity-100'
+        "
       >
         <!-- 正文气泡：用户消息或已有内容的 AI 消息 -->
         <div
