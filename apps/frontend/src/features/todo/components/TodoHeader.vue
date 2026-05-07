@@ -21,7 +21,6 @@ import {
 } from 'lucide-vue-next'
 import ThemeToggle from './ThemeToggle.vue'
 import ThemeColorPicker from './ThemeColorPicker.vue'
-import TodoBetaBadge from './TodoBetaBadge.vue'
 import AiAssistantQuickModesMenu from '@/features/ai/components/AiAssistantQuickModesMenu.vue'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -115,7 +114,6 @@ const handleDblClick = () => {
         class="hidden sm:flex items-center gap-2 cursor-default text-[18px] font-semibold tracking-tight text-primary transition-transform hover:scale-105 md:text-[var(--todo-font-title)]"
       >
         {{ t('common.appName') }}
-        <TodoBetaBadge data-test="beta-badge" :label="t('common.beta')" />
       </h1>
     </div>
     <div class="flex items-center gap-1 md:gap-2">

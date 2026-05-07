@@ -81,7 +81,6 @@ const i18n = createI18n({
       },
       common: {
         appName: '简思',
-        beta: 'Beta',
         settings: '设置',
         toggleLanguage: '切换语言',
         logout: '退出登录',
@@ -114,7 +113,6 @@ const i18n = createI18n({
       },
       common: {
         appName: 'Lumina',
-        beta: 'Beta',
         settings: 'Settings',
         toggleLanguage: 'Switch Language',
         logout: 'Logout',
@@ -164,8 +162,6 @@ describe('TodoHeader', () => {
 
     const title = wrapper.find('h1').text()
     expect(title).toContain('简思')
-    expect(title).toContain('Beta')
-    expect(wrapper.get('[data-test="beta-badge"]').text()).toBe('Beta')
   })
 
   it('点击语言切换应该切换语言并保存到 localStorage', async () => {
