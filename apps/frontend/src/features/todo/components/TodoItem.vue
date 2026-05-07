@@ -311,7 +311,7 @@ watch(
     @dragleave="handleDragLeave"
   >
     <div
-      class="group relative flex items-center gap-1.5 rounded-[16px] border transition-all duration-200 hover:shadow-[0_6px_18px_rgba(0,0,0,0.04)] md:gap-2.5 md:rounded-[var(--todo-radius-soft)] md:hover:shadow-md md:hover:shadow-black/5"
+      class="group relative flex items-center gap-1.5 rounded-[16px] border transition-all duration-200 hover:shadow-[0_6px_18px_rgba(0,0,0,0.04)] md:gap-2.5 md:rounded-[var(--todo-radius-soft)] md:hover:shadow-md md:hover:shadow-black/5 overflow-hidden"
       :class="[
         itemClass,
         { 'border-primary/30 bg-primary/[0.03] shadow-sm shadow-primary/5': todo.isPinned },

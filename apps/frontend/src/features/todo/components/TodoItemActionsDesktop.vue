@@ -52,7 +52,7 @@ function handleApplySchedule(
 <template>
   <div
     data-test="desktop-actions"
-    class="flex shrink-0 items-center gap-0.5 self-stretch pl-2 transition-all duration-200 invisible opacity-0 pointer-events-none translate-x-1 group-hover:visible group-hover:opacity-100 group-hover:pointer-events-auto group-hover:translate-x-0 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-x-0"
+    class="absolute right-0 inset-y-0 flex items-center gap-0.5 pl-2 pr-1 transition-all duration-200 invisible opacity-0 pointer-events-none translate-x-1 group-hover:visible group-hover:opacity-100 group-hover:pointer-events-auto group-hover:translate-x-0 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-x-0 bg-gradient-to-l from-card via-card/95 to-transparent rounded-r-xl"
   >
     <TooltipProvider :delay-duration="0">
       <!-- Focus -->
