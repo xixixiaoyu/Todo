@@ -28,23 +28,32 @@
 - [apps/frontend/src/features/ai/components/ChatMessage.vue](file://apps/frontend/src/features/ai/components/ChatMessage.vue)
 - [apps/frontend/src/features/ai/components/ChatMessageThinking.vue](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue)
 - [apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue](file://apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue)
+- [apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue](file://apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue)
+- [apps/frontend/src/features/ai/components/AISettingsParameterSection.vue](file://apps/frontend/src/features/ai/components/AISettingsParameterSection.vue)
+- [apps/frontend/src/features/ai/components/AiAssistantThinkingMenu.vue](file://apps/frontend/src/features/ai/components/AiAssistantThinkingMenu.vue)
 - [apps/frontend/src/features/ai/composables/useChatState.ts](file://apps/frontend/src/features/ai/composables/useChatState.ts)
 - [apps/backend/src/ai-sync/ai-sync.module.ts](file://apps/backend/src/ai-sync/ai-sync.module.ts)
 - [apps/backend/src/ai-sync/ai-sync.controller.ts](file://apps/backend/src/ai-sync/ai-sync.controller.ts)
 - [apps/backend/src/ai-sync/ai-memory.service.ts](file://apps/backend/src/ai-sync/ai-memory.service.ts)
 - [apps/backend/src/ai-sync/ai-skill.service.ts](file://apps/backend/src/ai-sync/ai-skill.service.ts)
 - [apps/backend/src/ai-sync/ai-preset.service.ts](file://apps/backend/src/ai-sync/ai-preset.service.ts)
+- [apps/backend/src/agent/session-file/session-file.module.ts](file://apps/backend/src/agent/session-file/session-file.module.ts)
+- [apps/backend/src/agent/session-file/session-file.controller.ts](file://apps/backend/src/agent/session-file/session-file.controller.ts)
+- [apps/backend/src/agent/session-file/session-file.registry.ts](file://apps/backend/src/agent/session-file/session-file.registry.ts)
 - [packages/shared/src/schemas/ai-sync.schema.ts](file://packages/shared/src/schemas/ai-sync.schema.ts)
 - [apps/frontend/src/features/ai/services/utils/systemPrompts.ts](file://apps/frontend/src/features/ai/services/utils/systemPrompts.ts)
+- [apps/frontend/src/features/ai/composables/useAIConfig/types.ts](file://apps/frontend/src/features/ai/composables/useAIConfig/types.ts)
+- [apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts](file://apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts)
 </cite>
 
 ## 更新摘要
 **所做更改**
-- 新增AIChatCompletionMessage类型的reasoning_content字段支持，实现推理内容显示功能
-- 改进AI助手快速模式菜单的统一胶囊设计，提供更好的用户体验
-- 增强AI对话消息的序列化逻辑，支持助手角色内容结构
-- 优化推理内容优先级处理，实现reasoning_details优先于reasoning_content的显示策略
-- 完善推理内容的序列化和传输边界处理
+- 多级思维模式升级：从二元开关升级为off/auto/high/xhigh四个级别
+- 代理工作空间系统：新增Agent工作区选择器和会话文件管理
+- 增强的推理内容显示：支持reasoning_details和thinkingContent的智能优先级处理
+- 会话文件管理：后端提供会话文件注册、查询和删除功能
+- Agent工具系统：完整的本地文件操作工具链，支持文件读写、编辑、查找等
+- 增强的系统提示注入：支持Agent工具能力注入和工作区路径提示
 
 ## 目录
 1. [简介](#简介)
@@ -55,27 +64,27 @@
 6. [AI数据同步系统](#ai数据同步系统)
 7. [AI翻译系统](#ai翻译系统)
 8. [小说写作助手系统](#小说写作助手系统)
-9. [依赖关系分析](#依赖关系分析)
-10. [性能考量](#性能考量)
-11. [故障排查指南](#故障排查指南)
-12. [结论](#结论)
-13. [附录](#附录)
+9. [代理工作空间系统](#代理工作空间系统)
+10. [依赖关系分析](#依赖关系分析)
+11. [性能考量](#性能考量)
+12. [故障排查指南](#故障排查指南)
+13. [结论](#结论)
+14. [附录](#附录)
 
 ## 简介
 本文件面向Lumina Todo的AI助手系统，提供从架构设计、对话管理、上下文记忆到前端交互与工具调用的完整技术文档。重点覆盖：
 - AI Service实现原理与流式响应处理
+- 多级思维模式配置系统（off/auto/high/xhigh四个级别）
+- 代理工作空间系统与会话文件管理
 - 预设配置系统与参数管理
 - 上下文压缩算法与记忆管理策略
 - 与MCP工具系统的集成方式
 - 前端组件的交互设计、状态管理与实时对话处理
-- **新增** AIChatCompletionMessage类型的reasoning_content字段支持
-- **新增** 改进的AI助手快速模式菜单统一胶囊设计
-- **新增** 增强的AI对话消息序列化逻辑
-- **新增** 推理内容优先级处理机制
-- **新增** 推理内容的序列化和传输边界处理
+- 增强的推理内容显示功能
+- Agent工具系统的完整实现
 
 ## 项目结构
-AI助手系统主要由前端Vue组合式函数与组件、AI服务层、MCP工具接口、**AI数据同步服务**和**AI翻译服务**五部分构成，采用模块化与可插拔的设计，便于扩展与维护。
+AI助手系统主要由前端Vue组合式函数与组件、AI服务层、MCP工具接口、AI数据同步服务、AI翻译服务和**代理工作空间系统**五部分构成，采用模块化与可插拔的设计，便于扩展与维护。
 
 ```mermaid
 graph TB
@@ -86,6 +95,7 @@ MsgList["ChatMessageList.vue"]
 Translation["TranslationPanel.vue"]
 QuickModes["AiAssistantQuickModesMenu.vue"]
 Thinking["ChatMessageThinking.vue"]
+Workspace["AgentWorkspaceSelector.vue"]
 ChatState["useChatState.ts"]
 Chat["useChat.ts"]
 Actions["useChatActions.ts"]
@@ -93,6 +103,7 @@ Stream["useChatActions.stream.ts"]
 ActionsCtx["useChatActions.contextCompression.ts"]
 Tools["useChatActions.toolCalls.ts"]
 Runtime["useChatActions.runtime.ts"]
+AgentTools["useChatActions.agentTools.ts"]
 Sync["aiSyncService.ts"]
 end
 subgraph "AI服务层"
@@ -113,6 +124,11 @@ SyncMem["AiMemoryService"]
 SyncSkill["AiSkillService"]
 SyncPreset["AiPresetService"]
 end
+subgraph "代理工作空间"
+WorkspaceCtrl["SessionFileController"]
+WorkspaceReg["SessionFileRegistry"]
+AgentToolsDef["Agent工具定义"]
+end
 subgraph "小说写作助手"
 CharPanel["NovelCharacterCardPanel.vue"]
 GenreSelector["NovelGenreSelector.vue"]
@@ -125,7 +141,9 @@ Actions --> Stream
 Actions --> Core
 Actions --> ActionsCtx
 Actions --> Runtime
+Actions --> AgentTools
 Actions --> Sync
+AgentTools --> Workspace
 Runtime --> MCPAPI
 Core --> Types
 Utils --> Types
@@ -136,10 +154,15 @@ Drawer --> Input
 Drawer --> MsgList
 Drawer --> Translation
 Drawer --> QuickModes
+Drawer --> Workspace
 QuickModes --> Thinking
 Translation --> TranslationSvc
 TranslationSvc --> Core
 SystemPrompts --> Types
+SystemPrompts --> Workspace
+Workspace --> WorkspaceCtrl
+WorkspaceCtrl --> WorkspaceReg
+WorkspaceReg --> AgentToolsDef
 MsgComponent --> CharPanel
 MsgComponent --> WorldviewPanel
 ```
@@ -151,6 +174,7 @@ MsgComponent --> WorldviewPanel
 - [apps/frontend/src/features/ai/components/TranslationPanel.vue:1-278](file://apps/frontend/src/features/ai/components/TranslationPanel.vue#L1-L278)
 - [apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue:1-158](file://apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue#L1-L158)
 - [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:1-303](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L1-L303)
+- [apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue:1-405](file://apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue#L1-L405)
 - [apps/frontend/src/features/ai/composables/useChatState.ts:1-149](file://apps/frontend/src/features/ai/composables/useChatState.ts#L1-L149)
 - [apps/frontend/src/features/ai/composables/useChat.ts:1-136](file://apps/frontend/src/features/ai/composables/useChat.ts#L1-L136)
 - [apps/frontend/src/features/ai/composables/useChatActions.ts:1-544](file://apps/frontend/src/features/ai/composables/useChatActions.ts#L1-L544)
@@ -158,19 +182,13 @@ MsgComponent --> WorldviewPanel
 - [apps/frontend/src/features/ai/composables/useChatActions.contextCompression.ts:1-263](file://apps/frontend/src/features/ai/composables/useChatActions.contextCompression.ts#L1-L263)
 - [apps/frontend/src/features/ai/composables/useChatActions.toolCalls.ts:1-172](file://apps/frontend/src/features/ai/composables/useChatActions.toolCalls.ts#L1-L172)
 - [apps/frontend/src/features/ai/composables/useChatActions.runtime.ts:1-100](file://apps/frontend/src/features/ai/composables/useChatActions.runtime.ts#L1-L100)
-- [apps/frontend/src/features/ai/composables/useAiAssistantModes.ts:1-145](file://apps/frontend/src/features/ai/composables/useAiAssistantModes.ts#L1-L145)
-- [apps/frontend/src/features/ai/composables/useAiModeItems.ts:1-63](file://apps/frontend/src/features/ai/composables/useAiModeItems.ts#L1-L63)
-- [apps/frontend/src/features/ai/services/core.ts:1-445](file://apps/frontend/src/features/ai/services/core.ts#L1-L445)
-- [apps/frontend/src/features/ai/services/types.ts:1-292](file://apps/frontend/src/features/ai/services/types.ts#L1-L292)
-- [apps/frontend/src/features/ai/services/utils.ts:1-10](file://apps/frontend/src/features/ai/services/utils.ts#L1-L10)
-- [apps/frontend/src/features/ai/services/translation.ts:1-54](file://apps/frontend/src/features/ai/services/translation.ts#L1-L54)
+- [apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts:1-403](file://apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts#L1-L403)
 - [apps/frontend/src/features/mcp/api/mcp.ts:1-108](file://apps/frontend/src/features/mcp/api/mcp.ts#L1-L108)
 - [apps/frontend/src/features/ai/services/aiSyncService.ts:1-41](file://apps/frontend/src/features/ai/services/aiSyncService.ts#L1-L41)
 - [apps/frontend/src/features/ai/services/utils/systemPrompts.ts:459-483](file://apps/frontend/src/features/ai/services/utils/systemPrompts.ts#L459-L483)
 - [apps/backend/src/ai-sync/ai-sync.controller.ts:1-84](file://apps/backend/src/ai-sync/ai-sync.controller.ts#L1-L84)
-- [apps/backend/src/ai-sync/ai-memory.service.ts:1-64](file://apps/backend/src/ai-sync/ai-memory.service.ts#L1-L64)
-- [apps/backend/src/ai-sync/ai-skill.service.ts:1-49](file://apps/backend/src/ai-sync/ai-skill.service.ts#L1-L49)
-- [apps/backend/src/ai-sync/ai-preset.service.ts:1-55](file://apps/backend/src/ai-sync/ai-preset.service.ts#L1-L55)
+- [apps/backend/src/agent/session-file/session-file.controller.ts:1-125](file://apps/backend/src/agent/session-file/session-file.controller.ts#L1-L125)
+- [apps/backend/src/agent/session-file/session-file.registry.ts:55-166](file://apps/backend/src/agent/session-file/session-file.registry.ts#L55-L166)
 - [apps/frontend/src/features/ai/components/NovelCharacterCardPanel.vue:1-130](file://apps/frontend/src/features/ai/components/NovelCharacterCardPanel.vue#L1-L130)
 - [apps/frontend/src/features/ai/components/NovelGenreSelector.vue:1-56](file://apps/frontend/src/features/ai/components/NovelGenreSelector.vue#L1-L56)
 - [apps/frontend/src/features/ai/components/NovelWorldviewPanel.vue:1-78](file://apps/frontend/src/features/ai/components/NovelWorldviewPanel.vue#L1-L78)
@@ -202,9 +220,8 @@ MsgComponent --> WorldviewPanel
 - [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:1-303](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L1-L303)
 - [apps/frontend/src/features/ai/services/utils/systemPrompts.ts:459-483](file://apps/frontend/src/features/ai/services/utils/systemPrompts.ts#L459-L483)
 - [apps/backend/src/ai-sync/ai-sync.controller.ts:1-84](file://apps/backend/src/ai-sync/ai-sync.controller.ts#L1-L84)
-- [apps/backend/src/ai-sync/ai-memory.service.ts:1-64](file://apps/backend/src/ai-sync/ai-memory.service.ts#L1-L64)
-- [apps/backend/src/ai-sync/ai-skill.service.ts:1-49](file://apps/backend/src/ai-sync/ai-skill.service.ts#L1-L49)
-- [apps/backend/src/ai-sync/ai-preset.service.ts:1-55](file://apps/backend/src/ai-sync/ai-preset.service.ts#L1-L55)
+- [apps/backend/src/agent/session-file/session-file.controller.ts:1-125](file://apps/backend/src/agent/session-file/session-file.controller.ts#L1-L125)
+- [apps/backend/src/agent/session-file/session-file.registry.ts:55-166](file://apps/backend/src/agent/session-file/session-file.registry.ts#L55-L166)
 - [apps/frontend/src/features/ai/components/NovelCharacterCardPanel.vue:1-130](file://apps/frontend/src/features/ai/components/NovelCharacterCardPanel.vue#L1-L130)
 - [apps/frontend/src/features/ai/components/NovelGenreSelector.vue:1-56](file://apps/frontend/src/features/ai/components/NovelGenreSelector.vue#L1-L56)
 - [apps/frontend/src/features/ai/components/NovelWorldviewPanel.vue:1-78](file://apps/frontend/src/features/ai/components/NovelWorldviewPanel.vue#L1-L78)
@@ -215,102 +232,67 @@ MsgComponent --> WorldviewPanel
   - 实现流式与非流式请求、SSE解析、工具调用聚合、推理内容抽取、请求中断与信号管理。
 - 类型系统（types.ts）
   - 定义消息、工具、推理细节、技能、结构化块等核心类型，支撑前后端一致的数据契约。
-- **新增** AIChatCompletionMessage类型的reasoning_content字段支持
-  - 新增AIChatCompletionMessage接口，支持assistant角色的reasoning_content字段
-  - 实现推理内容的序列化和传输边界处理
-  - 优化推理内容优先级处理，reasoning_details优先于reasoning_content显示
-- **新增** 改进的快速模式菜单统一胶囊设计（AiAssistantQuickModesMenu.vue）
-  - 采用统一胶囊设计（主按钮 + 分割线 + 辅助chevron）
-  - 柔和背景 + 圆角边框，hover时加深效果
-  - 支持细pointer设备的悬停延迟弹出和触屏设备的点击响应
-  - 集成所有AI模式的统一入口管理
-- **新增** 增强的对话消息序列化逻辑（systemPrompts.ts）
-  - 实现sanitizeRequestMessages函数，支持reasoning_content字段的序列化
-  - 优化助手角色内容结构的处理逻辑
-  - 确保传输边界的安全性和完整性
-- **新增** 推理内容显示组件（ChatMessageThinking.vue）
-  - 支持reasoning_details和thinkingContent的优先级显示
-  - 实现智能折叠和展开逻辑
-  - 提供流畅的动画过渡效果
-- **新增** AI翻译服务（translation.ts）
-  - 提供智能语言检测与实时翻译功能，支持中英文双向翻译，包含错误处理与API调用。
-- **新增** 统一模式管理API（useAiModeItems.ts）
-  - 提供统一的AI模式管理接口，确保所有模式菜单入口的顺序一致性，支持翻译模式集成。
-- **新增** AI翻译面板（TranslationPanel.vue）
-  - 提供独立的翻译界面，支持双栏布局、拖拽调整、历史持久化、实时翻译等功能。
-- **新增** AI数据同步服务（aiSyncService.ts）
-  - 提供服务器端数据同步能力，支持记忆、技能、预设的获取与更新，采用API优先的加载策略。
-- 配置与预设（useAIConfig.ts）
-  - 统一管理AI参数、思考模式、讨论模式、上下文压缩开关与阈值、技能集合与运行时可用性。
-- **新增** AI助手模式管理（useAiAssistantModes.ts）
-  - 扩展模式切换功能，新增小说创作模式和翻译模式支持，包含类型、语调、主角提示等配置。
-- 对话编排（useChat.ts, useChatState.ts）
-  - 聚合状态与动作，计算实时消息视图，支持流式渲染与教学/待办/小说/翻译结构化块。
-- 动作与流程（useChatActions.ts）
-  - 发送消息、生成图片、停止生成、重试机制、上下文压缩、工具调用执行、MCP集成。
-- 上下文压缩（useChatActions.contextCompression.ts）
-  - 基于字符预算的尾部截取与增量摘要，保障长对话上下文可控。
-- 工具调用（useChatActions.toolCalls.ts）
-  - 解析工具参数、本地工具与MCP工具执行、结果注入消息流。
-- 运行时能力准备（useChatActions.runtime.ts）
-  - 从MCP与技能库构建AI工具清单，评估运行时可用性，注入提示词。
-- MCP API（mcp.ts）
-  - 封装服务器管理、工具枚举与调用，提供超时与错误兜底。
-- **新增** 小说写作助手组件
-  - 角色卡面板（NovelCharacterCardPanel.vue）、类型选择器（NovelGenreSelector.vue）、世界观面板（NovelWorldviewPanel.vue）
-  - 小说消息组件支持继续按钮与自动续写功能
-- 前端组件（AiAssistantDrawer.vue, AiAssistantInput.vue, ChatMessageList.vue）
-  - 抽屉式交互、输入增强（斜杠命令、粘贴、附件）、消息列表与智能滚动。
+- **新增** 多级思维模式配置
+  - ThinkingMode和ReasoningEffort类型升级为'off' | 'auto' | 'high' | 'xhigh'
+  - 支持精细化的推理控制和思维深度调节
+  - AISettingsParameterSection和AiAssistantThinkingMenu提供可视化配置界面
+- **新增** 代理工作空间系统
+  - AgentWorkspaceSelector组件提供工作区选择和权限管理模式
+  - 支持自动、询问、只读三种权限模式
+  - 与后端SessionFileController配合实现文件管理
+- **新增** 会话文件管理
+  - SessionFileController提供文件注册、查询、删除API
+  - SessionFileRegistry实现文件索引和持久化存储
+  - 支持按会话ID管理文件关联关系
+- **新增** Agent工具系统
+  - 完整的本地文件操作工具链：READ_FILE、WRITE_FILE、EDIT_FILE、LS、GREP、FIND、MKDIR、BASH、STAGE_FILES
+  - 支持文件读取、写入、编辑、目录操作、搜索、创建目录、命令执行、文件交付
+  - 与AgentWorkspaceSelector集成，限定操作范围在指定工作区内
+- **新增** 增强的推理内容显示
+  - ChatMessageThinking组件支持reasoning_details优先显示策略
+  - thinkingContent作为备选显示方案
+  - 智能折叠和展开逻辑，优化用户体验
+- **新增** 系统提示注入增强
+  - buildAgentSystemPrompt函数生成Agent工具使用规范
+  - 支持工作区路径提示、工具纪律、文件交付、失败处理、操作安全等指导原则
+  - 与injectSystemPrompts集成，实现完整的Agent能力注入
 
 **章节来源**
 - [apps/frontend/src/features/ai/services/core.ts:1-445](file://apps/frontend/src/features/ai/services/core.ts#L1-L445)
 - [apps/frontend/src/features/ai/services/types.ts:276-292](file://apps/frontend/src/features/ai/services/types.ts#L276-L292)
-- [apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue:25-41](file://apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue#L25-L41)
-- [apps/frontend/src/features/ai/services/utils/systemPrompts.ts:459-483](file://apps/frontend/src/features/ai/services/utils/systemPrompts.ts#L459-L483)
+- [apps/frontend/src/features/ai/composables/useAIConfig/types.ts:1-95](file://apps/frontend/src/features/ai/composables/useAIConfig/types.ts#L1-L95)
+- [apps/frontend/src/features/ai/components/AISettingsParameterSection.vue:118-154](file://apps/frontend/src/features/ai/components/AISettingsParameterSection.vue#L118-L154)
+- [apps/frontend/src/features/ai/components/AiAssistantThinkingMenu.vue:28-51](file://apps/frontend/src/features/ai/components/AiAssistantThinkingMenu.vue#L28-L51)
+- [apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue:1-405](file://apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue#L1-L405)
+- [apps/backend/src/agent/session-file/session-file.controller.ts:1-125](file://apps/backend/src/agent/session-file/session-file.controller.ts#L1-L125)
+- [apps/backend/src/agent/session-file/session-file.registry.ts:55-166](file://apps/backend/src/agent/session-file/session-file.registry.ts#L55-L166)
+- [apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts:9-166](file://apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts#L9-L166)
 - [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:56-63](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L56-L63)
-- [apps/frontend/src/features/ai/services/translation.ts:1-54](file://apps/frontend/src/features/ai/services/translation.ts#L1-L54)
-- [apps/frontend/src/features/ai/composables/useAiModeItems.ts:1-63](file://apps/frontend/src/features/ai/composables/useAiModeItems.ts#L1-L63)
-- [apps/frontend/src/features/ai/components/TranslationPanel.vue:1-278](file://apps/frontend/src/features/ai/components/TranslationPanel.vue#L1-L278)
-- [apps/frontend/src/features/ai/services/aiSyncService.ts:1-41](file://apps/frontend/src/features/ai/services/aiSyncService.ts#L1-L41)
-- [apps/frontend/src/features/ai/composables/useAIConfig.ts:1-800](file://apps/frontend/src/features/ai/composables/useAIConfig.ts#L1-L800)
-- [apps/frontend/src/features/ai/composables/useAiAssistantModes.ts:1-145](file://apps/frontend/src/features/ai/composables/useAiAssistantModes.ts#L1-L145)
-- [apps/frontend/src/features/ai/composables/useChat.ts:1-136](file://apps/frontend/src/features/ai/composables/useChat.ts#L1-L136)
-- [apps/frontend/src/features/ai/composables/useChatState.ts:1-149](file://apps/frontend/src/features/ai/composables/useChatState.ts#L1-L149)
-- [apps/frontend/src/features/ai/composables/useChatActions.ts:1-544](file://apps/frontend/src/features/ai/composables/useChatActions.ts#L1-L544)
-- [apps/frontend/src/features/ai/composables/useChatActions.contextCompression.ts:1-263](file://apps/frontend/src/features/ai/composables/useChatActions.contextCompression.ts#L1-L263)
-- [apps/frontend/src/features/ai/composables/useChatActions.toolCalls.ts:1-172](file://apps/frontend/src/features/ai/composables/useChatActions.toolCalls.ts#L1-L172)
-- [apps/frontend/src/features/ai/composables/useChatActions.runtime.ts:1-100](file://apps/frontend/src/features/ai/composables/useChatActions.runtime.ts#L1-L100)
-- [apps/frontend/src/features/mcp/api/mcp.ts:1-108](file://apps/frontend/src/features/mcp/api/mcp.ts#L1-L108)
-- [apps/frontend/src/features/ai/components/AiAssistantDrawer.vue:1-475](file://apps/frontend/src/features/ai/components/AiAssistantDrawer.vue#L1-L475)
-- [apps/frontend/src/features/ai/components/AiAssistantInput.vue:1-345](file://apps/frontend/src/features/ai/components/AiAssistantInput.vue#L1-L345)
-- [apps/frontend/src/features/ai/components/ChatMessageList.vue:1-492](file://apps/frontend/src/features/ai/components/ChatMessageList.vue#L1-L492)
-- [apps/frontend/src/features/ai/components/NovelCharacterCardPanel.vue:1-130](file://apps/frontend/src/features/ai/components/NovelCharacterCardPanel.vue#L1-L130)
-- [apps/frontend/src/features/ai/components/NovelGenreSelector.vue:1-56](file://apps/frontend/src/features/ai/components/NovelGenreSelector.vue#L1-L56)
-- [apps/frontend/src/features/ai/components/NovelWorldviewPanel.vue:1-78](file://apps/frontend/src/features/ai/components/NovelWorldviewPanel.vue#L1-L78)
-- [apps/frontend/src/features/ai/components/ChatMessage.vue:390-449](file://apps/frontend/src/features/ai/components/ChatMessage.vue#L390-L449)
+- [apps/frontend/src/features/ai/services/utils/systemPrompts.ts:485-553](file://apps/frontend/src/features/ai/services/utils/systemPrompts.ts#L485-L553)
 
 ## 架构总览
-AI助手系统采用"前端组合式函数 + AI服务层 + MCP工具系统 + AI数据同步 + AI翻译服务"的分层架构。前端负责交互与状态，AI服务层负责与大模型通信与工具编排，MCP提供外部工具能力，**AI数据同步模块提供服务器端持久化**，**AI翻译服务提供独立的语言处理能力**。**新增的推理内容显示功能**通过reasoning_content字段实现，**改进的快速模式菜单**提供统一的胶囊设计，**增强的序列化逻辑**确保消息内容的完整性和安全性。
+AI助手系统采用"前端组合式函数 + AI服务层 + MCP工具系统 + AI数据同步 + 代理工作空间系统 + AI翻译服务"的分层架构。前端负责交互与状态，AI服务层负责与大模型通信与工具编排，MCP提供外部工具能力，**AI数据同步模块提供服务器端持久化**，**代理工作空间系统提供本地文件操作能力**，**AI翻译服务提供独立的语言处理能力**。**新增的多级思维模式**通过ThinkingMode和ReasoningEffort配置实现精细化控制，**增强的推理内容显示**通过reasoning_details优先策略优化用户体验。
 
 ```mermaid
 sequenceDiagram
 participant U as "用户"
-participant QM as "AiAssistantQuickModesMenu.vue"
+participant WS as "AgentWorkspaceSelector.vue"
 participant D as "AiAssistantDrawer.vue"
 participant T as "TranslationPanel.vue"
 participant C as "useChatActions.ts"
 participant S as "useChatActions.stream.ts"
 participant CC as "contextCompression"
 participant R as "runtime"
-participant CS as "useChatState.ts"
-participant M as "MCP API"
-U->>QM : 点击快速模式菜单
-QM->>D : 打开AI助手抽屉
+participant AT as "useChatActions.agentTools.ts"
+participant SC as "SessionFileController"
+U->>WS : 选择工作区目录
+WS->>SC : POST /api/agent/session-files
+SC-->>WS : 注册文件并返回文件ID
+WS-->>D : 更新工作区状态
 U->>D : 切换到翻译模式
 D->>T : 渲染翻译面板
 U->>T : 输入文本并点击翻译
 T->>S : finalizeCompletedResponse()
-S->>CS : 更新novelBatchRemaining
 S->>S : 处理章节标记与自动续写
 S-->>T : 返回处理后的响应
 T-->>D : 更新翻译结果显示
@@ -319,6 +301,8 @@ C->>CC : buildContextCompression(messages)
 CC-->>C : messagesForRequest, contextSummary
 C->>R : prepareRuntimeCapabilities(aiConfig, skillContext)
 R-->>C : aiTools, mcpToolLookup, local handlers
+C->>AT : buildAgentLocalToolHandlers()
+AT-->>C : agent工具处理器
 C->>S : createStreamChunkHandler()
 S->>S : 处理流式响应与状态管理
 S-->>C : 触发自动续写逻辑
@@ -328,155 +312,262 @@ C-->>D : 更新消息列表/状态
 ```
 
 **图表来源**
+- [apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue:69-156](file://apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue#L69-L156)
+- [apps/backend/src/agent/session-file/session-file.controller.ts:22-80](file://apps/backend/src/agent/session-file/session-file.controller.ts#L22-L80)
 - [apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue:79-87](file://apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue#L79-L87)
-- [apps/frontend/src/features/ai/components/AiAssistantDrawer.vue:274-275](file://apps/frontend/src/features/ai/components/AiAssistantDrawer.vue#L274-L275)
 - [apps/frontend/src/features/ai/components/TranslationPanel.vue:69-85](file://apps/frontend/src/features/ai/components/TranslationPanel.vue#L69-L85)
 - [apps/frontend/src/features/ai/composables/useChatActions.stream.ts:128-312](file://apps/frontend/src/features/ai/composables/useChatActions.stream.ts#L128-L312)
 - [apps/frontend/src/features/ai/composables/useChatActions.ts:333-408](file://apps/frontend/src/features/ai/composables/useChatActions.ts#L333-L408)
 - [apps/frontend/src/features/ai/composables/useChatActions.contextCompression.ts:1-263](file://apps/frontend/src/features/ai/composables/useChatActions.contextCompression.ts#L1-L263)
 - [apps/frontend/src/features/ai/composables/useChatActions.runtime.ts:1-100](file://apps/frontend/src/features/ai/composables/useChatActions.runtime.ts#L1-L100)
-- [apps/frontend/src/features/ai/composables/useChatState.ts:14-15](file://apps/frontend/src/features/ai/composables/useChatState.ts#L14-L15)
+- [apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts:197-200](file://apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts#L197-L200)
 - [apps/frontend/src/features/mcp/api/mcp.ts:1-108](file://apps/frontend/src/features/mcp/api/mcp.ts#L1-L108)
 
 ## 详细组件分析
 
-### 推理内容显示系统
+### 多级思维模式系统
 
-#### reasoning_content字段支持
-**新增** AIChatCompletionMessage类型的reasoning_content字段支持，实现推理内容的完整显示功能。
+#### 思维模式配置升级
+**新增** 多级思维模式系统，从简单的二元开关升级为off/auto/high/xhigh四个级别，提供更精细的推理控制。
 
 - **类型定义增强**
-  - AIChatCompletionMessage接口新增assistant角色的reasoning_content字段
-  - 支持字符串格式的推理内容，用于私有链路思维过程
-  - 与reasoning_details字段形成互补，提供完整的推理内容支持
+  - ThinkingMode: 'off' | 'auto' | 'high' | 'xhigh'
+  - ReasoningEffort: 'off' | 'auto' | 'high' | 'xhigh'
+  - 支持四种不同的推理强度级别
+  - off: 关闭推理输出
+  - auto: 自动推理，根据内容复杂度决定
+  - high: 高强度推理，适用于复杂问题
+  - xhigh: 超高强度推理，适用于深度分析
 
-- **序列化逻辑优化**
-  - sanitizeRequestMessages函数支持reasoning_content字段的序列化
-  - 确保传输边界的安全性，移除额外字段
-  - 保持reasoning_details的优先显示策略
+- **配置界面**
+  - AISettingsParameterSection提供四个级别的可视化选择
+  - AiAssistantThinkingMenu提供下拉菜单形式的思维模式切换
+  - 每个级别都有对应的标签和描述信息
 
-- **显示优先级处理**
-  - ChatMessageThinking组件优先显示reasoning_details
-  - 当reasoning_details不存在时回退到thinkingContent
-  - reasoning_content主要用于内部传输，不直接显示给用户
-
-```mermaid
-flowchart TD
-Start(["开始: 推理内容处理"]) --> CheckReasoning{"检查推理内容类型"}
-CheckReasoning --> |reasoning_details| ShowDetails["显示reasoning_details"]
-CheckReasoning --> |thinkingContent| ShowThinking["显示thinkingContent"]
-CheckReasoning --> |reasoning_content| TransportOnly["仅传输，不显示"]
-ShowDetails --> Render["渲染Markdown内容"]
-ShowThinking --> Render
-TransportOnly --> Sanitize["序列化处理"]
-Sanitize --> Send["发送到AI服务"]
-Render --> End(["结束"])
-Send --> End
-```
-
-**图表来源**
-- [apps/frontend/src/features/ai/services/types.ts:276-292](file://apps/frontend/src/features/ai/services/types.ts#L276-L292)
-- [apps/frontend/src/features/ai/services/utils/systemPrompts.ts:459-483](file://apps/frontend/src/features/ai/services/utils/systemPrompts.ts#L459-L483)
-- [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:56-63](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L56-L63)
-
-#### 推理内容序列化处理
-**新增** 增强的推理内容序列化逻辑，确保消息内容的完整性和安全性。
-
-- **传输边界处理**
-  - sanitizeRequestMessages函数确保reasoning_content字段正确序列化
-  - 移除聊天消息中的额外字段（如id、createdAt等）
-  - 保持消息结构的简洁性和安全性
-
-- **助手角色内容结构**
-  - 优化assistant角色的消息结构处理
-  - 支持tool_calls和reasoning_content字段的组合
-  - 确保工具调用信息的完整传递
-
-- **安全检查机制**
-  - 验证reasoning_content字段的存在性和有效性
-  - 确保传输内容符合AI服务的期望格式
-  - 防止恶意内容的注入和传播
-
-**章节来源**
-- [apps/frontend/src/features/ai/services/types.ts:276-292](file://apps/frontend/src/features/ai/services/types.ts#L276-L292)
-- [apps/frontend/src/features/ai/services/utils/systemPrompts.ts:459-483](file://apps/frontend/src/features/ai/services/utils/systemPrompts.ts#L459-L483)
-- [apps/frontend/tests/features/ai/services/aiServiceCleaning.spec.ts:90-175](file://apps/frontend/tests/features/ai/services/aiServiceCleaning.spec.ts#L90-L175)
-
-### 改进的快速模式菜单系统
-
-#### 统一胶囊设计
-**新增** 改进的AI助手快速模式菜单，提供统一的胶囊设计和更好的用户体验。
-
-- **设计理念**
-  - 主按钮（左侧）：Clover图标 + "AI助手"文案，点击打开Drawer
-  - 分割线：垂直细线分隔主按钮与chevron
-  - Chevron（右侧）：下拉箭头，提示"有菜单"
-  - 整体容器：柔和背景 + 圆角边框的胶囊，hover时加深
-
-- **交互特性**
-  - 点击主按钮：打开AI助手Drawer
-  - 悬浮chevron（仅fine pointer设备）：延迟150ms弹出模式菜单，延迟200ms收起
-  - 点击chevron：手动切换菜单开合（无需等待hover延迟）
-  - 菜单项点击：打开Drawer + 切到对应模式（已激活则仅开Drawer，避免误关）
-
-- **移动端适配**
-  - useHoverPopover内置(hover: hover)检测
-  - 触屏设备仅响应点击，自动降级
-  - 响应式设计，支持不同屏幕尺寸
+- **行为差异**
+  - off: 不产生推理内容，专注于直接回答
+  - auto: 根据问题复杂度自动决定是否产生推理
+  - high: 产生详细的推理过程，适合需要解释的场景
+  - xhigh: 产生最详细的推理过程，适合深度分析和学习
 
 ```mermaid
 flowchart TD
-Start(["用户点击快速模式菜单"]) --> ClickMain["点击主按钮"]
-ClickMain --> OpenDrawer["打开AI助手抽屉"]
-OpenDrawer --> HoverChevron["悬浮chevron"]
-HoverChevron --> Delay150ms["延迟150ms"]
-Delay150ms --> ShowMenu["显示模式菜单"]
-ShowMenu --> HoverLeave["鼠标离开"]
-HoverLeave --> Delay200ms["延迟200ms"]
-Delay200ms --> HideMenu["隐藏菜单"]
-ClickChevron["点击chevron"] --> ToggleMenu["切换菜单开合"]
-ToggleMenu --> OpenDrawer
-MenuClick["点击菜单项"] --> OpenDrawer2["打开抽屉"]
-OpenDrawer2 --> SwitchMode["切换到对应模式"]
-SwitchMode --> CloseMenu["关闭菜单"]
+Start(["开始: 思维模式配置"]) --> Level{"选择思维级别"}
+Level --> |off| Disable["禁用推理输出"]
+Level --> |auto| AutoMode["自动推理模式"]
+Level --> |high| HighMode["高强度推理"]
+Level --> |xhigh| XHighMode["超高强度推理"]
+Disable --> Request["发送请求"]
+AutoMode --> Request
+HighMode --> Request
+XHighMode --> Request
+Request --> Process["AI处理请求"]
+Process --> Output{"推理级别"}
+Output --> |off| Direct["直接输出答案"]
+Output --> |auto| Decide["AI决定是否推理"]
+Output --> |high| Detailed["详细推理过程"]
+Output --> |xhigh| Deep["深度推理分析"]
+Decide --> Detailed
+Direct --> End(["结束"])
+Detailed --> End
+Deep --> End
 ```
 
 **图表来源**
-- [apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue:25-41](file://apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue#L25-L41)
-- [apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue:79-87](file://apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue#L79-L87)
+- [apps/frontend/src/features/ai/composables/useAIConfig/types.ts:1-4](file://apps/frontend/src/features/ai/composables/useAIConfig/types.ts#L1-L4)
+- [apps/frontend/src/features/ai/components/AISettingsParameterSection.vue:124-153](file://apps/frontend/src/features/ai/components/AISettingsParameterSection.vue#L124-L153)
+- [apps/frontend/src/features/ai/components/AiAssistantThinkingMenu.vue:28-48](file://apps/frontend/src/features/ai/components/AiAssistantThinkingMenu.vue#L28-L48)
 
-#### 模式图标集成
-**新增** 快速模式菜单的图标集成，提供直观的视觉识别。
+#### 思维模式配置管理
+**新增** useAIConfig模块对多级思维模式的支持，包括配置加载、验证和持久化。
 
-- **图标映射**
-  - todo: Clover图标
-  - teaching: GraduationCap图标
-  - draw: AiLuminaIcon图标
-  - discuss: MessageSquare图标
-  - novel: BookOpen图标
-  - translation: Languages图标
+- **配置验证**
+  - normalizeThinkingLevel函数确保思维级别在有效范围内
+  - 支持大小写不敏感的输入
+  - 默认值为'auto'
 
-- **视觉反馈**
-  - 激活模式：高亮显示，显示小圆点指示
-  - 悬停效果：图标颜色变化，背景高亮
-  - 响应式尺寸：支持移动端和桌面端的不同尺寸
+- **预设支持**
+  - AIPreset接口支持thinkingEffort字段
+  - 支持在预设中保存特定的思维模式配置
+  - 预设应用时自动验证思维级别
+
+- **持久化机制**
+  - 使用localStorage存储思维模式配置
+  - 支持配置的导入导出功能
+  - 配置迁移时自动处理级别转换
 
 **章节来源**
-- [apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue:67-74](file://apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue#L67-L74)
-- [apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue:132-155](file://apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue#L132-L155)
+- [apps/frontend/src/features/ai/composables/useAIConfig/types.ts:1-4](file://apps/frontend/src/features/ai/composables/useAIConfig/types.ts#L1-L4)
+- [apps/frontend/src/features/ai/composables/useAIConfig/index.ts:90-101](file://apps/frontend/src/features/ai/composables/useAIConfig/index.ts#L90-L101)
+- [apps/frontend/src/features/ai/components/AISettingsParameterSection.vue:118-154](file://apps/frontend/src/features/ai/components/AISettingsParameterSection.vue#L118-L154)
+- [apps/frontend/src/features/ai/components/AiAssistantThinkingMenu.vue:14-51](file://apps/frontend/src/features/ai/components/AiAssistantThinkingMenu.vue#L14-L51)
 
-### 增强的推理内容显示组件
+### 代理工作空间系统
 
-#### 智能优先级处理
+#### 工作区选择器组件
+**新增** AgentWorkspaceSelector组件，提供完整的代理工作区管理功能。
+
+- **工作区管理**
+  - 支持添加、删除、选择工作区
+  - 通过HTTP API与后端交互
+  - 支持本地目录选择和远程工作区管理
+
+- **权限模式**
+  - 自动模式：自动执行操作，无需用户确认
+  - 询问模式：关键操作前询问用户确认
+  - 只读模式：仅允许文件读取，禁止修改操作
+
+- **状态管理**
+  - 支持工作区加载状态显示
+  - 自动检测Sidecar服务可用性
+  - 工作区选择状态的持久化
+
+```mermaid
+flowchart TD
+Start(["开始: 工作区管理"]) --> LoadWS["加载工作区列表"]
+LoadWS --> HasWS{"是否有工作区?"}
+HasWS --> |否| Empty["显示空状态"]
+HasWS --> |是| ShowList["显示工作区列表"]
+ShowList --> SelectWS["选择工作区"]
+SelectWS --> SetPerm["设置权限模式"]
+SetPerm --> AutoMode["自动模式"]
+SetPerm --> AskMode["询问模式"]
+SetPerm --> ReadOnly["只读模式"]
+AutoMode --> Execute["执行Agent操作"]
+AskMode --> Confirm["用户确认"]
+ReadOnly --> ReadOps["只读操作"]
+Confirm --> Execute
+Execute --> End(["结束"])
+ReadOps --> End
+Empty --> AddWS["添加新工作区"]
+AddWS --> SelectWS
+```
+
+**图表来源**
+- [apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue:69-156](file://apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue#L69-L156)
+- [apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue:242-254](file://apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue#L242-L254)
+
+#### 会话文件管理
+**新增** 后端SessionFileController和SessionFileRegistry，提供会话级别的文件管理能力。
+
+- **文件注册**
+  - 支持批量文件注册到指定会话
+  - 自动生成文件ID和元数据
+  - 支持文件标签和描述
+
+- **会话关联**
+  - 按会话ID组织文件关联关系
+  - 支持文件查询和删除
+  - 维护文件创建时间和排序
+
+- **持久化存储**
+  - 使用JSON文件存储文件索引
+  - 支持数据恢复和迁移
+  - 提供统计信息和健康检查
+
+- **API接口**
+  - POST /api/agent/session-files：注册文件
+  - GET /api/agent/session-files：查询会话文件
+  - DELETE /api/agent/session-files/:id：删除文件
+
+**章节来源**
+- [apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue:1-405](file://apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue#L1-L405)
+- [apps/backend/src/agent/session-file/session-file.controller.ts:1-125](file://apps/backend/src/agent/session-file/session-file.controller.ts#L1-L125)
+- [apps/backend/src/agent/session-file/session-file.registry.ts:55-166](file://apps/backend/src/agent/session-file/session-file.registry.ts#L55-L166)
+
+### Agent工具系统
+
+#### 工具定义与实现
+**新增** 完整的Agent工具系统，提供本地文件操作能力。
+
+- **工具类型**
+  - 文件读取：READ_FILE（支持行范围选择）
+  - 文件写入：WRITE_FILE（创建或覆盖文件）
+  - 文件编辑：EDIT_FILE（精确字符串替换）
+  - 目录操作：LS、MKDIR
+  - 文件搜索：FIND、GREP
+  - 命令执行：BASH（带超时控制）
+  - 文件交付：STAGE_FILES（注册到会话）
+
+- **参数验证**
+  - 每个工具都有严格的参数验证
+  - 必需参数强制检查
+  - 类型和格式验证
+
+- **本地处理器**
+  - buildAgentLocalToolHandlers函数构建本地工具处理器
+  - 支持文件系统操作和命令执行
+  - 错误处理和结果格式化
+
+```mermaid
+classDiagram
+class AgentTools {
++READ_FILE : Tool
++WRITE_FILE : Tool
++EDIT_FILE : Tool
++LS : Tool
++GREP : Tool
++FIND : Tool
++MKDIR : Tool
++BASH : Tool
++STAGE_FILES : Tool
+}
+class ToolDefinition {
++type : "function"
++function.name : string
++function.description : string
++function.parameters : object
+}
+class LocalToolHandler {
++execute(args) : string | Promise<string>
+}
+AgentTools --> ToolDefinition : "定义"
+AgentTools --> LocalToolHandler : "实现"
+```
+
+**图表来源**
+- [apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts:9-166](file://apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts#L9-L166)
+- [apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts:197-200](file://apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts#L197-L200)
+
+#### 工具使用纪律
+**新增** Agent工具使用纪律和安全指导原则。
+
+- **工具使用纪律**
+  - 优先使用成本最低、干扰最小的工具
+  - 避免在简单场景下使用重型工具
+  - 优先使用agent_系列工具进行本地文件操作
+
+- **文件交付规范**
+  - 创建或找到文件时使用agent_stage_files注册
+  - 仅传递真实存在的本机绝对路径
+  - 不要在文本中仅写文件路径
+
+- **失败处理策略**
+  - 方案失败时先诊断原因再换方向
+  - 读取错误信息、检查假设、尝试针对性修复
+  - 不要盲目重复相同动作
+
+- **操作安全原则**
+  - 执行前考虑可逆性和影响范围
+  - 本地可撤销操作可直接执行
+  - 对难以撤销或影响外部系统操作需用户确认
+
+**章节来源**
+- [apps/frontend/src/features/ai/services/utils/systemPrompts.ts:500-553](file://apps/frontend/src/features/ai/services/utils/systemPrompts.ts#L500-L553)
+- [apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts:176-185](file://apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts#L176-L185)
+
+### 增强的推理内容显示系统
+
+#### 推理内容优先级处理
 **新增** ChatMessageThinking组件的推理内容智能优先级处理，优化用户体验。
 
 - **优先级策略**
   - reasoning_details > thinkingContent > reasoning_content
-  - reasoning_details用于向用户显示的结构化推理内容
-  - thinkingContent用于传统的思考过程显示
-  - reasoning_content仅用于内部传输，不直接显示
+  - reasoning_details：结构化的推理内容，优先显示
+  - thinkingContent：传统的思考过程内容，作为备选
+  - reasoning_content：内部传输用，不直接显示给用户
 
-- **自动折叠逻辑**
+- **智能折叠逻辑**
   - AI开始输出正文内容：立即折叠思考区域
   - 只有思考内容且流式结束：3秒延迟后自动折叠
   - 思考内容稳定（非流式状态）：保持展开状态
@@ -502,10 +593,33 @@ stateDiagram-v2
 - [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:65-100](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L65-L100)
 - [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:114-197](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L114-L197)
 
+#### 系统提示注入增强
+**新增** buildAgentSystemPrompt函数，为Agent工具系统提供完整的使用指导。
+
+- **工作区路径提示**
+  - 明确指定工作目录和绝对路径要求
+  - 限制文件操作范围在指定工作区内
+
+- **工具使用纪律**
+  - 详细的工具选择和使用原则
+  - 成本效益和干扰最小化原则
+  - 本地文件操作优先策略
+
+- **文件交付规范**
+  - 文件注册和交付流程
+  - 绝对路径和文件路径的区别
+  - 平台无关的展示处理
+
+- **失败处理和操作安全**
+  - 失败时的诊断和修复策略
+  - 可逆性和影响范围的考虑
+  - 用户确认机制的重要性
+
 **章节来源**
 - [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:56-63](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L56-L63)
 - [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:65-100](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L65-L100)
 - [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:114-197](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L114-L197)
+- [apps/frontend/src/features/ai/services/utils/systemPrompts.ts:485-553](file://apps/frontend/src/features/ai/services/utils/systemPrompts.ts#L485-L553)
 
 ### AI翻译系统
 
@@ -624,6 +738,9 @@ AiModeItems --> AiModeInputs : "处理"
   - 翻译模式与其他模式互斥，确保同一时间只能激活一个模式
   - 切换到翻译模式时清除其他模式配置
   - 退出翻译模式时恢复之前的配置状态
+- **代理模式支持**
+  - 新增agentMode配置项，支持代理工作空间模式
+  - 集成工作区选择和权限管理模式
 
 **章节来源**
 - [apps/frontend/src/features/ai/composables/useAiAssistantModes.ts:44-54](file://apps/frontend/src/features/ai/composables/useAiAssistantModes.ts#L44-L54)
@@ -661,16 +778,19 @@ Skip --> Read
 
 ### 配置与预设系统
 - AIConfig
-  - 包含基础参数（baseUrl、apiKey、model、temperature）、系统提示、思考模式与努力等级、讨论模式、图像生动生成功能开关、MCP开关、上下文压缩开关与阈值、技能ID集合等。
+  - 包含基础参数（baseUrl、apiKey、model、temperature）、系统提示、思维模式与努力等级、讨论模式、图像生动生成功能开关、MCP开关、上下文压缩开关与阈值、技能ID集合等。
 - **扩展** 小说创作配置
   - 新增novelGenre、novelTone、novelProtagonistHint等小说创作相关参数。
 - **扩展** 翻译模式配置
   - 新增assistantMode支持'translation'类型
   - 翻译模式与其他模式互斥，确保单一模式激活
+- **扩展** 代理模式配置
+  - 新增agentMode、agentWorkspaceId、agentWorkspacePath等代理工作空间相关参数
+  - 支持代理工具的启用和工作区管理
 - 预设（AIPreset）
   - 保存常用配置快照，支持与当前配置比对与自动匹配。
 - 存储与同步
-  - 使用localStorage持久化；思考模式双向绑定；默认配置与归一化逻辑保证一致性。
+  - 使用localStorage持久化；思维模式双向绑定；默认配置与归一化逻辑保证一致性。
 
 ```mermaid
 classDiagram
@@ -697,6 +817,9 @@ class AIConfig {
 +novelGenre
 +novelTone
 +novelProtagonistHint
++agentMode
++agentWorkspaceId
++agentWorkspacePath
 }
 class AIPreset {
 +id
@@ -712,27 +835,32 @@ class AIPreset {
 +novelGenre
 +novelTone
 +novelProtagonistHint
++agentMode
++agentWorkspaceId
++agentWorkspacePath
 }
 AIConfig <.. AIPreset : "可匹配/应用"
 ```
 
 **图表来源**
 - [apps/frontend/src/features/ai/composables/useAIConfig.ts:18-51](file://apps/frontend/src/features/ai/composables/useAIConfig.ts#L18-L51)
-- [apps/frontend/src/features/ai/composables/useAIConfig/types.ts:1-37](file://apps/frontend/src/features/ai/composables/useAIConfig/types.ts#L1-L37)
+- [apps/frontend/src/features/ai/composables/useAIConfig/types.ts:15-41](file://apps/frontend/src/features/ai/composables/useAIConfig/types.ts#L15-L41)
 
 **章节来源**
 - [apps/frontend/src/features/ai/composables/useAIConfig.ts:601-800](file://apps/frontend/src/features/ai/composables/useAIConfig.ts#L601-L800)
-- [apps/frontend/src/features/ai/composables/useAIConfig/types.ts:1-92](file://apps/frontend/src/features/ai/composables/useAIConfig/types.ts#L1-L92)
+- [apps/frontend/src/features/ai/composables/useAIConfig/types.ts:1-95](file://apps/frontend/src/features/ai/composables/useAIConfig/types.ts#L1-L95)
 
 ### 对话管理与状态
 - useChatState
   - 维护当前会话消息、流式响应内容、思考与推理详情、讨论步骤、待办建议、生成状态、错误与重试次数，并提供重置与清理方法。
   - **新增** 小说相关状态管理，包括novelBatchRemaining全局状态。
+  - **新增** 代理工作区状态管理，跟踪工作区选择和权限模式。
 - useChat
   - 计算实时消息视图，合并流式响应与结构化块（教学/待办/小说/翻译），避免流式结束瞬间的重复消息。
 - useChatActions
   - 发送消息、生成图片、停止生成、清理历史、重试机制、上下文压缩、工具调用执行、MCP集成与本地工具处理。
   - **新增** novel模式自动续写逻辑，在消息发送完成后检查剩余章节并自动继续。
+  - **新增** Agent工具处理器构建，在代理模式下启用本地文件操作能力。
 
 ```mermaid
 stateDiagram-v2
@@ -860,6 +988,7 @@ Runtime --> MCP_API : "获取工具/调用"
   - AiAssistantDrawer集中管理设置、历史、预设、讨论模式等，支持最大化与侧边栏尺寸调整。
   - **新增** 翻译模式面板与配置选项，支持独立的翻译界面。
   - **新增** 快速模式菜单，提供统一的胶囊设计入口。
+  - **新增** 代理工作区选择器，支持工作区管理和权限模式切换。
 - 输入增强
   - AiAssistantInput支持斜杠命令（待办/教学/绘图/讨论模式切换、翻译模式）、粘贴、文件上传、自适应高度与移动端优化。
 - 消息列表
@@ -871,9 +1000,12 @@ Runtime --> MCP_API : "获取工具/调用"
 - **新增** 小说消息组件
   - 支持角色卡面板、世界观面板、章节元数据的显示
   - 提供继续按钮，支持手动触发下一章生成
-- **新增** 推理内容显示
+- **新增** 增强的推理内容显示
   - ChatMessageThinking组件支持推理内容的智能显示和管理
   - 优化推理内容的优先级处理和用户体验
+- **新增** 代理工作区集成
+  - AgentWorkspaceSelector与系统提示注入集成
+  - 支持工作区路径的动态更新和权限模式切换
 
 ```mermaid
 graph LR
@@ -882,6 +1014,7 @@ Drawer --> Toolbar["工具栏/预设/模式切换"]
 Drawer --> Input["AiAssistantInput.vue"]
 Drawer --> List["ChatMessageList.vue"]
 Drawer --> Translation["TranslationPanel.vue"]
+Drawer --> Workspace["AgentWorkspaceSelector.vue"]
 QuickModes --> Thinking["ChatMessageThinking.vue"]
 Input --> Actions["useChatActions.ts"]
 List --> Actions
@@ -890,8 +1023,12 @@ Actions --> State["useChatState.ts"]
 Actions --> Stream["useChatActions.stream.ts"]
 Actions --> Core["services/core.ts"]
 Actions --> Sync["aiSyncService.ts"]
+Actions --> AgentTools["useChatActions.agentTools.ts"]
 TranslationSvc --> Core
 Stream --> State
+Workspace --> WorkspaceCtrl["SessionFileController"]
+WorkspaceCtrl --> WorkspaceReg["SessionFileRegistry"]
+WorkspaceReg --> AgentToolsDef["Agent工具定义"]
 ```
 
 **图表来源**
@@ -901,12 +1038,15 @@ Stream --> State
 - [apps/frontend/src/features/ai/components/ChatMessageList.vue:1-492](file://apps/frontend/src/features/ai/components/ChatMessageList.vue#L1-L492)
 - [apps/frontend/src/features/ai/components/TranslationPanel.vue:1-278](file://apps/frontend/src/features/ai/components/TranslationPanel.vue#L1-L278)
 - [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:1-303](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L1-L303)
+- [apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue:1-405](file://apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue#L1-L405)
 - [apps/frontend/src/features/ai/composables/useChatActions.ts:1-544](file://apps/frontend/src/features/ai/composables/useChatActions.ts#L1-L544)
 - [apps/frontend/src/features/ai/composables/useChatState.ts:1-149](file://apps/frontend/src/features/ai/composables/useChatState.ts#L1-L149)
 - [apps/frontend/src/features/ai/composables/useChatActions.stream.ts:1-411](file://apps/frontend/src/features/ai/composables/useChatActions.stream.ts#L1-L411)
 - [apps/frontend/src/features/ai/services/core.ts:1-445](file://apps/frontend/src/features/ai/services/core.ts#L1-L445)
 - [apps/frontend/src/features/ai/services/aiSyncService.ts:1-41](file://apps/frontend/src/features/ai/services/aiSyncService.ts#L1-L41)
 - [apps/frontend/src/features/ai/services/translation.ts:1-54](file://apps/frontend/src/features/ai/services/translation.ts#L1-L54)
+- [apps/backend/src/agent/session-file/session-file.controller.ts:1-125](file://apps/backend/src/agent/session-file/session-file.controller.ts#L1-L125)
+- [apps/backend/src/agent/session-file/session-file.registry.ts:55-166](file://apps/backend/src/agent/session-file/session-file.registry.ts#L55-L166)
 
 **章节来源**
 - [apps/frontend/src/features/ai/components/AiAssistantDrawer.vue:1-475](file://apps/frontend/src/features/ai/components/AiAssistantDrawer.vue#L1-L475)
@@ -914,6 +1054,7 @@ Stream --> State
 - [apps/frontend/src/features/ai/components/ChatMessageList.vue:1-492](file://apps/frontend/src/features/ai/components/ChatMessageList.vue#L1-L492)
 - [apps/frontend/src/features/ai/components/ChatMessage.vue:390-449](file://apps/frontend/src/features/ai/components/ChatMessage.vue#L390-L449)
 - [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:1-303](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L1-L303)
+- [apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue:1-405](file://apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue#L1-L405)
 - [apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue:1-158](file://apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue#L1-L158)
 
 ## AI数据同步系统
@@ -955,6 +1096,7 @@ AI数据同步系统提供服务器端持久化能力，支持记忆、技能、
   - baseUrl必须是有效URL
   - apiKey字段不参与同步
   - 支持novelGenre、novelTone、novelProtagonistHint等小说相关字段
+  - 支持agentMode、agentWorkspaceId、agentWorkspacePath等代理相关字段
 
 ```mermaid
 sequenceDiagram
@@ -1084,7 +1226,7 @@ TranslationSvc --> Utils
 - [apps/frontend/src/features/ai/components/TranslationPanel.vue:1-278](file://apps/frontend/src/features/ai/components/TranslationPanel.vue#L1-L278)
 - [apps/frontend/src/features/ai/services/translation.ts:1-54](file://apps/frontend/src/features/ai/services/translation.ts#L1-L54)
 - [apps/frontend/src/features/ai/composables/useAiModeItems.ts:1-63](file://apps/frontend/src/features/ai/composables/useAiModeItems.ts#L1-L63)
-- [apps/frontend/src/features/ai/composables/useAIConfig/types.ts:1-92](file://apps/frontend/src/features/ai/composables/useAIConfig/types.ts#L1-L92)
+- [apps/frontend/src/features/ai/composables/useAIConfig/types.ts:1-95](file://apps/frontend/src/features/ai/composables/useAIConfig/types.ts#L1-L95)
 - [apps/frontend/src/features/ai/composables/useAiAssistantModes.ts:1-145](file://apps/frontend/src/features/ai/composables/useAiAssistantModes.ts#L1-L145)
 
 ## 小说写作助手系统
@@ -1175,6 +1317,78 @@ MsgComponent --> WorldviewPanel
 - [apps/frontend/src/features/ai/services/types.ts:133-174](file://apps/frontend/src/features/ai/services/types.ts#L133-L174)
 - [apps/frontend/src/features/ai/components/ChatMessage.vue:390-449](file://apps/frontend/src/features/ai/components/ChatMessage.vue#L390-L449)
 
+## 代理工作空间系统
+
+### 系统概述
+代理工作空间系统为AI助手提供本地文件操作能力，支持在受控的工作区内执行文件操作、命令执行和文件交付。通过AgentWorkspaceSelector组件和SessionFileController后端服务，实现完整的文件管理生命周期。
+
+### 核心组件
+
+#### 工作区选择器
+- **AgentWorkspaceSelector.vue**
+  - 提供工作区选择界面，支持添加、删除、选择工作区
+  - 支持三种权限模式：自动、询问、只读
+  - 与后端API交互，管理工作区状态
+  - 支持本地目录选择和远程工作区管理
+
+#### 会话文件管理
+- **SessionFileController** (`session-file.controller.ts`)
+  - 提供RESTful API接口：`POST /api/agent/session-files`、`GET /api/agent/session-files`、`DELETE /api/agent/session-files/:id`
+  - 支持文件注册、查询、删除操作
+  - 验证文件存在性和会话ID有效性
+  - 返回标准化的API响应格式
+
+- **SessionFileRegistry** (`session-file.registry.ts`)
+  - 内存中的文件索引和持久化存储
+  - 支持按会话ID查询文件列表
+  - 文件注册、删除和统计功能
+  - JSON文件持久化，支持数据恢复
+
+#### Agent工具系统
+- **Agent工具定义** (`useChatActions.agentTools.ts`)
+  - 完整的本地文件操作工具链：READ_FILE、WRITE_FILE、EDIT_FILE、LS、GREP、FIND、MKDIR、BASH、STAGE_FILES
+  - 支持文件读取、写入、编辑、目录操作、搜索、创建目录、命令执行、文件交付
+  - 与工作区路径绑定，限制操作范围
+  - 参数验证和错误处理
+
+#### 系统提示注入
+- **buildAgentSystemPrompt** (`systemPrompts.ts`)
+  - 生成Agent工具使用规范和安全指导
+  - 包含工作区路径提示、工具纪律、文件交付、失败处理、操作安全等原则
+  - 与injectSystemPrompts集成，实现完整的Agent能力注入
+
+```mermaid
+sequenceDiagram
+participant User as "用户"
+participant WS as "AgentWorkspaceSelector"
+participant API as "SessionFileController"
+participant Reg as "SessionFileRegistry"
+participant Tools as "Agent工具系统"
+User->>WS : 选择工作区目录
+WS->>API : POST /api/agent/session-files
+API->>Reg : register(filepaths, sessionId)
+Reg-->>API : SessionFile[]
+API-->>WS : 注册结果
+WS-->>User : 更新工作区状态
+User->>Tools : 执行文件操作
+Tools->>Reg : 查询会话文件
+Reg-->>Tools : 文件列表
+Tools-->>User : 操作结果
+```
+
+**图表来源**
+- [apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue:69-156](file://apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue#L69-L156)
+- [apps/backend/src/agent/session-file/session-file.controller.ts:22-80](file://apps/backend/src/agent/session-file/session-file.controller.ts#L22-L80)
+- [apps/backend/src/agent/session-file/session-file.registry.ts:107-133](file://apps/backend/src/agent/session-file/session-file.registry.ts#L107-L133)
+- [apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts:9-166](file://apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts#L9-L166)
+
+**章节来源**
+- [apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue:1-405](file://apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue#L1-L405)
+- [apps/backend/src/agent/session-file/session-file.controller.ts:1-125](file://apps/backend/src/agent/session-file/session-file.controller.ts#L1-L125)
+- [apps/backend/src/agent/session-file/session-file.registry.ts:55-166](file://apps/backend/src/agent/session-file/session-file.registry.ts#L55-L166)
+- [apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts:1-403](file://apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts#L1-L403)
+- [apps/frontend/src/features/ai/services/utils/systemPrompts.ts:485-553](file://apps/frontend/src/features/ai/services/utils/systemPrompts.ts#L485-L553)
+
 ## 依赖关系分析
 - 组件耦合
   - AiAssistantDrawer聚合useChat与useAIConfig，形成UI与业务逻辑的桥接；useChatActions依赖useChatState、useChatHistory、useChatMemory与runtime工具集。
@@ -1182,15 +1396,19 @@ MsgComponent --> WorldviewPanel
   - **新增** TranslationPanel与translation服务深度集成。
   - **新增** AiAssistantQuickModesMenu提供统一的快速模式入口。
   - **新增** ChatMessageThinking组件处理推理内容显示。
-  - **新增** systemPrompts.ts提供增强的序列化逻辑。
+  - **新增** systemPrompts.ts提供增强的序列化逻辑和Agent工具注入。
+  - **新增** AgentWorkspaceSelector与SessionFileController后端服务集成。
+  - **新增** useChatActions.agentTools提供完整的Agent工具处理器。
 - 外部依赖
   - MCP API封装@lumina/shared与HTTP客户端，提供工具枚举与调用；AI服务依赖浏览器fetch与SSE Reader。
   - **新增** 后端使用Prisma ORM进行数据持久化。
+  - **新增** 代理工作空间系统依赖Sidecar服务进行本地文件操作。
 - 循环依赖
   - 通过组合式函数与模块化导入避免循环依赖；工具调用在useChatActions中集中处理，降低跨模块耦合。
   - **新增** useAiModeItems提供统一的模式管理，避免各组件间的模式状态不一致。
   - **新增** useChatState提供全局状态管理，支持novel模式的自动续写功能。
   - **新增** reasoning_content字段支持推理内容的完整显示。
+  - **新增** 多级思维模式配置支持精细化的推理控制。
 
 ```mermaid
 graph TB
@@ -1200,9 +1418,11 @@ Chat --> Actions["useChatActions.ts"]
 Actions --> Stream["useChatActions.stream.ts"]
 Actions --> State["useChatState.ts"]
 Actions --> Runtime["useChatActions.runtime.ts"]
+Actions --> AgentTools["useChatActions.agentTools.ts"]
 Actions --> Sync["aiSyncService.ts"]
 Actions --> Translation["TranslationPanel.vue"]
 Translation --> TranslationSvc["translation.ts"]
+AgentTools --> Workspace["AgentWorkspaceSelector.vue"]
 Runtime --> MCP["mcp.ts"]
 Actions --> Core["services/core.ts"]
 Core --> Types["services/types.ts"]
@@ -1216,6 +1436,10 @@ ModeItems["useAiModeItems.ts"] --> Config["useAIConfig.ts"]
 Modes["useAiAssistantModes.ts"] --> ModeItems
 Thinking["ChatMessageThinking.vue"] --> Types
 SystemPrompts["utils/systemPrompts.ts"] --> Types
+SystemPrompts --> Workspace
+Workspace --> WorkspaceCtrl["SessionFileController"]
+WorkspaceCtrl --> WorkspaceReg["SessionFileRegistry"]
+WorkspaceReg --> AgentToolsDef["Agent工具定义"]
 ```
 
 **图表来源**
@@ -1234,11 +1458,10 @@ SystemPrompts["utils/systemPrompts.ts"] --> Types
 - [apps/frontend/src/features/ai/composables/useAiModeItems.ts:1-63](file://apps/frontend/src/features/ai/composables/useAiModeItems.ts#L1-L63)
 - [apps/frontend/src/features/ai/composables/useAiAssistantModes.ts:1-145](file://apps/frontend/src/features/ai/composables/useAiAssistantModes.ts#L1-L145)
 - [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:1-303](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L1-L303)
-- [apps/frontend/src/features/ai/services/utils/systemPrompts.ts:459-483](file://apps/frontend/src/features/ai/services/utils/systemPrompts.ts#L459-L483)
+- [apps/frontend/src/features/ai/services/utils/systemPrompts.ts:485-553](file://apps/frontend/src/features/ai/services/utils/systemPrompts.ts#L485-L553)
 - [apps/backend/src/ai-sync/ai-sync.controller.ts:1-84](file://apps/backend/src/ai-sync/ai-sync.controller.ts#L1-L84)
-- [apps/backend/src/ai-sync/ai-memory.service.ts:1-64](file://apps/backend/src/ai-sync/ai-memory.service.ts#L1-L64)
-- [apps/backend/src/ai-sync/ai-skill.service.ts:1-49](file://apps/backend/src/ai-sync/ai-skill.service.ts#L1-L49)
-- [apps/backend/src/ai-sync/ai-preset.service.ts:1-55](file://apps/backend/src/ai-sync/ai-preset.service.ts#L1-L55)
+- [apps/backend/src/agent/session-file/session-file.controller.ts:1-125](file://apps/backend/src/agent/session-file/session-file.controller.ts#L1-L125)
+- [apps/backend/src/agent/session-file/session-file.registry.ts:55-166](file://apps/backend/src/agent/session-file/session-file.registry.ts#L55-L166)
 
 **章节来源**
 - [apps/frontend/src/features/ai/composables/useChatActions.ts:1-544](file://apps/frontend/src/features/ai/composables/useChatActions.ts#L1-L544)
@@ -1251,8 +1474,10 @@ SystemPrompts["utils/systemPrompts.ts"] --> Types
 - [apps/frontend/src/features/ai/composables/useChatActions.stream.ts:1-411](file://apps/frontend/src/features/ai/composables/useChatActions.stream.ts#L1-L411)
 - [apps/frontend/src/features/ai/composables/useChatState.ts:1-149](file://apps/frontend/src/features/ai/composables/useChatState.ts#L1-L149)
 - [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:1-303](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L1-L303)
-- [apps/frontend/src/features/ai/services/utils/systemPrompts.ts:459-483](file://apps/frontend/src/features/ai/services/utils/systemPrompts.ts#L459-L483)
+- [apps/frontend/src/features/ai/services/utils/systemPrompts.ts:485-553](file://apps/frontend/src/features/ai/services/utils/systemPrompts.ts#L485-L553)
 - [apps/backend/src/ai-sync/ai-sync.controller.ts:1-84](file://apps/backend/src/ai-sync/ai-sync.controller.ts#L1-L84)
+- [apps/backend/src/agent/session-file/session-file.controller.ts:1-125](file://apps/backend/src/agent/session-file/session-file.controller.ts#L1-L125)
+- [apps/backend/src/agent/session-file/session-file.registry.ts:55-166](file://apps/backend/src/agent/session-file/session-file.registry.ts#L55-L166)
 
 ## 性能考量
 - 流式渲染
@@ -1263,6 +1488,14 @@ SystemPrompts["utils/systemPrompts.ts"] --> Types
   - 工具结果截断与错误兜底，避免超长内容污染上下文；本地工具优先执行，降低网络延迟。
 - 缓存与复用
   - 会话级压缩任务缓存与去重，避免重复计算；预设与配置持久化减少初始化成本。
+- **新增** 多级思维模式优化
+  - off级别完全跳过推理生成，减少API调用和处理开销
+  - auto级别智能决策，平衡推理质量和性能
+  - high/xhigh级别增加推理开销，但提供更丰富的思考过程
+- **新增** 代理工作空间性能
+  - 工作区路径限制避免不必要的文件扫描
+  - 权限模式选择影响操作频率和复杂度
+  - 文件注册采用异步处理，避免阻塞UI线程
 - **新增** 推理内容显示优化
   - reasoning_details优先显示策略，减少不必要的内容处理
   - ChatMessageThinking组件的智能折叠逻辑，避免频繁的DOM操作
@@ -1291,6 +1524,15 @@ SystemPrompts["utils/systemPrompts.ts"] --> Types
   - 校验工具参数JSON合法性；检查本地处理器与MCP服务器可达性；查看工具返回内容长度截断日志。
 - 上下文压缩异常
   - 确认摘要模型预设可用；检查摘要untilMessageId是否与当前会话一致；观察后台任务状态。
+- **新增** 多级思维模式问题
+  - 检查ThinkingMode和ReasoningEffort配置是否在有效范围内
+  - 验证normalizeThinkingLevel函数的级别转换逻辑
+  - 确认AISettingsParameterSection和AiAssistantThinkingMenu的界面更新
+- **新增** 代理工作空间问题
+  - 检查AgentWorkspaceSelector的Sidecar服务连接状态
+  - 验证SessionFileController的API响应和错误处理
+  - 确认SessionFileRegistry的文件索引和持久化状态
+  - 检查Agent工具的参数验证和执行结果
 - **新增** 推理内容显示问题
   - 检查reasoning_details和thinkingContent的优先级处理逻辑
   - 验证reasoning_content字段的序列化和传输边界处理
@@ -1325,9 +1567,15 @@ SystemPrompts["utils/systemPrompts.ts"] --> Types
 - [apps/backend/src/ai-sync/ai-preset.service.ts:30-36](file://apps/backend/src/ai-sync/ai-preset.service.ts#L30-L36)
 - [apps/frontend/src/features/ai/services/translation.ts:35-49](file://apps/frontend/src/features/ai/services/translation.ts#L35-L49)
 - [apps/frontend/src/features/ai/components/TranslationPanel.vue:76-84](file://apps/frontend/src/features/ai/components/TranslationPanel.vue#L76-L84)
+- [apps/frontend/src/features/ai/composables/useAIConfig/index.ts:90-101](file://apps/frontend/src/features/ai/composables/useAIConfig/index.ts#L90-L101)
+- [apps/frontend/src/features/ai/components/AISettingsParameterSection.vue:124-153](file://apps/frontend/src/features/ai/components/AISettingsParameterSection.vue#L124-L153)
+- [apps/frontend/src/features/ai/components/AiAssistantThinkingMenu.vue:28-48](file://apps/frontend/src/features/ai/components/AiAssistantThinkingMenu.vue#L28-L48)
+- [apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue:69-156](file://apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue#L69-L156)
+- [apps/backend/src/agent/session-file/session-file.controller.ts:22-80](file://apps/backend/src/agent/session-file/session-file.controller.ts#L22-L80)
+- [apps/backend/src/agent/session-file/session-file.registry.ts:107-133](file://apps/backend/src/agent/session-file/session-file.registry.ts#L107-L133)
 
 ## 结论
-Lumina Todo的AI助手系统通过清晰的分层设计与模块化组合，实现了从对话编排、上下文压缩、工具调用到前端交互的完整闭环。**新增的推理内容显示功能**通过reasoning_content字段实现完整的推理内容支持，优化了推理内容的优先级处理和显示策略；**改进的快速模式菜单**提供统一的胶囊设计，提升了用户体验和交互效率；**增强的序列化逻辑**确保了消息内容的完整性和安全性，支持助手角色内容结构的正确处理。其预设配置与运行时能力准备机制，使得系统具备良好的可扩展性与可维护性；流式渲染与智能滚动提升了用户体验；MCP工具集成进一步增强了系统能力边界。建议在生产环境中持续关注推理内容的显示效果和性能优化，确保推理内容的正确处理和高效传输；同时关注快速模式菜单的用户体验和移动端适配，确保不同设备上的良好表现；继续完善AI数据同步和翻译功能的配置管理，确保系统的稳定性和可靠性。
+Lumina Todo的AI助手系统通过清晰的分层设计与模块化组合，实现了从对话编排、上下文压缩、工具调用到前端交互的完整闭环。**新增的多级思维模式**通过ThinkingMode和ReasoningEffort配置实现精细化控制，提供off/auto/high/xhigh四个级别的推理强度调节；**代理工作空间系统**通过AgentWorkspaceSelector和SessionFileController提供完整的本地文件操作能力，支持文件读写、编辑、查找等操作；**增强的推理内容显示**通过reasoning_details优先策略优化用户体验；**Agent工具系统**提供完整的本地文件操作工具链，支持9种不同的工具类型。其预设配置与运行时能力准备机制，使得系统具备良好的可扩展性与可维护性；流式渲染与智能滚动提升了用户体验；MCP工具集成进一步增强了系统能力边界。建议在生产环境中持续关注多级思维模式的性能影响、代理工作空间的安全性和稳定性，确保推理内容的正确处理和高效传输，同时优化Agent工具的权限控制和错误处理机制。
 
 ## 附录
 
@@ -1345,16 +1593,19 @@ Lumina Todo的AI助手系统通过清晰的分层设计与模块化组合，实�
 - 上下文压缩
   - 路径：useChatActions.contextCompression.buildContextCompression
   - 注意：阈值、摘要模型预设、会话边界
-- **新增** 推理内容显示
+- **新增** 多级思维模式配置
+  - 路径：AISettingsParameterSection -> useAIConfig.normalizeThinkingLevel
+  - 注意：思维级别的验证和默认值处理
+- **新增** 代理工作空间管理
+  - 路径：AgentWorkspaceSelector -> SessionFileController.registerFiles
+  - 注意：工作区路径验证和权限模式设置
+- **新增** Agent工具执行
+  - 路径：useChatActions.agentTools -> buildAgentLocalToolHandlers
+  - 注意：工具参数验证和本地文件操作
+- **新增** 增强推理内容显示
   - 路径：ChatMessageThinking -> reasoning_details优先显示策略
   - 注意：推理内容的优先级处理和智能折叠逻辑
-- **新增** 快速模式菜单
-  - 路径：AiAssistantQuickModesMenu -> 统一胶囊设计和hover延迟机制
-  - 注意：移动端降级和响应式设计
-- **新增** 增强流式传输处理
-  - 路径：useChatActions.stream.finalizeCompletedResponse -> useChatState.novelBatchRemaining
-  - 注意：章节标记统计、自动续写逻辑、状态保持
-- **新增** AI翻译功能
+- **新增** 翻译功能
   - 路径：TranslationPanel -> translation.detectLanguage/translateText -> services/core.getAIStreamResponse
   - 注意：智能语言检测、防抖保存、错误处理
 - **新增** AI数据同步
@@ -1372,7 +1623,11 @@ Lumina Todo的AI助手系统通过清晰的分层设计与模块化组合，实�
 - [apps/frontend/src/features/ai/composables/useChatActions.toolCalls.ts:30-172](file://apps/frontend/src/features/ai/composables/useChatActions.toolCalls.ts#L30-L172)
 - [apps/frontend/src/features/ai/composables/useChatActions.contextCompression.ts:150-259](file://apps/frontend/src/features/ai/composables/useChatActions.contextCompression.ts#L150-L259)
 - [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:56-63](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L56-L63)
-- [apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue:25-41](file://apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue#L25-L41)
+- [apps/frontend/src/features/ai/components/AISettingsParameterSection.vue:118-154](file://apps/frontend/src/features/ai/components/AISettingsParameterSection.vue#L118-L154)
+- [apps/frontend/src/features/ai/components/AiAssistantThinkingMenu.vue:28-51](file://apps/frontend/src/features/ai/components/AiAssistantThinkingMenu.vue#L28-L51)
+- [apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue:69-156](file://apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue#L69-L156)
+- [apps/backend/src/agent/session-file/session-file.controller.ts:22-80](file://apps/backend/src/agent/session-file/session-file.controller.ts#L22-L80)
+- [apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts:197-200](file://apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts#L197-L200)
 - [apps/frontend/src/features/ai/services/aiSyncService.ts:1-41](file://apps/frontend/src/features/ai/services/aiSyncService.ts#L1-L41)
 - [apps/backend/src/ai-sync/ai-sync.controller.ts:1-84](file://apps/backend/src/ai-sync/ai-sync.controller.ts#L1-L84)
 - [apps/frontend/src/features/ai/services/translation.ts:8-53](file://apps/frontend/src/features/ai/services/translation.ts#L8-L53)
