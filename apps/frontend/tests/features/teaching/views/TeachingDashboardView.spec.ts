@@ -79,7 +79,7 @@ const mockConfig = ref({
   model: '',
   temperature: 0.7,
   systemPrompt: '',
-  thinkingMode: 'disabled',
+  thinkingMode: 'off',
   thinkingEffort: 'high',
   todoAssistant: false,
   discussionMode: false,

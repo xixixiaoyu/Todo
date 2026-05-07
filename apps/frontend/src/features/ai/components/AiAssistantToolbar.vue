@@ -2,13 +2,12 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useWindowSize } from '@vueuse/core'
-import type { AIPreset, AIConfig } from '@/features/ai/composables/useAIConfig'
+import type { AIPreset, AIConfig, ThinkingMode } from '@/features/ai/composables/useAIConfig'
 import type { ChatSession } from '@/features/ai/composables/useChatHistory'
 import {
   Plus,
   History,
   Paperclip,
-  Lightbulb,
   Settings2,
   Blocks,
   ChevronLeft,
@@ -19,11 +18,12 @@ import {
 import AiAssistantToolbarDiscussionMenu from '@/features/ai/components/AiAssistantToolbarDiscussionMenu.vue'
 import AiAssistantToolbarPresetMenu from '@/features/ai/components/AiAssistantToolbarPresetMenu.vue'
 import AiAssistantToolbarModesMenu from '@/features/ai/components/AiAssistantToolbarModesMenu.vue'
+import AiAssistantThinkingMenu from '@/features/ai/components/AiAssistantThinkingMenu.vue'
 
 defineProps<{
   hasHistory: boolean
   isGenerating: boolean
-  isThinkingEnabled: boolean
+  thinkingLevel: ThinkingMode
   isTeachingEnabled: boolean
   isNovelEnabled: boolean
   isTodoAssistantEnabled: boolean
@@ -46,7 +46,7 @@ const showDiscussionPopover = defineModel<boolean>('showDiscussionPopover', { de
 const emit = defineEmits<{
   (e: 'newChat'): void
   (e: 'openHistory'): void
-  (e: 'toggleThinking'): void
+  (e: 'update:thinkingLevel', level: ThinkingMode): void
   (e: 'toggleTeaching'): void
   (e: 'toggleNovel'): void
   (e: 'toggleTodo'): void
@@ -146,40 +146,12 @@ const newChatTitle = computed(() => `${t('ai.newChat')} (${shortcutHint})`)
 
           <div class="h-4 w-px shrink-0 bg-border/20 mx-1" />
 
-          <!-- AI 思考模式开关 (移回工具栏外层) -->
-          <button
-            class="toolbar-btn relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border active:scale-95 transition-all duration-700"
-            :class="[
-              isThinkingEnabled
-                ? '!border-primary/40 bg-gradient-to-br from-primary/10 to-primary/5 text-primary shadow-[0_4px_12px_rgba(var(--primary-rgb),0.12)]'
-                : 'border-transparent',
-            ]"
-            :title="isThinkingEnabled ? t('ai.thinkingEnabled') : t('ai.thinkingDisabled')"
-            @click="emit('toggleThinking')"
-          >
-            <!-- 激活状态下的外层扩散光圈 (极简设计) -->
-            <div
-              v-if="isThinkingEnabled"
-              class="absolute inset-0 rounded-full animate-ping-slow bg-primary/20"
-            ></div>
-
-            <Lightbulb
-              :size="16"
-              :class="[
-                'relative z-10 transition-all duration-700 ease-soft-spring',
-                isThinkingEnabled
-                  ? 'text-primary scale-110 filter drop-shadow-[0_0_5px_rgba(var(--primary-rgb),0.4)]'
-                  : 'text-muted-foreground opacity-60',
-              ]"
-              :stroke-width="isThinkingEnabled ? 2.5 : 2"
-            />
-
-            <!-- 极简激活指示点 -->
-            <div
-              v-if="isThinkingEnabled"
-              class="absolute bottom-1.5 right-1.5 h-1 w-1 rounded-full bg-primary shadow-[0_0_4px_rgba(var(--primary-rgb),0.8)]"
-            ></div>
-          </button>
+          <!-- AI 思考级别选择器 -->
+          <AiAssistantThinkingMenu
+            :current-level="thinkingLevel"
+            :is-mobile="isMobile"
+            @update:level="(level) => emit('update:thinkingLevel', level)"
+          />
 
           <!-- 模式切换功能 -->
           <AiAssistantToolbarModesMenu

@@ -106,7 +106,7 @@ vi.mock('@/features/ai/composables/useAIConfig', () => ({
       model: '',
       temperature: 0.7,
       systemPrompt: '',
-      thinkingMode: 'disabled',
+      thinkingMode: 'off',
       thinkingEffort: 'high',
       todoAssistant: false,
       discussionMode: false,
@@ -122,8 +122,8 @@ vi.mock('@/features/ai/composables/useAIConfig', () => ({
     }),
     updateConfig: vi.fn(),
   }),
-  aiThinkingMode: ref('disabled'),
-  saveAIThinkingMode: vi.fn(),
+  aiThinkingLevel: ref('off'),
+  saveAIThinkingLevel: vi.fn(),
 }))
 
 vi.mock('@/composables/useFileParsing', () => ({

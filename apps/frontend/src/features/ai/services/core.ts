@@ -3,6 +3,7 @@
  */
 
 import { getAIConfig } from '@/features/ai/composables/useAIConfig'
+import type { ReasoningEffort } from '@/features/ai/composables/useAIConfig/types'
 import i18n from '@/i18n'
 import type {
   ChatMessage,
@@ -145,7 +146,6 @@ export async function getAIStreamResponse(
     systemPrompt = aiConfig.systemPrompt,
     assistantMode = aiConfig.assistantMode,
     thinkingMode = aiConfig.thinkingMode,
-    thinkingEffort = aiConfig.thinkingEffort,
     contextSummary,
     memorySnapshot,
     skills,
@@ -194,18 +194,16 @@ export async function getAIStreamResponse(
       requestBody.tool_choice = toolChoice || 'auto'
     }
 
-    // 推理参数：DeepSeek 原生 reasoning_effort（顶层）+ OpenRouter reasoning（兼容）
-    if (thinkingMode === 'enabled') {
-      requestBody.reasoning_effort = options.thinkingEffort || thinkingEffort || 'high'
-      requestBody.reasoning = {
-        enabled: true,
-        effort: options.thinkingEffort || thinkingEffort || 'high',
-      }
-    }
+    // 推理参数：根据思考级别映射 API 参数
+    const effectiveLevel = thinkingMode || 'auto'
 
-    // DeepSeek 模型的 thinking 参数（仅在启用时发送）
-    if (thinkingMode === 'enabled') {
-      requestBody.thinking = { type: 'enabled' }
+    // thinking 开关：off 显式禁用，其余启用
+    requestBody.thinking = { type: effectiveLevel === 'off' ? 'disabled' : 'enabled' }
+
+    // reasoning.effort / reasoning_effort 仅在显式指定强度时发送
+    if (effectiveLevel === 'high' || effectiveLevel === 'xhigh') {
+      requestBody.reasoning_effort = effectiveLevel
+      requestBody.reasoning = { effort: effectiveLevel }
     }
 
     const response = await fetch(buildApiUrl(baseUrl), {
@@ -368,7 +366,7 @@ export async function fetchNonStreamResponse(
     model: string
     temperature?: number
     top_p?: number
-    thinkingEffort?: 'high' | 'max'
+    thinkingEffort?: ReasoningEffort
   },
   messages: AIChatCompletionMessage[],
   thinkingMode?: string,
@@ -383,17 +381,13 @@ export async function fetchNonStreamResponse(
     stream: false,
   }
 
-  if (thinkingMode === 'enabled') {
-    requestBody.reasoning_effort = config.thinkingEffort || 'high'
-    requestBody.reasoning = {
-      enabled: true,
-      effort: config.thinkingEffort || 'high',
-    }
-  }
+  if (thinkingMode) {
+    requestBody.thinking = { type: thinkingMode === 'off' ? 'disabled' : 'enabled' }
 
-  // DeepSeek 模型的 thinking 参数（仅在启用时发送）
-  if (thinkingMode === 'enabled') {
-    requestBody.thinking = { type: 'enabled' }
+    if (thinkingMode === 'high' || thinkingMode === 'xhigh') {
+      requestBody.reasoning_effort = thinkingMode
+      requestBody.reasoning = { effort: thinkingMode }
+    }
   }
 
   const response = await fetch(buildApiUrl(config.baseUrl), {

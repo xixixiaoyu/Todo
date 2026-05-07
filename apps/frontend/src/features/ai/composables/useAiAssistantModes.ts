@@ -1,20 +1,22 @@
 import { computed, type Ref } from 'vue'
 import {
-  aiThinkingMode,
-  saveAIThinkingMode,
+  aiThinkingLevel,
+  saveAIThinkingLevel,
   type AIConfig,
 } from '@/features/ai/composables/useAIConfig'
+import type { ThinkingMode } from '@/features/ai/composables/useAIConfig/types'
 import type { NovelGenre } from '@/features/ai/services/types'
 
 export function useAiAssistantModes(params: {
   config: Ref<AIConfig>
   updateConfig: (patch: Partial<AIConfig>) => void
 }) {
-  const isThinkingEnabled = computed(() => aiThinkingMode.value === 'enabled')
+  const isThinkingEnabled = computed(() => aiThinkingLevel.value !== 'off')
 
-  const toggleThinkingMode = () => {
-    const mode = aiThinkingMode.value === 'enabled' ? 'disabled' : 'enabled'
-    saveAIThinkingMode(mode)
+  const thinkingLevel = computed(() => aiThinkingLevel.value)
+
+  const setThinkingLevel = (level: ThinkingMode) => {
+    saveAIThinkingLevel(level)
   }
 
   const isTeachingEnabled = computed(() => params.config.value.assistantMode === 'teaching')
@@ -143,7 +145,8 @@ export function useAiAssistantModes(params: {
 
   return {
     isThinkingEnabled,
-    toggleThinkingMode,
+    thinkingLevel,
+    setThinkingLevel,
     isTeachingEnabled,
     toggleTeachingMode,
     isNovelEnabled,

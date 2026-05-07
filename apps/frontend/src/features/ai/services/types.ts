@@ -255,8 +255,8 @@ export interface AIRequestOptions {
   novelGenre?: NovelGenre | null
   novelTone?: string
   novelProtagonistHint?: string
-  thinkingMode?: 'enabled' | 'disabled'
-  thinkingEffort?: 'high' | 'max'
+  thinkingMode?: 'off' | 'auto' | 'high' | 'xhigh'
+  thinkingEffort?: 'off' | 'auto' | 'high' | 'xhigh'
   agentToolsEnabled?: boolean
   agentWorkspacePath?: string | null
   contextSummary?: string

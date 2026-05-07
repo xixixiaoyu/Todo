@@ -12,6 +12,7 @@ import {
   Languages,
 } from 'lucide-vue-next'
 import type { ParsedFile } from '@/composables/useFileParsing'
+import type { ThinkingMode } from '@/features/ai/composables/useAIConfig/types'
 import AiAssistantInputAttachments from '@/features/ai/components/AiAssistantInputAttachments.vue'
 import AiAssistantInputSlashCommands from '@/features/ai/components/AiAssistantInputSlashCommands.vue'
 import { AI_UPLOAD_ACCEPT } from '@/features/ai/constants/attachments'
@@ -21,7 +22,7 @@ const props = defineProps<{
   modelValue: string
   isImageGenerationEnabled: boolean
   isTodoAssistantEnabled: boolean
-  isThinkingEnabled: boolean
+  thinkingLevel: ThinkingMode
   isTeachingEnabled: boolean
   isNovelEnabled: boolean
   isTranslationEnabled: boolean
@@ -41,7 +42,7 @@ const emit = defineEmits<{
   (e: 'paste', event: ClipboardEvent): void
   (e: 'toggleTodo'): void
   (e: 'toggleImageGen'): void
-  (e: 'toggleThinking'): void
+  (e: 'update:thinkingLevel', level: ThinkingMode): void
   (e: 'toggleTeaching'): void
   (e: 'toggleNovel'): void
   (e: 'toggleTranslation'): void

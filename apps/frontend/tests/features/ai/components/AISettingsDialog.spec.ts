@@ -41,7 +41,7 @@ const mockConfig = ref<AIConfig>({
   model: 'test-model',
   systemPrompt: 'test-prompt',
   temperature: 0.7,
-  thinkingMode: 'disabled',
+  thinkingMode: 'off',
   thinkingEffort: 'high',
   todoAssistant: false,
   discussionMode: false,
@@ -189,7 +189,7 @@ describe('AISettingsDialog', () => {
       model: 'test-model',
       systemPrompt: 'test-prompt',
       temperature: 0.7,
-      thinkingMode: 'disabled',
+      thinkingMode: 'off',
       thinkingEffort: 'high',
       todoAssistant: false,
       discussionMode: false,
@@ -448,7 +448,7 @@ describe('AISettingsDialog', () => {
 
     const maxEffortButton = wrapper
       .findAll('button')
-      .find((button) => button.text().includes('ai.reasoningEffortMax'))
+      .find((button) => button.text().includes('ai.reasoningEffortXhigh'))
     expect(maxEffortButton).toBeTruthy()
     await maxEffortButton!.trigger('click')
     await wrapper.vm.$nextTick()

@@ -127,7 +127,7 @@ export function createParallelTaskOrchestrator(options: {
           temperature: config.temperature ?? 0.3,
           maxTokens: config.maxTokens ?? 4096,
           abortSignal: abortController.signal,
-          thinkingMode: 'enabled',
+          thinkingMode: 'auto',
         },
         () => {},
       )

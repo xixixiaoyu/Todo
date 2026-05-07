@@ -13,7 +13,7 @@ import {
 import { useChatState, novelBatchRemaining } from './useChatState'
 import { useChatMemory } from './useChatMemory'
 import { useChatHistory } from './useChatHistory'
-import { getAIThinkingMode, getAIConfig, getAISkills } from './useAIConfig'
+import { getAIThinkingLevel, getAIConfig, getAISkills } from './useAIConfig'
 import { useTodoStore } from '@/features/todo/stores/todo'
 import { useAuthStore } from '@/features/auth/stores/auth'
 import { createContextCompression } from './useChatActions.contextCompression'
@@ -345,7 +345,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
           },
           {
             ...options,
-            thinkingMode: getAIThinkingMode(),
+            thinkingMode: getAIThinkingLevel(),
             contextSummary,
             tools: aiTools.length > 0 ? aiTools : undefined,
             skills: skillContext.catalogSkills,
@@ -432,7 +432,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
           },
           {
             ...options,
-            thinkingMode: getAIThinkingMode(),
+            thinkingMode: getAIThinkingLevel(),
             tools: aiTools.length > 0 ? aiTools : undefined,
             contextSummary,
             skills: skillContext.catalogSkills,

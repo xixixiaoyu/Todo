@@ -44,8 +44,8 @@ const assistantInputRef = ref<InstanceType<typeof AiAssistantInput>>()
 const triggerFileUpload = () => assistantInputRef.value?.triggerFileUpload()
 
 const {
-  isThinkingEnabled,
-  toggleThinkingMode,
+  thinkingLevel,
+  setThinkingLevel,
   isTeachingEnabled,
   toggleTeachingMode,
   isNovelEnabled,
@@ -419,7 +419,7 @@ defineOptions({
             v-model:show-discussion-popover="showDiscussionPopover"
             :has-history="hasHistory"
             :is-generating="isGenerating"
-            :is-thinking-enabled="isThinkingEnabled"
+            :thinking-level="thinkingLevel"
             :is-teaching-enabled="isTeachingEnabled"
             :is-novel-enabled="isNovelEnabled"
             :is-todo-assistant-enabled="isTodoAssistantEnabled"
@@ -436,7 +436,7 @@ defineOptions({
             :total-attachments="selectedImages.length + parsedFiles.length"
             @new-chat="handleNewChat"
             @open-history="openHistory"
-            @toggle-thinking="toggleThinkingMode"
+            @update:thinking-level="setThinkingLevel"
             @toggle-teaching="toggleTeachingMode"
             @toggle-todo="toggleTodoAssistant"
             @toggle-discussion="toggleDiscussionMode"
@@ -460,7 +460,7 @@ defineOptions({
                 v-model="chatInput"
                 :is-image-generation-enabled="isImageGenerationEnabled"
                 :is-todo-assistant-enabled="isTodoAssistantEnabled"
-                :is-thinking-enabled="isThinkingEnabled"
+                :thinking-level="thinkingLevel"
                 :is-teaching-enabled="isTeachingEnabled"
                 :is-novel-enabled="isNovelEnabled"
                 :is-translation-enabled="isTranslationEnabled"
@@ -476,7 +476,7 @@ defineOptions({
                 @paste="handlePaste"
                 @toggle-todo="toggleTodoAssistant"
                 @toggle-image-gen="toggleImageGeneration"
-                @toggle-thinking="toggleThinkingMode"
+                @update:thinking-level="setThinkingLevel"
                 @toggle-teaching="toggleTeachingMode"
                 @toggle-novel="toggleNovelMode"
                 @toggle-translation="toggleTranslationMode"

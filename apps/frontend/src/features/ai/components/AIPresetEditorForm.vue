@@ -221,37 +221,32 @@ const title = computed(() => (props.isCreating ? t('ai.createPreset') : t('ai.ed
           :aria-label="t('ai.reasoningEffortLabel')"
         >
           <button
+            v-for="level in ['off', 'auto', 'high', 'xhigh'] as const"
+            :key="level"
             type="button"
             class="rounded-lg border px-3 py-2 text-left text-xs transition-all"
             :class="
-              form.thinkingEffort === 'high'
+              form.thinkingEffort === level
                 ? 'border-primary/50 bg-primary/10'
                 : 'border-border bg-muted/20 hover:border-primary/30'
             "
-            :aria-checked="form.thinkingEffort === 'high'"
+            :aria-checked="form.thinkingEffort === level"
             role="radio"
-            @click="form.thinkingEffort = 'high'"
+            @click="form.thinkingEffort = level"
           >
-            <p class="font-semibold text-foreground">{{ t('ai.reasoningEffortHigh') }}</p>
-            <p class="mt-0.5 text-[11px] text-muted-foreground">
-              {{ t('ai.reasoningEffortHighHint') }}
+            <p class="font-semibold text-foreground">
+              {{
+                t(
+                  `ai.reasoningEffort${level === 'off' ? 'Off' : level === 'auto' ? 'Auto' : level === 'high' ? 'High' : 'Xhigh'}`,
+                )
+              }}
             </p>
-          </button>
-          <button
-            type="button"
-            class="rounded-lg border px-3 py-2 text-left text-xs transition-all"
-            :class="
-              form.thinkingEffort === 'max'
-                ? 'border-primary/50 bg-primary/10'
-                : 'border-border bg-muted/20 hover:border-primary/30'
-            "
-            :aria-checked="form.thinkingEffort === 'max'"
-            role="radio"
-            @click="form.thinkingEffort = 'max'"
-          >
-            <p class="font-semibold text-foreground">{{ t('ai.reasoningEffortMax') }}</p>
             <p class="mt-0.5 text-[11px] text-muted-foreground">
-              {{ t('ai.reasoningEffortMaxHint') }}
+              {{
+                t(
+                  `ai.reasoningEffort${level === 'off' ? 'Off' : level === 'auto' ? 'Auto' : level === 'high' ? 'High' : 'Xhigh'}Hint`,
+                )
+              }}
             </p>
           </button>
         </div>

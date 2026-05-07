@@ -15,9 +15,9 @@ const utf8Encoder = new TextEncoder()
 const utf8Decoder = new TextDecoder()
 
 function normalizeReasoningEffort(value: unknown): ReasoningEffort | undefined {
-  if (value === 'max') return 'max'
-  if (value === 'high') return 'high'
-  return undefined
+  const VALID = new Set(['off', 'auto', 'high', 'xhigh'])
+  const s = typeof value === 'string' ? value.toLowerCase() : ''
+  return VALID.has(s) ? (s as ReasoningEffort) : undefined
 }
 
 export function encodeUtf8(content: string): Uint8Array {
@@ -488,7 +488,7 @@ export function isConfigMatchPreset(cfg: AIConfig, preset: AIPreset): boolean {
     preset.model === cfg.model &&
     preset.systemPrompt === cfg.systemPrompt &&
     Math.abs(preset.temperature - cfg.temperature) < 0.001 &&
-    (preset.thinkingEffort || 'high') === cfg.thinkingEffort &&
+    (preset.thinkingEffort || 'auto') === cfg.thinkingEffort &&
     isSkillSetMatched
   )
 }

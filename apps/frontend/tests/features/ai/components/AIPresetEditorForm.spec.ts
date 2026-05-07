@@ -43,12 +43,12 @@ describe('AIPresetEditorForm', () => {
       },
     })
 
-    const maxButton = wrapper
+    const xhighButton = wrapper
       .findAll('button')
-      .find((button) => button.text().includes('ai.reasoningEffortMax'))
-    expect(maxButton).toBeDefined()
-    await maxButton!.trigger('click')
-    expect(form.thinkingEffort).toBe('max')
+      .find((button) => button.text().includes('ai.reasoningEffortXhigh'))
+    expect(xhighButton).toBeDefined()
+    await xhighButton!.trigger('click')
+    expect(form.thinkingEffort).toBe('xhigh')
 
     const highButton = wrapper
       .findAll('button')

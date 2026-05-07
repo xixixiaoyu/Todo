@@ -1,6 +1,6 @@
-export type ThinkingMode = 'enabled' | 'disabled'
+export type ThinkingMode = 'off' | 'auto' | 'high' | 'xhigh'
 export type AssistantMode = 'default' | 'teaching' | 'novel' | 'translation'
-export type ReasoningEffort = 'high' | 'max'
+export type ReasoningEffort = 'off' | 'auto' | 'high' | 'xhigh'
 
 export type NovelGenre =
   | 'fantasy'
@@ -73,7 +73,6 @@ export type SkillArchivePayload = {
 export const STORAGE_KEY = 'ai-config'
 export const PRESETS_STORAGE_KEY = 'ai-presets'
 export const ACTIVE_PRESET_KEY = 'ai-active-preset'
-export const AI_THINKING_MODE_STORAGE_KEY = 'ai_thinking_mode'
 export const SKILLS_STORAGE_KEY = 'ai-skills'
 
 // Size limits

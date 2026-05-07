@@ -99,7 +99,7 @@ const isDuplicatePreset = computed(() => {
       preset.model === formData.value.model &&
       preset.systemPrompt === formData.value.systemPrompt &&
       preset.temperature === formData.value.temperature &&
-      (preset.thinkingEffort || 'high') === formData.value.thinkingEffort &&
+      (preset.thinkingEffort || 'auto') === formData.value.thinkingEffort &&
       preset.todoAssistant === formData.value.todoAssistant &&
       presetSkillIds.length === formSkillIds.length &&
       presetSkillIds.every((id, index) => id === formSkillIds[index])

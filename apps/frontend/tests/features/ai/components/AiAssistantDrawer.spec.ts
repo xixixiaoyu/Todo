@@ -121,7 +121,7 @@ const mockConfig = ref({
   systemPrompt: '',
   temperature: 0.7,
   thinkingEffort: 'high',
-  thinkingMode: 'disabled',
+  thinkingMode: 'off',
   todoAssistant: false,
   discussionMode: false,
   discussionModelIds: [],
@@ -144,8 +144,8 @@ vi.mock('@/features/ai/composables/useAIConfig', () => ({
     config: mockConfig,
     updateConfig: mockUpdateConfig,
   }),
-  aiThinkingMode: ref('disabled'),
-  saveAIThinkingMode: vi.fn(),
+  aiThinkingLevel: ref('off'),
+  saveAIThinkingLevel: vi.fn(),
 }))
 
 vi.mock('vue-i18n', () => ({

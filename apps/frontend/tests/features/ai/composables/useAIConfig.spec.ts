@@ -6,8 +6,8 @@ import { httpClient } from '@/api'
 import {
   useAIConfig,
   _resetAIConfig,
-  aiThinkingMode,
-  getAIThinkingMode,
+  aiThinkingLevel,
+  getAIThinkingLevel,
   syncSkillsFromServer,
   syncPresetsFromServer,
 } from '@/features/ai/composables/useAIConfig'
@@ -59,8 +59,8 @@ describe('useAIConfig - Core', () => {
         model: 'test-model',
         temperature: 0.7,
         systemPrompt: 'Test prompt',
-        thinkingMode: 'enabled' as const,
-        thinkingEffort: 'max' as const,
+        thinkingMode: 'auto' as const,
+        thinkingEffort: 'xhigh' as const,
         todoAssistant: true,
         discussionMode: true,
         discussionModelIds: ['1', '2'],
@@ -94,7 +94,7 @@ describe('useAIConfig - Core', () => {
       _resetAIConfig()
       const { config } = useAIConfig()
 
-      expect(config.value.thinkingEffort).toBe('high')
+      expect(config.value.thinkingEffort).toBe('auto')
     })
 
     it('should merge saved config with defaults', () => {
@@ -147,36 +147,30 @@ describe('useAIConfig - Core', () => {
     })
   })
 
-  describe('AI Thinking Mode', () => {
-    it('should initialize with default value (enabled)', () => {
-      expect(aiThinkingMode.value).toBe('enabled')
-      expect(getAIThinkingMode()).toBe('enabled')
+  describe('AI Thinking Level', () => {
+    it('should initialize with default value (auto)', () => {
+      expect(aiThinkingLevel.value).toBe('auto')
+      expect(getAIThinkingLevel()).toBe('auto')
     })
 
-    it('should load saved value from localStorage', () => {
-      localStorage.setItem('ai_thinking_mode', 'disabled')
+    it('should load saved value from config', () => {
+      localStorage.setItem('ai-config', JSON.stringify({ thinkingMode: 'high' }))
       _resetAIConfig()
-      expect(aiThinkingMode.value).toBe('disabled')
-    })
-
-    it('should persist value to localStorage when changed', async () => {
-      aiThinkingMode.value = 'disabled'
-      await nextTick()
-      expect(localStorage.getItem('ai_thinking_mode')).toBe('disabled')
+      expect(aiThinkingLevel.value).toBe('high')
     })
 
     it('should sync with config.thinkingMode', async () => {
       const { config, updateConfig } = useAIConfig()
 
-      // aiThinkingMode -> config
-      aiThinkingMode.value = 'disabled'
+      // aiThinkingLevel -> config
+      aiThinkingLevel.value = 'high'
       await nextTick()
-      expect(config.value.thinkingMode).toBe('disabled')
+      expect(config.value.thinkingMode).toBe('high')
 
-      // config -> aiThinkingMode
-      updateConfig({ thinkingMode: 'enabled' })
+      // config -> aiThinkingLevel
+      updateConfig({ thinkingMode: 'auto' })
       await nextTick()
-      expect(aiThinkingMode.value).toBe('enabled')
+      expect(aiThinkingLevel.value).toBe('auto')
     })
   })
 
@@ -456,14 +450,14 @@ describe('useAIConfig - Core', () => {
           model: 'newmodel',
           systemPrompt: 'newprompt',
           temperature: 0.7,
-          thinkingEffort: 'max',
+          thinkingEffort: 'xhigh',
           todoAssistant: true,
         },
       ]
 
       importPresets(JSON.stringify(importData))
 
-      expect(presets.value[0]?.thinkingEffort).toBe('max')
+      expect(presets.value[0]?.thinkingEffort).toBe('xhigh')
     })
   })
 
@@ -1197,7 +1191,7 @@ describe('useAIConfig - Core', () => {
           model: 'local-model',
           systemPrompt: '',
           temperature: 0.7,
-          thinkingEffort: 'max',
+          thinkingEffort: 'xhigh',
           todoAssistant: false,
           apiKey: 'sk-local-key',
           updatedAt: '2025-07-01T00:00:00.000Z',
@@ -1206,7 +1200,7 @@ describe('useAIConfig - Core', () => {
 
       await syncPresetsFromServer()
 
-      expect(presets.value[0]?.thinkingEffort).toBe('high')
+      expect(presets.value[0]?.thinkingEffort).toBe('auto')
     })
 
     it('should keep local data when local updatedAt is newer', async () => {

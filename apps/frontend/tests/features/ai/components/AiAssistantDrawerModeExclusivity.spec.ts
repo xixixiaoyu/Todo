@@ -87,7 +87,7 @@ const mockConfig = ref({
   model: '',
   temperature: 0.7,
   systemPrompt: '',
-  thinkingMode: 'disabled',
+  thinkingMode: 'off',
   thinkingEffort: 'high',
   todoAssistant: false,
   discussionMode: false,
@@ -111,8 +111,8 @@ vi.mock('@/features/ai/composables/useAIConfig', () => ({
     config: mockConfig,
     updateConfig: mockUpdateConfig,
   }),
-  aiThinkingMode: ref('disabled'),
-  saveAIThinkingMode: vi.fn(),
+  aiThinkingLevel: ref('off'),
+  saveAIThinkingLevel: vi.fn(),
 }))
 
 vi.mock('vue-i18n', async (importOriginal) => {
@@ -154,7 +154,7 @@ describe('AiAssistantDrawer Mode Exclusivity', () => {
       model: '',
       temperature: 0.7,
       systemPrompt: '',
-      thinkingMode: 'disabled',
+      thinkingMode: 'off',
       thinkingEffort: 'high',
       todoAssistant: false,
       discussionMode: false,

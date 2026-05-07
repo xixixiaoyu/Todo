@@ -6,8 +6,8 @@ import {
   migrateLegacySkillRuntime,
 } from '@/features/ai/services/aiService'
 import type { AISkill } from '@/features/ai/services/types'
-import type { AIConfig, AIPreset, AssistantMode, ReasoningEffort } from './types'
-import { AI_THINKING_MODE_STORAGE_KEY, STORAGE_KEY } from './types'
+import type { AIConfig, AIPreset, AssistantMode, ReasoningEffort, ThinkingMode } from './types'
+import { STORAGE_KEY } from './types'
 import {
   normalizeIdList,
   normalizeSkillAliases,
@@ -39,27 +39,22 @@ import type { AISkillSync, AIPresetSync } from '@lumina/shared'
 // ─── Thinking Mode ─────────────────────────────────────────────────
 
 /**
- * AI 思考模式状态
+ * AI 思考级别状态（从 AI config 中派生，保持独立 ref 便于工具栏绑定）
  */
-export const aiThinkingMode = ref<'enabled' | 'disabled'>(
-  (() => {
-    const raw = localStorage.getItem(AI_THINKING_MODE_STORAGE_KEY)
-    return raw === 'disabled' ? 'disabled' : 'enabled'
-  })(),
-)
+export const aiThinkingLevel = ref<ThinkingMode>('auto')
 
 /**
- * 获取 AI 思考模式
+ * 获取 AI 思考级别
  */
-export function getAIThinkingMode(): 'enabled' | 'disabled' {
-  return aiThinkingMode.value
+export function getAIThinkingLevel(): ThinkingMode {
+  return aiThinkingLevel.value
 }
 
 /**
- * 保存 AI 思考模式
+ * 保存 AI 思考级别
  */
-export function saveAIThinkingMode(mode: 'enabled' | 'disabled'): void {
-  aiThinkingMode.value = mode
+export function saveAIThinkingLevel(level: ThinkingMode): void {
+  aiThinkingLevel.value = level
 }
 
 // ─── Default Config ────────────────────────────────────────────────
@@ -71,8 +66,8 @@ const DEFAULT_CONFIG: AIConfig = {
   model: 'deepseek-chat',
   temperature: 0.6,
   systemPrompt: i18n.global.t('ai.defaultSystemPrompt'),
-  thinkingMode: aiThinkingMode.value,
-  thinkingEffort: 'high',
+  thinkingMode: 'auto' as ThinkingMode,
+  thinkingEffort: 'auto' as ReasoningEffort,
   todoAssistant: false,
   discussionMode: false,
   discussionModelIds: [],
@@ -92,8 +87,15 @@ const DEFAULT_CONFIG: AIConfig = {
   agentWorkspacePath: null,
 }
 
+const VALID_THINKING_LEVELS: Set<ThinkingMode> = new Set(['off', 'auto', 'high', 'xhigh'])
+
+function normalizeThinkingLevel(value: unknown): ThinkingMode {
+  const s = typeof value === 'string' ? value.toLowerCase() : ''
+  return VALID_THINKING_LEVELS.has(s as ThinkingMode) ? (s as ThinkingMode) : 'auto'
+}
+
 function normalizeReasoningEffort(value: unknown): ReasoningEffort {
-  return value === 'max' ? 'max' : 'high'
+  return normalizeThinkingLevel(value)
 }
 
 // ─── Load Config ───────────────────────────────────────────────────
@@ -106,6 +108,7 @@ function loadConfig(): AIConfig {
       return {
         ...DEFAULT_CONFIG,
         ...parsed,
+        thinkingMode: normalizeThinkingLevel(parsed.thinkingMode ?? parsed.thinking_mode ?? 'auto'),
         thinkingEffort: normalizeReasoningEffort(parsed.thinkingEffort),
         discussionModelIds: normalizeIdList(parsed.discussionModelIds),
         discussionPrimaryModelId:
@@ -138,11 +141,13 @@ const presets = ref<AIPreset[]>(loadPresets())
 const skills = shallowRef<AISkill[]>(loadSkills())
 const activePresetId = ref<string | null>(loadActivePresetId())
 
+// 从已加载的配置中同步思考级别
+aiThinkingLevel.value = config.value.thinkingMode
+
 // ─── Watchers ──────────────────────────────────────────────────────
 
-// 监听思考模式变化并同步
-watch(aiThinkingMode, (val) => {
-  localStorage.setItem(AI_THINKING_MODE_STORAGE_KEY, val)
+// 监听思考级别变化并同步 thinkingMode 到配置（thinkingEffort 由预设/设置独立管理）
+watch(aiThinkingLevel, (val) => {
   if (config.value.thinkingMode !== val) {
     config.value.thinkingMode = val
   }
@@ -151,8 +156,8 @@ watch(aiThinkingMode, (val) => {
 watch(
   () => config.value.thinkingMode,
   (val) => {
-    if (aiThinkingMode.value !== val) {
-      aiThinkingMode.value = val
+    if (aiThinkingLevel.value !== val) {
+      aiThinkingLevel.value = val
     }
   },
 )
@@ -213,9 +218,8 @@ watch(
  * 导出重置函数用于测试
  */
 export function _resetAIConfig() {
-  aiThinkingMode.value =
-    (localStorage.getItem(AI_THINKING_MODE_STORAGE_KEY) as 'enabled' | 'disabled') || 'enabled'
   config.value = loadConfig()
+  aiThinkingLevel.value = config.value.thinkingMode
   presets.value = loadPresets()
   skills.value = loadSkills()
   activePresetId.value = loadActivePresetId()
@@ -472,10 +476,13 @@ export function useAIConfig() {
           const systemPrompt = typeof raw.systemPrompt === 'string' ? raw.systemPrompt : ''
           const apiKey = typeof raw.apiKey === 'string' ? raw.apiKey : ''
           const temperature = typeof raw.temperature === 'number' ? raw.temperature : 0.6
-          const thinkingEffort =
-            raw.thinkingEffort === 'high' || raw.thinkingEffort === 'max'
-              ? raw.thinkingEffort
-              : undefined
+          const thinkingEffort = VALID_THINKING_LEVELS.has(
+            (typeof raw.thinkingEffort === 'string'
+              ? raw.thinkingEffort.toLowerCase()
+              : '') as ThinkingMode,
+          )
+            ? (raw.thinkingEffort as ThinkingMode)
+            : undefined
           return {
             id: generateId(),
             name,

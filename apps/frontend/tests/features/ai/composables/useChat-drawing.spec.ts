@@ -107,7 +107,7 @@ const mockConfig = ref({
   model: '',
   systemPrompt: '',
   temperature: 0.7,
-  thinkingMode: 'disabled',
+  thinkingMode: 'off',
   todoAssistant: false,
   enableImageGeneration: false,
   mcpEnabled: false,
@@ -119,7 +119,7 @@ const mockConfig = ref({
 
 vi.mock('@/features/ai/composables/useAIConfig', () => ({
   getAIConfig: vi.fn(() => mockConfig.value),
-  getAIThinkingMode: vi.fn(() => 'disabled'),
+  getAIThinkingLevel: vi.fn(() => 'off'),
   getAISkills: vi.fn(() => []),
 }))
 

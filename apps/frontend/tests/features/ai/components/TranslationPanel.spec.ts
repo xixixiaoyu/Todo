@@ -37,7 +37,7 @@ const DEFAULT_CONFIG = {
   model: 'test-model',
   temperature: 0.6,
   systemPrompt: '',
-  thinkingMode: 'disabled' as const,
+  thinkingMode: 'off' as const,
   thinkingEffort: 'high' as const,
   todoAssistant: false,
   discussionMode: false,

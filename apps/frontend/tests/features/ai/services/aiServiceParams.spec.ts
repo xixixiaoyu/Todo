@@ -84,7 +84,7 @@ describe('aiService - Request Parameters', () => {
       expect(requestBody).toHaveProperty('top_p', 0.8)
     })
 
-    it('should include reasoning effort when thinkingMode is enabled', async () => {
+    it('should include thinking but not reasoning_effort when thinkingMode is auto', async () => {
       const onChunk = vi.fn()
       const encoder = new TextEncoder()
 
@@ -106,17 +106,17 @@ describe('aiService - Request Parameters', () => {
         },
       } as unknown as Response)
 
-      await getAIStreamResponse([], onChunk, undefined, undefined, { thinkingMode: 'enabled' })
+      await getAIStreamResponse([], onChunk, undefined, undefined, { thinkingMode: 'auto' })
 
       expect(fetchMock).toHaveBeenCalledTimes(1)
       const callArgs = fetchMock.mock.calls[0]
       const requestBody = JSON.parse(callArgs[1]?.body as string)
 
-      expect(requestBody.reasoning_effort).toBe('high')
-      expect(requestBody.reasoning).toEqual({ enabled: true, effort: 'high' })
+      expect(requestBody.thinking).toEqual({ type: 'enabled' })
+      expect(requestBody.reasoning_effort).toBeUndefined()
     })
 
-    it('should allow overriding reasoning effort to max', async () => {
+    it('should include reasoning_effort with high level', async () => {
       const onChunk = vi.fn()
       const encoder = new TextEncoder()
 
@@ -139,16 +139,16 @@ describe('aiService - Request Parameters', () => {
       } as unknown as Response)
 
       await getAIStreamResponse([], onChunk, undefined, undefined, {
-        thinkingMode: 'enabled',
-        thinkingEffort: 'max',
+        thinkingMode: 'high',
+        thinkingEffort: 'high',
       })
 
       expect(fetchMock).toHaveBeenCalledTimes(1)
       const callArgs = fetchMock.mock.calls[0]
       const requestBody = JSON.parse(callArgs[1]?.body as string)
 
-      expect(requestBody.reasoning_effort).toBe('max')
-      expect(requestBody.reasoning).toEqual({ enabled: true, effort: 'max' })
+      expect(requestBody.reasoning_effort).toBe('high')
+      expect(requestBody.reasoning).toEqual({ effort: 'high' })
     })
 
     it('should preserve tool calls while stripping assistant reasoning fields', async () => {
@@ -195,7 +195,7 @@ describe('aiService - Request Parameters', () => {
         onChunk,
         undefined,
         undefined,
-        { thinkingMode: 'enabled' },
+        { thinkingMode: 'auto' },
       )
 
       expect(fetchMock).toHaveBeenCalledTimes(1)

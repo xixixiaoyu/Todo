@@ -181,7 +181,7 @@ describe('aiService - Discussion Config & Prompt', () => {
     setupDiscussionConfig({
       discussionMode: true,
       discussionModelIds: ['p1'],
-      thinkingMode: 'enabled',
+      thinkingMode: 'auto',
     })
 
     fetchMock.mockImplementation(async (_input: string | URL | Request, init?: RequestInit) => {

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { nextTick } from 'vue'
-import { useAIConfig, _resetAIConfig, aiThinkingMode } from '@/features/ai/composables/useAIConfig'
+import { useAIConfig, _resetAIConfig, aiThinkingLevel } from '@/features/ai/composables/useAIConfig'
 
 describe('useAIConfig - Presets', () => {
   beforeEach(() => {
@@ -364,7 +364,7 @@ describe('useAIConfig - Presets', () => {
         model: 'defaults-model',
         temperature: 0.9,
         systemPrompt: 'Defaults prompt',
-        thinkingEffort: 'high',
+        thinkingEffort: 'auto',
         todoAssistant: true,
         skillIds: [],
         novelGenre: null,
@@ -390,8 +390,8 @@ describe('useAIConfig - Presets', () => {
       await nextTick()
       expect(activePresetId.value).toBe(preset.id)
 
-      // Toggle thinking mode via aiThinkingMode ref (similar to toggleThinkingMode in Drawer)
-      aiThinkingMode.value = aiThinkingMode.value === 'enabled' ? 'disabled' : 'enabled'
+      // Toggle thinking mode via aiThinkingLevel ref (similar to toggleThinkingMode in Drawer)
+      aiThinkingLevel.value = aiThinkingLevel.value === 'auto' ? 'off' : 'auto'
       await nextTick()
       await nextTick() // Second tick for the config watcher
 
