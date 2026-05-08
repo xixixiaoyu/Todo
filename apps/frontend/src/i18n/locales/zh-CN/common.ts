@@ -86,7 +86,6 @@ export const common = {
   success: '操作成功',
   nav: {
     todo: '待办',
-    teaching: '学习',
   },
   settings: '设置',
   versionUpdated: '应用已更新，请刷新页面以加载最新版本',

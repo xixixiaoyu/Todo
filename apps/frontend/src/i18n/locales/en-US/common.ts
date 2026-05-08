@@ -86,7 +86,6 @@ export const common = {
   success: 'Success',
   nav: {
     todo: 'Todo',
-    teaching: 'Learn',
   },
   settings: 'Settings',
   versionUpdated: 'App updated. Please refresh the page to load the latest version.',

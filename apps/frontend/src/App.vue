@@ -1,34 +1,15 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
-import { RouterView, useRoute } from 'vue-router'
+import { onMounted } from 'vue'
+import { RouterView } from 'vue-router'
 import { useTodoStore } from '@/features/todo/stores/todo'
 import ToastProvider from '@/components/ui/ToastProvider.vue'
 import AIAnonymousMigrationDialog from '@/features/ai/components/AIAnonymousMigrationDialog.vue'
-import BottomTabBar from '@/components/BottomTabBar.vue'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { nativeService } from '@/services/native'
 import { useTheme } from '@/composables/useTheme'
 
 // 初始化主题
 useTheme()
-
-const route = useRoute()
-
-const showTabBar = computed(() => {
-  const path = route.path
-  // 隐藏导航栏的路由：认证页面、设置、404
-  const hiddenPaths = [
-    '/login',
-    '/register',
-    '/forgot-password',
-    '/reset-password',
-    '/settings/mcp',
-  ]
-  if (hiddenPaths.some((p) => path.startsWith(p))) return false
-  // 404 catch-all 也不显示
-  if (path !== '/' && !path.startsWith('/teaching')) return false
-  return true
-})
 
 const todoStore = useTodoStore()
 
@@ -68,8 +49,6 @@ const handleDblClick = () => {
       <main class="flex-1 min-h-0 relative">
         <RouterView />
       </main>
-
-      <BottomTabBar v-if="showTabBar && !todoStore.isAppFullscreen" />
 
       <ToastProvider />
       <AIAnonymousMigrationDialog />

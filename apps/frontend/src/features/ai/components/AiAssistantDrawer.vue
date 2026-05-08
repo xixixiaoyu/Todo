@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useWindowSize, onKeyStroke } from '@vueuse/core'
-import { useRouter } from 'vue-router'
 import ResizableDrawer from '@/components/ResizableDrawer.vue'
 import ChatMessageList from '@/features/ai/components/ChatMessageList.vue'
 import AISettingsDialog from '@/features/ai/components/AISettingsDialog.vue'
@@ -29,10 +28,9 @@ import { useSidecar } from '@/composables/useSidecar'
 import { useI18n } from 'vue-i18n'
 import { useResizable } from '@/composables/useResizable'
 import { useToast } from '@/composables/useToast'
-import { AlertCircle, X, Copy, Check, GraduationCap } from 'lucide-vue-next'
+import { AlertCircle, X, Copy, Check } from 'lucide-vue-next'
 
 const { t } = useI18n()
-const router = useRouter()
 const { success: showToast } = useToast()
 const modelValue = defineModel<boolean>({ required: true })
 
@@ -144,9 +142,6 @@ const copyError = async () => {
 
 const todoStore = useTodoStore()
 
-function navigateToTeachingDashboard() {
-  void router.push('/teaching')
-}
 const isMaximized = computed({
   get: () => todoStore.isMaximized,
   set: (val) => todoStore.setMaximized(val),
@@ -316,23 +311,6 @@ defineOptions({
 
           <!-- 非翻译模式：保持原有内容 -->
           <template v-else>
-            <!-- 教学模式：学习仪表盘入口 -->
-            <div
-              v-if="isTeachingEnabled"
-              class="mx-4 mt-3 flex items-center gap-2 rounded-xl border border-primary/15 bg-primary/5 px-3 py-2"
-            >
-              <GraduationCap :size="13" class="text-primary/60 shrink-0" />
-              <span class="flex-1 truncate text-xs font-medium text-foreground/80">
-                {{ t('ai.teachingMode') }}
-              </span>
-              <button
-                type="button"
-                class="shrink-0 rounded-lg px-2 py-1 text-[10px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                @click="navigateToTeachingDashboard"
-              >
-                {{ t('ai.teachingDashboard') }}
-              </button>
-            </div>
             <!-- Agent 工作区（有消息时显示精简条） -->
             <AgentWorkspaceSelector
               v-if="isAgentEnabled && messages.length > 0"

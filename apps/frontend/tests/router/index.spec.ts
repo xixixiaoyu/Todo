@@ -26,9 +26,6 @@ vi.mock('@/views/error/NotFoundView.vue', () => ({
 vi.mock('@/features/mcp/views/McpSettingsView.vue', () => ({
   default: { name: 'McpSettingsView', template: '<div></div>' },
 }))
-vi.mock('@/features/teaching/views/TeachingDashboardView.vue', () => ({
-  default: { name: 'TeachingDashboardView', template: '<div></div>' },
-}))
 
 describe('Router Title', () => {
   beforeEach(() => {
@@ -68,33 +65,33 @@ describe('Router Auth Guard', () => {
     localStorage.clear()
   })
 
-  it('未登录访问 /teaching 应携带完整原路径作为 redirect', async () => {
+  it('未登录访问 /settings/mcp 应携带完整原路径作为 redirect', async () => {
     const auth = useAuthStore()
     auth.token = null
 
-    await router.push('/teaching')
+    await router.push('/settings/mcp')
 
     expect(router.currentRoute.value.path).toBe('/login')
-    expect(router.currentRoute.value.query.redirect).toBe('/teaching')
+    expect(router.currentRoute.value.query.redirect).toBe('/settings/mcp')
   })
 
   it('未登录访问其他受保护路由也应被拦截', async () => {
     const auth = useAuthStore()
     auth.token = null
 
-    await router.push('/teaching')
+    await router.push('/settings/mcp')
 
     expect(router.currentRoute.value.path).toBe('/login')
-    expect(router.currentRoute.value.query.redirect).toBe('/teaching')
+    expect(router.currentRoute.value.query.redirect).toBe('/settings/mcp')
   })
 
   it('已登录访问受保护路由应正常进入', async () => {
     const auth = useAuthStore()
     auth.token = 'fake-jwt-token'
 
-    await router.push('/teaching')
+    await router.push('/settings/mcp')
 
-    expect(router.currentRoute.value.path).toBe('/teaching')
+    expect(router.currentRoute.value.path).toBe('/settings/mcp')
   })
 
   it('Todo 主页（/）未登录也能访问（匿名模式）', async () => {

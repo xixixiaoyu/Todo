@@ -48,12 +48,6 @@ const router = createRouter({
       meta: { title: 'mcp.settings.title', requiresAuth: true },
     },
     {
-      path: '/teaching',
-      name: 'teaching-dashboard',
-      component: () => import('@/features/teaching/views/TeachingDashboardView.vue'),
-      meta: { title: 'ai.teachingDashboard', requiresAuth: true },
-    },
-    {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: () => import('@/views/error/NotFoundView.vue'),
