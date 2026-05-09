@@ -54,6 +54,7 @@ apps/backend/src/generated/
 .eslintcache
 .eslintcache-fast
 .eslintcache-strict
+.oxlintcache
 apps/frontend/package.json.md5
 
 # Capacitor

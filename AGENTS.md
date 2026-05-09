@@ -12,9 +12,28 @@
 
 Lumina（简思）是基于 **NestJS 11（Fastify） + Vue 3.5（Vite） + Three.js** 的全栈 Todo 应用，采用 **pnpm Monorepo + Turborepo** 编排。开发环境默认 `pnpm docker:dev`。
 
+### 1.1 工具链
+
+| 环节 | 工具 | 备注 |
+|------|------|------|
+| Runtime | **Bun 1.3+** | TypeScript 原生执行，替代 tsx / ts-node / cross-env |
+| Package 管理 | pnpm 9.15.0 | workspace + 依赖解析 |
+| Monorepo 编排 | Turbo 2.7 | 任务缓存与并行 |
+| Lint | **oxlint** | ESLint 兼容，保留 `pnpm lint:eslint` 作为 fallback |
+| Format | **oxfmt** | Prettier 兼容，配置自动迁移自 `.prettierrc` |
+| Type-check (backend/shared/sidecar) | **tsgo** | Bun 原生 tsc 替代，3-5x 提速 |
+| Type-check (frontend) | **vue-tsc** | tsgo 不支持 Vue SFC |
+| Build (shared/sidecar) | tsup | esbuild 打包 |
+| Build (backend) | NestJS CLI | |
+| Build (frontend) | Vite | |
+| Test | Vitest + Happy DOM | bun test 暂不兼容 vue-test-utils |
+
+### 1.2 环境要求
+
 | 工具 | 版本要求 |
 |------|---------|
-| Node | `>= 20.19.0`（推荐 corepack） |
+| Bun | `>= 1.3.0`（TypeScript 原生执行） |
+| Node | `>= 20.19.0`（NestJS CLI / Turbo / Vitest 仍需 Node） |
 | pnpm | `>= 9.15.0`（仓库锁定 `9.15.0`） |
 
 ---
@@ -25,6 +44,7 @@ Lumina（简思）是基于 **NestJS 11（Fastify） + Vue 3.5（Vite） + Three
 apps/backend/     # NestJS 后端 — 领域逻辑、鉴权、持久化、队列、实时通信
 apps/frontend/    # Vue 3 前端 — 界面/交互、状态管理、请求编排、动效
 apps/wails/       # Wails（Go）桌面壳 — 系统级能力（托盘、快捷键、文件、窗口）
+apps/sidecar/     # Hono 旁路服务 — MCP 集成、文件操作、Shell 代理
 packages/shared/  # 共享契约 — Zod Schema、DTO、工具函数
 ```
 
@@ -41,6 +61,7 @@ packages/shared/  # 共享契约 — Zod Schema、DTO、工具函数
 | `packages/shared` | 无外部依赖 | 前端/后端实现、`window`/`document`、`process.env` 业务分支、模块顶层副作用 |
 | `apps/frontend` | `@lumina/shared` + 自身模块 | 后端私有实现 |
 | `apps/backend` | `@lumina/shared` + 自身模块 | 前端私有实现 |
+| `apps/sidecar` | `@lumina/shared` + 自身模块 | 前端/后端私有实现 |
 | `apps/wails` | 原生能力 + 桥接 | 业务规则 |
 
 ---
@@ -61,6 +82,8 @@ packages/shared/  # 共享契约 — Zod Schema、DTO、工具函数
 ### 3.2 代码风格
 
 - 2 空格缩进、单引号、无分号；TypeScript 严格类型，禁止 `any`，优先 `interface`
+- 格式化由 **oxfmt**（`.oxfmtrc.json`）统一执行，提交前 `pnpm format` 自动处理
+- Lint 由 **oxlint**（`.oxlintrc.json`）统一执行，配置覆盖 TypeScript / Vue / import / unicorn / vitest 规则
 - 导入约定：
 
 ```ts
@@ -78,6 +101,7 @@ import { cn } from '@/lib/utils'
 - 不引入泄露密钥/隐私的日志与代码；不在仓库内写入任何密钥
 - 变更完成后必须通过 `pnpm ci:check` + `pnpm test`
 - 破坏性清理命令（如 `pnpm docker:prune`）仅在明确要求时执行
+- 脚本中不再使用 `cross-env` 或 `NODE_OPTIONS` — Bun 跨平台原生处理环境变量，Node 工具直接调用即可
 
 ### 3.4 建议规则（SHOULD）
 
@@ -123,6 +147,7 @@ import { cn } from '@/lib/utils'
 - **实时**：通过 `EventsGateway` 广播，不在业务层散落 Socket 逻辑
 - **队列**：BullMQ + Redis，耗时/可重试工作入队，不阻塞请求
 - **日志**：只打印排障必要信息，禁止输出 token、cookie、验证码等敏感数据
+- **开发**：`bun --watch src/main.ts` 原生 TypeScript 热重载，无需 tsx/ts-node
 
 ### 4.5 国际化（i18n）
 
@@ -166,6 +191,7 @@ type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse
 | 前端 | Vitest + Happy DOM + `@vue/test-utils` | `apps/frontend/tests/` |
 | 后端 | Vitest + Node + `@nestjs/testing` | `apps/backend/tests/`（配置 `vitest.config.mts`） |
 | 共享包 | Vitest + Node | `packages/shared/src/**/*.spec.ts` |
+| Sidecar | Vitest + Node | `apps/sidecar/tests/` |
 
 - 覆盖率：`@vitest/coverage-v8`，输出 `text/json/html`
 - 运行单文件：`pnpm --filter <package> test -- <相对包目录的路径>`
@@ -177,16 +203,25 @@ type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse
 
 ```bash
 # 研发
-pnpm dev                      # 本地开发
+pnpm dev                      # 本地开发（Bun + Turbo）
 pnpm docker:dev               # Docker 全栈开发
 
 # 质量门禁（提交前必须通过）
-pnpm ci:check
-pnpm test
+pnpm ci:check                 # oxfmt + oxlint + tsgo/vue-tsc
+pnpm test                     # 全量 vitest
 
-# 辅助
-pnpm lint / lint:strict       # Lint
-pnpm format / format:check    # 格式化
+# Lint / Format
+pnpm lint                     # oxlint 快速检查
+pnpm lint:strict              # oxlint 严格模式（warning → error）
+pnpm lint:fix                 # oxlint 自动修复
+pnpm lint:eslint              # ESLint fallback（规则覆盖更全面时使用）
+pnpm format                   # oxfmt 格式化
+pnpm format:check             # oxfmt 检查（CI 用）
+
+# 类型检查
+pnpm type-check               # tsgo + vue-tsc（全量）
+
+# 测试
 pnpm test:watch / test:coverage
 
 # 数据库
@@ -223,3 +258,4 @@ pnpm docker:prune
 - [ ] 验证 API 响应结构与错误语义
 - [ ] 质量门禁通过（`ci:check` / `test`）
 - [ ] 未引入敏感信息日志与密钥
+- [ ] 脚本未使用 `cross-env` / `NODE_OPTIONS` — Bun 跨平台原生处理

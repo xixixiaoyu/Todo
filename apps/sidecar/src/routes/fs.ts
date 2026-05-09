@@ -1,12 +1,5 @@
 import { Hono } from 'hono'
-import {
-  readFileSync,
-  writeFileSync,
-  mkdirSync,
-  readdirSync,
-  statSync,
-  existsSync,
-} from 'node:fs'
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, statSync, existsSync } from 'node:fs'
 import { join, resolve, dirname, relative, extname } from 'node:path'
 import { ValidationError } from '../server/errors'
 import { assertPathAllowed } from '../security/workspace-guard'
@@ -61,11 +54,17 @@ export function createFsRoutes(
     const content = readFileSync(absPath, 'utf-8')
     const lines = content.split('\n')
 
-    const startLine = typeof body.startLine === 'number' ? Math.max(1, Math.floor(body.startLine)) : 1
-    const endLine = typeof body.endLine === 'number' ? Math.min(lines.length, Math.floor(body.endLine)) : lines.length
+    const startLine =
+      typeof body.startLine === 'number' ? Math.max(1, Math.floor(body.startLine)) : 1
+    const endLine =
+      typeof body.endLine === 'number'
+        ? Math.min(lines.length, Math.floor(body.endLine))
+        : lines.length
 
     const selected = lines.slice(startLine - 1, endLine)
-    const numbered = selected.map((line, i) => `${(startLine + i).toString().padStart(4, ' ')}| ${line}`).join('\n')
+    const numbered = selected
+      .map((line, i) => `${(startLine + i).toString().padStart(4, ' ')}| ${line}`)
+      .join('\n')
 
     return c.json({
       success: true,
@@ -84,7 +83,8 @@ export function createFsRoutes(
     const filePath = typeof body.filePath === 'string' ? body.filePath : ''
 
     if (!filePath) throw new ValidationError('filePath is required')
-    if (body.content === undefined || body.content === null) throw new ValidationError('content is required')
+    if (body.content === undefined || body.content === null)
+      throw new ValidationError('content is required')
 
     const content: string = body.content
 
@@ -223,7 +223,10 @@ export function createFsRoutes(
     }
 
     const extensions = fileTypes
-      ? fileTypes.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean)
+      ? fileTypes
+          .split(',')
+          .map((s: string) => s.trim().toLowerCase())
+          .filter(Boolean)
       : []
 
     const matches: Array<{ file: string; line: number; content: string }> = []

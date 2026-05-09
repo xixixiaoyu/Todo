@@ -47,12 +47,15 @@ export function createBashRoutes(workspaceStore: WorkspaceStore): Hono {
 
     const blockReason = isBlockedCommand(command)
     if (blockReason) {
-      return c.json({
-        success: false,
-        data: null,
-        message: blockReason,
-        timestamp: new Date().toISOString(),
-      }, 400)
+      return c.json(
+        {
+          success: false,
+          data: null,
+          message: blockReason,
+          timestamp: new Date().toISOString(),
+        },
+        400,
+      )
     }
 
     const roots = await workspaceStore.getRoots()
@@ -95,31 +98,36 @@ export function createBashRoutes(workspaceStore: WorkspaceStore): Hono {
     return new Promise((resolveCb) => {
       exec(command, options, (error, stdout, stderr) => {
         if (error && error.killed) {
-          resolveCb(c.json({
-            success: false,
-            data: {
-              stdout: stdout?.slice(0, MAX_OUTPUT_SIZE) || '',
-              stderr: `Command timed out after ${timeout}ms`,
-              exitCode: error.code ?? -1,
-            },
-            message: `Command timed out after ${timeout}ms`,
-            timestamp: new Date().toISOString(),
-          }))
+          resolveCb(
+            c.json({
+              success: false,
+              data: {
+                stdout: stdout?.slice(0, MAX_OUTPUT_SIZE) || '',
+                stderr: `Command timed out after ${timeout}ms`,
+                exitCode: error.code ?? -1,
+              },
+              message: `Command timed out after ${timeout}ms`,
+              timestamp: new Date().toISOString(),
+            }) as unknown as void,
+          )
           return
         }
 
         const out = stdout?.slice(0, MAX_OUTPUT_SIZE) || ''
         const err = stderr?.slice(0, MAX_OUTPUT_SIZE) || ''
 
-        resolveCb(c.json({
-          success: true,
-          data: {
-            stdout: out,
-            stderr: err,
-            exitCode: error?.code ?? 0,
-          },
-          timestamp: new Date().toISOString(),
-        }))
+        resolveCb(
+          c.json({
+            success: true,
+            data: {
+              stdout: out,
+              stderr: err,
+              exitCode: error?.code ?? 0,
+            },
+            timestamp: new Date().toISOString(),
+          }) as unknown as void,
+        )
+        return
       })
     })
   })

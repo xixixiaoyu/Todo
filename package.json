@@ -29,26 +29,28 @@
     "pnpm": ">=9.15.0"
   },
   "scripts": {
-    "dev": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run dev --filter=@lumina/shared --filter=@lumina/backend --filter=@lumina/frontend",
-    "dev:backend": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run dev --filter=@lumina/shared --filter=@lumina/backend",
-    "dev:frontend": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run dev --filter=@lumina/shared --filter=@lumina/frontend",
-    "dev:all": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run dev",
-    "build": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run build",
-    "build:ci": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run build --concurrency=50%",
-    "type-check": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run type-check --concurrency=2",
-    "type-check:watch": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run type-check:watch --filter=@lumina/shared --filter=@lumina/backend --filter=@lumina/frontend",
-    "lint": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run lint",
-    "lint:strict": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run lint:strict",
-    "lint:fix": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run lint -- --fix --cache",
-    "test": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run test",
-    "ci:check": "pnpm format:check && cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run lint:strict type-check --concurrency=50%",
-    "ci:test": "cross-env NODE_OPTIONS='--max-old-space-size=8192' turbo run test --concurrency=50%",
+    "dev": "turbo run dev --filter=@lumina/shared --filter=@lumina/backend --filter=@lumina/frontend",
+    "dev:backend": "turbo run dev --filter=@lumina/shared --filter=@lumina/backend",
+    "dev:frontend": "turbo run dev --filter=@lumina/shared --filter=@lumina/frontend",
+    "dev:all": "turbo run dev",
+    "build": "turbo run build",
+    "build:ci": "turbo run build --concurrency=50%",
+    "type-check": "turbo run type-check --concurrency=2",
+    "type-check:watch": "turbo run type-check:watch --filter=@lumina/shared --filter=@lumina/backend --filter=@lumina/frontend",
+    "lint": "pnpm exec oxlint --config .oxlintrc.json",
+    "lint:eslint": "turbo run lint",
+    "lint:eslint:strict": "turbo run lint:strict",
+    "lint:strict": "pnpm exec oxlint --config .oxlintrc.json --deny-warnings",
+    "lint:fix": "pnpm exec oxlint --config .oxlintrc.json --fix",
+    "test": "turbo run test",
+    "ci:check": "pnpm exec oxfmt --check && pnpm exec oxlint --config .oxlintrc.json --deny-warnings && turbo run type-check --filter=@lumina/backend --filter=@lumina/frontend --filter=@lumina/sidecar --filter=@lumina/shared --concurrency=50%",
+    "ci:test": "turbo run test --concurrency=50%",
     "ci:all": "pnpm ci:check && pnpm ci:test && pnpm security-audit",
     "test:watch": "turbo run test:watch",
     "test:coverage": "turbo run test:coverage",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "security-audit": "node scripts/security-audit.js",
+    "format": "pnpm exec oxfmt --write",
+    "format:check": "pnpm exec oxfmt --check",
+    "security-audit": "bun scripts/security-audit.js",
     "clean": "turbo run clean",
     "db:generate": "pnpm --filter @lumina/backend prisma:generate",
     "db:push": "pnpm --filter @lumina/backend prisma:push",
@@ -90,14 +92,16 @@
   },
   "devDependencies": {
     "@eslint/js": "9.39.2",
+    "@typescript/native-preview": "7.0.0-dev.20260421.2",
     "@vitest/coverage-v8": "4.1.0",
-    "cross-env": "10.1.0",
     "eslint": "9.39.2",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "5.5.4",
     "eslint-plugin-vue": "10.6.2",
     "husky": "9.1.7",
     "lint-staged": "16.2.7",
+    "oxfmt": "0.48.0",
+    "oxlint": "1.63.0",
     "prettier": "3.7.4",
     "turbo": "2.7.2",
     "typescript": "5.9.3",
@@ -105,20 +109,12 @@
     "vitest": "4.1.0"
   },
   "lint-staged": {
-    "apps/frontend/**/*.{ts,tsx,vue}": [
-      "cross-env NODE_OPTIONS='--max-old-space-size=8192' eslint --fix --cache --cache-location apps/frontend/.eslintcache-fast --cache-strategy content --config apps/frontend/eslint.config.mjs",
-      "prettier --write"
-    ],
-    "apps/backend/**/*.ts": [
-      "cross-env NODE_OPTIONS='--max-old-space-size=8192' eslint --fix --cache --cache-location apps/backend/.eslintcache-fast --cache-strategy content --config apps/backend/eslint.config.mjs",
-      "prettier --write"
-    ],
-    "packages/shared/**/*.ts": [
-      "cross-env NODE_OPTIONS='--max-old-space-size=8192' eslint --fix --cache --cache-location packages/shared/.eslintcache-fast --cache-strategy content --config packages/shared/eslint.config.mjs",
-      "prettier --write"
+    "**/*.{ts,tsx,vue,mts,cts}": [
+      "oxlint --config .oxlintrc.json --fix",
+      "oxfmt --write"
     ],
     "**/*.{json,css,scss,html,yml,yaml,md}": [
-      "prettier --write"
+      "oxfmt --write"
     ]
   },
   "pnpm": {

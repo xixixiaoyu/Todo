@@ -1,0 +1,69 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["import", "typescript", "unicorn", "vue", "vitest"],
+  "env": {
+    "browser": false,
+    "node": true,
+    "es2022": true
+  },
+  "rules": {
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "typescript/no-explicit-any": "error",
+    "import/no-cycle": "off",
+    "vitest/require-mock-type-parameters": "off",
+    "vitest/no-conditional-expect": "off",
+    "vitest/expect-expect": "off",
+    "vitest/require-to-throw-message": "off",
+    "unicorn/no-useless-fallback-in-spread": "off",
+    "unicorn/no-useless-spread": "off"
+  },
+  "overrides": [
+    {
+      "files": ["apps/backend/**/*.ts", "apps/backend/**/*.mts"],
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    {
+      "files": ["apps/sidecar/**/*.ts", "apps/sidecar/**/*.mts"],
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    {
+      "files": ["**/*.test.ts", "**/*.spec.ts", "**/*.test.mts", "**/*.spec.mts"],
+      "rules": {
+        "typescript/no-explicit-any": "off",
+        "no-console": "off"
+      }
+    },
+    {
+      "files": ["apps/frontend/src/features/ai/services/utils/systemPrompts.ts"],
+      "rules": {
+        "no-control-regex": "off"
+      }
+    },
+    {
+      "files": ["scripts/**/*.js", "scripts/**/*.mjs"],
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    {
+      "files": [
+        "**/*.config.ts",
+        "**/*.config.mts",
+        "**/*.config.mjs",
+        "**/tsup.config.ts",
+        "**/vitest.config.mts",
+        "**/vite.config.mts",
+        "**/capacitor.config.ts",
+        "**/pwa-assets.config.ts"
+      ],
+      "rules": {
+        "typescript/no-explicit-any": "off",
+        "typescript/no-misused-promises": "off"
+      }
+    }
+  ]
+}

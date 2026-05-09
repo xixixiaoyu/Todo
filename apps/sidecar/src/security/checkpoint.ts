@@ -1,16 +1,57 @@
-import { mkdirSync, readdirSync, readFileSync, writeFileSync, renameSync, unlinkSync, statSync } from 'node:fs'
+import {
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+  renameSync,
+  unlinkSync,
+  statSync,
+} from 'node:fs'
 import { join, dirname, extname } from 'node:path'
 import { homedir } from 'node:os'
 import { randomBytes } from 'node:crypto'
 
 const BINARY_EXTENSIONS = new Set([
-  '.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.ico', '.svg',
-  '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
-  '.zip', '.tar', '.gz', '.bz2', '.7z', '.rar',
-  '.exe', '.dll', '.so', '.dylib', '.wasm',
-  '.mp3', '.mp4', '.wav', '.avi', '.mov', '.mkv', '.flac',
-  '.ttf', '.otf', '.woff', '.woff2',
-  '.db', '.sqlite', '.sqlite3',
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.gif',
+  '.webp',
+  '.bmp',
+  '.ico',
+  '.svg',
+  '.pdf',
+  '.doc',
+  '.docx',
+  '.xls',
+  '.xlsx',
+  '.ppt',
+  '.pptx',
+  '.zip',
+  '.tar',
+  '.gz',
+  '.bz2',
+  '.7z',
+  '.rar',
+  '.exe',
+  '.dll',
+  '.so',
+  '.dylib',
+  '.wasm',
+  '.mp3',
+  '.mp4',
+  '.wav',
+  '.avi',
+  '.mov',
+  '.mkv',
+  '.flac',
+  '.ttf',
+  '.otf',
+  '.woff',
+  '.woff2',
+  '.db',
+  '.sqlite',
+  '.sqlite3',
 ])
 
 const MAX_FILE_SIZE_KB = 512
@@ -24,7 +65,11 @@ function getDefaultCheckpointsDir(): string {
     case 'win32':
       return join(process.env.APPDATA || join(home, 'AppData', 'Roaming'), 'Lumina', 'checkpoints')
     default:
-      return join(process.env.XDG_DATA_HOME || join(home, '.local', 'share'), 'Lumina', 'checkpoints')
+      return join(
+        process.env.XDG_DATA_HOME || join(home, '.local', 'share'),
+        'Lumina',
+        'checkpoints',
+      )
   }
 }
 

@@ -26,16 +26,16 @@
     "dist"
   ],
   "scripts": {
-    "build": "cross-env NODE_OPTIONS='--max-old-space-size=8192' tsup",
-    "type-check": "cross-env NODE_OPTIONS='--max-old-space-size=8192' tsc --noEmit",
-    "type-check:watch": "cross-env NODE_OPTIONS='--max-old-space-size=8192' tsc --noEmit --watch --preserveWatchOutput",
-    "dev": "cross-env NODE_OPTIONS='--max-old-space-size=8192' tsup --watch",
-    "test": "cross-env NODE_OPTIONS='--max-old-space-size=8192' vitest run",
+    "build": "tsup",
+    "type-check": "tsgo --noEmit",
+    "type-check:watch": "tsgo --noEmit --watch",
+    "dev": "tsup --watch",
+    "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "lint": "cross-env NODE_OPTIONS='--max-old-space-size=8192' eslint src '*.{js,mjs,cjs,ts,mts,cts}' --cache --cache-location .eslintcache-fast --cache-strategy content --no-warn-ignored",
-    "lint:strict": "cross-env NODE_OPTIONS='--max-old-space-size=8192' eslint src '*.{js,mjs,cjs,ts,mts,cts}' --config eslint.strict.config.mjs --cache --cache-location .eslintcache-strict --cache-strategy content --no-warn-ignored",
-    "lint:fix": "cross-env NODE_OPTIONS='--max-old-space-size=8192' eslint src '*.{js,mjs,cjs,ts,mts,cts}' --fix --cache --cache-location .eslintcache-fast --cache-strategy content --no-warn-ignored",
+    "lint": "eslint src '*.{js,mjs,cjs,ts,mts,cts}' --cache --cache-location .eslintcache-fast --cache-strategy content --no-warn-ignored",
+    "lint:strict": "eslint src '*.{js,mjs,cjs,ts,mts,cts}' --config eslint.strict.config.mjs --cache --cache-location .eslintcache-strict --cache-strategy content --no-warn-ignored",
+    "lint:fix": "eslint src '*.{js,mjs,cjs,ts,mts,cts}' --fix --cache --cache-location .eslintcache-fast --cache-strategy content --no-warn-ignored",
     "clean": "rm -rf dist"
   },
   "dependencies": {
@@ -43,7 +43,6 @@
   },
   "devDependencies": {
     "@vitest/coverage-v8": "4.1.0",
-    "cross-env": "10.1.0",
     "tsup": "8.5.1",
     "typescript": "5.9.3",
     "vitest": "4.1.0"

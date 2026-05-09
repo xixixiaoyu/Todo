@@ -132,10 +132,10 @@ describe('AIPresetSyncSchema', () => {
     expect(result.success).toBe(false)
   })
 
-  it('should accept preset with max reasoning effort', () => {
+  it('should accept preset with xhigh reasoning effort', () => {
     const result = AIPresetSyncSchema.safeParse({
       ...validPreset,
-      thinkingEffort: 'max',
+      thinkingEffort: 'xhigh',
     })
     expect(result.success).toBe(true)
   })

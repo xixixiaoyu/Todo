@@ -30,6 +30,7 @@ const defaultProps = {
   isTodoAssistantEnabled: false,
   isDiscussionEnabled: false,
   isThinkingEnabled: false,
+  thinkingLevel: 'off' as const,
   isTeachingEnabled: false,
   selectedImages: [],
   parsedFiles: [],

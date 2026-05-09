@@ -134,7 +134,8 @@ describe('aiService - Discussion Config & Prompt', () => {
 
       // Final synthesis request (should use p1, not basic)
       expect(url).toContain('api.p1.com')
-      expect((init?.headers as Record<string, string>).Authorization).toBe('Bearer key-p1')
+      expect(init).toBeDefined()
+      expect((init!.headers as Record<string, string>).Authorization).toBe('Bearer key-p1')
       return makeStreamResponse('Final')
     })
 
