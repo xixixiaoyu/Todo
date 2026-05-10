@@ -5,31 +5,49 @@
 - [apps/frontend/src/components/ui/button/Button.vue](file://apps/frontend/src/components/ui/button/Button.vue)
 - [apps/frontend/src/components/ui/button/index.ts](file://apps/frontend/src/components/ui/button/index.ts)
 - [apps/frontend/src/components/ui/input/Input.vue](file://apps/frontend/src/components/ui/input/Input.vue)
+- [apps/frontend/src/components/ui/input/index.ts](file://apps/frontend/src/components/ui/input/index.ts)
 - [apps/frontend/src/components/ui/checkbox/Checkbox.vue](file://apps/frontend/src/components/ui/checkbox/Checkbox.vue)
+- [apps/frontend/src/components/ui/checkbox/index.ts](file://apps/frontend/src/components/ui/checkbox/index.ts)
 - [apps/frontend/src/components/ui/dropdown-menu/DropdownMenu.vue](file://apps/frontend/src/components/ui/dropdown-menu/DropdownMenu.vue)
 - [apps/frontend/src/components/ui/dropdown-menu/DropdownMenuContent.vue](file://apps/frontend/src/components/ui/dropdown-menu/DropdownMenuContent.vue)
+- [apps/frontend/src/components/ui/dropdown-menu/index.ts](file://apps/frontend/src/components/ui/dropdown-menu/index.ts)
 - [apps/frontend/src/components/ui/tabs/Tabs.vue](file://apps/frontend/src/components/ui/tabs/Tabs.vue)
+- [apps/frontend/src/components/ui/tabs/index.ts](file://apps/frontend/src/components/ui/tabs/index.ts)
 - [apps/frontend/src/components/ui/tooltip/Tooltip.vue](file://apps/frontend/src/components/ui/tooltip/Tooltip.vue)
+- [apps/frontend/src/components/ui/tooltip/index.ts](file://apps/frontend/src/components/ui/tooltip/index.ts)
 - [apps/frontend/src/components/ui/alert-dialog/AlertDialog.vue](file://apps/frontend/src/components/ui/alert-dialog/AlertDialog.vue)
+- [apps/frontend/src/components/ui/alert-dialog/index.ts](file://apps/frontend/src/components/ui/alert-dialog/index.ts)
 - [apps/frontend/src/components/ui/card/Card.vue](file://apps/frontend/src/components/ui/card/Card.vue)
 - [apps/frontend/src/components/ui/card/CardContent.vue](file://apps/frontend/src/components/ui/card/CardContent.vue)
 - [apps/frontend/src/components/ui/card/CardHeader.vue](file://apps/frontend/src/components/ui/card/CardHeader.vue)
 - [apps/frontend/src/components/ui/card/CardTitle.vue](file://apps/frontend/src/components/ui/card/CardTitle.vue)
 - [apps/frontend/src/components/ui/card/CardDescription.vue](file://apps/frontend/src/components/ui/card/CardDescription.vue)
 - [apps/frontend/src/components/ui/card/CardFooter.vue](file://apps/frontend/src/components/ui/card/CardFooter.vue)
+- [apps/frontend/src/components/ui/card/index.ts](file://apps/frontend/src/components/ui/card/index.ts)
 - [apps/frontend/src/components/ui/badge/Badge.vue](file://apps/frontend/src/components/ui/badge/Badge.vue)
+- [apps/frontend/src/components/ui/badge/index.ts](file://apps/frontend/src/components/ui/badge/index.ts)
 - [apps/frontend/src/components/ui/separator/Separator.vue](file://apps/frontend/src/components/ui/separator/Separator.vue)
+- [apps/frontend/src/components/ui/separator/index.ts](file://apps/frontend/src/components/ui/separator/index.ts)
 - [apps/frontend/src/components/ui/popover/Popover.vue](file://apps/frontend/src/components/ui/popover/Popover.vue)
 - [apps/frontend/src/components/ui/popover/PopoverContent.vue](file://apps/frontend/src/components/ui/popover/PopoverContent.vue)
 - [apps/frontend/src/components/ui/popover/PopoverTrigger.vue](file://apps/frontend/src/components/ui/popover/PopoverTrigger.vue)
+- [apps/frontend/src/components/ui/popover/index.ts](file://apps/frontend/src/components/ui/popover/index.ts)
 - [apps/frontend/src/components/ui/scroll-area/ScrollArea.vue](file://apps/frontend/src/components/ui/scroll-area/ScrollArea.vue)
 - [apps/frontend/src/components/ui/scroll-area/ScrollBar.vue](file://apps/frontend/src/components/ui/scroll-area/ScrollBar.vue)
+- [apps/frontend/src/components/ui/scroll-area/index.ts](file://apps/frontend/src/components/ui/scroll-area/index.ts)
 - [apps/frontend/src/components/ui/ToastProvider.vue](file://apps/frontend/src/components/ui/ToastProvider.vue)
 - [apps/frontend/src/lib/utils.ts](file://apps/frontend/src/lib/utils.ts)
 - [apps/frontend/src/styles/theme.css](file://apps/frontend/src/styles/theme.css)
 - [apps/frontend/src/styles/ui.css](file://apps/frontend/src/styles/ui.css)
 - [apps/frontend/package.json](file://apps/frontend/package.json)
 </cite>
+
+## 更新摘要
+**所做更改**
+- 更新了组件导入顺序标准化改进的相关章节
+- 新增了关于组件索引文件重构的说明
+- 完善了组件模块化结构的文档描述
+- 增强了代码组织性和可维护性的相关内容
 
 ## 目录
 1. [简介](#简介)
@@ -45,6 +63,8 @@
 
 ## 简介
 本文件系统性梳理 Lumina Todo 前端应用的 UI 组件库，重点围绕基于 Reka UI（原 Radix UI 的 Vue 生态适配）与 Headless UI 思想的组件体系进行设计与实现解析。文档涵盖组件功能特性、属性配置、可访问性设计、主题定制与样式覆盖、组件组合与状态管理、事件处理、响应式设计、动画与交互反馈，并提供最佳实践、性能优化与无障碍访问建议。
+
+**更新** 本版本重点反映了组件导入顺序标准化改进，通过重构组件索引文件结构，提升了代码组织性和可维护性。
 
 ## 项目结构
 UI 组件集中位于前端应用的组件目录下，采用按功能域分层组织：基础按钮、输入、复选框等通用控件；卡片、徽章、分隔线等布局容器；弹出层、下拉菜单、标签页、提示框等交互组件；以及通知 ToastProvider。样式通过主题变量与 Tailwind 工具类统一治理，工具函数提供类名合并与高亮等通用能力。
@@ -94,46 +114,74 @@ Toast --> |"提供全局通知"| Btn
 
 **图示来源**
 - [apps/frontend/src/components/ui/button/Button.vue:1-32](file://apps/frontend/src/components/ui/button/Button.vue#L1-L32)
+- [apps/frontend/src/components/ui/button/index.ts:1-38](file://apps/frontend/src/components/ui/button/index.ts#L1-L38)
 - [apps/frontend/src/components/ui/input/Input.vue:1-42](file://apps/frontend/src/components/ui/input/Input.vue#L1-L42)
+- [apps/frontend/src/components/ui/input/index.ts:1-2](file://apps/frontend/src/components/ui/input/index.ts#L1-L2)
 - [apps/frontend/src/components/ui/checkbox/Checkbox.vue:1-34](file://apps/frontend/src/components/ui/checkbox/Checkbox.vue#L1-L34)
+- [apps/frontend/src/components/ui/checkbox/index.ts:1-2](file://apps/frontend/src/components/ui/checkbox/index.ts#L1-L2)
 - [apps/frontend/src/components/ui/dropdown-menu/DropdownMenu.vue:1-16](file://apps/frontend/src/components/ui/dropdown-menu/DropdownMenu.vue#L1-L16)
 - [apps/frontend/src/components/ui/dropdown-menu/DropdownMenuContent.vue:1-37](file://apps/frontend/src/components/ui/dropdown-menu/DropdownMenuContent.vue#L1-L37)
+- [apps/frontend/src/components/ui/dropdown-menu/index.ts:1-17](file://apps/frontend/src/components/ui/dropdown-menu/index.ts#L1-L17)
 - [apps/frontend/src/components/ui/tabs/Tabs.vue:1-16](file://apps/frontend/src/components/ui/tabs/Tabs.vue#L1-L16)
+- [apps/frontend/src/components/ui/tabs/index.ts:1-5](file://apps/frontend/src/components/ui/tabs/index.ts#L1-L5)
 - [apps/frontend/src/components/ui/tooltip/Tooltip.vue:1-16](file://apps/frontend/src/components/ui/tooltip/Tooltip.vue#L1-L16)
+- [apps/frontend/src/components/ui/tooltip/index.ts:1-5](file://apps/frontend/src/components/ui/tooltip/index.ts#L1-L5)
 - [apps/frontend/src/components/ui/alert-dialog/AlertDialog.vue:1-16](file://apps/frontend/src/components/ui/alert-dialog/AlertDialog.vue#L1-L16)
+- [apps/frontend/src/components/ui/alert-dialog/index.ts:1-10](file://apps/frontend/src/components/ui/alert-dialog/index.ts#L1-L10)
 - [apps/frontend/src/components/ui/card/Card.vue:1-15](file://apps/frontend/src/components/ui/card/Card.vue#L1-L15)
 - [apps/frontend/src/components/ui/card/CardContent.vue](file://apps/frontend/src/components/ui/card/CardContent.vue)
 - [apps/frontend/src/components/ui/card/CardHeader.vue](file://apps/frontend/src/components/ui/card/CardHeader.vue)
 - [apps/frontend/src/components/ui/card/CardTitle.vue](file://apps/frontend/src/components/ui/card/CardTitle.vue)
 - [apps/frontend/src/components/ui/card/CardDescription.vue](file://apps/frontend/src/components/ui/card/CardDescription.vue)
 - [apps/frontend/src/components/ui/card/CardFooter.vue](file://apps/frontend/src/components/ui/card/CardFooter.vue)
-- [apps/frontend/src/components/ui/badge/Badge.vue](file://apps/frontend/src/components/ui/badge/Badge.vue)
-- [apps/frontend/src/components/ui/separator/Separator.vue](file://apps/frontend/src/components/ui/separator/Separator.vue)
+- [apps/frontend/src/components/ui/card/index.ts:1-7](file://apps/frontend/src/components/ui/card/index.ts#L1-L7)
+- [apps/frontend/src/components/ui/badge/Badge.vue:1-18](file://apps/frontend/src/components/ui/badge/Badge.vue#L1-L18)
+- [apps/frontend/src/components/ui/badge/index.ts:1-26](file://apps/frontend/src/components/ui/badge/index.ts#L1-L26)
+- [apps/frontend/src/components/ui/separator/Separator.vue:1-16](file://apps/frontend/src/components/ui/separator/Separator.vue#L1-L16)
+- [apps/frontend/src/components/ui/separator/index.ts:1-2](file://apps/frontend/src/components/ui/separator/index.ts#L1-L2)
 - [apps/frontend/src/components/ui/popover/Popover.vue](file://apps/frontend/src/components/ui/popover/Popover.vue)
 - [apps/frontend/src/components/ui/popover/PopoverContent.vue](file://apps/frontend/src/components/ui/popover/PopoverContent.vue)
 - [apps/frontend/src/components/ui/popover/PopoverTrigger.vue](file://apps/frontend/src/components/ui/popover/PopoverTrigger.vue)
+- [apps/frontend/src/components/ui/popover/index.ts:1-4](file://apps/frontend/src/components/ui/popover/index.ts#L1-L4)
 - [apps/frontend/src/components/ui/scroll-area/ScrollArea.vue](file://apps/frontend/src/components/ui/scroll-area/ScrollArea.vue)
 - [apps/frontend/src/components/ui/scroll-area/ScrollBar.vue](file://apps/frontend/src/components/ui/scroll-area/ScrollBar.vue)
+- [apps/frontend/src/components/ui/scroll-area/index.ts:1-3](file://apps/frontend/src/components/ui/scroll-area/index.ts#L1-L3)
 - [apps/frontend/src/components/ui/ToastProvider.vue](file://apps/frontend/src/components/ui/ToastProvider.vue)
 
 **章节来源**
 - [apps/frontend/src/components/ui/button/Button.vue:1-32](file://apps/frontend/src/components/ui/button/Button.vue#L1-L32)
 - [apps/frontend/src/components/ui/button/index.ts:1-38](file://apps/frontend/src/components/ui/button/index.ts#L1-L38)
 - [apps/frontend/src/components/ui/input/Input.vue:1-42](file://apps/frontend/src/components/ui/input/Input.vue#L1-L42)
+- [apps/frontend/src/components/ui/input/index.ts:1-2](file://apps/frontend/src/components/ui/input/index.ts#L1-L2)
 - [apps/frontend/src/components/ui/checkbox/Checkbox.vue:1-34](file://apps/frontend/src/components/ui/checkbox/Checkbox.vue#L1-L34)
+- [apps/frontend/src/components/ui/checkbox/index.ts:1-2](file://apps/frontend/src/components/ui/checkbox/index.ts#L1-L2)
 - [apps/frontend/src/components/ui/dropdown-menu/DropdownMenu.vue:1-16](file://apps/frontend/src/components/ui/dropdown-menu/DropdownMenu.vue#L1-L16)
 - [apps/frontend/src/components/ui/dropdown-menu/DropdownMenuContent.vue:1-37](file://apps/frontend/src/components/ui/dropdown-menu/DropdownMenuContent.vue#L1-L37)
+- [apps/frontend/src/components/ui/dropdown-menu/index.ts:1-17](file://apps/frontend/src/components/ui/dropdown-menu/index.ts#L1-L17)
 - [apps/frontend/src/components/ui/tabs/Tabs.vue:1-16](file://apps/frontend/src/components/ui/tabs/Tabs.vue#L1-L16)
+- [apps/frontend/src/components/ui/tabs/index.ts:1-5](file://apps/frontend/src/components/ui/tabs/index.ts#L1-L5)
 - [apps/frontend/src/components/ui/tooltip/Tooltip.vue:1-16](file://apps/frontend/src/components/ui/tooltip/Tooltip.vue#L1-L16)
+- [apps/frontend/src/components/ui/tooltip/index.ts:1-5](file://apps/frontend/src/components/ui/tooltip/index.ts#L1-L5)
 - [apps/frontend/src/components/ui/alert-dialog/AlertDialog.vue:1-16](file://apps/frontend/src/components/ui/alert-dialog/AlertDialog.vue#L1-L16)
+- [apps/frontend/src/components/ui/alert-dialog/index.ts:1-10](file://apps/frontend/src/components/ui/alert-dialog/index.ts#L1-L10)
 - [apps/frontend/src/components/ui/card/Card.vue:1-15](file://apps/frontend/src/components/ui/card/Card.vue#L1-L15)
-- [apps/frontend/src/components/ui/badge/Badge.vue](file://apps/frontend/src/components/ui/badge/Badge.vue)
-- [apps/frontend/src/components/ui/separator/Separator.vue](file://apps/frontend/src/components/ui/separator/Separator.vue)
+- [apps/frontend/src/components/ui/card/CardContent.vue](file://apps/frontend/src/components/ui/card/CardContent.vue)
+- [apps/frontend/src/components/ui/card/CardHeader.vue](file://apps/frontend/src/components/ui/card/CardHeader.vue)
+- [apps/frontend/src/components/ui/card/CardTitle.vue](file://apps/frontend/src/components/ui/card/CardTitle.vue)
+- [apps/frontend/src/components/ui/card/CardDescription.vue](file://apps/frontend/src/components/ui/card/CardDescription.vue)
+- [apps/frontend/src/components/ui/card/CardFooter.vue](file://apps/frontend/src/components/ui/card/CardFooter.vue)
+- [apps/frontend/src/components/ui/card/index.ts:1-7](file://apps/frontend/src/components/ui/card/index.ts#L1-L7)
+- [apps/frontend/src/components/ui/badge/Badge.vue:1-18](file://apps/frontend/src/components/ui/badge/Badge.vue#L1-L18)
+- [apps/frontend/src/components/ui/badge/index.ts:1-26](file://apps/frontend/src/components/ui/badge/index.ts#L1-L26)
+- [apps/frontend/src/components/ui/separator/Separator.vue:1-16](file://apps/frontend/src/components/ui/separator/Separator.vue#L1-L16)
+- [apps/frontend/src/components/ui/separator/index.ts:1-2](file://apps/frontend/src/components/ui/separator/index.ts#L1-L2)
 - [apps/frontend/src/components/ui/popover/Popover.vue](file://apps/frontend/src/components/ui/popover/Popover.vue)
 - [apps/frontend/src/components/ui/popover/PopoverContent.vue](file://apps/frontend/src/components/ui/popover/PopoverContent.vue)
 - [apps/frontend/src/components/ui/popover/PopoverTrigger.vue](file://apps/frontend/src/components/ui/popover/PopoverTrigger.vue)
+- [apps/frontend/src/components/ui/popover/index.ts:1-4](file://apps/frontend/src/components/ui/popover/index.ts#L1-L4)
 - [apps/frontend/src/components/ui/scroll-area/ScrollArea.vue](file://apps/frontend/src/components/ui/scroll-area/ScrollArea.vue)
 - [apps/frontend/src/components/ui/scroll-area/ScrollBar.vue](file://apps/frontend/src/components/ui/scroll-area/ScrollBar.vue)
+- [apps/frontend/src/components/ui/scroll-area/index.ts:1-3](file://apps/frontend/src/components/ui/scroll-area/index.ts#L1-L3)
 - [apps/frontend/src/components/ui/ToastProvider.vue](file://apps/frontend/src/components/ui/ToastProvider.vue)
 - [apps/frontend/src/lib/utils.ts:1-33](file://apps/frontend/src/lib/utils.ts#L1-L33)
 - [apps/frontend/src/styles/theme.css:1-170](file://apps/frontend/src/styles/theme.css#L1-L170)
@@ -155,28 +203,46 @@ Toast --> |"提供全局通知"| Btn
 - 滚动区域 ScrollArea/ScrollBar：可定制滚动条与滚动行为。
 - ToastProvider：全局通知提供者，配合业务逻辑进行消息提示。
 
+**更新** 组件导入结构现已标准化，通过统一的索引文件组织，提升了代码的可维护性和一致性。
+
 **章节来源**
 - [apps/frontend/src/components/ui/button/Button.vue:1-32](file://apps/frontend/src/components/ui/button/Button.vue#L1-L32)
 - [apps/frontend/src/components/ui/button/index.ts:1-38](file://apps/frontend/src/components/ui/button/index.ts#L1-L38)
 - [apps/frontend/src/components/ui/input/Input.vue:1-42](file://apps/frontend/src/components/ui/input/Input.vue#L1-L42)
+- [apps/frontend/src/components/ui/input/index.ts:1-2](file://apps/frontend/src/components/ui/input/index.ts#L1-L2)
 - [apps/frontend/src/components/ui/checkbox/Checkbox.vue:1-34](file://apps/frontend/src/components/ui/checkbox/Checkbox.vue#L1-L34)
+- [apps/frontend/src/components/ui/checkbox/index.ts:1-2](file://apps/frontend/src/components/ui/checkbox/index.ts#L1-L2)
 - [apps/frontend/src/components/ui/dropdown-menu/DropdownMenu.vue:1-16](file://apps/frontend/src/components/ui/dropdown-menu/DropdownMenu.vue#L1-L16)
 - [apps/frontend/src/components/ui/dropdown-menu/DropdownMenuContent.vue:1-37](file://apps/frontend/src/components/ui/dropdown-menu/DropdownMenuContent.vue#L1-L37)
+- [apps/frontend/src/components/ui/dropdown-menu/index.ts:1-17](file://apps/frontend/src/components/ui/dropdown-menu/index.ts#L1-L17)
 - [apps/frontend/src/components/ui/tabs/Tabs.vue:1-16](file://apps/frontend/src/components/ui/tabs/Tabs.vue#L1-L16)
+- [apps/frontend/src/components/ui/tabs/index.ts:1-5](file://apps/frontend/src/components/ui/tabs/index.ts#L1-L5)
 - [apps/frontend/src/components/ui/tooltip/Tooltip.vue:1-16](file://apps/frontend/src/components/ui/tooltip/Tooltip.vue#L1-L16)
+- [apps/frontend/src/components/ui/tooltip/index.ts:1-5](file://apps/frontend/src/components/ui/tooltip/index.ts#L1-L5)
 - [apps/frontend/src/components/ui/alert-dialog/AlertDialog.vue:1-16](file://apps/frontend/src/components/ui/alert-dialog/AlertDialog.vue#L1-L16)
+- [apps/frontend/src/components/ui/alert-dialog/index.ts:1-10](file://apps/frontend/src/components/ui/alert-dialog/index.ts#L1-L10)
 - [apps/frontend/src/components/ui/card/Card.vue:1-15](file://apps/frontend/src/components/ui/card/Card.vue#L1-L15)
-- [apps/frontend/src/components/ui/badge/Badge.vue](file://apps/frontend/src/components/ui/badge/Badge.vue)
-- [apps/frontend/src/components/ui/separator/Separator.vue](file://apps/frontend/src/components/ui/separator/Separator.vue)
+- [apps/frontend/src/components/ui/card/CardContent.vue](file://apps/frontend/src/components/ui/card/CardContent.vue)
+- [apps/frontend/src/components/ui/card/CardHeader.vue](file://apps/frontend/src/components/ui/card/CardHeader.vue)
+- [apps/frontend/src/components/ui/card/CardTitle.vue](file://apps/frontend/src/components/ui/card/CardTitle.vue)
+- [apps/frontend/src/components/ui/card/CardDescription.vue](file://apps/frontend/src/components/ui/card/CardDescription.vue)
+- [apps/frontend/src/components/ui/card/CardFooter.vue](file://apps/frontend/src/components/ui/card/CardFooter.vue)
+- [apps/frontend/src/components/ui/card/index.ts:1-7](file://apps/frontend/src/components/ui/card/index.ts#L1-L7)
+- [apps/frontend/src/components/ui/badge/Badge.vue:1-18](file://apps/frontend/src/components/ui/badge/Badge.vue#L1-L18)
+- [apps/frontend/src/components/ui/badge/index.ts:1-26](file://apps/frontend/src/components/ui/badge/index.ts#L1-L26)
+- [apps/frontend/src/components/ui/separator/Separator.vue:1-16](file://apps/frontend/src/components/ui/separator/Separator.vue#L1-L16)
+- [apps/frontend/src/components/ui/separator/index.ts:1-2](file://apps/frontend/src/components/ui/separator/index.ts#L1-L2)
 - [apps/frontend/src/components/ui/popover/Popover.vue](file://apps/frontend/src/components/ui/popover/Popover.vue)
 - [apps/frontend/src/components/ui/popover/PopoverContent.vue](file://apps/frontend/src/components/ui/popover/PopoverContent.vue)
 - [apps/frontend/src/components/ui/popover/PopoverTrigger.vue](file://apps/frontend/src/components/ui/popover/PopoverTrigger.vue)
+- [apps/frontend/src/components/ui/popover/index.ts:1-4](file://apps/frontend/src/components/ui/popover/index.ts#L1-L4)
 - [apps/frontend/src/components/ui/scroll-area/ScrollArea.vue](file://apps/frontend/src/components/ui/scroll-area/ScrollArea.vue)
 - [apps/frontend/src/components/ui/scroll-area/ScrollBar.vue](file://apps/frontend/src/components/ui/scroll-area/ScrollBar.vue)
+- [apps/frontend/src/components/ui/scroll-area/index.ts:1-3](file://apps/frontend/src/components/ui/scroll-area/index.ts#L1-L3)
 - [apps/frontend/src/components/ui/ToastProvider.vue](file://apps/frontend/src/components/ui/ToastProvider.vue)
 
 ## 架构总览
-组件库整体采用“容器-内容”与“触发器-内容”的分层设计，根容器负责状态与上下文，子组件负责渲染与交互。Reka UI 提供可访问性与状态机，Tailwind 与主题变量提供样式与主题一致性，cn 工具保障类名合并与冲突最小化。
+组件库整体采用"容器-内容"与"触发器-内容"的分层设计，根容器负责状态与上下文，子组件负责渲染与交互。Reka UI 提供可访问性与状态机，Tailwind 与主题变量提供样式与主题一致性，cn 工具保障类名合并与冲突最小化。
 
 ```mermaid
 graph LR
@@ -226,6 +292,8 @@ Styles --> Root
   - 变体与尺寸在变体集中统一定义，可通过覆盖变量或自定义类进行扩展。
 - 使用场景
   - 表单提交、操作按钮、导航入口、图标按钮等。
+
+**更新** 导入结构现已标准化，通过统一的索引文件导出组件和变体定义，提升了代码组织性。
 
 ```mermaid
 classDiagram
@@ -278,6 +346,8 @@ Button --> Variants : "使用"
 - 使用场景
   - 文本输入、数字输入、搜索框等。
 
+**更新** 导入结构简化，通过单一索引文件导出组件，减少了导入复杂度。
+
 ```mermaid
 flowchart TD
 Start(["组件挂载"]) --> GenId["生成唯一 ID"]
@@ -292,6 +362,7 @@ Focus --> End(["完成"])
 
 **章节来源**
 - [apps/frontend/src/components/ui/input/Input.vue:1-42](file://apps/frontend/src/components/ui/input/Input.vue#L1-L42)
+- [apps/frontend/src/components/ui/input/index.ts:1-2](file://apps/frontend/src/components/ui/input/index.ts#L1-L2)
 
 ### 复选框 Checkbox
 - 设计要点
@@ -324,6 +395,7 @@ I-->>U : 显示指示图标
 
 **章节来源**
 - [apps/frontend/src/components/ui/checkbox/Checkbox.vue:1-34](file://apps/frontend/src/components/ui/checkbox/Checkbox.vue#L1-L34)
+- [apps/frontend/src/components/ui/checkbox/index.ts:1-2](file://apps/frontend/src/components/ui/checkbox/index.ts#L1-L2)
 
 ### 下拉菜单 DropdownMenu 与内容层 DropdownMenuContent
 - 设计要点
@@ -358,6 +430,7 @@ C-->>U : 显示菜单项
 **章节来源**
 - [apps/frontend/src/components/ui/dropdown-menu/DropdownMenu.vue:1-16](file://apps/frontend/src/components/ui/dropdown-menu/DropdownMenu.vue#L1-L16)
 - [apps/frontend/src/components/ui/dropdown-menu/DropdownMenuContent.vue:1-37](file://apps/frontend/src/components/ui/dropdown-menu/DropdownMenuContent.vue#L1-L37)
+- [apps/frontend/src/components/ui/dropdown-menu/index.ts:1-17](file://apps/frontend/src/components/ui/dropdown-menu/index.ts#L1-L17)
 
 ### 标签页 Tabs
 - 设计要点
@@ -387,6 +460,7 @@ C-->>U : 展示目标面板
 
 **章节来源**
 - [apps/frontend/src/components/ui/tabs/Tabs.vue:1-16](file://apps/frontend/src/components/ui/tabs/Tabs.vue#L1-L16)
+- [apps/frontend/src/components/ui/tabs/index.ts:1-5](file://apps/frontend/src/components/ui/tabs/index.ts#L1-L5)
 
 ### 提示框 Tooltip
 - 设计要点
@@ -415,6 +489,7 @@ Ct-->>U : 显示提示
 
 **章节来源**
 - [apps/frontend/src/components/ui/tooltip/Tooltip.vue:1-16](file://apps/frontend/src/components/ui/tooltip/Tooltip.vue#L1-L16)
+- [apps/frontend/src/components/ui/tooltip/index.ts:1-5](file://apps/frontend/src/components/ui/tooltip/index.ts#L1-L5)
 
 ### 对话框 AlertDialog
 - 设计要点
@@ -425,6 +500,8 @@ Ct-->>U : 显示提示
   - 焦点陷阱、ESC 关闭、模态交互。
 - 使用场景
   - 删除确认、危险操作提示、重要决策。
+
+**更新** 导入结构已标准化，通过统一的索引文件导出所有相关组件，提升了模块化程度。
 
 ```mermaid
 sequenceDiagram
@@ -443,6 +520,7 @@ C-->>U : 显示确认/取消
 
 **章节来源**
 - [apps/frontend/src/components/ui/alert-dialog/AlertDialog.vue:1-16](file://apps/frontend/src/components/ui/alert-dialog/AlertDialog.vue#L1-L16)
+- [apps/frontend/src/components/ui/alert-dialog/index.ts:1-10](file://apps/frontend/src/components/ui/alert-dialog/index.ts#L1-L10)
 
 ### 卡片 Card 与卡片系列
 - 设计要点
@@ -453,6 +531,8 @@ C-->>U : 显示确认/取消
   - 统一卡片背景与前景色，支持暗色主题自动适配。
 - 使用场景
   - 信息区块、统计卡片、设置面板、对话容器。
+
+**更新** 卡片组件的索引文件已重构，通过统一导出机制提升了组件的一致性。
 
 ```mermaid
 classDiagram
@@ -496,6 +576,7 @@ Card --> CardFooter
 - [apps/frontend/src/components/ui/card/CardDescription.vue](file://apps/frontend/src/components/ui/card/CardDescription.vue)
 - [apps/frontend/src/components/ui/card/CardContent.vue](file://apps/frontend/src/components/ui/card/CardContent.vue)
 - [apps/frontend/src/components/ui/card/CardFooter.vue](file://apps/frontend/src/components/ui/card/CardFooter.vue)
+- [apps/frontend/src/components/ui/card/index.ts:1-7](file://apps/frontend/src/components/ui/card/index.ts#L1-L7)
 
 ### 其他常用组件
 - 徽章 Badge：语义化标记，支持主题色与尺寸。
@@ -504,14 +585,20 @@ Card --> CardFooter
 - 滚动区域 ScrollArea/ScrollBar：可定制滚动条与滚动行为。
 - ToastProvider：全局通知提供者，配合业务逻辑进行消息提示。
 
+**更新** 徽章组件的导入结构已标准化，通过统一的索引文件导出变体定义和组件，提升了代码组织性。
+
 **章节来源**
-- [apps/frontend/src/components/ui/badge/Badge.vue](file://apps/frontend/src/components/ui/badge/Badge.vue)
-- [apps/frontend/src/components/ui/separator/Separator.vue](file://apps/frontend/src/components/ui/separator/Separator.vue)
+- [apps/frontend/src/components/ui/badge/Badge.vue:1-18](file://apps/frontend/src/components/ui/badge/Badge.vue#L1-L18)
+- [apps/frontend/src/components/ui/badge/index.ts:1-26](file://apps/frontend/src/components/ui/badge/index.ts#L1-L26)
+- [apps/frontend/src/components/ui/separator/Separator.vue:1-16](file://apps/frontend/src/components/ui/separator/Separator.vue#L1-L16)
+- [apps/frontend/src/components/ui/separator/index.ts:1-2](file://apps/frontend/src/components/ui/separator/index.ts#L1-L2)
 - [apps/frontend/src/components/ui/popover/Popover.vue](file://apps/frontend/src/components/ui/popover/Popover.vue)
 - [apps/frontend/src/components/ui/popover/PopoverContent.vue](file://apps/frontend/src/components/ui/popover/PopoverContent.vue)
 - [apps/frontend/src/components/ui/popover/PopoverTrigger.vue](file://apps/frontend/src/components/ui/popover/PopoverTrigger.vue)
+- [apps/frontend/src/components/ui/popover/index.ts:1-4](file://apps/frontend/src/components/ui/popover/index.ts#L1-L4)
 - [apps/frontend/src/components/ui/scroll-area/ScrollArea.vue](file://apps/frontend/src/components/ui/scroll-area/ScrollArea.vue)
 - [apps/frontend/src/components/ui/scroll-area/ScrollBar.vue](file://apps/frontend/src/components/ui/scroll-area/ScrollBar.vue)
+- [apps/frontend/src/components/ui/scroll-area/index.ts:1-3](file://apps/frontend/src/components/ui/scroll-area/index.ts#L1-L3)
 - [apps/frontend/src/components/ui/ToastProvider.vue](file://apps/frontend/src/components/ui/ToastProvider.vue)
 
 ## 依赖关系分析
@@ -521,6 +608,8 @@ Card --> CardFooter
   - 主题变量集中在 theme.css，通过 CSS 变量驱动明/暗主题；ui.css 提供特定场景的扩展样式；cn 工具统一类名合并。
 - 工具函数
   - utils.ts 提供 cn 与高亮工具，贯穿所有组件的类名与文本处理。
+
+**更新** 组件导入结构现已标准化，通过统一的索引文件组织，提升了代码的可维护性和一致性。
 
 ```mermaid
 graph TB
@@ -576,16 +665,24 @@ PvlT --> Theme
 
 **章节来源**
 - [apps/frontend/src/components/ui/button/Button.vue:1-32](file://apps/frontend/src/components/ui/button/Button.vue#L1-L32)
+- [apps/frontend/src/components/ui/button/index.ts:1-38](file://apps/frontend/src/components/ui/button/index.ts#L1-L38)
 - [apps/frontend/src/components/ui/input/Input.vue:1-42](file://apps/frontend/src/components/ui/input/Input.vue#L1-L42)
+- [apps/frontend/src/components/ui/input/index.ts:1-2](file://apps/frontend/src/components/ui/input/index.ts#L1-L2)
 - [apps/frontend/src/components/ui/checkbox/Checkbox.vue:1-34](file://apps/frontend/src/components/ui/checkbox/Checkbox.vue#L1-L34)
+- [apps/frontend/src/components/ui/checkbox/index.ts:1-2](file://apps/frontend/src/components/ui/checkbox/index.ts#L1-L2)
 - [apps/frontend/src/components/ui/dropdown-menu/DropdownMenu.vue:1-16](file://apps/frontend/src/components/ui/dropdown-menu/DropdownMenu.vue#L1-L16)
 - [apps/frontend/src/components/ui/dropdown-menu/DropdownMenuContent.vue:1-37](file://apps/frontend/src/components/ui/dropdown-menu/DropdownMenuContent.vue#L1-L37)
+- [apps/frontend/src/components/ui/dropdown-menu/index.ts:1-17](file://apps/frontend/src/components/ui/dropdown-menu/index.ts#L1-L17)
 - [apps/frontend/src/components/ui/tabs/Tabs.vue:1-16](file://apps/frontend/src/components/ui/tabs/Tabs.vue#L1-L16)
+- [apps/frontend/src/components/ui/tabs/index.ts:1-5](file://apps/frontend/src/components/ui/tabs/index.ts#L1-L5)
 - [apps/frontend/src/components/ui/tooltip/Tooltip.vue:1-16](file://apps/frontend/src/components/ui/tooltip/Tooltip.vue#L1-L16)
+- [apps/frontend/src/components/ui/tooltip/index.ts:1-5](file://apps/frontend/src/components/ui/tooltip/index.ts#L1-L5)
 - [apps/frontend/src/components/ui/alert-dialog/AlertDialog.vue:1-16](file://apps/frontend/src/components/ui/alert-dialog/AlertDialog.vue#L1-L16)
+- [apps/frontend/src/components/ui/alert-dialog/index.ts:1-10](file://apps/frontend/src/components/ui/alert-dialog/index.ts#L1-L10)
 - [apps/frontend/src/components/ui/popover/Popover.vue](file://apps/frontend/src/components/ui/popover/Popover.vue)
 - [apps/frontend/src/components/ui/popover/PopoverContent.vue](file://apps/frontend/src/components/ui/popover/PopoverContent.vue)
 - [apps/frontend/src/components/ui/popover/PopoverTrigger.vue](file://apps/frontend/src/components/ui/popover/PopoverTrigger.vue)
+- [apps/frontend/src/components/ui/popover/index.ts:1-4](file://apps/frontend/src/components/ui/popover/index.ts#L1-L4)
 - [apps/frontend/src/lib/utils.ts:1-33](file://apps/frontend/src/lib/utils.ts#L1-L33)
 - [apps/frontend/src/styles/theme.css:1-170](file://apps/frontend/src/styles/theme.css#L1-L170)
 
@@ -600,6 +697,8 @@ PvlT --> Theme
   - 内容层（如 TabsContent、DropdownMenuContent、PopoverContent）按需渲染，降低初始负载。
 - 事件节流
   - 输入与滚动等高频事件建议配合防抖/节流策略，避免过度重渲染。
+
+**更新** 标准化的导入结构有助于提升构建时的模块解析效率，减少了不必要的依赖分析开销。
 
 **章节来源**
 - [apps/frontend/src/styles/theme.css:143-169](file://apps/frontend/src/styles/theme.css#L143-L169)
@@ -617,6 +716,8 @@ PvlT --> Theme
 - 输入焦点问题
   - 确保 id 生成与 v-model 绑定正常，避免 label 与输入未关联导致的可访问性问题。
 
+**更新** 标准化的导入结构减少了因路径错误或模块解析问题导致的故障，提升了开发体验。
+
 **章节来源**
 - [apps/frontend/src/components/ui/checkbox/Checkbox.vue:1-34](file://apps/frontend/src/components/ui/checkbox/Checkbox.vue#L1-L34)
 - [apps/frontend/src/components/ui/dropdown-menu/DropdownMenuContent.vue:1-37](file://apps/frontend/src/components/ui/dropdown-menu/DropdownMenuContent.vue#L1-L37)
@@ -624,7 +725,11 @@ PvlT --> Theme
 - [apps/frontend/src/styles/theme.css:1-170](file://apps/frontend/src/styles/theme.css#L1-L170)
 
 ## 结论
-本 UI 组件库以 Reka UI 为核心，结合 Tailwind 与主题变量，实现了高可访问性、强一致性与良好扩展性的组件体系。通过容器-内容与触发器-内容的分层设计，组件在功能、样式与交互上保持解耦，便于组合与维护。建议在实际使用中遵循可访问性规范、合理利用主题变量与工具函数，并关注性能细节以获得更佳体验。
+本 UI 组件库以 Reka UI 为核心，结合 Tailwind 与主题变量，实现了高可访问性、强一致性与良好扩展性的组件体系。通过容器-内容与触发器-内容的分层设计，组件在功能、样式与交互上保持解耦，便于组合与维护。
+
+**更新** 本次组件导入顺序标准化改进进一步提升了代码组织性和可维护性，通过统一的索引文件结构，开发者可以更清晰地理解和使用组件库，同时减少了模块导入的复杂度和潜在的错误。
+
+建议在实际使用中遵循可访问性规范、合理利用主题变量与工具函数，并关注性能细节以获得更佳体验。
 
 ## 附录
 - 最佳实践
@@ -632,6 +737,7 @@ PvlT --> Theme
   - 使用变体集与尺寸族统一风格，避免散落样式。
   - 通过 class 与 CSS 变量进行主题定制，保持一致性。
   - 对高频交互组件（输入、滚动）实施性能优化。
+  - 利用标准化的导入结构，提升开发效率和代码质量。
 - 无障碍访问指南
   - 确保键盘可达、焦点可见、屏幕阅读器可读。
   - 正确使用 aria-* 属性与 role。
@@ -640,3 +746,4 @@ PvlT --> Theme
   - 合理使用懒加载与虚拟化。
   - 减少不必要的重渲染与样式计算。
   - 利用 GPU 加速与过渡优化。
+  - 优化模块导入结构，提升构建性能。
