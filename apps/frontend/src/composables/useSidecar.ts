@@ -21,6 +21,10 @@ export interface SidecarState {
 }
 
 const HEALTH_CHECK_INTERVAL = 30_000
+/** Sidecar 启动最长等待时间（毫秒），覆盖 sidecar manager 15s 健康检查超时 */
+const MAX_INIT_WAIT_MS = 20_000
+/** 轮询间隔：前 5s 每 1s，之后每 2s */
+const INIT_RETRY_INTERVAL_MS = 2_000
 
 // 模块级共享状态 — 所有 useSidecar() 调用者共享同一份响应式数据
 const isAvailable = ref(false)
@@ -47,27 +51,38 @@ async function initSidecar(): Promise<void> {
   if (!isWails()) return
   initialized = true
 
-  try {
-    const info = (await system.getSidecarInfo()) as SidecarInfo | null
-    if (!info || info.status !== 'running' || !info.port || !info.token) {
-      isAvailable.value = false
-      return
+  const deadline = Date.now() + MAX_INIT_WAIT_MS
+
+  while (Date.now() < deadline) {
+    try {
+      const info = (await system.getSidecarInfo()) as SidecarInfo | null
+      if (info && info.status === 'running' && info.port && info.token) {
+        sidecarPort.value = info.port
+        sidecarToken.value = info.token
+        sidecarInfo.value = info
+
+        const healthy = await probeHealth()
+        isAvailable.value = healthy
+
+        if (healthy) {
+          startHealthCheck()
+        }
+        return
+      }
+    } catch (err) {
+      console.warn('[Sidecar] Init probe failed:', err)
     }
 
-    sidecarPort.value = info.port
-    sidecarToken.value = info.token
-    sidecarInfo.value = info
-
-    const healthy = await probeHealth()
-    isAvailable.value = healthy
-
-    if (healthy) {
-      startHealthCheck()
+    // 等待后重试，除非 deadline 已到
+    if (Date.now() + INIT_RETRY_INTERVAL_MS < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, INIT_RETRY_INTERVAL_MS))
+    } else {
+      break
     }
-  } catch (err) {
-    console.warn('[Sidecar] Init failed:', err)
-    isAvailable.value = false
   }
+
+  console.warn('[Sidecar] Init failed: sidecar did not become ready within', MAX_INIT_WAIT_MS, 'ms')
+  isAvailable.value = false
 }
 
 function startHealthCheck() {

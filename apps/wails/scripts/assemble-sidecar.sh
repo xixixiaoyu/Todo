@@ -45,23 +45,38 @@ echo "Assembling Sidecar into ${SIDECAR_DIR}..."
 mkdir -p "${SIDECAR_DIR}/app"
 mkdir -p "${SIDECAR_DIR}/data"
 
-# Copy Node.js runtime
-if [ -d "$NODE_CACHE" ]; then
-  echo "Copying Node.js runtime from ${NODE_CACHE}..."
-  mkdir -p "${SIDECAR_DIR}/node"
-  cp -r "$NODE_CACHE"/* "${SIDECAR_DIR}/node/" 2>/dev/null || true
-else
-  echo "Warning: Node.js runtime not cached. Run download-node.sh first."
-  echo "Expected: ${NODE_CACHE}"
+# Copy Node.js runtime (auto-download if cache missing)
+if [ ! -d "$NODE_CACHE" ]; then
+  echo "Node.js runtime not cached, downloading automatically..."
+  DOWNLOAD_SCRIPT="${SCRIPT_DIR}/download-node.sh"
+  if [ -x "$DOWNLOAD_SCRIPT" ]; then
+    "$DOWNLOAD_SCRIPT" "$NODE_VERSION" "$PLATFORM" "$ARCH"
+  else
+    echo "Error: download-node.sh not found or not executable at ${DOWNLOAD_SCRIPT}"
+    exit 1
+  fi
 fi
+
+if [ ! -d "$NODE_CACHE" ]; then
+  echo "Error: Node.js runtime download failed. Cache directory still missing: ${NODE_CACHE}"
+  exit 1
+fi
+
+echo "Copying Node.js runtime from ${NODE_CACHE}..."
+mkdir -p "${SIDECAR_DIR}/node"
+cp -R "$NODE_CACHE"/* "${SIDECAR_DIR}/node/" || {
+  echo "Error: Failed to copy Node.js runtime to ${SIDECAR_DIR}/node/"
+  exit 1
+}
 
 # Copy Sidecar JS bundle
 if [ -f "$SIDECAR_BUNDLE" ]; then
   echo "Copying Sidecar bundle..."
   cp "$SIDECAR_BUNDLE" "${SIDECAR_DIR}/app/sidecar.mjs"
 else
-  echo "Warning: Sidecar bundle not found. Run 'pnpm --filter @lumina/sidecar build' first."
+  echo "Error: Sidecar bundle not found. Run 'pnpm --filter @lumina/sidecar build' first."
   echo "Expected: ${SIDECAR_BUNDLE}"
+  exit 1
 fi
 
 echo "Sidecar assembly complete."
