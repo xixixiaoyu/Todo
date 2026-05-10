@@ -6,7 +6,8 @@ import { createPinia, setActivePinia } from 'pinia'
 import { vi } from 'vitest'
 import TodoList from '@/features/todo/components/TodoList.vue'
 import TodoItem from '@/features/todo/components/TodoItem.vue'
-import { useTodoStore, type Todo } from '@/features/todo/stores/todo'
+import { useTodoStore } from '@/features/todo/stores/todo'
+import type { Todo } from '@/features/todo/stores/todo'
 
 // Mock reka-ui components
 vi.mock('reka-ui', async (importOriginal) => {

@@ -1,11 +1,6 @@
 import { Injectable, Logger, Inject } from '@nestjs/common'
-import {
-  McpTransportType,
-  type StdioConfig,
-  type HttpConfig,
-  type McpToolResponse,
-  type ToolCallResult,
-} from './mcp.dto'
+import { McpTransportType } from './mcp.dto'
+import type { StdioConfig, HttpConfig, McpToolResponse, ToolCallResult } from './mcp.dto'
 import { McpTransportFactory } from './core/mcp-transport.factory'
 import { McpConnectionManager } from './core/mcp-connection.manager'
 import { McpToolRegistry } from './core/mcp-tool.registry'

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { useToast, type Toast } from '@/composables/useToast'
+import { useToast } from '@/composables/useToast'
+import type { Toast } from '@/composables/useToast'
 import { AlertCircle, CheckCircle2, Info, AlertTriangle, X, Copy, Check } from 'lucide-vue-next'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'

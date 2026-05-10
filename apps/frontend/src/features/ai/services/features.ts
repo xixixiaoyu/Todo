@@ -2,7 +2,8 @@
  * AI 服务扩展功能（生图、多模型讨论）
  */
 
-import { getAIConfig, getAIPresets, type AIPreset } from '@/features/ai/composables/useAIConfig'
+import { getAIConfig, getAIPresets } from '@/features/ai/composables/useAIConfig'
+import type { AIPreset } from '@/features/ai/composables/useAIConfig'
 import i18n from '@/i18n'
 import type {
   ChatMessage,

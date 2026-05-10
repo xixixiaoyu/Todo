@@ -1,11 +1,7 @@
 import type { ExecutionContext } from '@nestjs/common'
 import type { ConfigService } from '@nestjs/config'
-import {
-  minutes,
-  seconds,
-  type ThrottlerModuleOptions,
-  type ThrottlerOptions,
-} from '@nestjs/throttler'
+import { minutes, seconds } from '@nestjs/throttler'
+import type { ThrottlerModuleOptions, ThrottlerOptions } from '@nestjs/throttler'
 import type { RedisThrottlerStorage } from './redis-throttler.storage'
 
 const DEFAULT_THROTTLE_TTLS = {

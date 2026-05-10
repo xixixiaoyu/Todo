@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { McpTransportType, type CreateMcpServerDto, type McpServerResponse } from '../api/mcp'
+import { McpTransportType } from '../api/mcp'
+import type { CreateMcpServerDto, McpServerResponse } from '../api/mcp'
 import { Loader2 } from 'lucide-vue-next'
 import type { McpServerFormState, McpAuthType } from './mcpServerForm.types'
 import McpServerFormBaseInfo from './McpServerFormBaseInfo.vue'

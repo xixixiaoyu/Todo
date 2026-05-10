@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
-import { ThrottlerStorageService, type ThrottlerStorage } from '@nestjs/throttler'
+import { ThrottlerStorageService } from '@nestjs/throttler'
+import type { ThrottlerStorage } from '@nestjs/throttler'
 import { CachePrefix, RedisService } from '../../redis'
 
 type RedisEvalClient = {

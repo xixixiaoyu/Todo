@@ -1,13 +1,11 @@
-import { Inject, type OnModuleDestroy, Logger } from '@nestjs/common'
+import { Inject, Logger } from '@nestjs/common'
+import type { OnModuleDestroy } from '@nestjs/common'
 import { readdir } from 'fs/promises'
 import * as path from 'path'
-import { Subject, merge, of, switchMap, type Observable } from 'rxjs'
-import {
-  I18N_LOADER_OPTIONS,
-  type I18nTranslation,
-  I18nLoader,
-  type I18nAbstractLoaderOptions,
-} from 'nestjs-i18n'
+import { Subject, merge, of, switchMap } from 'rxjs'
+import type { Observable } from 'rxjs'
+import { I18N_LOADER_OPTIONS, I18nLoader } from 'nestjs-i18n'
+import type { I18nTranslation, I18nAbstractLoaderOptions } from 'nestjs-i18n'
 
 type I18nTsLoaderOptions = Pick<I18nAbstractLoaderOptions, 'path' | 'watch'>
 

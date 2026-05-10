@@ -1,6 +1,7 @@
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'
-import { McpTransportType, type StdioConfig } from '@lumina/shared'
+import { McpTransportType } from '@lumina/shared'
+import type { StdioConfig } from '@lumina/shared'
 import type { LocalHttpConfig } from '../types'
 import type { WorkspaceStore } from '../store/workspace-store'
 import { assertPathAllowed } from '../security/workspace-guard'

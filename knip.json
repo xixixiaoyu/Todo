@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/knip/schema.json",
+  "workspaces": {
+    "apps/backend": {
+      "entry": ["src/main.ts", "prisma.config.js"],
+      "project": ["src/**/*.ts", "tests/**/*.ts"]
+    },
+    "apps/frontend": {
+      "entry": ["src/main.ts"],
+      "project": ["src/**/*.ts", "src/**/*.vue", "tests/**/*.ts"]
+    },
+    "apps/sidecar": {
+      "entry": ["src/main.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/shared": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
+    }
+  }
+}

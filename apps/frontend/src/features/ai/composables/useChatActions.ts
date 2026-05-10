@@ -6,10 +6,8 @@ import {
   getSessionAbortSignal,
   abortSessionRequest,
   generateId,
-  type ChatMessage,
-  type AIRequestOptions,
-  type ToolCall,
 } from '@/features/ai/services/aiService'
+import type { ChatMessage, AIRequestOptions, ToolCall } from '@/features/ai/services/aiService'
 import { useChatState, novelBatchRemaining } from './useChatState'
 import { useChatMemory } from './useChatMemory'
 import { useChatHistory } from './useChatHistory'
@@ -21,7 +19,8 @@ import { executeToolCalls } from './useChatActions.toolCalls'
 import { useToolPermission } from './useToolPermission'
 import { useGenerationState } from '@/features/ai/stores/generationState'
 import { getStreamBuffer } from './useChatState'
-import { createStreamChunkHandler, type TeachingPersistPayload } from './useChatActions.stream'
+import { createStreamChunkHandler } from './useChatActions.stream'
+import type { TeachingPersistPayload } from './useChatActions.stream'
 import { prepareRuntimeCapabilities } from './useChatActions.runtime'
 import { resolveSkillContext } from '@/features/ai/services/aiService'
 import { httpClient } from '@/api'
@@ -564,7 +563,7 @@ export function useChatActions(options: AIRequestOptions = {}) {
     const documentsToUse =
       newDocuments !== undefined ? newDocuments : chatHistory.value[index].documents
 
-    const newHistory = [...chatHistory.value.slice(0, index)]
+    const newHistory = chatHistory.value.slice(0, index)
     chatHistory.value = newHistory
 
     await sendMessage(newContent, imagesToUse, documentsToUse)

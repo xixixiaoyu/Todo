@@ -13,7 +13,8 @@ import {
   Eye,
 } from 'lucide-vue-next'
 import SkillViewerOverlay from './SkillViewerOverlay.vue'
-import { useAIConfig, type AIConfig } from '@/features/ai/composables/useAIConfig'
+import { useAIConfig } from '@/features/ai/composables/useAIConfig'
+import type { AIConfig } from '@/features/ai/composables/useAIConfig'
 import type { AISkill } from '@/features/ai/services/types'
 import {
   parseSkillManifest,

@@ -1,5 +1,6 @@
 import i18n from '@/i18n'
-import { useTodoStore, type Todo } from '@/features/todo/stores/todo'
+import { useTodoStore } from '@/features/todo/stores/todo'
+import type { Todo } from '@/features/todo/stores/todo'
 import { useMemory } from '@/features/ai/composables/useMemory'
 import {
   MAX_PROMPT_DOC_CHARS_PER_FILE,

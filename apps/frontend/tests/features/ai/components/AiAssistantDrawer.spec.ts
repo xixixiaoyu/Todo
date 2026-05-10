@@ -70,8 +70,8 @@ vi.mock('@/features/ai/components/ChatHistoryPanel.vue', () => ({
   default: { template: '<div>ChatHistoryPanel</div>' },
 }))
 
-import { type ChatMessage } from '@/features/ai/services/aiService'
-import { type ChatSession } from '@/features/ai/composables/useChatHistory'
+import type { ChatMessage } from '@/features/ai/services/aiService'
+import type { ChatSession } from '@/features/ai/composables/useChatHistory'
 
 // Mock composables
 const mockSessions = ref<ChatSession[]>([])

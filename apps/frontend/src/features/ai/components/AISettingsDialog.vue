@@ -4,7 +4,8 @@ import { useI18n } from 'vue-i18n'
 import { X, RotateCcw } from 'lucide-vue-next'
 import AiLuminaIcon from './AiLuminaIcon.vue'
 import { isEqual } from 'lodash-es'
-import { useAIConfig, type AIConfig, type AIPreset } from '@/features/ai/composables/useAIConfig'
+import { useAIConfig } from '@/features/ai/composables/useAIConfig'
+import type { AIConfig, AIPreset } from '@/features/ai/composables/useAIConfig'
 import { useEscClose } from '@/composables/useEscClose'
 import {
   AlertDialog,

@@ -1,12 +1,10 @@
-import { ref, type Ref } from 'vue'
+import { ref } from 'vue'
+import type { Ref } from 'vue'
 import { io, Socket } from 'socket.io-client'
 import { useAuthStore } from '@/features/auth/stores/auth'
 import { getServerBaseUrl } from '@/api/config'
-import {
-  isSocketAuthError,
-  isTransientSocketError,
-  type SocketConnectionError,
-} from './useSocket.errors'
+import { isSocketAuthError, isTransientSocketError } from './useSocket.errors'
+import type { SocketConnectionError } from './useSocket.errors'
 
 let socketInstance: Socket | null = null
 const isConnected = ref(false)

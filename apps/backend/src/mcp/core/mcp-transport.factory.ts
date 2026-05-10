@@ -4,7 +4,8 @@ import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'
 import { lookup } from 'node:dns/promises'
 import { basename } from 'node:path'
 import { isIP } from 'node:net'
-import { McpTransportType, type StdioConfig, type HttpConfig } from '../mcp.dto'
+import { McpTransportType } from '../mcp.dto'
+import type { StdioConfig, HttpConfig } from '../mcp.dto'
 
 @Injectable()
 export class McpTransportFactory {

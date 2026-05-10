@@ -2,7 +2,7 @@
 import { useI18n } from 'vue-i18n'
 import { Users, Check } from 'lucide-vue-next'
 import AiLuminaIcon from './AiLuminaIcon.vue'
-import { type AIConfig, type AIPreset } from '@/features/ai/composables/useAIConfig'
+import type { AIConfig, AIPreset } from '@/features/ai/composables/useAIConfig'
 
 defineProps<{
   presets: AIPreset[]

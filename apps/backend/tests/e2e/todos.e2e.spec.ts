@@ -1,13 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { randomUUID } from 'crypto'
 import type { NestFastifyApplication } from '@nestjs/platform-fastify'
-import {
-  unwrapApiResponse,
-  type ApiResponse,
-  type AuthResponse,
-  type SyncResponse,
-  type Todo,
-} from '@lumina/shared'
+import { unwrapApiResponse } from '@lumina/shared'
+import type { ApiResponse, AuthResponse, SyncResponse, Todo } from '@lumina/shared'
 import { createE2eApp } from './test-app'
 
 const ajaxHeaders = {

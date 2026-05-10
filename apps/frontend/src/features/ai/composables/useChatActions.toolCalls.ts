@@ -1,10 +1,6 @@
 import type { ToolCallResult } from '@/features/mcp/api/mcp'
-import {
-  generateId,
-  type ChatMessage,
-  type DiscussionStep,
-  type ToolCall,
-} from '@/features/ai/services/aiService'
+import { generateId } from '@/features/ai/services/aiService'
+import type { ChatMessage, DiscussionStep, ToolCall } from '@/features/ai/services/aiService'
 import { classifyPermission } from './useToolPermission'
 
 const MAX_TOOL_CONTENT_LENGTH = 15000

@@ -1,4 +1,5 @@
-import { nextTick, ref, type Ref } from 'vue'
+import { nextTick, ref } from 'vue'
+import type { Ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ParsedFile } from '@/composables/useFileParsing'
 import type { AIConfig } from '@/features/ai/composables/useAIConfig'

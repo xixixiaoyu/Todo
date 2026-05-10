@@ -1,9 +1,7 @@
-import { computed, type Ref } from 'vue'
-import {
-  aiThinkingLevel,
-  saveAIThinkingLevel,
-  type AIConfig,
-} from '@/features/ai/composables/useAIConfig'
+import { computed } from 'vue'
+import type { Ref } from 'vue'
+import { aiThinkingLevel, saveAIThinkingLevel } from '@/features/ai/composables/useAIConfig'
+import type { AIConfig } from '@/features/ai/composables/useAIConfig'
 import type { ThinkingMode } from '@/features/ai/composables/useAIConfig/types'
 import type { NovelGenre } from '@/features/ai/services/types'
 

@@ -1,10 +1,7 @@
 import { isAxiosError } from 'axios'
 import { debounce } from 'lodash-es'
-import {
-  unwrapApiResponse,
-  type SyncConflict as SharedSyncConflict,
-  type Todo as SharedTodo,
-} from '@lumina/shared'
+import { unwrapApiResponse } from '@lumina/shared'
+import type { SyncConflict as SharedSyncConflict, Todo as SharedTodo } from '@lumina/shared'
 import { getActiveSocketId } from '@/composables/useSocket'
 import { todoApi } from '../api'
 import { mapServerTodoToLocalTodo } from './todo.actions.common'

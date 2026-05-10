@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, type CSSProperties, toRef } from 'vue'
+import { ref, computed, watch, onMounted, toRef } from 'vue'
+import type { CSSProperties } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useEscClose } from '@/composables/useEscClose'
 import { useResizable } from '@/composables/useResizable'

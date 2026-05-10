@@ -3,8 +3,8 @@ import type { Todo } from '@/features/todo/stores/todo.types'
 import {
   applyProposedTodoChanges,
   buildBasePreviewTodos,
-  type ProposedTodoActions,
 } from '@/features/todo/stores/todo.proposed'
+import type { ProposedTodoActions } from '@/features/todo/stores/todo.proposed'
 
 function createTodo(overrides: Partial<Todo> = {}): Todo {
   return {

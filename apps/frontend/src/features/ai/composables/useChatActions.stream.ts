@@ -1,14 +1,13 @@
 import type { Ref } from 'vue'
-import {
-  generateId,
-  parseAssistantBlocks,
-  type ChatMessage,
-  type DiscussionStep,
-  type TeachingAssessment,
-  type TeachingQuiz,
-  type NovelCharacterCard,
-  type NovelWorldviewSetting,
-  type NovelChapterMeta,
+import { generateId, parseAssistantBlocks } from '@/features/ai/services/aiService'
+import type {
+  ChatMessage,
+  DiscussionStep,
+  TeachingAssessment,
+  TeachingQuiz,
+  NovelCharacterCard,
+  NovelWorldviewSetting,
+  NovelChapterMeta,
 } from '@/features/ai/services/aiService'
 import type { ProposedTodoChange } from '@/features/todo/stores/todo'
 import type { AIConfig } from './useAIConfig'

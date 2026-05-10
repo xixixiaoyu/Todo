@@ -1,7 +1,9 @@
-import { ref, watch, computed, type Ref } from 'vue'
+import { ref, watch, computed } from 'vue'
+import type { Ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { debounce } from 'lodash-es'
-import { useAIConfig, type AIPreset } from '@/features/ai/composables/useAIConfig'
+import { useAIConfig } from '@/features/ai/composables/useAIConfig'
+import type { AIPreset } from '@/features/ai/composables/useAIConfig'
 import { useToast } from '@/composables/useToast'
 import type { AISkill } from '@/features/ai/services/types'
 

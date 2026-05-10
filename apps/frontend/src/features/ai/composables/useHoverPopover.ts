@@ -1,4 +1,5 @@
-import { computed, onUnmounted, toValue, type MaybeRefOrGetter, type Ref } from 'vue'
+import { computed, onUnmounted, toValue } from 'vue'
+import type { MaybeRefOrGetter, Ref } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
 
 export function useHoverPopover(params: {

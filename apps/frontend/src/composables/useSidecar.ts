@@ -1,6 +1,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { isWails, system } from '@/lib/wails'
-import { createSidecarClient, type SidecarClient } from '@/api/sidecar'
+import { createSidecarClient } from '@/api/sidecar'
+import type { SidecarClient } from '@/api/sidecar'
 
 export interface SidecarInfo {
   status: 'stopped' | 'starting' | 'running' | 'errored'

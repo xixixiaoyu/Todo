@@ -1,4 +1,5 @@
-import { computed, type ComputedRef, type Ref } from 'vue'
+import { computed } from 'vue'
+import type { ComputedRef, Ref } from 'vue'
 import type { Todo } from '../stores/todo'
 import { isEffectivelyCompleted } from '../stores/todo.filtering'
 import type { PomodoroHistory } from '../stores/pomodoro'

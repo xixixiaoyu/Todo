@@ -1,5 +1,7 @@
-import { getAIStaticResponse, type ChatMessage } from '@/features/ai/services/aiService'
-import { getAIConfig, getAIPresets, type AIConfig } from './useAIConfig'
+import { getAIStaticResponse } from '@/features/ai/services/aiService'
+import type { ChatMessage } from '@/features/ai/services/aiService'
+import { getAIConfig, getAIPresets } from './useAIConfig'
+import type { AIConfig } from './useAIConfig'
 import type { ChatSession } from './useChatHistory'
 
 const compressingSessionIds = new Set<string>()

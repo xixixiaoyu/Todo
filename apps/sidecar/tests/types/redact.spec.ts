@@ -1,12 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { McpTransportType, type StdioConfig } from '@lumina/shared'
-import {
-  REDACTED,
-  redactServerConfig,
-  toServerResponse,
-  type LocalHttpConfig,
-  type McpServerConfig,
-} from '../../src/types'
+import { McpTransportType } from '@lumina/shared'
+import type { StdioConfig } from '@lumina/shared'
+import { REDACTED, redactServerConfig, toServerResponse } from '../../src/types'
+import type { LocalHttpConfig, McpServerConfig } from '../../src/types'
 
 function baseServer(
   transport: McpTransportType,

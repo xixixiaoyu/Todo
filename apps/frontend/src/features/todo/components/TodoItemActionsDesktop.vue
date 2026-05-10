@@ -13,7 +13,8 @@ import {
   Clock3,
 } from 'lucide-vue-next'
 import { ref } from 'vue'
-import { useTodoStore, type Todo } from '../stores/todo'
+import { useTodoStore } from '../stores/todo'
+import type { Todo } from '../stores/todo'
 import { usePomodoroStore } from '../stores/pomodoro'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'

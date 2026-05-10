@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, useId, computed, toRefs } from 'vue'
 import { useGsap } from '@/composables/useGsap'
-import { type AIConfig, type AIPreset } from '@/features/ai/composables/useAIConfig'
+import type { AIConfig, AIPreset } from '@/features/ai/composables/useAIConfig'
 import type { AISkill } from '@/features/ai/services/types'
 import AISettingsDiscussionCard from './AISettingsDiscussionCard.vue'
 import AISettingsApiSection from './AISettingsApiSection.vue'

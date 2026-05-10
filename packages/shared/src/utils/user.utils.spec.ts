@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { formatUser, formatUsers, type PrismaUser } from './user.utils'
+import { formatUser, formatUsers } from './user.utils'
+import type { PrismaUser } from './user.utils'
 
 describe('user.utils', () => {
   const mockDate = new Date('2024-01-21T00:00:00.000Z')

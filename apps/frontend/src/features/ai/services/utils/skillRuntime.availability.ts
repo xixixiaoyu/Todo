@@ -1,8 +1,6 @@
 import type { McpToolResponse, ToolCallResult } from '@/features/mcp/api/mcp'
-import {
-  getSkillRuntimeConfig,
-  type SkillRuntimeConfig,
-} from '@/features/ai/composables/useSkillRuntimeConfig'
+import { getSkillRuntimeConfig } from '@/features/ai/composables/useSkillRuntimeConfig'
+import type { SkillRuntimeConfig } from '@/features/ai/composables/useSkillRuntimeConfig'
 import type { AISkill, AISkillMcpRuntime, AISkillRuntimeAvailability, Tool } from '../types'
 import { callSkillHttpRuntime } from './skillRuntime.http'
 import {

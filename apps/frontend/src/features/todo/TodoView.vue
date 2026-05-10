@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed, defineAsyncComponent } from 'vue'
-import { useTodoStore, type FilterType, type ViewMode } from './stores/todo'
+import { useTodoStore } from './stores/todo'
+import type { FilterType, ViewMode } from './stores/todo'
 import { usePomodoroStore } from './stores/pomodoro'
 import { useTodo } from './composables/useTodo'
 import { useImageTaskExtraction } from './composables/useImageTaskExtraction'

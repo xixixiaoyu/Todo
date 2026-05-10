@@ -9,7 +9,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu'
-import { POMODORO_MODES, type PomodoroMode } from '../stores/pomodoro'
+import { POMODORO_MODES } from '../stores/pomodoro'
+import type { PomodoroMode } from '../stores/pomodoro'
 
 const { t } = useI18n()
 

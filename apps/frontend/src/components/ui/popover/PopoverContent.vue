@@ -1,11 +1,6 @@
 <script setup lang="ts">
-import {
-  PopoverContent,
-  type PopoverContentEmits,
-  type PopoverContentProps,
-  PopoverPortal,
-  useForwardPropsEmits,
-} from 'reka-ui'
+import { PopoverContent, PopoverPortal, useForwardPropsEmits } from 'reka-ui'
+import type { PopoverContentEmits, PopoverContentProps } from 'reka-ui'
 import { cn } from '@/lib/utils'
 
 const props = withDefaults(defineProps<PopoverContentProps>(), {

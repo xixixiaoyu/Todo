@@ -1,4 +1,5 @@
-import { onUnmounted, watch, type Ref } from 'vue'
+import { onUnmounted, watch } from 'vue'
+import type { Ref } from 'vue'
 
 // 全局栈，存储所有活跃的关闭回调
 const escStack: (() => void)[] = []

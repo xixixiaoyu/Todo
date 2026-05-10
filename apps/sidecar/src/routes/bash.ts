@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
-import { exec, type ExecOptions } from 'node:child_process'
+import { exec } from 'node:child_process'
+import type { ExecOptions } from 'node:child_process'
 import { resolve } from 'node:path'
 import { ValidationError } from '../server/errors'
 import { assertPathAllowed } from '../security/workspace-guard'

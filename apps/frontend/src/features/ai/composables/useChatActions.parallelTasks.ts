@@ -1,9 +1,7 @@
-import { ref, type Ref } from 'vue'
-import {
-  getAIStreamResponse,
-  generateId,
-  type AIRequestOptions,
-} from '@/features/ai/services/aiService'
+import { ref } from 'vue'
+import type { Ref } from 'vue'
+import { getAIStreamResponse, generateId } from '@/features/ai/services/aiService'
+import type { AIRequestOptions } from '@/features/ai/services/aiService'
 
 export interface SubtaskDefinition {
   id: string

@@ -9,10 +9,8 @@ import {
   getSkillRuntimeAvailability,
   READ_SKILL_TOOL_NAME,
   resolveSkillRuntime,
-  type AISkill,
-  type AISkillRuntimeAvailability,
-  type Tool,
 } from '@/features/ai/services/aiService'
+import type { AISkill, AISkillRuntimeAvailability, Tool } from '@/features/ai/services/aiService'
 import type { McpToolResponse } from '@/features/mcp/api/mcp'
 import { AGENT_TOOL_DEFINITIONS, buildAgentLocalToolHandlers } from './useChatActions.agentTools'
 

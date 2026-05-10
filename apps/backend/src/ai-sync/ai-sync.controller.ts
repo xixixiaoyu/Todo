@@ -3,14 +3,8 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { CurrentUser } from '../auth/current-user.decorator'
 import { ZodValidationPipe } from 'nestjs-zod'
-import {
-  AIMemoryDataSchema,
-  AISkillSyncListSchema,
-  AIPresetSyncListSchema,
-  type AIMemoryData,
-  type AISkillSync,
-  type AIPresetSync,
-} from '@lumina/shared'
+import { AIMemoryDataSchema, AISkillSyncListSchema, AIPresetSyncListSchema } from '@lumina/shared'
+import type { AIMemoryData, AISkillSync, AIPresetSync } from '@lumina/shared'
 import type { User } from '@lumina/shared'
 import { AiMemoryService } from './ai-memory.service'
 import { AiSkillService } from './ai-skill.service'

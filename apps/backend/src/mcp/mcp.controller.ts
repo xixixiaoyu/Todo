@@ -19,14 +19,8 @@ import { CurrentUser } from '../auth/current-user.decorator'
 import type { User } from '@lumina/shared'
 import { McpServerConfigService } from './mcp-server-config.service'
 import { McpClientService } from './mcp-client.service'
-import {
-  CreateMcpServerDto,
-  UpdateMcpServerDto,
-  CallToolDto,
-  type McpServerResponse,
-  type McpToolResponse,
-  type ToolCallResult,
-} from './mcp.dto'
+import { CreateMcpServerDto, UpdateMcpServerDto, CallToolDto } from './mcp.dto'
+import type { McpServerResponse, McpToolResponse, ToolCallResult } from './mcp.dto'
 import {
   MCP_CONNECTION_THROTTLE,
   MCP_TOOL_CALL_THROTTLE,

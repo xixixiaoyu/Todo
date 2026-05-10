@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import McpServerList from '@/features/mcp/components/McpServerList.vue'
-import { McpTransportType, type McpServerResponse } from '@/features/mcp/api/mcp'
+import { McpTransportType } from '@/features/mcp/api/mcp'
+import type { McpServerResponse } from '@/features/mcp/api/mcp'
 
 const mockStore = {
   connectionStates: {} as Record<string, boolean>,

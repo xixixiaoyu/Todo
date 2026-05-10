@@ -1,5 +1,6 @@
 import { httpClient } from '@/api'
-import { unwrapApiResponse, type ApiResponse } from '@lumina/shared'
+import { unwrapApiResponse } from '@lumina/shared'
+import type { ApiResponse } from '@lumina/shared'
 import type { AISkillHttpRuntime } from '../types'
 
 const DEFAULT_HTTP_TIMEOUT_MS = 15000

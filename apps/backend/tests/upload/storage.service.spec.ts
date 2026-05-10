@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import { ServiceUnavailableException } from '@nestjs/common'
 import type { ConfigService } from '@nestjs/config'
-import { StorageService, type UploadedFile } from '@/upload/storage.service'
+import { StorageService } from '@/upload/storage.service'
+import type { UploadedFile } from '@/upload/storage.service'
 
 class MockConfigService {
   constructor(private readonly values: Record<string, string>) {}

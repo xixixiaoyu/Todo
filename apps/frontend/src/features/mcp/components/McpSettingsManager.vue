@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useMcpStore } from '../stores/mcp'
-import { type McpServerResponse, type CreateMcpServerDto, type McpToolResponse } from '../api/mcp'
+import type { McpServerResponse, CreateMcpServerDto, McpToolResponse } from '../api/mcp'
 import McpServerList from './McpServerList.vue'
 import McpServerForm from './McpServerForm.vue'
 import { ScrollArea } from '@/components/ui/scroll-area'

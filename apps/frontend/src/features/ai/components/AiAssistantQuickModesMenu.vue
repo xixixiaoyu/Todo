@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, type Component } from 'vue'
+import { ref } from 'vue'
+import type { Component } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   ChevronDown,
@@ -18,7 +19,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useAIConfig } from '@/features/ai/composables/useAIConfig'
 import { useAiAssistantModes } from '@/features/ai/composables/useAiAssistantModes'
-import { useAiModeItems, type AiModeId } from '@/features/ai/composables/useAiModeItems'
+import { useAiModeItems } from '@/features/ai/composables/useAiModeItems'
+import type { AiModeId } from '@/features/ai/composables/useAiModeItems'
 import { useHoverPopover } from '@/features/ai/composables/useHoverPopover'
 import { useTodoStore } from '@/features/todo/stores/todo'
 

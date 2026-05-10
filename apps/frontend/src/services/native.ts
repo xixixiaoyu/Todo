@@ -1,4 +1,5 @@
-import { isWails, system, type SidecarInfo } from '@/lib/wails'
+import { isWails, system } from '@/lib/wails'
+import type { SidecarInfo } from '@/lib/wails'
 import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics'
 import { Capacitor } from '@capacitor/core'
 

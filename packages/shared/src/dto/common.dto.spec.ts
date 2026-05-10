@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { isApiSuccess, unwrapApiResponse, ApiError, type ApiResponse } from './common.dto'
+import { isApiSuccess, unwrapApiResponse, ApiError } from './common.dto'
+import type { ApiResponse } from './common.dto'
 
 describe('common.dto', () => {
   it('unwrapApiResponse returns data for success response', () => {

@@ -1,4 +1,5 @@
-import { ref, computed, watch, type Ref } from 'vue'
+import { ref, computed, watch } from 'vue'
+import type { Ref } from 'vue'
 import { useChatHistory } from './useChatHistory'
 import { useGenerationState } from '@/features/ai/stores/generationState'
 import type { ChatMessage, DiscussionStep } from '@/features/ai/services/aiService'

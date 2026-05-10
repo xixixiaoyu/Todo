@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, nextTick, watch, computed, useId, onMounted, onUnmounted, type Component } from 'vue'
+import { ref, nextTick, watch, computed, useId, onMounted, onUnmounted } from 'vue'
+import type { Component } from 'vue'
 import { useWindowSize } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import {
@@ -16,7 +17,8 @@ import type { ThinkingMode } from '@/features/ai/composables/useAIConfig/types'
 import AiAssistantInputAttachments from '@/features/ai/components/AiAssistantInputAttachments.vue'
 import AiAssistantInputSlashCommands from '@/features/ai/components/AiAssistantInputSlashCommands.vue'
 import { AI_UPLOAD_ACCEPT } from '@/features/ai/constants/attachments'
-import { useAiModeItems, type AiModeId } from '@/features/ai/composables/useAiModeItems'
+import { useAiModeItems } from '@/features/ai/composables/useAiModeItems'
+import type { AiModeId } from '@/features/ai/composables/useAiModeItems'
 
 const props = defineProps<{
   modelValue: string

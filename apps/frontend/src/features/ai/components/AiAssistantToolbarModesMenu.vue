@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, type Component } from 'vue'
+import { computed } from 'vue'
+import type { Component } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   GraduationCap,
@@ -18,7 +19,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useHoverPopover } from '@/features/ai/composables/useHoverPopover'
-import { useAiModeItems, type AiModeId } from '@/features/ai/composables/useAiModeItems'
+import { useAiModeItems } from '@/features/ai/composables/useAiModeItems'
+import type { AiModeId } from '@/features/ai/composables/useAiModeItems'
 
 const props = defineProps<{
   isMobile: boolean

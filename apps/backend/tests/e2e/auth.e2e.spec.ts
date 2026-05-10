@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import type { NestFastifyApplication } from '@nestjs/platform-fastify'
-import { unwrapApiResponse, type ApiResponse, type AuthResponse, type User } from '@lumina/shared'
+import { unwrapApiResponse } from '@lumina/shared'
+import type { ApiResponse, AuthResponse, User } from '@lumina/shared'
 import { createE2eApp } from './test-app'
 
 const ajaxHeaders = {

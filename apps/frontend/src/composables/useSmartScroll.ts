@@ -1,4 +1,5 @@
-import { nextTick, onMounted, onUnmounted, ref, watch, type Ref } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import type { Ref } from 'vue'
 import gsap from 'gsap'
 
 import {
@@ -7,9 +8,8 @@ import {
   createRafThrottle,
   getScrollSnapshotEl,
   isAtBottomEl,
-  type ScrollBehaviorOption,
-  type ScrollTriggerContext,
 } from './useSmartScroll.internals'
+import type { ScrollBehaviorOption, ScrollTriggerContext } from './useSmartScroll.internals'
 
 interface UseSmartScrollOptions {
   /** 滚动容器引用 */

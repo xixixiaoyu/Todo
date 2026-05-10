@@ -22,6 +22,12 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       exclude: ['node_modules/', 'dist/', 'src/**/*.d.ts', 'src/main.ts'],
+      thresholds: {
+        lines: 60,
+        branches: 50,
+        functions: 60,
+        statements: 60,
+      },
     },
   },
   resolve: {

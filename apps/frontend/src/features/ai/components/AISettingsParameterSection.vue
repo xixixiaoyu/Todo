@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Thermometer, MessageSquare, Sparkles } from 'lucide-vue-next'
-import { type AIConfig } from '@/features/ai/composables/useAIConfig'
+import type { AIConfig } from '@/features/ai/composables/useAIConfig'
 import type { AISkill } from '@/features/ai/services/types'
 
 defineProps<{

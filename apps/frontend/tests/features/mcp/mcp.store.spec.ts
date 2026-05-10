@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { ref, computed } from 'vue'
 import { useMcpStore } from '@/features/mcp/stores/mcp'
-import { McpTransportType, type McpServerResponse } from '@lumina/shared'
+import { McpTransportType } from '@lumina/shared'
+import type { McpServerResponse } from '@lumina/shared'
 
 // 在 hoisted 中创建 mock 函数以便测试中引用
 const mockApiFunctions = vi.hoisted(() => ({

@@ -2,12 +2,11 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Globe, Key, Cpu, Info, Eye, EyeOff } from 'lucide-vue-next'
-import { useAIConfig, type AIConfig } from '@/features/ai/composables/useAIConfig'
+import { useAIConfig } from '@/features/ai/composables/useAIConfig'
+import type { AIConfig } from '@/features/ai/composables/useAIConfig'
 import { useSkillRuntimeConfig } from '@/features/ai/composables/useSkillRuntimeConfig'
-import {
-  getSkillRuntimeSecretDefinitions,
-  type AISkillRuntimeSecret,
-} from '@/features/ai/services/aiService'
+import { getSkillRuntimeSecretDefinitions } from '@/features/ai/services/aiService'
+import type { AISkillRuntimeSecret } from '@/features/ai/services/aiService'
 
 defineProps<{
   baseUrlId: string

@@ -9,8 +9,8 @@ import {
   isReminderOnlySchedule,
   resolveScheduleDate,
   resolveScheduleUpdate,
-  type ScheduleEditorKind,
 } from '../stores/todo.schedule'
+import type { ScheduleEditorKind } from '../stores/todo.schedule'
 
 const props = defineProps<{
   dueAt: Date | string | number | null | undefined

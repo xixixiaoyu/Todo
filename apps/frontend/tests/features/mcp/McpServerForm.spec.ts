@@ -2,11 +2,8 @@ import { describe, it, expect, vi } from 'vitest'
 import { h, nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
 import McpServerForm from '@/features/mcp/components/McpServerForm.vue'
-import {
-  McpTransportType,
-  type CreateMcpServerDto,
-  type McpServerResponse,
-} from '@/features/mcp/api/mcp'
+import { McpTransportType } from '@/features/mcp/api/mcp'
+import type { CreateMcpServerDto, McpServerResponse } from '@/features/mcp/api/mcp'
 
 // Mock vue-i18n
 vi.mock('vue-i18n', () => ({

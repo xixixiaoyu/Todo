@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick, type CSSProperties } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
+import type { CSSProperties } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-vue-next'
 import { useMermaidEditor } from '../composables/useMermaidEditor'

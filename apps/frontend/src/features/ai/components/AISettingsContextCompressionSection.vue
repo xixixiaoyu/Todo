@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Cpu, Info } from 'lucide-vue-next'
-import { type AIConfig, type AIPreset } from '@/features/ai/composables/useAIConfig'
+import type { AIConfig, AIPreset } from '@/features/ai/composables/useAIConfig'
 
 const { presets, contextCompressionEnabledId, contextCompressionTriggerId } = defineProps<{
   presets: AIPreset[]

@@ -9,13 +9,8 @@
  */
 
 import { httpClient } from '@/api'
-import {
-  type ApiResponse,
-  type AIMemoryData,
-  type AISkillSync,
-  type AIPresetSync,
-  unwrapApiResponse,
-} from '@lumina/shared'
+import { unwrapApiResponse } from '@lumina/shared'
+import type { ApiResponse, AIMemoryData, AISkillSync, AIPresetSync } from '@lumina/shared'
 import type { AISkill } from './types'
 import type { AIPreset } from '@/features/ai/composables/useAIConfig/types'
 

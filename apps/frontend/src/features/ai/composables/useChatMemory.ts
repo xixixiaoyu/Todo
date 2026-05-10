@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import i18n from '@/i18n'
-import { getAIStaticResponse, type ChatMessage } from '@/features/ai/services/aiService'
+import { getAIStaticResponse } from '@/features/ai/services/aiService'
+import type { ChatMessage } from '@/features/ai/services/aiService'
 import { useMemory } from './useMemory'
 import { useToast } from '@/composables/useToast'
 

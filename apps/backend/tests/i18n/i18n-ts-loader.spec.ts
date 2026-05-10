@@ -3,7 +3,8 @@ import { mkdtemp, mkdir, rm, writeFile } from 'fs/promises'
 import { tmpdir } from 'os'
 import * as path from 'path'
 import { firstValueFrom, isObservable } from 'rxjs'
-import { I18nTsLoader, type TranslationNode } from '../../src/i18n/i18n-ts.loader'
+import { I18nTsLoader } from '../../src/i18n/i18n-ts.loader'
+import type { TranslationNode } from '../../src/i18n/i18n-ts.loader'
 
 class TestI18nTsLoader extends I18nTsLoader {
   constructor(

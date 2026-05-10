@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import type { Mock } from 'vitest'
 import { ref, defineComponent, nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
 import gsap from 'gsap'

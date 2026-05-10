@@ -22,8 +22,10 @@ import {
   MoreHorizontal,
 } from 'lucide-vue-next'
 import { onBeforeUnmount, ref, watch } from 'vue'
-import { useTodoStore, type Todo } from '../stores/todo'
-import { usePomodoroStore, type PomodoroMode } from '../stores/pomodoro'
+import { useTodoStore } from '../stores/todo'
+import type { Todo } from '../stores/todo'
+import { usePomodoroStore } from '../stores/pomodoro'
+import type { PomodoroMode } from '../stores/pomodoro'
 import { useBodyScrollLock } from '../composables/useBodyScrollLock'
 import { Button } from '@/components/ui/button'
 import TodoSchedulePopover from './TodoSchedulePopover.vue'

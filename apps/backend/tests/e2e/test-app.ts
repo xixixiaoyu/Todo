@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing'
-import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify'
+import { FastifyAdapter } from '@nestjs/platform-fastify'
+import type { NestFastifyApplication } from '@nestjs/platform-fastify'
 import { APP_GUARD } from '@nestjs/core'
 import { PassportModule } from '@nestjs/passport'
 import { ThrottlerModule } from '@nestjs/throttler'

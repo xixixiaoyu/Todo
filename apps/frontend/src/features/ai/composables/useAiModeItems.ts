@@ -1,4 +1,5 @@
-import { computed, type ComputedRef } from 'vue'
+import { computed } from 'vue'
+import type { ComputedRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 export type AiModeId = 'todo' | 'teaching' | 'draw' | 'discuss' | 'novel' | 'translation'

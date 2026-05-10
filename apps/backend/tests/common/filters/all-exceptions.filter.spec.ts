@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import type { Mock } from 'vitest'
 import { AllExceptionsFilter } from '../../../src/common/filters/all-exceptions.filter'
 import { HttpException, HttpStatus, ArgumentsHost, ConflictException, Logger } from '@nestjs/common'
 import { I18nContext } from 'nestjs-i18n'

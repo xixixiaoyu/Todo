@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useMcpStore } from '../stores/mcp'
-import { type McpServerResponse, type CreateMcpServerDto, type McpToolResponse } from '../api/mcp'
+import type { McpServerResponse, CreateMcpServerDto, McpToolResponse } from '../api/mcp'
 import McpServerList from '../components/McpServerList.vue'
 import McpServerForm from '../components/McpServerForm.vue'
 import { Button } from '@/components/ui/button'

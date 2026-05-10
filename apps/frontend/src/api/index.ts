@@ -145,7 +145,7 @@ httpClient.interceptors.response.use(
                 headers.set('Authorization', `Bearer ${token}`)
               } else {
                 originalRequest.headers = {
-                  ...(headers || {}),
+                  ...headers,
                   Authorization: `Bearer ${token}`,
                 }
               }
