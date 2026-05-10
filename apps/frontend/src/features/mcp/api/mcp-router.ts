@@ -1,5 +1,5 @@
 import type { AxiosInstance } from 'axios'
-import httpClient from '@/api'
+import { httpClient } from '@/api'
 import { unwrapApiResponse } from '@lumina/shared'
 import type {
   McpServerResponse,

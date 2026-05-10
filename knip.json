@@ -1,13 +1,49 @@
 {
   "$schema": "./node_modules/knip/schema.json",
+  "ignore": ["**/dist/**"],
+  "ignoreDependencies": [
+    "@capacitor/ios",
+    "@tailwindcss/postcss",
+    "pino-pretty",
+    "eslint-plugin-prettier",
+    "eslint-plugin-vue",
+    "prettier",
+    "typescript-eslint"
+  ],
+  "ignoreBinaries": ["pm2", "wails", "pwsh"],
   "workspaces": {
     "apps/backend": {
-      "entry": ["src/main.ts", "prisma.config.js"],
-      "project": ["src/**/*.ts", "tests/**/*.ts"]
+      "entry": ["src/main.ts"],
+      "project": ["src/**/*.ts", "tests/**/*.ts"],
+      "ignore": ["src/i18n/**/*.ts", "src/auth/index.ts"],
+      "ignoreDependencies": [
+        "ts-loader",
+        "@types/bcryptjs",
+        "@types/lodash",
+        "@types/pdf-parse",
+        "@fastify/cors",
+        "ioredis",
+        "lodash",
+        "xss",
+        "uuid",
+        "chokidar",
+        "zod"
+      ]
     },
     "apps/frontend": {
       "entry": ["src/main.ts"],
-      "project": ["src/**/*.ts", "src/**/*.vue", "tests/**/*.ts"]
+      "project": ["src/**/*.ts", "src/**/*.vue", "tests/**/*.ts"],
+      "ignore": [
+        "src/composables/index.ts",
+        "src/features/ai/components/NovelGenreSelector.vue",
+        "src/features/ai/components/ParallelTaskBlock.vue",
+        "src/features/ai/components/SessionFileCard.vue",
+        "src/features/ai/composables/useChatActions.parallelTasks.ts",
+        "src/features/ai/stores/toolExecutionLog.ts",
+        "src/features/todo/components/pomodoro/PomodoroTaskInfo.vue",
+        "src/features/todo/components/pomodoro/PomodoroTimerControls.vue"
+      ],
+      "ignoreDependencies": ["@types/dompurify", "@vitest/coverage-v8"]
     },
     "apps/sidecar": {
       "entry": ["src/main.ts"],

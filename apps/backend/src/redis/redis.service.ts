@@ -16,12 +16,8 @@ type KeyvStoreLike = {
  * 缓存键前缀枚举
  */
 export enum CachePrefix {
-  USER = 'user',
-  SESSION = 'session',
   AUTH = 'auth',
   RATE_LIMIT = 'rate_limit',
-  CONFIG = 'config',
-  TEMP = 'temp',
 }
 
 /**

@@ -1,4 +1,4 @@
-import httpClient from '@/api'
+import { httpClient } from '@/api'
 export * from '@lumina/shared'
 import { unwrapApiResponse } from '@lumina/shared'
 import type {
