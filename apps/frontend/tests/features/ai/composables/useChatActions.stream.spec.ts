@@ -6,6 +6,7 @@ import { ref } from 'vue'
 import { _resetChatState, novelBatchRemaining } from '@/features/ai/composables/useChatState'
 import type { AIConfig } from '@/features/ai/composables/useAIConfig'
 import type { ChatSession } from '@/features/ai/composables/useChatHistory'
+import { parseAssistantBlocks } from '@/features/ai/services/aiService'
 import type { DiscussionStep } from '@/features/ai/services/aiService'
 import type { ProposedTodoChange } from '@/features/todo/stores/todo'
 
@@ -27,7 +28,6 @@ vi.mock('@/features/ai/composables/useChatActions.utils', () => ({
 }))
 
 import { finalizeCompletedResponse } from '@/features/ai/composables/useChatActions.stream'
-import { parseAssistantBlocks } from '@/features/ai/services/aiService'
 
 const mockParseAssistantBlocks = vi.mocked(parseAssistantBlocks)
 

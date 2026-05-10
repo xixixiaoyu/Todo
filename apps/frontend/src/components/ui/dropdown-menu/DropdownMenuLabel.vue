@@ -1,8 +1,8 @@
 <script setup lang="ts">
+import { DropdownMenuLabel, useForwardProps } from 'reka-ui'
 import type { DropdownMenuLabelProps } from 'reka-ui'
 import type { HTMLAttributes } from 'vue'
 import { reactiveOmit } from '@vueuse/core'
-import { DropdownMenuLabel, useForwardProps } from 'reka-ui'
 import { cn } from '@/lib/utils'
 
 const props = defineProps<

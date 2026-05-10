@@ -8,8 +8,8 @@ import {
   Search,
   Trash2,
 } from 'lucide-vue-next'
-import type { FilterType } from '../stores/todo'
 import { useTodoStore } from '../stores/todo'
+import type { FilterType } from '../stores/todo'
 import { useToast } from '@/composables/useToast'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'

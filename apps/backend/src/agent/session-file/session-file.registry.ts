@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { v4 as uuidv4 } from 'uuid'
 import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'node:fs'
-import { join } from 'node:path'
-import { extname, basename } from 'node:path'
+import { join, extname, basename } from 'node:path'
 import type { SessionFile, SessionFileCreateInput } from './session-file.types'
 
 interface StoreData {

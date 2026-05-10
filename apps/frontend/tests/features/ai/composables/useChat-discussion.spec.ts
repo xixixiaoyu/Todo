@@ -8,9 +8,9 @@ import { useChat } from '@/features/ai/composables/useChat'
 import type { ChatSession } from '@/features/ai/composables/useChatHistory'
 import { _resetChatState } from '@/features/ai/composables/useChatState'
 import { getMultiModelDiscussionStream } from '@/features/ai/services/aiService'
+import type { ChatMessage, DiscussionStep } from '@/features/ai/services/aiService'
 import { getAIConfig, getAISkills } from '@/features/ai/composables/useAIConfig'
 import type { AIConfig } from '@/features/ai/composables/useAIConfig'
-import type { ChatMessage, DiscussionStep } from '@/features/ai/services/aiService'
 import { mcpApi } from '@/features/mcp/api/mcp'
 
 const mockAuthToken = ref<string | null>('access-token')

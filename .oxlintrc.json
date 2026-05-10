@@ -10,7 +10,6 @@
     "no-console": ["warn", { "allow": ["warn", "error"] }],
     "typescript/no-explicit-any": "error",
     "import/no-cycle": "warn",
-    "eslint/no-duplicate-imports": "warn",
     "eslint/prefer-const": "error",
     "typescript/consistent-type-assertions": "error",
     "typescript/no-unsafe-return": "error",

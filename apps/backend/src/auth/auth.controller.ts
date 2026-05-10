@@ -6,8 +6,8 @@ import { JwtAuthGuard } from './jwt-auth.guard'
 import { CurrentUser } from './current-user.decorator'
 import { LoginDto, RegisterDto, RefreshTokenDto, LogoutDto } from './auth.dto'
 import type { User, AuthResponse } from '@lumina/shared'
-import type { FastifyReplyWithCookie } from '../common'
 import { AUTH_LOGIN_THROTTLE, AUTH_REFRESH_THROTTLE, AUTH_REGISTER_THROTTLE } from '../common'
+import type { FastifyReplyWithCookie } from '../common'
 
 /**
  * 用户认证控制器

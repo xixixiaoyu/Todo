@@ -1,6 +1,5 @@
-import { resolve } from 'path'
+import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
-import { dirname } from 'path'
 import { defineConfig } from 'vite'
 import type { UserConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'

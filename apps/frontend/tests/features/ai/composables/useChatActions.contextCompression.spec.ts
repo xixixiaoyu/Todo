@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref } from 'vue'
+import { getAIStaticResponse } from '@/features/ai/services/aiService'
 import type { ChatMessage } from '@/features/ai/services/aiService'
 import { createContextCompression } from '@/features/ai/composables/useChatActions.contextCompression'
-import { getAIStaticResponse } from '@/features/ai/services/aiService'
 
 vi.mock('@/features/ai/services/aiService', () => ({
   getAIStaticResponse: vi.fn(),

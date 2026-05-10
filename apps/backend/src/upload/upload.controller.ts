@@ -14,8 +14,8 @@ import { StorageService } from './storage.service'
 import type { UploadResult, UploadedFile } from './storage.service'
 import { FileParsingService } from './file-parsing.service'
 import { ALLOWED_UPLOAD_EXTENSIONS, ALLOWED_UPLOAD_MIME_TYPES } from './upload.constants'
-import type { FastifyRequestWithMultipart, MultipartFile } from '../common'
 import { FILE_PARSE_THROTTLE, FILE_UPLOAD_THROTTLE } from '../common'
+import type { FastifyRequestWithMultipart, MultipartFile } from '../common'
 
 /**
  * 文件上传控制器

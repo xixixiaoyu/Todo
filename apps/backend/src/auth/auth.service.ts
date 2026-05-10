@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException, Inject, forwardRef } from '@nestjs/common'
 import { UsersService } from '../users/users.service'
-import type { LoginInput, RegisterInput, User, AuthResponse } from '@lumina/shared'
 import { formatUser } from '@lumina/shared'
+import type { LoginInput, RegisterInput, User, AuthResponse } from '@lumina/shared'
 import { TokenService, JwtPayload } from './token.service'
 import { PasswordService } from './password.service'
 

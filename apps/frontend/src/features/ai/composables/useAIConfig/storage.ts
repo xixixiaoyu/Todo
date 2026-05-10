@@ -1,5 +1,5 @@
-import type { AIConfig, AIPreset } from './types'
 import { STORAGE_KEY, PRESETS_STORAGE_KEY, SKILLS_STORAGE_KEY, ACTIVE_PRESET_KEY } from './types'
+import type { AIConfig, AIPreset } from './types'
 import { normalizePreset, normalizeSkill } from './skill-utils'
 import type { AISkill } from '@/features/ai/services/types'
 

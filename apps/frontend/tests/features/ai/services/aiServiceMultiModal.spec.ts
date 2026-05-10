@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { getAIStreamResponse } from '@/features/ai/services/aiService'
-import { _resetAIConfig } from '@/features/ai/composables/useAIConfig'
 import type { ChatMessage } from '@/features/ai/services/aiService'
+import { _resetAIConfig } from '@/features/ai/composables/useAIConfig'
 
 const fetchMock = vi.mocked(fetch)
 

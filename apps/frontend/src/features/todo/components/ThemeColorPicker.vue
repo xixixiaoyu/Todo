@@ -1,9 +1,9 @@
 <script setup lang="ts">
+import { DEFAULT_THEME_COLOR, THEME_PRESETS, useTheme } from '@/composables/useTheme'
 import type { ThemePresetDefinition } from '@/composables/useTheme'
 import { computed, ref, useId, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Palette, RotateCcw } from 'lucide-vue-next'
-import { DEFAULT_THEME_COLOR, THEME_PRESETS, useTheme } from '@/composables/useTheme'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'

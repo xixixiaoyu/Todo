@@ -8,10 +8,10 @@ import type {
   NovelWorldviewSetting,
   NovelChapterMeta,
 } from '@/features/ai/services/aiService'
+import { useTodoStore } from '@/features/todo/stores/todo'
 import type { ProposedTodoChange } from '@/features/todo/stores/todo'
 import { parseAssistantBlocks } from '@/features/ai/services/aiService'
 import { getAIConfig } from '@/features/ai/composables/useAIConfig'
-import { useTodoStore } from '@/features/todo/stores/todo'
 import { useChatState } from './useChatState'
 import { useChatActions } from './useChatActions'
 

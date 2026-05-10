@@ -5,8 +5,8 @@ import { createPinia, setActivePinia } from 'pinia'
 import { defineComponent, h, nextTick, ref } from 'vue'
 import TodoStatistics from '@/features/todo/components/TodoStatistics.vue'
 import { useTodoStore } from '@/features/todo/stores/todo'
-import { usePomodoroStore } from '@/features/todo/stores/pomodoro'
 import type { Todo } from '@/features/todo/stores/todo'
+import { usePomodoroStore } from '@/features/todo/stores/pomodoro'
 
 let mockResizeObserverReady = true
 
