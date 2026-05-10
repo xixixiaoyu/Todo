@@ -37,8 +37,8 @@ describe('UsersService', () => {
       const result = await service.findAll()
 
       expect(result).toHaveLength(1)
-      expect(result[0].email).toBe('test@example.com')
-      expect(typeof result[0].createdAt).toBe('string')
+      expect(result[0]!.email).toBe('test@example.com')
+      expect(typeof result[0]!.createdAt).toBe('string')
     })
   })
 

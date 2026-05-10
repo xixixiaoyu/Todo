@@ -86,8 +86,8 @@ describe('Todos e2e', () => {
     expect(createRes.statusCode).toBe(201)
     const synced1 = unwrapApiResponse(createRes.body as ApiResponse<SyncResponse>).synced
     expect(synced1).toHaveLength(1)
-    expect(synced1[0].id).toBe(id)
-    expect(synced1[0].version).toBe(1)
+    expect(synced1[0]!.id).toBe(id)
+    expect(synced1[0]!.version).toBe(1)
 
     const listRes = await inject<Todo[]>({
       method: 'GET',
@@ -111,7 +111,7 @@ describe('Todos e2e', () => {
             ...synced1[0],
             deletedAt,
             updatedAt: updatedAt2,
-            version: synced1[0].version,
+            version: synced1[0]!.version,
           },
         ],
         lastSyncAt: createdAt,

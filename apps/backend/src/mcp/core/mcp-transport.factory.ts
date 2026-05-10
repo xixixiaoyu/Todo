@@ -14,11 +14,13 @@ export class McpTransportFactory {
     const parts = ip.split('.')
     if (parts.length !== 4 || !parts.every((p) => /^\d+$/.test(p))) return false
 
-    const [a, b] = parts.map((p) => Number(p))
-    if (a === 10 || a === 127 || a === 0) return true
-    if (a === 169 && b === 254) return true
-    if (a === 172 && b >= 16 && b <= 31) return true
-    if (a === 192 && b === 168) return true
+    const [a, b] = parts as [string, string, string, string]
+    const na = Number(a),
+      nb = Number(b)
+    if (na === 10 || na === 127 || na === 0) return true
+    if (na === 169 && nb === 254) return true
+    if (na === 172 && nb >= 16 && nb <= 31) return true
+    if (na === 192 && nb === 168) return true
     return false
   }
 

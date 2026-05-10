@@ -21,7 +21,7 @@ function createStatefulEvalClient() {
 
       if (current.blockedUntil > now) {
         const timeToExpireMs =
-          current.hits.length > 0 ? Math.max(0, current.hits[0] + ttl - now) : 0
+          current.hits.length > 0 ? Math.max(0, current.hits[0]! + ttl - now) : 0
         return [
           current.hits.length,
           Math.ceil(timeToExpireMs / 1000),
@@ -32,7 +32,7 @@ function createStatefulEvalClient() {
 
       current.hits.push(now)
 
-      const timeToExpireMs = Math.max(0, current.hits[0] + ttl - now)
+      const timeToExpireMs = Math.max(0, current.hits[0]! + ttl - now)
       const totalHits = current.hits.length
 
       if (totalHits > limit) {

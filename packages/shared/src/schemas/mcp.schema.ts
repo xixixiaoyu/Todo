@@ -15,7 +15,7 @@ function isPrivateOrLoopbackIpv4(hostname: string): boolean {
   if (parts.length !== 4) return false
   if (!parts.every((p) => /^\d+$/.test(p))) return false
 
-  const octets = parts.map((p) => Number(p))
+  const octets = parts.map((p) => Number(p)) as [number, number, number, number]
   if (octets.some((o) => o < 0 || o > 255)) return false
 
   const [a, b] = octets

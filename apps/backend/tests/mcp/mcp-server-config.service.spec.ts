@@ -97,7 +97,7 @@ describe('McpServerConfigService', () => {
         orderBy: { createdAt: 'desc' },
       })
       expect(result).toHaveLength(1)
-      expect(result[0].name).toBe('S1')
+      expect(result[0]!.name).toBe('S1')
     })
   })
 

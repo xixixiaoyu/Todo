@@ -52,9 +52,9 @@ describe('AiPresetService', () => {
     }
     mockPrisma.aiPreset.findMany.mockResolvedValue([{ id: 'p1', presetData, updatedAt }])
     const result = await service.findAll(1)
-    expect(result[0].id).toBe('p1')
-    expect(result[0].name).toBe('GPT-4')
-    expect(result[0].updatedAt).toBe(updatedAt.toISOString())
+    expect(result[0]!.id).toBe('p1')
+    expect(result[0]!.name).toBe('GPT-4')
+    expect(result[0]!.updatedAt).toBe(updatedAt.toISOString())
   })
 
   it('should reject presets containing apiKey field', async () => {
@@ -103,6 +103,6 @@ describe('AiPresetService', () => {
     expect(mockPrisma.$transaction).toHaveBeenCalled()
     expect(mockTx.aiPreset.deleteMany).toHaveBeenCalledWith({ where: { userId: 1 } })
     expect(result).toHaveLength(1)
-    expect(result[0].updatedAt).toBe(updatedAt.toISOString())
+    expect(result[0]!.updatedAt).toBe(updatedAt.toISOString())
   })
 })

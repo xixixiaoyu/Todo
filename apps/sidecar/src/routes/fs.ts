@@ -272,11 +272,12 @@ export function createFsRoutes(
             const content = readFileSync(fullPath, 'utf-8')
             const lines = content.split('\n')
             for (let i = 0; i < lines.length && matches.length < MAX_MATCHES; i++) {
-              if (regex.test(lines[i])) {
+              const line = lines[i]!
+              if (regex.test(line)) {
                 matches.push({
                   file: relative(absPath, fullPath),
                   line: i + 1,
-                  content: lines[i].trim().slice(0, 200),
+                  content: line.trim().slice(0, 200),
                 })
               }
             }

@@ -174,7 +174,7 @@ describe('Auth e2e', () => {
     }
 
     expect(results.map((result) => result.statusCode)).toEqual([201, 201, 429])
-    expect(results[2].body).toMatchObject({
+    expect(results[2]!.body).toMatchObject({
       success: false,
       statusCode: 429,
       message: 'common.error.TOO_MANY_REQUESTS',
@@ -237,6 +237,6 @@ describe('Auth e2e', () => {
     }
 
     expect(requests.slice(0, 10).every((result) => result.statusCode === 200)).toBe(true)
-    expect(requests[10].statusCode).toBe(429)
+    expect(requests[10]!.statusCode).toBe(429)
   })
 })

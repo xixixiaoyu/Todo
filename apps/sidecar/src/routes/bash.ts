@@ -63,7 +63,7 @@ export function createBashRoutes(workspaceStore: WorkspaceStore): Hono {
       throw new ValidationError('no workspace roots configured')
     }
 
-    let cwd = resolve(roots[0]) // 默认 cwd 为第一个 workspace root
+    let cwd = resolve(roots[0]!) // 默认 cwd 为第一个 workspace root
     if (typeof body.cwd === 'string' && body.cwd.trim()) {
       const requestedCwd = resolve(body.cwd.trim())
       try {

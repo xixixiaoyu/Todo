@@ -47,8 +47,8 @@ describe('user.utils', () => {
       const users = [mockPrismaUser, { ...mockPrismaUser, id: 2 }]
       const result = formatUsers(users)
       expect(result).toHaveLength(2)
-      expect(result[0].id).toBe(1)
-      expect(result[1].id).toBe(2)
+      expect(result[0]!.id).toBe(1)
+      expect(result[1]!.id).toBe(2)
     })
 
     it('should handle empty array', () => {

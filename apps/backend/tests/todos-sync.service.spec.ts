@@ -215,8 +215,8 @@ describe('TodoSyncService', () => {
       const result = await service.sync(userId, syncDto)
 
       expect(result.synced).toHaveLength(1)
-      expect(result.synced[0].id).toBe('deleted-todo')
-      expect(result.synced[0].deletedAt).toBeDefined()
+      expect(result.synced[0]!.id).toBe('deleted-todo')
+      expect(result.synced[0]!.deletedAt).toBeDefined()
     })
 
     it('should return deletedIds from tombstones since lastSyncAt', async () => {
@@ -393,7 +393,7 @@ describe('TodoSyncService', () => {
       await service.sync(userId, syncDto)
 
       expect(mockPrisma.todo.create).toHaveBeenCalledTimes(1)
-      const createArgs = mockPrisma.todo.create.mock.calls[0][0]
+      const createArgs = mockPrisma.todo.create.mock.calls[0]![0]
       expect(createArgs.data.recurrenceRule).toBe('DAILY')
       expect(createArgs.data.dueAt.toISOString()).toBe('2026-03-18T09:00:00.000Z')
       expect(createArgs.data.remindAt.toISOString()).toBe('2026-03-18T08:30:00.000Z')
@@ -441,7 +441,7 @@ describe('TodoSyncService', () => {
 
       await service.sync(userId, syncDto)
 
-      const upsertArgs = mockPrisma.todo.upsert.mock.calls[0][0]
+      const upsertArgs = mockPrisma.todo.upsert.mock.calls[0]![0]
       expect(upsertArgs.update.recurrenceRule).toBe('WEEKLY')
       expect(upsertArgs.update.recurrenceTz).toBe('Asia/Shanghai')
       expect(upsertArgs.update.recurrenceSpawnedAt).toEqual(existingSpawnedAt)
@@ -487,7 +487,7 @@ describe('TodoSyncService', () => {
 
       await service.sync(userId, syncDto)
 
-      const upsertArgs = mockPrisma.todo.upsert.mock.calls[0][0]
+      const upsertArgs = mockPrisma.todo.upsert.mock.calls[0]![0]
       expect(upsertArgs.update.dueAt).toBeNull()
       expect(upsertArgs.update.recurrenceRule).toBeNull()
       expect(upsertArgs.update.recurrenceTz).toBeNull()
@@ -581,7 +581,7 @@ describe('TodoSyncService', () => {
 
       await service.sync(userId, syncDto)
 
-      const createArgs = mockPrisma.todo.create.mock.calls[0][0]
+      const createArgs = mockPrisma.todo.create.mock.calls[0]![0]
       expect(createArgs.data.dueAt.toISOString()).toBe('2026-03-23T09:00:00.000Z')
       expect(createArgs.data.remindAt.toISOString()).toBe('2026-03-23T08:00:00.000Z')
     })
@@ -633,7 +633,7 @@ describe('TodoSyncService', () => {
 
       await service.sync(userId, syncDto)
 
-      const createArgs = mockPrisma.todo.create.mock.calls[0][0]
+      const createArgs = mockPrisma.todo.create.mock.calls[0]![0]
       expect(createArgs.data.dueAt.toISOString()).toBe('2026-03-08T13:00:00.000Z')
       expect(createArgs.data.remindAt.toISOString()).toBe('2026-03-08T12:30:00.000Z')
     })

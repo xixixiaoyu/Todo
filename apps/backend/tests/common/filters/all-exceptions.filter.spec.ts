@@ -99,7 +99,7 @@ describe('AllExceptionsFilter', () => {
     filter.catch(exception, mockArgumentsHost as ArgumentsHost)
 
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST)
-    const jsonResult = mockResponse.send.mock.calls[0][0]
+    const jsonResult = mockResponse.send.mock.calls[0]![0]
     expect(jsonResult.success).toBe(false)
     expect(jsonResult.errors).toEqual({
       email: 'validation.REQUIRED',
@@ -133,7 +133,7 @@ describe('AllExceptionsFilter', () => {
     filter.catch(new MockZodException(), mockArgumentsHost as ArgumentsHost)
 
     expect(warnSpy).toHaveBeenCalledTimes(1)
-    const warnMessage = warnSpy.mock.calls[0][0] as string
+    const warnMessage = warnSpy.mock.calls[0]![0] as string
     expect(warnMessage).toContain('Zod validation failed')
     expect(warnMessage).toContain('POST /test')
     expect(warnMessage).toContain('todos.0.title')

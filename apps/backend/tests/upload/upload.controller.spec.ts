@@ -93,7 +93,7 @@ describe('UploadController', () => {
     await controller.uploadSingle(createSingleFileRequest(part))
 
     expect(mockStorageService.upload).toHaveBeenCalledTimes(1)
-    expect(mockStorageService.upload.mock.calls[0][0]).toMatchObject({
+    expect(mockStorageService.upload.mock.calls[0]![0]).toMatchObject({
       originalname: uploaded.originalname,
       mimetype: uploaded.mimetype,
       size: uploaded.size,

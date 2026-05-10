@@ -146,7 +146,7 @@ async function bootstrap() {
         return
       }
 
-      const pathname = req.url.split('?')[0]
+      const pathname = req.url.split('?')[0]!
       const isHealthPath = pathname === '/api/health' || pathname.startsWith('/api/health/')
       const isSocketPath = pathname.startsWith('/socket.io')
 

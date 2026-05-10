@@ -43,7 +43,7 @@
     "lint:strict": "pnpm exec oxlint --config .oxlintrc.json --deny-warnings",
     "lint:fix": "pnpm exec oxlint --config .oxlintrc.json --fix",
     "test": "turbo run test",
-    "ci:check": "pnpm exec oxfmt --check && pnpm exec oxlint --config .oxlintrc.json --deny-warnings && turbo run type-check --filter=@lumina/backend --filter=@lumina/frontend --filter=@lumina/sidecar --filter=@lumina/shared --concurrency=50%",
+    "ci:check": "pnpm exec oxfmt --check && pnpm exec oxlint --config .oxlintrc.json && bun scripts/check-boundaries.js && turbo run type-check --filter=@lumina/backend --filter=@lumina/frontend --filter=@lumina/sidecar --filter=@lumina/shared --concurrency=50%",
     "ci:test": "turbo run test --concurrency=50%",
     "ci:all": "pnpm ci:check && pnpm ci:test && pnpm security-audit",
     "test:watch": "turbo run test:watch",

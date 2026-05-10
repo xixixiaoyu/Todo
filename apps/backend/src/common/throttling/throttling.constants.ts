@@ -166,7 +166,7 @@ export function shouldSkipGlobalThrottle(context: ExecutionContext): boolean {
     return true
   }
 
-  const pathname = (request.url ?? '').split('?')[0]
+  const pathname = (request.url ?? '').split('?')[0]!
   return pathname === '/api/health' || pathname.startsWith('/api/health/')
 }
 

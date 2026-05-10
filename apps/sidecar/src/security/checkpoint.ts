@@ -217,7 +217,7 @@ export class CheckpointStore {
     let cleaned = 0
     for (const name of entries) {
       if (!name.endsWith('.json') || name.endsWith('.tmp')) continue
-      const ts = parseInt(name.split('_')[0], 10)
+      const ts = parseInt(name.split('_')[0]!, 10)
       if (!isNaN(ts) && ts < cutoff) {
         try {
           unlinkSync(join(this._dir, name))

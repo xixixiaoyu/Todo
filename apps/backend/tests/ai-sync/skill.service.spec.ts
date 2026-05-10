@@ -42,9 +42,9 @@ describe('AiSkillService', () => {
       { id: 's1', skillData: { id: 's1', name: 'Test', prompt: 'You are helpful' }, updatedAt },
     ])
     const result = await service.findAll(1)
-    expect(result[0].id).toBe('s1')
-    expect(result[0].name).toBe('Test')
-    expect(result[0].updatedAt).toBe(updatedAt.toISOString())
+    expect(result[0]!.id).toBe('s1')
+    expect(result[0]!.name).toBe('Test')
+    expect(result[0]!.updatedAt).toBe(updatedAt.toISOString())
   })
 
   it('should replace all skills in a transaction and return updatedAt', async () => {
@@ -65,7 +65,7 @@ describe('AiSkillService', () => {
     expect(mockTx.aiSkill.deleteMany).toHaveBeenCalledWith({ where: { userId: 1 } })
     expect(mockTx.aiSkill.createMany).toHaveBeenCalled()
     expect(result).toHaveLength(2)
-    expect(result[0].updatedAt).toBe(updatedAt.toISOString())
+    expect(result[0]!.updatedAt).toBe(updatedAt.toISOString())
   })
 
   it('should handle empty skills array', async () => {

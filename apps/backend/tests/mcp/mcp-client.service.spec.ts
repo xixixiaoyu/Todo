@@ -108,7 +108,7 @@ describe('McpClientService', () => {
 
       const result = await service.callTool(serverId, 'tool1', { arg: 'val' })
 
-      expect(result.content[0].text).toBe('result')
+      expect(result.content[0]!.text).toBe('result')
       expect(mockClient.callTool).toHaveBeenCalledWith({
         name: 'tool1',
         arguments: { arg: 'val' },

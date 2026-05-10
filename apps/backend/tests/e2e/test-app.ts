@@ -525,7 +525,7 @@ export async function createE2eApp() {
   fastify.addHook('preHandler', async (req, reply) => {
     const method = req.method.toUpperCase()
     if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') return
-    const pathname = (req.url || '').split('?')[0]
+    const pathname = (req.url || '').split('?')[0]!
     const isHealthPath = pathname === '/api/health' || pathname.startsWith('/api/health/')
     const isSocketPath = pathname.startsWith('/socket.io')
     if (isHealthPath || isSocketPath) return
