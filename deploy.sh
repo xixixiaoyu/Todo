@@ -160,10 +160,14 @@ backend_source_changed() {
   local changed_file
   for changed_file in "${CHANGED_FILES[@]}"; do
     case "$changed_file" in
-      package.json | pnpm-lock.yaml | pnpm-workspace.yaml | tsconfig.base.json | turbo.json | .npmrc | .dockerignore | apps/backend/* | packages/shared/*)
+      package.json | pnpm-lock.yaml | pnpm-workspace.yaml | tsconfig.base.json | turbo.json | .npmrc | .dockerignore)
         return 0
         ;;
     esac
+    # [[ ]] 中的 * 会匹配 /，因此能覆盖子目录内的源码变更
+    if [[ "$changed_file" == apps/backend/* ]] || [[ "$changed_file" == packages/shared/* ]]; then
+      return 0
+    fi
   done
 
   return 1
@@ -173,10 +177,13 @@ frontend_source_changed() {
   local changed_file
   for changed_file in "${CHANGED_FILES[@]}"; do
     case "$changed_file" in
-      package.json | pnpm-lock.yaml | pnpm-workspace.yaml | tsconfig.base.json | turbo.json | .npmrc | .dockerignore | apps/frontend/* | packages/shared/*)
+      package.json | pnpm-lock.yaml | pnpm-workspace.yaml | tsconfig.base.json | turbo.json | .npmrc | .dockerignore)
         return 0
         ;;
     esac
+    if [[ "$changed_file" == apps/frontend/* ]] || [[ "$changed_file" == packages/shared/* ]]; then
+      return 0
+    fi
   done
 
   return 1
