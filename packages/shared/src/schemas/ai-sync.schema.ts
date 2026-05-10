@@ -52,7 +52,6 @@ export const AIPresetSyncSchema = z.object({
   model: z.string(),
   systemPrompt: z.string().default(''),
   temperature: z.number().min(0).max(2).default(0.7),
-  thinkingEffort: z.enum(['off', 'auto', 'high', 'xhigh']).default('auto'),
   todoAssistant: z.boolean().default(false),
   skillIds: z.array(z.string()).default([]),
   novelGenre: z

@@ -38,7 +38,6 @@ const DEFAULT_CONFIG = {
   temperature: 0.6,
   systemPrompt: '',
   thinkingMode: 'off' as const,
-  thinkingEffort: 'high' as const,
   todoAssistant: false,
   discussionMode: false,
   discussionModelIds: [] as readonly string[],

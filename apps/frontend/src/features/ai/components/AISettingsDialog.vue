@@ -110,7 +110,6 @@ const isDuplicatePreset = computed(() => {
       preset.model === formData.value.model &&
       preset.systemPrompt === formData.value.systemPrompt &&
       preset.temperature === formData.value.temperature &&
-      (preset.thinkingEffort || 'auto') === formData.value.thinkingEffort &&
       preset.todoAssistant === formData.value.todoAssistant &&
       presetSkillIds.length === formSkillIds.length &&
       presetSkillIds.every((id, index) => id === formSkillIds[index])
@@ -199,7 +198,6 @@ function confirmSaveAsPreset() {
     model: formData.value.model,
     systemPrompt: formData.value.systemPrompt,
     temperature: formData.value.temperature,
-    thinkingEffort: formData.value.thinkingEffort,
     todoAssistant: formData.value.todoAssistant,
     skillIds: formData.value.skillIds,
   })

@@ -46,7 +46,6 @@ describe('AiPresetService', () => {
       model: 'gpt-4',
       systemPrompt: '',
       temperature: 0.7,
-      thinkingEffort: 'high' as const,
       todoAssistant: false,
       skillIds: [],
     }
@@ -72,7 +71,6 @@ describe('AiPresetService', () => {
         model: 'gpt-4',
         systemPrompt: '',
         temperature: 0.7,
-        thinkingEffort: 'high',
         todoAssistant: false,
         skillIds: [],
         updatedAt: '2025-01-01T00:00:00.000Z',
@@ -90,7 +88,6 @@ describe('AiPresetService', () => {
           model: 'gpt-4',
           systemPrompt: '',
           temperature: 0.7,
-          thinkingEffort: 'high',
           todoAssistant: false,
           skillIds: [],
         },

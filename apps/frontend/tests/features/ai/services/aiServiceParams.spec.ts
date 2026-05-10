@@ -140,7 +140,6 @@ describe('aiService - Request Parameters', () => {
 
       await getAIStreamResponse([], onChunk, undefined, undefined, {
         thinkingMode: 'high',
-        thinkingEffort: 'high',
       })
 
       expect(fetchMock).toHaveBeenCalledTimes(1)

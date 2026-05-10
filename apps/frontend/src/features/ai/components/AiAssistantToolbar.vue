@@ -9,7 +9,6 @@ import {
   History,
   Paperclip,
   Settings2,
-  Blocks,
   ChevronLeft,
   Square,
   Presentation,
@@ -211,17 +210,6 @@ const newChatTitle = computed(() => `${t('ai.newChat')} (${shortcutHint})`)
             @click="emit('openMermaidEditor')"
           >
             <Presentation :size="16" />
-          </button>
-
-          <!-- MCP 工具 -->
-          <button
-            :class="[
-              'toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-muted-foreground active:scale-95',
-            ]"
-            :title="t('ai.mcp')"
-            @click="emit('openSettings', 'mcp')"
-          >
-            <Blocks :size="16" />
           </button>
 
           <div class="h-4 w-px shrink-0 bg-border/20 mx-0.5" />

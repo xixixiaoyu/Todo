@@ -60,7 +60,6 @@ describe('useAIConfig - Core', () => {
         temperature: 0.7,
         systemPrompt: 'Test prompt',
         thinkingMode: 'auto' as const,
-        thinkingEffort: 'xhigh' as const,
         todoAssistant: true,
         discussionMode: true,
         discussionModelIds: ['1', '2'],
@@ -80,21 +79,21 @@ describe('useAIConfig - Core', () => {
       })
     })
 
-    it('should normalize legacy reasoning effort values to high', () => {
+    it('should normalize legacy thinking mode values to auto', () => {
       localStorage.setItem(
         'ai-config',
         JSON.stringify({
           baseUrl: 'https://api.test.com',
           apiKey: 'test-key',
           model: 'test-model',
-          thinkingEffort: 'medium',
+          thinkingMode: 'invalid',
         }),
       )
 
       _resetAIConfig()
       const { config } = useAIConfig()
 
-      expect(config.value.thinkingEffort).toBe('auto')
+      expect(config.value.thinkingMode).toBe('auto')
     })
 
     it('should merge saved config with defaults', () => {
@@ -440,24 +439,25 @@ describe('useAIConfig - Core', () => {
       expect(presets.value[0].name).toBe('Valid')
     })
 
-    it('should preserve max reasoning effort when importing presets', () => {
+    it('should import presets with all required fields', () => {
       const { presets, importPresets } = useAIConfig()
       const importData = [
         {
-          name: 'Max Reasoning',
+          name: 'Test Preset',
           baseUrl: 'https://max.example.com',
           apiKey: 'newkey',
           model: 'newmodel',
           systemPrompt: 'newprompt',
           temperature: 0.7,
-          thinkingEffort: 'xhigh',
           todoAssistant: true,
         },
       ]
 
       importPresets(JSON.stringify(importData))
 
-      expect(presets.value[0]?.thinkingEffort).toBe('xhigh')
+      expect(presets.value).toHaveLength(1)
+      expect(presets.value[0]?.name).toBe('Test Preset')
+      expect(presets.value[0]?.baseUrl).toBe('https://max.example.com')
     })
   })
 
@@ -1131,7 +1131,6 @@ describe('useAIConfig - Core', () => {
           model: 'remote-model',
           systemPrompt: '',
           temperature: 0.7,
-          thinkingEffort: 'high' as const,
           todoAssistant: false,
           skillIds: [],
           updatedAt: '2025-08-01T00:00:00.000Z',
@@ -1164,17 +1163,16 @@ describe('useAIConfig - Core', () => {
       expect(p1.apiKey).toBe('sk-local-key')
     })
 
-    it('should normalize legacy remote reasoning effort values to high', async () => {
+    it('should use remote data when remote updatedAt is newer, keeping local apiKey', async () => {
       const { fetchPresets, pushPresets } = await import('@/features/ai/services/aiSyncService')
       vi.mocked(fetchPresets).mockResolvedValue([
         {
           id: 'p1',
-          name: 'Legacy Remote Preset',
+          name: 'Remote Preset',
           baseUrl: 'https://api.remote.com',
           model: 'remote-model',
           systemPrompt: '',
           temperature: 0.7,
-          thinkingEffort: 'medium' as unknown as 'high',
           todoAssistant: false,
           skillIds: [],
           updatedAt: '2025-08-01T00:00:00.000Z',
@@ -1191,7 +1189,6 @@ describe('useAIConfig - Core', () => {
           model: 'local-model',
           systemPrompt: '',
           temperature: 0.7,
-          thinkingEffort: 'xhigh',
           todoAssistant: false,
           apiKey: 'sk-local-key',
           updatedAt: '2025-07-01T00:00:00.000Z',
@@ -1200,7 +1197,10 @@ describe('useAIConfig - Core', () => {
 
       await syncPresetsFromServer()
 
-      expect(presets.value[0]?.thinkingEffort).toBe('auto')
+      const p1 = presets.value[0]
+      expect(p1?.name).toBe('Remote Preset')
+      expect(p1?.baseUrl).toBe('https://api.remote.com')
+      expect(p1?.apiKey).toBe('sk-local-key')
     })
 
     it('should keep local data when local updatedAt is newer', async () => {
@@ -1213,7 +1213,6 @@ describe('useAIConfig - Core', () => {
           model: 'remote-model',
           systemPrompt: '',
           temperature: 0.7,
-          thinkingEffort: 'high' as const,
           todoAssistant: false,
           skillIds: [],
           updatedAt: '2025-01-01T00:00:00.000Z',

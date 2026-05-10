@@ -1,6 +1,5 @@
 export type ThinkingMode = 'off' | 'auto' | 'high' | 'xhigh'
 export type AssistantMode = 'default' | 'teaching' | 'novel' | 'translation'
-export type ReasoningEffort = 'off' | 'auto' | 'high' | 'xhigh'
 
 export type NovelGenre =
   | 'fantasy'
@@ -20,7 +19,6 @@ export interface AIConfig {
   temperature: number
   systemPrompt: string
   thinkingMode: ThinkingMode
-  thinkingEffort: ReasoningEffort
   todoAssistant: boolean
   discussionMode: boolean
   discussionModelIds: readonly string[]
@@ -48,7 +46,6 @@ export interface AIPreset {
   model: string
   systemPrompt: string
   temperature: number
-  thinkingEffort?: ReasoningEffort
   todoAssistant: boolean
   skillIds?: readonly string[]
   novelGenre?: NovelGenre | null

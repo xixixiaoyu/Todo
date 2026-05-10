@@ -107,7 +107,6 @@ vi.mock('@/features/ai/composables/useAIConfig', () => ({
       temperature: 0.7,
       systemPrompt: '',
       thinkingMode: 'off',
-      thinkingEffort: 'high',
       todoAssistant: false,
       discussionMode: false,
       mcpEnabled: false,

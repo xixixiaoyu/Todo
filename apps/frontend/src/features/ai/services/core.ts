@@ -3,7 +3,6 @@
  */
 
 import { getAIConfig } from '@/features/ai/composables/useAIConfig'
-import type { ReasoningEffort } from '@/features/ai/composables/useAIConfig/types'
 import i18n from '@/i18n'
 import type {
   ChatMessage,
@@ -496,7 +495,6 @@ export async function fetchNonStreamResponse(
     model: string
     temperature?: number
     top_p?: number
-    thinkingEffort?: ReasoningEffort
   },
   messages: AIChatCompletionMessage[],
   thinkingMode?: string,
@@ -560,11 +558,10 @@ export async function getAIStaticResponse(
     apiKey = aiConfig.apiKey,
     temperature = aiConfig.temperature,
     top_p = 0.95,
-    thinkingEffort = aiConfig.thinkingEffort,
   } = options
 
   return fetchNonStreamResponse(
-    { baseUrl, apiKey, model, temperature, top_p, thinkingEffort },
+    { baseUrl, apiKey, model, temperature, top_p },
     messages,
     aiConfig.thinkingMode,
   )

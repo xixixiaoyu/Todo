@@ -87,13 +87,10 @@ export async function fetchPresets(): Promise<AIPresetSync[] | null> {
  */
 export async function pushPresets(presets: AIPreset[]): Promise<void> {
   const now = new Date().toISOString()
-  const syncData: AIPresetSync[] = presets.map(
-    ({ apiKey: _, updatedAt, thinkingEffort, skillIds, ...rest }) => ({
-      ...rest,
-      thinkingEffort: thinkingEffort ?? 'high',
-      skillIds: (skillIds ?? []) as string[],
-      updatedAt: updatedAt ?? now,
-    }),
-  )
+  const syncData: AIPresetSync[] = presets.map(({ apiKey: _, updatedAt, skillIds, ...rest }) => ({
+    ...rest,
+    skillIds: (skillIds ?? []) as string[],
+    updatedAt: updatedAt ?? now,
+  }))
   await safePut<AIPresetSync[]>('/ai/presets', syncData)
 }

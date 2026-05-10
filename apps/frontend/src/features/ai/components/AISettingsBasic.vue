@@ -27,7 +27,6 @@ const baseUrlId = useId()
 const apiKeyId = useId()
 const modelId = useId()
 const temperatureId = useId()
-const reasoningEffortId = useId()
 const systemPromptId = useId()
 const discussionModeId = useId()
 const contextCompressionEnabledId = useId()
@@ -84,7 +83,6 @@ onMounted(() => {
         <AISettingsParameterSection
           v-model="formData"
           :temperature-id="temperatureId"
-          :reasoning-effort-id="reasoningEffortId"
           :system-prompt-id="systemPromptId"
           :skills="skills"
         />

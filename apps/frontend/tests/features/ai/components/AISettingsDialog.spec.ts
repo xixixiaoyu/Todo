@@ -42,7 +42,6 @@ const mockConfig = ref<AIConfig>({
   systemPrompt: 'test-prompt',
   temperature: 0.7,
   thinkingMode: 'off',
-  thinkingEffort: 'high',
   todoAssistant: false,
   discussionMode: false,
   discussionModelIds: [],
@@ -136,7 +135,6 @@ const getPresetDefaults = vi.fn(() => ({
   model: 'test-model',
   systemPrompt: 'test-prompt',
   temperature: 0.7,
-  thinkingEffort: 'high',
   todoAssistant: false,
   skillIds: [],
 }))
@@ -190,7 +188,6 @@ describe('AISettingsDialog', () => {
       systemPrompt: 'test-prompt',
       temperature: 0.7,
       thinkingMode: 'off',
-      thinkingEffort: 'high',
       todoAssistant: false,
       discussionMode: false,
       discussionModelIds: [],
@@ -417,7 +414,6 @@ describe('AISettingsDialog', () => {
         model: 'test-model',
         systemPrompt: 'test-prompt',
         temperature: 0.7,
-        thinkingEffort: 'high',
         todoAssistant: false,
         skillIds: [],
       },
@@ -446,11 +442,9 @@ describe('AISettingsDialog', () => {
     expect(saveButtonBefore).toBeTruthy()
     expect(saveButtonBefore!.attributes('disabled')).toBeDefined()
 
-    const maxEffortButton = wrapper
-      .findAll('button')
-      .find((button) => button.text().includes('ai.reasoningEffortXhigh'))
-    expect(maxEffortButton).toBeTruthy()
-    await maxEffortButton!.trigger('click')
+    const tempSlider = wrapper.find('input[name="ai-temperature"]')
+    expect(tempSlider.exists()).toBe(true)
+    await tempSlider.setValue(1.0)
     await wrapper.vm.$nextTick()
 
     const saveButtonAfter = wrapper

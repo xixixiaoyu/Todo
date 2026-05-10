@@ -6,19 +6,13 @@ import {
   isTrustedSkillSourceUrl,
 } from '@/features/ai/services/aiService'
 import type { AISkill } from '@/features/ai/services/types'
-import type { AIConfig, AIPreset, ReasoningEffort, SkillArchivePayload } from './types'
+import type { AIConfig, AIPreset, SkillArchivePayload } from './types'
 import { MAX_SKILL_FILE_BYTES, MAX_SKILL_ARCHIVE_BYTES } from './types'
 
 // ─── Encoding Utilities ────────────────────────────────────────────
 
 const utf8Encoder = new TextEncoder()
 const utf8Decoder = new TextDecoder()
-
-function normalizeReasoningEffort(value: unknown): ReasoningEffort | undefined {
-  const VALID = new Set(['off', 'auto', 'high', 'xhigh'])
-  const s = typeof value === 'string' ? value.toLowerCase() : ''
-  return VALID.has(s) ? (s as ReasoningEffort) : undefined
-}
 
 export function encodeUtf8(content: string): Uint8Array {
   return utf8Encoder.encode(content)
@@ -453,7 +447,6 @@ export function normalizePreset(raw: unknown): AIPreset | null {
   const model = typeof item.model === 'string' ? item.model : ''
   const systemPrompt = typeof item.systemPrompt === 'string' ? item.systemPrompt : ''
   const temperature = typeof item.temperature === 'number' ? item.temperature : 0.6
-  const thinkingEffort = normalizeReasoningEffort(item.thinkingEffort)
   const todoAssistant = !!item.todoAssistant
 
   if (!id || !name || !baseUrl || !model) return null
@@ -466,7 +459,6 @@ export function normalizePreset(raw: unknown): AIPreset | null {
     model,
     systemPrompt,
     temperature,
-    ...(thinkingEffort ? { thinkingEffort } : {}),
     todoAssistant,
     skillIds: normalizeIdList(item.skillIds),
     ...(typeof item.updatedAt === 'string' ? { updatedAt: item.updatedAt } : {}),
@@ -488,7 +480,6 @@ export function isConfigMatchPreset(cfg: AIConfig, preset: AIPreset): boolean {
     preset.model === cfg.model &&
     preset.systemPrompt === cfg.systemPrompt &&
     Math.abs(preset.temperature - cfg.temperature) < 0.001 &&
-    (preset.thinkingEffort || 'auto') === cfg.thinkingEffort &&
     isSkillSetMatched
   )
 }

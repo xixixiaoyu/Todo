@@ -132,12 +132,19 @@ describe('AIPresetSyncSchema', () => {
     expect(result.success).toBe(false)
   })
 
-  it('should accept preset with xhigh reasoning effort', () => {
+  it('should accept preset with all optional fields', () => {
     const result = AIPresetSyncSchema.safeParse({
       ...validPreset,
-      thinkingEffort: 'xhigh',
+      systemPrompt: 'You are helpful',
+      temperature: 0.9,
+      todoAssistant: true,
+      skillIds: ['skill-1'],
     })
     expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.temperature).toBe(0.9)
+      expect(result.data.todoAssistant).toBe(true)
+    }
   })
 })
 

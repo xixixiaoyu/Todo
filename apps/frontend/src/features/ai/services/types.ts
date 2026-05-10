@@ -256,7 +256,6 @@ export interface AIRequestOptions {
   novelTone?: string
   novelProtagonistHint?: string
   thinkingMode?: 'off' | 'auto' | 'high' | 'xhigh'
-  thinkingEffort?: 'off' | 'auto' | 'high' | 'xhigh'
   agentToolsEnabled?: boolean
   agentWorkspacePath?: string | null
   contextSummary?: string

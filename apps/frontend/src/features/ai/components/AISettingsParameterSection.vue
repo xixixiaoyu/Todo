@@ -7,7 +7,6 @@ import type { AISkill } from '@/features/ai/services/types'
 
 defineProps<{
   temperatureId: string
-  reasoningEffortId: string
   systemPromptId: string
   skills: AISkill[]
 }>()
@@ -90,66 +89,6 @@ function toggleSkill(skillId: string) {
             {{ t('ai.tempCreative') }}
           </span>
         </div>
-      </div>
-    </div>
-
-    <div class="group space-y-3">
-      <div class="flex items-start justify-between gap-3">
-        <label
-          :for="reasoningEffortId"
-          class="flex items-center gap-2 text-[13px] font-semibold text-foreground/70"
-        >
-          <Sparkles
-            :size="14"
-            class="text-muted-foreground transition-colors group-focus-within:text-primary"
-          />
-          {{ t('ai.reasoningEffortLabel') }}
-        </label>
-        <span
-          class="rounded-lg bg-primary/10 px-2.5 py-1 text-xs font-mono font-bold uppercase text-primary shadow-sm"
-        >
-          {{ formData.thinkingEffort }}
-        </span>
-      </div>
-      <p class="text-[11px] leading-relaxed text-muted-foreground/80">
-        {{ t('ai.reasoningEffortHint') }}
-      </p>
-
-      <div
-        :id="reasoningEffortId"
-        class="grid grid-cols-2 gap-2"
-        role="radiogroup"
-        :aria-label="t('ai.reasoningEffortLabel')"
-      >
-        <button
-          v-for="level in ['off', 'auto', 'high', 'xhigh'] as const"
-          :key="level"
-          type="button"
-          class="rounded-xl border px-3 py-2.5 text-left transition-all"
-          :class="
-            formData.thinkingEffort === level
-              ? 'border-primary/50 bg-primary/10'
-              : 'border-border/70 bg-muted/30 hover:border-primary/30 hover:bg-muted/50'
-          "
-          :aria-checked="formData.thinkingEffort === level"
-          role="radio"
-          @click="formData.thinkingEffort = level"
-        >
-          <p class="text-sm font-semibold text-foreground">
-            {{
-              t(
-                `ai.reasoningEffort${level === 'off' ? 'Off' : level === 'auto' ? 'Auto' : level === 'high' ? 'High' : 'Xhigh'}`,
-              )
-            }}
-          </p>
-          <p class="mt-0.5 text-xs text-muted-foreground">
-            {{
-              t(
-                `ai.reasoningEffort${level === 'off' ? 'Off' : level === 'auto' ? 'Auto' : level === 'high' ? 'High' : 'Xhigh'}Hint`,
-              )
-            }}
-          </p>
-        </button>
       </div>
     </div>
 

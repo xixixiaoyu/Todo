@@ -6,7 +6,7 @@ import {
   migrateLegacySkillRuntime,
 } from '@/features/ai/services/aiService'
 import type { AISkill } from '@/features/ai/services/types'
-import type { AIConfig, AIPreset, AssistantMode, ReasoningEffort, ThinkingMode } from './types'
+import type { AIConfig, AIPreset, AssistantMode, ThinkingMode } from './types'
 import { STORAGE_KEY } from './types'
 import {
   normalizeIdList,
@@ -67,7 +67,6 @@ const DEFAULT_CONFIG: AIConfig = {
   temperature: 0.6,
   systemPrompt: i18n.global.t('ai.defaultSystemPrompt'),
   thinkingMode: 'auto' as ThinkingMode,
-  thinkingEffort: 'auto' as ReasoningEffort,
   todoAssistant: false,
   discussionMode: false,
   discussionModelIds: [],
@@ -94,10 +93,6 @@ function normalizeThinkingLevel(value: unknown): ThinkingMode {
   return VALID_THINKING_LEVELS.has(s as ThinkingMode) ? (s as ThinkingMode) : 'auto'
 }
 
-function normalizeReasoningEffort(value: unknown): ReasoningEffort {
-  return normalizeThinkingLevel(value)
-}
-
 // ─── Load Config ───────────────────────────────────────────────────
 
 function loadConfig(): AIConfig {
@@ -109,7 +104,6 @@ function loadConfig(): AIConfig {
         ...DEFAULT_CONFIG,
         ...parsed,
         thinkingMode: normalizeThinkingLevel(parsed.thinkingMode ?? parsed.thinking_mode ?? 'auto'),
-        thinkingEffort: normalizeReasoningEffort(parsed.thinkingEffort),
         discussionModelIds: normalizeIdList(parsed.discussionModelIds),
         discussionPrimaryModelId:
           typeof parsed.discussionPrimaryModelId === 'string' &&
@@ -146,7 +140,7 @@ aiThinkingLevel.value = config.value.thinkingMode
 
 // ─── Watchers ──────────────────────────────────────────────────────
 
-// 监听思考级别变化并同步 thinkingMode 到配置（thinkingEffort 由预设/设置独立管理）
+// 监听思考级别变化并同步 thinkingMode 到配置
 watch(aiThinkingLevel, (val) => {
   if (config.value.thinkingMode !== val) {
     config.value.thinkingMode = val
@@ -296,7 +290,6 @@ export function useAIConfig() {
       model: preset.model,
       systemPrompt: preset.systemPrompt,
       temperature: preset.temperature,
-      thinkingEffort: normalizeReasoningEffort(preset.thinkingEffort),
       todoAssistant: preset.todoAssistant,
       skillIds: presetSkillIds,
       novelGenre: preset.novelGenre ?? null,
@@ -348,7 +341,6 @@ export function useAIConfig() {
           model: updatedPreset.model,
           systemPrompt: updatedPreset.systemPrompt,
           temperature: updatedPreset.temperature,
-          thinkingEffort: normalizeReasoningEffort(updatedPreset.thinkingEffort),
           todoAssistant: updatedPreset.todoAssistant,
           skillIds: presetSkillIds,
           novelGenre: updatedPreset.novelGenre ?? null,
@@ -374,7 +366,6 @@ export function useAIConfig() {
       model: config.value.model,
       systemPrompt: config.value.systemPrompt,
       temperature: config.value.temperature,
-      thinkingEffort: config.value.thinkingEffort,
       todoAssistant: config.value.todoAssistant,
       skillIds: config.value.skillIds,
       novelGenre: config.value.novelGenre,
@@ -426,7 +417,6 @@ export function useAIConfig() {
       model: config.value.model,
       systemPrompt: config.value.systemPrompt,
       temperature: config.value.temperature,
-      thinkingEffort: config.value.thinkingEffort,
       todoAssistant: config.value.todoAssistant,
       skillIds: config.value.skillIds,
       novelGenre: config.value.novelGenre,
@@ -476,13 +466,6 @@ export function useAIConfig() {
           const systemPrompt = typeof raw.systemPrompt === 'string' ? raw.systemPrompt : ''
           const apiKey = typeof raw.apiKey === 'string' ? raw.apiKey : ''
           const temperature = typeof raw.temperature === 'number' ? raw.temperature : 0.6
-          const thinkingEffort = VALID_THINKING_LEVELS.has(
-            (typeof raw.thinkingEffort === 'string'
-              ? raw.thinkingEffort.toLowerCase()
-              : '') as ThinkingMode,
-          )
-            ? (raw.thinkingEffort as ThinkingMode)
-            : undefined
           return {
             id: generateId(),
             name,
@@ -491,7 +474,6 @@ export function useAIConfig() {
             model,
             systemPrompt,
             temperature,
-            ...(thinkingEffort ? { thinkingEffort } : {}),
             todoAssistant: !!raw.todoAssistant,
             skillIds: normalizeIdList(raw.skillIds),
           } satisfies AIPreset
@@ -873,7 +855,6 @@ function mergePresets(remote: AIPresetSync[], local: AIPreset[]): AIPreset[] {
       // 远端无此项，或远端版本更新：采用远端数据，但保留本地 apiKey
       mergedMap.set(r.id, {
         ...r,
-        thinkingEffort: normalizeReasoningEffort(r.thinkingEffort),
         apiKey: existing?.apiKey ?? '',
       })
     }

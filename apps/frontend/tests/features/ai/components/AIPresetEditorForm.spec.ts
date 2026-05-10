@@ -17,7 +17,7 @@ vi.mock('vue-i18n', () => ({
 }))
 
 describe('AIPresetEditorForm', () => {
-  it('should update thinking effort when switching reasoning effort option', async () => {
+  it('should render the preset editor form with required fields', async () => {
     const form: Omit<AIPreset, 'id'> = {
       name: 'Preset A',
       baseUrl: 'https://api.deepseek.com',
@@ -25,7 +25,6 @@ describe('AIPresetEditorForm', () => {
       model: 'deepseek-v4-pro',
       systemPrompt: 'system',
       temperature: 0.6,
-      thinkingEffort: 'high' as const,
       todoAssistant: false,
       skillIds: [],
     }
@@ -43,18 +42,7 @@ describe('AIPresetEditorForm', () => {
       },
     })
 
-    const xhighButton = wrapper
-      .findAll('button')
-      .find((button) => button.text().includes('ai.reasoningEffortXhigh'))
-    expect(xhighButton).toBeDefined()
-    await xhighButton!.trigger('click')
-    expect(form.thinkingEffort).toBe('xhigh')
-
-    const highButton = wrapper
-      .findAll('button')
-      .find((button) => button.text().includes('ai.reasoningEffortHigh'))
-    expect(highButton).toBeDefined()
-    await highButton!.trigger('click')
-    expect(form.thinkingEffort).toBe('high')
+    expect(wrapper.find('input[name="preset-name"]').exists()).toBe(true)
+    expect(wrapper.find('input[name="preset-model"]').exists()).toBe(true)
   })
 })
