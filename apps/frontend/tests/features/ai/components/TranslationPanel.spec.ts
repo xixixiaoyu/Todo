@@ -55,6 +55,8 @@ const DEFAULT_CONFIG = {
   agentMode: false,
   agentWorkspaceId: null,
   agentWorkspacePath: null,
+  visionEnabled: false,
+  visionPresetId: null,
 }
 
 beforeEach(() => {

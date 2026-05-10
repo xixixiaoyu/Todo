@@ -20,6 +20,7 @@ import {
   sanitizeRequestMessages,
 } from './utils'
 import { getAIStreamResponse, fetchNonStreamResponse, resetAbortSignal } from './core'
+import { prepareVisionContext, resolveVisionConfig } from './visionBridge'
 
 const t = i18n.global.t
 
@@ -347,8 +348,18 @@ export async function getMultiModelDiscussionStream(
     try {
       // 副模型仅使用其自身定义的系统提示词（如果不定义则不注入），不回退到全局设置
       const modelSystemPrompt = preset.systemPrompt || ''
+
+      // 视觉辅助：已启用且消息含图片时，用视觉模型预处理
+      let subMessages = messages
+      if (aiConfig.visionEnabled && aiConfig.visionPresetId) {
+        const visionConfig = resolveVisionConfig(aiConfig.visionPresetId, presets)
+        if (visionConfig) {
+          subMessages = await prepareVisionContext(messages, visionConfig)
+        }
+      }
+
       const messagesForModel = injectSystemPrompts(
-        messages,
+        subMessages,
         modelSystemPrompt,
         aiConfig.todoAssistant,
         aiConfig.assistantMode,

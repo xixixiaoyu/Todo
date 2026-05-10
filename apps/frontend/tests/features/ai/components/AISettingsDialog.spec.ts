@@ -59,6 +59,8 @@ const mockConfig = ref<AIConfig>({
   agentMode: false,
   agentWorkspaceId: null,
   agentWorkspacePath: null,
+  visionEnabled: false,
+  visionPresetId: null,
 })
 
 const mockPresets = ref<AIPreset[]>([])
@@ -205,6 +207,8 @@ describe('AISettingsDialog', () => {
       agentMode: false,
       agentWorkspaceId: null,
       agentWorkspacePath: null,
+      visionEnabled: false,
+      visionPresetId: null,
     }
     mockPresets.value = []
     mockSkills.value = []

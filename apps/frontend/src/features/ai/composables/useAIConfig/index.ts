@@ -84,6 +84,8 @@ const DEFAULT_CONFIG: AIConfig = {
   agentMode: false,
   agentWorkspaceId: null,
   agentWorkspacePath: null,
+  visionEnabled: false,
+  visionPresetId: null,
 }
 
 const VALID_THINKING_LEVELS: Set<ThinkingMode> = new Set(['off', 'auto', 'high', 'xhigh'])
@@ -118,6 +120,10 @@ function loadConfig(): AIConfig {
           typeof parsed.contextCompressionModelId === 'string' &&
           parsed.contextCompressionModelId.trim().length > 0
             ? parsed.contextCompressionModelId
+            : null,
+        visionPresetId:
+          typeof parsed.visionPresetId === 'string' && parsed.visionPresetId.trim().length > 0
+            ? parsed.visionPresetId
             : null,
         skillIds: normalizeIdList(parsed.skillIds),
       }

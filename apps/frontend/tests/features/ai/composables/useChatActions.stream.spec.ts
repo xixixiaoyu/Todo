@@ -57,6 +57,8 @@ function createNovelAIConfig(): AIConfig {
     agentMode: false,
     agentWorkspaceId: null,
     agentWorkspacePath: null,
+    visionEnabled: false,
+    visionPresetId: null,
   }
 }
 
@@ -86,6 +88,8 @@ function createDefaultAIConfig(): AIConfig {
     agentMode: false,
     agentWorkspaceId: null,
     agentWorkspacePath: null,
+    visionEnabled: false,
+    visionPresetId: null,
   }
 }
 

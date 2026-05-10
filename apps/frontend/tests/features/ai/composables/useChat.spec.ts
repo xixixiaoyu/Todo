@@ -152,6 +152,8 @@ vi.mock('@/features/ai/composables/useAIConfig', () => ({
     agentMode: false,
     agentWorkspaceId: null,
     agentWorkspacePath: null,
+    visionEnabled: false,
+    visionPresetId: null,
   })),
   getAIThinkingLevel: vi.fn(() => 'off'),
   getAISkills: vi.fn(() => []),
@@ -209,6 +211,8 @@ describe('useChat', () => {
       agentMode: false,
       agentWorkspaceId: null,
       agentWorkspacePath: null,
+      visionEnabled: false,
+      visionPresetId: null,
     })
     vi.mocked(getAISkills).mockReturnValue([])
     mockUpdateSessionMessages.mockImplementation((sessionId, messages) => {
@@ -591,6 +595,8 @@ describe('useChat', () => {
         agentMode: false,
         agentWorkspaceId: null,
         agentWorkspacePath: null,
+        visionEnabled: false,
+        visionPresetId: null,
       })
       vi.mocked(getAISkills).mockReturnValue([
         {
@@ -652,6 +658,8 @@ describe('useChat', () => {
         agentMode: false,
         agentWorkspaceId: null,
         agentWorkspacePath: null,
+        visionEnabled: false,
+        visionPresetId: null,
       })
       vi.mocked(getAISkills).mockReturnValue([
         {
@@ -719,6 +727,8 @@ describe('useChat', () => {
         agentMode: false,
         agentWorkspaceId: null,
         agentWorkspacePath: null,
+        visionEnabled: false,
+        visionPresetId: null,
       })
 
       mockCurrentSession.value = {
@@ -816,6 +826,8 @@ describe('useChat', () => {
         agentMode: false,
         agentWorkspaceId: null,
         agentWorkspacePath: null,
+        visionEnabled: false,
+        visionPresetId: null,
       })
 
       mockGetAIStreamResponse.mockImplementation(

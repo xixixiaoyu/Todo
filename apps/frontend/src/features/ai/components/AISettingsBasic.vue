@@ -79,6 +79,7 @@ onMounted(() => {
           :base-url-id="baseUrlId"
           :api-key-id="apiKeyId"
           :model-id="modelId"
+          :presets="presets"
         />
         <AISettingsParameterSection
           v-model="formData"

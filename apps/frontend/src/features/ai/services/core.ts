@@ -2,7 +2,7 @@
  * AI 服务核心请求逻辑
  */
 
-import { getAIConfig } from '@/features/ai/composables/useAIConfig'
+import { getAIConfig, getAIPresets } from '@/features/ai/composables/useAIConfig'
 import i18n from '@/i18n'
 import type {
   ChatMessage,
@@ -12,6 +12,7 @@ import type {
   AIChatCompletionMessage,
 } from './types'
 import { buildApiUrl, getHeaders, injectSystemPrompts, sanitizeRequestMessages } from './utils'
+import { prepareVisionContext, resolveVisionConfig } from './visionBridge'
 
 const t = i18n.global.t
 
@@ -261,9 +262,18 @@ export async function getAIStreamResponse(
   const usesExternalSignal = !!abortSignal
   const signal = abortSignal || getAbortSignal()
 
+  // 视觉辅助：已启用且消息含图片时，用视觉模型分析并替换为文本描述
+  let processedMessages = messages
+  if (aiConfig.visionEnabled && aiConfig.visionPresetId) {
+    const visionConfig = resolveVisionConfig(aiConfig.visionPresetId, getAIPresets())
+    if (visionConfig) {
+      processedMessages = await prepareVisionContext(messages, visionConfig)
+    }
+  }
+
   // 构建消息列表（添加系统提示和 Todo 列表）
   const messagesWithSystemPrompts = injectSystemPrompts(
-    messages,
+    processedMessages,
     systemPrompt,
     aiConfig.todoAssistant,
     assistantMode,

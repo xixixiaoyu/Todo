@@ -36,6 +36,8 @@ export interface AIConfig {
   agentMode: boolean
   agentWorkspaceId: string | null
   agentWorkspacePath: string | null
+  visionEnabled: boolean
+  visionPresetId: string | null
 }
 
 export interface AIPreset {
