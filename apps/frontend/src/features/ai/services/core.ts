@@ -21,6 +21,109 @@ const sessionControllers = new Map<string, AbortController>()
 // 兼容旧 API：全局 controller（abortCurrentRequest 会清空所有）
 let globalController: AbortController | null = null
 
+// ---------- <tool_call> XML 文本过滤 ----------
+// 部分模型（如 GLM）会在 delta.content 中输出文本形式的工具调用标记，
+// 需要在流式渲染前过滤掉，避免用户看到原始 XML。
+// 同时支持从 XML 解析工具调用，作为不支持原生 function calling 模型的 fallback。
+
+interface ParsedXmlToolCall {
+  name: string
+  arguments: Record<string, string>
+}
+
+function parseXmlToolCallContent(inner: string): ParsedXmlToolCall | null {
+  const firstTagIdx = inner.indexOf('<arg_key>')
+  if (firstTagIdx === -1) return null
+
+  const name = inner.slice(0, firstTagIdx).trim()
+  if (!name) return null
+
+  const args: Record<string, string> = {}
+  const kvRegex = /<arg_key>(.*?)<\/arg_key>\s*<arg_value>(.*?)<\/arg_value>/g
+  let kvMatch: RegExpExecArray | null
+
+  while ((kvMatch = kvRegex.exec(inner)) !== null) {
+    const key = kvMatch[1].trim()
+    if (key) {
+      args[key] = kvMatch[2].trim()
+    }
+  }
+
+  return { name, arguments: args }
+}
+
+const MAX_XML_BUFFER = 8192
+
+function filterAndParseXmlToolCalls(
+  chunk: string,
+  buffer: { value: string },
+): { cleanText: string; toolCalls: ParsedXmlToolCall[] } {
+  // 防止未闭合的 <tool_call> 标签导致缓冲区无限增长
+  if (buffer.value.length > MAX_XML_BUFFER) {
+    const flushed = buffer.value
+    buffer.value = ''
+    return { cleanText: flushed + chunk, toolCalls: [] }
+  }
+
+  const combined = buffer.value + chunk
+  buffer.value = ''
+
+  const toolCalls: ParsedXmlToolCall[] = []
+  let cleanText = ''
+  let lastIndex = 0
+
+  const blockRegex = /<tool_call>([\s\S]*?)<\/tool_call>/g
+  let match: RegExpExecArray | null
+
+  while ((match = blockRegex.exec(combined)) !== null) {
+    cleanText += combined.slice(lastIndex, match.index)
+    lastIndex = blockRegex.lastIndex
+
+    const parsed = parseXmlToolCallContent(match[1])
+    if (parsed) {
+      toolCalls.push(parsed)
+    }
+  }
+
+  const remaining = combined.slice(lastIndex)
+  const openTagIdx = remaining.lastIndexOf('<tool_call>')
+
+  if (openTagIdx !== -1) {
+    cleanText += remaining.slice(0, openTagIdx)
+    buffer.value = remaining.slice(openTagIdx)
+  } else {
+    cleanText += remaining
+  }
+
+  return { cleanText, toolCalls }
+}
+
+function flushXmlToolCallBuffer(buffer: { value: string }): string {
+  const flushed = buffer.value.replace(/<tool_call>[\s\S]*$/, '')
+  buffer.value = ''
+  return flushed
+}
+
+function emitXmlFallbackToolCalls(
+  toolCallsMap: Map<number, ToolCall>,
+  parsedXmlToolCalls: ParsedXmlToolCall[],
+  onToolCall?: (toolCall: ToolCall) => void,
+): void {
+  if (toolCallsMap.size > 0 || parsedXmlToolCalls.length === 0 || !onToolCall) return
+
+  let fallbackId = 0
+  for (const xmlCall of parsedXmlToolCalls) {
+    onToolCall({
+      id: `xml_fallback_${fallbackId++}`,
+      type: 'function',
+      function: {
+        name: xmlCall.name,
+        arguments: JSON.stringify(xmlCall.arguments),
+      },
+    })
+  }
+}
+
 function asReasoningText(value: unknown): string {
   if (typeof value === 'string') {
     return value
@@ -236,6 +339,11 @@ export async function getAIStreamResponse(
     // 累积 tool_calls
     const toolCallsMap = new Map<number, ToolCall>()
 
+    // <tool_call> XML 文本过滤缓冲区（跨 chunk 拼接）
+    const xmlToolCallBuffer = { value: '' }
+    // 从 XML 文本中解析出的工具调用（作为 fallback）
+    const parsedXmlToolCalls: ParsedXmlToolCall[] = []
+
     /**
      * 处理单行数据的辅助函数
      */
@@ -250,9 +358,15 @@ export async function getAIStreamResponse(
 
       // 流结束标志
       if (data === '[DONE]') {
+        // 刷新缓冲区中残留的 <tool_call> XML 文本
+        const flushed = flushXmlToolCallBuffer(xmlToolCallBuffer)
+        if (flushed) {
+          onChunk(flushed)
+        }
+        // 如果没有结构化的 tool_calls 但解析到了 XML 格式的，作为 fallback 触发
+        emitXmlFallbackToolCalls(toolCallsMap, parsedXmlToolCalls, onToolCall)
         onChunk('[DONE]')
         doneReceived = true
-        // 如果有工具调用且未完成，触发回调
         for (const toolCall of toolCallsMap.values()) {
           if (onToolCall) onToolCall(toolCall)
         }
@@ -265,10 +379,19 @@ export async function getAIStreamResponse(
           const parsedData = JSON.parse(data)
           const delta = parsedData.choices?.[0]?.delta
 
-          // 处理正文内容
+          // 处理正文内容（过滤 <tool_call> XML 文本）
           const content = delta?.content
           if (content) {
-            onChunk(content)
+            const { cleanText, toolCalls: xmlCalls } = filterAndParseXmlToolCalls(
+              content,
+              xmlToolCallBuffer,
+            )
+            for (const xmlCall of xmlCalls) {
+              parsedXmlToolCalls.push(xmlCall)
+            }
+            if (cleanText) {
+              onChunk(cleanText)
+            }
           }
 
           // 处理工具调用 (Tool Calls)
@@ -338,6 +461,13 @@ export async function getAIStreamResponse(
 
     // 如果正常结束但没有收到 [DONE]
     if (!doneReceived) {
+      // 刷新残留的 <tool_call> XML 文本
+      const flushed = flushXmlToolCallBuffer(xmlToolCallBuffer)
+      if (flushed) {
+        onChunk(flushed)
+      }
+      // XML fallback：没有结构化 tool_calls 但有 XML 解析结果
+      emitXmlFallbackToolCalls(toolCallsMap, parsedXmlToolCalls, onToolCall)
       onChunk('[DONE]')
       for (const toolCall of toolCallsMap.values()) {
         if (onToolCall) onToolCall(toolCall)
