@@ -399,6 +399,15 @@ export const ai = {
   mcpLoginRequiredDesc:
     'MCP server configurations will be securely synced to your account. Please login to enable this feature.',
   memory: 'Memory',
+  webSearch: 'Web Search',
+  webSearchDesc:
+    'Configure API keys for web search providers. The AI assistant will automatically use the configured search service when it needs real-time information.',
+  webSearchTavilyHint: 'Get API Key from tavily.com',
+  webSearchSerperHint: 'Get API Key from serper.dev',
+  webSearchBraveHint: 'Get API Key from brave.com/search/api/',
+  webSearchDuckDuckGoDesc:
+    'DuckDuckGo serves as a free fallback search engine with no API key required. Search quality is lower than paid APIs, but it is automatically enabled when no other keys are configured.',
+  webSearchDuckDuckGoFree: 'No API Key · Enabled by default',
   memoryEnabled: 'Memory Enabled',
   memoryDisabled: 'Memory Disabled',
   memoryManagement: 'Memory Management',

@@ -24,8 +24,16 @@ import AIMemoryManager from './AIMemoryManager.vue'
 import AIPresetManager from './AIPresetManager.vue'
 import AISkillManager from './AISkillManager.vue'
 import McpSettingsManager from '@/features/mcp/components/McpSettingsManager.vue'
+import AIWebSearchConfig from './AIWebSearchConfig.vue'
 
-type SettingsTab = 'settings' | 'presets' | 'skills' | 'memory' | 'mcp' | 'contextCompression'
+type SettingsTab =
+  | 'settings'
+  | 'presets'
+  | 'skills'
+  | 'memory'
+  | 'mcp'
+  | 'contextCompression'
+  | 'webSearch'
 
 const orderedTabs: SettingsTab[] = [
   'settings',
@@ -33,6 +41,7 @@ const orderedTabs: SettingsTab[] = [
   'memory',
   'contextCompression',
   'skills',
+  'webSearch',
   'mcp',
 ]
 
@@ -70,6 +79,7 @@ const activeTab = ref<SettingsTab>(props.initialTab || 'settings')
 function getTabLabelKey(tab: SettingsTab) {
   if (tab === 'settings') return 'ai.basicSettings'
   if (tab === 'presets') return 'ai.presetManagement'
+  if (tab === 'webSearch') return 'ai.webSearch'
   return `ai.${tab}`
 }
 
@@ -376,6 +386,9 @@ defineExpose({
               :skills="skills"
               mode="contextCompression"
             />
+
+            <!-- 联网搜索 Tab -->
+            <AIWebSearchConfig v-else-if="activeTab === 'webSearch'" />
 
             <!-- MCP 扩展 Tab -->
             <McpSettingsManager v-else-if="activeTab === 'mcp'" />

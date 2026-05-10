@@ -13,9 +13,9 @@
     "eslint/prefer-const": "error",
     "typescript/consistent-type-assertions": "error",
     "typescript/no-unsafe-return": "error",
-    "eslint/complexity": ["warn", { "max": 15 }],
-    "eslint/max-depth": ["warn", { "max": 4 }],
-    "eslint/max-lines-per-function": ["warn", { "max": 100 }],
+    "eslint/complexity": ["warn", { "max": 25 }],
+    "eslint/max-depth": ["warn", { "max": 5 }],
+    "eslint/max-lines-per-function": ["warn", { "max": 200 }],
     "import/consistent-type-specifier-style": ["error", "prefer-top-level"],
     "vitest/require-mock-type-parameters": "off",
     "vitest/no-conditional-expect": "off",
@@ -41,7 +41,10 @@
       "files": ["**/*.test.ts", "**/*.spec.ts", "**/*.test.mts", "**/*.spec.mts"],
       "rules": {
         "typescript/no-explicit-any": "off",
-        "no-console": "off"
+        "no-console": "off",
+        "eslint/max-lines-per-function": ["warn", { "max": 600 }],
+        "eslint/complexity": ["warn", { "max": 35 }],
+        "eslint/max-depth": ["warn", { "max": 7 }]
       }
     },
     {

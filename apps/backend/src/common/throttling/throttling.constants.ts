@@ -155,6 +155,12 @@ export const MCP_TOOL_CALL_THROTTLE = createThrottlePolicy({
   long: 30,
 })
 
+export const SEARCH_WEB_THROTTLE = createThrottlePolicy({
+  short: 2,
+  medium: 6,
+  long: 15,
+})
+
 export function shouldSkipGlobalThrottle(context: ExecutionContext): boolean {
   const request = context.switchToHttp().getRequest<{ method?: string; url?: string }>()
   const method = request.method?.toUpperCase()

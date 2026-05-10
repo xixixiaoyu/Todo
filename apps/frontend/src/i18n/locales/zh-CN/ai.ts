@@ -381,6 +381,14 @@ export const ai = {
   parallelSynthesisPrompt:
     '我邀请了多个 AI 模型对用户的问题“{originalQuery}”进行了独立回答。以下是各模型的回答内容：\n\n{discussionData}\n\n请你作为“主模型”，深度分析并综合以上所有输入，为用户提供一个最准确、专业且全面的最终答案。注意：在你的最终答案中，严禁提及“副模型”、“其他模型”、“以上回答”或任何暗示讨论过程的内容，直接呈现最完美的回答。',
   memory: '记忆',
+  webSearch: '联网搜索',
+  webSearchDesc: '配置联网搜索服务的 API Key。AI 助手在需要实时信息时会自动调用已配置的搜索服务。',
+  webSearchTavilyHint: '从 tavily.com 获取 API Key',
+  webSearchSerperHint: '从 serper.dev 获取 API Key',
+  webSearchBraveHint: '从 brave.com/search/api/ 获取 API Key',
+  webSearchDuckDuckGoDesc:
+    'DuckDuckGo 作为免费搜索兜底，无需配置 API Key，默认可用。搜索质量不如付费 API，但在未配置其他 Key 时自动启用。',
+  webSearchDuckDuckGoFree: '无需 API Key · 默认启用',
   memoryEnabled: '记忆功能已开启',
   memoryDisabled: '记忆功能已关闭',
   memoryManagement: '记忆管理',

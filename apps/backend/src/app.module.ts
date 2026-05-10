@@ -24,6 +24,7 @@ import { SkillSourcesModule } from './skill-sources/skill-sources.module'
 import { AiSyncModule } from './ai-sync/ai-sync.module'
 import { SessionFileModule } from './agent/session-file'
 import { TaskQueueModule } from './agent/task-queue'
+import { WebSearchModule } from './web-search'
 import { AppThrottlerGuard, RedisThrottlerStorage, createGlobalThrottlerOptions } from './common'
 
 /**
@@ -151,6 +152,7 @@ import { AppThrottlerGuard, RedisThrottlerStorage, createGlobalThrottlerOptions 
     TeachingModule, // 教学模式模块
     SessionFileModule, // Agent Session 文件注册模块
     TaskQueueModule, // Agent 异步任务队列模块
+    WebSearchModule, // 联网搜索模块
   ],
   providers: [
     // 全局速率限制守卫

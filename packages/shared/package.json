@@ -29,7 +29,7 @@
     "build": "tsup",
     "type-check": "tsgo --noEmit",
     "type-check:watch": "tsgo --noEmit --watch",
-    "dev": "tsup",
+    "dev": "TSUP_DEV=true tsup",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

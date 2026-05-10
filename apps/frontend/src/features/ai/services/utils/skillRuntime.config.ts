@@ -2,6 +2,11 @@ import type { SkillRuntimeConfig } from '@/features/ai/composables/useSkillRunti
 import type { AISkill, AISkillHttpRuntime, AISkillRuntimeSecret } from '../types'
 import { resolveSkillRuntime } from './skillRuntime.normalize'
 
+/**
+ * getSkillRuntimeSecretDefinitions 从已有技能中收集需要用户填写的运行时密钥定义。
+ * 注意：web_search 原生工具的密钥已迁移至独立 Tab 组件 AIWebSearchConfig，不再在此注入。
+ */
+
 function mergeSkillSecretDefinition(
   current: AISkillRuntimeSecret | undefined,
   next: AISkillRuntimeSecret,
