@@ -77,6 +77,7 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3000
+      CHOKIDAR_USEPOLLING: 'true'
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-lumina}?schema=public
       # Redis
       REDIS_HOST: redis
@@ -157,6 +158,8 @@ services:
       VITE_PROXY_TARGET: http://backend:3000
       # 不设置 VITE_API_BASE_URL，让其回退到 /api 以支持 Vite 代理
       VITE_API_BASE_URL: ''
+      # Docker on macOS 下 inotify 事件传播不可靠，启用 Vite polling 轮询文件变更
+      VITE_USE_POLLING: 'true'
     volumes:
       # 挂载项目目录（代码热更新）
       - .:/app

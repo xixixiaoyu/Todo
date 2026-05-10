@@ -70,6 +70,16 @@ setup_pnpm() {
   corepack prepare pnpm@9.15.0 --activate >/dev/null 2>&1
 }
 
+setup_bun() {
+  if command -v bun >/dev/null 2>&1; then
+    log 'Bun already installed'
+    return
+  fi
+
+  log 'Installing Bun'
+  npm install -g bun >/dev/null 2>&1
+}
+
 ensure_install_unlocked() {
   lock_hash="$(hash_file "$APP_ROOT/pnpm-lock.yaml")"
   marker_file="$CACHE_DIR/pnpm-lock.sha256"
@@ -132,6 +142,7 @@ fi
 
 mkdir -p "$CACHE_DIR"
 setup_pnpm
+setup_bun
 run_locked install ensure_install_unlocked
 run_locked shared-build ensure_shared_build_unlocked
 

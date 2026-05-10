@@ -7,4 +7,5 @@ export default defineConfig({
   clean: true,
   splitting: false,
   sourcemap: true,
+  watch: process.env.CHOKIDAR_USEPOLLING === 'true' ? { usePolling: true, interval: 300 } : true,
 })
