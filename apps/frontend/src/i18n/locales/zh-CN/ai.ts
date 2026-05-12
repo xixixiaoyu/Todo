@@ -48,6 +48,8 @@ export const ai = {
   askSelectionFloatingTitle: 'AI 快速解答',
   askSelectionTransferToChat: '转存至对话',
   settings: 'AI 助手设置',
+  appearance: '外观',
+  appearanceDesc: '主题模式、主题色与语言偏好',
   basicSettings: '基础设置',
   presetManagement: '预设管理',
   baseUrlLabel: 'API Base URL',

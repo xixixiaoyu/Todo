@@ -56,6 +56,8 @@ export const ai = {
   askSelectionFloatingTitle: 'AI Quick Answer',
   askSelectionTransferToChat: 'Transfer to Chat',
   settings: 'AI Assistant Settings',
+  appearance: 'Appearance',
+  appearanceDesc: 'Theme mode, color, and language preferences',
   basicSettings: 'Basic Settings',
   presetManagement: 'Preset Management',
   baseUrlLabel: 'API Base URL',

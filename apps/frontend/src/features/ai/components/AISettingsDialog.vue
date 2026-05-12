@@ -1,7 +1,18 @@
 <script setup lang="ts">
 import { ref, watch, computed, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { X, RotateCcw } from 'lucide-vue-next'
+import {
+  X,
+  RotateCcw,
+  Palette,
+  SlidersHorizontal,
+  Layers,
+  Brain,
+  FileText,
+  Zap,
+  Globe,
+  Terminal,
+} from 'lucide-vue-next'
 import AiLuminaIcon from './AiLuminaIcon.vue'
 import { isEqual } from 'lodash-es'
 import { useAIConfig } from '@/features/ai/composables/useAIConfig'
@@ -18,8 +29,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 
-// 导入子组件
 import AISettingsBasic from './AISettingsBasic.vue'
+import AISettingsAppearance from './AISettingsAppearance.vue'
 import AIMemoryManager from './AIMemoryManager.vue'
 import AIPresetManager from './AIPresetManager.vue'
 import AISkillManager from './AISkillManager.vue'
@@ -27,6 +38,7 @@ import McpSettingsManager from '@/features/mcp/components/McpSettingsManager.vue
 import AIWebSearchConfig from './AIWebSearchConfig.vue'
 
 type SettingsTab =
+  | 'appearance'
   | 'settings'
   | 'presets'
   | 'skills'
@@ -35,14 +47,15 @@ type SettingsTab =
   | 'contextCompression'
   | 'webSearch'
 
-const orderedTabs: SettingsTab[] = [
-  'settings',
-  'presets',
-  'memory',
-  'contextCompression',
-  'skills',
-  'webSearch',
-  'mcp',
+const navItems: { id: SettingsTab; icon: typeof Palette; labelKey: string }[] = [
+  { id: 'appearance', icon: Palette, labelKey: 'ai.appearance' },
+  { id: 'settings', icon: SlidersHorizontal, labelKey: 'ai.basicSettings' },
+  { id: 'presets', icon: Layers, labelKey: 'ai.presetManagement' },
+  { id: 'memory', icon: Brain, labelKey: 'ai.memory' },
+  { id: 'contextCompression', icon: FileText, labelKey: 'ai.contextCompression' },
+  { id: 'skills', icon: Zap, labelKey: 'ai.skills' },
+  { id: 'webSearch', icon: Globe, labelKey: 'ai.webSearch' },
+  { id: 'mcp', icon: Terminal, labelKey: 'ai.mcp' },
 ]
 
 const props = defineProps<{
@@ -70,25 +83,14 @@ const {
   syncConfigToPreset,
 } = useAIConfig()
 
-// 子组件引用
 const presetManagerRef = ref<InstanceType<typeof AIPresetManager> | null>(null)
 
-// 当前 Tab
-const activeTab = ref<SettingsTab>(props.initialTab || 'settings')
+const activeTab = ref<SettingsTab>(props.initialTab || 'appearance')
 
-function getTabLabelKey(tab: SettingsTab) {
-  if (tab === 'settings') return 'ai.basicSettings'
-  if (tab === 'presets') return 'ai.presetManagement'
-  if (tab === 'webSearch') return 'ai.webSearch'
-  return `ai.${tab}`
-}
-
-// 监听内部 Tab 变化并通知外部
 watch(activeTab, (newTab) => {
   emit('update:initialTab', newTab)
 })
 
-// 本地表单状态
 const formData = ref<AIConfig>({
   ...config.value,
   discussionModelIds: [...config.value.discussionModelIds] as string[],
@@ -97,9 +99,6 @@ const formData = ref<AIConfig>({
   skillIds: [...config.value.skillIds] as string[],
 })
 
-/**
- * 检查当前表单配置是否与现有预设重复
- */
 const isDuplicatePreset = computed(() => {
   return presets.value.some((preset) => {
     const presetSkillIds = [...(preset.skillIds || [])].sort()
@@ -117,7 +116,6 @@ const isDuplicatePreset = computed(() => {
   })
 })
 
-// 预设相关状态 (保留在父组件以便处理 "保存为预设" 逻辑)
 const showSaveAsPresetConfirm = ref(false)
 const saveAsPresetName = ref('')
 const syncTargetPresetId = ref<string | null>(activePresetId.value)
@@ -127,7 +125,6 @@ const canSyncToPreset = computed(() => {
   return presets.value.some((preset) => preset.id === syncTargetPresetId.value)
 })
 
-// 监听弹窗打开，或者初始 Tab 变化时，设置当前 Tab 以及重置内部状态
 watch(
   [() => modelValue.value, () => props.initialTab],
   ([isOpen, tab]) => {
@@ -147,7 +144,6 @@ watch(
   { immediate: true },
 )
 
-// 同步外部配置到表单
 watch(
   () => config.value,
   (newConfig) => {
@@ -158,7 +154,6 @@ watch(
       memoryModelId: newConfig.memoryModelId,
       skillIds: [...newConfig.skillIds] as string[],
     }
-    // 只有当外部配置真的变了且与当前表单不一致时才同步
     if (!isEqual(formData.value, newFormData)) {
       formData.value = newFormData
     }
@@ -166,7 +161,6 @@ watch(
   { immediate: true, deep: true },
 )
 
-// 监听本地表单变化并自动保存
 watch(
   formData,
   (newVal) => {
@@ -177,17 +171,11 @@ watch(
   { deep: true },
 )
 
-/**
- * 保存为预设 (显示确认弹窗)
- */
 function handleSaveAsPreset() {
   saveAsPresetName.value = ''
   showSaveAsPresetConfirm.value = true
 }
 
-/**
- * 确认保存为预设
- */
 function confirmSaveAsPreset() {
   if (!saveAsPresetName.value.trim()) return
 
@@ -212,9 +200,6 @@ function handleSyncToPreset() {
   syncConfigToPreset(syncTargetPresetId.value)
 }
 
-/**
- * 重置为默认值
- */
 function handleReset() {
   formData.value = {
     ...DEFAULT_CONFIG,
@@ -225,11 +210,7 @@ function handleReset() {
   }
 }
 
-/**
- * 关闭弹窗
- */
 function handleClose() {
-  // 如果在预设管理 Tab 且正在编辑，自动尝试保存预设 (创建模式除外，因为创建通常需要显式保存)
   if (
     activeTab.value === 'presets' &&
     presetManagerRef.value &&
@@ -240,10 +221,8 @@ function handleClose() {
   modelValue.value = false
 }
 
-// 使用公共 Composable 处理 ESC 关闭
 useEscClose(modelValue, handleClose)
 
-// 监听切换预设，更新本地表单
 watch(activePresetId, () => {
   if (activePresetId.value) {
     syncTargetPresetId.value = activePresetId.value
@@ -270,7 +249,6 @@ defineExpose({
   handleClose,
   activePresetId,
   switchPreset,
-  // 代理子组件的方法和状态，以保持测试兼容性
   startCreatePreset: () => presetManagerRef.value?.startCreatePreset(),
   startEditPreset: (preset: AIPreset) => presetManagerRef.value?.startEditPreset(preset),
   savePreset: () => presetManagerRef.value?.savePreset(),
@@ -288,111 +266,98 @@ defineExpose({
       <Transition name="scale">
         <div
           v-if="modelValue"
-          class="flex h-full w-full flex-col rounded-2xl bg-background shadow-2xl transition-all duration-300 sm:h-auto sm:max-h-[80vh] sm:max-w-lg sm:border sm:border-border/50"
+          class="flex h-full w-full flex-col overflow-hidden rounded-2xl bg-background shadow-2xl transition-all duration-300 sm:h-auto sm:max-h-[85vh] sm:max-w-2xl sm:border sm:border-border/50"
         >
-          <!-- 顶部区域：紧凑 Header -->
+          <!-- Header -->
           <div
-            class="relative flex shrink-0 flex-col overflow-hidden border-b border-border/50 bg-gradient-to-b from-primary/5 via-background to-background"
+            class="relative flex shrink-0 items-center justify-between border-b border-border/50 bg-gradient-to-r from-primary/5 via-background to-background px-6 py-4 sm:px-8"
           >
-            <div class="absolute inset-0 bg-muted/5" />
             <div class="absolute top-0 right-12 h-16 w-40 bg-primary/10 blur-[44px]" />
-
-            <!-- 标题内容层 -->
-            <div
-              class="relative flex items-center justify-between px-6 pt-5 pb-1.5 sm:px-7 sm:pt-5 sm:pb-2"
-            >
-              <div class="flex items-center gap-3">
-                <div
-                  class="relative flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10"
-                >
-                  <div class="absolute inset-0 rounded-xl border border-primary/10" />
-                  <AiLuminaIcon :size="15" class="relative text-primary" />
-                </div>
-                <h2 class="text-[15px] font-bold tracking-tight text-foreground/90">
-                  {{ t('ai.settings') }}
-                </h2>
+            <div class="relative flex items-center gap-3">
+              <div
+                class="relative flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10"
+              >
+                <div class="absolute inset-0 rounded-xl border border-primary/10" />
+                <AiLuminaIcon :size="15" class="relative text-primary" />
               </div>
-              <button
-                class="group flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-primary/10 active:scale-90"
-                @click="handleClose"
-              >
-                <X
-                  :size="16"
-                  stroke-width="2.5"
-                  class="text-muted-foreground transition-colors group-hover:text-primary"
-                />
-              </button>
+              <h2 class="text-[15px] font-bold tracking-tight text-foreground/90">
+                {{ t('ai.settings') }}
+              </h2>
             </div>
+            <button
+              class="group relative flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-primary/10 active:scale-90"
+              @click="handleClose"
+            >
+              <X
+                :size="16"
+                stroke-width="2.5"
+                class="text-muted-foreground transition-colors group-hover:text-primary"
+              />
+            </button>
+          </div>
 
-            <!-- 导航层 -->
-            <div class="no-scrollbar relative flex gap-5 overflow-x-auto px-6 sm:gap-6 sm:px-7">
+          <!-- Body: left nav + right content -->
+          <div class="flex min-h-0 flex-1">
+            <!-- Left sidebar nav -->
+            <nav
+              class="no-scrollbar flex w-[164px] shrink-0 flex-col gap-0.5 overflow-y-auto border-r border-border/40 bg-muted/10 px-2 py-3"
+            >
               <button
-                v-for="tab in orderedTabs"
-                :key="tab"
-                class="group relative shrink-0 py-3 text-[13px] font-semibold tracking-wide transition-all"
+                v-for="item in navItems"
+                :key="item.id"
+                class="group flex items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[13px] font-medium transition-all"
                 :class="
-                  activeTab === tab ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                  activeTab === item.id
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:bg-muted/30 hover:text-foreground'
                 "
-                @click="activeTab = tab"
+                @click="activeTab = item.id"
               >
-                <span class="relative z-10">{{ t(getTabLabelKey(tab)) }}</span>
-
-                <!-- 灵动的指示器 -->
-                <div
-                  v-if="activeTab === tab"
-                  class="absolute bottom-0 left-1/2 h-0.5 w-full -translate-x-1/2 overflow-hidden rounded-full bg-primary"
-                >
-                  <div
-                    class="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
-                  />
-                </div>
-                <!-- 悬停态光晕 -->
-                <div
-                  class="absolute inset-x-0 -bottom-1.5 h-6 w-full scale-75 bg-primary/10 opacity-0 blur-lg transition-all group-hover:scale-100 group-hover:opacity-100"
+                <component
+                  :is="item.icon"
+                  :size="15"
+                  :class="activeTab === item.id ? 'text-primary' : ''"
                 />
+                <span class="truncate">{{ t(item.labelKey) }}</span>
               </button>
+            </nav>
+
+            <!-- Right content area -->
+            <div class="custom-scrollbar min-w-0 flex-1 overflow-y-auto">
+              <AISettingsAppearance v-if="activeTab === 'appearance'" />
+
+              <AISettingsBasic
+                v-else-if="activeTab === 'settings'"
+                v-model="formData"
+                :presets="presets"
+                :skills="skills"
+              />
+
+              <AIPresetManager v-else-if="activeTab === 'presets'" ref="presetManagerRef" />
+
+              <AISkillManager v-else-if="activeTab === 'skills'" v-model="formData" />
+
+              <AIMemoryManager
+                v-else-if="activeTab === 'memory'"
+                v-model="formData"
+                :presets="presets"
+              />
+
+              <AISettingsBasic
+                v-else-if="activeTab === 'contextCompression'"
+                v-model="formData"
+                :presets="presets"
+                :skills="skills"
+                mode="contextCompression"
+              />
+
+              <AIWebSearchConfig v-else-if="activeTab === 'webSearch'" />
+
+              <McpSettingsManager v-else-if="activeTab === 'mcp'" />
             </div>
           </div>
 
-          <!-- 内容区域 -->
-          <div class="custom-scrollbar min-h-0 flex-1 overflow-y-auto">
-            <!-- 基础设置 Tab -->
-            <AISettingsBasic
-              v-if="activeTab === 'settings'"
-              v-model="formData"
-              :presets="presets"
-              :skills="skills"
-            />
-
-            <!-- 预设管理 Tab -->
-            <AIPresetManager v-else-if="activeTab === 'presets'" ref="presetManagerRef" />
-
-            <AISkillManager v-else-if="activeTab === 'skills'" v-model="formData" />
-
-            <!-- 记忆管理 Tab -->
-            <AIMemoryManager
-              v-else-if="activeTab === 'memory'"
-              v-model="formData"
-              :presets="presets"
-            />
-
-            <!-- 上下文压缩 Tab -->
-            <AISettingsBasic
-              v-else-if="activeTab === 'contextCompression'"
-              v-model="formData"
-              :presets="presets"
-              :skills="skills"
-              mode="contextCompression"
-            />
-
-            <!-- 联网搜索 Tab -->
-            <AIWebSearchConfig v-else-if="activeTab === 'webSearch'" />
-
-            <!-- MCP 扩展 Tab -->
-            <McpSettingsManager v-else-if="activeTab === 'mcp'" />
-          </div>
-
-          <!-- 底部按钮 -->
+          <!-- Footer -->
           <div
             class="flex shrink-0 flex-col gap-3 border-t border-border bg-muted/5 px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-5"
           >

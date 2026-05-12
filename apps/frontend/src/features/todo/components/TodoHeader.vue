@@ -4,7 +4,6 @@ import { useI18n } from 'vue-i18n'
 import { getServerBaseUrl } from '@/api/config'
 import {
   Snowflake,
-  Languages,
   Network,
   List,
   LogOut,
@@ -15,12 +14,9 @@ import {
   Cloud,
   ClipboardPaste,
   Upload,
-  Settings,
   Maximize2,
   Minimize2,
 } from 'lucide-vue-next'
-import ThemeToggle from './ThemeToggle.vue'
-import ThemeColorPicker from './ThemeColorPicker.vue'
 import AiAssistantQuickModesMenu from '@/features/ai/components/AiAssistantQuickModesMenu.vue'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -38,7 +34,7 @@ import { useRouter } from 'vue-router'
 import { nativeService } from '@/services/native'
 import { useToast } from '@/composables/useToast'
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const todoStore = useTodoStore()
 const authStore = useAuthStore()
 const router = useRouter()
@@ -82,12 +78,6 @@ const handleAvatarChange = async (event: Event) => {
 
   // 重置 input 以允许再次选择同一文件
   input.value = ''
-}
-
-const toggleLanguage = () => {
-  const newLocale = locale.value === 'zh-CN' ? 'en-US' : 'zh-CN'
-  locale.value = newLocale
-  localStorage.setItem('locale', newLocale)
 }
 
 const handleDblClick = () => {
@@ -256,26 +246,6 @@ const handleDblClick = () => {
               todoStore.isAppFullscreen ? t('common.minimize') : t('common.maximize')
             }}</span>
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <div class="flex items-center justify-between px-2 py-1">
-            <span class="text-[var(--todo-font-meta)] text-muted-foreground">{{
-              t('common.theme.label')
-            }}</span>
-            <ThemeToggle size="sm" />
-          </div>
-          <div class="flex items-center justify-between px-2 py-1">
-            <span class="text-[var(--todo-font-meta)] text-muted-foreground">{{
-              t('common.themeColor.label')
-            }}</span>
-            <ThemeColorPicker size="sm" />
-          </div>
-          <DropdownMenuItem
-            class="rounded-lg cursor-pointer text-[var(--todo-font-meta)]"
-            @click="toggleLanguage"
-          >
-            <Languages class="mr-2 h-4 w-4" />
-            <span>{{ locale === 'zh-CN' ? '中文' : 'English' }}</span>
-          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -298,48 +268,6 @@ const handleDblClick = () => {
             {{ todoStore.isAppFullscreen ? t('common.minimize') : t('common.maximize') }}
           </TooltipContent>
         </Tooltip>
-
-        <!-- 偏好设置折叠菜单：主题明暗 / 主题色 / 语言 统一收纳，降低顶栏视觉密度 -->
-        <DropdownMenu :modal="false">
-          <DropdownMenuTrigger as-child>
-            <Button
-              variant="outline"
-              size="icon"
-              class="h-10 w-10 rounded-xl bg-card border-border hover:bg-accent"
-              :title="t('common.settings')"
-              :aria-label="t('common.settings')"
-            >
-              <Settings :size="18" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" class="w-52 rounded-xl p-2">
-            <DropdownMenuLabel
-              class="text-[var(--todo-font-caption)] text-muted-foreground font-normal"
-            >
-              {{ t('common.settings') }}
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <div class="flex items-center justify-between px-2 py-1">
-              <span class="text-[var(--todo-font-meta)] text-muted-foreground">{{
-                t('common.theme.label')
-              }}</span>
-              <ThemeToggle size="sm" />
-            </div>
-            <div class="flex items-center justify-between px-2 py-1">
-              <span class="text-[var(--todo-font-meta)] text-muted-foreground">{{
-                t('common.themeColor.label')
-              }}</span>
-              <ThemeColorPicker size="sm" />
-            </div>
-            <DropdownMenuItem
-              class="rounded-lg cursor-pointer text-[var(--todo-font-meta)]"
-              @click="toggleLanguage"
-            >
-              <Languages class="mr-2 h-4 w-4" />
-              <span>{{ locale === 'zh-CN' ? '中文' : 'English' }}</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
 
       <div class="mx-0.5 hidden h-6 w-px bg-border/40 md:mx-1 md:block"></div>
