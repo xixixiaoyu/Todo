@@ -48,6 +48,7 @@ const emit = defineEmits<{
   (e: 'toggleSecondaryModel', id: string): void
   (e: 'selectPreset', id: string): void
   (e: 'openSettings', tab?: 'settings' | 'presets' | 'memory' | 'mcp' | 'contextCompression'): void
+  (e: 'openSessionSidebar'): void
   (e: 'triggerFileUpload'): void
   (e: 'navigatePrevious'): void
   (e: 'stopGenerating'): void
@@ -99,7 +100,7 @@ const newChatTitle = computed(() => `${t('ai.newChat')} (${shortcutHint})`)
             :title="t('ai.history')"
             :class="{ 'cursor-not-allowed opacity-50': isGenerating }"
             :disabled="isGenerating"
-            @click="emit('openHistory')"
+            @click="emit('openSessionSidebar')"
           >
             <History :size="16" />
           </button>

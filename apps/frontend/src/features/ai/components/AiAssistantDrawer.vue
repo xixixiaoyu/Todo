@@ -7,7 +7,6 @@ import AISettingsDialog from '@/features/ai/components/AISettingsDialog.vue'
 import AiAssistantHeader from '@/features/ai/components/AiAssistantHeader.vue'
 import AiAssistantToolbar from '@/features/ai/components/AiAssistantToolbar.vue'
 import AiAssistantInput from '@/features/ai/components/AiAssistantInput.vue'
-import AiAssistantHistoryOverlay from '@/features/ai/components/AiAssistantHistoryOverlay.vue'
 import MermaidEditorDialog from '@/features/ai/components/MermaidEditorDialog.vue'
 import TranslationPanel from '@/features/ai/components/TranslationPanel.vue'
 import AgentWorkspaceSelector from '@/features/ai/components/AgentWorkspaceSelector.vue'
@@ -27,7 +26,6 @@ import { useAiAssistantComposer } from '@/features/ai/composables/useAiAssistant
 import { useTodoStore } from '@/features/todo/stores/todo'
 import { useSidecar } from '@/composables/useSidecar'
 import { useI18n } from 'vue-i18n'
-import { useResizable } from '@/composables/useResizable'
 import { useToast } from '@/composables/useToast'
 import { AlertCircle, X, Copy, Check } from 'lucide-vue-next'
 
@@ -90,6 +88,10 @@ const selectedWorkspacePath = computed(() => config.value.agentWorkspacePath)
 const workspacePanelCollapsed = ref(false)
 const sessionSidebarCollapsed = ref(false)
 
+function openSessionSidebar() {
+  sessionSidebarCollapsed.value = false
+}
+
 function cyclePermissionMode() {
   const modes: PermissionMode[] = ['operate', 'ask', 'read_only']
   const idx = modes.indexOf(permissionMode.value)
@@ -148,38 +150,15 @@ const isMaximized = computed({
   set: (val) => todoStore.setMaximized(val),
 })
 
-const {
-  showSettings,
-  lastActiveTab,
-  openSettings,
-  showHistory,
-  openHistory,
-  showPresetDropdown,
-  showDiscussionPopover,
-} = useAiAssistantPanels({ isGenerating })
+const { showSettings, lastActiveTab, openSettings, showPresetDropdown, showDiscussionPopover } =
+  useAiAssistantPanels({ isGenerating })
 
 const hasOpenedSettings = ref(false)
-const hasOpenedHistory = ref(false)
 
 const shouldMountSettings = computed(() => showSettings.value || hasOpenedSettings.value)
-const shouldMountHistory = computed(() => showHistory.value || hasOpenedHistory.value)
 
 const { width: windowWidth } = useWindowSize()
 const isMobile = computed(() => windowWidth.value < 640)
-
-const {
-  width: historyWidth,
-  isResizing: isResizingHistory,
-  startResize: startHistoryResize,
-} = useResizable({
-  initialWidth: 320,
-  minWidth: 240,
-  maxWidth: () => {
-    const containerWidth =
-      (assistantInputRef.value?.$el.closest('.drawer') as HTMLElement)?.offsetWidth || 400
-    return containerWidth * 0.8
-  },
-})
 
 // 是否有聊天历史
 const hasHistory = computed(() => messages.value.length > 0)
@@ -197,15 +176,6 @@ const {
   triggerFileUpload,
 })
 
-const handleSelectSession = (sessionId: string) => {
-  if (isGenerating.value) {
-    stopGenerating()
-  }
-  switchSession(sessionId)
-  showHistory.value = false
-}
-
-// 选择预设
 const handleSelectPreset = (presetId: string) => {
   switchPreset(presetId)
   showPresetDropdown.value = false
@@ -257,12 +227,6 @@ watch(showSettings, (isOpen) => {
   }
 })
 
-watch(showHistory, (isOpen) => {
-  if (isOpen) {
-    hasOpenedHistory.value = true
-  }
-})
-
 // 当前显示的预设名称
 const currentPresetName = computed(() => activePreset.value?.name ?? t('ai.custom'))
 
@@ -300,7 +264,6 @@ defineOptions({
         <!-- 左侧会话列表 -->
         <LeftSessionSidebar
           :collapsed="sessionSidebarCollapsed"
-          @toggle="sessionSidebarCollapsed = !sessionSidebarCollapsed"
           @new-chat="handleNewChat"
           @switch-session="switchSession"
           @open-settings="openSettings()"
@@ -414,7 +377,6 @@ defineOptions({
             :last-active-session="lastActiveSession"
             :total-attachments="selectedImages.length + parsedFiles.length"
             @new-chat="handleNewChat"
-            @open-history="openHistory"
             @update:thinking-level="setThinkingLevel"
             @toggle-teaching="toggleTeachingMode"
             @toggle-todo="toggleTodoAssistant"
@@ -427,6 +389,7 @@ defineOptions({
             @toggle-secondary-model="toggleSecondaryModel"
             @select-preset="handleSelectPreset"
             @open-settings="openSettings"
+            @open-session-sidebar="openSessionSidebar"
             @open-mermaid-editor="openMermaidEditor()"
             @trigger-file-upload="triggerUpload"
             @navigate-previous="navigateToPrevious"
@@ -481,18 +444,6 @@ defineOptions({
         v-model:initial-tab="lastActiveTab"
       />
 
-      <AiAssistantHistoryOverlay
-        v-if="shouldMountHistory"
-        v-model="showHistory"
-        :is-mobile="isMobile"
-        :history-width="historyWidth"
-        :is-resizing="isResizingHistory"
-        :start-resize="startHistoryResize"
-        @select="handleSelectSession"
-        @new-chat="handleNewChat"
-      />
-
-      <!-- Mermaid 编辑器对话框 -->
       <MermaidEditorDialog />
     </div>
   </ResizableDrawer>

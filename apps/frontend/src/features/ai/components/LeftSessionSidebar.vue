@@ -8,11 +8,23 @@ import {
   Trash2,
   Plus,
   Settings2,
-  PanelLeftClose,
+  FileDown,
+  Search,
 } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useChatHistory } from '@/features/ai/composables/useChatHistory'
 import { useGenerationState } from '@/features/ai/stores/generationState'
+import { exportSessionToMarkdown, exportAllSessionsToMarkdown } from '@/lib/export'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 const { t } = useI18n()
 
@@ -21,14 +33,37 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'toggle'): void
   (e: 'newChat'): void
   (e: 'switchSession', sessionId: string): void
   (e: 'openSettings'): void
 }>()
 
-const { sessions, currentSessionId, togglePin, renameSession, deleteSession } = useChatHistory()
+const { sessions, currentSessionId, togglePin, renameSession, deleteSession, clearAllSessions } =
+  useChatHistory()
 const { isSessionGenerating } = useGenerationState()
+
+// ── Search ──
+const searchQuery = ref('')
+
+// ── Confirm dialogs ──
+const showClearConfirm = ref(false)
+const showDeleteConfirm = ref(false)
+const sessionToDelete = ref<string | null>(null)
+
+// ── Filtered sessions ──
+const filteredSessions = computed(() => {
+  let filtered = sessions.value
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase()
+    filtered = filtered.filter(
+      (s) =>
+        s.title.toLowerCase().includes(query) ||
+        s.messages.some((m) => m.content.toLowerCase().includes(query)),
+    )
+  }
+  return filtered
+})
+
 function loadPanelWidth(): number {
   try {
     const v = localStorage.getItem('lumina-sidebar-width')
@@ -57,7 +92,7 @@ const sessionGroups = computed(() => {
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
   const weekAgo = todayStart - 7 * 86400000
 
-  const sorted = [...sessions.value].sort(
+  const sorted = [...filteredSessions.value].sort(
     (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
   )
 
@@ -123,8 +158,39 @@ function cancelRename() {
 }
 
 function handleDelete(sid: string) {
-  deleteSession(sid)
+  sessionToDelete.value = sid
+  showDeleteConfirm.value = true
 }
+
+function confirmDelete() {
+  if (sessionToDelete.value) {
+    deleteSession(sessionToDelete.value)
+    sessionToDelete.value = null
+  }
+  showDeleteConfirm.value = false
+}
+
+// ── Export ──
+function handleExport(session: (typeof sessions.value)[number]) {
+  exportSessionToMarkdown(session)
+}
+
+function handleExportAll() {
+  exportAllSessionsToMarkdown(sessions.value)
+}
+
+// ── Clear all ──
+function handleClearAll() {
+  showClearConfirm.value = true
+}
+
+function confirmClearAll() {
+  clearAllSessions()
+  showClearConfirm.value = false
+}
+
+// ── Has sessions ──
+const hasSessions = computed(() => sessions.value.length > 0)
 
 // ── Resize ──
 function onResizeStart(e: PointerEvent) {
@@ -161,6 +227,22 @@ function onResizeStart(e: PointerEvent) {
       <div class="lss-header">
         <span class="lss-title">会话</span>
         <div class="lss-header-actions">
+          <button
+            v-if="hasSessions"
+            class="lss-action-btn"
+            :title="t('ai.exportAll')"
+            @click.stop="handleExportAll"
+          >
+            <FileDown :size="14" />
+          </button>
+          <button
+            v-if="hasSessions"
+            class="lss-action-btn lss-action-btn--danger"
+            :title="t('ai.clearAll')"
+            @click.stop="handleClearAll"
+          >
+            <Trash2 :size="14" />
+          </button>
           <button class="lss-action-btn" :title="t('ai.newChat')" @click.stop="emit('newChat')">
             <Plus :size="14" />
           </button>
@@ -171,14 +253,26 @@ function onResizeStart(e: PointerEvent) {
           >
             <Settings2 :size="14" />
           </button>
-          <button class="lss-action-btn" :title="t('ai.closeSidebar')" @click.stop="emit('toggle')">
-            <PanelLeftClose :size="14" />
-          </button>
         </div>
       </div>
 
+      <!-- 搜索 -->
+      <div class="lss-search">
+        <Search :size="13" class="lss-search-icon" />
+        <input v-model="searchQuery" class="lss-search-input" :placeholder="t('common.search')" />
+      </div>
+
       <div class="lss-list">
-        <template v-for="group in sessionGroups" :key="group.label">
+        <!-- 空状态 -->
+        <div v-if="!hasSessions" class="lss-empty">{{ t('ai.noHistory') }}</div>
+
+        <!-- 搜索无结果 -->
+        <div v-else-if="filteredSessions.length === 0 && searchQuery.trim()" class="lss-empty">
+          {{ t('common.noResults') }}
+        </div>
+
+        <!-- 列表 -->
+        <template v-else v-for="group in sessionGroups" :key="group.label">
           <div class="lss-group-label">{{ group.label }}</div>
           <div
             v-for="s in group.items"
@@ -217,6 +311,9 @@ function onResizeStart(e: PointerEvent) {
                 <PinOff v-if="s.isPinned" :size="11" />
                 <Pin v-else :size="11" />
               </button>
+              <button class="lss-act" :title="t('ai.exportMarkdown')" @click="handleExport(s)">
+                <FileDown :size="11" />
+              </button>
               <button
                 class="lss-act"
                 title="重命名"
@@ -230,9 +327,51 @@ function onResizeStart(e: PointerEvent) {
             </div>
           </div>
         </template>
-
-        <div v-if="sessionGroups.length === 0" class="lss-empty">暂无历史会话</div>
       </div>
+
+      <!-- 删除确认弹窗 -->
+      <AlertDialog v-model:open="showDeleteConfirm">
+        <AlertDialogContent class="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{{ t('ai.deleteSession') }}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {{ t('ai.deleteConfirm') }}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel @click="sessionToDelete = null">{{
+              t('common.cancel')
+            }}</AlertDialogCancel>
+            <AlertDialogAction
+              class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              @click="confirmDelete"
+            >
+              {{ t('common.confirm') }}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <!-- 清空确认弹窗 -->
+      <AlertDialog v-model:open="showClearConfirm">
+        <AlertDialogContent class="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{{ t('ai.clearAll') }}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {{ t('ai.clearAllConfirm') }}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{{ t('common.cancel') }}</AlertDialogCancel>
+            <AlertDialogAction
+              class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              @click="confirmClearAll"
+            >
+              {{ t('common.confirm') }}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </template>
   </aside>
 </template>
@@ -310,6 +449,47 @@ function onResizeStart(e: PointerEvent) {
 .lss-action-btn:hover {
   color: hsl(var(--primary));
   background: hsl(var(--primary) / 0.08);
+}
+
+.lss-action-btn--danger:hover {
+  color: hsl(var(--destructive));
+  background: hsl(var(--destructive) / 0.08);
+}
+
+/* ── Search ── */
+.lss-search {
+  position: relative;
+  padding: 6px 10px;
+  flex-shrink: 0;
+}
+
+.lss-search-icon {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: hsl(var(--muted-foreground) / 0.4);
+  pointer-events: none;
+}
+
+.lss-search-input {
+  width: 100%;
+  padding: 5px 8px 5px 26px;
+  font-size: 0.68rem;
+  border: 1px solid hsl(var(--border) / 0.15);
+  border-radius: 6px;
+  background: hsl(var(--muted) / 0.2);
+  color: hsl(var(--foreground) / 0.8);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.lss-search-input::placeholder {
+  color: hsl(var(--muted-foreground) / 0.35);
+}
+
+.lss-search-input:focus {
+  border-color: hsl(var(--primary) / 0.3);
 }
 
 /* ── List ── */
