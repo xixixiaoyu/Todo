@@ -44,18 +44,25 @@
 - [apps/frontend/src/features/ai/services/utils/systemPrompts.ts](file://apps/frontend/src/features/ai/services/utils/systemPrompts.ts)
 - [apps/frontend/src/features/ai/composables/useAIConfig/types.ts](file://apps/frontend/src/features/ai/composables/useAIConfig/types.ts)
 - [apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts](file://apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts)
+- [packages/shared/src/agent/agent-tool.schema.ts](file://packages/shared/src/agent/agent-tool.schema.ts)
+- [packages/shared/src/agent/agent-tool.types.ts](file://packages/shared/src/agent/agent-tool.types.ts)
 </cite>
 
 ## 更新摘要
+
 **所做更改**
+
 - 多级思维模式升级：从二元开关升级为off/auto/high/xhigh四个级别
 - 代理工作空间系统：新增Agent工作区选择器和会话文件管理
 - 增强的推理内容显示：支持reasoning_details和thinkingContent的智能优先级处理
 - 会话文件管理：后端提供会话文件注册、查询和删除功能
 - Agent工具系统：完整的本地文件操作工具链，支持文件读写、编辑、查找等
 - 增强的系统提示注入：支持Agent工具能力注入和工作区路径提示
+- 翻译模式支持：新增翻译模式的完整集成和配置管理
+- 小说写作助手增强：新增角色管理、世界观构建、类型选择等组件
 
 ## 目录
+
 1. [简介](#简介)
 2. [项目结构](#项目结构)
 3. [核心组件](#核心组件)
@@ -72,7 +79,9 @@
 14. [附录](#附录)
 
 ## 简介
+
 本文件面向Lumina Todo的AI助手系统，提供从架构设计、对话管理、上下文记忆到前端交互与工具调用的完整技术文档。重点覆盖：
+
 - AI Service实现原理与流式响应处理
 - 多级思维模式配置系统（off/auto/high/xhigh四个级别）
 - 代理工作空间系统与会话文件管理
@@ -82,8 +91,10 @@
 - 前端组件的交互设计、状态管理与实时对话处理
 - 增强的推理内容显示功能
 - Agent工具系统的完整实现
+- 翻译模式支持与小说写作助手增强
 
 ## 项目结构
+
 AI助手系统主要由前端Vue组合式函数与组件、AI服务层、MCP工具接口、AI数据同步服务、AI翻译服务和**代理工作空间系统**五部分构成，采用模块化与可插拔的设计，便于扩展与维护。
 
 ```mermaid
@@ -168,6 +179,7 @@ MsgComponent --> WorldviewPanel
 ```
 
 **图表来源**
+
 - [apps/frontend/src/features/ai/components/AiAssistantDrawer.vue:1-475](file://apps/frontend/src/features/ai/components/AiAssistantDrawer.vue#L1-L475)
 - [apps/frontend/src/features/ai/components/AiAssistantInput.vue:1-345](file://apps/frontend/src/features/ai/components/AiAssistantInput.vue#L1-L345)
 - [apps/frontend/src/features/ai/components/ChatMessageList.vue:1-492](file://apps/frontend/src/features/ai/components/ChatMessageList.vue#L1-L492)
@@ -195,6 +207,7 @@ MsgComponent --> WorldviewPanel
 - [apps/frontend/src/features/ai/components/ChatMessage.vue:390-449](file://apps/frontend/src/features/ai/components/ChatMessage.vue#L390-L449)
 
 **章节来源**
+
 - [apps/frontend/src/features/ai/services/aiService.ts:1-6](file://apps/frontend/src/features/ai/services/aiService.ts#L1-L6)
 - [apps/frontend/src/features/ai/services/core.ts:1-445](file://apps/frontend/src/features/ai/services/core.ts#L1-L445)
 - [apps/frontend/src/features/ai/services/types.ts:1-292](file://apps/frontend/src/features/ai/services/types.ts#L1-L292)
@@ -228,6 +241,7 @@ MsgComponent --> WorldviewPanel
 - [apps/frontend/src/features/ai/components/ChatMessage.vue:390-449](file://apps/frontend/src/features/ai/components/ChatMessage.vue#L390-L449)
 
 ## 核心组件
+
 - AI服务核心（core.ts）
   - 实现流式与非流式请求、SSE解析、工具调用聚合、推理内容抽取、请求中断与信号管理。
 - 类型系统（types.ts）
@@ -256,8 +270,16 @@ MsgComponent --> WorldviewPanel
   - buildAgentSystemPrompt函数生成Agent工具使用规范
   - 支持工作区路径提示、工具纪律、文件交付、失败处理、操作安全等指导原则
   - 与injectSystemPrompts集成，实现完整的Agent能力注入
+- **新增** 翻译模式支持
+  - 新增translation模式类型和相关配置
+  - TranslationPanel提供独立的翻译界面
+  - 支持智能语言检测和实时翻译功能
+- **新增** 小说写作助手增强
+  - NovelCharacterCardPanel、NovelWorldviewPanel、NovelGenreSelector组件
+  - 支持角色管理、世界观构建、类型选择等创作功能
 
 **章节来源**
+
 - [apps/frontend/src/features/ai/services/core.ts:1-445](file://apps/frontend/src/features/ai/services/core.ts#L1-L445)
 - [apps/frontend/src/features/ai/services/types.ts:276-292](file://apps/frontend/src/features/ai/services/types.ts#L276-L292)
 - [apps/frontend/src/features/ai/composables/useAIConfig/types.ts:1-95](file://apps/frontend/src/features/ai/composables/useAIConfig/types.ts#L1-L95)
@@ -269,8 +291,13 @@ MsgComponent --> WorldviewPanel
 - [apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts:9-166](file://apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts#L9-L166)
 - [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:56-63](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L56-L63)
 - [apps/frontend/src/features/ai/services/utils/systemPrompts.ts:485-553](file://apps/frontend/src/features/ai/services/utils/systemPrompts.ts#L485-L553)
+- [apps/frontend/src/features/ai/components/TranslationPanel.vue:1-278](file://apps/frontend/src/features/ai/components/TranslationPanel.vue#L1-L278)
+- [apps/frontend/src/features/ai/components/NovelCharacterCardPanel.vue:1-130](file://apps/frontend/src/features/ai/components/NovelCharacterCardPanel.vue#L1-L130)
+- [apps/frontend/src/features/ai/components/NovelWorldviewPanel.vue:1-78](file://apps/frontend/src/features/ai/components/NovelWorldviewPanel.vue#L1-L78)
+- [apps/frontend/src/features/ai/components/NovelGenreSelector.vue:1-56](file://apps/frontend/src/features/ai/components/NovelGenreSelector.vue#L1-L56)
 
 ## 架构总览
+
 AI助手系统采用"前端组合式函数 + AI服务层 + MCP工具系统 + AI数据同步 + 代理工作空间系统 + AI翻译服务"的分层架构。前端负责交互与状态，AI服务层负责与大模型通信与工具编排，MCP提供外部工具能力，**AI数据同步模块提供服务器端持久化**，**代理工作空间系统提供本地文件操作能力**，**AI翻译服务提供独立的语言处理能力**。**新增的多级思维模式**通过ThinkingMode和ReasoningEffort配置实现精细化控制，**增强的推理内容显示**通过reasoning_details优先策略优化用户体验。
 
 ```mermaid
@@ -312,6 +339,7 @@ C-->>D : 更新消息列表/状态
 ```
 
 **图表来源**
+
 - [apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue:69-156](file://apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue#L69-L156)
 - [apps/backend/src/agent/session-file/session-file.controller.ts:22-80](file://apps/backend/src/agent/session-file/session-file.controller.ts#L22-L80)
 - [apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue:79-87](file://apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue#L79-L87)
@@ -328,6 +356,7 @@ C-->>D : 更新消息列表/状态
 ### 多级思维模式系统
 
 #### 思维模式配置升级
+
 **新增** 多级思维模式系统，从简单的二元开关升级为off/auto/high/xhigh四个级别，提供更精细的推理控制。
 
 - **类型定义增强**
@@ -374,11 +403,13 @@ Deep --> End
 ```
 
 **图表来源**
+
 - [apps/frontend/src/features/ai/composables/useAIConfig/types.ts:1-4](file://apps/frontend/src/features/ai/composables/useAIConfig/types.ts#L1-L4)
 - [apps/frontend/src/features/ai/components/AISettingsParameterSection.vue:124-153](file://apps/frontend/src/features/ai/components/AISettingsParameterSection.vue#L124-L153)
 - [apps/frontend/src/features/ai/components/AiAssistantThinkingMenu.vue:28-48](file://apps/frontend/src/features/ai/components/AiAssistantThinkingMenu.vue#L28-L48)
 
 #### 思维模式配置管理
+
 **新增** useAIConfig模块对多级思维模式的支持，包括配置加载、验证和持久化。
 
 - **配置验证**
@@ -397,6 +428,7 @@ Deep --> End
   - 配置迁移时自动处理级别转换
 
 **章节来源**
+
 - [apps/frontend/src/features/ai/composables/useAIConfig/types.ts:1-4](file://apps/frontend/src/features/ai/composables/useAIConfig/types.ts#L1-L4)
 - [apps/frontend/src/features/ai/composables/useAIConfig/index.ts:90-101](file://apps/frontend/src/features/ai/composables/useAIConfig/index.ts#L90-L101)
 - [apps/frontend/src/features/ai/components/AISettingsParameterSection.vue:118-154](file://apps/frontend/src/features/ai/components/AISettingsParameterSection.vue#L118-L154)
@@ -405,6 +437,7 @@ Deep --> End
 ### 代理工作空间系统
 
 #### 工作区选择器组件
+
 **新增** AgentWorkspaceSelector组件，提供完整的代理工作区管理功能。
 
 - **工作区管理**
@@ -444,10 +477,12 @@ AddWS --> SelectWS
 ```
 
 **图表来源**
+
 - [apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue:69-156](file://apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue#L69-L156)
 - [apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue:242-254](file://apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue#L242-L254)
 
 #### 会话文件管理
+
 **新增** 后端SessionFileController和SessionFileRegistry，提供会话级别的文件管理能力。
 
 - **文件注册**
@@ -471,6 +506,7 @@ AddWS --> SelectWS
   - DELETE /api/agent/session-files/:id：删除文件
 
 **章节来源**
+
 - [apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue:1-405](file://apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue#L1-L405)
 - [apps/backend/src/agent/session-file/session-file.controller.ts:1-125](file://apps/backend/src/agent/session-file/session-file.controller.ts#L1-L125)
 - [apps/backend/src/agent/session-file/session-file.registry.ts:55-166](file://apps/backend/src/agent/session-file/session-file.registry.ts#L55-L166)
@@ -478,6 +514,7 @@ AddWS --> SelectWS
 ### Agent工具系统
 
 #### 工具定义与实现
+
 **新增** 完整的Agent工具系统，提供本地文件操作能力。
 
 - **工具类型**
@@ -526,16 +563,20 @@ AgentTools --> LocalToolHandler : "实现"
 ```
 
 **图表来源**
+
 - [apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts:9-166](file://apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts#L9-L166)
 - [apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts:197-200](file://apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts#L197-L200)
+- [packages/shared/src/agent/agent-tool.schema.ts:82-95](file://packages/shared/src/agent/agent-tool.schema.ts#L82-L95)
+- [packages/shared/src/agent/agent-tool.types.ts:26-39](file://packages/shared/src/agent/agent-tool.types.ts#L26-L39)
 
 #### 工具使用纪律
+
 **新增** Agent工具使用纪律和安全指导原则。
 
 - **工具使用纪律**
   - 优先使用成本最低、干扰最小的工具
   - 避免在简单场景下使用重型工具
-  - 优先使用agent_系列工具进行本地文件操作
+  - 优先使用agent\_系列工具进行本地文件操作
 
 - **文件交付规范**
   - 创建或找到文件时使用agent_stage_files注册
@@ -553,12 +594,14 @@ AgentTools --> LocalToolHandler : "实现"
   - 对难以撤销或影响外部系统操作需用户确认
 
 **章节来源**
+
 - [apps/frontend/src/features/ai/services/utils/systemPrompts.ts:500-553](file://apps/frontend/src/features/ai/services/utils/systemPrompts.ts#L500-L553)
 - [apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts:176-185](file://apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts#L176-L185)
 
 ### 增强的推理内容显示系统
 
 #### 推理内容优先级处理
+
 **新增** ChatMessageThinking组件的推理内容智能优先级处理，优化用户体验。
 
 - **优先级策略**
@@ -590,10 +633,12 @@ stateDiagram-v2
 ```
 
 **图表来源**
+
 - [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:65-100](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L65-L100)
 - [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:114-197](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L114-L197)
 
 #### 系统提示注入增强
+
 **新增** buildAgentSystemPrompt函数，为Agent工具系统提供完整的使用指导。
 
 - **工作区路径提示**
@@ -616,6 +661,7 @@ stateDiagram-v2
   - 用户确认机制的重要性
 
 **章节来源**
+
 - [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:56-63](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L56-L63)
 - [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:65-100](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L65-L100)
 - [apps/frontend/src/features/ai/components/ChatMessageThinking.vue:114-197](file://apps/frontend/src/features/ai/components/ChatMessageThinking.vue#L114-L197)
@@ -624,6 +670,7 @@ stateDiagram-v2
 ### AI翻译系统
 
 #### 翻译面板组件（TranslationPanel.vue）
+
 - **智能语言检测**
   - 使用正则表达式检测中文字符，自动判断目标语言（中文↔英文）
   - 支持Unicode范围[\u4e00-\u9fff]的中文字符识别
@@ -658,10 +705,12 @@ Copy --> Toast["显示成功提示<br/>useToast()"]
 ```
 
 **图表来源**
+
 - [apps/frontend/src/features/ai/components/TranslationPanel.vue:69-102](file://apps/frontend/src/features/ai/components/TranslationPanel.vue#L69-L102)
 - [apps/frontend/src/features/ai/services/translation.ts:8-53](file://apps/frontend/src/features/ai/services/translation.ts#L8-L53)
 
 #### 翻译服务（translation.ts）
+
 - **语言检测函数**
   - `detectLanguage(text: string): 'zh' | 'non-zh'`
   - 使用正则表达式判断文本是否包含中文字符
@@ -677,12 +726,14 @@ Copy --> Toast["显示成功提示<br/>useToast()"]
   - 记录详细的错误日志，包括状态码和响应体
 
 **章节来源**
+
 - [apps/frontend/src/features/ai/components/TranslationPanel.vue:1-278](file://apps/frontend/src/features/ai/components/TranslationPanel.vue#L1-L278)
 - [apps/frontend/src/features/ai/services/translation.ts:1-54](file://apps/frontend/src/features/ai/services/translation.ts#L1-L54)
 
 ### 统一模式管理API
 
 #### 模式管理组合式API（useAiModeItems.ts）
+
 - **模式ID定义**
   - `AiModeId = 'todo' | 'teaching' | 'draw' | 'discuss' | 'novel' | 'translation'`
   - 定义所有支持的AI模式类型，包括新增的翻译模式
@@ -722,14 +773,17 @@ AiModeItems --> AiModeInputs : "处理"
 ```
 
 **图表来源**
+
 - [apps/frontend/src/features/ai/composables/useAiModeItems.ts:11-62](file://apps/frontend/src/features/ai/composables/useAiModeItems.ts#L11-L62)
 
 **章节来源**
+
 - [apps/frontend/src/features/ai/composables/useAiModeItems.ts:1-63](file://apps/frontend/src/features/ai/composables/useAiModeItems.ts#L1-L63)
 
 ### AI助手模式管理增强
 
 #### 模式切换增强（useAiAssistantModes.ts）
+
 - **翻译模式集成**
   - 新增`isTranslationEnabled`计算属性，基于`assistantMode === 'translation'`
   - `toggleTranslationMode()`实现翻译模式的切换逻辑
@@ -743,10 +797,12 @@ AiModeItems --> AiModeInputs : "处理"
   - 集成工作区选择和权限管理模式
 
 **章节来源**
+
 - [apps/frontend/src/features/ai/composables/useAiAssistantModes.ts:44-54](file://apps/frontend/src/features/ai/composables/useAiAssistantModes.ts#L44-L54)
 - [apps/frontend/src/features/ai/composables/useAiAssistantModes.ts:123-143](file://apps/frontend/src/features/ai/composables/useAiAssistantModes.ts#L123-L143)
 
 ### AI服务核心（流式与非流式）
+
 - 流式请求
   - 构建请求体（模型、温度、top_p、工具、推理参数），通过fetch建立SSE连接，按行解析data行，累计工具调用，分别触发内容、思考、推理回调。
   - 支持AbortSignal中断，异常处理与[DONE]收尾。
@@ -771,12 +827,15 @@ Skip --> Read
 ```
 
 **图表来源**
+
 - [apps/frontend/src/features/ai/services/core.ts:115-340](file://apps/frontend/src/features/ai/services/core.ts#L115-L340)
 
 **章节来源**
+
 - [apps/frontend/src/features/ai/services/core.ts:115-340](file://apps/frontend/src/features/ai/services/core.ts#L115-L340)
 
 ### 配置与预设系统
+
 - AIConfig
   - 包含基础参数（baseUrl、apiKey、model、temperature）、系统提示、思维模式与努力等级、讨论模式、图像生动生成功能开关、MCP开关、上下文压缩开关与阈值、技能ID集合等。
 - **扩展** 小说创作配置
@@ -802,7 +861,6 @@ class AIConfig {
 +temperature
 +systemPrompt
 +thinkingMode
-+thinkingEffort
 +todoAssistant
 +discussionMode
 +discussionModelIds
@@ -829,7 +887,6 @@ class AIPreset {
 +model
 +systemPrompt
 +temperature
-+thinkingEffort
 +todoAssistant
 +skillIds
 +novelGenre
@@ -843,14 +900,17 @@ AIConfig <.. AIPreset : "可匹配/应用"
 ```
 
 **图表来源**
+
 - [apps/frontend/src/features/ai/composables/useAIConfig.ts:18-51](file://apps/frontend/src/features/ai/composables/useAIConfig.ts#L18-L51)
 - [apps/frontend/src/features/ai/composables/useAIConfig/types.ts:15-41](file://apps/frontend/src/features/ai/composables/useAIConfig/types.ts#L15-L41)
 
 **章节来源**
+
 - [apps/frontend/src/features/ai/composables/useAIConfig.ts:601-800](file://apps/frontend/src/features/ai/composables/useAIConfig.ts#L601-L800)
 - [apps/frontend/src/features/ai/composables/useAIConfig/types.ts:1-95](file://apps/frontend/src/features/ai/composables/useAIConfig/types.ts#L1-L95)
 
 ### 对话管理与状态
+
 - useChatState
   - 维护当前会话消息、流式响应内容、思考与推理详情、讨论步骤、待办建议、生成状态、错误与重试次数，并提供重置与清理方法。
   - **新增** 小说相关状态管理，包括novelBatchRemaining全局状态。
@@ -877,16 +937,19 @@ stateDiagram-v2
 ```
 
 **图表来源**
+
 - [apps/frontend/src/features/ai/composables/useChatState.ts:14-78](file://apps/frontend/src/features/ai/composables/useChatState.ts#L14-L78)
 - [apps/frontend/src/features/ai/composables/useChatActions.ts:333-408](file://apps/frontend/src/features/ai/composables/useChatActions.ts#L333-L408)
 - [apps/frontend/src/features/ai/composables/useChatActions.stream.ts:153-160](file://apps/frontend/src/features/ai/composables/useChatActions.stream.ts#L153-L160)
 
 **章节来源**
+
 - [apps/frontend/src/features/ai/composables/useChatState.ts:1-149](file://apps/frontend/src/features/ai/composables/useChatState.ts#L1-L149)
 - [apps/frontend/src/features/ai/composables/useChat.ts:1-136](file://apps/frontend/src/features/ai/composables/useChat.ts#L1-L136)
 - [apps/frontend/src/features/ai/composables/useChatActions.ts:1-544](file://apps/frontend/src/features/ai/composables/useChatActions.ts#L1-L544)
 
 ### 上下文压缩算法
+
 - 触发条件
   - 当会话未有摘要且历史长度超过阈值，或摘要存在但未总结片段超过阈值时触发。
 - 截断策略
@@ -911,12 +974,15 @@ H --> I["返回保留消息 + 摘要"]
 ```
 
 **图表来源**
+
 - [apps/frontend/src/features/ai/composables/useChatActions.contextCompression.ts:150-259](file://apps/frontend/src/features/ai/composables/useChatActions.contextCompression.ts#L150-L259)
 
 **章节来源**
+
 - [apps/frontend/src/features/ai/composables/useChatActions.contextCompression.ts:1-263](file://apps/frontend/src/features/ai/composables/useChatActions.contextCompression.ts#L1-L263)
 
 ### 工具调用机制
+
 - 参数解析
   - 将工具参数字符串解析为JSON对象，非法参数返回错误消息。
 - 本地工具
@@ -945,14 +1011,17 @@ T-->>A : 注入tool消息
 ```
 
 **图表来源**
+
 - [apps/frontend/src/features/ai/composables/useChatActions.toolCalls.ts:30-172](file://apps/frontend/src/features/ai/composables/useChatActions.toolCalls.ts#L30-L172)
 - [apps/frontend/src/features/mcp/api/mcp.ts:70-84](file://apps/frontend/src/features/mcp/api/mcp.ts#L70-L84)
 
 **章节来源**
+
 - [apps/frontend/src/features/ai/composables/useChatActions.toolCalls.ts:1-172](file://apps/frontend/src/features/ai/composables/useChatActions.toolCalls.ts#L1-L172)
 - [apps/frontend/src/features/mcp/api/mcp.ts:1-108](file://apps/frontend/src/features/mcp/api/mcp.ts#L1-L108)
 
 ### MCP工具系统集成
+
 - 能力发现与构建
   - 通过mcpApi.getAllTools获取可用工具，转换为AI工具清单；结合技能运行时构建本地工具处理器。
 - 运行时可用性
@@ -976,14 +1045,17 @@ Runtime --> MCP_API : "获取工具/调用"
 ```
 
 **图表来源**
+
 - [apps/frontend/src/features/ai/composables/useChatActions.runtime.ts:27-99](file://apps/frontend/src/features/ai/composables/useChatActions.runtime.ts#L27-L99)
 - [apps/frontend/src/features/mcp/api/mcp.ts:103-107](file://apps/frontend/src/features/mcp/api/mcp.ts#L103-L107)
 
 **章节来源**
+
 - [apps/frontend/src/features/ai/composables/useChatActions.runtime.ts:1-100](file://apps/frontend/src/features/ai/composables/useChatActions.runtime.ts#L1-L100)
 - [apps/frontend/src/features/mcp/api/mcp.ts:1-108](file://apps/frontend/src/features/mcp/api/mcp.ts#L1-L108)
 
 ### 前端交互与实时处理
+
 - 抽屉式布局与面板
   - AiAssistantDrawer集中管理设置、历史、预设、讨论模式等，支持最大化与侧边栏尺寸调整。
   - **新增** 翻译模式面板与配置选项，支持独立的翻译界面。
@@ -1032,6 +1104,7 @@ WorkspaceReg --> AgentToolsDef["Agent工具定义"]
 ```
 
 **图表来源**
+
 - [apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue:79-87](file://apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue#L79-L87)
 - [apps/frontend/src/features/ai/components/AiAssistantDrawer.vue:274-275](file://apps/frontend/src/features/ai/components/AiAssistantDrawer.vue#L274-L275)
 - [apps/frontend/src/features/ai/components/AiAssistantInput.vue:70-79](file://apps/frontend/src/features/ai/components/AiAssistantInput.vue#L70-L79)
@@ -1049,6 +1122,7 @@ WorkspaceReg --> AgentToolsDef["Agent工具定义"]
 - [apps/backend/src/agent/session-file/session-file.registry.ts:55-166](file://apps/backend/src/agent/session-file/session-file.registry.ts#L55-L166)
 
 **章节来源**
+
 - [apps/frontend/src/features/ai/components/AiAssistantDrawer.vue:1-475](file://apps/frontend/src/features/ai/components/AiAssistantDrawer.vue#L1-L475)
 - [apps/frontend/src/features/ai/components/AiAssistantInput.vue:1-345](file://apps/frontend/src/features/ai/components/AiAssistantInput.vue#L1-L345)
 - [apps/frontend/src/features/ai/components/ChatMessageList.vue:1-492](file://apps/frontend/src/features/ai/components/ChatMessageList.vue#L1-L492)
@@ -1060,11 +1134,13 @@ WorkspaceReg --> AgentToolsDef["Agent工具定义"]
 ## AI数据同步系统
 
 ### 系统概述
+
 AI数据同步系统提供服务器端持久化能力，支持记忆、技能、预设三种数据类型的同步。采用"server-as-truth"策略，加载时优先使用API数据，失败时回退到本地存储。
 
 ### 核心组件
 
 #### 后端服务层
+
 - **AiSyncController** (`ai-sync.controller.ts`)
   - 提供RESTful API接口：`GET /ai/memories`, `PUT /ai/memories`, `GET /ai/skills`, `PUT /ai/skills`, `GET /ai/presets`, `PUT /ai/presets`
   - 使用JWT认证保护接口，支持Zod验证管道
@@ -1079,12 +1155,14 @@ AI数据同步系统提供服务器端持久化能力，支持记忆、技能、
   - 安全检查：拒绝包含apiKey字段的预设数据
 
 #### 前端同步服务
+
 - **aiSyncService.ts**
   - HTTP客户端封装，提供安全的GET/PUT方法
   - API优先策略：优先从服务器获取，失败时静默回退到本地存储
   - 错误处理：写入失败静默，下次加载时自动恢复
 
 #### 共享类型定义
+
 - **AIMemoryDataSchema** (`ai-sync.schema.ts`)
   - memories: 最多100条，每条最多200字符的字符串数组
   - enabled: 布尔值
@@ -1134,6 +1212,7 @@ Server-->>SyncSvc : 确认更新
 ```
 
 **图表来源**
+
 - [apps/frontend/src/features/ai/services/aiSyncService.ts:1-41](file://apps/frontend/src/features/ai/services/aiSyncService.ts#L1-L41)
 - [apps/backend/src/ai-sync/ai-sync.controller.ts:1-84](file://apps/backend/src/ai-sync/ai-sync.controller.ts#L1-L84)
 - [apps/backend/src/ai-sync/ai-memory.service.ts:1-64](file://apps/backend/src/ai-sync/ai-memory.service.ts#L1-L64)
@@ -1141,6 +1220,7 @@ Server-->>SyncSvc : 确认更新
 - [apps/backend/src/ai-sync/ai-preset.service.ts:1-55](file://apps/backend/src/ai-sync/ai-preset.service.ts#L1-L55)
 
 **章节来源**
+
 - [apps/backend/src/ai-sync/ai-sync.module.ts:1-16](file://apps/backend/src/ai-sync/ai-sync.module.ts#L1-L16)
 - [apps/backend/src/ai-sync/ai-sync.controller.ts:1-84](file://apps/backend/src/ai-sync/ai-sync.controller.ts#L1-L84)
 - [apps/backend/src/ai-sync/ai-memory.service.ts:1-64](file://apps/backend/src/ai-sync/ai-memory.service.ts#L1-L64)
@@ -1152,11 +1232,13 @@ Server-->>SyncSvc : 确认更新
 ## AI翻译系统
 
 ### 系统概述
+
 AI翻译系统提供独立的语言处理能力，支持智能语言检测、实时翻译、历史持久化等功能。通过专门的翻译面板和翻译服务，为用户提供便捷的多语言交流体验。
 
 ### 核心组件
 
 #### 翻译面板组件
+
 - **TranslationPanel.vue**
   - 独立的翻译界面，支持双栏布局和拖拽调整
   - 智能语言检测，自动判断目标语言
@@ -1165,6 +1247,7 @@ AI翻译系统提供独立的语言处理能力，支持智能语言检测、实
   - 响应式设计，支持桌面端和移动端
 
 #### 翻译服务
+
 - **translation.ts**
   - `detectLanguage(text: string): 'zh' | 'non-zh'`
     - 使用正则表达式检测中文字符
@@ -1176,12 +1259,14 @@ AI翻译系统提供独立的语言处理能力，支持智能语言检测、实
     - 支持请求取消和错误处理
 
 #### 模式集成
+
 - **useAiModeItems.ts**
   - 新增翻译模式支持，统一模式管理
   - 确保翻译模式在所有菜单中的正确排序
   - 支持响应式状态管理和动态切换
 
 #### 配置扩展
+
 - **useAIConfig/types.ts**
   - 新增AssistantMode支持'translation'
   - 翻译模式与其他模式互斥机制
@@ -1213,6 +1298,7 @@ TranslationSvc --> Utils
 ```
 
 **图表来源**
+
 - [apps/frontend/src/features/ai/components/TranslationPanel.vue:1-278](file://apps/frontend/src/features/ai/components/TranslationPanel.vue#L1-L278)
 - [apps/frontend/src/features/ai/services/translation.ts:1-54](file://apps/frontend/src/features/ai/services/translation.ts#L1-L54)
 - [apps/frontend/src/features/ai/composables/useAiModeItems.ts:1-63](file://apps/frontend/src/features/ai/composables/useAiModeItems.ts#L1-L63)
@@ -1223,6 +1309,7 @@ TranslationSvc --> Utils
 - [apps/frontend/src/features/ai/services/utils.ts:1-10](file://apps/frontend/src/features/ai/services/utils.ts#L1-L10)
 
 **章节来源**
+
 - [apps/frontend/src/features/ai/components/TranslationPanel.vue:1-278](file://apps/frontend/src/features/ai/components/TranslationPanel.vue#L1-L278)
 - [apps/frontend/src/features/ai/services/translation.ts:1-54](file://apps/frontend/src/features/ai/services/translation.ts#L1-L54)
 - [apps/frontend/src/features/ai/composables/useAiModeItems.ts:1-63](file://apps/frontend/src/features/ai/composables/useAiModeItems.ts#L1-L63)
@@ -1232,17 +1319,20 @@ TranslationSvc --> Utils
 ## 小说写作助手系统
 
 ### 系统概述
+
 小说写作助手系统提供完整的创作辅助功能，包括角色管理、世界观构建、类型选择等。通过专门的组件面板和配置选项，帮助用户进行沉浸式的小说创作。
 
 ### 核心组件
 
 #### 小说助手模式管理
+
 - **useAiAssistantModes.ts** (`useAiAssistantModes.ts`)
   - 新增小说模式切换功能
   - 支持novelGenre、novelTone、novelProtagonistHint等配置项
   - 切换时自动禁用其他模式（待办助手、讨论模式、图像生成）
 
 #### 角色管理系统
+
 - **NovelCharacterCardPanel.vue** (`NovelCharacterCardPanel.vue`)
   - 展示小说角色卡片，支持展开/折叠查看详情
   - 支持四种角色类型：主角、二号角色、反派、配角
@@ -1250,6 +1340,7 @@ TranslationSvc --> Utils
   - 响应式网格布局，支持多角色展示
 
 #### 世界观构建系统
+
 - **NovelWorldviewPanel.vue** (`NovelWorldviewPanel.vue`)
   - 展示小说世界观设置，支持多种分类
   - 地理环境、文化体系、魔法系统、科技水平、政治制度、历史背景
@@ -1257,12 +1348,14 @@ TranslationSvc --> Utils
   - 图标化展示，提升视觉体验
 
 #### 类型选择器
+
 - **NovelGenreSelector.vue** (`NovelGenreSelector.vue`)
   - 支持八种小说类型：奇幻、科幻、浪漫、悬疑、武侠、文学、恐怖、赛博朋克
   - 每种类型配有专属图标和标签
   - 支持单选操作，高亮显示当前选择
 
 #### 小说相关类型定义
+
 - **AssistantMode扩展** (`types.ts`)
   - 新增'novel'模式类型
   - 支持小说创作场景的专业提示词和工作流程
@@ -1273,6 +1366,7 @@ TranslationSvc --> Utils
   - NovelCharacterCard、NovelWorldviewSetting、NovelChapterMeta结构定义
 
 #### **新增** 小说消息组件增强
+
 - **ChatMessage.vue** (`ChatMessage.vue`)
   - 支持角色卡面板和世界观面板的显示
   - 提供继续按钮，支持手动触发下一章生成
@@ -1302,6 +1396,7 @@ MsgComponent --> WorldviewPanel
 ```
 
 **图表来源**
+
 - [apps/frontend/src/features/ai/composables/useAiAssistantModes.ts:1-145](file://apps/frontend/src/features/ai/composables/useAiAssistantModes.ts#L1-L145)
 - [apps/frontend/src/features/ai/components/NovelCharacterCardPanel.vue:1-130](file://apps/frontend/src/features/ai/components/NovelCharacterCardPanel.vue#L1-L130)
 - [apps/frontend/src/features/ai/components/NovelWorldviewPanel.vue:1-78](file://apps/frontend/src/features/ai/components/NovelWorldviewPanel.vue#L1-L78)
@@ -1310,6 +1405,7 @@ MsgComponent --> WorldviewPanel
 - [apps/frontend/src/features/ai/components/ChatMessage.vue:390-449](file://apps/frontend/src/features/ai/components/ChatMessage.vue#L390-L449)
 
 **章节来源**
+
 - [apps/frontend/src/features/ai/composables/useAiAssistantModes.ts:1-145](file://apps/frontend/src/features/ai/composables/useAiAssistantModes.ts#L1-L145)
 - [apps/frontend/src/features/ai/components/NovelCharacterCardPanel.vue:1-130](file://apps/frontend/src/features/ai/components/NovelCharacterCardPanel.vue#L1-L130)
 - [apps/frontend/src/features/ai/components/NovelWorldviewPanel.vue:1-78](file://apps/frontend/src/features/ai/components/NovelWorldviewPanel.vue#L1-L78)
@@ -1320,11 +1416,13 @@ MsgComponent --> WorldviewPanel
 ## 代理工作空间系统
 
 ### 系统概述
+
 代理工作空间系统为AI助手提供本地文件操作能力，支持在受控的工作区内执行文件操作、命令执行和文件交付。通过AgentWorkspaceSelector组件和SessionFileController后端服务，实现完整的文件管理生命周期。
 
 ### 核心组件
 
 #### 工作区选择器
+
 - **AgentWorkspaceSelector.vue**
   - 提供工作区选择界面，支持添加、删除、选择工作区
   - 支持三种权限模式：自动、询问、只读
@@ -1332,6 +1430,7 @@ MsgComponent --> WorldviewPanel
   - 支持本地目录选择和远程工作区管理
 
 #### 会话文件管理
+
 - **SessionFileController** (`session-file.controller.ts`)
   - 提供RESTful API接口：`POST /api/agent/session-files`、`GET /api/agent/session-files`、`DELETE /api/agent/session-files/:id`
   - 支持文件注册、查询、删除操作
@@ -1345,6 +1444,7 @@ MsgComponent --> WorldviewPanel
   - JSON文件持久化，支持数据恢复
 
 #### Agent工具系统
+
 - **Agent工具定义** (`useChatActions.agentTools.ts`)
   - 完整的本地文件操作工具链：READ_FILE、WRITE_FILE、EDIT_FILE、LS、GREP、FIND、MKDIR、BASH、STAGE_FILES
   - 支持文件读取、写入、编辑、目录操作、搜索、创建目录、命令执行、文件交付
@@ -1352,6 +1452,7 @@ MsgComponent --> WorldviewPanel
   - 参数验证和错误处理
 
 #### 系统提示注入
+
 - **buildAgentSystemPrompt** (`systemPrompts.ts`)
   - 生成Agent工具使用规范和安全指导
   - 包含工作区路径提示、工具纪律、文件交付、失败处理、操作安全等原则
@@ -1377,12 +1478,14 @@ Tools-->>User : 操作结果
 ```
 
 **图表来源**
+
 - [apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue:69-156](file://apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue#L69-L156)
 - [apps/backend/src/agent/session-file/session-file.controller.ts:22-80](file://apps/backend/src/agent/session-file/session-file.controller.ts#L22-L80)
 - [apps/backend/src/agent/session-file/session-file.registry.ts:107-133](file://apps/backend/src/agent/session-file/session-file.registry.ts#L107-L133)
 - [apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts:9-166](file://apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts#L9-L166)
 
 **章节来源**
+
 - [apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue:1-405](file://apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue#L1-L405)
 - [apps/backend/src/agent/session-file/session-file.controller.ts:1-125](file://apps/backend/src/agent/session-file/session-file.controller.ts#L1-L125)
 - [apps/backend/src/agent/session-file/session-file.registry.ts:55-166](file://apps/backend/src/agent/session-file/session-file.registry.ts#L55-L166)
@@ -1390,6 +1493,7 @@ Tools-->>User : 操作结果
 - [apps/frontend/src/features/ai/services/utils/systemPrompts.ts:485-553](file://apps/frontend/src/features/ai/services/utils/systemPrompts.ts#L485-L553)
 
 ## 依赖关系分析
+
 - 组件耦合
   - AiAssistantDrawer聚合useChat与useAIConfig，形成UI与业务逻辑的桥接；useChatActions依赖useChatState、useChatHistory、useChatMemory与runtime工具集。
   - **新增** aiSyncService与后端同步模块紧密集成。
@@ -1409,6 +1513,8 @@ Tools-->>User : 操作结果
   - **新增** useChatState提供全局状态管理，支持novel模式的自动续写功能。
   - **新增** reasoning_content字段支持推理内容的完整显示。
   - **新增** 多级思维模式配置支持精细化的推理控制。
+  - **新增** 翻译模式集成支持模式间的互斥切换。
+  - **新增** Agent工具系统提供完整的本地文件操作能力。
 
 ```mermaid
 graph TB
@@ -1443,6 +1549,7 @@ WorkspaceReg --> AgentToolsDef["Agent工具定义"]
 ```
 
 **图表来源**
+
 - [apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue:1-158](file://apps/frontend/src/features/ai/components/AiAssistantQuickModesMenu.vue#L1-L158)
 - [apps/frontend/src/features/ai/components/AiAssistantDrawer.vue:1-475](file://apps/frontend/src/features/ai/components/AiAssistantDrawer.vue#L1-L475)
 - [apps/frontend/src/features/ai/composables/useChat.ts:1-136](file://apps/frontend/src/features/ai/composables/useChat.ts#L1-L136)
@@ -1464,6 +1571,7 @@ WorkspaceReg --> AgentToolsDef["Agent工具定义"]
 - [apps/backend/src/agent/session-file/session-file.registry.ts:55-166](file://apps/backend/src/agent/session-file/session-file.registry.ts#L55-L166)
 
 **章节来源**
+
 - [apps/frontend/src/features/ai/composables/useChatActions.ts:1-544](file://apps/frontend/src/features/ai/composables/useChatActions.ts#L1-L544)
 - [apps/frontend/src/features/mcp/api/mcp.ts:1-108](file://apps/frontend/src/features/mcp/api/mcp.ts#L1-L108)
 - [apps/frontend/src/features/ai/services/core.ts:1-445](file://apps/frontend/src/features/ai/services/core.ts#L1-L445)
@@ -1480,6 +1588,7 @@ WorkspaceReg --> AgentToolsDef["Agent工具定义"]
 - [apps/backend/src/agent/session-file/session-file.registry.ts:55-166](file://apps/backend/src/agent/session-file/session-file.registry.ts#L55-L166)
 
 ## 性能考量
+
 - 流式渲染
   - 使用useSmartScroll与虚拟窗口渲染，减少DOM节点数量，提升长对话滚动性能。
 - 上下文压缩
@@ -1516,8 +1625,13 @@ WorkspaceReg --> AgentToolsDef["Agent工具定义"]
   - 智能语言检测减少不必要的API调用
   - 响应式布局优化移动端体验
   - 错误处理与状态管理提升用户体验
+- **新增** Agent工具系统性能
+  - Sidecar服务的异步处理避免阻塞主进程
+  - 工具参数的严格验证减少无效调用
+  - 文件操作的批量处理提升效率
 
 ## 故障排查指南
+
 - 流式中断
   - 检查AbortSignal是否被外部复用；确认[DONE]收尾与工具调用补发逻辑。
 - 工具调用失败
@@ -1553,10 +1667,16 @@ WorkspaceReg --> AgentToolsDef["Agent工具定义"]
   - 验证语言检测逻辑，检查正则表达式是否正确识别中文字符
   - 查看localStorage权限和容量限制
   - 检查网络连接和API响应状态码
+- **新增** Agent工具系统问题
+  - 检查Sidecar服务的可用性和端口配置
+  - 验证工具参数的Schema验证是否通过
+  - 确认文件路径的有效性和权限设置
+  - 查看工具执行的日志和错误信息
 - 错误提示
   - 使用AiAssistantDrawer中的错误复制功能快速上报；结合useChatState.clearError重置状态。
 
 **章节来源**
+
 - [apps/frontend/src/features/ai/services/core.ts:328-339](file://apps/frontend/src/features/ai/services/core.ts#L328-L339)
 - [apps/frontend/src/features/ai/composables/useChatActions.toolCalls.ts:140-172](file://apps/frontend/src/features/ai/composables/useChatActions.toolCalls.ts#L140-L172)
 - [apps/frontend/src/features/ai/composables/useChatActions.contextCompression.ts:136-140](file://apps/frontend/src/features/ai/composables/useChatActions.contextCompression.ts#L136-L140)
@@ -1573,13 +1693,16 @@ WorkspaceReg --> AgentToolsDef["Agent工具定义"]
 - [apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue:69-156](file://apps/frontend/src/features/ai/components/AgentWorkspaceSelector.vue#L69-L156)
 - [apps/backend/src/agent/session-file/session-file.controller.ts:22-80](file://apps/backend/src/agent/session-file/session-file.controller.ts#L22-L80)
 - [apps/backend/src/agent/session-file/session-file.registry.ts:107-133](file://apps/backend/src/agent/session-file/session-file.registry.ts#L107-L133)
+- [apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts:176-185](file://apps/frontend/src/features/ai/composables/useChatActions.agentTools.ts#L176-L185)
 
 ## 结论
-Lumina Todo的AI助手系统通过清晰的分层设计与模块化组合，实现了从对话编排、上下文压缩、工具调用到前端交互的完整闭环。**新增的多级思维模式**通过ThinkingMode和ReasoningEffort配置实现精细化控制，提供off/auto/high/xhigh四个级别的推理强度调节；**代理工作空间系统**通过AgentWorkspaceSelector和SessionFileController提供完整的本地文件操作能力，支持文件读写、编辑、查找等操作；**增强的推理内容显示**通过reasoning_details优先策略优化用户体验；**Agent工具系统**提供完整的本地文件操作工具链，支持9种不同的工具类型。其预设配置与运行时能力准备机制，使得系统具备良好的可扩展性与可维护性；流式渲染与智能滚动提升了用户体验；MCP工具集成进一步增强了系统能力边界。建议在生产环境中持续关注多级思维模式的性能影响、代理工作空间的安全性和稳定性，确保推理内容的正确处理和高效传输，同时优化Agent工具的权限控制和错误处理机制。
+
+Lumina Todo的AI助手系统通过清晰的分层设计与模块化组合，实现了从对话编排、上下文压缩、工具调用到前端交互的完整闭环。**新增的多级思维模式**通过ThinkingMode和ReasoningEffort配置实现精细化控制，提供off/auto/high/xhigh四个级别的推理强度调节；**代理工作空间系统**通过AgentWorkspaceSelector和SessionFileController提供完整的本地文件操作能力，支持文件读写、编辑、查找等操作；**增强的推理内容显示**通过reasoning_details优先策略优化用户体验；**Agent工具系统**提供完整的本地文件操作工具链，支持9种不同的工具类型。其预设配置与运行时能力准备机制，使得系统具备良好的可扩展性与可维护性；流式渲染与智能滚动提升了用户体验；MCP工具集成进一步增强了系统能力边界。**翻译模式支持**为多语言交流提供了独立的功能模块；**小说写作助手增强**通过角色管理、世界观构建等组件提升了创作体验。建议在生产环境中持续关注多级思维模式的性能影响、代理工作空间的安全性和稳定性，确保推理内容的正确处理和高效传输，同时优化Agent工具的权限控制和错误处理机制。
 
 ## 附录
 
 ### API使用示例（集成要点）
+
 - 发送消息（流式）
   - 调用路径：AiAssistantDrawer -> useChatActions.sendMessage -> services/core.getAIStreamResponse
   - 关键参数：messagesForRequest、thinkingMode、tools、contextSummary、skills、activeSkills、skillRuntimeAvailability
@@ -1614,8 +1737,12 @@ Lumina Todo的AI助手系统通过清晰的分层设计与模块化组合，实�
 - **新增** 模式管理
   - 路径：useAiModeItems -> useAiAssistantModes -> AIConfig
   - 注意：统一排序、互斥切换、状态持久化
+- **新增** 小说写作助手
+  - 路径：useAiAssistantModes -> NovelCharacterCardPanel/NovelWorldviewPanel/NovelGenreSelector
+  - 注意：角色管理、世界观构建、类型选择的集成
 
 **章节来源**
+
 - [apps/frontend/src/features/ai/components/AiAssistantDrawer.vue:66-80](file://apps/frontend/src/features/ai/components/AiAssistantDrawer.vue#L66-L80)
 - [apps/frontend/src/features/ai/composables/useChatActions.ts:333-408](file://apps/frontend/src/features/ai/composables/useChatActions.ts#L333-L408)
 - [apps/frontend/src/features/ai/composables/useChatActions.stream.ts:128-312](file://apps/frontend/src/features/ai/composables/useChatActions.stream.ts#L128-L312)
@@ -1633,3 +1760,6 @@ Lumina Todo的AI助手系统通过清晰的分层设计与模块化组合，实�
 - [apps/frontend/src/features/ai/services/translation.ts:8-53](file://apps/frontend/src/features/ai/services/translation.ts#L8-L53)
 - [apps/frontend/src/features/ai/composables/useAiModeItems.ts:48-62](file://apps/frontend/src/features/ai/composables/useAiModeItems.ts#L48-L62)
 - [apps/frontend/src/features/ai/composables/useAiAssistantModes.ts:46-54](file://apps/frontend/src/features/ai/composables/useAiAssistantModes.ts#L46-L54)
+- [apps/frontend/src/features/ai/components/NovelCharacterCardPanel.vue:1-130](file://apps/frontend/src/features/ai/components/NovelCharacterCardPanel.vue#L1-L130)
+- [apps/frontend/src/features/ai/components/NovelWorldviewPanel.vue:1-78](file://apps/frontend/src/features/ai/components/NovelWorldviewPanel.vue#L1-L78)
+- [apps/frontend/src/features/ai/components/NovelGenreSelector.vue:1-56](file://apps/frontend/src/features/ai/components/NovelGenreSelector.vue#L1-L56)
