@@ -1,6 +1,7 @@
 export const ai = {
   newChat: '新对话',
   assistant: 'AI 助手',
+  closeSidebar: '收起侧栏',
   stop: '停止',
   previousSession: '返回上一个会话',
   history: '历史记录',

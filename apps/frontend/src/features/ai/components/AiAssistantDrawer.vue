@@ -285,7 +285,7 @@ defineOptions({
     >
       <AiAssistantHeader
         :is-maximized="isMaximized"
-        :session-sidebar-collapsed="isAgentEnabled ? sessionSidebarCollapsed : undefined"
+        :session-sidebar-collapsed="sessionSidebarCollapsed"
         :workspace-collapsed="
           isAgentEnabled && selectedWorkspacePath ? workspacePanelCollapsed : undefined
         "
@@ -299,11 +299,11 @@ defineOptions({
       <div class="relative flex-1 min-h-0 flex flex-row">
         <!-- 左侧会话列表 -->
         <LeftSessionSidebar
-          v-if="isAgentEnabled"
           :collapsed="sessionSidebarCollapsed"
           @toggle="sessionSidebarCollapsed = !sessionSidebarCollapsed"
           @new-chat="handleNewChat"
           @switch-session="switchSession"
+          @open-settings="openSettings()"
         />
         <!-- 聊天列 -->
         <div class="relative flex-1 min-h-0 flex flex-col min-w-0">

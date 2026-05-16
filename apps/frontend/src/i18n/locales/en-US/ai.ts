@@ -1,6 +1,7 @@
 export const ai = {
   newChat: 'New Chat',
   assistant: 'AI Assistant',
+  closeSidebar: 'Close Sidebar',
   stop: 'Stop',
   previousSession: 'Previous Session',
   history: 'History',

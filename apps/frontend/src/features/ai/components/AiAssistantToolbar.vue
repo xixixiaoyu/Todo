@@ -4,16 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useWindowSize } from '@vueuse/core'
 import type { AIPreset, AIConfig, ThinkingMode } from '@/features/ai/composables/useAIConfig'
 import type { ChatSession } from '@/features/ai/composables/useChatHistory'
-import {
-  Plus,
-  History,
-  Paperclip,
-  Settings2,
-  ChevronLeft,
-  Square,
-  Presentation,
-  Bot,
-} from 'lucide-vue-next'
+import { Plus, History, Paperclip, ChevronLeft, Square, Presentation, Bot } from 'lucide-vue-next'
 import AiAssistantToolbarDiscussionMenu from '@/features/ai/components/AiAssistantToolbarDiscussionMenu.vue'
 import AiAssistantToolbarPresetMenu from '@/features/ai/components/AiAssistantToolbarPresetMenu.vue'
 import AiAssistantToolbarModesMenu from '@/features/ai/components/AiAssistantToolbarModesMenu.vue'
@@ -224,20 +215,6 @@ const newChatTitle = computed(() => `${t('ai.newChat')} (${shortcutHint})`)
             @select-preset="(id) => emit('selectPreset', id)"
             @open-presets-settings="emit('openSettings', 'presets')"
           />
-        </div>
-
-        <!-- 设置 -->
-        <div class="flex shrink-0 items-center gap-2 pl-0.5">
-          <button
-            :class="[
-              'toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-muted-foreground active:scale-95',
-              'group',
-            ]"
-            :title="t('ai.settings')"
-            @click="emit('openSettings')"
-          >
-            <Settings2 :size="16" class="transition-transform duration-500 group-hover:rotate-90" />
-          </button>
         </div>
       </div>
       <slot name="input"></slot>

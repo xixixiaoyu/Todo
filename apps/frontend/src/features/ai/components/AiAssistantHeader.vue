@@ -42,7 +42,6 @@ const isMobile = computed(() => !isDesktop.value && windowWidth.value < 640)
     <!-- 左侧：会话列表开关（macOS 留出红绿灯空间） -->
     <div class="flex items-center gap-1" :class="[isDesktop && isMac ? 'pl-16' : '']">
       <button
-        v-if="sessionSidebarCollapsed !== undefined"
         class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-95"
         :title="sessionSidebarCollapsed ? '展开会话列表' : '折叠会话列表'"
         @click="$emit('toggleSessionSidebar')"

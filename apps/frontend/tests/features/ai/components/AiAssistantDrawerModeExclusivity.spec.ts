@@ -41,6 +41,9 @@ vi.mock('@/features/ai/components/AiAssistantToolbar.vue', () => ({
     emits: ['toggle-teaching', 'toggle-todo', 'toggle-discussion', 'toggle-image-gen'],
   },
 }))
+vi.mock('@/features/ai/components/LeftSessionSidebar.vue', () => ({
+  default: { template: '<div>LeftSessionSidebar</div>' },
+}))
 vi.mock('@/features/ai/components/AiAssistantInput.vue', () => ({
   default: {
     template: '<div>AiAssistantInput</div>',

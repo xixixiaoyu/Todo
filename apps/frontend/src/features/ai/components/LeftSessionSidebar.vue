@@ -1,8 +1,20 @@
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
-import { MessageSquare, Pin, PinOff, Pencil, Trash2 } from 'lucide-vue-next'
+import {
+  MessageSquare,
+  Pin,
+  PinOff,
+  Pencil,
+  Trash2,
+  Plus,
+  Settings2,
+  PanelLeftClose,
+} from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
 import { useChatHistory } from '@/features/ai/composables/useChatHistory'
 import { useGenerationState } from '@/features/ai/stores/generationState'
+
+const { t } = useI18n()
 
 defineProps<{
   collapsed: boolean
@@ -12,6 +24,7 @@ const emit = defineEmits<{
   (e: 'toggle'): void
   (e: 'newChat'): void
   (e: 'switchSession', sessionId: string): void
+  (e: 'openSettings'): void
 }>()
 
 const { sessions, currentSessionId, togglePin, renameSession, deleteSession } = useChatHistory()
@@ -147,6 +160,21 @@ function onResizeStart(e: PointerEvent) {
     <template v-if="!collapsed">
       <div class="lss-header">
         <span class="lss-title">会话</span>
+        <div class="lss-header-actions">
+          <button class="lss-action-btn" :title="t('ai.newChat')" @click.stop="emit('newChat')">
+            <Plus :size="14" />
+          </button>
+          <button
+            class="lss-action-btn"
+            :title="t('ai.settings')"
+            @click.stop="emit('openSettings')"
+          >
+            <Settings2 :size="14" />
+          </button>
+          <button class="lss-action-btn" :title="t('ai.closeSidebar')" @click.stop="emit('toggle')">
+            <PanelLeftClose :size="14" />
+          </button>
+        </div>
       </div>
 
       <div class="lss-list">
@@ -257,6 +285,31 @@ function onResizeStart(e: PointerEvent) {
   font-weight: 600;
   color: hsl(var(--foreground) / 0.7);
   letter-spacing: 0.02em;
+}
+
+.lss-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.lss-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: hsl(var(--muted-foreground) / 0.5);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.lss-action-btn:hover {
+  color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.08);
 }
 
 /* ── List ── */
