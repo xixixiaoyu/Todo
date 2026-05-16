@@ -4,14 +4,13 @@ import { useI18n } from 'vue-i18n'
 import { useWindowSize } from '@vueuse/core'
 import type { AIPreset, AIConfig, ThinkingMode } from '@/features/ai/composables/useAIConfig'
 import type { ChatSession } from '@/features/ai/composables/useChatHistory'
-import { Plus, History, Paperclip, ChevronLeft, Square, Presentation, Bot } from 'lucide-vue-next'
+import { Plus, Paperclip, ChevronLeft, Square, Presentation, Bot } from 'lucide-vue-next'
 import AiAssistantToolbarDiscussionMenu from '@/features/ai/components/AiAssistantToolbarDiscussionMenu.vue'
 import AiAssistantToolbarPresetMenu from '@/features/ai/components/AiAssistantToolbarPresetMenu.vue'
 import AiAssistantToolbarModesMenu from '@/features/ai/components/AiAssistantToolbarModesMenu.vue'
 import AiAssistantThinkingMenu from '@/features/ai/components/AiAssistantThinkingMenu.vue'
 
 defineProps<{
-  hasHistory: boolean
   isGenerating: boolean
   thinkingLevel: ThinkingMode
   isTeachingEnabled: boolean
@@ -48,7 +47,6 @@ const emit = defineEmits<{
   (e: 'toggleSecondaryModel', id: string): void
   (e: 'selectPreset', id: string): void
   (e: 'openSettings', tab?: 'settings' | 'presets' | 'memory' | 'mcp' | 'contextCompression'): void
-  (e: 'openSessionSidebar'): void
   (e: 'triggerFileUpload'): void
   (e: 'navigatePrevious'): void
   (e: 'stopGenerating'): void
@@ -86,23 +84,11 @@ const newChatTitle = computed(() => `${t('ai.newChat')} (${shortcutHint})`)
               isMobile ? 'h-8 px-2.5 gap-1' : 'px-3.5 py-1.5 gap-1.5 text-[13px]',
               '!border-primary/20 !bg-primary/10 !text-primary hover:!bg-primary/20 hover:!border-primary/30',
             ]"
-            :disabled="!hasHistory"
             :title="newChatTitle"
             @click="emit('newChat')"
           >
             <Plus :size="isMobile ? 14 : 14" class="transition-transform group-hover:rotate-90" />
             <span v-if="!isMobile" class="toolbar-text font-medium">{{ t('ai.newChat') }}</span>
-          </button>
-
-          <!-- 历史记录按钮 -->
-          <button
-            class="toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border active:scale-95"
-            :title="t('ai.history')"
-            :class="{ 'cursor-not-allowed opacity-50': isGenerating }"
-            :disabled="isGenerating"
-            @click="emit('openSessionSidebar')"
-          >
-            <History :size="16" />
           </button>
 
           <!-- 文件上传与上一个会话 -->

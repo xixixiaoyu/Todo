@@ -28,9 +28,6 @@ vi.mock('@/features/ai/components/ChatMessageList.vue', () => ({
 vi.mock('@/features/ai/components/AISettingsDialog.vue', () => ({
   default: { template: '<div>AISettingsDialog</div>' },
 }))
-vi.mock('@/features/ai/components/ChatHistoryPanel.vue', () => ({
-  default: { template: '<div>ChatHistoryPanel</div>' },
-}))
 vi.mock('@/features/ai/components/AiAssistantHeader.vue', () => ({
   default: { template: '<div>AiAssistantHeader</div>' },
 }))

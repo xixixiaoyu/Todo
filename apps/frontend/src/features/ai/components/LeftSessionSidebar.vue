@@ -1,16 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
-import {
-  MessageSquare,
-  Pin,
-  PinOff,
-  Pencil,
-  Trash2,
-  Plus,
-  Settings2,
-  FileDown,
-  Search,
-} from 'lucide-vue-next'
+import { Pin, PinOff, Pencil, Trash2, Plus, Settings2, FileDown, Search } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useChatHistory } from '@/features/ai/composables/useChatHistory'
 import { useGenerationState } from '@/features/ai/stores/generationState'
@@ -283,9 +273,8 @@ function onResizeStart(e: PointerEvent) {
             @click="emit('switchSession', s.id)"
             @keydown.enter="emit('switchSession', s.id)"
           >
-            <span v-if="isSessionGenerating(s.id)" class="lss-dot" />
-            <MessageSquare v-else :size="12" class="lss-item-icon" />
-            <div class="lss-item-main">
+            <div class="lss-item-header">
+              <span v-if="isSessionGenerating(s.id)" class="lss-dot" />
               <!-- Title or inline edit -->
               <input
                 v-if="editingId === s.id"
@@ -298,33 +287,43 @@ function onResizeStart(e: PointerEvent) {
                 @click.stop
               />
               <span v-else class="lss-item-title">{{ s.title || '新对话' }}</span>
-              <span class="lss-item-time">{{ fmtTime(s.updatedAt) }}</span>
             </div>
+            <div class="lss-item-meta">{{ fmtTime(s.updatedAt) }}</div>
 
-            <!-- Hover actions -->
-            <div class="lss-item-actions" @pointerdown.stop>
-              <button
-                class="lss-act"
-                :title="s.isPinned ? '取消置顶' : '置顶'"
-                @click="handlePin(s.id)"
-              >
-                <PinOff v-if="s.isPinned" :size="11" />
-                <Pin v-else :size="11" />
-              </button>
-              <button class="lss-act" :title="t('ai.exportMarkdown')" @click="handleExport(s)">
-                <FileDown :size="11" />
-              </button>
-              <button
-                class="lss-act"
-                title="重命名"
-                @click="startRename(s.id, s.title || '新对话')"
-              >
-                <Pencil :size="11" />
-              </button>
-              <button class="lss-act lss-act--danger" title="删除" @click="handleDelete(s.id)">
-                <Trash2 :size="11" />
-              </button>
-            </div>
+            <!-- Hover actions (absolute positioned) -->
+            <button
+              class="lss-act lss-act--pin"
+              :title="s.isPinned ? '取消置顶' : '置顶'"
+              @pointerdown.stop
+              @click="handlePin(s.id)"
+            >
+              <PinOff v-if="s.isPinned" :size="10" />
+              <Pin v-else :size="10" />
+            </button>
+            <button
+              class="lss-act lss-act--export"
+              :title="t('ai.exportMarkdown')"
+              @pointerdown.stop
+              @click="handleExport(s)"
+            >
+              <FileDown :size="10" />
+            </button>
+            <button
+              class="lss-act lss-act--rename"
+              title="重命名"
+              @pointerdown.stop
+              @click="startRename(s.id, s.title || '新对话')"
+            >
+              <Pencil :size="10" />
+            </button>
+            <button
+              class="lss-act lss-act--delete lss-act--danger"
+              title="删除"
+              @pointerdown.stop
+              @click="handleDelete(s.id)"
+            >
+              <Trash2 :size="10" />
+            </button>
           </div>
         </template>
       </div>
@@ -377,22 +376,23 @@ function onResizeStart(e: PointerEvent) {
 </template>
 
 <style scoped>
+/* ── Container ── */
 .lss {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   position: relative;
-  border-right: 1px solid hsl(var(--border) / 0.2);
-  background: hsl(var(--muted) / 0.15);
+  border-right: 1px solid hsl(var(--border) / 0.25);
+  background: hsl(var(--muted) / 0.35);
   overflow: hidden;
-  transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .lss--collapsed {
   border-right-color: transparent;
 }
 
-/* ── Resize ── */
+/* ── Resize Handle ── */
 .lss-handle {
   position: absolute;
   right: -3px;
@@ -406,7 +406,7 @@ function onResizeStart(e: PointerEvent) {
 
 .lss-handle:hover,
 .lss-handle--active {
-  background: hsl(var(--primary) / 0.2);
+  background: hsl(var(--primary) / 0.18);
 }
 
 /* ── Header ── */
@@ -414,22 +414,21 @@ function onResizeStart(e: PointerEvent) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 10px 6px;
-  border-bottom: 1px solid hsl(var(--border) / 0.12);
+  padding: 10px 12px 8px;
   flex-shrink: 0;
 }
 
 .lss-title {
   font-size: 0.72rem;
   font-weight: 600;
-  color: hsl(var(--foreground) / 0.7);
-  letter-spacing: 0.02em;
+  color: hsl(var(--foreground) / 0.65);
+  letter-spacing: 0.01em;
 }
 
 .lss-header-actions {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 1px;
 }
 
 .lss-action-btn {
@@ -440,15 +439,15 @@ function onResizeStart(e: PointerEvent) {
   height: 26px;
   background: none;
   border: none;
-  border-radius: 4px;
-  color: hsl(var(--muted-foreground) / 0.5);
+  border-radius: 5px;
+  color: hsl(var(--muted-foreground) / 0.45);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .lss-action-btn:hover {
-  color: hsl(var(--primary));
-  background: hsl(var(--primary) / 0.08);
+  color: hsl(var(--foreground) / 0.8);
+  background: hsl(var(--foreground) / 0.06);
 }
 
 .lss-action-btn--danger:hover {
@@ -459,16 +458,16 @@ function onResizeStart(e: PointerEvent) {
 /* ── Search ── */
 .lss-search {
   position: relative;
-  padding: 6px 10px;
+  padding: 0 12px 8px;
   flex-shrink: 0;
 }
 
 .lss-search-icon {
   position: absolute;
-  left: 18px;
+  left: 20px;
   top: 50%;
   transform: translateY(-50%);
-  color: hsl(var(--muted-foreground) / 0.4);
+  color: hsl(var(--muted-foreground) / 0.3);
   pointer-events: none;
 }
 
@@ -476,161 +475,115 @@ function onResizeStart(e: PointerEvent) {
   width: 100%;
   padding: 5px 8px 5px 26px;
   font-size: 0.68rem;
-  border: 1px solid hsl(var(--border) / 0.15);
+  border: 1px solid hsl(var(--border) / 0.12);
   border-radius: 6px;
-  background: hsl(var(--muted) / 0.2);
-  color: hsl(var(--foreground) / 0.8);
+  background: hsl(var(--muted) / 0.15);
+  color: hsl(var(--foreground) / 0.75);
   outline: none;
-  transition: border-color 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
 }
 
 .lss-search-input::placeholder {
-  color: hsl(var(--muted-foreground) / 0.35);
+  color: hsl(var(--muted-foreground) / 0.3);
 }
 
 .lss-search-input:focus {
-  border-color: hsl(var(--primary) / 0.3);
+  border-color: hsl(var(--primary) / 0.25);
+  background: hsl(var(--muted) / 0.25);
 }
 
 /* ── List ── */
 .lss-list {
   flex: 1;
   overflow-y: auto;
-  padding: 4px 0;
+  padding: 2px 8px 8px;
   scrollbar-width: thin;
 }
 
+/* ── Group Label ── */
 .lss-group-label {
-  padding: 6px 10px 2px;
+  padding: 10px 4px 4px;
   font-size: 0.6rem;
   font-weight: 600;
-  color: hsl(var(--muted-foreground) / 0.5);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  color: hsl(var(--muted-foreground) / 0.42);
+  letter-spacing: 0.02em;
+  user-select: none;
 }
 
-/* ── Item ── */
+.lss-group-label:first-child {
+  padding-top: 2px;
+}
+
+/* ── Item (card layout) ── */
 .lss-item {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
   width: 100%;
-  padding: 6px 10px;
+  padding: 7px 10px 22px;
+  margin-bottom: 1px;
   border: none;
+  border-radius: 6px;
   background: transparent;
   cursor: pointer;
   text-align: left;
-  transition: background 0.1s;
+  transition: background 0.12s;
   position: relative;
   outline: none;
-}
-
-.lss-item:focus-visible {
-  box-shadow: inset 0 0 0 2px hsl(var(--primary) / 0.3);
+  overflow: hidden;
 }
 
 .lss-item:hover {
   background: hsl(var(--foreground) / 0.04);
 }
 
+.lss-item:focus-visible {
+  box-shadow: inset 0 0 0 2px hsl(var(--primary) / 0.25);
+}
+
 .lss-item--active {
-  background: hsl(var(--primary) / 0.08);
+  background: hsl(var(--primary) / 0.06);
 }
 
 .lss-item--active:hover {
-  background: hsl(var(--primary) / 0.12);
+  background: hsl(var(--primary) / 0.1);
 }
 
-.lss-item-icon {
-  flex-shrink: 0;
-  color: hsl(var(--muted-foreground) / 0.4);
-  margin-top: 1px;
-}
-
-.lss-item-main {
-  flex: 1;
-  min-width: 0;
+/* ── Item Header (title row) ── */
+.lss-item-header {
   display: flex;
-  flex-direction: column;
-  gap: 1px;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
 }
 
+/* ── Title ── */
 .lss-item-title {
-  font-size: 0.72rem;
-  font-weight: 450;
-  color: hsl(var(--foreground) / 0.8);
+  font-size: 0.77rem;
+  font-weight: 460;
+  color: hsl(var(--foreground) / 0.78);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
+  line-height: 1.35;
+  transition: color 0.12s;
 }
 
-.lss-item-input {
-  font-size: 0.72rem;
-  font-weight: 450;
-  color: hsl(var(--foreground));
-  background: hsl(var(--background));
-  border: 1px solid hsl(var(--primary) / 0.3);
-  border-radius: 3px;
-  padding: 1px 4px;
-  outline: none;
-  width: 100%;
+.lss-item--active .lss-item-title {
+  color: hsl(var(--primary));
+  font-weight: 550;
 }
 
-.lss-item-time {
-  font-size: 0.6rem;
-  color: hsl(var(--muted-foreground) / 0.45);
-}
-
-/* ── Hover actions ── */
-.lss-item-actions {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  opacity: 0;
-  transition: opacity 0.15s;
-  flex-shrink: 0;
-}
-
-.lss-item:hover .lss-item-actions {
-  opacity: 0.6;
-}
-
-.lss-act {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border: none;
-  border-radius: 3px;
-  background: transparent;
-  color: hsl(var(--muted-foreground));
-  cursor: pointer;
-  transition:
-    background 0.1s,
-    color 0.1s;
-}
-
-.lss-act:hover {
-  background: hsl(var(--foreground) / 0.06);
-  color: hsl(var(--foreground));
-}
-
-.lss-act--danger:hover {
-  background: hsl(var(--destructive) / 0.1);
-  color: hsl(var(--destructive));
-}
-
-/* ── Empty ── */
-/* ── 生成中呼吸点 ── */
+/* ── Streaming Dot ── */
 .lss-dot {
   width: 5px;
   height: 5px;
   border-radius: 50%;
   flex-shrink: 0;
-  margin: 1px 3px 0 5px;
   background: hsl(var(--primary));
-  animation: lss-breathe 1.5s ease-in-out infinite;
+  animation: lss-breathe 2s ease-in-out infinite;
 }
 
 @keyframes lss-breathe {
@@ -641,14 +594,87 @@ function onResizeStart(e: PointerEvent) {
   }
   50% {
     opacity: 1;
-    transform: scale(1.2);
+    transform: scale(1.15);
   }
 }
 
-.lss-empty {
-  padding: 16px 10px;
-  font-size: 0.68rem;
+/* ── Rename Input ── */
+.lss-item-input {
+  font-size: 0.77rem;
+  font-weight: 460;
+  color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.06);
+  border: none;
+  border-radius: 3px;
+  padding: 1px 5px;
+  outline: none;
+  width: 100%;
+  min-width: 0;
+  line-height: 1.35;
+}
+
+/* ── Meta (time) ── */
+.lss-item-meta {
+  margin-top: 1px;
+  font-size: 0.62rem;
+  color: hsl(var(--muted-foreground) / 0.4);
+}
+
+/* ── Hover Action Buttons (absolute, bottom-right) ── */
+.lss-act {
+  position: absolute;
+  bottom: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 3px;
+  background: none;
   color: hsl(var(--muted-foreground) / 0.5);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 0.12s,
+    background 0.12s,
+    color 0.12s;
+  z-index: 1;
+}
+
+.lss-item:hover .lss-act {
+  opacity: 0.5;
+}
+
+.lss-act:hover {
+  opacity: 1 !important;
+  background: hsl(var(--foreground) / 0.07);
+  color: hsl(var(--foreground) / 0.7);
+}
+
+.lss-act--danger:hover {
+  background: hsl(var(--destructive) / 0.1);
+  color: hsl(var(--destructive));
+}
+
+.lss-act--pin {
+  right: 72px;
+}
+.lss-act--export {
+  right: 50px;
+}
+.lss-act--rename {
+  right: 28px;
+}
+.lss-act--delete {
+  right: 5px;
+}
+
+/* ── Empty ── */
+.lss-empty {
+  padding: 24px 12px;
+  font-size: 0.7rem;
+  color: hsl(var(--muted-foreground) / 0.4);
   text-align: center;
 }
 </style>

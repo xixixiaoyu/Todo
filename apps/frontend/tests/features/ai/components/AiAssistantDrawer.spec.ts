@@ -75,9 +75,6 @@ vi.mock('@/features/ai/components/AISettingsDialog.vue', () => ({
     props: ['modelValue', 'initialTab'],
   },
 }))
-vi.mock('@/features/ai/components/ChatHistoryPanel.vue', () => ({
-  default: { template: '<div>ChatHistoryPanel</div>' },
-}))
 
 import type { ChatMessage } from '@/features/ai/services/aiService'
 import type { ChatSession } from '@/features/ai/composables/useChatHistory'
@@ -196,13 +193,13 @@ describe('AiAssistantDrawer Navigation and Button States', () => {
     focusSpy.mockRestore()
   })
 
-  it('should disable "New Chat" button when there is no chat history', async () => {
+  it('should always keep "New Chat" button enabled', async () => {
     const wrapper = mount(AiAssistantDrawer, {
       props: { modelValue: true },
     })
 
     const newChatBtn = wrapper.findAll('button').find((b) => b.text().includes('ai.newChat'))
-    expect(newChatBtn?.attributes('disabled')).toBeDefined()
+    expect(newChatBtn?.attributes('disabled')).toBeUndefined()
   })
 
   it('should enable "New Chat" button when there is chat history', async () => {

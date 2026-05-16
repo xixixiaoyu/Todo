@@ -88,10 +88,6 @@ const selectedWorkspacePath = computed(() => config.value.agentWorkspacePath)
 const workspacePanelCollapsed = ref(false)
 const sessionSidebarCollapsed = ref(false)
 
-function openSessionSidebar() {
-  sessionSidebarCollapsed.value = false
-}
-
 function cyclePermissionMode() {
   const modes: PermissionMode[] = ['operate', 'ask', 'read_only']
   const idx = modes.indexOf(permissionMode.value)
@@ -359,7 +355,6 @@ defineOptions({
           <AiAssistantToolbar
             v-model:show-preset-dropdown="showPresetDropdown"
             v-model:show-discussion-popover="showDiscussionPopover"
-            :has-history="hasHistory"
             :is-generating="isGenerating"
             :thinking-level="thinkingLevel"
             :is-teaching-enabled="isTeachingEnabled"
@@ -389,7 +384,6 @@ defineOptions({
             @toggle-secondary-model="toggleSecondaryModel"
             @select-preset="handleSelectPreset"
             @open-settings="openSettings"
-            @open-session-sidebar="openSessionSidebar"
             @open-mermaid-editor="openMermaidEditor()"
             @trigger-file-upload="triggerUpload"
             @navigate-previous="navigateToPrevious"

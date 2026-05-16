@@ -70,9 +70,6 @@ vi.mock('@/features/ai/components/AISettingsDialog.vue', () => ({
     props: ['modelValue', 'initialTab'],
   },
 }))
-vi.mock('@/features/ai/components/ChatHistoryPanel.vue', () => ({
-  default: { template: '<div>ChatHistoryPanel</div>' },
-}))
 
 // Mock composables
 vi.mock('@/features/ai/composables/useChatHistory', () => ({
