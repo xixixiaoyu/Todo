@@ -232,6 +232,7 @@ export const ai = {
   mermaidEmptyCode: 'Enter Mermaid syntax to preview',
   mermaidOpenEditor: 'Open Mermaid Editor',
   mermaidCollapseSource: 'Collapse Source',
+  scratchpadOpenEditor: 'Open Scratchpad',
   mermaidExpandSource: 'Expand Source',
   teachingMode: 'Teaching Mode',
   teachingPlaceholder: 'Type what you want to learn…',

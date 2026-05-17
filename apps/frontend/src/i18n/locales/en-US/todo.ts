@@ -30,7 +30,6 @@ export const todo = {
   visualMode: 'Visual View',
   listMode: 'List View',
   statsMode: 'Statistics',
-  scratchpadMode: 'Scratchpad',
   expandAll: 'Expand All',
   collapseAll: 'Collapse All',
   pin: 'Pin',

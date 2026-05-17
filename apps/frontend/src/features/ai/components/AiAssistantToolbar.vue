@@ -4,7 +4,15 @@ import { useI18n } from 'vue-i18n'
 import { useWindowSize } from '@vueuse/core'
 import type { AIPreset, AIConfig, ThinkingMode } from '@/features/ai/composables/useAIConfig'
 import type { ChatSession } from '@/features/ai/composables/useChatHistory'
-import { Plus, Paperclip, ChevronLeft, Square, Presentation, Bot } from 'lucide-vue-next'
+import {
+  Plus,
+  Paperclip,
+  ChevronLeft,
+  Square,
+  Presentation,
+  Bot,
+  ClipboardPaste,
+} from 'lucide-vue-next'
 import AiAssistantToolbarDiscussionMenu from '@/features/ai/components/AiAssistantToolbarDiscussionMenu.vue'
 import AiAssistantToolbarPresetMenu from '@/features/ai/components/AiAssistantToolbarPresetMenu.vue'
 import AiAssistantToolbarModesMenu from '@/features/ai/components/AiAssistantToolbarModesMenu.vue'
@@ -51,6 +59,7 @@ const emit = defineEmits<{
   (e: 'navigatePrevious'): void
   (e: 'stopGenerating'): void
   (e: 'openMermaidEditor'): void
+  (e: 'openScratchpad'): void
 }>()
 
 const { t } = useI18n()
@@ -188,6 +197,17 @@ const newChatTitle = computed(() => `${t('ai.newChat')} (${shortcutHint})`)
             @click="emit('openMermaidEditor')"
           >
             <Presentation :size="16" />
+          </button>
+
+          <!-- 暂存箱 -->
+          <button
+            :class="[
+              'toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-muted-foreground active:scale-95',
+            ]"
+            :title="t('ai.scratchpadOpenEditor')"
+            @click="emit('openScratchpad')"
+          >
+            <ClipboardPaste :size="16" />
           </button>
 
           <div class="h-4 w-px shrink-0 bg-border/20 mx-0.5" />

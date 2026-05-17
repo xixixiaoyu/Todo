@@ -12,7 +12,6 @@ import TodoInput from './components/TodoInput.vue'
 import TodoFilter from './components/TodoFilter.vue'
 import TodoSearch from './components/TodoSearch.vue'
 import TodoList from './components/TodoList.vue'
-import TodoScratchpad from './components/TodoScratchpad.vue'
 import PomodoroTimer from './components/PomodoroTimer.vue'
 import TodoSyncConflictPanel from './components/TodoSyncConflictPanel.vue'
 import TodoImageTaskConfirmDialog from './components/TodoImageTaskConfirmDialog.vue'
@@ -120,7 +119,6 @@ const currentViewKey = computed(() => {
 const currentViewComponent = computed(() => {
   if (todoStore.viewMode === 'list') return TodoList
   if (todoStore.viewMode === 'visual') return TodoVisualizer
-  if (todoStore.viewMode === 'scratchpad') return TodoScratchpad
   return TodoStatistics
 })
 
@@ -157,9 +155,8 @@ watch(
   (newVal, oldVal) => {
     const viewOrder: Record<ViewMode, number> = {
       list: 0,
-      scratchpad: 1,
-      visual: 2,
-      stats: 3,
+      visual: 1,
+      stats: 2,
     }
     direction.value = viewOrder[newVal] > viewOrder[oldVal] ? 1 : -1
   },
@@ -242,7 +239,7 @@ watch(
 )
 
 const currentViewProps = computed(() => {
-  if (todoStore.viewMode === 'stats' || todoStore.viewMode === 'scratchpad') return {}
+  if (todoStore.viewMode === 'stats') return {}
 
   const baseProps = {
     filter: todoStore.filter,

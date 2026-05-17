@@ -30,7 +30,6 @@ export const todo = {
   visualMode: '可视化视图',
   listMode: '列表视图',
   statsMode: '统计报告',
-  scratchpadMode: '暂存箱',
   expandAll: '全部展开',
   collapseAll: '全部收起',
   pin: '置顶',

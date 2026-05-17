@@ -12,7 +12,6 @@ import {
   MoreHorizontal,
   HardDrive,
   Cloud,
-  ClipboardPaste,
   Upload,
   Maximize2,
   Minimize2,
@@ -142,25 +141,6 @@ const handleDblClick = () => {
               size="icon"
               class="h-9 w-9 rounded-xl transition-all"
               :class="
-                todoStore.viewMode === 'scratchpad'
-                  ? 'bg-background text-primary shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-              "
-              @click="todoStore.viewMode = 'scratchpad'"
-            >
-              <ClipboardPaste :size="18" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>{{ t('todo.scratchpadMode') }}</TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger as-child>
-            <Button
-              variant="ghost"
-              size="icon"
-              class="h-9 w-9 rounded-xl transition-all"
-              :class="
                 todoStore.viewMode === 'visual'
                   ? 'bg-background text-primary shadow-sm'
                   : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
@@ -214,13 +194,6 @@ const handleDblClick = () => {
           <DropdownMenuItem class="rounded-lg cursor-pointer" @click="todoStore.viewMode = 'list'">
             <List class="mr-2 h-4 w-4" />
             <span>{{ t('todo.listMode') }}</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            class="rounded-lg cursor-pointer"
-            @click="todoStore.viewMode = 'scratchpad'"
-          >
-            <ClipboardPaste class="mr-2 h-4 w-4" />
-            <span>{{ t('todo.scratchpadMode') }}</span>
           </DropdownMenuItem>
           <DropdownMenuItem
             class="rounded-lg cursor-pointer"

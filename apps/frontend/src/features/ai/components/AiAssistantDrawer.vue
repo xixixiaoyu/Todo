@@ -8,11 +8,13 @@ import AiAssistantHeader from '@/features/ai/components/AiAssistantHeader.vue'
 import AiAssistantToolbar from '@/features/ai/components/AiAssistantToolbar.vue'
 import AiAssistantInput from '@/features/ai/components/AiAssistantInput.vue'
 import MermaidEditorDialog from '@/features/ai/components/MermaidEditorDialog.vue'
+import ScratchpadEditorDialog from '@/features/ai/components/ScratchpadEditorDialog.vue'
 import TranslationPanel from '@/features/ai/components/TranslationPanel.vue'
 import AgentWorkspaceSelector from '@/features/ai/components/AgentWorkspaceSelector.vue'
 import RightWorkspacePanel from '@/features/ai/components/RightWorkspacePanel.vue'
 import LeftSessionSidebar from '@/features/ai/components/LeftSessionSidebar.vue'
 import { useMermaidEditor } from '@/features/ai/composables/useMermaidEditor'
+import { useScratchpadEditor } from '@/features/ai/composables/useScratchpadEditor'
 import { useToolPermission } from '@/features/ai/composables/useToolPermission'
 import type { PermissionMode } from '@/features/ai/composables/useToolPermission'
 import { discoverWorkspaceSkills } from '@/features/ai/services/utils/skills.workspace'
@@ -122,6 +124,7 @@ const {
 } = useChat()
 
 const { openEditor: openMermaidEditor } = useMermaidEditor()
+const { openEditor: openScratchpad } = useScratchpadEditor()
 
 const isCopying = ref(false)
 const copyError = async () => {
@@ -385,6 +388,7 @@ defineOptions({
             @select-preset="handleSelectPreset"
             @open-settings="openSettings"
             @open-mermaid-editor="openMermaidEditor()"
+            @open-scratchpad="openScratchpad()"
             @trigger-file-upload="triggerUpload"
             @navigate-previous="navigateToPrevious"
             @stop-generating="stopGenerating"
@@ -439,6 +443,7 @@ defineOptions({
       />
 
       <MermaidEditorDialog />
+      <ScratchpadEditorDialog />
     </div>
   </ResizableDrawer>
 </template>

@@ -31,6 +31,7 @@ vi.mock('lucide-vue-next', () => {
     'ArrowRight',
     'Paperclip',
     'Bot',
+    'ClipboardPaste',
     'User',
     'Image',
     'Blocks',
