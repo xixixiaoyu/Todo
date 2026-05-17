@@ -233,6 +233,7 @@ export const ai = {
   mermaidOpenEditor: 'Open Mermaid Editor',
   mermaidCollapseSource: 'Collapse Source',
   scratchpadOpenEditor: 'Open Scratchpad',
+  todoPanelOpenEditor: 'Open Todo',
   mermaidExpandSource: 'Expand Source',
   teachingMode: 'Teaching Mode',
   teachingPlaceholder: 'Type what you want to learn…',

@@ -3,6 +3,10 @@ import { useTodoStore } from '../stores/todo'
 import { useToast } from '@/composables/useToast'
 import { useI18n } from 'vue-i18n'
 import { useDebounceFn } from '@vueuse/core'
+import { useTodoPanel } from '../composables/useTodoPanel'
+
+/** 模块级单例：任务完成烟花状态，跨组件共享 */
+export const showFireworks = ref(false)
 
 export function useTodo() {
   const todoStore = useTodoStore()
@@ -12,7 +16,6 @@ export function useTodo() {
   const newTodoTitle = ref('')
   const showSearch = ref(false)
   const searchInput = ref('')
-  const showFireworks = ref(false)
 
   // 监听搜索输入，使用防抖更新 store
   const debouncedSearch = useDebounceFn((value: string) => {
@@ -131,10 +134,9 @@ export function useTodo() {
 
   /**
    * 全局快捷键处理
-   * Command+E (Mac) 或 Alt+E (Windows/Mac/Linux) 切换 AI 助手
+   * Command+E (Mac) 或 Alt+E (Windows/Mac/Linux) 打开 / 关闭待办事项面板
    */
   function handleGlobalKeydown(e: KeyboardEvent) {
-    // 允许在输入框中触发，但如果是在 AI 助手输入框中则不触发（避免冲突）
     const activeElement = document.activeElement
     const isAiInput =
       activeElement?.closest('.ai-assistant-input') ||
@@ -149,7 +151,8 @@ export function useTodo() {
 
     if (isE && isCmdOrAlt) {
       e.preventDefault()
-      isDrawerOpen.value = !isDrawerOpen.value
+      const { togglePanel } = useTodoPanel()
+      togglePanel()
     }
   }
 

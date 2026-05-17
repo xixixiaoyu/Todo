@@ -27,6 +27,7 @@ const { themeColor } = useTheme()
 const vChartRef = ref<InstanceType<typeof VChart> | null>(null)
 const containerRef = ref<HTMLElement | null>(null)
 const isReady = ref(false)
+const showChart = ref(false)
 
 // 使用 ResizeObserver 确保容器尺寸就绪后再初始化图表，并添加防抖优化性能
 const debouncedResize = debounce(() => {
@@ -39,29 +40,33 @@ onBeforeUnmount(() => {
   debouncedResize.cancel()
 })
 
-useResizeObserver(containerRef, (entries) => {
+useResizeObserver(containerRef, async (entries) => {
   const entry = entries[0]
   const { width, height } = entry.contentRect
   if (width <= 0 || height <= 0) return
 
   if (!isReady.value) {
     isReady.value = true
+    await nextTick()
+    showChart.value = true
   }
   debouncedResize()
 })
 
 onMounted(async () => {
   await nextTick()
-  const checkSize = () => {
+  const checkSize = async () => {
     if (
       containerRef.value &&
       containerRef.value.clientWidth > 0 &&
       containerRef.value.clientHeight > 0
     ) {
       isReady.value = true
+      await nextTick()
+      showChart.value = true
     } else {
       let attempts = 0
-      const retry = () => {
+      const retry = async () => {
         if (attempts > 20) return // 增加尝试次数以应对可能的动画
         if (
           containerRef.value &&
@@ -69,6 +74,8 @@ onMounted(async () => {
           containerRef.value.clientHeight > 0
         ) {
           isReady.value = true
+          await nextTick()
+          showChart.value = true
         } else {
           attempts++
           requestAnimationFrame(retry)
@@ -80,11 +87,13 @@ onMounted(async () => {
   checkSize()
 })
 
-onActivated(() => {
-  requestAnimationFrame(() => {
+onActivated(async () => {
+  requestAnimationFrame(async () => {
     if (!containerRef.value) return
     if (containerRef.value.clientWidth > 0 && containerRef.value.clientHeight > 0) {
       isReady.value = true
+      await nextTick()
+      showChart.value = true
       debouncedResize()
     }
   })
@@ -128,7 +137,7 @@ const emptyText = computed(() =>
 </script>
 
 <template>
-  <div ref="containerRef" class="flex-1 flex flex-col min-h-0 w-full relative group">
+  <div ref="containerRef" class="flex-1 flex flex-col min-h-[200px] w-full relative group">
     <Transition name="fade" mode="out-in">
       <div
         v-if="treeData.length === 0"
@@ -144,7 +153,7 @@ const emptyText = computed(() =>
       </div>
 
       <VChart
-        v-else-if="isReady"
+        v-else-if="showChart"
         :key="`chart-${props.filter}`"
         ref="vChartRef"
         class="flex-1 w-full h-full relative z-10"

@@ -24,6 +24,7 @@ vi.mock('lucide-vue-next', () => {
     'Trash2',
     'History',
     'Check',
+    'CheckSquare',
     'Users',
     'MessageSquare',
     'Sparkles',

@@ -236,6 +236,28 @@ function toggleDeferredSection(): void {
           </template>
         </draggable>
 
+        <!-- Trash items: non-draggable list -->
+        <div v-if="props.filter === 'trash'" class="flex flex-col gap-2 md:gap-2.5">
+          <TodoItem
+            v-for="todo in displayTodos"
+            :key="todo.id"
+            :todo="todo"
+            :all-todos="todos"
+            :editing-id="editingId"
+            :editing-title="editingTitle"
+            :search-query="searchQuery"
+            :hide-deferred-badge="true"
+            @toggle="(id, currentCompleted) => emit('toggle', id, currentCompleted)"
+            @start-edit="(id, title) => emit('startEdit', id, title)"
+            @save-edit="emit('saveEdit')"
+            @cancel-edit="emit('cancelEdit')"
+            @delete="(id) => emit('delete', id)"
+            @reorder="(ids, pId) => emit('reorder', ids, pId)"
+            @update:editing-title="(value) => emit('update:editingTitle', value)"
+            @edit-keydown="(e) => emit('editKeydown', e)"
+          />
+        </div>
+
         <div v-if="shouldShowDeferredSection">
           <section
             class="rounded-[20px] border border-primary/10 bg-primary/[0.03] px-2 pb-2 md:rounded-[18px] md:px-3 md:pb-3"

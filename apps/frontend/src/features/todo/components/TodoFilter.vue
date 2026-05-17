@@ -7,6 +7,7 @@ import {
   ChevronsUpDown,
   Search,
   Trash2,
+  Eraser,
 } from 'lucide-vue-next'
 import { useTodoStore } from '../stores/todo'
 import type { FilterType, Todo } from '../stores/todo'
@@ -134,47 +135,43 @@ async function handleClearTrash() {
 
         <!-- Clear Trash -->
         <div v-if="filter === 'trash'">
-          <Tooltip>
-            <TooltipTrigger as-child>
-              <Popover v-model:open="isClearPopoverOpen">
-                <PopoverTrigger as-child>
+          <Popover v-model:open="isClearPopoverOpen">
+            <PopoverTrigger as-child>
+              <Button
+                variant="ghost"
+                size="icon"
+                class="h-[var(--todo-control-secondary-height)] w-[var(--todo-control-secondary-height)] rounded-[12px] text-destructive transition-all duration-300 hover:bg-destructive/10 md:rounded-[var(--todo-radius-soft)]"
+                :aria-label="t('todo.clearTrash')"
+              >
+                <Eraser :size="16" class="md:w-[18px] md:h-[18px]" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent side="bottom" :side-offset="8" align="end" class="w-64 p-4 z-50">
+              <div class="space-y-3">
+                <p class="text-[var(--todo-font-meta)] font-medium leading-none">
+                  {{ t('todo.clearTrashConfirm') }}
+                </p>
+                <div class="flex justify-end gap-2">
                   <Button
                     variant="ghost"
-                    size="icon"
-                    class="h-[var(--todo-control-secondary-height)] w-[var(--todo-control-secondary-height)] rounded-[12px] text-destructive transition-all duration-300 hover:bg-destructive/10 md:rounded-[var(--todo-radius-soft)]"
+                    size="sm"
+                    class="h-8 rounded-lg px-3 text-[var(--todo-font-caption)]"
+                    @click="isClearPopoverOpen = false"
                   >
-                    <Trash2 :size="16" class="md:w-[18px] md:h-[18px]" />
+                    {{ t('common.cancel') }}
                   </Button>
-                </PopoverTrigger>
-                <PopoverContent side="bottom" :side-offset="8" align="end" class="w-64 p-4 z-50">
-                  <div class="space-y-3">
-                    <p class="text-[var(--todo-font-meta)] font-medium leading-none">
-                      {{ t('todo.clearTrashConfirm') }}
-                    </p>
-                    <div class="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        class="h-8 rounded-lg px-3 text-[var(--todo-font-caption)]"
-                        @click="isClearPopoverOpen = false"
-                      >
-                        {{ t('common.cancel') }}
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        class="h-8 rounded-lg px-3 text-[var(--todo-font-caption)] shadow-lg shadow-destructive/20"
-                        @click="handleClearTrash"
-                      >
-                        {{ t('common.confirm') }}
-                      </Button>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </TooltipTrigger>
-            <TooltipContent side="top">{{ t('todo.clearTrash') }}</TooltipContent>
-          </Tooltip>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    class="h-8 rounded-lg px-3 text-[var(--todo-font-caption)] shadow-lg shadow-destructive/20"
+                    @click="handleClearTrash"
+                  >
+                    {{ t('common.confirm') }}
+                  </Button>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
 
         <!-- Expand/Collapse -->

@@ -6,6 +6,13 @@ import { defineComponent, h, ref, nextTick } from 'vue'
 import TodoVisualizer from '@/features/todo/components/TodoVisualizer.vue'
 import { useTodoStore } from '@/features/todo/stores/todo'
 
+/** 在 Happy DOM 中容器 clientWidth/clientHeight 为 0，需推进动画帧 */
+async function flushAnimationFrames(count = 5) {
+  for (let i = 0; i < count; i++) {
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+  }
+}
+
 let mockResizeRect = { width: 800, height: 600 }
 
 vi.mock('@vueuse/core', () => ({
@@ -144,6 +151,7 @@ describe('TodoVisualizer', () => {
     })
 
     await nextTick()
+    await flushAnimationFrames()
 
     const chart = wrapper.findComponent({ name: 'VChart' })
     const option = chart.props('option') as {

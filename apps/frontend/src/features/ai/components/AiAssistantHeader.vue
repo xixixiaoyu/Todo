@@ -12,11 +12,19 @@ import {
 } from 'lucide-vue-next'
 import { nativeService } from '@/services/native'
 
-defineProps<{
-  isMaximized: boolean
-  workspaceCollapsed?: boolean
-  sessionSidebarCollapsed?: boolean
-}>()
+withDefaults(
+  defineProps<{
+    isMaximized: boolean
+    workspaceCollapsed?: boolean
+    sessionSidebarCollapsed?: boolean
+    showClose?: boolean
+    showMaximize?: boolean
+  }>(),
+  {
+    showClose: true,
+    showMaximize: true,
+  },
+)
 
 defineEmits<{
   (e: 'toggleMaximize'): void
@@ -63,7 +71,7 @@ const isMobile = computed(() => !isDesktop.value && windowWidth.value < 640)
         <PanelRightClose v-else :size="14" />
       </button>
       <button
-        v-if="!isMobile"
+        v-if="!isMobile && showMaximize"
         class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-95"
         @click="$emit('toggleMaximize')"
       >
@@ -71,6 +79,7 @@ const isMobile = computed(() => !isDesktop.value && windowWidth.value < 640)
         <Minimize2 v-else :size="14" />
       </button>
       <button
+        v-if="showClose"
         class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive active:scale-95"
         @click="$emit('close')"
       >

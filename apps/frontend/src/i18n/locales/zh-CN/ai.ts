@@ -220,6 +220,7 @@ export const ai = {
   mermaidOpenEditor: '打开 Mermaid 编辑器',
   mermaidCollapseSource: '折叠源码',
   scratchpadOpenEditor: '打开暂存箱',
+  todoPanelOpenEditor: '打开待办事项',
   mermaidExpandSource: '展开源码',
   teachingMode: '教学模式',
   teachingPlaceholder: '输入你想学的主题…',

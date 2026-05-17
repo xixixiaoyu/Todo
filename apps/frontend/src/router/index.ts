@@ -11,8 +11,8 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'todo',
-      component: () => import('@/features/todo/TodoView.vue'),
+      name: 'home',
+      component: () => import('@/features/ai/views/AiAssistantView.vue'),
     },
     {
       path: '/settings/mcp',

@@ -3,6 +3,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { defineComponent, h } from 'vue'
 import { mount } from '@vue/test-utils'
 import { useTodo } from '@/features/todo/composables/useTodo'
+import { showFireworks } from '@/features/todo/composables/useTodo'
 import { useTodoStore } from '@/features/todo/stores/todo'
 
 // Mock useToast
@@ -10,6 +11,17 @@ vi.mock('@/composables/useToast', () => ({
   useToast: vi.fn(() => ({
     error: vi.fn(),
     success: vi.fn(),
+  })),
+}))
+
+// Mock useTodoPanel for global shortcut tests
+const mockTogglePanel = vi.fn()
+vi.mock('@/features/todo/composables/useTodoPanel', () => ({
+  useTodoPanel: vi.fn(() => ({
+    isOpen: { value: false },
+    openPanel: vi.fn(),
+    closePanel: vi.fn(),
+    togglePanel: mockTogglePanel,
   })),
 }))
 
@@ -208,7 +220,7 @@ describe('useTodo', () => {
 
   describe('handleToggleTodo', () => {
     it('should show fireworks when completing a todo', async () => {
-      const { showFireworks, handleToggleTodo } = withSetup(useTodo)
+      const { handleToggleTodo } = withSetup(useTodo)
 
       await handleToggleTodo('1', false)
 
@@ -217,7 +229,8 @@ describe('useTodo', () => {
     })
 
     it('should not show fireworks when uncompleting a todo', async () => {
-      const { showFireworks, handleToggleTodo } = withSetup(useTodo)
+      showFireworks.value = false
+      const { handleToggleTodo } = withSetup(useTodo)
 
       await handleToggleTodo('1', true)
 
@@ -326,13 +339,14 @@ describe('useTodo', () => {
 
     beforeEach(() => {
       originalUserAgent = navigator.userAgent
+      mockTogglePanel.mockClear()
     })
 
     afterEach(() => {
       vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(originalUserAgent)
     })
 
-    it('should toggle drawer on Command+E (Mac)', () => {
+    it('should toggle todo panel on Command+E (Mac)', () => {
       vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Macintosh')
       withSetup(useTodo)
 
@@ -344,10 +358,10 @@ describe('useTodo', () => {
       })
       window.dispatchEvent(event)
 
-      expect(todoStore.setDrawerOpen).toHaveBeenCalledWith(true)
+      expect(mockTogglePanel).toHaveBeenCalled()
     })
 
-    it('should toggle drawer on Alt+E', () => {
+    it('should toggle todo panel on Alt+E', () => {
       withSetup(useTodo)
 
       const event = new KeyboardEvent('keydown', {
@@ -358,10 +372,10 @@ describe('useTodo', () => {
       })
       window.dispatchEvent(event)
 
-      expect(todoStore.setDrawerOpen).toHaveBeenCalledWith(true)
+      expect(mockTogglePanel).toHaveBeenCalled()
     })
 
-    it('should not toggle drawer on other keys', () => {
+    it('should not toggle on other keys', () => {
       withSetup(useTodo)
 
       const event = new KeyboardEvent('keydown', {
@@ -371,10 +385,10 @@ describe('useTodo', () => {
       })
       window.dispatchEvent(event)
 
-      expect(todoStore.setDrawerOpen).not.toHaveBeenCalled()
+      expect(mockTogglePanel).not.toHaveBeenCalled()
     })
 
-    it('should toggle drawer even when focus is in a normal input', () => {
+    it('should toggle todo panel even when focus is in a normal input', () => {
       withSetup(useTodo)
 
       const input = document.createElement('input')
@@ -389,12 +403,12 @@ describe('useTodo', () => {
       })
       window.dispatchEvent(event)
 
-      expect(todoStore.setDrawerOpen).toHaveBeenCalledWith(true)
+      expect(mockTogglePanel).toHaveBeenCalled()
 
       document.body.removeChild(input)
     })
 
-    it('should not toggle drawer when focus is in AI input', () => {
+    it('should not toggle when focus is in AI input', () => {
       withSetup(useTodo)
 
       const input = document.createElement('input')
@@ -410,7 +424,7 @@ describe('useTodo', () => {
       })
       window.dispatchEvent(event)
 
-      expect(todoStore.setDrawerOpen).not.toHaveBeenCalled()
+      expect(mockTogglePanel).not.toHaveBeenCalled()
 
       document.body.removeChild(input)
     })
