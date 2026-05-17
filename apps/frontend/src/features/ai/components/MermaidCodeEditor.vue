@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onUnmounted, watch } from 'vue'
 import hljs from 'highlight.js'
 import { useI18n } from 'vue-i18n'
 
@@ -16,12 +16,39 @@ const textareaRef = ref<HTMLTextAreaElement | null>(null)
 const preRef = ref<HTMLPreElement | null>(null)
 const highlightedCode = ref('')
 
+/** 超出此字符数则跳过语法高亮，防止大段粘贴导致主线程冻结 */
+const MAX_HIGHLIGHT_CHARS = 30000
+
+/** HTML 转义，用于无高亮模式的纯文本渲染 */
+const escapeHtml = (str: string): string => {
+  const map: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }
+  return str.replace(/[&<>"]/g, (c) => map[c] || c)
+}
+
 const highlight = () => {
-  const result = hljs.highlight(props.modelValue || '', {
+  const code = props.modelValue || ''
+  if (code.length > MAX_HIGHLIGHT_CHARS) {
+    highlightedCode.value = escapeHtml(code) + '\n'
+    return
+  }
+
+  const result = hljs.highlight(code, {
     language: 'mermaid',
     ignoreIllegals: true,
   })
   highlightedCode.value = result.value + '\n' // 增加换行符以防止最后一行抖动
+}
+
+let highlightTimer: ReturnType<typeof setTimeout> | null = null
+
+const debouncedHighlight = () => {
+  if (highlightTimer) {
+    clearTimeout(highlightTimer)
+  }
+  highlightTimer = setTimeout(() => {
+    highlightTimer = null
+    highlight()
+  }, 100)
 }
 
 const syncScroll = () => {
@@ -52,10 +79,13 @@ const handleKeydown = (e: KeyboardEvent) => {
   }
 }
 
-watch(() => props.modelValue, highlight, { immediate: true })
+watch(() => props.modelValue, debouncedHighlight, { immediate: true })
 
-onMounted(() => {
-  highlight()
+onUnmounted(() => {
+  if (highlightTimer) {
+    clearTimeout(highlightTimer)
+    highlightTimer = null
+  }
 })
 </script>
 

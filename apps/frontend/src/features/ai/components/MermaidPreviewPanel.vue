@@ -15,12 +15,10 @@ const containerRef = ref<HTMLElement | null>(null)
 const updateInteractions = () => {
   if (!containerRef.value) return
 
-  // 查找内部的 mermaid-container
   const mermaidContainer = containerRef.value.querySelector('.mermaid-container') as HTMLElement
   if (mermaidContainer) {
-    // 清除之前的交互状态以便重新绑定
-    delete mermaidContainer.dataset.interacted
-    initMermaidInteractions(mermaidContainer)
+    const isInitial = mermaidContainer.dataset.interacted !== 'true'
+    initMermaidInteractions(mermaidContainer, !isInitial)
   }
 }
 

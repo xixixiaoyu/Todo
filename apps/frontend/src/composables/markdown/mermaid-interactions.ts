@@ -1,11 +1,15 @@
 import { useMermaidEditor } from '@/features/ai/composables/useMermaidEditor'
 
+/** 存储每个 container 的 AbortController，用于清理旧的事件监听器 */
+const containerAbortMap = new WeakMap<HTMLElement, AbortController>()
+
 /**
  * 初始化 Mermaid 图表的缩放、拖拽和复制功能
+ * @param container - Mermaid 容器元素
+ * @param rebindSvgOnly - SVG 更新后仅重绑 SVG 层监听器，不重复绑定容器层
  */
-export function initMermaidInteractions(container: HTMLElement) {
-  if (container.dataset.interacted === 'true') return
-  container.dataset.interacted = 'true'
+export function initMermaidInteractions(container: HTMLElement, rebindSvgOnly = false) {
+  if (!rebindSvgOnly && container.dataset.interacted === 'true') return
 
   const { openEditor } = useMermaidEditor()
   const diagram = container.querySelector('.mermaid-diagram') as HTMLElement
@@ -25,60 +29,80 @@ export function initMermaidInteractions(container: HTMLElement) {
     diagram.style.setProperty('--mermaid-translate-y', `${translateY}px`)
   }
 
-  container.addEventListener('click', (e) => {
-    const btn = (e.target as HTMLElement).closest('.mermaid-zoom-btn') as HTMLButtonElement
-    if (!btn) return
+  // 容器层监听器：首次绑定时注册，之后不再重复
+  if (!rebindSvgOnly) {
+    container.dataset.interacted = 'true'
 
-    const action = btn.dataset.action
-    const step = 0.15
-
-    if (action === 'edit') {
-      const rawCode = container.dataset.raw
-      if (!rawCode) return
-      openEditor(decodeURIComponent(rawCode))
-      return
+    // 清理旧的 AbortController（如果存在）
+    const oldController = containerAbortMap.get(container)
+    if (oldController) {
+      oldController.abort()
     }
 
-    if (action === 'copy') {
-      const rawCode = container.dataset.raw
-      if (!rawCode) return
-      void navigator.clipboard.writeText(decodeURIComponent(rawCode))
-      return
-    }
+    const controller = new AbortController()
+    containerAbortMap.set(container, controller)
+    const { signal } = controller
 
-    if (action === 'in') {
-      scale = Math.min(scale + step, 3)
-    } else if (action === 'out') {
-      scale = Math.max(scale - step, 0.3)
-    } else if (action === 'reset') {
-      scale = 0.9
-      translateX = 0
-      translateY = 0
-    } else {
-      return
-    }
+    container.addEventListener(
+      'click',
+      (e) => {
+        const btn = (e.target as HTMLElement).closest('.mermaid-zoom-btn') as HTMLButtonElement
+        if (!btn) return
 
-    updateTransform()
-  })
+        const action = btn.dataset.action
+        const step = 0.15
 
-  // 鼠标滚轮缩放支持
-  container.addEventListener(
-    'wheel',
-    (e) => {
-      if (e.ctrlKey || e.metaKey) {
-        e.preventDefault()
-        const step = 0.05
-        if (e.deltaY < 0) {
-          scale = Math.min(scale + step, 3)
-        } else {
-          scale = Math.max(scale - step, 0.3)
+        if (action === 'edit') {
+          const rawCode = container.dataset.raw
+          if (!rawCode) return
+          openEditor(decodeURIComponent(rawCode))
+          return
         }
-        updateTransform()
-      }
-    },
-    { passive: false },
-  )
 
+        if (action === 'copy') {
+          const rawCode = container.dataset.raw
+          if (!rawCode) return
+          void navigator.clipboard.writeText(decodeURIComponent(rawCode))
+          return
+        }
+
+        if (action === 'in') {
+          scale = Math.min(scale + step, 3)
+        } else if (action === 'out') {
+          scale = Math.max(scale - step, 0.3)
+        } else if (action === 'reset') {
+          scale = 0.9
+          translateX = 0
+          translateY = 0
+        } else {
+          return
+        }
+
+        updateTransform()
+      },
+      { signal },
+    )
+
+    // 鼠标滚轮缩放支持
+    container.addEventListener(
+      'wheel',
+      (e) => {
+        if (e.ctrlKey || e.metaKey) {
+          e.preventDefault()
+          const step = 0.05
+          if (e.deltaY < 0) {
+            scale = Math.min(scale + step, 3)
+          } else {
+            scale = Math.max(scale - step, 0.3)
+          }
+          updateTransform()
+        }
+      },
+      { passive: false, signal },
+    )
+  }
+
+  // SVG 层监听器：每次 SVG 更新后重绑（旧 SVG 被移除时监听器自动清理）
   svg.addEventListener('mousedown', (e) => {
     if ((e.target as HTMLElement).closest('.mermaid-zoom-btn')) return
     e.preventDefault()
