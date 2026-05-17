@@ -17,6 +17,7 @@ We take the security of Lumina seriously. If you believe you have found a securi
 2.  **Email**: Send an email to the project maintainer at yunmucoder@163.com.
 
 When reporting a vulnerability, please include as much information as possible, such as:
+
 - A description of the vulnerability.
 - Steps to reproduce it (POC).
 - Any potential impact it may have.
@@ -26,6 +27,7 @@ We will acknowledge your report within 48 hours and work with you to resolve the
 ## Scope
 
 This security policy applies to all components in the Lumina monorepo:
+
 - `@lumina/backend`
 - `@lumina/frontend`
 - `@lumina/shared`
@@ -34,6 +36,7 @@ This security policy applies to all components in the Lumina monorepo:
 ## Security Best Practices
 
 We encourage users to:
+
 - Always keep their installation up to date.
 - Use strong, unique passwords and rotate credentials periodically.
 - Avoid exposing the backend database or Redis instance to the public internet.

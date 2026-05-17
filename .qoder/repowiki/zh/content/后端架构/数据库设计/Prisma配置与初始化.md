@@ -18,6 +18,7 @@
 </cite>
 
 ## 目录
+
 1. [简介](#简介)
 2. [项目结构](#项目结构)
 3. [核心组件](#核心组件)
@@ -63,10 +64,12 @@ TodosService --> PrismaService
 ```
 
 **图表来源**
+
 - [apps/backend/src/app.module.ts:134](file://apps/backend/src/app.module.ts#L134)
 - [apps/backend/src/prisma/prisma.module.ts:1-10](file://apps/backend/src/prisma/prisma.module.ts#L1-L10)
 
 **章节来源**
+
 - [apps/backend/src/app.module.ts:1-160](file://apps/backend/src/app.module.ts#L1-L160)
 - [apps/backend/src/prisma/prisma.module.ts:1-10](file://apps/backend/src/prisma/prisma.module.ts#L1-L10)
 
@@ -99,6 +102,7 @@ PrismaService --> Pool : "使用"
 ```
 
 **图表来源**
+
 - [apps/backend/src/prisma/prisma.service.ts:1-34](file://apps/backend/src/prisma/prisma.service.ts#L1-L34)
 
 ### PrismaModule - 依赖注入模块
@@ -120,10 +124,12 @@ Container-->>AppModule : 提供服务实例
 ```
 
 **图表来源**
+
 - [apps/backend/src/prisma/prisma.module.ts:4-8](file://apps/backend/src/prisma/prisma.module.ts#L4-L8)
 - [apps/backend/src/prisma/prisma.service.ts:10-21](file://apps/backend/src/prisma/prisma.service.ts#L10-L21)
 
 **章节来源**
+
 - [apps/backend/src/prisma/prisma.service.ts:1-34](file://apps/backend/src/prisma/prisma.service.ts#L1-L34)
 - [apps/backend/src/prisma/prisma.module.ts:1-10](file://apps/backend/src/prisma/prisma.module.ts#L1-L10)
 
@@ -157,6 +163,7 @@ PrismaService --> HealthIndicator
 ```
 
 **图表来源**
+
 - [apps/backend/src/prisma/prisma.service.ts:3-4](file://apps/backend/src/prisma/prisma.service.ts#L3-L4)
 - [apps/backend/src/prisma/prisma.service.ts:17-20](file://apps/backend/src/prisma/prisma.service.ts#L17-L20)
 
@@ -183,9 +190,11 @@ Pool-->>PrismaService : 连接池关闭
 ```
 
 **图表来源**
+
 - [apps/backend/src/prisma/prisma.service.ts:23-32](file://apps/backend/src/prisma/prisma.service.ts#L23-L32)
 
 **章节来源**
+
 - [apps/backend/src/prisma/prisma.service.ts:10-32](file://apps/backend/src/prisma/prisma.service.ts#L10-L32)
 
 ## 详细组件分析
@@ -210,11 +219,13 @@ ThrowError --> End
 ```
 
 **图表来源**
+
 - [apps/backend/src/prisma/prisma.service.ts:10-21](file://apps/backend/src/prisma/prisma.service.ts#L10-L21)
 
 #### 连接池参数配置
 
 项目使用默认的pg.Pool配置，主要参数包括：
+
 - `connectionString`: 来自DATABASE_URL环境变量
 - 默认连接池大小：由pg库决定
 - 连接超时：使用pg库默认超时设置
@@ -234,9 +245,11 @@ ReThrow --> End
 ```
 
 **图表来源**
+
 - [apps/backend/src/health/prisma.health.ts:20-29](file://apps/backend/src/health/prisma.health.ts#L20-L29)
 
 **章节来源**
+
 - [apps/backend/src/prisma/prisma.service.ts:13-15](file://apps/backend/src/prisma/prisma.service.ts#L13-L15)
 - [apps/backend/src/health/prisma.health.ts:19-31](file://apps/backend/src/health/prisma.health.ts#L19-L31)
 
@@ -264,6 +277,7 @@ PrismaModule --> PrismaService : "提供单例"
 ```
 
 **图表来源**
+
 - [apps/backend/src/prisma/prisma.module.ts:4-8](file://apps/backend/src/prisma/prisma.module.ts#L4-L8)
 
 #### 模块销毁处理
@@ -271,6 +285,7 @@ PrismaModule --> PrismaService : "提供单例"
 PrismaService实现了OnModuleDestroy接口，在模块销毁时执行清理操作：
 
 **章节来源**
+
 - [apps/backend/src/prisma/prisma.module.ts:1-10](file://apps/backend/src/prisma/prisma.module.ts#L1-L10)
 - [apps/backend/src/prisma/prisma.service.ts:27-32](file://apps/backend/src/prisma/prisma.service.ts#L27-L32)
 
@@ -305,6 +320,7 @@ USER ||--o{ TODO : "拥有"
 ```
 
 **图表来源**
+
 - [apps/backend/prisma/schema/user.prisma:1-16](file://apps/backend/prisma/schema/user.prisma#L1-L16)
 - [apps/backend/prisma/schema/todo.prisma:1-40](file://apps/backend/prisma/schema/todo.prisma#L1-L40)
 
@@ -313,6 +329,7 @@ USER ||--o{ TODO : "拥有"
 待办事项模型支持复杂的业务需求，包括递归关系、软删除和时间追踪：
 
 **章节来源**
+
 - [apps/backend/prisma/schema/user.prisma:1-16](file://apps/backend/prisma/schema/user.prisma#L1-L16)
 - [apps/backend/prisma/schema/todo.prisma:1-40](file://apps/backend/prisma/schema/todo.prisma#L1-L40)
 
@@ -344,6 +361,7 @@ HealthIndicator --> PrismaService
 ```
 
 **图表来源**
+
 - [apps/backend/package.json:57-78](file://apps/backend/package.json#L57-L78)
 - [apps/backend/src/health/prisma.health.ts:1-32](file://apps/backend/src/health/prisma.health.ts#L1-L32)
 
@@ -362,11 +380,13 @@ TodosService --> PrismaService
 ```
 
 **图表来源**
+
 - [apps/backend/src/app.module.ts:134](file://apps/backend/src/app.module.ts#L134)
 - [apps/backend/src/users/users.service.ts:14](file://apps/backend/src/users/users.service.ts#L14)
 - [apps/backend/src/todos/todos.service.ts:29](file://apps/backend/src/todos/todos.service.ts#L29)
 
 **章节来源**
+
 - [apps/backend/package.json:1-109](file://apps/backend/package.json#L1-L109)
 - [apps/backend/src/app.module.ts:134](file://apps/backend/src/app.module.ts#L134)
 
@@ -394,6 +414,7 @@ TodosService --> PrismaService
 ### 监控与诊断
 
 建议实施以下监控措施：
+
 - 连接池使用率监控
 - 查询执行时间统计
 - 错误率和异常跟踪
@@ -408,11 +429,13 @@ TodosService --> PrismaService
 **症状**: 应用启动时报数据库连接错误
 
 **可能原因**:
+
 1. DATABASE_URL环境变量未正确设置
 2. 数据库服务器不可达
 3. 认证凭据错误
 
 **解决步骤**:
+
 1. 验证DATABASE_URL格式正确性
 2. 检查网络连通性
 3. 确认数据库用户权限
@@ -423,6 +446,7 @@ TodosService --> PrismaService
 **症状**: 应用出现连接等待或超时
 
 **解决方法**:
+
 1. 增加连接池最大连接数
 2. 优化查询执行时间
 3. 实施连接复用策略
@@ -433,11 +457,13 @@ TodosService --> PrismaService
 **症状**: 应用优雅关闭时出现连接未正确释放
 
 **解决方法**:
+
 1. 确保onModuleDestroy正确实现
 2. 检查连接池关闭顺序
 3. 验证资源清理完整性
 
 **章节来源**
+
 - [apps/backend/src/prisma/prisma.service.ts:13-15](file://apps/backend/src/prisma/prisma.service.ts#L13-L15)
 - [apps/backend/src/prisma/prisma.service.ts:27-32](file://apps/backend/src/prisma/prisma.service.ts#L27-L32)
 
@@ -456,11 +482,11 @@ Lumina Todo项目的Prisma配置展现了现代Node.js应用的最佳实践：
 
 ### 环境变量配置指南
 
-| 变量名 | 必需性 | 默认值 | 描述 |
-|--------|--------|--------|------|
-| DATABASE_URL | 必需 | 无 | PostgreSQL连接字符串 |
-| PORT | 可选 | 3000 | 应用监听端口 |
-| NODE_ENV | 可选 | development | 运行环境 |
+| 变量名       | 必需性 | 默认值      | 描述                 |
+| ------------ | ------ | ----------- | -------------------- |
+| DATABASE_URL | 必需   | 无          | PostgreSQL连接字符串 |
+| PORT         | 可选   | 3000        | 应用监听端口         |
+| NODE_ENV     | 可选   | development | 运行环境             |
 
 ### 连接超时设置
 

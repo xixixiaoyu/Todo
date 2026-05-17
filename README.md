@@ -39,21 +39,25 @@
 ## 界面预览
 
 ### Todo 列表
+
 <p align="center">
   <img src="./docs/images/todo%20列表.png?v=2" alt="Todo 列表" width="920" />
 </p>
 
 ### 完成反馈
+
 <p align="center">
   <img src="./docs/images/todo%20完成.png" alt="Todo 完成反馈" width="920" />
 </p>
 
 ### AI 助手
+
 <p align="center">
   <img src="./docs/images/AI%20助手.png" alt="AI 助手" width="920" />
 </p>
 
 ### 专注模式
+
 <p align="center">
   <img src="./docs/images/专注模式.png" alt="专注模式" width="920" />
 </p>
@@ -161,16 +165,16 @@ AI 在这里不是一个孤立弹窗。仓库里已经包含上下文压缩、�
 
 ## 技术栈
 
-| 层级 | 选型 |
-| :--- | :--- |
-| 前端 | Vue 3.5、Vite 8、Pinia、Tailwind CSS、GSAP、Three.js |
-| 后端 | NestJS 11（Fastify）、Prisma、PostgreSQL、Redis、BullMQ |
-| 数据请求与缓存 | Axios、TanStack Query |
-| 实时通信 | Socket.IO |
-| 跨端 | Wails、Capacitor |
-| 共享契约 | Zod、TypeScript |
-| 容器化 | Docker、Docker Compose |
-| 工程化 | pnpm Monorepo、Turborepo、ESLint、Prettier、Vitest |
+| 层级           | 选型                                                    |
+| :------------- | :------------------------------------------------------ |
+| 前端           | Vue 3.5、Vite 8、Pinia、Tailwind CSS、GSAP、Three.js    |
+| 后端           | NestJS 11（Fastify）、Prisma、PostgreSQL、Redis、BullMQ |
+| 数据请求与缓存 | Axios、TanStack Query                                   |
+| 实时通信       | Socket.IO                                               |
+| 跨端           | Wails、Capacitor                                        |
+| 共享契约       | Zod、TypeScript                                         |
+| 容器化         | Docker、Docker Compose                                  |
+| 工程化         | pnpm Monorepo、Turborepo、ESLint、Prettier、Vitest      |
 
 ## 架构说明
 

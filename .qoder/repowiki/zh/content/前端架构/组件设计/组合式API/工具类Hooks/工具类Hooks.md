@@ -19,6 +19,7 @@
 </cite>
 
 ## 目录
+
 1. [简介](#简介)
 2. [项目结构](#项目结构)
 3. [核心组件](#核心组件)
@@ -31,7 +32,9 @@
 10. [附录](#附录)
 
 ## 简介
+
 本文件面向通用工具类组合式API，系统化梳理并解释以下能力：
+
 - 主题切换与颜色体系：主题模式、预设色板、随机色、可访问性对比度保障、CSS变量注入与持久化。
 - 通知提示：消息队列、定时器管理、悬停暂停/恢复、类型化提示。
 - 窗口尺寸监听：响应式宽高、移动端断点判断、生命周期安全处理。
@@ -42,6 +45,7 @@
 文档同时给出设计原则、复用策略、扩展方法、测试与性能监控建议、错误处理策略以及开发规范与最佳实践。
 
 ## 项目结构
+
 工具类hooks集中于前端应用的组合式API目录，按功能域分组导出，便于按需引入与测试隔离。
 
 ```mermaid
@@ -70,12 +74,15 @@ IDX --> USK
 ```
 
 **图表来源**
+
 - [apps/frontend/src/composables/index.ts:1-11](file://apps/frontend/src/composables/index.ts#L1-L11)
 
 **章节来源**
+
 - [apps/frontend/src/composables/index.ts:1-11](file://apps/frontend/src/composables/index.ts#L1-L11)
 
 ## 核心组件
+
 - 主题与颜色体系：useTheme 提供主题模式、预设色、随机色、可访问性前景色、CSS变量注入与持久化。
 - 通知提示：useToast 提供消息队列、定时器、悬停暂停/恢复、类型化快捷方法。
 - 窗口尺寸监听：useWindowSize 与 useIsMobile 提供响应式宽高与移动端断点。
@@ -87,6 +94,7 @@ IDX --> USK
 - Socket连接：useSocket 提供单例连接、鉴权透传、重连策略、错误分类与日志冷却。
 
 **章节来源**
+
 - [apps/frontend/src/composables/useTheme.ts:308-377](file://apps/frontend/src/composables/useTheme.ts#L308-L377)
 - [apps/frontend/src/composables/useToast.ts:17-85](file://apps/frontend/src/composables/useToast.ts#L17-L85)
 - [apps/frontend/src/composables/useWindowSize.ts:6-44](file://apps/frontend/src/composables/useWindowSize.ts#L6-L44)
@@ -98,6 +106,7 @@ IDX --> USK
 - [apps/frontend/src/composables/useSocket.ts:56-190](file://apps/frontend/src/composables/useSocket.ts#L56-L190)
 
 ## 架构总览
+
 工具hooks遵循“单一职责、最小耦合、可测试”的设计原则，通过Vue响应式系统与浏览器API协作，提供跨组件共享的状态与行为。
 
 ```mermaid
@@ -140,6 +149,7 @@ C2 --> T9
 ## 详细组件分析
 
 ### 主题切换与颜色体系（useTheme）
+
 - 设计要点
   - 主题模式：基于系统偏好与用户选择，支持light/dark/auto三态。
   - 预设色板：内置多组推荐配色，支持随机色。
@@ -172,12 +182,15 @@ Write --> End(["完成"])
 ```
 
 **图表来源**
+
 - [apps/frontend/src/composables/useTheme.ts:237-306](file://apps/frontend/src/composables/useTheme.ts#L237-L306)
 
 **章节来源**
+
 - [apps/frontend/src/composables/useTheme.ts:308-377](file://apps/frontend/src/composables/useTheme.ts#L308-L377)
 
 ### 通知提示（useToast）
+
 - 设计要点
   - 消息队列：基于响应式数组维护toast列表。
   - 定时器：每条toast独立计时器，支持暂停/恢复。
@@ -201,12 +214,15 @@ Hook-->>UI : "返回ID"
 ```
 
 **图表来源**
+
 - [apps/frontend/src/composables/useToast.ts:17-85](file://apps/frontend/src/composables/useToast.ts#L17-L85)
 
 **章节来源**
+
 - [apps/frontend/src/composables/useToast.ts:17-85](file://apps/frontend/src/composables/useToast.ts#L17-L85)
 
 ### 窗口尺寸监听（useWindowSize / useIsMobile）
+
 - 设计要点
   - 响应式宽高：在组件挂载时注册resize监听，在卸载时移除。
   - 非组件环境：在window存在时注册监听，避免SSR问题。
@@ -229,12 +245,15 @@ Hook->>Win : "removeEventListener('resize')"
 ```
 
 **图表来源**
+
 - [apps/frontend/src/composables/useWindowSize.ts:6-34](file://apps/frontend/src/composables/useWindowSize.ts#L6-L34)
 
 **章节来源**
+
 - [apps/frontend/src/composables/useWindowSize.ts:6-44](file://apps/frontend/src/composables/useWindowSize.ts#L6-L44)
 
 ### 文件解析（useFileParsing）
+
 - 设计要点
   - 混合策略：前端直读（文本/代码）与后端解析（PDF/Word/Excel）。
   - 鉴权：复杂文件解析需要登录态，否则抛错。
@@ -258,12 +277,15 @@ Err --> UpdateErr["更新状态为error并提示"]
 ```
 
 **图表来源**
+
 - [apps/frontend/src/composables/useFileParsing.ts:47-95](file://apps/frontend/src/composables/useFileParsing.ts#L47-L95)
 
 **章节来源**
+
 - [apps/frontend/src/composables/useFileParsing.ts:24-121](file://apps/frontend/src/composables/useFileParsing.ts#L24-L121)
 
 ### 动画效果（useGsap）
+
 - 设计要点
   - 注册Flip插件，提供gsap实例与上下文。
   - 组件卸载时自动revert上下文，避免动画残留。
@@ -284,12 +306,15 @@ Hook->>Ctx : "ctx.revert()"
 ```
 
 **图表来源**
+
 - [apps/frontend/src/composables/useGsap.ts:7-19](file://apps/frontend/src/composables/useGsap.ts#L7-L19)
 
 **章节来源**
+
 - [apps/frontend/src/composables/useGsap.ts:7-19](file://apps/frontend/src/composables/useGsap.ts#L7-L19)
 
 ### ESC键堆叠关闭（useEscClose）
+
 - 设计要点
   - 全局keydown监听，仅注册一次。
   - 堆栈管理：按打开顺序压栈，仅顶层回调生效。
@@ -308,12 +333,15 @@ Unmount["组件卸载"] --> Remove["从堆栈移除"]
 ```
 
 **图表来源**
+
 - [apps/frontend/src/composables/useEscClose.ts:34-65](file://apps/frontend/src/composables/useEscClose.ts#L34-L65)
 
 **章节来源**
+
 - [apps/frontend/src/composables/useEscClose.ts:34-65](file://apps/frontend/src/composables/useEscClose.ts#L34-L65)
 
 ### 可调整面板（useResizable）
+
 - 设计要点
   - 支持水平/垂直拖拽，提供min/max约束。
   - 鼠标事件绑定在document上，结束时清理。
@@ -332,12 +360,15 @@ Up --> End(["回调onResizeEnd并清理事件"])
 ```
 
 **图表来源**
+
 - [apps/frontend/src/composables/useResizable.ts:50-68](file://apps/frontend/src/composables/useResizable.ts#L50-L68)
 
 **章节来源**
+
 - [apps/frontend/src/composables/useResizable.ts:12-69](file://apps/frontend/src/composables/useResizable.ts#L12-L69)
 
 ### 智能滚动（useSmartScroll）
+
 - 设计要点
   - 自动粘附底部：内容新增时自动滚动到底部。
   - 用户交互感知：向上滚动时暂停自动粘附，显示“回到底部”提示。
@@ -365,14 +396,17 @@ Animate --> Update["更新lastScrollTop/lastScrollHeight"]
 ```
 
 **图表来源**
+
 - [apps/frontend/src/composables/useSmartScroll.ts:182-195](file://apps/frontend/src/composables/useSmartScroll.ts#L182-L195)
 - [apps/frontend/src/composables/useSmartScroll.ts:209-240](file://apps/frontend/src/composables/useSmartScroll.ts#L209-L240)
 - [apps/frontend/src/composables/useSmartScroll.ts:277-297](file://apps/frontend/src/composables/useSmartScroll.ts#L277-L297)
 
 **章节来源**
+
 - [apps/frontend/src/composables/useSmartScroll.ts:33-441](file://apps/frontend/src/composables/useSmartScroll.ts#L33-L441)
 
 ### Socket连接（useSocket）
+
 - 设计要点
   - 单例连接：全局缓存socket实例，避免重复创建。
   - 鉴权：connect时注入token，connect_error时尝试刷新令牌。
@@ -403,12 +437,15 @@ Hook->>Hook : "记录socketId/connected"
 ```
 
 **图表来源**
+
 - [apps/frontend/src/composables/useSocket.ts:56-190](file://apps/frontend/src/composables/useSocket.ts#L56-L190)
 
 **章节来源**
+
 - [apps/frontend/src/composables/useSocket.ts:56-190](file://apps/frontend/src/composables/useSocket.ts#L56-L190)
 
 ## 依赖关系分析
+
 - 组件内聚与解耦
   - useTheme与useStorage、@vueuse/core协作，低耦合。
   - useToast独立于UI组件，仅依赖浏览器定时器。
@@ -439,18 +476,21 @@ USK --> Store
 ```
 
 **图表来源**
+
 - [apps/frontend/src/composables/useTheme.ts:1-2](file://apps/frontend/src/composables/useTheme.ts#L1-L2)
 - [apps/frontend/src/composables/useFileParsing.ts:2-7](file://apps/frontend/src/composables/useFileParsing.ts#L2-L7)
 - [apps/frontend/src/composables/useGsap.ts:1-3](file://apps/frontend/src/composables/useGsap.ts#L1-L3)
 - [apps/frontend/src/composables/useSocket.ts:1-3](file://apps/frontend/src/composables/useSocket.ts#L1-L3)
 
 **章节来源**
+
 - [apps/frontend/src/composables/useTheme.ts:1-2](file://apps/frontend/src/composables/useTheme.ts#L1-L2)
 - [apps/frontend/src/composables/useFileParsing.ts:2-7](file://apps/frontend/src/composables/useFileParsing.ts#L2-L7)
 - [apps/frontend/src/composables/useGsap.ts:1-3](file://apps/frontend/src/composables/useGsap.ts#L1-L3)
 - [apps/frontend/src/composables/useSocket.ts:1-3](file://apps/frontend/src/composables/useSocket.ts#L1-L3)
 
 ## 性能考量
+
 - 事件与监听
   - useWindowSize：仅在组件上下文挂载/卸载时注册/移除监听，避免重复注册。
   - useEscClose：全局监听仅注册一次，组件级堆栈管理，避免重复监听。
@@ -469,6 +509,7 @@ USK --> Store
 [本节为通用性能指导，无需特定文件来源]
 
 ## 故障排查指南
+
 - 主题颜色异常
   - 检查CSS变量是否被覆盖，确认useTheme是否正确写入变量。
   - 验证随机色定时器是否被意外清理。
@@ -490,6 +531,7 @@ USK --> Store
   - 查看connect_error日志，确认鉴权错误与瞬时错误分类，检查重连参数。
 
 **章节来源**
+
 - [apps/frontend/src/composables/useTheme.ts:337-353](file://apps/frontend/src/composables/useTheme.ts#L337-L353)
 - [apps/frontend/src/composables/useToast.ts:18-26](file://apps/frontend/src/composables/useToast.ts#L18-L26)
 - [apps/frontend/src/composables/useWindowSize.ts:18-31](file://apps/frontend/src/composables/useWindowSize.ts#L18-L31)
@@ -501,6 +543,7 @@ USK --> Store
 - [apps/frontend/src/composables/useSocket.ts:93-108](file://apps/frontend/src/composables/useSocket.ts#L93-L108)
 
 ## 结论
+
 上述工具类hooks以“单一职责、可测试、可扩展”为核心设计原则，通过Vue响应式与浏览器API实现跨组件共享的状态与行为。它们在主题、通知、窗口、文件解析、动画、ESC关闭、可调整面板、智能滚动与Socket连接等场景提供了高复用、低耦合的解决方案，并配套了测试与性能优化策略，适合在大型前端应用中推广使用。
 
 [本节为总结，无需特定文件来源]
@@ -508,6 +551,7 @@ USK --> Store
 ## 附录
 
 ### 测试方法
+
 - useTheme
   - 模拟useColorMode与useMediaQuery，验证主题解析与CSS变量写入。
   - 验证可访问性对比度与预设亮度上限。
@@ -519,12 +563,14 @@ USK --> Store
   - 挂载组件验证ctx.revert在卸载时被调用。
 
 **章节来源**
+
 - [apps/frontend/tests/composables/useTheme.spec.ts:72-170](file://apps/frontend/tests/composables/useTheme.spec.ts#L72-L170)
 - [apps/frontend/tests/composables/useWindowSize.spec.ts:4-90](file://apps/frontend/tests/composables/useWindowSize.spec.ts#L4-L90)
 - [apps/frontend/tests/composables/useFileParsing.spec.ts:32-84](file://apps/frontend/tests/composables/useFileParsing.spec.ts#L32-L84)
 - [apps/frontend/tests/composables/useGsap.spec.ts:8-43](file://apps/frontend/tests/composables/useGsap.spec.ts#L8-L43)
 
 ### 开发规范与最佳实践
+
 - 命名与导出
   - 统一以use前缀命名，导出在index.ts集中管理。
 - 响应式与副作用

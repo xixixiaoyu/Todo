@@ -28,7 +28,9 @@
 </cite>
 
 ## 更新摘要
+
 **所做更改**
+
 - 新增2分钟超时机制，防止MCP服务卡死导致请求永久阻塞
 - 改进ToolCallResult类型的错误处理，增强错误传播机制
 - 完善前端API封装中的超时策略和错误处理
@@ -36,6 +38,7 @@
 - 增强工具调用的超时保护和错误恢复机制
 
 ## 目录
+
 1. [简介](#简介)
 2. [项目结构](#项目结构)
 3. [核心组件](#核心组件)
@@ -49,7 +52,9 @@
 11. [附录](#附录)
 
 ## 简介
+
 本文件面向需要在系统中集成 MCP（Model Context Protocol）客户端能力的开发者，提供从后端 NestJS 服务到前端 API 的完整集成指南。文档覆盖以下关键主题：
+
 - 设计架构与职责划分
 - 客户端初始化流程、连接与断开
 - 工具发现与调用流程、参数传递与响应处理
@@ -62,6 +67,7 @@
 - API 调用示例与最佳实践
 
 ## 项目结构
+
 MCP 客户端相关代码主要分布在后端模块、共享包以及新增的Wails桌面应用中，并由前端提供统一的 API 封装。
 
 ```mermaid
@@ -118,6 +124,7 @@ O --> R
 ```
 
 **图表来源**
+
 - [apps/backend/src/mcp/mcp.module.ts:13-22](file://apps/backend/src/mcp/mcp.module.ts#L13-L22)
 - [apps/backend/src/mcp/mcp.controller.ts:40-46](file://apps/backend/src/mcp/mcp.controller.ts#L40-L46)
 - [apps/backend/src/mcp/mcp-client.service.ts:18-28](file://apps/backend/src/mcp/mcp-client.service.ts#L18-L28)
@@ -132,6 +139,7 @@ O --> R
 - [apps/wails/sidecar/manager.go:47-69](file://apps/wails/sidecar/manager.go#L47-L69)
 
 **章节来源**
+
 - [apps/backend/src/mcp/mcp.module.ts:13-22](file://apps/backend/src/mcp/mcp.module.ts#L13-L22)
 - [apps/backend/src/mcp/mcp.controller.ts:40-46](file://apps/backend/src/mcp/mcp.controller.ts#L40-L46)
 - [apps/backend/src/mcp/mcp-client.service.ts:18-28](file://apps/backend/src/mcp/mcp-client.service.ts#L18-L28)
@@ -146,6 +154,7 @@ O --> R
 - [apps/wails/sidecar/manager.go:47-69](file://apps/wails/sidecar/manager.go#L47-L69)
 
 ## 核心组件
+
 - McpClientService：统一门面，负责连接管理、工具发现与调用、连接状态查询与清理。**新增** 2分钟超时机制保护工具调用。
 - McpController：提供 REST API，包括配置 CRUD、连接/断开、工具发现、工具调用等。
 - McpServerConfigService：用户维度的 MCP 服务器配置持久化与权限控制。
@@ -158,6 +167,7 @@ O --> R
 - **新增** 前端 wails.ts：Wails原生API封装，提供桌面应用功能。
 
 **章节来源**
+
 - [apps/backend/src/mcp/mcp-client.service.ts:18-123](file://apps/backend/src/mcp/mcp-client.service.ts#L18-L123)
 - [apps/backend/src/mcp/mcp.controller.ts:40-208](file://apps/backend/src/mcp/mcp.controller.ts#L40-L208)
 - [apps/backend/src/mcp/mcp-server-config.service.ts:10-155](file://apps/backend/src/mcp/mcp-server-config.service.ts#L10-L155)
@@ -169,6 +179,7 @@ O --> R
 - [apps/wails/sidecar/manager.go:47-146](file://apps/wails/sidecar/manager.go#L47-L146)
 
 ## 架构总览
+
 下图展示从前端到后端再到 MCP 服务器的整体调用链路与数据流，包括新增的Wails桌面应用集成和2分钟超时保护机制。
 
 ```mermaid
@@ -210,6 +221,7 @@ CTRL-->>FE : "返回结果"
 ```
 
 **图表来源**
+
 - [apps/backend/src/mcp/mcp.controller.ts:168-207](file://apps/backend/src/mcp/mcp.controller.ts#L168-L207)
 - [apps/backend/src/mcp/mcp-client.service.ts:60-108](file://apps/backend/src/mcp/mcp-client.service.ts#L60-L108)
 - [apps/backend/src/mcp/core/mcp-tool.registry.ts:12-41](file://apps/backend/src/mcp/core/mcp-tool.registry.ts#L12-L41)
@@ -219,6 +231,7 @@ CTRL-->>FE : "返回结果"
 ## 详细组件分析
 
 ### McpClientService：客户端门面
+
 - 职责
   - 连接/断开：通过工厂创建传输，交由连接管理器建立或关闭连接。
   - 工具发现：先检查连接，再通过工具注册表获取/刷新工具清单。
@@ -266,6 +279,7 @@ McpClientService --> ToolCallResult : "封装结果"
 ```
 
 **图表来源**
+
 - [apps/backend/src/mcp/mcp-client.service.ts:18-123](file://apps/backend/src/mcp/mcp-client.service.ts#L18-L123)
 - [apps/backend/src/mcp/core/mcp-transport.factory.ts:112-126](file://apps/backend/src/mcp/core/mcp-transport.factory.ts#L112-L126)
 - [apps/backend/src/mcp/core/mcp-connection.manager.ts:23-95](file://apps/backend/src/mcp/core/mcp-connection.manager.ts#L23-L95)
@@ -273,9 +287,11 @@ McpClientService --> ToolCallResult : "封装结果"
 - [packages/shared/src/schemas/mcp.schema.ts:291-303](file://packages/shared/src/schemas/mcp.schema.ts#L291-303)
 
 **章节来源**
+
 - [apps/backend/src/mcp/mcp-client.service.ts:30-123](file://apps/backend/src/mcp/mcp-client.service.ts#L30-L123)
 
 ### McpController：REST API 实现
+
 - 权限与鉴权
   - 使用 JWT 守卫保护所有路由。
   - 所有操作均基于当前用户上下文，读写分离用户维度数据。
@@ -309,14 +325,17 @@ Disconnect --> ThrottleConn
 ```
 
 **图表来源**
+
 - [apps/backend/src/mcp/mcp.controller.ts:40-208](file://apps/backend/src/mcp/mcp.controller.ts#L40-L208)
 - [apps/backend/src/common/throttling/throttling.constants.ts:144-160](file://apps/backend/src/common/throttling/throttling.constants.ts#L144-L160)
 
 **章节来源**
+
 - [apps/backend/src/mcp/mcp.controller.ts:40-208](file://apps/backend/src/mcp/mcp.controller.ts#L40-L208)
 - [apps/backend/src/common/throttling/throttling.constants.ts:144-160](file://apps/backend/src/common/throttling/throttling.constants.ts#L144-L160)
 
 ### McpTransportFactory：传输层工厂与安全
+
 - 支持的传输类型
   - STDIO：通过命令与参数启动外部进程，严格控制允许的命令与环境变量。
   - HTTP：StreamableHTTP 客户端，支持 Bearer/OAuth/API Key 认证头注入。
@@ -340,14 +359,17 @@ J --> K["创建 StreamableHTTPClientTransport"]
 ```
 
 **图表来源**
+
 - [apps/backend/src/mcp/core/mcp-transport.factory.ts:112-218](file://apps/backend/src/mcp/core/mcp-transport.factory.ts#L112-L218)
 - [packages/shared/src/schemas/mcp.schema.ts:63-116](file://packages/shared/src/schemas/mcp.schema.ts#L63-L116)
 
 **章节来源**
+
 - [apps/backend/src/mcp/core/mcp-transport.factory.ts:112-218](file://apps/backend/src/mcp/core/mcp-transport.factory.ts#L112-L218)
 - [packages/shared/src/schemas/mcp.schema.ts:63-116](file://packages/shared/src/schemas/mcp.schema.ts#L63-L116)
 
 ### McpConnectionManager：连接生命周期
+
 - 维护 serverId -> ActiveConnection 映射。
 - 连接建立时设置超时、错误监听与关闭回调；断开时关闭 client 并清理缓存。
 - **新增** 请求超时配置，默认300秒，防止连接建立过程中的长时间阻塞。
@@ -363,12 +385,15 @@ stateDiagram-v2
 ```
 
 **图表来源**
+
 - [apps/backend/src/mcp/core/mcp-connection.manager.ts:23-95](file://apps/backend/src/mcp/core/mcp-connection.manager.ts#L23-L95)
 
 **章节来源**
+
 - [apps/backend/src/mcp/core/mcp-connection.manager.ts:12-100](file://apps/backend/src/mcp/core/mcp-connection.manager.ts#L12-L100)
 
 ### McpToolRegistry：工具缓存与刷新
+
 - 缓存结构：Map<serverId, tools[]>。
 - 行为：优先返回缓存；若无连接则清空缓存并返回空；刷新失败时回退到旧缓存。
 
@@ -385,12 +410,15 @@ G --> I["记录错误并回退缓存"]
 ```
 
 **图表来源**
+
 - [apps/backend/src/mcp/core/mcp-tool.registry.ts:12-46](file://apps/backend/src/mcp/core/mcp-tool.registry.ts#L12-L46)
 
 **章节来源**
+
 - [apps/backend/src/mcp/core/mcp-tool.registry.ts:12-46](file://apps/backend/src/mcp/core/mcp-tool.registry.ts#L12-L46)
 
 ### 前端 API 封装：mcp.ts
+
 - 方法概览
   - 服务器配置：getServers/getServer/createServer/updateServer/deleteServer
   - 工具：getTools/getAllTools
@@ -418,15 +446,18 @@ API-->>UI : "unwrapApiResponse(data)"
 ```
 
 **图表来源**
+
 - [apps/frontend/src/features/mcp/api/mcp.ts:59-84](file://apps/frontend/src/features/mcp/api/mcp.ts#L59-L84)
 - [apps/backend/src/mcp/mcp.controller.ts:168-184](file://apps/backend/src/mcp/mcp.controller.ts#L168-L184)
 
 **章节来源**
+
 - [apps/frontend/src/features/mcp/api/mcp.ts:16-107](file://apps/frontend/src/features/mcp/api/mcp.ts#L16-L107)
 
 ## Wails桌面应用集成
 
 ### 应用入口与配置
+
 Wails桌面应用提供原生桌面体验，集成MCP客户端功能。应用入口配置了菜单系统、窗口属性和资产服务器。
 
 ```mermaid
@@ -440,13 +471,16 @@ F --> G["调用startup(ctx)"]
 ```
 
 **图表来源**
+
 - [apps/wails/main.go:20-95](file://apps/wails/main.go#L20-L95)
 
 **章节来源**
+
 - [apps/wails/main.go:20-95](file://apps/wails/main.go#L20-L95)
 - [apps/wails/wails.json:1-22](file://apps/wails/wails.json#L1-L22)
 
 ### 应用逻辑与生命周期
+
 应用逻辑封装了Wails运行时API，提供窗口管理、对话框显示、浏览器打开等功能。
 
 ```mermaid
@@ -477,13 +511,16 @@ App --> SidecarManager : "管理Sidecar进程"
 ```
 
 **图表来源**
+
 - [apps/wails/app.go:15-32](file://apps/wails/app.go#L15-L32)
 - [apps/wails/sidecar/manager.go:47-146](file://apps/wails/sidecar/manager.go#L47-L146)
 
 **章节来源**
+
 - [apps/wails/app.go:15-211](file://apps/wails/app.go#L15-L211)
 
 ### Sidecar进程管理器
+
 Sidecar进程管理器负责Node.js Sidecar进程的完整生命周期管理，包括启动、停止、重启和监控。
 
 ```mermaid
@@ -500,13 +537,16 @@ stateDiagram-v2
 ```
 
 **图表来源**
+
 - [apps/wails/sidecar/manager.go:14-61](file://apps/wails/sidecar/manager.go#L14-L61)
 - [apps/wails/sidecar/manager.go:220-289](file://apps/wails/sidecar/manager.go#L220-L289)
 
 **章节来源**
+
 - [apps/wails/sidecar/manager.go:47-289](file://apps/wails/sidecar/manager.go#L47-L289)
 
 ### 健康监控机制
+
 健康监控通过定期轮询Sidecar的/health端点来验证进程状态，支持超时控制和上下文取消。
 
 ```mermaid
@@ -524,12 +564,15 @@ J --> C
 ```
 
 **图表来源**
+
 - [apps/wails/sidecar/health.go:11-44](file://apps/wails/sidecar/health.go#L11-L44)
 
 **章节来源**
+
 - [apps/wails/sidecar/health.go:11-77](file://apps/wails/sidecar/health.go#L11-L77)
 
 ### 进程控制与终止
+
 进程控制实现了跨平台的进程管理和优雅终止，支持进程组隔离和信号处理。
 
 ```mermaid
@@ -550,13 +593,16 @@ N --> O["强制杀死进程"]
 ```
 
 **图表来源**
+
 - [apps/wails/sidecar/process.go:16-81](file://apps/wails/sidecar/process.go#L16-L81)
 - [apps/wails/sidecar/process.go:83-147](file://apps/wails/sidecar/process.go#L83-L147)
 
 **章节来源**
+
 - [apps/wails/sidecar/process.go:16-164](file://apps/wails/sidecar/process.go#L16-L164)
 
 ### 路径解析与部署
+
 路径解析支持多平台部署，自动检测可执行文件位置并解析Node.js二进制和入口文件路径。
 
 ```mermaid
@@ -571,12 +617,15 @@ F --> |否| H["返回错误"]
 ```
 
 **图表来源**
+
 - [apps/wails/sidecar/paths.go:16-48](file://apps/wails/sidecar/paths.go#L16-L48)
 
 **章节来源**
+
 - [apps/wails/sidecar/paths.go:16-97](file://apps/wails/sidecar/paths.go#L16-L97)
 
 ### 前端Wails集成
+
 前端提供了完整的Wails原生API封装和服务集成。
 
 ```mermaid
@@ -601,15 +650,18 @@ WailsService --> SidecarComposable : "状态同步"
 ```
 
 **图表来源**
+
 - [apps/frontend/src/lib/wails.ts:1-200](file://apps/frontend/src/lib/wails.ts#L1-L200)
 - [apps/frontend/src/composables/useSidecar.ts:1-150](file://apps/frontend/src/composables/useSidecar.ts#L1-L150)
 
 **章节来源**
+
 - [apps/frontend/src/lib/wails.ts:1-200](file://apps/frontend/src/lib/wails.ts#L1-L200)
 - [apps/frontend/src/composables/useSidecar.ts:1-150](file://apps/frontend/src/composables/useSidecar.ts#L1-L150)
 - [apps/frontend/src/services/native.ts:1-100](file://apps/frontend/src/services/native.ts#L1-L100)
 
 ## 依赖关系分析
+
 - 模块耦合
   - McpModule 统一导出配置服务与客户端服务，便于其他模块按需注入。
   - McpController 仅依赖服务层，不直接操作传输层，职责清晰。
@@ -649,6 +701,7 @@ WS --> SC["SidecarComposable"]
 ```
 
 **图表来源**
+
 - [apps/backend/src/mcp/mcp.module.ts:13-22](file://apps/backend/src/mcp/mcp.module.ts#L13-L22)
 - [apps/backend/src/mcp/mcp-client.service.ts:18-28](file://apps/backend/src/mcp/mcp-client.service.ts#L18-L28)
 - [apps/backend/src/mcp/mcp.controller.ts:40-46](file://apps/backend/src/mcp/mcp.controller.ts#L40-L46)
@@ -658,6 +711,7 @@ WS --> SC["SidecarComposable"]
 - [apps/wails/sidecar/manager.go:47-69](file://apps/wails/sidecar/manager.go#L47-L69)
 
 **章节来源**
+
 - [apps/backend/src/mcp/mcp.module.ts:13-22](file://apps/backend/src/mcp/mcp.module.ts#L13-L22)
 - [apps/backend/src/mcp/mcp-client.service.ts:18-28](file://apps/backend/src/mcp/mcp-client.service.ts#L18-L28)
 - [apps/backend/src/mcp/mcp.controller.ts:40-46](file://apps/backend/src/mcp/mcp.controller.ts#L40-L46)
@@ -667,6 +721,7 @@ WS --> SC["SidecarComposable"]
 - [apps/wails/sidecar/manager.go:47-69](file://apps/wails/sidecar/manager.go#L47-L69)
 
 ## 性能考量
+
 - 连接复用
   - 连接管理器以 serverId 为键维护连接，避免重复握手。
 - 工具缓存
@@ -685,6 +740,7 @@ WS --> SC["SidecarComposable"]
   - 内容数组结构更加灵活，支持多种数据类型。
 
 **章节来源**
+
 - [apps/backend/src/mcp/core/mcp-tool.registry.ts:12-46](file://apps/backend/src/mcp/core/mcp-tool.registry.ts#L12-L46)
 - [apps/backend/src/common/throttling/throttling.constants.ts:144-160](file://apps/backend/src/common/throttling/throttling.constants.ts#L144-L160)
 - [apps/frontend/src/features/mcp/api/mcp.ts:62-82](file://apps/frontend/src/features/mcp/api/mcp.ts#L62-L82)
@@ -692,6 +748,7 @@ WS --> SC["SidecarComposable"]
 - [packages/shared/src/schemas/mcp.schema.ts:291-303](file://packages/shared/src/schemas/mcp.schema.ts#L291-303)
 
 ## 故障排查指南
+
 - 常见错误与定位
   - "未连接到 MCP 服务器"：确认已调用连接接口或在调用工具前自动连接。
   - "工具不存在"：确认工具名称拼写正确，或重新刷新工具缓存。
@@ -715,6 +772,7 @@ WS --> SC["SidecarComposable"]
   - **新增** Sidecar进程管理器包含完整的生命周期测试用例。
 
 **章节来源**
+
 - [apps/backend/src/mcp/mcp-client.service.ts:74-108](file://apps/backend/src/mcp/mcp-client.service.ts#L74-L108)
 - [apps/backend/src/mcp/core/mcp-transport.factory.ts:91-110](file://apps/backend/src/mcp/core/mcp-transport.factory.ts#L91-L110)
 - [apps/backend/tests/mcp/mcp-client.service.spec.ts:118-130](file://apps/backend/tests/mcp/mcp-client.service.spec.ts#L118-L130)
@@ -722,6 +780,7 @@ WS --> SC["SidecarComposable"]
 - [apps/wails/sidecar/manager.go:118-126](file://apps/wails/sidecar/manager.go#L118-L126)
 
 ## 结论
+
 该 MCP 客户端集成方案通过清晰的模块划分与安全约束，提供了稳定、可扩展的工具调用能力。后端以门面服务为核心，结合传输工厂、连接管理与工具缓存，实现了高效的工具发现与调用；前端提供统一 API 封装与合理的超时策略。配合节流与安全检查，整体具备良好的生产可用性。
 
 **新增的2分钟超时机制显著提升了系统的稳定性**，防止MCP服务卡死导致请求永久阻塞，确保系统能够及时响应超时错误并进行适当的错误处理。**改进的ToolCallResult类型增强了错误传播能力**，通过isError标记使前端能够准确区分正常结果和错误状态，提升了用户体验。
@@ -731,6 +790,7 @@ WS --> SC["SidecarComposable"]
 ## 附录
 
 ### API 定义与调用示例
+
 - 获取服务器配置列表
   - 方法：GET
   - 路径：/mcp/servers
@@ -773,6 +833,7 @@ WS --> SC["SidecarComposable"]
   - 前端封装：参见 [apps/frontend/src/features/mcp/api/mcp.ts:70-84](file://apps/frontend/src/features/mcp/api/mcp.ts#L70-L84)
 
 ### Wails桌面应用API
+
 - **新增** 获取Sidecar状态
   - 方法：GET
   - 路径：/sidecar/info
@@ -791,6 +852,7 @@ WS --> SC["SidecarComposable"]
   - 前端封装：参见 [apps/frontend/src/lib/wails.ts:135-145](file://apps/frontend/src/lib/wails.ts#L135-L145)
 
 ### 错误码与异常
+
 - 未找到配置：后端抛出"未找到"异常，前端捕获并提示。
 - 权限不足：后端抛出"禁止访问"异常，前端提示无权限。
 - 连接失败：后端记录错误并抛出异常，前端提示重试或检查配置。
@@ -803,6 +865,7 @@ WS --> SC["SidecarComposable"]
 - **新增** 进程终止错误：优雅终止失败，尝试强制终止并记录错误。
 
 **章节来源**
+
 - [apps/backend/src/mcp/mcp-server-config.service.ts:55-58](file://apps/backend/src/mcp/mcp-server-config.service.ts#L55-L58)
 - [apps/backend/src/mcp/mcp-server-config.service.ts:124-126](file://apps/backend/src/mcp/mcp-server-config.service.ts#L124-L126)
 - [apps/backend/src/mcp/mcp-client.service.ts:76-87](file://apps/backend/src/mcp/mcp-client.service.ts#L76-L87)
@@ -811,6 +874,7 @@ WS --> SC["SidecarComposable"]
 - [apps/wails/sidecar/paths.go:35-42](file://apps/wails/sidecar/paths.go#L35-L42)
 
 ### 最佳实践
+
 - 配置管理
   - 为每个服务器配置唯一标识与描述，启用字段默认开启，便于快速接入。
 - 连接策略
@@ -841,6 +905,7 @@ WS --> SC["SidecarComposable"]
   - 事件驱动模式，避免阻塞主线程。
 
 **章节来源**
+
 - [apps/backend/src/mcp/mcp-client.service.ts:33-55](file://apps/backend/src/mcp/mcp-client.service.ts#L33-L55)
 - [apps/backend/src/mcp/core/mcp-transport.factory.ts:67-89](file://apps/backend/src/mcp/core/mcp-transport.factory.ts#L67-L89)
 - [apps/frontend/src/features/mcp/api/mcp.ts:62-82](file://apps/frontend/src/features/mcp/api/mcp.ts#L62-L82)

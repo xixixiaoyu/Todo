@@ -18,6 +18,7 @@
 </cite>
 
 ## 目录
+
 1. [简介](#简介)
 2. [项目结构](#项目结构)
 3. [核心组件](#核心组件)
@@ -30,10 +31,13 @@
 10. [附录](#附录)
 
 ## 简介
+
 本文件为认证API接口的完整技术文档，覆盖登录、注册、刷新令牌、登出、找回密码、重置密码等全部认证相关HTTP端点。文档详细说明请求参数、响应格式、状态码含义、错误处理方案，并深入解释登录流程实现细节、注册数据验证规则、密码重置安全机制。同时提供基于Swagger的接口规范要点、参数校验规则、认证要求说明，以及版本控制策略、速率限制机制、CORS配置、安全性考虑、防暴力破解措施、日志记录策略和客户端集成指南。
 
 ## 项目结构
+
 认证相关代码主要位于后端应用的认证模块与共享包中，采用按功能分层组织：
+
 - 控制器层：暴露REST端点，负责请求接收与响应封装
 - 服务层：业务编排，整合用户、令牌、密码服务
 - 策略与守卫：JWT认证与授权
@@ -72,6 +76,7 @@ AM --> MA
 ```
 
 图表来源
+
 - [apps/backend/src/auth/auth.controller.ts:15-80](file://apps/backend/src/auth/auth.controller.ts#L15-L80)
 - [apps/backend/src/auth/password.controller.ts:11-37](file://apps/backend/src/auth/password.controller.ts#L11-L37)
 - [apps/backend/src/auth/auth.service.ts:12-126](file://apps/backend/src/auth/auth.service.ts#L12-L126)
@@ -85,6 +90,7 @@ AM --> MA
 - [apps/backend/src/main.ts:48-167](file://apps/backend/src/main.ts#L48-L167)
 
 章节来源
+
 - [apps/backend/src/auth/auth.controller.ts:15-80](file://apps/backend/src/auth/auth.controller.ts#L15-L80)
 - [apps/backend/src/auth/password.controller.ts:11-37](file://apps/backend/src/auth/password.controller.ts#L11-L37)
 - [apps/backend/src/auth/auth.service.ts:12-126](file://apps/backend/src/auth/auth.service.ts#L12-L126)
@@ -98,6 +104,7 @@ AM --> MA
 - [apps/backend/src/main.ts:48-167](file://apps/backend/src/main.ts#L48-L167)
 
 ## 核心组件
+
 - 认证控制器：提供登录、注册、刷新、登出、获取当前用户信息等端点
 - 密码控制器：提供找回密码、重置密码端点
 - 认证服务：整合用户、令牌、密码服务，提供统一认证入口
@@ -109,6 +116,7 @@ AM --> MA
 - 安全与通用：CORS、CSRF防护、Helmet、压缩、静态资源、全局拦截器与过滤器
 
 章节来源
+
 - [apps/backend/src/auth/auth.controller.ts:15-80](file://apps/backend/src/auth/auth.controller.ts#L15-L80)
 - [apps/backend/src/auth/password.controller.ts:11-37](file://apps/backend/src/auth/password.controller.ts#L11-L37)
 - [apps/backend/src/auth/auth.service.ts:12-126](file://apps/backend/src/auth/auth.service.ts#L12-L126)
@@ -121,6 +129,7 @@ AM --> MA
 - [apps/backend/src/main.ts:48-167](file://apps/backend/src/main.ts#L48-L167)
 
 ## 架构总览
+
 认证系统采用“控制器-服务-策略/守卫-令牌/密码服务”的分层设计，配合Zod进行请求参数校验，通过NestJS内置的全局拦截器与异常过滤器统一响应格式与错误处理。安全方面通过Helmet设置安全头、CSRF防护钩子、CORS配置、Gzip压缩、静态资源托管与Redis限流实现。
 
 ```mermaid
@@ -172,6 +181,7 @@ end
 ```
 
 图表来源
+
 - [apps/backend/src/auth/auth.controller.ts:23-48](file://apps/backend/src/auth/auth.controller.ts#L23-L48)
 - [apps/backend/src/auth/password.controller.ts:19-36](file://apps/backend/src/auth/password.controller.ts#L19-L36)
 - [apps/backend/src/auth/auth.service.ts:41-93](file://apps/backend/src/auth/auth.service.ts#L41-L93)
@@ -179,6 +189,7 @@ end
 - [apps/backend/src/auth/token.service.ts:175-185](file://apps/backend/src/auth/token.service.ts#L175-L185)
 
 章节来源
+
 - [apps/backend/src/auth/auth.controller.ts:23-48](file://apps/backend/src/auth/auth.controller.ts#L23-L48)
 - [apps/backend/src/auth/password.controller.ts:19-36](file://apps/backend/src/auth/password.controller.ts#L19-L36)
 - [apps/backend/src/auth/auth.service.ts:41-93](file://apps/backend/src/auth/auth.service.ts#L41-L93)
@@ -188,6 +199,7 @@ end
 ## 详细组件分析
 
 ### 认证控制器（AuthController）
+
 - 路径前缀：/api/auth
 - 端点列表与行为
   - POST /api/auth/login
@@ -231,11 +243,13 @@ end
   - 429 速率限制触发（见“性能考量”）
 
 章节来源
+
 - [apps/backend/src/auth/auth.controller.ts:15-80](file://apps/backend/src/auth/auth.controller.ts#L15-L80)
 - [apps/backend/src/common/throttling/throttling.constants.ts:90-106](file://apps/backend/src/common/throttling/throttling.constants.ts#L90-L106)
 - [apps/backend/src/main.ts:133-167](file://apps/backend/src/main.ts#L133-L167)
 
 ### 密码控制器（PasswordController）
+
 - 路径前缀：/api/auth
 - 端点列表与行为
   - POST /api/auth/forgot-password
@@ -258,10 +272,12 @@ end
   - 重置密码：[apps/backend/src/auth/password.controller.ts:33-36](file://apps/backend/src/auth/password.controller.ts#L33-L36)
 
 章节来源
+
 - [apps/backend/src/auth/password.controller.ts:11-37](file://apps/backend/src/auth/password.controller.ts#L11-L37)
 - [apps/backend/src/common/throttling/throttling.constants.ts:108-118](file://apps/backend/src/common/throttling/throttling.constants.ts#L108-L118)
 
 ### 认证服务（AuthService）
+
 - 职责
   - 用户验证（邮箱+密码）
   - 统一认证响应构建（AccessToken/RefreshToken）
@@ -275,9 +291,11 @@ end
   - 密码重置：委托PasswordService执行
 
 章节来源
+
 - [apps/backend/src/auth/auth.service.ts:12-126](file://apps/backend/src/auth/auth.service.ts#L12-L126)
 
 ### 密码服务（PasswordService）
+
 - 职责
   - 密码哈希与比较
   - 重置令牌生成（明文token与哈希token）
@@ -290,9 +308,11 @@ end
   - 重置后调用令牌服务使会话失效
 
 章节来源
+
 - [apps/backend/src/auth/password.service.ts:9-99](file://apps/backend/src/auth/password.service.ts#L9-L99)
 
 ### 令牌服务（TokenService）
+
 - 职责
   - AccessToken/RefreshToken签发（不同密钥与过期时间）
   - 令牌验证（区分访问/刷新令牌）
@@ -306,28 +326,34 @@ end
   - 会话失效检查：若令牌签发时间早于用户会话失效时间戳则视为无效
 
 章节来源
+
 - [apps/backend/src/auth/token.service.ts:15-186](file://apps/backend/src/auth/token.service.ts#L15-L186)
 
 ### JWT守卫与策略
+
 - JwtAuthGuard：基于Bearer Token的访问令牌验证
 - JwtStrategy：验证payload类型为access、用户存在且未被会话失效、解析sub为正整数
 - 配合TokenService进行会话失效检查
 
 章节来源
+
 - [apps/backend/src/auth/jwt-auth.guard.ts:8-9](file://apps/backend/src/auth/jwt-auth.guard.ts#L8-L9)
 - [apps/backend/src/auth/jwt.strategy.ts:19-67](file://apps/backend/src/auth/jwt.strategy.ts#L19-L67)
 - [apps/backend/src/auth/token.service.ts:55-76](file://apps/backend/src/auth/token.service.ts#L55-L76)
 
 ### DTO与Schema
+
 - LoginDto/ RegisterDto/ RefreshTokenDto/ LogoutDto/ ForgotPasswordDto/ ResetPasswordDto
 - 基于Zod Schema，自动生成Swagger文档
 - 共享Schema定义了邮箱、密码、用户信息、认证响应、刷新/登出/找回/重置等Schema
 
 章节来源
+
 - [apps/backend/src/auth/auth.dto.ts:1-41](file://apps/backend/src/auth/auth.dto.ts#L1-L41)
 - [packages/shared/src/schemas/auth.schema.ts:24-121](file://packages/shared/src/schemas/auth.schema.ts#L24-L121)
 
 ### 速率限制与安全
+
 - 速率限制策略（短/中/长窗口）
   - 登录：AUTH_LOGIN_THROTTLE
   - 注册：AUTH_REGISTER_THROTTLE
@@ -342,6 +368,7 @@ end
 - 静态资源：/api/public/与/old/public/路径托管
 
 章节来源
+
 - [apps/backend/src/common/throttling/throttling.constants.ts:90-118](file://apps/backend/src/common/throttling/throttling.constants.ts#L90-L118)
 - [apps/backend/src/app.module.ts:117-123](file://apps/backend/src/app.module.ts#L117-L123)
 - [apps/backend/src/main.ts:48-167](file://apps/backend/src/main.ts#L48-L167)
@@ -399,6 +426,7 @@ JwtAuthGuard --> JwtStrategy : "基于"
 ```
 
 图表来源
+
 - [apps/backend/src/auth/auth.controller.ts:17-80](file://apps/backend/src/auth/auth.controller.ts#L17-L80)
 - [apps/backend/src/auth/password.controller.ts:13-37](file://apps/backend/src/auth/password.controller.ts#L13-L37)
 - [apps/backend/src/auth/auth.service.ts:14-126](file://apps/backend/src/auth/auth.service.ts#L14-L126)
@@ -408,6 +436,7 @@ JwtAuthGuard --> JwtStrategy : "基于"
 - [apps/backend/src/auth/jwt.strategy.ts:21-67](file://apps/backend/src/auth/jwt.strategy.ts#L21-L67)
 
 章节来源
+
 - [apps/backend/src/auth/auth.controller.ts:17-80](file://apps/backend/src/auth/auth.controller.ts#L17-L80)
 - [apps/backend/src/auth/password.controller.ts:13-37](file://apps/backend/src/auth/password.controller.ts#L13-L37)
 - [apps/backend/src/auth/auth.service.ts:14-126](file://apps/backend/src/auth/auth.service.ts#L14-L126)
@@ -417,6 +446,7 @@ JwtAuthGuard --> JwtStrategy : "基于"
 - [apps/backend/src/auth/jwt.strategy.ts:21-67](file://apps/backend/src/auth/jwt.strategy.ts#L21-L67)
 
 ## 性能考量
+
 - 速率限制
   - 短窗口：1秒，中窗口：10秒，长窗口：1分钟
   - 登录/注册/刷新/找回/重置分别有独立策略，避免单一阈值导致的误伤
@@ -430,11 +460,13 @@ JwtAuthGuard --> JwtStrategy : "基于"
   - 重置密码后调用invalidateUserSessions，确保旧令牌无法继续使用
 
 章节来源
+
 - [apps/backend/src/common/throttling/throttling.constants.ts:11-198](file://apps/backend/src/common/throttling/throttling.constants.ts#L11-L198)
 - [apps/backend/src/auth/token.service.ts:47-76](file://apps/backend/src/auth/token.service.ts#L47-L76)
 - [apps/backend/src/main.ts:111-123](file://apps/backend/src/main.ts#L111-L123)
 
 ## 故障排除指南
+
 - 400 参数校验失败
   - 检查请求体字段类型与长度是否满足Zod规则
   - 参考共享Schema中的字段约束
@@ -455,6 +487,7 @@ JwtAuthGuard --> JwtStrategy : "基于"
   - 重置后会话已被使失效，需重新登录
 
 章节来源
+
 - [packages/shared/src/schemas/auth.schema.ts:24-121](file://packages/shared/src/schemas/auth.schema.ts#L24-L121)
 - [apps/backend/src/auth/auth.service.ts:44-92](file://apps/backend/src/auth/auth.service.ts#L44-L92)
 - [apps/backend/src/auth/password.service.ts:66-89](file://apps/backend/src/auth/password.service.ts#L66-L89)
@@ -462,11 +495,13 @@ JwtAuthGuard --> JwtStrategy : "基于"
 - [apps/backend/src/main.ts:133-167](file://apps/backend/src/main.ts#L133-L167)
 
 ## 结论
+
 本认证API接口通过清晰的分层设计、严格的参数校验、完善的令牌与会话管理、以及全面的安全防护，提供了稳定可靠的认证能力。结合速率限制、CSRF防护、CORS与Helmet等安全机制，能够有效抵御暴力破解与常见Web攻击。建议在生产环境配置合适的JWT密钥、Redis连接与限流策略，并持续监控日志与告警以保障系统安全与可用性。
 
 ## 附录
 
 ### 接口规范与参数校验（基于Swagger与Zod）
+
 - 公共约定
   - 路径前缀：/api
   - 认证方式：Bearer Token（Authorization: Bearer <token>）
@@ -512,6 +547,7 @@ JwtAuthGuard --> JwtStrategy : "基于"
   - 版本：来自package.json的版本号
 
 章节来源
+
 - [apps/backend/src/auth/auth.controller.ts:23-79](file://apps/backend/src/auth/auth.controller.ts#L23-L79)
 - [apps/backend/src/auth/password.controller.ts:19-36](file://apps/backend/src/auth/password.controller.ts#L19-L36)
 - [apps/backend/src/auth/auth.dto.ts:15-41](file://apps/backend/src/auth/auth.dto.ts#L15-L41)
@@ -519,6 +555,7 @@ JwtAuthGuard --> JwtStrategy : "基于"
 - [apps/backend/src/main.ts:181-190](file://apps/backend/src/main.ts#L181-L190)
 
 ### 安全性考虑与最佳实践
+
 - 传输安全
   - 使用HTTPS，确保Bearer Token与Cookie安全传输
 - 密钥管理
@@ -537,6 +574,7 @@ JwtAuthGuard --> JwtStrategy : "基于"
   - Helmet启用XSS、点击劫持等防护
 
 章节来源
+
 - [apps/backend/src/auth/token.service.ts:30-44](file://apps/backend/src/auth/token.service.ts#L30-L44)
 - [apps/backend/src/auth/password.service.ts:66-89](file://apps/backend/src/auth/password.service.ts#L66-L89)
 - [apps/backend/src/auth/token.service.ts:130-170](file://apps/backend/src/auth/token.service.ts#L130-L170)
@@ -544,6 +582,7 @@ JwtAuthGuard --> JwtStrategy : "基于"
 - [apps/backend/src/main.ts:48-167](file://apps/backend/src/main.ts#L48-L167)
 
 ### 客户端集成指南
+
 - 登录
   - 方法：POST /api/auth/login
   - 请求头：Content-Type: application/json
@@ -565,10 +604,12 @@ JwtAuthGuard --> JwtStrategy : "基于"
   - 携带token与新密码
 
 章节来源
+
 - [apps/backend/src/auth/auth.controller.ts:23-79](file://apps/backend/src/auth/auth.controller.ts#L23-L79)
 - [apps/backend/src/auth/password.controller.ts:19-36](file://apps/backend/src/auth/password.controller.ts#L19-L36)
 
 ### 常见问题解答
+
 - Q：为什么登录后仍然提示未授权？
   - A：确认Authorization头是否正确携带，且令牌未过期；检查会话是否被使失效
 - Q：为什么找回密码总是返回成功？
@@ -579,6 +620,7 @@ JwtAuthGuard --> JwtStrategy : "基于"
   - A：配置JWT密钥、Redis连接、CORS白名单、日志级别与安全头
 
 章节来源
+
 - [apps/backend/src/auth/auth.service.ts:44-92](file://apps/backend/src/auth/auth.service.ts#L44-L92)
 - [apps/backend/src/auth/password.service.ts:42-45](file://apps/backend/src/auth/password.service.ts#L42-L45)
 - [apps/backend/src/common/throttling/throttling.constants.ts:90-118](file://apps/backend/src/common/throttling/throttling.constants.ts#L90-L118)

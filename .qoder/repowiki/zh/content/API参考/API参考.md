@@ -17,6 +17,7 @@
 </cite>
 
 ## 目录
+
 1. [简介](#简介)
 2. [项目结构](#项目结构)
 3. [核心组件](#核心组件)
@@ -29,9 +30,11 @@
 10. [附录](#附录)
 
 ## 简介
+
 本文件为 Lumina Todo 后端服务的完整 API 参考文档，覆盖认证、任务管理、MCP 工具、文件上传、用户管理以及 WebSocket 实时通信等公开接口。文档提供每个接口的 HTTP 方法、URL 模式、请求参数、响应格式、状态码、认证与权限控制、错误处理说明，并给出序列图与流程图帮助理解端到端交互。
 
 ## 项目结构
+
 后端基于 NestJS + Fastify 架构，采用模块化设计，主要模块包括认证、用户、任务、上传、MCP、事件网关等。全局统一响应格式、Zod 验证、CSRF/XSS 安全中间件、CORS、压缩、静态资源托管等在启动脚本中集中配置。
 
 ```mermaid
@@ -56,14 +59,17 @@ B --> H
 ```
 
 图表来源
+
 - [apps/backend/src/main.ts:34-211](file://apps/backend/src/main.ts#L34-L211)
 - [apps/backend/src/app.module.ts:28-159](file://apps/backend/src/app.module.ts#L28-L159)
 
 章节来源
+
 - [apps/backend/src/main.ts:34-211](file://apps/backend/src/main.ts#L34-L211)
 - [apps/backend/src/app.module.ts:28-159](file://apps/backend/src/app.module.ts#L28-L159)
 
 ## 核心组件
+
 - 统一响应格式：所有接口返回统一的成功或错误响应体，包含 success、data/message、timestamp、statusCode 等字段。
 - 全局中间件与安全：
   - CORS、Helmet 安全头、Gzip 压缩、CSRF 校验（X-Requested-With）、XSS 清理、Zod 验证管道、全局异常过滤器、全局响应拦截器。
@@ -71,10 +77,12 @@ B --> H
 - 文档：Swagger/OpenAPI 在 /api/docs 提供自动生成的接口文档。
 
 章节来源
+
 - [packages/shared/src/dto/common.dto.ts:4-34](file://packages/shared/src/dto/common.dto.ts#L4-L34)
 - [apps/backend/src/main.ts:48-191](file://apps/backend/src/main.ts#L48-L191)
 
 ## 架构总览
+
 下图展示客户端与后端各模块之间的交互关系，包括 REST API 与 WebSocket 实时通信。
 
 ```mermaid
@@ -99,12 +107,14 @@ MCP --> WS
 ```
 
 图表来源
+
 - [apps/backend/src/main.ts:92-191](file://apps/backend/src/main.ts#L92-L191)
 - [apps/backend/src/events/events.gateway.ts:20-56](file://apps/backend/src/events/events.gateway.ts#L20-L56)
 
 ## 详细组件分析
 
 ### 认证 API
+
 - 基础信息
   - 前缀：/api/auth
   - 认证：部分接口使用 JWT，部分接口使用速率限制
@@ -147,10 +157,12 @@ MCP --> WS
   - 登出会清除 accessToken、refreshToken Cookie
 
 章节来源
+
 - [apps/backend/src/auth/auth.controller.ts:23-79](file://apps/backend/src/auth/auth.controller.ts#L23-L79)
 - [apps/backend/src/auth/auth.dto.ts:15-41](file://apps/backend/src/auth/auth.dto.ts#L15-L41)
 
 ### 任务管理 API
+
 - 基础信息
   - 前缀：/api/todos
   - 认证：全部接口需 JWT
@@ -186,11 +198,13 @@ MCP --> WS
   - 后端通过事件网关向用户房间广播 todos:sync 事件，客户端收到后拉取最新数据
 
 章节来源
+
 - [apps/backend/src/todos/todos.controller.ts:30-68](file://apps/backend/src/todos/todos.controller.ts#L30-L68)
 - [apps/backend/src/todos/todos.dto.ts:4-5](file://apps/backend/src/todos/todos.dto.ts#L4-L5)
 - [apps/backend/src/events/events.gateway.ts:179-202](file://apps/backend/src/events/events.gateway.ts#L179-L202)
 
 ### 文件上传 API
+
 - 基础信息
   - 前缀：/api/upload
   - 认证：JWT
@@ -221,9 +235,11 @@ MCP --> WS
   - 缺少文件字段、不支持的文件类型、超过大小/数量限制均返回 400
 
 章节来源
+
 - [apps/backend/src/upload/upload.controller.ts:70-159](file://apps/backend/src/upload/upload.controller.ts#L70-L159)
 
 ### 用户管理 API
+
 - 基础信息
   - 前缀：/api/users
   - 认证：JWT
@@ -254,9 +270,11 @@ MCP --> WS
   - 若用户已有本地头像，会尝试删除旧头像以节省空间
 
 章节来源
+
 - [apps/backend/src/users/users.controller.ts:37-133](file://apps/backend/src/users/users.controller.ts#L37-L133)
 
 ### MCP 工具 API
+
 - 基础信息
   - 前缀：/api/mcp
   - 认证：JWT
@@ -309,10 +327,12 @@ MCP --> WS
   - 权限不足、未找到、连接失败、调用失败等返回相应状态码
 
 章节来源
+
 - [apps/backend/src/mcp/mcp.controller.ts:51-207](file://apps/backend/src/mcp/mcp.controller.ts#L51-L207)
 - [apps/backend/src/mcp/mcp.dto.ts:22-59](file://apps/backend/src/mcp/mcp.dto.ts#L22-L59)
 
 ### WebSocket 实时通信接口
+
 - 基础信息
   - 命名空间：/events
   - 传输：polling/websocket
@@ -354,14 +374,17 @@ end
 ```
 
 图表来源
+
 - [apps/backend/src/events/events.gateway.ts:89-116](file://apps/backend/src/events/events.gateway.ts#L89-L116)
 - [apps/backend/src/events/events.gateway.ts:150-175](file://apps/backend/src/events/events.gateway.ts#L150-L175)
 
 章节来源
+
 - [apps/backend/src/events/events.gateway.ts:20-56](file://apps/backend/src/events/events.gateway.ts#L20-L56)
 - [apps/backend/src/events/events.gateway.ts:147-202](file://apps/backend/src/events/events.gateway.ts#L147-L202)
 
 ### 统一响应格式与错误处理
+
 - 成功响应
   - 结构：{ success: true, data, timestamp }
   - 适用：绝大多数成功场景
@@ -372,10 +395,12 @@ end
   - Zod 验证管道、XSS 清理拦截器、响应转换拦截器、全局异常过滤器统一处理
 
 章节来源
+
 - [packages/shared/src/dto/common.dto.ts:4-34](file://packages/shared/src/dto/common.dto.ts#L4-L34)
 - [apps/backend/src/main.ts:169-179](file://apps/backend/src/main.ts#L169-L179)
 
 ## 依赖关系分析
+
 - 模块耦合
   - AppModule 导入并装配认证、用户、任务、上传、MCP、事件、定时任务、技能源等模块
   - 控制器之间通过服务层解耦，事件网关通过服务调用触发广播
@@ -400,6 +425,7 @@ McpCtrl --> EventsGW
 ```
 
 图表来源
+
 - [apps/backend/src/app.module.ts:134-146](file://apps/backend/src/app.module.ts#L134-L146)
 - [apps/backend/src/auth/auth.controller.ts:18-18](file://apps/backend/src/auth/auth.controller.ts#L18-L18)
 - [apps/backend/src/todos/todos.controller.ts:25-28](file://apps/backend/src/todos/todos.controller.ts#L25-L28)
@@ -407,9 +433,11 @@ McpCtrl --> EventsGW
 - [apps/backend/src/mcp/mcp.controller.ts:43-46](file://apps/backend/src/mcp/mcp.controller.ts#L43-L46)
 
 章节来源
+
 - [apps/backend/src/app.module.ts:134-146](file://apps/backend/src/app.module.ts#L134-L146)
 
 ## 性能考量
+
 - 速率限制：针对登录、注册、刷新、文件上传、文件解析、MCP 连接与工具调用设置独立节流，防止滥用
 - 压缩：Gzip 压缩开启，阈值 1KB，减少网络传输
 - 静态资源：/api/public/ 与 /public/ 前缀静态资源托管，降低后端压力
@@ -417,10 +445,12 @@ McpCtrl --> EventsGW
 - 传输优化：WebSocket 与轮询双栈，移动端优先使用 WebSocket
 
 章节来源
+
 - [apps/backend/src/main.ts:111-131](file://apps/backend/src/main.ts#L111-L131)
 - [apps/backend/src/events/events.gateway.ts:179-202](file://apps/backend/src/events/events.gateway.ts#L179-L202)
 
 ## 故障排除指南
+
 - 400 参数错误
   - 常见原因：缺少必填字段、文件类型不支持、超出大小/数量限制
   - 处理建议：检查请求体与 Content-Type，确认文件白名单
@@ -440,11 +470,14 @@ McpCtrl --> EventsGW
   - 处理建议：核对 token 格式与来源，确认 CORS 配置
 
 章节来源
+
 - [apps/backend/src/main.ts:152-167](file://apps/backend/src/main.ts#L152-L167)
 - [apps/backend/src/events/events.gateway.ts:89-116](file://apps/backend/src/events/events.gateway.ts#L89-L116)
 
 ## 结论
+
 本 API 参考文档系统性地梳理了 Lumina Todo 的 REST 与 WebSocket 接口，明确了认证与权限控制、统一响应格式、错误处理策略与性能优化措施。建议客户端在集成时：
+
 - 使用 /api/docs 查看最新接口定义
 - 严格遵循 JWT 认证与 CORS/安全头要求
 - 对上传与 MCP 工具调用做好限流与重试策略
@@ -453,15 +486,18 @@ McpCtrl --> EventsGW
 ## 附录
 
 ### API 版本管理与迁移
+
 - 版本来源：启动时读取 npm 包版本号作为 API 版本
 - 文档：Swagger 在 /api/docs 输出当前版本的 OpenAPI 文档
 - 迁移建议：后端保持向后兼容，新增接口以新路径或新命名空间提供，避免破坏既有客户端行为
 
 章节来源
+
 - [apps/backend/src/main.ts:45-47](file://apps/backend/src/main.ts#L45-L47)
 - [apps/backend/src/main.ts:182-190](file://apps/backend/src/main.ts#L182-L190)
 
 ### SDK 使用示例与客户端集成指引
+
 - SDK 位置：前端应用位于 apps/frontend/src/api/index.ts 与 upload.ts，提供基础请求封装
 - 集成要点
   - 统一设置 Authorization: Bearer <access_token>
@@ -473,5 +509,6 @@ McpCtrl --> EventsGW
   - [apps/frontend/src/api/upload.ts](file://apps/frontend/src/api/upload.ts)
 
 章节来源
+
 - [apps/frontend/src/api/index.ts](file://apps/frontend/src/api/index.ts)
 - [apps/frontend/src/api/upload.ts](file://apps/frontend/src/api/upload.ts)

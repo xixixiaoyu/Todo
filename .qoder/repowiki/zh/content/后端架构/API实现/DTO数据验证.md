@@ -21,6 +21,7 @@
 </cite>
 
 ## 目录
+
 1. [简介](#简介)
 2. [项目结构](#项目结构)
 3. [核心组件](#核心组件)
@@ -33,7 +34,9 @@
 10. [附录](#附录)
 
 ## 简介
+
 本文件系统性梳理 Lumina Todo 的 DTO 数据验证体系，围绕以下目标展开：
+
 - 解释数据传输对象（DTO）的设计原则与实现方式，涵盖 Zod 验证器、TypeScript 类型定义与数据转换机制。
 - 深入说明三大模块的 DTO 结构：任务管理 DTO、用户认证 DTO、MCP 配置 DTO 的字段定义、验证规则与约束条件。
 - 阐述输入数据的预处理、类型转换与错误处理策略。
@@ -41,7 +44,9 @@
 - 提供 DTO 设计最佳实践、性能优化与调试技巧。
 
 ## 项目结构
+
 本项目采用“共享 Schema + NestJS DTO 包装 + 前端 Zod 国际化”的分层验证架构：
+
 - 共享层（packages/shared）：集中定义 Zod Schema 与 TypeScript 类型，确保前后端一致的验证规则与类型契约。
 - 后端层（apps/backend）：使用 nestjs-zod 将共享 Schema 包装为 DTO，结合拦截器与异常过滤器统一响应与错误输出。
 - 前端层（apps/frontend）：在本地 Zod 实例上应用国际化错误映射，提升用户体验与可维护性。
@@ -83,6 +88,7 @@ F_ZOD_I18N --> F_FORM_TYPES
 ```
 
 图表来源
+
 - [packages/shared/src/schemas/todo.schema.ts:1-76](file://packages/shared/src/schemas/todo.schema.ts#L1-L76)
 - [packages/shared/src/schemas/auth.schema.ts:1-121](file://packages/shared/src/schemas/auth.schema.ts#L1-L121)
 - [packages/shared/src/schemas/mcp.schema.ts:1-220](file://packages/shared/src/schemas/mcp.schema.ts#L1-L220)
@@ -99,6 +105,7 @@ F_ZOD_I18N --> F_FORM_TYPES
 - [apps/frontend/src/features/mcp/components/mcpServerForm.types.ts:1-25](file://apps/frontend/src/features/mcp/components/mcpServerForm.types.ts#L1-L25)
 
 章节来源
+
 - [packages/shared/src/schemas/todo.schema.ts:1-76](file://packages/shared/src/schemas/todo.schema.ts#L1-L76)
 - [packages/shared/src/schemas/auth.schema.ts:1-121](file://packages/shared/src/schemas/auth.schema.ts#L1-L121)
 - [packages/shared/src/schemas/mcp.schema.ts:1-220](file://packages/shared/src/schemas/mcp.schema.ts#L1-L220)
@@ -114,12 +121,14 @@ F_ZOD_I18N --> F_FORM_TYPES
 - [packages/shared/src/utils/user.utils.ts:1-36](file://packages/shared/src/utils/user.utils.ts#L1-L36)
 
 ## 核心组件
+
 - 共享 Schema 层：统一定义字段约束、枚举与复杂校验逻辑，确保前后端一致。
 - DTO 包装层：基于 nestjs-zod 将 Schema 转换为 Nest DTO，自动支持 Swagger 文档生成。
 - 响应与错误处理：统一响应包装与 Zod 错误国际化，提升可观测性与用户体验。
 - 前端 Zod 国际化：在客户端应用统一的错误映射，增强本地化体验。
 
 章节来源
+
 - [packages/shared/src/schemas/todo.schema.ts:1-76](file://packages/shared/src/schemas/todo.schema.ts#L1-L76)
 - [packages/shared/src/schemas/auth.schema.ts:1-121](file://packages/shared/src/schemas/auth.schema.ts#L1-L121)
 - [packages/shared/src/schemas/mcp.schema.ts:1-220](file://packages/shared/src/schemas/mcp.schema.ts#L1-L220)
@@ -131,6 +140,7 @@ F_ZOD_I18N --> F_FORM_TYPES
 - [apps/frontend/src/lib/zod-i18n.ts:1-96](file://apps/frontend/src/lib/zod-i18n.ts#L1-L96)
 
 ## 架构总览
+
 下图展示从请求进入后端到响应返回的完整流程，包括 DTO 校验、拦截器包装与异常过滤器处理。
 
 ```mermaid
@@ -154,6 +164,7 @@ end
 ```
 
 图表来源
+
 - [apps/backend/src/todos/todos.dto.ts:1-5](file://apps/backend/src/todos/todos.dto.ts#L1-L5)
 - [apps/backend/src/auth/auth.dto.ts:1-41](file://apps/backend/src/auth/auth.dto.ts#L1-L41)
 - [apps/backend/src/mcp/mcp.dto.ts:1-59](file://apps/backend/src/mcp/mcp.dto.ts#L1-L59)
@@ -163,6 +174,7 @@ end
 ## 详细组件分析
 
 ### 任务管理 DTO
+
 - 设计要点
   - 使用共享 Todo Schema 定义字段范围与约束，如 UUID 标识、布尔状态、整数排序与版本号、日期字段支持字符串或 Date 对象等。
   - 支持递归规则枚举与时区约束，以及延期、完成、删除等生命周期字段。
@@ -215,16 +227,19 @@ TodoSchema <.. SyncResponseSchema : "作为返回元素"
 ```
 
 图表来源
+
 - [packages/shared/src/schemas/todo.schema.ts:8-28](file://packages/shared/src/schemas/todo.schema.ts#L8-L28)
 - [packages/shared/src/schemas/todo.schema.ts:40-51](file://packages/shared/src/schemas/todo.schema.ts#L40-L51)
 - [packages/shared/src/schemas/todo.schema.ts:62-68](file://packages/shared/src/schemas/todo.schema.ts#L62-L68)
 
 章节来源
+
 - [packages/shared/src/schemas/todo.schema.ts:1-76](file://packages/shared/src/schemas/todo.schema.ts#L1-L76)
 - [apps/backend/src/todos/todos.dto.ts:1-5](file://apps/backend/src/todos/todos.dto.ts#L1-L5)
 - [packages/shared/src/schemas/todo.schema.spec.ts:1-57](file://packages/shared/src/schemas/todo.schema.spec.ts#L1-L57)
 
 ### 用户认证 DTO
+
 - 设计要点
   - 共享邮箱与密码基础规则，注册与登录分别组合不同字段集。
   - 支持更新用户信息（名称、头像 URL）与认证响应（访问令牌、刷新令牌、用户信息）。
@@ -288,16 +303,19 @@ ForgotPasswordSchema <.. ResetPasswordSchema : "重置流程"
 ```
 
 图表来源
+
 - [packages/shared/src/schemas/auth.schema.ts:25-41](file://packages/shared/src/schemas/auth.schema.ts#L25-L41)
 - [packages/shared/src/schemas/auth.schema.ts:59-77](file://packages/shared/src/schemas/auth.schema.ts#L59-L77)
 - [packages/shared/src/schemas/auth.schema.ts:82-110](file://packages/shared/src/schemas/auth.schema.ts#L82-L110)
 
 章节来源
+
 - [packages/shared/src/schemas/auth.schema.ts:1-121](file://packages/shared/src/schemas/auth.schema.ts#L1-L121)
 - [apps/backend/src/auth/auth.dto.ts:1-41](file://apps/backend/src/auth/auth.dto.ts#L1-L41)
 - [packages/shared/src/schemas/i18n-keys.ts:1-13](file://packages/shared/src/schemas/i18n-keys.ts#L1-L13)
 
 ### MCP 配置 DTO
+
 - 设计要点
   - 传输类型枚举（STDIO/HTTP），并针对每种类型提供专用配置 Schema。
   - HTTP 配置支持 URL 校验与私有/环回地址阻断，OAuth/Bearer/API-Key 认证模式。
@@ -352,6 +370,7 @@ McpServerBaseSchema <|-- UpdateMcpServerSchema
 ```
 
 图表来源
+
 - [packages/shared/src/schemas/mcp.schema.ts:6-11](file://packages/shared/src/schemas/mcp.schema.ts#L6-L11)
 - [packages/shared/src/schemas/mcp.schema.ts:79-84](file://packages/shared/src/schemas/mcp.schema.ts#L79-L84)
 - [packages/shared/src/schemas/mcp.schema.ts:101-116](file://packages/shared/src/schemas/mcp.schema.ts#L101-L116)
@@ -359,12 +378,14 @@ McpServerBaseSchema <|-- UpdateMcpServerSchema
 - [packages/shared/src/schemas/mcp.schema.ts:148-161](file://packages/shared/src/schemas/mcp.schema.ts#L148-L161)
 
 章节来源
+
 - [packages/shared/src/schemas/mcp.schema.ts:1-220](file://packages/shared/src/schemas/mcp.schema.ts#L1-L220)
 - [apps/backend/src/mcp/mcp.dto.ts:1-59](file://apps/backend/src/mcp/mcp.dto.ts#L1-L59)
 - [apps/frontend/src/features/mcp/components/mcpServerForm.types.ts:1-25](file://apps/frontend/src/features/mcp/components/mcpServerForm.types.ts#L1-L25)
 - [packages/shared/src/schemas/mcp.schema.spec.ts:1-67](file://packages/shared/src/schemas/mcp.schema.spec.ts#L1-L67)
 
 ### 技能运行时 DTO（扩展）
+
 - 设计要点
   - 支持模板值绑定（$source: arg|secret），允许在运行时注入参数或密钥。
   - HTTP 技能运行时请求包含 URL、方法、头部、查询、请求体、超时与响应类型等字段。
@@ -376,9 +397,11 @@ McpServerBaseSchema <|-- UpdateMcpServerSchema
   - 通过 createZodDto 包装，自动获得强类型输入与 Swagger 文档。
 
 章节来源
+
 - [apps/backend/src/skill-sources/skill-runtime.dto.ts:1-98](file://apps/backend/src/skill-sources/skill-runtime.dto.ts#L1-L98)
 
 ### 输入预处理、类型转换与错误处理策略
+
 - 输入预处理
   - 共享 Schema 在解析阶段即完成类型收敛与格式化（如邮箱小写、去除空白、URL 合法性、枚举约束等）。
   - MCP HTTP URL 校验与私有/环回地址阻断，避免内网暴露风险。
@@ -401,16 +424,19 @@ Filter --> End
 ```
 
 图表来源
+
 - [apps/backend/src/common/filters/all-exceptions.filter.ts:52-86](file://apps/backend/src/common/filters/all-exceptions.filter.ts#L52-L86)
 - [apps/backend/src/common/interceptors/transform.interceptor.ts:20-28](file://apps/backend/src/common/interceptors/transform.interceptor.ts#L20-L28)
 - [packages/shared/src/utils/user.utils.ts:19-28](file://packages/shared/src/utils/user.utils.ts#L19-L28)
 
 章节来源
+
 - [apps/backend/src/common/filters/all-exceptions.filter.ts:1-137](file://apps/backend/src/common/filters/all-exceptions.filter.ts#L1-L137)
 - [apps/backend/src/common/interceptors/transform.interceptor.ts:1-30](file://apps/backend/src/common/interceptors/transform.interceptor.ts#L1-L30)
 - [packages/shared/src/utils/user.utils.ts:1-36](file://packages/shared/src/utils/user.utils.ts#L1-L36)
 
 ### 共享 Schema 的设计思想、一致性与版本兼容
+
 - 设计思想
   - 将验证规则与类型定义集中在共享包，避免重复与漂移，确保前端、后端与测试用例的一致性。
   - 使用 refine/superRefine 实现跨字段约束（如 MCP 传输与配置必须匹配、更新时需成对提供）。
@@ -422,12 +448,14 @@ Filter --> End
   - 建议新增字段时保持向后兼容，避免破坏既有客户端行为。
 
 章节来源
+
 - [packages/shared/src/schemas/todo.schema.ts:10-28](file://packages/shared/src/schemas/todo.schema.ts#L10-L28)
 - [packages/shared/src/schemas/mcp.schema.ts:148-172](file://packages/shared/src/schemas/mcp.schema.ts#L148-L172)
 - [packages/shared/src/schemas/i18n-keys.ts:1-13](file://packages/shared/src/schemas/i18n-keys.ts#L1-L13)
 - [apps/frontend/src/lib/zod-i18n.ts:18-95](file://apps/frontend/src/lib/zod-i18n.ts#L18-L95)
 
 ## 依赖关系分析
+
 - 模块耦合
   - 后端 DTO 仅依赖共享 Schema，降低耦合度，便于独立演进。
   - 异常过滤器与拦截器作为横切关注点，被所有控制器复用。
@@ -450,6 +478,7 @@ F_ZOD_I18N["zod-i18n.ts"] --> F_FORM_TYPES["mcpServerForm.types.ts"]
 ```
 
 图表来源
+
 - [packages/shared/src/schemas/todo.schema.ts:1-76](file://packages/shared/src/schemas/todo.schema.ts#L1-L76)
 - [packages/shared/src/schemas/auth.schema.ts:1-121](file://packages/shared/src/schemas/auth.schema.ts#L1-L121)
 - [packages/shared/src/schemas/mcp.schema.ts:1-220](file://packages/shared/src/schemas/mcp.schema.ts#L1-L220)
@@ -462,6 +491,7 @@ F_ZOD_I18N["zod-i18n.ts"] --> F_FORM_TYPES["mcpServerForm.types.ts"]
 - [apps/frontend/src/features/mcp/components/mcpServerForm.types.ts:1-25](file://apps/frontend/src/features/mcp/components/mcpServerForm.types.ts#L1-L25)
 
 章节来源
+
 - [packages/shared/src/schemas/todo.schema.ts:1-76](file://packages/shared/src/schemas/todo.schema.ts#L1-L76)
 - [packages/shared/src/schemas/auth.schema.ts:1-121](file://packages/shared/src/schemas/auth.schema.ts#L1-L121)
 - [packages/shared/src/schemas/mcp.schema.ts:1-220](file://packages/shared/src/schemas/mcp.schema.ts#L1-L220)
@@ -474,12 +504,14 @@ F_ZOD_I18N["zod-i18n.ts"] --> F_FORM_TYPES["mcpServerForm.types.ts"]
 - [apps/frontend/src/features/mcp/components/mcpServerForm.types.ts:1-25](file://apps/frontend/src/features/mcp/components/mcpServerForm.types.ts#L1-L25)
 
 ## 性能考量
+
 - 避免过度嵌套：复杂 Schema（如技能运行时模板值）通过 lazy 与严格模式控制深度，减少解析开销。
 - 选择性校验：仅在必要路径执行 refine/superRefine，避免对非关键路径造成额外负担。
 - 缓存与复用：共享 Schema 在多处复用，减少重复定义与解析成本。
 - 响应包装：拦截器与异常过滤器为所有路由提供统一处理，减少重复代码与分支判断。
 
 ## 故障排查指南
+
 - Zod 校验失败
   - 检查字段路径与国际化键名是否正确映射；确认共享 Schema 中的验证规则与前端本地校验一致。
   - 参考异常过滤器如何提取字段级错误并进行国际化处理。
@@ -490,13 +522,16 @@ F_ZOD_I18N["zod-i18n.ts"] --> F_FORM_TYPES["mcpServerForm.types.ts"]
   - 确认拦截器是否生效；检查异常过滤器是否正确捕获并返回结构化错误对象。
 
 章节来源
+
 - [apps/backend/src/common/filters/all-exceptions.filter.ts:52-134](file://apps/backend/src/common/filters/all-exceptions.filter.ts#L52-L134)
 - [packages/shared/src/schemas/mcp.schema.ts:148-172](file://packages/shared/src/schemas/mcp.schema.ts#L148-L172)
 
 ## 结论
+
 本项目通过“共享 Schema + Nest DTO 包装 + 前端 Zod 国际化”的架构，实现了跨模块的数据一致性与可维护性。任务管理、用户认证与 MCP 配置三大模块的 DTO 均以 Zod 为核心，辅以严格的类型定义与错误处理策略，既保证了运行时安全，也提升了开发效率与用户体验。
 
 ## 附录
+
 - 最佳实践
   - 将所有验证规则集中在共享 Schema，避免重复与漂移。
   - 使用 refine/superRefine 表达跨字段约束，确保业务一致性。

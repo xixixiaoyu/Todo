@@ -9,6 +9,7 @@
 </cite>
 
 ## 目录
+
 1. [简介](#简介)
 2. [项目结构](#项目结构)
 3. [核心组件](#核心组件)
@@ -21,9 +22,11 @@
 10. [附录](#附录)
 
 ## 简介
+
 本文件围绕前端组合式API useSocket 的WebSocket通信能力进行系统化说明，覆盖连接管理、消息处理、状态监控、房间管理、事件监听与广播机制，并给出自动重连与错误恢复策略、调试方法、性能优化与安全注意事项。后端基于 NestJS WebSocket Gateway 提供认证、房间与广播能力，前后端通过统一的事件命名空间与鉴权流程协作。
 
 ## 项目结构
+
 - 前端
   - 组合式API：useSocket（Socket.IO 客户端封装）、useSocket.errors（错误类型与分类辅助）
   - 功能集成：todo.cloud.listeners 使用 useSocket 订阅 todos:sync、todos:remind 等事件
@@ -46,29 +49,34 @@ A --> |错误分类| B
 ```
 
 图表来源
+
 - [apps/frontend/src/composables/useSocket.ts:56-191](file://apps/frontend/src/composables/useSocket.ts#L56-L191)
 - [apps/frontend/src/composables/useSocket.errors.ts:1-33](file://apps/frontend/src/composables/useSocket.errors.ts#L1-L33)
 - [apps/frontend/src/features/todo/stores/todo.cloud.listeners.ts:47-84](file://apps/frontend/src/features/todo/stores/todo.cloud.listeners.ts#L47-L84)
 - [apps/backend/src/events/events.gateway.ts:57-266](file://apps/backend/src/events/events.gateway.ts#L57-L266)
 
 章节来源
+
 - [apps/frontend/src/composables/useSocket.ts:56-191](file://apps/frontend/src/composables/useSocket.ts#L56-L191)
 - [apps/frontend/src/composables/useSocket.errors.ts:1-33](file://apps/frontend/src/composables/useSocket.errors.ts#L1-L33)
 - [apps/frontend/src/features/todo/stores/todo.cloud.listeners.ts:47-84](file://apps/frontend/src/features/todo/stores/todo.cloud.listeners.ts#L47-L84)
 - [apps/backend/src/events/events.gateway.ts:57-266](file://apps/backend/src/events/events.gateway.ts#L57-L266)
 
 ## 核心组件
+
 - useSocket：提供单例 Socket 实例、连接/断开、等待连接完成、连接状态与 socketId 暴露；内置自动重连与认证错误处理；对前端业务层暴露统一接口。
 - useSocket.errors：定义 Socket 连接错误结构体与两类错误识别函数：认证错误与瞬态传输错误。
 - todo.cloud.listeners：在认证状态变化时动态挂载事件监听，订阅 todos:sync、todos:remind 等后端广播事件。
 
 章节来源
+
 - [apps/frontend/src/composables/useSocket.ts:19-26](file://apps/frontend/src/composables/useSocket.ts#L19-L26)
 - [apps/frontend/src/composables/useSocket.ts:56-191](file://apps/frontend/src/composables/useSocket.ts#L56-L191)
 - [apps/frontend/src/composables/useSocket.errors.ts:1-33](file://apps/frontend/src/composables/useSocket.errors.ts#L1-L33)
 - [apps/frontend/src/features/todo/stores/todo.cloud.listeners.ts:7-13](file://apps/frontend/src/features/todo/stores/todo.cloud.listeners.ts#L7-L13)
 
 ## 架构总览
+
 - 前端通过 useSocket 初始化 Socket.IO 客户端，设置认证令牌、传输协议、重连参数与命名空间路径。
 - 后端 EventsGateway 在握手阶段校验 JWT，绑定用户身份到 socket.data.user，并自动将客户端加入其专属房间 user:{userId}。
 - 前端在连接成功后可主动 join 房间或由后端自动加入；随后订阅业务事件（如 todos:sync、todos:remind）。
@@ -92,12 +100,14 @@ GW-->>FE : 广播 todos : sync/todos : remind
 ```
 
 图表来源
+
 - [apps/frontend/src/composables/useSocket.ts:59-111](file://apps/frontend/src/composables/useSocket.ts#L59-L111)
 - [apps/backend/src/events/events.gateway.ts:86-141](file://apps/backend/src/events/events.gateway.ts#L86-L141)
 
 ## 详细组件分析
 
 ### useSocket 组合式API
+
 - 单例与状态
   - 保持全局唯一 Socket 实例，维护 isConnected 与 socketId 的响应式状态。
   - 仅在首次调用时初始化监听器，避免重复订阅。
@@ -138,14 +148,17 @@ IsTransient --> |否| LogError["记录异常日志(带冷却)"]
 ```
 
 图表来源
+
 - [apps/frontend/src/composables/useSocket.ts:164-180](file://apps/frontend/src/composables/useSocket.ts#L164-L180)
 - [apps/frontend/src/composables/useSocket.ts:113-120](file://apps/frontend/src/composables/useSocket.ts#L113-L120)
 - [apps/frontend/src/composables/useSocket.ts:93-108](file://apps/frontend/src/composables/useSocket.ts#L93-L108)
 
 章节来源
+
 - [apps/frontend/src/composables/useSocket.ts:56-191](file://apps/frontend/src/composables/useSocket.ts#L56-L191)
 
 ### useSocket.errors 错误分类工具
+
 - 类型定义：SocketConnectionError 包含 message、type、description、context 等字段。
 - 认证错误识别：根据错误消息中包含 unauthorized、token、jwt、authentication 等关键词判断。
 - 瞬态错误识别：根据错误消息或类型中包含 timeout、transport close、transport error、websocket error、xhr poll/post error 等关键词判断。
@@ -166,12 +179,15 @@ ErrorHelpers --> SocketConnectionError : "输入"
 ```
 
 图表来源
+
 - [apps/frontend/src/composables/useSocket.errors.ts:1-33](file://apps/frontend/src/composables/useSocket.errors.ts#L1-L33)
 
 章节来源
+
 - [apps/frontend/src/composables/useSocket.errors.ts:1-33](file://apps/frontend/src/composables/useSocket.errors.ts#L1-L33)
 
 ### 业务事件监听器 todo.cloud.listeners
+
 - 初始化与挂载
   - 首次调用时启动本地提醒循环，加载认证状态，attach 事件监听。
   - 当认证状态变化时，强制重新 attach，确保在登录后自动连接并订阅事件。
@@ -198,13 +214,16 @@ Sock-->>Store : 回调执行(触发同步/提醒)
 ```
 
 图表来源
+
 - [apps/frontend/src/features/todo/stores/todo.cloud.listeners.ts:47-84](file://apps/frontend/src/features/todo/stores/todo.cloud.listeners.ts#L47-L84)
 - [apps/frontend/src/composables/useSocket.ts:113-120](file://apps/frontend/src/composables/useSocket.ts#L113-L120)
 
 章节来源
+
 - [apps/frontend/src/features/todo/stores/todo.cloud.listeners.ts:47-84](file://apps/frontend/src/features/todo/stores/todo.cloud.listeners.ts#L47-L84)
 
 ### 后端 EventsGateway 能力
+
 - 认证中间件
   - 从握手数据或头部提取 token，校验 JWT 并检查会话是否失效，失败则拒绝连接。
   - 成功后将用户信息写入 socket.data.user，后续房间访问控制以此为准。
@@ -235,15 +254,18 @@ LeaveEvt --> LeaveOK["离开房间并广播 user:left"]
 ```
 
 图表来源
+
 - [apps/backend/src/events/events.gateway.ts:86-141](file://apps/backend/src/events/events.gateway.ts#L86-L141)
 - [apps/backend/src/events/events.gateway.ts:150-175](file://apps/backend/src/events/events.gateway.ts#L150-L175)
 - [apps/backend/src/events/events.gateway.ts:207-226](file://apps/backend/src/events/events.gateway.ts#L207-L226)
 - [apps/backend/src/events/events.gateway.ts:231-250](file://apps/backend/src/events/events.gateway.ts#L231-L250)
 
 章节来源
+
 - [apps/backend/src/events/events.gateway.ts:57-266](file://apps/backend/src/events/events.gateway.ts#L57-L266)
 
 ## 依赖关系分析
+
 - 前端依赖
   - useSocket 依赖认证状态存储以驱动连接生命周期。
   - todo.cloud.listeners 依赖 useSocket 的 connect 与事件监听能力。
@@ -263,16 +285,19 @@ TL["todo.cloud.listeners.ts"] --> |on/emit| IO
 ```
 
 图表来源
+
 - [apps/frontend/src/composables/useSocket.ts:56-191](file://apps/frontend/src/composables/useSocket.ts#L56-L191)
 - [apps/frontend/src/features/todo/stores/todo.cloud.listeners.ts:47-84](file://apps/frontend/src/features/todo/stores/todo.cloud.listeners.ts#L47-L84)
 - [apps/backend/src/events/events.gateway.ts:66-116](file://apps/backend/src/events/events.gateway.ts#L66-L116)
 
 章节来源
+
 - [apps/frontend/src/composables/useSocket.ts:56-191](file://apps/frontend/src/composables/useSocket.ts#L56-L191)
 - [apps/frontend/src/features/todo/stores/todo.cloud.listeners.ts:47-84](file://apps/frontend/src/features/todo/stores/todo.cloud.listeners.ts#L47-L84)
 - [apps/backend/src/events/events.gateway.ts:57-266](file://apps/backend/src/events/events.gateway.ts#L57-L266)
 
 ## 性能考量
+
 - 传输选择
   - 开发环境优先轮询，便于调试；生产环境优先 WebSocket，降低延迟与 CPU 开销。
 - 重连策略
@@ -287,6 +312,7 @@ TL["todo.cloud.listeners.ts"] --> |on/emit| IO
 [本节为通用性能建议，无需特定文件引用]
 
 ## 故障排查指南
+
 - 连接失败
   - 检查认证令牌是否有效与最新；若出现认证类错误，确认 isSocketAuthError 判断逻辑与刷新流程。
   - 关注 connect_error 事件，区分瞬态错误与非瞬态错误；瞬态错误应交由自动重连处理。
@@ -300,16 +326,19 @@ TL["todo.cloud.listeners.ts"] --> |on/emit| IO
   - 确保前端 path 与后端命名空间一致；核对 CORS 配置允许来源与凭证。
 
 章节来源
+
 - [apps/frontend/src/composables/useSocket.ts:32-51](file://apps/frontend/src/composables/useSocket.ts#L32-L51)
 - [apps/frontend/src/composables/useSocket.ts:93-108](file://apps/frontend/src/composables/useSocket.ts#L93-L108)
 - [apps/backend/src/events/events.gateway.ts:20-56](file://apps/backend/src/events/events.gateway.ts#L20-L56)
 
 ## 结论
+
 useSocket 将 Socket.IO 的复杂性封装为简洁的组合式API，提供连接生命周期管理、认证错误自愈、瞬态错误屏蔽与冷却日志等能力；配合后端 EventsGateway 的认证中间件、房间与广播机制，形成完整的实时通信闭环。业务侧通过 todo.cloud.listeners 展示了如何在认证状态变化时动态挂载事件监听，实现跨设备同步与提醒等场景。
 
 [本节为总结，无需特定文件引用]
 
 ## 附录
+
 - 事件清单
   - 前端触发：join、leave、message（由业务侧决定是否发送）
   - 前端订阅：todos:sync、todos:remind、user:joined、user:left、message

@@ -13,6 +13,7 @@
 </cite>
 
 ## 目录
+
 1. [简介](#简介)
 2. [项目结构](#项目结构)
 3. [核心组件](#核心组件)
@@ -25,7 +26,9 @@
 10. [附录](#附录)
 
 ## 简介
+
 本文件面向 Lumina Todo 的 WebSocket 实时通信系统，系统基于 NestJS 的 @nestjs/websockets 与 socket.io，提供以下能力：
+
 - 用户认证与授权：通过访问令牌校验，限制房间访问范围为“用户专属房间”
 - 房间管理：自动加入用户房间；支持加入/离开房间；广播用户加入/离开事件
 - 任务同步事件：服务端在关键变更后向用户房间广播“todos:sync”事件，触发客户端去拉取增量数据
@@ -36,6 +39,7 @@
 - 性能优化：服务端对广播做去抖，客户端对同步做冷却与防抖
 
 ## 项目结构
+
 WebSocket 相关代码主要分布在后端网关与前端组合式函数中，并通过共享 DTO 与事件约定进行协作。
 
 ```mermaid
@@ -64,6 +68,7 @@ SHARED --- SYNCSTORE
 ```
 
 图示来源
+
 - [apps/backend/src/events/events.gateway.ts:1-266](file://apps/backend/src/events/events.gateway.ts#L1-L266)
 - [apps/backend/src/todos/todos-sync.service.ts:1-226](file://apps/backend/src/todos/todos-sync.service.ts#L1-L226)
 - [apps/backend/src/todos/todos.dto.ts:1-5](file://apps/backend/src/todos/todos.dto.ts#L1-L5)
@@ -73,10 +78,12 @@ SHARED --- SYNCSTORE
 - [packages/shared/src/schemas/todo.schema.ts:1-76](file://packages/shared/src/schemas/todo.schema.ts#L1-L76)
 
 章节来源
+
 - [apps/backend/src/events/events.gateway.ts:1-266](file://apps/backend/src/events/events.gateway.ts#L1-L266)
 - [apps/frontend/src/composables/useSocket.ts:1-191](file://apps/frontend/src/composables/useSocket.ts#L1-L191)
 
 ## 核心组件
+
 - 后端网关 EventsGateway
   - 认证中间件：从握手参数或 Authorization 头提取访问令牌，校验并写入 socket.data.user
   - 房间权限：ensureOwnRoomAccess 限制客户端只能访问自身房间 user:{userId}
@@ -96,11 +103,13 @@ SHARED --- SYNCSTORE
   - 前端监听：todo.cloud.listeners 监听 todos:sync/todos:remind，触发云端同步
 
 章节来源
+
 - [apps/backend/src/events/events.gateway.ts:57-266](file://apps/backend/src/events/events.gateway.ts#L57-L266)
 - [apps/frontend/src/composables/useSocket.ts:56-191](file://apps/frontend/src/composables/useSocket.ts#L56-L191)
 - [apps/backend/src/todos/todos-sync.service.ts:42-226](file://apps/backend/src/todos/todos-sync.service.ts#L42-L226)
 
 ## 架构总览
+
 WebSocket 采用“后端网关 + 前端组合式函数 + 共享 Schema”的分层设计，事件流如下：
 
 ```mermaid
@@ -124,6 +133,7 @@ SVC-->>FE : "返回 synced/deletedIds/conflicts/serverTime"
 ```
 
 图示来源
+
 - [apps/frontend/src/composables/useSocket.ts:59-120](file://apps/frontend/src/composables/useSocket.ts#L59-L120)
 - [apps/backend/src/events/events.gateway.ts:177-202](file://apps/backend/src/events/events.gateway.ts#L177-L202)
 - [apps/backend/src/todos/todos-sync.service.ts:212-215](file://apps/backend/src/todos/todos-sync.service.ts#L212-L215)
@@ -131,6 +141,7 @@ SVC-->>FE : "返回 synced/deletedIds/conflicts/serverTime"
 ## 详细组件分析
 
 ### 后端网关 EventsGateway
+
 - 认证与握手
   - 从握手 auth 或 Authorization 头提取 token，verifyAccessToken 校验
   - 校验会话是否失效（如登出/换设备），失败则拒绝连接
@@ -166,15 +177,18 @@ EventsGateway --> TokenService : "使用"
 ```
 
 图示来源
+
 - [apps/backend/src/events/events.gateway.ts:57-266](file://apps/backend/src/events/events.gateway.ts#L57-L266)
 
 章节来源
+
 - [apps/backend/src/events/events.gateway.ts:86-145](file://apps/backend/src/events/events.gateway.ts#L86-L145)
 - [apps/backend/src/events/events.gateway.ts:150-175](file://apps/backend/src/events/events.gateway.ts#L150-L175)
 - [apps/backend/src/events/events.gateway.ts:207-250](file://apps/backend/src/events/events.gateway.ts#L207-L250)
 - [apps/backend/src/events/events.gateway.ts:177-202](file://apps/backend/src/events/events.gateway.ts#L177-L202)
 
 ### 前端 useSocket 组合式函数
+
 - 连接参数
   - 命名空间：/events
   - 传输：websocket/polling（开发优先 polling，生产优先 websocket）
@@ -205,14 +219,17 @@ Joined --> Run["运行业务监听/同步"]
 ```
 
 图示来源
+
 - [apps/frontend/src/composables/useSocket.ts:59-120](file://apps/frontend/src/composables/useSocket.ts#L59-L120)
 - [apps/frontend/src/composables/useSocket.errors.ts:8-32](file://apps/frontend/src/composables/useSocket.errors.ts#L8-L32)
 
 章节来源
+
 - [apps/frontend/src/composables/useSocket.ts:56-191](file://apps/frontend/src/composables/useSocket.ts#L56-L191)
 - [apps/frontend/src/composables/useSocket.errors.ts:1-33](file://apps/frontend/src/composables/useSocket.errors.ts#L1-L33)
 
 ### 任务同步事件与流程
+
 - 服务端
   - TodoSyncService 接收客户端待同步的 todos 与 lastSyncAt
   - 执行事务性合并，检测墓碑、所有权与版本冲突
@@ -240,17 +257,20 @@ SVC-->>FE : "返回 synced/deletedIds/conflicts/serverTime"
 ```
 
 图示来源
+
 - [apps/backend/src/todos/todos-sync.service.ts:52-224](file://apps/backend/src/todos/todos-sync.service.ts#L52-L224)
 - [apps/backend/src/events/events.gateway.ts:177-202](file://apps/backend/src/events/events.gateway.ts#L177-L202)
 - [apps/frontend/src/features/todo/stores/todo.cloud.listeners.ts:24-31](file://apps/frontend/src/features/todo/stores/todo.cloud.listeners.ts#L24-L31)
 - [apps/frontend/src/features/todo/stores/todo.cloud.sync.ts:47-74](file://apps/frontend/src/features/todo/stores/todo.cloud.sync.ts#L47-L74)
 
 章节来源
+
 - [apps/backend/src/todos/todos-sync.service.ts:42-226](file://apps/backend/src/todos/todos-sync.service.ts#L42-L226)
 - [apps/frontend/src/features/todo/stores/todo.cloud.listeners.ts:1-89](file://apps/frontend/src/features/todo/stores/todo.cloud.listeners.ts#L1-L89)
 - [apps/frontend/src/features/todo/stores/todo.cloud.sync.ts:1-187](file://apps/frontend/src/features/todo/stores/todo.cloud.sync.ts#L1-L187)
 
 ### 聊天消息与系统通知
+
 - 聊天消息
   - 事件名：message
   - 载荷：content 必填；可选 room 字段
@@ -262,10 +282,12 @@ SVC-->>FE : "返回 synced/deletedIds/conflicts/serverTime"
   - 行为：前端收到后更新本地提醒状态并提示
 
 章节来源
+
 - [apps/backend/src/events/events.gateway.ts:150-175](file://apps/backend/src/events/events.gateway.ts#L150-L175)
 - [apps/frontend/src/features/todo/stores/todo.cloud.listeners.ts:33-45](file://apps/frontend/src/features/todo/stores/todo.cloud.listeners.ts#L33-L45)
 
 ### 房间管理与广播规则
+
 - 房间命名
   - 用户房间：user:{userId}
   - 自动加入：连接成功后自动加入 user:{userId}
@@ -278,11 +300,13 @@ SVC-->>FE : "返回 synced/deletedIds/conflicts/serverTime"
   - 系统通知：todos:remind 由服务端按需触发
 
 章节来源
+
 - [apps/backend/src/events/events.gateway.ts:138-141](file://apps/backend/src/events/events.gateway.ts#L138-L141)
 - [apps/backend/src/events/events.gateway.ts:207-250](file://apps/backend/src/events/events.gateway.ts#L207-L250)
 - [apps/backend/src/events/events.gateway.ts:177-202](file://apps/backend/src/events/events.gateway.ts#L177-L202)
 
 ### 客户端连接示例与错误处理策略
+
 - 连接示例（概念步骤）
   - 初始化 useSocket，传入当前访问令牌
   - 连接成功后自动加入 user:{userId} 房间
@@ -293,10 +317,12 @@ SVC-->>FE : "返回 synced/deletedIds/conflicts/serverTime"
   - 其他错误：记录日志并提示
 
 章节来源
+
 - [apps/frontend/src/composables/useSocket.ts:59-120](file://apps/frontend/src/composables/useSocket.ts#L59-L120)
 - [apps/frontend/src/composables/useSocket.errors.ts:8-32](file://apps/frontend/src/composables/useSocket.errors.ts#L8-L32)
 
 ## 依赖关系分析
+
 - 后端
   - EventsGateway 依赖 TokenService 进行认证
   - TodoSyncService 依赖 EventsGateway 进行广播
@@ -316,6 +342,7 @@ SHARED["共享 Schema"] --> SYNCSTORE
 ```
 
 图示来源
+
 - [apps/backend/src/events/events.gateway.ts:66](file://apps/backend/src/events/events.gateway.ts#L66)
 - [apps/backend/src/todos/todos-sync.service.ts:43-47](file://apps/backend/src/todos/todos-sync.service.ts#L43-L47)
 - [apps/frontend/src/features/todo/stores/todo.cloud.listeners.ts:61-73](file://apps/frontend/src/features/todo/stores/todo.cloud.listeners.ts#L61-L73)
@@ -324,11 +351,13 @@ SHARED["共享 Schema"] --> SYNCSTORE
 - [packages/shared/src/schemas/todo.schema.ts:40-68](file://packages/shared/src/schemas/todo.schema.ts#L40-L68)
 
 章节来源
+
 - [apps/backend/src/events/events.gateway.ts:57-266](file://apps/backend/src/events/events.gateway.ts#L57-L266)
 - [apps/backend/src/todos/todos-sync.service.ts:42-226](file://apps/backend/src/todos/todos-sync.service.ts#L42-L226)
 - [apps/frontend/src/composables/useSocket.ts:56-191](file://apps/frontend/src/composables/useSocket.ts#L56-L191)
 
 ## 性能考量
+
 - 服务端广播去抖
   - 对同一用户在短时间内多次变更，使用定时器合并为一次广播，降低广播风暴
 - 客户端同步冷却与防抖
@@ -340,12 +369,14 @@ SHARED["共享 Schema"] --> SYNCSTORE
   - 服务端按 lastSyncAt 过滤增量变更，避免重复传输
 
 章节来源
+
 - [apps/backend/src/events/events.gateway.ts:177-202](file://apps/backend/src/events/events.gateway.ts#L177-L202)
 - [apps/frontend/src/features/todo/stores/todo.cloud.sync.ts:15-156](file://apps/frontend/src/features/todo/stores/todo.cloud.sync.ts#L15-L156)
 - [apps/frontend/src/composables/useSocket.ts:14-15](file://apps/frontend/src/composables/useSocket.ts#L14-L15)
 - [apps/backend/src/todos/todos-sync.service.ts:182-192](file://apps/backend/src/todos/todos-sync.service.ts#L182-L192)
 
 ## 故障排查指南
+
 - 连接失败
   - 检查 CORS 配置与 allowedHeaders 是否包含必要头部
   - 确认握手时携带 token，且未过期或被标记失效
@@ -362,17 +393,20 @@ SHARED["共享 Schema"] --> SYNCSTORE
   - 云端同步是否满足冷却与待同步条件
 
 章节来源
+
 - [apps/backend/src/events/events.gateway.ts:20-56](file://apps/backend/src/events/events.gateway.ts#L20-L56)
 - [apps/backend/src/events/events.gateway.ts:86-116](file://apps/backend/src/events/events.gateway.ts#L86-L116)
 - [apps/frontend/src/composables/useSocket.errors.ts:8-32](file://apps/frontend/src/composables/useSocket.errors.ts#L8-L32)
 - [apps/frontend/src/features/todo/stores/todo.cloud.listeners.ts:61-73](file://apps/frontend/src/features/todo/stores/todo.cloud.listeners.ts#L61-L73)
 
 ## 结论
+
 本 WebSocket 实时通信系统通过严格的认证与房间权限控制，结合服务端广播去抖与客户端冷却防抖策略，在保证一致性的同时兼顾了性能与稳定性。任务同步、聊天消息与系统通知三大事件族覆盖了核心交互场景，配合统一的错误分类与重连机制，能够有效应对网络波动与认证失效等异常情况。
 
 ## 附录
 
 ### 事件与载荷规范
+
 - 通用
   - 事件名：字符串
   - 载荷：对象，包含业务所需字段
@@ -395,12 +429,14 @@ SHARED["共享 Schema"] --> SYNCSTORE
   - 行为：前端收到后更新本地提醒状态
 
 章节来源
+
 - [apps/backend/src/events/events.gateway.ts:150-175](file://apps/backend/src/events/events.gateway.ts#L150-L175)
 - [apps/backend/src/events/events.gateway.ts:207-250](file://apps/backend/src/events/events.gateway.ts#L207-L250)
 - [apps/backend/src/events/events.gateway.ts:177-202](file://apps/backend/src/events/events.gateway.ts#L177-L202)
 - [apps/frontend/src/features/todo/stores/todo.cloud.listeners.ts:33-45](file://apps/frontend/src/features/todo/stores/todo.cloud.listeners.ts#L33-L45)
 
 ### 连接参数与配置
+
 - 命名空间：/events
 - 传输：websocket/polling（开发优先 polling，生产优先 websocket）
 - 认证：auth.token 注入
@@ -408,10 +444,12 @@ SHARED["共享 Schema"] --> SYNCSTORE
 - CORS：允许特定 origin 与必要头部，生产环境允许空 origin
 
 章节来源
+
 - [apps/frontend/src/composables/useSocket.ts:64-77](file://apps/frontend/src/composables/useSocket.ts#L64-L77)
 - [apps/backend/src/events/events.gateway.ts:20-56](file://apps/backend/src/events/events.gateway.ts#L20-L56)
 
 ### 数据模型与同步协议
+
 - 请求体（SyncMergeRequest）
   - todos：数组，元素为 Todo 对象
   - lastSyncAt：可选，时间戳或 ISO 字符串
@@ -423,5 +461,6 @@ SHARED["共享 Schema"] --> SYNCSTORE
   - serverTime：服务端时间戳
 
 章节来源
+
 - [packages/shared/src/schemas/todo.schema.ts:40-68](file://packages/shared/src/schemas/todo.schema.ts#L40-L68)
 - [apps/backend/src/todos/todos.dto.ts:2](file://apps/backend/src/todos/todos.dto.ts#L2)

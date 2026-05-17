@@ -16,6 +16,7 @@
 </cite>
 
 ## 目录
+
 1. [简介](#简介)
 2. [项目结构](#项目结构)
 3. [核心组件](#核心组件)
@@ -28,7 +29,9 @@
 10. [附录：接口清单与示例](#附录接口清单与示例)
 
 ## 简介
+
 本文件为“用户管理”模块的REST API文档，覆盖以下能力：
+
 - 用户信息查询（分页/列表、详情、当前用户）
 - 用户资料修改（名称、头像URL等）
 - 头像上传与管理（本地/云端存储）
@@ -38,7 +41,9 @@
 - 常见使用场景与请求/响应示例
 
 ## 项目结构
+
 用户管理相关模块主要分布在后端应用中，采用按功能域划分的目录结构：
+
 - 用户域：users.controller.ts、users.service.ts
 - 认证域：auth.controller.ts、auth.dto.ts
 - 上传域：upload.controller.ts、storage.service.ts、upload.constants.ts
@@ -68,6 +73,7 @@ AD --> SH1
 ```
 
 图表来源
+
 - [apps/backend/src/users/users.controller.ts:1-135](file://apps/backend/src/users/users.controller.ts#L1-135)
 - [apps/backend/src/users/users.service.ts:1-118](file://apps/backend/src/users/users.service.ts#L1-118)
 - [apps/backend/src/auth/auth.controller.ts:1-81](file://apps/backend/src/auth/auth.controller.ts#L1-81)
@@ -78,6 +84,7 @@ AD --> SH1
 - [packages/shared/src/utils/user.utils.ts:1-36](file://packages/shared/src/utils/user.utils.ts#L1-36)
 
 章节来源
+
 - [apps/backend/src/users/users.controller.ts:1-135](file://apps/backend/src/users/users.controller.ts#L1-135)
 - [apps/backend/src/users/users.service.ts:1-118](file://apps/backend/src/users/users.service.ts#L1-118)
 - [apps/backend/src/auth/auth.controller.ts:1-81](file://apps/backend/src/auth/auth.controller.ts#L1-81)
@@ -88,6 +95,7 @@ AD --> SH1
 - [packages/shared/src/utils/user.utils.ts:1-36](file://packages/shared/src/utils/user.utils.ts#L1-36)
 
 ## 核心组件
+
 - 用户控制器（UsersController）
   - 提供用户列表、当前用户、单个用户查询、头像上传、用户创建等接口
   - 使用 JWT 认证守卫保护接口
@@ -108,6 +116,7 @@ AD --> SH1
   - 提供用户对象格式化工具
 
 章节来源
+
 - [apps/backend/src/users/users.controller.ts:26-135](file://apps/backend/src/users/users.controller.ts#L26-L135)
 - [apps/backend/src/users/users.service.ts:12-118](file://apps/backend/src/users/users.service.ts#L12-L118)
 - [apps/backend/src/upload/upload.controller.ts:22-161](file://apps/backend/src/upload/upload.controller.ts#L22-L161)
@@ -117,6 +126,7 @@ AD --> SH1
 - [packages/shared/src/utils/user.utils.ts:19-35](file://packages/shared/src/utils/user.utils.ts#L19-L35)
 
 ## 架构总览
+
 用户管理API围绕“控制器-服务-存储-共享Schema”的分层设计，配合JWT认证与全局限流策略，形成统一的安全与可扩展架构。
 
 ```mermaid
@@ -150,6 +160,7 @@ UC-->>C : "200 OK + 用户信息"
 ```
 
 图表来源
+
 - [apps/backend/src/users/users.controller.ts:48-111](file://apps/backend/src/users/users.controller.ts#L48-L111)
 - [apps/backend/src/users/users.service.ts:69-82](file://apps/backend/src/users/users.service.ts#L69-L82)
 - [apps/backend/src/upload/storage.service.ts:74-139](file://apps/backend/src/upload/storage.service.ts#L74-L139)
@@ -157,6 +168,7 @@ UC-->>C : "200 OK + 用户信息"
 ## 详细组件分析
 
 ### 用户查询与列表
+
 - GET /users
   - 描述：获取所有用户列表
   - 权限：需要JWT认证
@@ -172,11 +184,13 @@ UC-->>C : "200 OK + 用户信息"
   - 返回：用户对象；当ID无效或不存在时返回错误
 
 章节来源
+
 - [apps/backend/src/users/users.controller.ts:37-54](file://apps/backend/src/users/users.controller.ts#L37-L54)
 - [apps/backend/src/users/users.controller.ts:116-122](file://apps/backend/src/users/users.controller.ts#L116-L122)
 - [apps/backend/src/users/users.service.ts:19-39](file://apps/backend/src/users/users.service.ts#L19-L39)
 
 ### 用户资料修改与头像管理
+
 - PATCH /users/me（通过更新用户字段实现）
   - 描述：更新当前用户的资料（如名称、头像URL）
   - 权限：需要JWT认证
@@ -209,16 +223,19 @@ Err --> Done
 ```
 
 图表来源
+
 - [apps/backend/src/users/users.controller.ts:72-111](file://apps/backend/src/users/users.controller.ts#L72-L111)
 - [apps/backend/src/upload/storage.service.ts:116-139](file://apps/backend/src/upload/storage.service.ts#L116-L139)
 - [apps/backend/src/upload/storage.service.ts:74-111](file://apps/backend/src/upload/storage.service.ts#L74-L111)
 
 章节来源
+
 - [apps/backend/src/users/users.controller.ts:59-111](file://apps/backend/src/users/users.controller.ts#L59-L111)
 - [apps/backend/src/upload/storage.service.ts:34-216](file://apps/backend/src/upload/storage.service.ts#L34-L216)
 - [apps/backend/src/upload/upload.constants.ts:1-66](file://apps/backend/src/upload/upload.constants.ts#L1-L66)
 
 ### 用户注册与认证
+
 - POST /auth/register
   - 描述：用户注册
   - 输入：email、name、password
@@ -258,18 +275,21 @@ Auth-->>Client : "201 Created + 认证响应"
 ```
 
 图表来源
+
 - [apps/backend/src/auth/auth.controller.ts:33-38](file://apps/backend/src/auth/auth.controller.ts#L33-L38)
 - [apps/backend/src/auth/auth.dto.ts:20-25](file://apps/backend/src/auth/auth.dto.ts#L20-L25)
 - [apps/backend/src/users/users.service.ts:96-116](file://apps/backend/src/users/users.service.ts#L96-L116)
 - [packages/shared/src/schemas/auth.schema.ts:33-41](file://packages/shared/src/schemas/auth.schema.ts#L33-L41)
 
 章节来源
+
 - [apps/backend/src/auth/auth.controller.ts:20-79](file://apps/backend/src/auth/auth.controller.ts#L20-L79)
 - [apps/backend/src/auth/auth.dto.ts:15-40](file://apps/backend/src/auth/auth.dto.ts#L15-L40)
 - [apps/backend/src/users/users.service.ts:96-116](file://apps/backend/src/users/users.service.ts#L96-L116)
 - [packages/shared/src/schemas/auth.schema.ts:25-41](file://packages/shared/src/schemas/auth.schema.ts#L25-L41)
 
 ### 文件上传与解析（通用）
+
 - POST /upload/single
   - 描述：上传单个文件
   - 请求体：multipart/form-data，字段名为file
@@ -291,10 +311,12 @@ Auth-->>Client : "201 Created + 认证响应"
   - 返回：{ success: true }
 
 章节来源
+
 - [apps/backend/src/upload/upload.controller.ts:67-159](file://apps/backend/src/upload/upload.controller.ts#L67-L159)
 - [apps/backend/src/common/throttling/throttling.constants.ts:132-142](file://apps/backend/src/common/throttling/throttling.constants.ts#L132-L142)
 
 ## 依赖关系分析
+
 - 控制器依赖服务：UsersController依赖UsersService；UploadController依赖StorageService
 - 服务依赖外部：UsersService依赖Prisma；StorageService依赖S3 SDK或本地文件系统
 - 数据模型：用户对象由共享Schema定义，服务层通过格式化工具转换为对外响应结构
@@ -345,6 +367,7 @@ AuthController --> AuthDto : "使用DTO"
 ```
 
 图表来源
+
 - [apps/backend/src/users/users.controller.ts:28-32](file://apps/backend/src/users/users.controller.ts#L28-L32)
 - [apps/backend/src/users/users.service.ts:12-14](file://apps/backend/src/users/users.service.ts#L12-L14)
 - [apps/backend/src/upload/upload.controller.ts:26-30](file://apps/backend/src/upload/upload.controller.ts#L26-L30)
@@ -352,6 +375,7 @@ AuthController --> AuthDto : "使用DTO"
 - [apps/backend/src/auth/auth.controller.ts:17-18](file://apps/backend/src/auth/auth.controller.ts#L17-L18)
 
 ## 性能与限流
+
 - 全局限流策略
   - 窗口定义：short（短）、medium（中）、long（长），默认TTL与限制可在环境变量中覆盖
   - 跳过规则：OPTIONS请求、/api/health及其子路径跳过全局限流
@@ -367,12 +391,14 @@ AuthController --> AuthDto : "使用DTO"
   - 错误消息统一为“请求过于频繁”
 
 章节来源
+
 - [apps/backend/src/common/throttling/throttling.constants.ts:173-197](file://apps/backend/src/common/throttling/throttling.constants.ts#L173-L197)
 - [apps/backend/src/common/throttling/throttling.constants.ts:90-142](file://apps/backend/src/common/throttling/throttling.constants.ts#L90-L142)
 - [apps/backend/src/auth/auth.controller.ts:23-48](file://apps/backend/src/auth/auth.controller.ts#L23-L48)
 - [apps/backend/src/upload/upload.controller.ts:70-90](file://apps/backend/src/upload/upload.controller.ts#L70-L90)
 
 ## 故障排查指南
+
 - 上传失败
   - 现象：上传接口返回错误
   - 可能原因：
@@ -395,13 +421,16 @@ AuthController --> AuthDto : "使用DTO"
   - 处理建议：检查输入字段、等待限流窗口恢复、确认令牌格式
 
 章节来源
+
 - [apps/backend/src/users/users.controller.ts:76-92](file://apps/backend/src/users/users.controller.ts#L76-L92)
 - [apps/backend/src/upload/storage.service.ts:84-101](file://apps/backend/src/upload/storage.service.ts#L84-L101)
 - [apps/backend/src/upload/storage.service.ts:208-214](file://apps/backend/src/upload/storage.service.ts#L208-L214)
 - [apps/backend/src/common/throttling/throttling.constants.ts:162-171](file://apps/backend/src/common/throttling/throttling.constants.ts#L162-L171)
 
 ## 结论
+
 本用户管理API以清晰的分层架构与严格的输入校验为基础，结合JWT认证与全局限流策略，提供了安全、可扩展的用户信息管理能力。头像上传支持本地与云端双模式，文件上传与解析接口满足多样化需求。建议在生产环境中：
+
 - 明确配置S3凭证以启用云端存储
 - 合理设置限流参数以平衡用户体验与系统负载
 - 对外暴露的接口遵循最小权限原则，避免不必要的公开接口
@@ -409,6 +438,7 @@ AuthController --> AuthDto : "使用DTO"
 ## 附录：接口清单与示例
 
 ### 用户查询
+
 - GET /users
   - 权限：JWT
   - 响应：用户数组
@@ -421,10 +451,12 @@ AuthController --> AuthDto : "使用DTO"
   - 响应：用户对象
 
 章节来源
+
 - [apps/backend/src/users/users.controller.ts:37-54](file://apps/backend/src/users/users.controller.ts#L37-L54)
 - [apps/backend/src/users/users.controller.ts:116-122](file://apps/backend/src/users/users.controller.ts#L116-L122)
 
 ### 头像上传与管理
+
 - POST /users/avatar
   - 权限：JWT
   - 请求体：multipart/form-data，字段file
@@ -432,10 +464,12 @@ AuthController --> AuthDto : "使用DTO"
   - 失败响应：缺少文件或不支持的文件类型
 
 章节来源
+
 - [apps/backend/src/users/users.controller.ts:59-111](file://apps/backend/src/users/users.controller.ts#L59-L111)
 - [apps/backend/src/upload/upload.constants.ts:1-66](file://apps/backend/src/upload/upload.constants.ts#L1-L66)
 
 ### 用户注册与认证
+
 - POST /auth/register
   - 请求体：email、name、password
   - 成功响应：认证响应（accessToken、refreshToken、user）
@@ -454,11 +488,13 @@ AuthController --> AuthDto : "使用DTO"
   - 成功响应：当前用户
 
 章节来源
+
 - [apps/backend/src/auth/auth.controller.ts:20-79](file://apps/backend/src/auth/auth.controller.ts#L20-L79)
 - [apps/backend/src/auth/auth.dto.ts:15-40](file://apps/backend/src/auth/auth.dto.ts#L15-L40)
 - [packages/shared/src/schemas/auth.schema.ts:33-41](file://packages/shared/src/schemas/auth.schema.ts#L33-L41)
 
 ### 文件上传与解析（通用）
+
 - POST /upload/single
   - 请求体：multipart/form-data，字段file
   - 成功响应：上传结果
@@ -472,5 +508,6 @@ AuthController --> AuthDto : "使用DTO"
   - 成功响应：{ success: true }
 
 章节来源
+
 - [apps/backend/src/upload/upload.controller.ts:67-159](file://apps/backend/src/upload/upload.controller.ts#L67-L159)
 - [apps/backend/src/common/throttling/throttling.constants.ts:132-142](file://apps/backend/src/common/throttling/throttling.constants.ts#L132-L142)

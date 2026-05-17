@@ -25,13 +25,16 @@
 </cite>
 
 ## 更新摘要
+
 **变更内容**
+
 - 新增统一API响应处理系统，提供标准化的响应解包机制
 - 实现后端统一响应包装，消除前端手动解包的需要
 - 新增共享的API响应类型定义和错误处理机制
 - 扩展前端API客户端功能，支持更丰富的HTTP方法
 
 ## 目录
+
 1. [简介](#简介)
 2. [项目结构](#项目结构)
 3. [核心组件](#核心组件)
@@ -50,6 +53,7 @@
 **最新更新**：系统现已引入统一API响应处理系统，通过apps/frontend/src/api/unwrap.ts提供getJson、postJson、putJson、patchJson、deleteJson等辅助函数，集中处理后端统一响应包装，消除前端手动解包的需要。
 
 该系统的核心特点包括：
+
 - 统一的API基础URL配置，支持多种部署模式
 - 智能的环境变量解析和优先级处理
 - 完善的错误处理和国际化支持
@@ -90,11 +94,13 @@ BE4 --> SH1
 ```
 
 **图表来源**
+
 - [apps/backend/src/app.module.ts:28-146](file://apps/backend/src/app.module.ts#L28-L146)
 - [apps/frontend/src/api/config.ts:1-47](file://apps/frontend/src/api/config.ts#L1-L47)
 - [apps/frontend/src/api/unwrap.ts:1-30](file://apps/frontend/src/api/unwrap.ts#L1-L30)
 
 **章节来源**
+
 - [apps/backend/src/app.module.ts:1-160](file://apps/backend/src/app.module.ts#L1-L160)
 - [apps/frontend/package.json:1-105](file://apps/frontend/package.json#L1-L105)
 
@@ -120,6 +126,7 @@ I --> J
 ```
 
 **图表来源**
+
 - [apps/frontend/src/api/config.ts:26-46](file://apps/frontend/src/api/config.ts#L26-L46)
 
 ### 前端API客户端
@@ -161,9 +168,11 @@ ResponseInterceptor --> TokenManager
 ```
 
 **图表来源**
+
 - [apps/frontend/src/api/index.ts:9-198](file://apps/frontend/src/api/index.ts#L9-L198)
 
 **章节来源**
+
 - [apps/frontend/src/api/config.ts:1-47](file://apps/frontend/src/api/config.ts#L1-L47)
 - [apps/frontend/src/api/index.ts:1-198](file://apps/frontend/src/api/index.ts#L1-L198)
 
@@ -208,6 +217,7 @@ SHARED --> UNWRAP
 ```
 
 **图表来源**
+
 - [apps/backend/src/app.module.ts:28-146](file://apps/backend/src/app.module.ts#L28-L146)
 - [apps/frontend/src/api/index.ts:1-198](file://apps/frontend/src/api/index.ts#L1-L198)
 - [apps/frontend/src/api/unwrap.ts:1-30](file://apps/frontend/src/api/unwrap.ts#L1-L30)
@@ -245,10 +255,12 @@ AuthController-->>Client : {accessToken}
 ```
 
 **图表来源**
+
 - [apps/backend/src/auth/auth.controller.ts:23-79](file://apps/backend/src/auth/auth.controller.ts#L23-L79)
 - [apps/backend/src/auth/auth.service.ts](file://apps/backend/src/auth/auth.service.ts)
 
 **章节来源**
+
 - [apps/backend/src/auth/auth.controller.ts:1-81](file://apps/backend/src/auth/auth.controller.ts#L1-L81)
 - [apps/backend/src/auth/auth.dto.ts:1-41](file://apps/backend/src/auth/auth.dto.ts#L1-L41)
 - [apps/backend/src/auth/auth.module.ts:1-41](file://apps/backend/src/auth/auth.module.ts#L1-L41)
@@ -286,11 +298,13 @@ TodosService --> TodoSyncService
 ```
 
 **图表来源**
+
 - [apps/backend/src/todos/todos.controller.ts:24-69](file://apps/backend/src/todos/todos.controller.ts#L24-L69)
 - [apps/backend/src/todos/todos.service.ts](file://apps/backend/src/todos/todos.service.ts)
 - [apps/backend/src/todos/todos-sync.service.ts](file://apps/backend/src/todos/todos-sync.service.ts)
 
 **章节来源**
+
 - [apps/backend/src/todos/todos.controller.ts:1-70](file://apps/backend/src/todos/todos.controller.ts#L1-L70)
 - [apps/backend/src/todos/todos.dto.ts:1-5](file://apps/backend/src/todos/todos.dto.ts#L1-L5)
 
@@ -317,9 +331,11 @@ K --> |否| L[允许请求通过]
 ```
 
 **图表来源**
+
 - [apps/backend/src/common/throttling/throttling.constants.ts:162-197](file://apps/backend/src/common/throttling/throttling.constants.ts#L162-L197)
 
 **章节来源**
+
 - [apps/backend/src/common/throttling/throttling.constants.ts:1-198](file://apps/backend/src/common/throttling/throttling.constants.ts#L1-198)
 
 ### 错误处理系统
@@ -347,9 +363,11 @@ L --> M
 ```
 
 **图表来源**
+
 - [apps/backend/src/common/filters/all-exceptions.filter.ts:27-135](file://apps/backend/src/common/filters/all-exceptions.filter.ts#L27-L135)
 
 **章节来源**
+
 - [apps/backend/src/common/filters/all-exceptions.filter.ts:1-137](file://apps/backend/src/common/filters/all-exceptions.filter.ts#L1-L137)
 
 ### Sidecar API集成
@@ -376,9 +394,11 @@ Sidecar->>Sidecar : 本地快速响应
 ```
 
 **图表来源**
+
 - [apps/frontend/src/api/sidecar.ts:9-17](file://apps/frontend/src/api/sidecar.ts#L9-L17)
 
 **章节来源**
+
 - [apps/frontend/src/api/sidecar.ts:1-20](file://apps/frontend/src/api/sidecar.ts#L1-L20)
 
 ## 统一API响应处理系统
@@ -403,6 +423,7 @@ Interceptor-->>Response : 返回统一格式
 ```
 
 **图表来源**
+
 - [apps/backend/src/common/interceptors/transform.interceptor.ts:18-29](file://apps/backend/src/common/interceptors/transform.interceptor.ts#L18-L29)
 
 ### 前端统一响应解包
@@ -421,6 +442,7 @@ E --> F
 ```
 
 **图表来源**
+
 - [apps/frontend/src/api/unwrap.ts:11-29](file://apps/frontend/src/api/unwrap.ts#L11-L29)
 - [packages/shared/src/dto/common.dto.ts:64-72](file://packages/shared/src/dto/common.dto.ts#L64-L72)
 
@@ -458,6 +480,7 @@ ApiError --> ApiErrorResponse
 ```
 
 **图表来源**
+
 - [packages/shared/src/dto/common.dto.ts:4-34](file://packages/shared/src/dto/common.dto.ts#L4-L34)
 - [packages/shared/src/dto/common.dto.ts:40-52](file://packages/shared/src/dto/common.dto.ts#L40-L52)
 
@@ -504,10 +527,12 @@ RESPONSE --> ERROR
 ```
 
 **图表来源**
+
 - [apps/frontend/src/features/novel/api/novelApi.ts:1-178](file://apps/frontend/src/features/novel/api/novelApi.ts#L1-L178)
 - [apps/frontend/src/features/teaching/api/teachingApi.ts:1-111](file://apps/frontend/src/features/teaching/api/teachingApi.ts#L1-L111)
 
 **章节来源**
+
 - [apps/frontend/src/api/unwrap.ts:1-30](file://apps/frontend/src/api/unwrap.ts#L1-L30)
 - [packages/shared/src/dto/common.dto.ts:1-99](file://packages/shared/src/dto/common.dto.ts#L1-L99)
 - [apps/backend/src/common/interceptors/transform.interceptor.ts:1-29](file://apps/backend/src/common/interceptors/transform.interceptor.ts#L1-L29)
@@ -550,11 +575,13 @@ SHARED --> APIERROR
 ```
 
 **图表来源**
+
 - [apps/frontend/package.json:31-70](file://apps/frontend/package.json#L31-L70)
 - [apps/backend/nest-cli.json:1-11](file://apps/backend/nest-cli.json#L1-L11)
 - [apps/frontend/src/api/unwrap.ts:1-3](file://apps/frontend/src/api/unwrap.ts#L1-L3)
 
 **章节来源**
+
 - [apps/frontend/package.json:1-105](file://apps/frontend/package.json#L1-L105)
 - [apps/backend/nest-cli.json:1-11](file://apps/backend/nest-cli.json#L1-L11)
 
@@ -563,6 +590,7 @@ SHARED --> APIERROR
 系统在多个层面实现了性能优化，统一响应处理机制进一步提升了性能：
 
 ### 前端性能优化
+
 - **智能缓存策略**：内存中缓存活跃令牌，减少localStorage访问
 - **并发控制**：防并发令牌刷新，避免重复请求
 - **懒加载**：按需加载API模块和组件
@@ -570,6 +598,7 @@ SHARED --> APIERROR
 - **响应解包优化**：统一的响应解包减少重复代码
 
 ### 后端性能优化
+
 - **连接池管理**：Redis连接池复用
 - **队列处理**：BullMQ异步任务处理
 - **缓存策略**：多级缓存架构
@@ -577,6 +606,7 @@ SHARED --> APIERROR
 - **统一响应包装**：减少重复的响应格式化代码
 
 ### 网络优化
+
 - **HTTP/2支持**：提升连接效率
 - **CDN集成**：静态资源CDN加速
 - **预加载策略**：关键资源预加载
@@ -587,32 +617,36 @@ SHARED --> APIERROR
 ### 常见问题诊断
 
 #### API连接问题
+
 1. **检查环境变量配置**
    - 验证VITE_API_BASE_URL设置
    - 确认WAILS模式下的VITE_SERVER_URL
    - 检查代理配置
 
 2. **网络连接测试**
+
    ```bash
    # 测试后端连通性
    curl -I http://localhost:3000/api/health
-   
+
    # 测试前端API
    curl -I http://localhost:5173/api/health
    ```
 
 #### 统一响应处理问题
+
 1. **检查响应格式**
    - 验证后端TransformInterceptor是否正常工作
    - 确认响应包含success、data、timestamp字段
    - 检查旧格式响应的兼容性
 
 2. **调试API响应**
+
    ```typescript
    // 检查响应结构
    const response = await getJson('/api/endpoint')
    console.log('Response structure:', response)
-   
+
    // 检查错误处理
    try {
      const data = await getJson('/api/endpoint')
@@ -625,6 +659,7 @@ SHARED --> APIERROR
    ```
 
 #### 认证问题
+
 1. **令牌刷新失败**
    - 检查刷新令牌有效性
    - 验证Redis连接状态
@@ -636,6 +671,7 @@ SHARED --> APIERROR
    - 验证凭证传递
 
 #### 性能问题
+
 1. **API响应缓慢**
    - 检查数据库查询
    - 监控Redis缓存命中率
@@ -647,6 +683,7 @@ SHARED --> APIERROR
    - 验证定时器清理
 
 **章节来源**
+
 - [apps/backend/src/common/filters/all-exceptions.filter.ts:1-137](file://apps/backend/src/common/filters/all-exceptions.filter.ts#L1-L137)
 - [apps/backend/src/common/throttling/throttling.constants.ts:162-197](file://apps/backend/src/common/throttling/throttling.constants.ts#L162-L197)
 - [apps/frontend/src/api/unwrap.ts:1-30](file://apps/frontend/src/api/unwrap.ts#L1-L30)
@@ -656,6 +693,7 @@ SHARED --> APIERROR
 本项目展示了现代API配置的最佳实践，通过以下关键特性实现了高质量的API体验：
 
 ### 核心优势
+
 - **统一配置管理**：智能的环境变量解析和优先级处理
 - **完善的错误处理**：国际化的错误响应和详细的日志记录
 - **高性能架构**：多级缓存、异步处理和连接池优化
@@ -664,6 +702,7 @@ SHARED --> APIERROR
 - **标准化响应**：统一的API响应格式和解包机制
 
 ### 技术亮点
+
 - 前后端分离的现代化架构
 - 智能的API客户端设计
 - 完善的TypeScript类型系统

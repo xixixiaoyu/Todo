@@ -18,6 +18,7 @@
 </cite>
 
 ## 目录
+
 1. [简介](#简介)
 2. [项目结构](#项目结构)
 3. [核心组件](#核心组件)
@@ -75,11 +76,13 @@ MI --> MP
 ```
 
 **图表来源**
+
 - [useMarkdown.ts:1-108](file://apps/frontend/src/composables/useMarkdown.ts#L1-L108)
 - [plugins.ts:1-233](file://apps/frontend/src/composables/markdown/plugins.ts#L1-L233)
 - [mermaid.ts:1-192](file://apps/frontend/src/composables/markdown/mermaid.ts#L1-L192)
 
 **章节来源**
+
 - [useMarkdown.ts:1-108](file://apps/frontend/src/composables/useMarkdown.ts#L1-L108)
 - [plugins.ts:1-233](file://apps/frontend/src/composables/markdown/plugins.ts#L1-L233)
 
@@ -122,6 +125,7 @@ PluginSystem --> SecurityLayer : "使用"
 ```
 
 **图表来源**
+
 - [useMarkdown.ts:14-107](file://apps/frontend/src/composables/useMarkdown.ts#L14-L107)
 - [mermaid.ts:15-191](file://apps/frontend/src/composables/markdown/mermaid.ts#L15-L191)
 - [plugins.ts:107-233](file://apps/frontend/src/composables/markdown/plugins.ts#L107-L233)
@@ -136,6 +140,7 @@ PluginSystem --> SecurityLayer : "使用"
 - **安全配置**：针对不同场景的DOMPurify配置
 
 **章节来源**
+
 - [mermaid.ts:19-22](file://apps/frontend/src/composables/markdown/mermaid.ts#L19-L22)
 - [plugins.ts:28-32](file://apps/frontend/src/composables/markdown/plugins.ts#L28-L32)
 - [purify.ts:4-200](file://apps/frontend/src/composables/markdown/purify.ts#L4-L200)
@@ -169,6 +174,7 @@ Renderer-->>Client : 最终HTML
 ```
 
 **图表来源**
+
 - [useMarkdown.ts:27-96](file://apps/frontend/src/composables/useMarkdown.ts#L27-L96)
 - [plugins.ts:176-228](file://apps/frontend/src/composables/markdown/plugins.ts#L176-L228)
 - [mermaid.ts:137-191](file://apps/frontend/src/composables/markdown/mermaid.ts#L137-L191)
@@ -191,10 +197,12 @@ style Finalize fill:#c8e6c9
 ```
 
 **图表来源**
+
 - [useMarkdown.ts:63-87](file://apps/frontend/src/composables/useMarkdown.ts#L63-L87)
 - [mermaid.ts:144-190](file://apps/frontend/src/composables/markdown/mermaid.ts#L144-L190)
 
 **章节来源**
+
 - [useMarkdown.ts:27-96](file://apps/frontend/src/composables/useMarkdown.ts#L27-L96)
 - [mermaid.ts:137-191](file://apps/frontend/src/composables/markdown/mermaid.ts#L137-L191)
 
@@ -220,6 +228,7 @@ style Output fill:#c8e6c9
 ```
 
 **图表来源**
+
 - [preprocessor.ts:99-234](file://apps/frontend/src/composables/markdown/preprocessor.ts#L99-L234)
 
 #### 关键特性
@@ -230,6 +239,7 @@ style Output fill:#c8e6c9
 - **转义保护**：正确处理`\\$`等转义字符
 
 **章节来源**
+
 - [preprocessor.ts:1-235](file://apps/frontend/src/composables/markdown/preprocessor.ts#L1-L235)
 
 ### 插件系统组件
@@ -240,12 +250,12 @@ style Output fill:#c8e6c9
 
 系统使用以下核心配置：
 
-| 配置项 | 值 | 作用 |
-|--------|-----|------|
-| `html: true` | 启用HTML标签 | 支持原生HTML内容 |
-| `linkify: true` | 启用链接识别 | 自动识别URL链接 |
+| 配置项              | 值           | 作用             |
+| ------------------- | ------------ | ---------------- |
+| `html: true`        | 启用HTML标签 | 支持原生HTML内容 |
+| `linkify: true`     | 启用链接识别 | 自动识别URL链接  |
 | `typographer: true` | 启用排版优化 | 智能引号和破折号 |
-| `breaks: true` | 启用软换行 | 支持单个换行符 |
+| `breaks: true`      | 启用软换行   | 支持单个换行符   |
 
 #### 自定义渲染器
 
@@ -257,6 +267,7 @@ style Output fill:#c8e6c9
 4. **链接渲染器**：自动添加`target="_blank"`属性
 
 **章节来源**
+
 - [plugins.ts:107-233](file://apps/frontend/src/composables/markdown/plugins.ts#L107-L233)
 
 ### Mermaid图表处理组件
@@ -278,6 +289,7 @@ Cache->>Queue : 返回处理后内容
 ```
 
 **图表来源**
+
 - [mermaid.ts:137-191](file://apps/frontend/src/composables/markdown/mermaid.ts#L137-L191)
 - [mermaid-render.ts:11-43](file://apps/frontend/src/composables/markdown/mermaid-render.ts#L11-L43)
 
@@ -290,6 +302,7 @@ Cache->>Queue : 返回处理后内容
 3. **哈希索引**：使用稳定哈希函数生成缓存键
 
 **章节来源**
+
 - [mermaid.ts:14-17](file://apps/frontend/src/composables/markdown/mermaid.ts#L14-L17)
 - [mermaid.ts:144-190](file://apps/frontend/src/composables/markdown/mermaid.ts#L144-L190)
 
@@ -324,6 +337,7 @@ InteractionController --> DragHandler : "委托"
 ```
 
 **图表来源**
+
 - [mermaid-interactions.ts:6-111](file://apps/frontend/src/composables/markdown/mermaid-interactions.ts#L6-L111)
 
 #### 交互特性
@@ -334,6 +348,7 @@ InteractionController --> DragHandler : "委托"
 - **编辑功能**：直接在编辑器中修改图表
 
 **章节来源**
+
 - [mermaid-interactions.ts:1-145](file://apps/frontend/src/composables/markdown/mermaid-interactions.ts#L1-L145)
 
 ### 安全处理组件
@@ -353,6 +368,7 @@ InteractionController --> DragHandler : "委托"
 - **内容清理**：移除潜在危险的内容
 
 **章节来源**
+
 - [purify.ts:1-293](file://apps/frontend/src/composables/markdown/purify.ts#L1-L293)
 
 ## 依赖关系分析
@@ -390,6 +406,7 @@ PU --> DP
 ```
 
 **图表来源**
+
 - [plugins.ts:1-12](file://apps/frontend/src/composables/markdown/plugins.ts#L1-L12)
 - [mermaid.ts:1-4](file://apps/frontend/src/composables/markdown/mermaid.ts#L1-L4)
 
@@ -403,6 +420,7 @@ PU --> DP
 - **可扩展性**：插件系统支持功能扩展
 
 **章节来源**
+
 - [plugins.ts:14-24](file://apps/frontend/src/composables/markdown/plugins.ts#L14-L24)
 - [mermaid.ts:27-50](file://apps/frontend/src/composables/markdown/mermaid.ts#L27-L50)
 
@@ -436,10 +454,12 @@ LogError --> FallbackHTML[返回降级HTML]
 ```
 
 **图表来源**
+
 - [useMarkdown.ts:18-22](file://apps/frontend/src/composables/useMarkdown.ts#L18-L22)
 - [useMarkdown.ts:38-46](file://apps/frontend/src/composables/useMarkdown.ts#L38-L46)
 
 **章节来源**
+
 - [useMarkdown.ts:18-22](file://apps/frontend/src/composables/useMarkdown.ts#L18-L22)
 - [mermaid.ts:14-17](file://apps/frontend/src/composables/markdown/mermaid.ts#L14-L17)
 
@@ -452,11 +472,13 @@ LogError --> FallbackHTML[返回降级HTML]
 **症状**：图表显示"渲染失败"错误
 
 **原因分析**：
+
 1. Mermaid语法错误
 2. 浏览器兼容性问题
 3. DOMPurify过滤异常
 
 **解决方法**：
+
 1. 检查Mermaid语法是否正确
 2. 确认浏览器支持情况
 3. 查看控制台错误日志
@@ -466,11 +488,13 @@ LogError --> FallbackHTML[返回降级HTML]
 **症状**：页面响应缓慢
 
 **排查步骤**：
+
 1. 检查图表数量和复杂度
 2. 监控内存使用情况
 3. 分析渲染时间
 
 **优化建议**：
+
 1. 减少同时渲染的图表数量
 2. 使用更简单的图表样式
 3. 实施适当的缓存策略
@@ -480,16 +504,19 @@ LogError --> FallbackHTML[返回降级HTML]
 **症状**：内容被意外过滤
 
 **检查清单**：
+
 1. 确认使用正确的安全配置
 2. 验证输入内容的安全性
 3. 检查DOMPurify版本兼容性
 
 **预防措施**：
+
 1. 始终使用DOMPurify进行内容清理
 2. 定期更新安全配置
 3. 实施内容审核机制
 
 **章节来源**
+
 - [mermaid.ts:184-187](file://apps/frontend/src/composables/markdown/mermaid.ts#L184-L187)
 - [purify.ts:202-292](file://apps/frontend/src/composables/markdown/purify.ts#L202-L292)
 

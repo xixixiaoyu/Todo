@@ -20,6 +20,7 @@
 </cite>
 
 ## 目录
+
 1. [简介](#简介)
 2. [项目结构](#项目结构)
 3. [核心组件](#核心组件)
@@ -32,9 +33,11 @@
 10. [附录](#附录)
 
 ## 简介
+
 本文件系统性梳理 Lumina Todo 前端的组合式 API 设计与实现，覆盖 Vue 3 Composition API 的设计理念、自定义 hooks 的功能特性与使用场景、状态管理与副作用处理、生命周期钩子、复用性设计、性能优化与内存管理，并结合异步数据处理、WebSocket 连接、文件解析等核心能力，给出开发规范、测试策略与最佳实践建议。
 
 ## 项目结构
+
 组合式 API 主要位于 apps/frontend/src/composables 目录，按功能域拆分，便于复用与维护；同时通过统一导出入口集中暴露给业务模块使用。
 
 ```mermaid
@@ -73,6 +76,7 @@ B --> N
 ```
 
 **图示来源**
+
 - [apps/frontend/src/composables/index.ts:1-11](file://apps/frontend/src/composables/index.ts#L1-L11)
 - [apps/frontend/src/composables/useSmartScroll.ts:1-442](file://apps/frontend/src/composables/useSmartScroll.ts#L1-L442)
 - [apps/frontend/src/composables/useSmartScroll.internals.ts:1-109](file://apps/frontend/src/composables/useSmartScroll.internals.ts#L1-L109)
@@ -80,9 +84,11 @@ B --> N
 - [apps/frontend/src/composables/useSocket.errors.ts:1-33](file://apps/frontend/src/composables/useSocket.errors.ts#L1-L33)
 
 **章节来源**
+
 - [apps/frontend/src/composables/index.ts:1-11](file://apps/frontend/src/composables/index.ts#L1-L11)
 
 ## 核心组件
+
 - useRequest：封装通用请求状态与错误处理，统一加载/完成/异常流程。
 - useSocket：统一 WebSocket 连接、重连、鉴权刷新、房间加入、连接等待与错误分类处理。
 - useFileParsing：混合前后端解析策略，支持前端直读与后端解析，含截断与提示。
@@ -97,6 +103,7 @@ B --> N
 - useResizable：拖拽调整尺寸，范围约束与回调。
 
 **章节来源**
+
 - [apps/frontend/src/composables/useRequest.ts:1-45](file://apps/frontend/src/composables/useRequest.ts#L1-L45)
 - [apps/frontend/src/composables/useSocket.ts:1-191](file://apps/frontend/src/composables/useSocket.ts#L1-L191)
 - [apps/frontend/src/composables/useFileParsing.ts:1-122](file://apps/frontend/src/composables/useFileParsing.ts#L1-L122)
@@ -111,7 +118,9 @@ B --> N
 - [apps/frontend/src/composables/useResizable.ts:1-70](file://apps/frontend/src/composables/useResizable.ts#L1-L70)
 
 ## 架构总览
+
 组合式 API 以“状态 + 行为 + 生命周期”为核心，围绕以下原则组织：
+
 - 单一职责：每个 hook 聚焦一个明确领域。
 - 响应式状态：基于 ref/computed/watch 管理状态与副作用。
 - 生命周期绑定：onMounted/onUnmounted 管理 DOM/网络/计时器资源。
@@ -137,6 +146,7 @@ HS --> HSE["useSocket.errors<br/>错误分类"]
 ```
 
 **图示来源**
+
 - [apps/frontend/src/composables/useSmartScroll.ts:1-442](file://apps/frontend/src/composables/useSmartScroll.ts#L1-L442)
 - [apps/frontend/src/composables/useSmartScroll.internals.ts:1-109](file://apps/frontend/src/composables/useSmartScroll.internals.ts#L1-L109)
 - [apps/frontend/src/composables/useSocket.ts:1-191](file://apps/frontend/src/composables/useSocket.ts#L1-L191)
@@ -145,6 +155,7 @@ HS --> HSE["useSocket.errors<br/>错误分类"]
 ## 详细组件分析
 
 ### useRequest：通用请求状态管理
+
 - 功能要点
   - 管理 data/loading/error 三态。
   - 提供 execute 手动触发请求。
@@ -180,12 +191,15 @@ end
 ```
 
 **图示来源**
+
 - [apps/frontend/src/composables/useRequest.ts:17-44](file://apps/frontend/src/composables/useRequest.ts#L17-L44)
 
 **章节来源**
+
 - [apps/frontend/src/composables/useRequest.ts:1-45](file://apps/frontend/src/composables/useRequest.ts#L1-L45)
 
 ### useSocket：WebSocket 连接与房间管理
+
 - 功能要点
   - 单例 socket 实例、自动重连、传输选择。
   - 认证错误自动刷新令牌并重连。
@@ -228,14 +242,17 @@ end
 ```
 
 **图示来源**
+
 - [apps/frontend/src/composables/useSocket.ts:56-191](file://apps/frontend/src/composables/useSocket.ts#L56-L191)
 - [apps/frontend/src/composables/useSocket.errors.ts:1-33](file://apps/frontend/src/composables/useSocket.errors.ts#L1-L33)
 
 **章节来源**
+
 - [apps/frontend/src/composables/useSocket.ts:1-191](file://apps/frontend/src/composables/useSocket.ts#L1-L191)
 - [apps/frontend/src/composables/useSocket.errors.ts:1-33](file://apps/frontend/src/composables/useSocket.errors.ts#L1-L33)
 
 ### useFileParsing：混合解析策略
+
 - 功能要点
   - 前端直读：适用于文本/代码类文件。
   - 后端解析：PDF/Word/Excel 等，需要登录态。
@@ -270,12 +287,15 @@ Throw --> End
 ```
 
 **图示来源**
+
 - [apps/frontend/src/composables/useFileParsing.ts:24-122](file://apps/frontend/src/composables/useFileParsing.ts#L24-L122)
 
 **章节来源**
+
 - [apps/frontend/src/composables/useFileParsing.ts:1-122](file://apps/frontend/src/composables/useFileParsing.ts#L1-L122)
 
 ### useMarkdown：Markdown 渲染管线
+
 - 功能要点
   - 预处理：公式修复、加粗修复等。
   - 渲染：Markdown-it 插件链，支持流式渲染。
@@ -308,12 +328,15 @@ Async --> Out
 ```
 
 **图示来源**
+
 - [apps/frontend/src/composables/useMarkdown.ts:14-108](file://apps/frontend/src/composables/useMarkdown.ts#L14-L108)
 
 **章节来源**
+
 - [apps/frontend/src/composables/useMarkdown.ts:1-108](file://apps/frontend/src/composables/useMarkdown.ts#L1-L108)
 
 ### useSmartScroll：智能滚动与动画
+
 - 功能要点
   - 智能决策：根据上下文（流式、新消息、内容变更、手动、尺寸）决定是否滚动及滚动方式。
   - 动画：GSAP 平滑滚动，瞬时滚动用于高频场景。
@@ -347,14 +370,17 @@ Update --> End
 ```
 
 **图示来源**
+
 - [apps/frontend/src/composables/useSmartScroll.ts:164-195](file://apps/frontend/src/composables/useSmartScroll.ts#L164-L195)
 - [apps/frontend/src/composables/useSmartScroll.internals.ts:28-64](file://apps/frontend/src/composables/useSmartScroll.internals.ts#L28-L64)
 
 **章节来源**
+
 - [apps/frontend/src/composables/useSmartScroll.ts:1-442](file://apps/frontend/src/composables/useSmartScroll.ts#L1-L442)
 - [apps/frontend/src/composables/useSmartScroll.internals.ts:1-109](file://apps/frontend/src/composables/useSmartScroll.internals.ts#L1-L109)
 
 ### useEscClose：ESC 关闭堆叠
+
 - 功能要点
   - 全局唯一键盘监听，仅处理栈顶回调。
   - 组件级入栈/出栈，自动清理。
@@ -368,9 +394,11 @@ Update --> End
   - onClose 为幂等函数，确保多次调用安全。
 
 **章节来源**
+
 - [apps/frontend/src/composables/useEscClose.ts:1-66](file://apps/frontend/src/composables/useEscClose.ts#L1-L66)
 
 ### useTheme：主题与颜色系统
+
 - 功能要点
   - 主题模式：亮/暗/自动，媒体查询回退。
   - 颜色预设：多组预设色，随机色轮换。
@@ -387,9 +415,11 @@ Update --> End
   - 颜色输入标准化，支持十六进制与随机值。
 
 **章节来源**
+
 - [apps/frontend/src/composables/useTheme.ts:1-378](file://apps/frontend/src/composables/useTheme.ts#L1-L378)
 
 ### useWindowSize：窗口尺寸与移动端判断
+
 - 功能要点
   - 响应式宽高，组件/非组件环境兼容。
   - 移动端断点判断。
@@ -403,9 +433,11 @@ Update --> End
   - computed 依赖 width，避免在渲染中频繁读取。
 
 **章节来源**
+
 - [apps/frontend/src/composables/useWindowSize.ts:1-45](file://apps/frontend/src/composables/useWindowSize.ts#L1-L45)
 
 ### useToast：消息通知队列
+
 - 功能要点
   - 队列管理、定时器、动作按钮。
   - 暂停/恢复计时器（悬停时）。
@@ -419,9 +451,11 @@ Update --> End
   - 为重要操作设置较长时间，普通提示短时即可。
 
 **章节来源**
+
 - [apps/frontend/src/composables/useToast.ts:1-87](file://apps/frontend/src/composables/useToast.ts#L1-L87)
 
 ### useGsap：动画上下文隔离
+
 - 功能要点
   - 注册 Flip 插件，自动在卸载时 revert。
 - 使用场景
@@ -434,9 +468,11 @@ Update --> End
   - 在组件销毁时无需手动清理。
 
 **章节来源**
+
 - [apps/frontend/src/composables/useGsap.ts:1-20](file://apps/frontend/src/composables/useGsap.ts#L1-L20)
 
 ### useHaptics：触觉反馈
+
 - 功能要点
   - 跨平台触觉：Impact/Selection/Vibrate。
   - 可用性检测：仅在原生平台生效。
@@ -450,9 +486,11 @@ Update --> End
   - 仅在交互关键点使用，避免过度。
 
 **章节来源**
+
 - [apps/frontend/src/composables/useHaptics.ts:1-62](file://apps/frontend/src/composables/useHaptics.ts#L1-L62)
 
 ### useResizable：拖拽调整尺寸
+
 - 功能要点
   - 鼠标拖拽、方向控制、范围约束、回调。
 - 使用场景
@@ -465,9 +503,11 @@ Update --> End
   - 最小/最大值合理设置，避免 UI 不可预期。
 
 **章节来源**
+
 - [apps/frontend/src/composables/useResizable.ts:1-70](file://apps/frontend/src/composables/useResizable.ts#L1-L70)
 
 ## 依赖分析
+
 - 组件内聚与耦合
   - useSmartScroll 与 useSmartScroll.internals 解耦滚动内核与外部接口。
   - useSocket 与 useSocket.errors 解耦错误分类逻辑。
@@ -492,6 +532,7 @@ HMD --> DP["DOMPurify"]
 ```
 
 **图示来源**
+
 - [apps/frontend/src/composables/useSmartScroll.ts:1-442](file://apps/frontend/src/composables/useSmartScroll.ts#L1-L442)
 - [apps/frontend/src/composables/useSmartScroll.internals.ts:1-109](file://apps/frontend/src/composables/useSmartScroll.internals.ts#L1-L109)
 - [apps/frontend/src/composables/useSocket.ts:1-191](file://apps/frontend/src/composables/useSocket.ts#L1-L191)
@@ -500,11 +541,13 @@ HMD --> DP["DOMPurify"]
 - [apps/frontend/src/composables/useTheme.ts:1-378](file://apps/frontend/src/composables/useTheme.ts#L1-L378)
 
 **章节来源**
+
 - [apps/frontend/src/composables/useSmartScroll.ts:1-442](file://apps/frontend/src/composables/useSmartScroll.ts#L1-L442)
 - [apps/frontend/src/composables/useSocket.ts:1-191](file://apps/frontend/src/composables/useSocket.ts#L1-L191)
 - [apps/frontend/src/composables/useMarkdown.ts:1-108](file://apps/frontend/src/composables/useMarkdown.ts#L1-L108)
 
 ## 性能考量
+
 - 主线程优化
   - 使用 RAF 节流/批处理（useSmartScroll、useSmartScroll.internals）。
   - 避免在渲染阶段做昂贵计算，将计算前置或缓存。
@@ -523,6 +566,7 @@ HMD --> DP["DOMPurify"]
 [本节为通用指导，无需具体文件来源]
 
 ## 故障排查指南
+
 - WebSocket 连接问题
   - 鉴权错误：确认 token 是否有效，是否触发了自动刷新与重连。
   - 瞬时错误：网络波动导致，通常可自动恢复。
@@ -544,6 +588,7 @@ HMD --> DP["DOMPurify"]
   - ESC 多层冲突：确认关闭回调是否正确入栈/出栈。
 
 **章节来源**
+
 - [apps/frontend/src/composables/useSocket.ts:93-108](file://apps/frontend/src/composables/useSocket.ts#L93-L108)
 - [apps/frontend/src/composables/useMarkdown.ts:90-96](file://apps/frontend/src/composables/useMarkdown.ts#L90-L96)
 - [apps/frontend/src/composables/useSmartScroll.ts:256-259](file://apps/frontend/src/composables/useSmartScroll.ts#L256-L259)
@@ -553,11 +598,13 @@ HMD --> DP["DOMPurify"]
 - [apps/frontend/src/composables/useEscClose.ts:34-66](file://apps/frontend/src/composables/useEscClose.ts#L34-L66)
 
 ## 结论
+
 Lumina Todo 的组合式 API 以清晰的职责划分、完善的生命周期管理与性能优化策略，构建了高复用、易维护的前端基础设施。通过统一的状态与行为抽象，开发者可以快速搭建复杂交互场景，同时在错误处理、资源管理与用户体验方面提供了稳健保障。
 
 [本节为总结，无需具体文件来源]
 
 ## 附录
+
 - 开发规范
   - 所有 hook 以“状态 + 行为 + 生命周期”组织，避免隐式副作用。
   - 在 onMounted/onUnmounted 中管理外部资源，确保成对出现。

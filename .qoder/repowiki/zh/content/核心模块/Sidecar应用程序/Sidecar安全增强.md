@@ -17,6 +17,7 @@
 </cite>
 
 ## 目录
+
 1. [简介](#简介)
 2. [项目结构](#项目结构)
 3. [核心安全组件](#核心安全组件)
@@ -62,10 +63,12 @@ end
 ```
 
 **图表来源**
+
 - [apps/sidecar/src/main.ts:1-59](file://apps/sidecar/src/main.ts#L1-L59)
 - [apps/sidecar/src/config.ts:1-51](file://apps/sidecar/src/config.ts#L1-L51)
 
 **章节来源**
+
 - [apps/sidecar/src/main.ts:1-59](file://apps/sidecar/src/main.ts#L1-L59)
 - [apps/sidecar/src/config.ts:1-51](file://apps/sidecar/src/config.ts#L1-L51)
 
@@ -93,6 +96,7 @@ O --> P[不解析符号链接]
 ```
 
 **图表来源**
+
 - [apps/sidecar/src/security/workspace-guard.ts:16-42](file://apps/sidecar/src/security/workspace-guard.ts#L16-L42)
 
 ### 强身份认证系统
@@ -118,10 +122,12 @@ Note over Guard : 严格路径规范化检查
 ```
 
 **图表来源**
+
 - [apps/sidecar/src/server/auth.ts:73-116](file://apps/sidecar/src/server/auth.ts#L73-L116)
 - [apps/sidecar/src/security/workspace-guard.ts:33-42](file://apps/sidecar/src/security/workspace-guard.ts#L33-L42)
 
 **章节来源**
+
 - [apps/sidecar/src/security/workspace-guard.ts:1-43](file://apps/sidecar/src/security/workspace-guard.ts#L1-L43)
 - [apps/sidecar/src/server/auth.ts:1-117](file://apps/sidecar/src/server/auth.ts#L1-L117)
 
@@ -158,6 +164,7 @@ R --> A
 ```
 
 **图表来源**
+
 - [apps/sidecar/src/server/auth.ts:73-116](file://apps/sidecar/src/server/auth.ts#L73-L116)
 - [apps/sidecar/src/security/workspace-guard.ts:16-42](file://apps/sidecar/src/security/workspace-guard.ts#L16-L42)
 - [apps/sidecar/src/store/file-store.ts:29-53](file://apps/sidecar/src/store/file-store.ts#L29-L53)
@@ -192,9 +199,11 @@ ConfigLoader --> EnvironmentValidator : uses
 ```
 
 **图表来源**
+
 - [apps/sidecar/src/config.ts:4-50](file://apps/sidecar/src/config.ts#L4-L50)
 
 **章节来源**
+
 - [apps/sidecar/src/config.ts:1-51](file://apps/sidecar/src/config.ts#L1-L51)
 
 ### 工作空间存储系统
@@ -233,10 +242,12 @@ WorkspacesConfig --> Workspace : contains
 ```
 
 **图表来源**
+
 - [apps/sidecar/src/store/workspace-store.ts:26-93](file://apps/sidecar/src/store/workspace-store.ts#L26-L93)
 - [apps/sidecar/src/store/file-store.ts:8-58](file://apps/sidecar/src/store/file-store.ts#L8-L58)
 
 **章节来源**
+
 - [apps/sidecar/src/store/workspace-store.ts:1-94](file://apps/sidecar/src/store/workspace-store.ts#L1-L94)
 - [apps/sidecar/src/store/file-store.ts:1-59](file://apps/sidecar/src/store/file-store.ts#L1-L59)
 
@@ -276,10 +287,12 @@ ErrorHandler --> Logger : uses
 ```
 
 **图表来源**
+
 - [apps/sidecar/src/server/errors.ts:8-53](file://apps/sidecar/src/server/errors.ts#L8-L53)
 - [apps/sidecar/src/utils/logger.ts:28-41](file://apps/sidecar/src/utils/logger.ts#L28-L41)
 
 **章节来源**
+
 - [apps/sidecar/src/server/errors.ts:1-54](file://apps/sidecar/src/server/errors.ts#L1-L54)
 - [apps/sidecar/src/utils/logger.ts:1-42](file://apps/sidecar/src/utils/logger.ts#L1-L42)
 
@@ -306,10 +319,12 @@ Note over Router,Handler : 所有路由都经过相同的认证流程
 ```
 
 **图表来源**
+
 - [apps/sidecar/src/routes/workspaces.ts:23-48](file://apps/sidecar/src/routes/workspaces.ts#L23-L48)
 - [apps/sidecar/src/server/auth.ts:73-116](file://apps/sidecar/src/server/auth.ts#L73-L116)
 
 **章节来源**
+
 - [apps/sidecar/src/routes/workspaces.ts:1-64](file://apps/sidecar/src/routes/workspaces.ts#L1-L64)
 
 ## 依赖关系分析
@@ -345,9 +360,11 @@ S --> U
 ```
 
 **图表来源**
+
 - [apps/sidecar/package.json:18-32](file://apps/sidecar/package.json#L18-L32)
 
 **章节来源**
+
 - [apps/sidecar/package.json:1-34](file://apps/sidecar/package.json#L1-L34)
 
 ## 性能考虑
@@ -369,21 +386,25 @@ S --> U
 ### 常见安全问题诊断
 
 **认证失败问题**
+
 - 检查Host头格式是否正确（必须包含端口号）
 - 验证Bearer Token长度和格式
 - 确认Token大小写敏感性
 
 **路径访问被拒绝**
+
 - 验证目标路径是否在工作空间白名单内
 - 检查路径规范化过程中的边界条件
 - 确认没有使用相对路径进行目录遍历
 
 **日志分析技巧**
+
 - 查看结构化日志中的时间戳和错误详情
 - 关注认证失败和路径验证失败的日志条目
 - 监控系统资源使用情况和连接状态
 
 **章节来源**
+
 - [apps/sidecar/tests/server/auth.spec.ts:1-165](file://apps/sidecar/tests/server/auth.spec.ts#L1-L165)
 - [apps/sidecar/tests/security/workspace-guard.spec.ts:1-89](file://apps/sidecar/tests/security/workspace-guard.spec.ts#L1-L89)
 

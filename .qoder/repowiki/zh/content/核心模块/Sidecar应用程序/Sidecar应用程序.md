@@ -25,6 +25,7 @@
 </cite>
 
 ## 目录
+
 1. [简介](#简介)
 2. [项目结构](#项目结构)
 3. [核心组件](#核心组件)
@@ -40,6 +41,7 @@
 Sidecar应用程序是一个基于Node.js开发的MCP（Model Context Protocol）客户端代理服务，专门为Lumina桌面应用提供MCP服务器管理能力。该应用程序通过HTTP API提供MCP服务器的配置、连接、工具发现和工具调用功能。
 
 主要特性包括：
+
 - 支持STDIO和HTTP两种传输协议
 - MCP服务器配置持久化存储
 - 动态工具发现和缓存机制
@@ -72,11 +74,13 @@ end
 ```
 
 **图表来源**
+
 - [apps/sidecar/src/main.ts:1-53](file://apps/sidecar/src/main.ts#L1-L53)
 - [apps/sidecar/src/server/app.ts:1-33](file://apps/sidecar/src/server/app.ts#L1-L33)
 - [apps/sidecar/src/routes/mcp.ts:1-238](file://apps/sidecar/src/routes/mcp.ts#L1-L238)
 
 **章节来源**
+
 - [apps/sidecar/src/main.ts:1-53](file://apps/sidecar/src/main.ts#L1-L53)
 - [apps/sidecar/src/config.ts:1-37](file://apps/sidecar/src/config.ts#L1-L37)
 - [apps/sidecar/package.json:1-34](file://apps/sidecar/package.json#L1-L34)
@@ -100,6 +104,7 @@ end
 封装了完整的MCP客户端功能，包括连接管理、工具发现和传输工厂。
 
 **章节来源**
+
 - [apps/sidecar/src/main.ts:11-47](file://apps/sidecar/src/main.ts#L11-L47)
 - [apps/sidecar/src/config.ts:29-36](file://apps/sidecar/src/config.ts#L29-L36)
 - [apps/sidecar/src/server/app.ts:6-32](file://apps/sidecar/src/server/app.ts#L6-L32)
@@ -144,6 +149,7 @@ L --> A
 ```
 
 **图表来源**
+
 - [apps/sidecar/src/mcp/mcp-client.ts:12-21](file://apps/sidecar/src/mcp/mcp-client.ts#L12-L21)
 - [apps/sidecar/src/store/mcp-config-store.ts:8-13](file://apps/sidecar/src/store/mcp-config-store.ts#L8-L13)
 - [apps/sidecar/src/server/app.ts:6-32](file://apps/sidecar/src/server/app.ts#L6-L32)
@@ -198,6 +204,7 @@ McpToolRegistry --> McpConnectionManager
 ```
 
 **图表来源**
+
 - [apps/sidecar/src/mcp/mcp-client.ts:12-21](file://apps/sidecar/src/mcp/mcp-client.ts#L12-L21)
 - [apps/sidecar/src/mcp/connection-manager.ts:16-104](file://apps/sidecar/src/mcp/connection-manager.ts#L16-L104)
 - [apps/sidecar/src/mcp/tool-registry.ts:9-52](file://apps/sidecar/src/mcp/tool-registry.ts#L9-L52)
@@ -239,6 +246,7 @@ McpConfigStore --> McpServerConfig
 ```
 
 **图表来源**
+
 - [apps/sidecar/src/store/mcp-config-store.ts:8-89](file://apps/sidecar/src/store/mcp-config-store.ts#L8-L89)
 - [apps/sidecar/src/store/file-store.ts:8-58](file://apps/sidecar/src/store/file-store.ts#L8-L58)
 - [apps/sidecar/src/types/index.ts:6-15](file://apps/sidecar/src/types/index.ts#L6-L15)
@@ -278,10 +286,12 @@ Routes-->>Client : 工具调用结果
 ```
 
 **图表来源**
+
 - [apps/sidecar/src/routes/mcp.ts:106-181](file://apps/sidecar/src/routes/mcp.ts#L106-L181)
 - [apps/sidecar/src/mcp/mcp-client.ts:23-88](file://apps/sidecar/src/mcp/mcp-client.ts#L23-L88)
 
 **章节来源**
+
 - [apps/sidecar/src/routes/mcp.ts:13-237](file://apps/sidecar/src/routes/mcp.ts#L13-L237)
 - [apps/sidecar/src/mcp/mcp-client.ts:12-89](file://apps/sidecar/src/mcp/mcp-client.ts#L12-L89)
 
@@ -326,10 +336,12 @@ L --> M
 ```
 
 **图表来源**
+
 - [apps/sidecar/package.json:18-32](file://apps/sidecar/package.json#L18-L32)
 - [apps/sidecar/src/main.ts:1-9](file://apps/sidecar/src/main.ts#L1-L9)
 
 **章节来源**
+
 - [apps/sidecar/package.json:1-34](file://apps/sidecar/package.json#L1-L34)
 - [apps/sidecar/tsconfig.json:1-14](file://apps/sidecar/tsconfig.json#L1-L14)
 
@@ -369,6 +381,7 @@ L --> M
 实现了全面的错误处理机制，包括网络异常、超时和认证失败等情况。
 
 **章节来源**
+
 - [apps/sidecar/src/server/errors.ts](file://apps/sidecar/src/server/errors.ts)
 - [apps/sidecar/src/utils/logger.ts](file://apps/sidecar/src/utils/logger.ts)
 
@@ -377,6 +390,7 @@ L --> M
 Sidecar应用程序是一个设计精良的MCP客户端代理服务，具有以下特点：
 
 **优势**
+
 - 清晰的分层架构和模块化设计
 - 完善的错误处理和日志记录机制
 - 支持多种传输协议和认证方式
@@ -384,6 +398,7 @@ Sidecar应用程序是一个设计精良的MCP客户端代理服务，具有以�
 - 完整的测试覆盖和文档
 
 **应用场景**
+
 - 桌面应用的AI工具集成
 - 本地MCP服务器管理
 - 多平台应用的统一MCP接入点

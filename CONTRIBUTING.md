@@ -24,12 +24,14 @@ Lumina is a monorepo built with **NestJS**, **Vue 3**, **pnpm**, and **Turborepo
 ### Getting Started
 
 1.  **Clone the repository**:
+
     ```bash
     git clone https://github.com/xixixiaoyu/lumina.git
     cd lumina
     ```
 
 2.  **Install dependencies**:
+
     ```bash
     pnpm install
     ```
@@ -38,11 +40,13 @@ Lumina is a monorepo built with **NestJS**, **Vue 3**, **pnpm**, and **Turborepo
     Copy `.env.example` to `.env` and fill in the required values (e.g., Database credentials, AI API keys).
 
 4.  **Start Infrastructure**:
+
     ```bash
     docker compose up -d
     ```
 
 5.  **Run Migrations**:
+
     ```bash
     pnpm db:push
     ```

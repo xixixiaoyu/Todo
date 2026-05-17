@@ -16,6 +16,7 @@
 </cite>
 
 ## 目录
+
 1. [简介](#简介)
 2. [项目结构](#项目结构)
 3. [核心组件](#核心组件)
@@ -28,7 +29,9 @@
 10. [附录](#附录)
 
 ## 简介
+
 本文件为 Lumina Todo 的文件上传子系统提供完整 API 文档，覆盖以下方面：
+
 - HTTP 接口规范：请求方法、路径、请求体格式 multipart/form-data、鉴权方式与响应结构
 - 文件类型与大小限制：支持的扩展名与 MIME 类型白名单、解析内容长度上限
 - 上传流程与行为：单文件、多文件、删除；后端解析能力与前端直读策略
@@ -39,6 +42,7 @@
 - 客户端使用示例与最佳实践：前端解析组合器与 API 调用方式
 
 ## 项目结构
+
 文件上传相关模块位于后端 NestJS 应用中，前端通过独立 API 方法调用后端解析接口。
 
 ```mermaid
@@ -69,6 +73,7 @@ UC --> I18N_EN
 ```
 
 图表来源
+
 - [apps/backend/src/upload/upload.controller.ts:1-161](file://apps/backend/src/upload/upload.controller.ts#L1-L161)
 - [apps/backend/src/upload/storage.service.ts:1-216](file://apps/backend/src/upload/storage.service.ts#L1-L216)
 - [apps/backend/src/upload/file-parsing.service.ts:1-142](file://apps/backend/src/upload/file-parsing.service.ts#L1-L142)
@@ -81,9 +86,11 @@ UC --> I18N_EN
 - [apps/frontend/src/composables/useFileParsing.ts:1-122](file://apps/frontend/src/composables/useFileParsing.ts#L1-L122)
 
 章节来源
+
 - [apps/backend/src/upload/upload.module.ts:1-16](file://apps/backend/src/upload/upload.module.ts#L1-L16)
 
 ## 核心组件
+
 - UploadController：对外暴露 /upload/single、/upload/multiple、/upload/parse、/upload/:key(delete) 四个接口，负责参数校验、类型检查、转发至存储与解析服务，并应用限流。
 - StorageService：封装本地与 S3（含兼容协议）存储，提供上传、批量上传、删除、生成公开 URL 或预签名 URL 的能力；当未配置凭证时，相关操作会抛出“存储未配置”异常。
 - FileParsingService：对 PDF、DOCX、XLS/XLSX 等进行解析，提取文本；对纯文本/代码类文件在前端直读；对超长解析结果进行截断。
@@ -91,6 +98,7 @@ UC --> I18N_EN
 - 前端 API 与组合器：提供 parseFileApi 与 useFileParsing 组合器，支持混合解析策略（简单文件前端直读，复杂文件后端解析）。
 
 章节来源
+
 - [apps/backend/src/upload/upload.controller.ts:26-160](file://apps/backend/src/upload/upload.controller.ts#L26-L160)
 - [apps/backend/src/upload/storage.service.ts:34-215](file://apps/backend/src/upload/storage.service.ts#L34-L215)
 - [apps/backend/src/upload/file-parsing.service.ts:9-141](file://apps/backend/src/upload/file-parsing.service.ts#L9-L141)
@@ -99,6 +107,7 @@ UC --> I18N_EN
 - [apps/frontend/src/composables/useFileParsing.ts:19-121](file://apps/frontend/src/composables/useFileParsing.ts#L19-L121)
 
 ## 架构总览
+
 后端采用控制器-服务分层，上传与解析职责分离；前端通过 API 层与组合器完成解析与展示。
 
 ```mermaid
@@ -118,6 +127,7 @@ API-->>FE : 返回解析结果
 ```
 
 图表来源
+
 - [apps/frontend/src/api/upload.ts:11-22](file://apps/frontend/src/api/upload.ts#L11-L22)
 - [apps/backend/src/upload/upload.controller.ts:95-116](file://apps/backend/src/upload/upload.controller.ts#L95-L116)
 - [apps/backend/src/upload/file-parsing.service.ts:16-72](file://apps/backend/src/upload/file-parsing.service.ts#L16-L72)
@@ -130,7 +140,7 @@ API-->>FE : 返回解析结果
   - 鉴权：所有上传接口均需携带 Bearer Token（JWT），由 JwtAuthGuard 保护
   - 内容类型：multipart/form-data
   - 限流：上传与解析接口分别应用独立限流策略
-  - 错误消息：统一使用 i18n 中的 upload.* 键，便于国际化
+  - 错误消息：统一使用 i18n 中的 upload.\* 键，便于国际化
 
 - 接口一览
   - 上传单个文件
@@ -158,6 +168,7 @@ API-->>FE : 返回解析结果
   - 用途：用于后续访问、缩略图生成与格式转换预留字段
 
 章节来源
+
 - [apps/backend/src/upload/upload.controller.ts:70-159](file://apps/backend/src/upload/upload.controller.ts#L70-L159)
 - [apps/backend/src/upload/storage.service.ts:15-28](file://apps/backend/src/upload/storage.service.ts#L15-L28)
 - [apps/backend/src/common/throttling/throttling.constants.ts:132-142](file://apps/backend/src/common/throttling/throttling.constants.ts#L132-L142)
@@ -177,6 +188,7 @@ API-->>FE : 返回解析结果
   - 当前代码未设置显式的文件大小上限；建议在网关/反向代理层或业务侧增加限制，避免内存溢出与 DoS 攻击
 
 章节来源
+
 - [apps/backend/src/upload/upload.constants.ts:1-66](file://apps/backend/src/upload/upload.constants.ts#L1-L66)
 - [apps/backend/src/upload/upload.controller.ts:53-65](file://apps/backend/src/upload/upload.controller.ts#L53-L65)
 - [apps/backend/src/upload/file-parsing.service.ts:134-140](file://apps/backend/src/upload/file-parsing.service.ts#L134-L140)
@@ -210,10 +222,12 @@ ErrType --> Done
 ```
 
 图表来源
+
 - [apps/backend/src/upload/upload.controller.ts:82-148](file://apps/backend/src/upload/upload.controller.ts#L82-L148)
 - [apps/backend/src/upload/file-parsing.service.ts:16-72](file://apps/backend/src/upload/file-parsing.service.ts#L16-L72)
 
 章节来源
+
 - [apps/backend/src/upload/upload.controller.ts:82-148](file://apps/backend/src/upload/upload.controller.ts#L82-L148)
 - [apps/frontend/src/composables/useFileParsing.ts:19-95](file://apps/frontend/src/composables/useFileParsing.ts#L19-L95)
 
@@ -246,9 +260,11 @@ StorageService --> ConfigService : "读取配置"
 ```
 
 图表来源
+
 - [apps/backend/src/upload/storage.service.ts:45-214](file://apps/backend/src/upload/storage.service.ts#L45-L214)
 
 章节来源
+
 - [apps/backend/src/upload/storage.service.ts:45-214](file://apps/backend/src/upload/storage.service.ts#L45-L214)
 
 ### 5) 文件解析服务 API
@@ -277,10 +293,12 @@ G --> H["返回 content"]
 ```
 
 图表来源
+
 - [apps/backend/src/upload/file-parsing.service.ts:16-72](file://apps/backend/src/upload/file-parsing.service.ts#L16-L72)
 - [apps/backend/src/upload/upload.constants.ts:45-66](file://apps/backend/src/upload/upload.constants.ts#L45-L66)
 
 章节来源
+
 - [apps/backend/src/upload/file-parsing.service.ts:16-141](file://apps/backend/src/upload/file-parsing.service.ts#L16-L141)
 - [apps/backend/src/upload/upload.constants.ts:45-66](file://apps/backend/src/upload/upload.constants.ts#L45-L66)
 
@@ -297,6 +315,7 @@ G --> H["返回 content"]
   - 当前代码未实现安全扫描与病毒检测；建议在网关层或前置代理接入安全扫描服务，或在对象存储侧启用相应策略
 
 章节来源
+
 - [apps/backend/src/upload/upload.controller.ts:24-26](file://apps/backend/src/upload/upload.controller.ts#L24-L26)
 - [apps/backend/src/common/throttling/throttling.constants.ts:132-142](file://apps/backend/src/common/throttling/throttling.constants.ts#L132-L142)
 - [apps/backend/src/i18n/zh-CN/upload.ts:1-10](file://apps/backend/src/i18n/zh-CN/upload.ts#L1-L10)
@@ -310,6 +329,7 @@ G --> H["返回 content"]
   - 当前未实现；可在解析完成后基于 mimetype 与 size 判断类型，调用图像/文档处理库生成缩略图或转换格式
 
 章节来源
+
 - [apps/backend/src/upload/storage.service.ts:15-28](file://apps/backend/src/upload/storage.service.ts#L15-L28)
 
 ### 8) 客户端上传组件使用示例与最佳实践
@@ -345,12 +365,14 @@ end
 ```
 
 图表来源
+
 - [apps/frontend/src/composables/useFileParsing.ts:47-95](file://apps/frontend/src/composables/useFileParsing.ts#L47-L95)
 - [apps/frontend/src/api/upload.ts:11-22](file://apps/frontend/src/api/upload.ts#L11-L22)
 - [apps/backend/src/upload/upload.controller.ts:95-116](file://apps/backend/src/upload/upload.controller.ts#L95-L116)
 - [apps/backend/src/upload/file-parsing.service.ts:16-72](file://apps/backend/src/upload/file-parsing.service.ts#L16-L72)
 
 章节来源
+
 - [apps/frontend/src/api/upload.ts:1-23](file://apps/frontend/src/api/upload.ts#L1-L23)
 - [apps/frontend/src/composables/useFileParsing.ts:19-121](file://apps/frontend/src/composables/useFileParsing.ts#L19-L121)
 
@@ -369,6 +391,7 @@ FE_COMP["frontend/composables/useFileParsing.ts"] --> FE_API
 ```
 
 图表来源
+
 - [apps/backend/src/upload/upload.controller.ts:1-161](file://apps/backend/src/upload/upload.controller.ts#L1-L161)
 - [apps/backend/src/upload/storage.service.ts:1-216](file://apps/backend/src/upload/storage.service.ts#L1-L216)
 - [apps/backend/src/upload/file-parsing.service.ts:1-142](file://apps/backend/src/upload/file-parsing.service.ts#L1-L142)
@@ -379,9 +402,11 @@ FE_COMP["frontend/composables/useFileParsing.ts"] --> FE_API
 - [apps/frontend/src/composables/useFileParsing.ts:1-122](file://apps/frontend/src/composables/useFileParsing.ts#L1-L122)
 
 章节来源
+
 - [apps/backend/src/upload/upload.module.ts:1-16](file://apps/backend/src/upload/upload.module.ts#L1-L16)
 
 ## 性能与容量规划
+
 - 限流策略：上传与解析分别应用独立限流，避免突发流量导致资源耗尽
 - 内存与磁盘：上传为内存 Buffer，建议在网关层限制请求体大小，防止 OOM
 - 并发上传：uploadMany 采用 Promise.all 并发上传，注意存储后端吞吐与网络带宽
@@ -389,8 +414,9 @@ FE_COMP["frontend/composables/useFileParsing.ts"] --> FE_API
 - 日志与可观测性：服务端对关键操作记录日志，便于问题定位与容量评估
 
 ## 故障排查指南
+
 - 常见错误与定位
-  - 上传失败（存储未配置）：检查 S3_* 环境变量是否正确配置
+  - 上传失败（存储未配置）：检查 S3\_\* 环境变量是否正确配置
   - 不支持的文件类型：确认扩展名与 MIME 是否在白名单内
   - 解析失败：确认文件格式是否受支持；查看后端日志定位具体异常
   - 限流触发：调整限流窗口与配额，或在客户端做退避重试
@@ -398,13 +424,16 @@ FE_COMP["frontend/composables/useFileParsing.ts"] --> FE_API
   - 前端根据语言包显示对应文案，便于用户理解
 
 章节来源
+
 - [apps/backend/src/i18n/zh-CN/upload.ts:1-10](file://apps/backend/src/i18n/zh-CN/upload.ts#L1-L10)
 - [apps/backend/src/i18n/en-US/upload.ts:1-10](file://apps/backend/src/i18n/en-US/upload.ts#L1-L10)
 - [apps/backend/src/upload/storage.service.ts:208-214](file://apps/backend/src/upload/storage.service.ts#L208-L214)
 - [apps/backend/src/upload/upload.controller.ts:53-65](file://apps/backend/src/upload/upload.controller.ts#L53-L65)
 
 ## 结论
+
 Lumina Todo 的文件上传子系统提供了清晰的接口与完善的类型校验、限流与国际化支持。当前重点覆盖了上传、删除与后端解析能力，存储策略同时支持本地与云存储，并预留了 CDN 与私有访问的扩展点。建议在生产环境中补充：
+
 - 明确的文件大小限制与安全扫描
 - 私有文件的预签名 URL 策略
 - 缩略图与格式转换的后续实现
@@ -412,6 +441,7 @@ Lumina Todo 的文件上传子系统提供了清晰的接口与完善的类型�
 ## 附录
 
 ### A. 接口清单与字段说明
+
 - POST /upload/single
   - 请求体：multipart/form-data，file: binary
   - 响应：UploadResult
@@ -425,12 +455,15 @@ Lumina Todo 的文件上传子系统提供了清晰的接口与完善的类型�
   - 响应：{ success: boolean }
 
 章节来源
+
 - [apps/backend/src/upload/upload.controller.ts:70-159](file://apps/backend/src/upload/upload.controller.ts#L70-L159)
 
 ### B. 常量与阈值
+
 - 允许的 MIME 类型与扩展名：参考 upload.constants.ts
 - 可解析文本扩展名集合：参考 upload.constants.ts
 - 解析内容最大字符数：MAX_PARSED_CONTENT_CHARS
 
 章节来源
+
 - [apps/backend/src/upload/upload.constants.ts:1-66](file://apps/backend/src/upload/upload.constants.ts#L1-L66)

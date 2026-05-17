@@ -26,13 +26,16 @@
 </cite>
 
 ## 更新摘要
+
 **所做更改**
+
 - 新增TodoItem组件拖拽悬停功能的详细分析
 - 扩展UI交互Hooks最佳实践章节，包含事件处理、状态管理和视觉反馈
 - 添加拖拽悬停计数器、延迟展开和状态管理的实现细节
 - 更新相关架构图和流程图以反映新的交互模式
 
 ## 目录
+
 1. [简介](#简介)
 2. [项目结构](#项目结构)
 3. [核心组件](#核心组件)
@@ -45,7 +48,9 @@
 10. [附录](#附录)
 
 ## 简介
+
 本文件聚焦于UI交互相关的组合式API，系统性梳理并解释以下能力的实现原理与使用方法：
+
 - ESC键关闭：基于全局栈的多层弹窗/抽屉ESC关闭机制
 - 触觉反馈：跨平台触觉反馈封装，适配原生设备
 - 可调整大小：拖拽调整宽度/高度，支持最小/最大限制与持久化
@@ -57,7 +62,9 @@
 - 最佳实践与性能优化技巧
 
 ## 项目结构
+
 UI交互Hooks主要位于前端应用的组合式API目录中，并通过组件进行集成使用。关键文件分布如下：
+
 - 组合式API：useEscClose、useHaptics、useResizable、useSmartScroll、useWindowSize、useTheme、useToast、useGsap
 - 内部工具：useSmartScroll.internals（滚动决策、RAF批处理与节流）
 - 示例组件：ResizableDrawer（抽屉+可调整大小+ESC关闭）、AlertDialog、Popover、Tabs（基于reka-ui）
@@ -107,6 +114,7 @@ D --> E
 ```
 
 **图表来源**
+
 - [useEscClose.ts:1-66](file://apps/frontend/src/composables/useEscClose.ts#L1-L66)
 - [useHaptics.ts:1-62](file://apps/frontend/src/composables/useHaptics.ts#L1-L62)
 - [useResizable.ts:1-70](file://apps/frontend/src/composables/useResizable.ts#L1-L70)
@@ -123,9 +131,11 @@ D --> E
 - [TodoItem.vue:1-473](file://apps/frontend/src/features/todo/components/TodoItem.vue#L1-L473)
 
 **章节来源**
+
 - [index.ts:1-11](file://apps/frontend/src/composables/index.ts#L1-L11)
 
 ## 核心组件
+
 本节概述各交互Hooks的能力边界与典型用法。
 
 - ESC键关闭（useEscClose）
@@ -173,6 +183,7 @@ D --> E
   - **性能优化：使用ctx.add确保动画执行时机**
 
 **章节来源**
+
 - [useEscClose.ts:1-66](file://apps/frontend/src/composables/useEscClose.ts#L1-L66)
 - [useHaptics.ts:1-62](file://apps/frontend/src/composables/useHaptics.ts#L1-L62)
 - [useResizable.ts:1-70](file://apps/frontend/src/composables/useResizable.ts#L1-L70)
@@ -185,6 +196,7 @@ D --> E
 - [TodoItem.vue:194-238](file://apps/frontend/src/features/todo/components/TodoItem.vue#L194-L238)
 
 ## 架构总览
+
 UI交互Hooks围绕"状态驱动 + 事件节流 + 平台适配"的设计原则构建，内部通过RAF批处理与节流优化渲染性能，外部通过组件以声明式方式接入。新增的拖拽悬停功能进一步丰富了交互模式。
 
 ```mermaid
@@ -226,6 +238,7 @@ N --> TS
 ```
 
 **图表来源**
+
 - [useSmartScroll.ts:1-442](file://apps/frontend/src/composables/useSmartScroll.ts#L1-L442)
 - [useSmartScroll.internals.ts:1-109](file://apps/frontend/src/composables/useSmartScroll.internals.ts#L1-L109)
 - [useResizable.ts:1-70](file://apps/frontend/src/composables/useResizable.ts#L1-L70)
@@ -239,6 +252,7 @@ N --> TS
 ## 详细组件分析
 
 ### ESC键关闭（useEscClose）
+
 - 实现要点
   - 全局keydown监听，仅在栈顶回调生效
   - isOpen变化时入栈/出栈，卸载时清理
@@ -262,13 +276,16 @@ C-->>U : "关闭弹窗/抽屉"
 ```
 
 **图表来源**
+
 - [useEscClose.ts:1-66](file://apps/frontend/src/composables/useEscClose.ts#L1-L66)
 
 **章节来源**
+
 - [useEscClose.ts:1-66](file://apps/frontend/src/composables/useEscClose.ts#L1-L66)
 - [ResizableDrawer.vue:89-91](file://apps/frontend/src/components/ResizableDrawer.vue#L89-L91)
 
 ### 触觉反馈（useHaptics）
+
 - 实现要点
   - 原生平台检测，非原生环境直接返回
   - 封装Impact/Selection/Vibrate等动作，异常安全兜底
@@ -294,12 +311,15 @@ Done --> End
 ```
 
 **图表来源**
+
 - [useHaptics.ts:1-62](file://apps/frontend/src/composables/useHaptics.ts#L1-L62)
 
 **章节来源**
+
 - [useHaptics.ts:1-62](file://apps/frontend/src/composables/useHaptics.ts#L1-L62)
 
 ### 可调整大小（useResizable）
+
 - 实现要点
   - 记录起始位置与尺寸，计算delta并约束范围
   - 拖拽期间设置cursor与userSelect，提升反馈
@@ -321,13 +341,16 @@ Up["鼠标抬起(stopResize)"] --> Cleanup["移除事件监听<br/>触发onResiz
 ```
 
 **图表来源**
+
 - [useResizable.ts:1-70](file://apps/frontend/src/composables/useResizable.ts#L1-L70)
 
 **章节来源**
+
 - [useResizable.ts:1-70](file://apps/frontend/src/composables/useResizable.ts#L1-L70)
 - [ResizableDrawer.vue:46-74](file://apps/frontend/src/components/ResizableDrawer.vue#L46-L74)
 
 ### 智能滚动（useSmartScroll）
+
 - 实现要点
   - isAtBottom阈值判断、滚动快照、程序化滚动标记
   - RAF批处理合并多次滚动决策，节流处理用户滚动
@@ -355,14 +378,17 @@ S-->>U : "平滑/瞬时滚动到底部"
 ```
 
 **图表来源**
+
 - [useSmartScroll.ts:1-442](file://apps/frontend/src/composables/useSmartScroll.ts#L1-L442)
 - [useSmartScroll.internals.ts:1-109](file://apps/frontend/src/composables/useSmartScroll.internals.ts#L1-L109)
 
 **章节来源**
+
 - [useSmartScroll.ts:1-442](file://apps/frontend/src/composables/useSmartScroll.ts#L1-L442)
 - [useSmartScroll.internals.ts:1-109](file://apps/frontend/src/composables/useSmartScroll.internals.ts#L1-L109)
 
 ### 拖拽悬停（TodoItem组件）
+
 - **更新** 新增拖拽悬停功能，体现UI交互Hooks的最佳实践
 
 - 实现要点
@@ -405,13 +431,16 @@ TI->>TI : "清理所有状态"
 ```
 
 **图表来源**
+
 - [TodoItem.vue:194-238](file://apps/frontend/src/features/todo/components/TodoItem.vue#L194-L238)
 
 **章节来源**
+
 - [TodoItem.vue:194-238](file://apps/frontend/src/features/todo/components/TodoItem.vue#L194-L238)
 - [TodoItem.vue:426-449](file://apps/frontend/src/features/todo/components/TodoItem.vue#L426-L449)
 
 ### 窗口尺寸与响应式（useWindowSize）
+
 - 实现要点
   - 响应式width/height，组件与非组件环境分别绑定/解绑
   - 提供移动端断点判断（isMobile）
@@ -421,10 +450,12 @@ TI->>TI : "清理所有状态"
   - 与useResizable结合，动态计算maxWidth
 
 **章节来源**
+
 - [useWindowSize.ts:1-45](file://apps/frontend/src/composables/useWindowSize.ts#L1-L45)
 - [ResizableDrawer.vue:36-44](file://apps/frontend/src/components/ResizableDrawer.vue#L36-L44)
 
 ### 主题与无障碍（useTheme + 组件）
+
 - 实现要点
   - 预设主题色、随机主题、对比度保障、深浅两套前景色
   - 注入CSS变量，支持hover亮度校准与无障碍对比度
@@ -433,6 +464,7 @@ TI->>TI : "清理所有状态"
   - 为可交互元素提供焦点可见性与键盘可达性
 
 **章节来源**
+
 - [useTheme.ts:1-378](file://apps/frontend/src/composables/useTheme.ts#L1-L378)
 - [ResizableDrawer.vue:113-133](file://apps/frontend/src/components/ResizableDrawer.vue#L113-L133)
 - [AlertDialog.vue:1-16](file://apps/frontend/src/components/ui/alert-dialog/AlertDialog.vue#L1-L16)
@@ -440,6 +472,7 @@ TI->>TI : "清理所有状态"
 - [Tabs.vue:1-16](file://apps/frontend/src/components/ui/tabs/Tabs.vue#L1-L16)
 
 ### 提示与通知（useToast）
+
 - 实现要点
   - 轻量提示队列，支持定时消失、暂停/恢复
   - 提供成功/错误/信息/警告类型别名方法
@@ -447,9 +480,11 @@ TI->>TI : "清理所有状态"
   - 操作反馈、错误提示、确认操作
 
 **章节来源**
+
 - [useToast.ts:1-87](file://apps/frontend/src/composables/useToast.ts#L1-L87)
 
 ### 动画驱动（useGsap）
+
 - **更新** 新增GSAP动画系统的集成使用
 
 - 实现要点
@@ -464,10 +499,12 @@ TI->>TI : "清理所有状态"
   - 注意动画完成后清理height样式
 
 **章节来源**
+
 - [useGsap.ts:1-200](file://apps/frontend/src/composables/useGsap.ts#L1-L200)
 - [TodoItem.vue:250-304](file://apps/frontend/src/features/todo/components/TodoItem.vue#L250-L304)
 
 ## 依赖关系分析
+
 - useSmartScroll依赖useSmartScroll.internals进行滚动决策与RAF批处理
 - ResizableDrawer同时依赖useEscClose与useResizable，形成"抽屉+可调整大小+ESC关闭"的完整交互
 - **TodoItem组件集成了useHaptics、useGsap、useWindowSize、useToast等多个Hooks**
@@ -494,6 +531,7 @@ UI3["Tabs.vue"] --> R3["reka-ui TabsRoot"]
 ```
 
 **图表来源**
+
 - [useSmartScroll.ts:1-442](file://apps/frontend/src/composables/useSmartScroll.ts#L1-L442)
 - [useSmartScroll.internals.ts:1-109](file://apps/frontend/src/composables/useSmartScroll.internals.ts#L1-L109)
 - [ResizableDrawer.vue:1-408](file://apps/frontend/src/components/ResizableDrawer.vue#L1-L408)
@@ -515,9 +553,11 @@ UI3["Tabs.vue"] --> R3["reka-ui TabsRoot"]
 - [Tabs.vue:1-16](file://apps/frontend/src/components/ui/tabs/Tabs.vue#L1-L16)
 
 **章节来源**
+
 - [index.ts:1-11](file://apps/frontend/src/composables/index.ts#L1-L11)
 
 ## 性能考量
+
 - 事件节流与RAF批处理
   - 使用createRafThrottle与createRafBatcher合并高频滚动/拖拽事件，减少重绘与回流
 - 程序化滚动标记
@@ -537,6 +577,7 @@ UI3["Tabs.vue"] --> R3["reka-ui TabsRoot"]
   - **动画完成后清理内联样式避免布局问题**
 
 ## 故障排查指南
+
 - ESC键无效
   - 检查isOpen是否正确响应，确认回调未被重复入栈
   - 确认组件卸载时已从栈中移除
@@ -559,6 +600,7 @@ UI3["Tabs.vue"] --> R3["reka-ui TabsRoot"]
   - **确认动画完成后样式清理**
 
 **章节来源**
+
 - [useEscClose.ts:1-66](file://apps/frontend/src/composables/useEscClose.ts#L1-L66)
 - [useResizable.ts:1-70](file://apps/frontend/src/composables/useResizable.ts#L1-L70)
 - [useSmartScroll.ts:1-442](file://apps/frontend/src/composables/useSmartScroll.ts#L1-L442)
@@ -567,9 +609,11 @@ UI3["Tabs.vue"] --> R3["reka-ui TabsRoot"]
 - [useGsap.ts:1-200](file://apps/frontend/src/composables/useGsap.ts#L1-L200)
 
 ## 结论
+
 UI交互Hooks通过"状态驱动 + 事件节流 + 平台适配"实现了稳定、流畅且可扩展的交互体验。新增的TodoItem拖拽悬停功能进一步完善了交互生态，体现了现代UI开发的最佳实践。结合组件层的声明式接入与无障碍设计，可在多端环境中提供一致的用户体验。建议在实际项目中遵循最佳实践，合理配置阈值与回调，持续关注性能与可维护性。
 
 ## 附录
+
 - 最佳实践清单
   - ESC关闭：每个弹窗独立回调，避免重复入栈
   - 触觉反馈：仅在原生平台启用，避免频繁触发
