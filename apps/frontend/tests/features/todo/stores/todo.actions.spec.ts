@@ -400,7 +400,6 @@ describe('useTodoStore - Actions', () => {
           isPinned: false,
           order: 0,
           version: 2,
-          syncStatus: 'synced',
           pomodoroCount: 0,
         },
       ]
@@ -408,7 +407,6 @@ describe('useTodoStore - Actions', () => {
       await store.removeTodos(['synced-todo'])
 
       expect(store.todos[0].deletedAt).toBeDefined()
-      expect(store.todos[0].syncStatus).toBe('pending')
     })
   })
 
@@ -551,7 +549,6 @@ describe('useTodoStore - Actions', () => {
 
       expect(deferredResult).toBe(true)
       expect(store.todos[0].deferredAt).toBeDefined()
-      expect(store.todos[0].syncStatus).toBe('pending')
 
       const resumeResult = await store.setTodoDeferred('1', false)
 
@@ -865,7 +862,6 @@ describe('useTodoStore - Actions', () => {
       const todo = store.todos[0]
       expect(todo.pomodoroCount).toBe(3)
       expect(new Date(todo.updatedAt).getTime()).toBeGreaterThan(initialDate.getTime())
-      expect(todo.syncStatus).toBe('pending')
     })
 
     it('should initialize pomodoroCount if it does not exist', () => {

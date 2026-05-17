@@ -61,19 +61,15 @@ describe('AllExceptionsFilter', () => {
     )
   })
 
-  it('should handle business error mapping (e.g., auth.EMAIL_EXISTS)', () => {
-    // 使用 ConflictException 模拟业务异常
-    const exception = new ConflictException('auth.EMAIL_EXISTS')
+  it('should handle business error without field mapping', () => {
+    const exception = new ConflictException('todo.duplicate')
     filter.catch(exception, mockArgumentsHost as ArgumentsHost)
 
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.CONFLICT)
     expect(mockResponse.send).toHaveBeenCalledWith(
       expect.objectContaining({
         success: false,
-        message: 'auth.EMAIL_EXISTS',
-        errors: {
-          email: 'auth.EMAIL_EXISTS',
-        },
+        message: 'todo.duplicate',
       }),
     )
   })

@@ -106,11 +106,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
           errors = body.errors as Record<string, string>
         } else if (typeof body.message === 'string') {
           // 尝试根据消息内容推断字段
-          const fieldMapping: Record<string, string> = {
-            'auth.EMAIL_EXISTS': 'email',
-            'auth.USER_NOT_FOUND': 'email',
-            'auth.INVALID_CREDENTIALS': 'password',
-          }
+          const fieldMapping: Record<string, string> = {}
 
           const field = fieldMapping[body.message]
           if (field) {

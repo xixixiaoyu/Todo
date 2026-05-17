@@ -10,7 +10,6 @@ type TodoMutationDeps = {
   todos: Ref<Todo[]>
   loading: Ref<boolean>
   error: Ref<string | null>
-  debouncedSync: () => void
 }
 
 export function createTodoMutations(deps: TodoMutationDeps): {
@@ -54,7 +53,6 @@ export function createTodoMutations(deps: TodoMutationDeps): {
         delete parent.completedAt
       }
       parent.updatedAt = new Date()
-      parent.syncStatus = 'pending'
       if (parent.parentId) {
         updateParentStatus(parent.parentId)
       }
@@ -89,12 +87,9 @@ export function createTodoMutations(deps: TodoMutationDeps): {
           }
 
           todo.updatedAt = new Date()
-          todo.syncStatus = 'pending'
         }
       }
     })
-
-    deps.debouncedSync()
   }
 
   async function addTodo(
@@ -139,12 +134,9 @@ export function createTodoMutations(deps: TodoMutationDeps): {
         order: minOrder - 1,
         expanded: true,
         version: 0,
-        syncStatus: 'pending',
         pomodoroCount: 0,
       }
       deps.todos.value.unshift(newTodo)
-
-      deps.debouncedSync()
 
       return newTodo.id
     } catch (err) {
@@ -194,15 +186,10 @@ export function createTodoMutations(deps: TodoMutationDeps): {
           order: --minOrder,
           expanded: true,
           version: 0,
-          syncStatus: 'pending',
           pomodoroCount: 0,
         }
         deps.todos.value.unshift(newTodo)
         addedIds.push(newTodo.id)
-      }
-
-      if (addedIds.length > 0) {
-        deps.debouncedSync()
       }
 
       return addedIds
@@ -244,7 +231,6 @@ export function createTodoMutations(deps: TodoMutationDeps): {
       delete todo.completedAt
     }
     todo.updatedAt = toggledAt
-    todo.syncStatus = 'pending'
 
     const toggleChildren = (parentId: string, completed: boolean) => {
       const children = deps.todos.value.filter((item) => item.parentId === parentId)
@@ -257,7 +243,6 @@ export function createTodoMutations(deps: TodoMutationDeps): {
           delete child.completedAt
         }
         child.updatedAt = toggledAt
-        child.syncStatus = 'pending'
         toggleChildren(child.id, completed)
       })
     }
@@ -267,8 +252,6 @@ export function createTodoMutations(deps: TodoMutationDeps): {
     if (todo.parentId) {
       updateParentStatus(todo.parentId)
     }
-
-    deps.debouncedSync()
   }
 
   async function togglePin(id: string): Promise<void> {
@@ -276,8 +259,6 @@ export function createTodoMutations(deps: TodoMutationDeps): {
     if (todo) {
       todo.isPinned = !todo.isPinned
       todo.updatedAt = new Date()
-      todo.syncStatus = 'pending'
-      deps.debouncedSync()
     }
   }
 
@@ -302,8 +283,6 @@ export function createTodoMutations(deps: TodoMutationDeps): {
     }
 
     todo.updatedAt = new Date()
-    todo.syncStatus = 'pending'
-    deps.debouncedSync()
     return true
   }
 
@@ -312,8 +291,6 @@ export function createTodoMutations(deps: TodoMutationDeps): {
     if (todo) {
       todo.pomodoroCount = (todo.pomodoroCount || 0) + 1
       todo.updatedAt = new Date()
-      todo.syncStatus = 'pending'
-      deps.debouncedSync()
     }
   }
 
@@ -330,13 +307,10 @@ export function createTodoMutations(deps: TodoMutationDeps): {
 
     todo.deletedAt = new Date()
     todo.updatedAt = new Date()
-    todo.syncStatus = 'pending'
 
     if (parentId) {
       updateParentStatus(parentId)
     }
-
-    deps.debouncedSync()
   }
 
   async function restoreTodo(id: string): Promise<void> {
@@ -345,7 +319,6 @@ export function createTodoMutations(deps: TodoMutationDeps): {
 
     todo.deletedAt = undefined
     todo.updatedAt = new Date()
-    todo.syncStatus = 'pending'
 
     if (todo.parentId) {
       const parent = deps.todos.value.find((item) => item.id === todo.parentId)
@@ -353,8 +326,6 @@ export function createTodoMutations(deps: TodoMutationDeps): {
         await restoreTodo(parent.id)
       }
     }
-
-    deps.debouncedSync()
   }
 
   async function updateTodo(
@@ -392,8 +363,6 @@ export function createTodoMutations(deps: TodoMutationDeps): {
     }
 
     todo.updatedAt = new Date()
-    todo.syncStatus = 'pending'
-    deps.debouncedSync()
     return true
   }
 
@@ -443,8 +412,6 @@ export function createTodoMutations(deps: TodoMutationDeps): {
     }
 
     todo.updatedAt = new Date()
-    todo.syncStatus = 'pending'
-    deps.debouncedSync()
     return true
   }
 

@@ -2,9 +2,7 @@ import { Test } from '@nestjs/testing'
 import { FastifyAdapter } from '@nestjs/platform-fastify'
 import type { NestFastifyApplication } from '@nestjs/platform-fastify'
 import { APP_GUARD } from '@nestjs/core'
-import { PassportModule } from '@nestjs/passport'
 import { ThrottlerModule } from '@nestjs/throttler'
-import { JwtService } from '@nestjs/jwt'
 import { ConfigService } from '@nestjs/config'
 import { ZodValidationPipe } from 'nestjs-zod'
 import fastifyCookie from '@fastify/cookie'
@@ -17,20 +15,8 @@ import {
   TransformInterceptor,
   createGlobalThrottlerOptions,
 } from '@/common'
-import { AuthController } from '@/auth/auth.controller'
-import { AuthService } from '@/auth/auth.service'
-import { JwtStrategy } from '@/auth/jwt.strategy'
-import { PasswordController } from '@/auth/password.controller'
-import { PasswordService } from '@/auth/password.service'
-import { TokenService } from '@/auth/token.service'
-import { UsersService } from '@/users/users.service'
 import { PrismaService } from '@/prisma/prisma.service'
 import { RedisService } from '@/redis/redis.service'
-import { MailService } from '@/mail/mail.service'
-import { TodosController } from '@/todos/todos.controller'
-import { TodosService } from '@/todos/todos.service'
-import { TodoSyncService } from '@/todos/todos-sync.service'
-import { EventsGateway } from '@/events/events.gateway'
 
 type InMemoryUser = {
   id: number
@@ -440,61 +426,22 @@ function createConfigService(overrides?: Record<string, unknown>) {
   return configService as unknown as ConfigService
 }
 
-function createMailService() {
-  const mail: Pick<MailService, 'send' | 'sendPasswordReset' | 'sendVerificationCode'> = {
-    async send() {
-      return true
-    },
-    async sendPasswordReset() {
-      return true
-    },
-    async sendVerificationCode() {
-      return true
-    },
-  }
-  return mail as unknown as MailService
-}
-
-function createEventsGateway() {
-  const events: Pick<EventsGateway, 'broadcastSyncNotify'> = {
-    broadcastSyncNotify() {
-      //
-    },
-  }
-  return events as unknown as EventsGateway
-}
-
 export async function createE2eApp() {
   const prisma = createInMemoryPrisma()
   const redis = createInMemoryRedis()
   const config = createConfigService()
-  const mail = createMailService()
-  const events = createEventsGateway()
-  const jwtService = new JwtService({ secret: 'test-jwt-secret' })
-  const tokenService = new TokenService(jwtService, config, redis)
 
   const moduleRef = await Test.createTestingModule({
     imports: [
-      PassportModule.register({ defaultStrategy: 'jwt' }),
       ThrottlerModule.forRoot(
         createGlobalThrottlerOptions(config, new RedisThrottlerStorage(redis)),
       ),
     ],
-    controllers: [AuthController, PasswordController, TodosController],
+    controllers: [],
     providers: [
-      AuthService,
-      UsersService,
-      PasswordService,
-      TodosService,
-      TodoSyncService,
-      JwtStrategy,
-      { provide: JwtService, useValue: jwtService },
-      { provide: TokenService, useValue: tokenService },
       { provide: PrismaService, useValue: prisma },
       { provide: RedisService, useValue: redis },
       { provide: ConfigService, useValue: config },
-      { provide: MailService, useValue: mail },
-      { provide: EventsGateway, useValue: events },
       { provide: APP_GUARD, useClass: AppThrottlerGuard },
     ],
   }).compile()

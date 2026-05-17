@@ -1,18 +1,11 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { getServerBaseUrl } from '@/api/config'
 import {
   Snowflake,
   Network,
   List,
-  LogOut,
-  LogIn,
   BarChart3,
   MoreHorizontal,
-  HardDrive,
-  Cloud,
-  Upload,
   Maximize2,
   Minimize2,
 } from 'lucide-vue-next'
@@ -28,56 +21,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useTodoStore } from '../stores/todo'
-import { useAuthStore } from '../../auth/stores/auth'
-import { useRouter } from 'vue-router'
 import { nativeService } from '@/services/native'
-import { useToast } from '@/composables/useToast'
 
 const { t } = useI18n()
 const todoStore = useTodoStore()
-const authStore = useAuthStore()
-const router = useRouter()
-const toast = useToast()
 
 const isWails = () => nativeService.platform === 'wails'
-
-const avatarUrl = computed(() => {
-  let avatar = authStore.user?.avatar
-  if (!avatar) return null
-  if (avatar.startsWith('http') || avatar.startsWith('data:')) return avatar
-
-  // 兼容旧路径 /public/avatars/ -> /api/public/avatars/
-  if (avatar.startsWith('/public/')) {
-    avatar = `/api${avatar}`
-  }
-
-  // 处理本地路径 /api/public/avatars/...
-  const baseUrl = getServerBaseUrl()
-  return `${baseUrl}${avatar}`
-})
-
-const fileInputRef = ref<HTMLInputElement | null>(null)
-
-const triggerAvatarUpload = () => {
-  fileInputRef.value?.click()
-}
-
-const handleAvatarChange = async (event: Event) => {
-  const input = event.target as HTMLInputElement
-  if (!input.files?.length) return
-
-  const file = input.files[0]
-  const success = await authStore.uploadAvatar(file)
-
-  if (success) {
-    toast.success(t('common.upload.avatar_success'))
-  } else {
-    toast.error(t('common.upload.avatar_failed'))
-  }
-
-  // 重置 input 以允许再次选择同一文件
-  input.value = ''
-}
 
 const handleDblClick = () => {
   if (isWails()) {
@@ -242,130 +191,7 @@ const handleDblClick = () => {
           </TooltipContent>
         </Tooltip>
       </div>
-
-      <div class="mx-0.5 hidden h-6 w-px bg-border/40 md:mx-1 md:block"></div>
-
-      <div
-        class="hidden md:flex items-center gap-1 p-1 bg-muted/50 rounded-2xl border border-border/50"
-      >
-        <Tooltip>
-          <TooltipTrigger as-child>
-            <Button
-              variant="ghost"
-              size="sm"
-              class="h-8 px-2.5 rounded-xl gap-1.5 transition-all"
-              :class="
-                todoStore.todoSource === 'local'
-                  ? 'bg-background text-primary shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-              "
-              @click="void todoStore.switchTodoSource('local')"
-            >
-              <HardDrive :size="14" />
-              <span class="text-[var(--todo-font-caption)]">{{ t('todo.localSource') }}</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>{{ t('todo.localSourceHint') }}</TooltipContent>
-        </Tooltip>
-        <Tooltip v-if="authStore.isAuthenticated">
-          <TooltipTrigger as-child>
-            <Button
-              variant="ghost"
-              size="sm"
-              class="h-8 px-2.5 rounded-xl gap-1.5 transition-all"
-              :class="
-                todoStore.todoSource === 'remote'
-                  ? 'bg-background text-primary shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-              "
-              @click="void todoStore.switchTodoSource('remote')"
-            >
-              <Cloud :size="14" />
-              <span class="text-[var(--todo-font-caption)]">{{ t('todo.remoteSource') }}</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>{{ t('todo.remoteSourceHint') }}</TooltipContent>
-        </Tooltip>
-      </div>
-
-      <!-- Auth Section -->
-      <DropdownMenu v-if="authStore.isAuthenticated">
-        <DropdownMenuTrigger as-child>
-          <Button
-            variant="outline"
-            size="icon"
-            class="relative h-9 w-9 overflow-hidden rounded-[18px] border-border/70 bg-card/90 transition-all hover:bg-accent md:h-10 md:w-10 md:rounded-xl group/user"
-          >
-            <div
-              v-if="avatarUrl"
-              class="w-full h-full bg-cover bg-center transition-transform duration-300 group-hover/user:scale-110"
-              :style="{ backgroundImage: `url(${avatarUrl})` }"
-            ></div>
-            <div
-              v-else
-              class="flex h-full w-full items-center justify-center bg-amber-500 text-white font-semibold text-[var(--todo-font-meta)] transition-colors group-hover/user:bg-amber-600"
-            >
-              {{ authStore.user?.name?.charAt(0).toUpperCase() || 'U' }}
-            </div>
-            <!-- 登录状态小圆点 -->
-            <span
-              class="absolute bottom-0.5 right-0.5 h-2.5 w-2.5 rounded-full border-2 border-card bg-emerald-500"
-            ></span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" class="w-52 rounded-xl p-2">
-          <DropdownMenuLabel class="font-normal">
-            <div class="flex flex-col space-y-1">
-              <p class="text-[var(--todo-font-meta)] font-medium leading-none">
-                {{ authStore.user?.name }}
-              </p>
-              <p class="text-[var(--todo-font-caption)] leading-none text-muted-foreground">
-                {{ authStore.user?.email }}
-              </p>
-            </div>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            class="rounded-lg cursor-pointer text-[var(--todo-font-meta)]"
-            @click="triggerAvatarUpload"
-          >
-            <Upload class="mr-2 h-4 w-4" />
-            <span>{{ t('common.upload.avatar') }}</span>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            class="rounded-lg cursor-pointer text-error focus:text-error focus:bg-error/10 text-[var(--todo-font-meta)]"
-            @click="void authStore.logout()"
-          >
-            <LogOut class="mr-2 h-4 w-4" />
-            <span>{{ t('common.logout') }}</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <Tooltip v-else>
-        <TooltipTrigger as-child>
-          <Button
-            variant="outline"
-            size="icon"
-            class="h-9 w-9 rounded-[18px] border-primary/15 bg-primary/5 text-primary transition-all hover:border-primary/25 hover:bg-primary/10 md:h-10 md:w-10 md:rounded-xl"
-            @click="void router.push('/login')"
-          >
-            <LogIn :size="18" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>{{ t('login.title') }}</TooltipContent>
-      </Tooltip>
     </div>
-
-    <!-- 隐藏的文件输入框用于上传头像 -->
-    <input
-      ref="fileInputRef"
-      type="file"
-      accept="image/*"
-      class="hidden"
-      @change="handleAvatarChange"
-    />
   </header>
 </template>
 

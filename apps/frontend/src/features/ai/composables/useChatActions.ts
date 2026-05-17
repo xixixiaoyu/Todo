@@ -13,7 +13,6 @@ import { useChatMemory } from './useChatMemory'
 import { useChatHistory } from './useChatHistory'
 import { getAIThinkingLevel, getAIConfig, getAISkills } from './useAIConfig'
 import { useTodoStore } from '@/features/todo/stores/todo'
-import { useAuthStore } from '@/features/auth/stores/auth'
 import { createContextCompression } from './useChatActions.contextCompression'
 import { executeToolCalls } from './useChatActions.toolCalls'
 import { useToolPermission } from './useToolPermission'
@@ -65,7 +64,6 @@ export function useChatActions(options: AIRequestOptions = {}) {
     clearSessionContextSummary,
   } = useChatHistory()
   const todoStore = useTodoStore()
-  const authStore = useAuthStore()
   const { isAvailable: sidecarAvailable, sidecarPort, sidecarToken } = useSidecar()
   const { mode: permissionMode } = useToolPermission()
   const { startGenerating: markGenerating, stopGenerating: markDone } = useGenerationState()
@@ -311,8 +309,8 @@ export function useChatActions(options: AIRequestOptions = {}) {
           agentToolsEnabled,
         } = await prepareRuntimeCapabilities({
           aiConfig,
-          getAuthToken: () => authStore.token,
-          hydrateAuth: () => authStore.hydrateFromStorage(),
+          getAuthToken: () => null,
+          hydrateAuth: () => {},
           skillContext,
           sidecarState: {
             port: sidecarPort.value,
@@ -402,8 +400,8 @@ export function useChatActions(options: AIRequestOptions = {}) {
           agentToolsEnabled,
         } = await prepareRuntimeCapabilities({
           aiConfig,
-          getAuthToken: () => authStore.token,
-          hydrateAuth: () => authStore.hydrateFromStorage(),
+          getAuthToken: () => null,
+          hydrateAuth: () => {},
           skillContext,
           sidecarState: {
             port: sidecarPort.value,

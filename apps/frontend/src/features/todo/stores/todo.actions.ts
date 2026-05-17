@@ -1,6 +1,5 @@
 import type { ComputedRef, Ref } from 'vue'
 import type { FilterType, Todo, ViewMode } from './todo.types'
-import { createTodoFetchActions } from './todo.actions.fetch'
 import { createTodoMutations } from './todo.actions.mutations'
 import { createTodoUiActions } from './todo.actions.ui'
 import { createTodoAiActions } from './todo.actions.ai'
@@ -17,18 +16,12 @@ export function createTodoActions(deps: {
   error: Ref<string | null>
   filteredTodos: ComputedRef<Todo[]>
   isAllExpanded: ComputedRef<boolean>
-  debouncedSync: () => void
-  sync: () => Promise<void>
   isDrawerOpen: Ref<boolean>
   isMaximized: Ref<boolean>
   isAppFullscreen: Ref<boolean>
   isSilencingToast: Ref<boolean>
-  isTrashLoaded: Ref<boolean>
-  isRemoteSource: Ref<boolean>
 }): {
   isDuplicate: (title: string, parentId?: string | null, excludeId?: string) => boolean
-  fetchTodos: () => Promise<void>
-  fetchTrash: () => Promise<void>
   addTodo: (title: string, parentId?: string | null, id?: string) => Promise<string | null>
   addTodos: (titles: string[], parentId?: string | null) => Promise<string[]>
   removeTodos: (ids: string[]) => Promise<void>
@@ -62,20 +55,10 @@ export function createTodoActions(deps: {
   getTodoPath: (todoId: string) => string[]
   setDragging: (dragging: boolean) => void
 } {
-  const fetchActions = createTodoFetchActions({
-    todos: deps.todos,
-    loading: deps.loading,
-    error: deps.error,
-    isTrashLoaded: deps.isTrashLoaded,
-    isRemoteSource: deps.isRemoteSource,
-    sync: deps.sync,
-  })
-
   const mutationActions = createTodoMutations({
     todos: deps.todos,
     loading: deps.loading,
     error: deps.error,
-    debouncedSync: deps.debouncedSync,
   })
 
   const uiActions = createTodoUiActions({
@@ -92,7 +75,6 @@ export function createTodoActions(deps: {
     filteredTodos: deps.filteredTodos,
     isAllExpanded: deps.isAllExpanded,
     todos: deps.todos,
-    fetchTrash: fetchActions.fetchTrash,
   })
 
   const aiActions = createTodoAiActions({
@@ -104,7 +86,6 @@ export function createTodoActions(deps: {
   })
 
   return {
-    ...fetchActions,
     ...mutationActions,
     ...aiActions,
     ...uiActions,

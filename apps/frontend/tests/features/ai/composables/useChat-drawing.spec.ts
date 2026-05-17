@@ -80,22 +80,6 @@ vi.mock('@/features/todo/stores/todo', () => ({
   })),
 }))
 
-// Mock useAuthStore
-vi.mock('@/features/auth/stores/auth', () => ({
-  useAuthStore: vi.fn(() => ({
-    get user() {
-      return null
-    },
-    get isAuthenticated() {
-      return false
-    },
-    get token() {
-      return null
-    },
-    hydrateFromStorage: vi.fn(),
-  })),
-}))
-
 // Mock AI config
 const mockConfig = ref({
   discussionMode: false,

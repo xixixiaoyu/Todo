@@ -1,7 +1,6 @@
-import { Controller, Post, Body, UseGuards, HttpCode, HttpStatus, Logger } from '@nestjs/common'
+import { Controller, Post, Body, HttpCode, HttpStatus, Logger } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger'
 import { Throttle } from '@nestjs/throttler'
-import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { WebSearchService } from './web-search.service'
 import { SearchWebDto, VerifySearchKeyDto, SEARCH_PROVIDER_META } from './web-search.dto'
 import type { SearchResponse } from './web-search.dto'
@@ -9,7 +8,6 @@ import { SEARCH_WEB_THROTTLE } from '../common'
 
 @ApiTags('Web Search')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller('web-search')
 export class WebSearchController {
   private readonly logger = new Logger(WebSearchController.name)

@@ -1,26 +1,15 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
-import type { Todo as SharedTodo } from '@lumina/shared'
-import type {
-  ProposedTodoChange,
-  FilterType,
-  ViewMode,
-  Todo,
-  TodoSyncConflict,
-  TodoDataSource,
-} from './todo.types'
+import type { ProposedTodoChange, FilterType, ViewMode, Todo } from './todo.types'
 import { applyFilterAndSort, isEffectivelyCompleted } from './todo.filtering'
-import { createTodoCloud } from './todo.cloud'
 import { createTodoActions } from './todo.actions'
 import { applyProposedTodoChanges, buildBasePreviewTodos } from './todo.proposed'
 import { createProposedChangeStateManager } from './todo.proposed-state'
-import { normalizeTodoDatesInPlace, snapshotTodos } from './todo.dates'
-import { isSameTodoList } from './todo.snapshot'
-import { createTodoSourceManager } from './todo.source'
 
 export const useTodoStore = defineStore(
   'todo',
   () => {
+    // -- 状态 --
     const todos = ref<Todo[]>([])
     const filter = ref<FilterType>('pending')
     const viewMode = ref<ViewMode>('list')
@@ -34,17 +23,11 @@ export const useTodoStore = defineStore(
     const isMaximized = ref(false)
     const isAppFullscreen = ref(false)
     const isSilencingToast = ref(false)
-    const isTrashLoaded = ref(false)
     const proposedChangeSets = ref<Record<string, ProposedTodoChange[]>>({})
     const proposedChangeSetOrder = ref<string[]>([])
     const activeProposedChangeSetId = ref<string | null>(null)
-    const lastSyncAt = ref<string | null>(null)
-    const syncOwnerId = ref<number | null>(null)
-    const syncConflicts = ref<TodoSyncConflict[]>([])
-    const todoSource = ref<TodoDataSource>('local')
-    const localTodos = ref<Todo[]>([])
-    const remoteTodos = ref<Todo[]>([])
 
+    // -- 计算属性 --
     const filteredTodos = computed(() =>
       applyFilterAndSort(todos.value, filter.value, searchQuery.value),
     )
@@ -56,99 +39,6 @@ export const useTodoStore = defineStore(
 
       if (currentParentTodos.length === 0) return false
       return currentParentTodos.some((t) => (t.expanded ?? true) !== false)
-    })
-
-    const normalizeAllTodos = () => {
-      todos.value.forEach(normalizeTodoDatesInPlace)
-    }
-
-    const applyPersistedExpansionState = () => {
-      let changed = false
-      todos.value.forEach((todo) => {
-        const persistedExpanded = todoExpansionState.value[todo.id]
-        if (persistedExpanded !== undefined && todo.expanded !== persistedExpanded) {
-          todo.expanded = persistedExpanded
-          changed = true
-        } else if (todo.expanded !== undefined && persistedExpanded === undefined) {
-          // Sync existing expanded state into todoExpansionState if not already present
-          todoExpansionState.value[todo.id] = todo.expanded
-        }
-      })
-      return changed
-    }
-
-    const sourceManager = createTodoSourceManager({
-      todos,
-      todoSource,
-      localTodos,
-      remoteTodos,
-      syncConflicts,
-      isTrashLoaded,
-      snapshotTodos,
-      isSameTodoList,
-    })
-
-    watch(
-      todos,
-      () => {
-        normalizeAllTodos()
-
-        // 1. Sync from persistence record to todos (for newly loaded/synced todos)
-        applyPersistedExpansionState()
-
-        // 2. Sync from todos back to persistence record (for state changes in UI)
-        const nextExpansionState = { ...todoExpansionState.value }
-        let expansionChanged = false
-        todos.value.forEach((todo) => {
-          if (todo.expanded !== undefined && nextExpansionState[todo.id] !== todo.expanded) {
-            nextExpansionState[todo.id] = todo.expanded
-            expansionChanged = true
-          }
-        })
-        if (expansionChanged) {
-          todoExpansionState.value = nextExpansionState
-        }
-
-        if (sourceManager.isApplyingSourceSnapshot()) return
-        sourceManager.persistActiveSourceTodos()
-      },
-      { immediate: true, deep: true },
-    )
-
-    watch(
-      [todoSource, localTodos, remoteTodos],
-      () => {
-        const targetTodos = todoSource.value === 'local' ? localTodos.value : remoteTodos.value
-        sourceManager.applyTodosSnapshot(targetTodos)
-        applyPersistedExpansionState()
-      },
-      { immediate: true, deep: true },
-    )
-
-    watch(
-      todoExpansionState,
-      () => {
-        if (sourceManager.isApplyingSourceSnapshot()) return
-        applyPersistedExpansionState()
-      },
-      { immediate: true, deep: true },
-    )
-
-    watch(searchQuery, (newQuery) => {
-      if (newQuery.trim()) {
-        const nextExpansionState = { ...todoExpansionState.value }
-        todos.value.forEach((todo) => {
-          todo.expanded = true
-          nextExpansionState[todo.id] = true
-        })
-        todoExpansionState.value = nextExpansionState
-      }
-    })
-
-    watch(viewMode, (newMode) => {
-      if (newMode === 'visual' && filter.value === 'trash') {
-        filter.value = 'pending'
-      }
     })
 
     const pendingCount = computed(
@@ -182,56 +72,71 @@ export const useTodoStore = defineStore(
     const visualTodos = computed(() =>
       applyFilterAndSort(basePreviewTodos.value, filter.value, searchQuery.value, false),
     )
-    const isRemoteSource = computed(() => todoSource.value === 'remote')
 
-    function toSharedTodo(todo: Todo): SharedTodo {
-      return {
-        id: todo.id,
-        title: todo.title,
-        completed: todo.completed,
-        order: todo.order,
-        isPinned: !!todo.isPinned,
-        parentId: todo.parentId || null,
-        version: todo.version || 0,
-        pomodoroCount: todo.pomodoroCount || 0,
-        dueAt: todo.dueAt || null,
-        remindAt: todo.remindAt || null,
-        remindedAt: todo.remindedAt || null,
-        recurrenceRule: todo.recurrenceRule || null,
-        recurrenceTz: todo.recurrenceTz || null,
-        recurrenceSpawnedAt: todo.recurrenceSpawnedAt || null,
-        createdAt: todo.createdAt,
-        updatedAt: todo.updatedAt,
-        completedAt: todo.completedAt || null,
-        deferredAt: todo.deferredAt || null,
-        deletedAt: todo.deletedAt || null,
-      }
+    // -- 辅助函数 --
+    const applyPersistedExpansionState = () => {
+      let changed = false
+      todos.value.forEach((todo) => {
+        const persistedExpanded = todoExpansionState.value[todo.id]
+        if (persistedExpanded !== undefined && todo.expanded !== persistedExpanded) {
+          todo.expanded = persistedExpanded
+          changed = true
+        } else if (todo.expanded !== undefined && persistedExpanded === undefined) {
+          todoExpansionState.value[todo.id] = todo.expanded
+        }
+      })
+      return changed
     }
 
-    const {
-      sync,
-      debouncedSync,
-      mergeOnLogin,
-      resetSyncStatus,
-      acceptSyncConflict,
-      retrySyncConflict,
-      clearSyncConflicts,
-      initSocketListener,
-      deleteTodoPermanently,
-      clearTrash,
-    } = createTodoCloud({
+    // -- 监听：同步展开状态 --
+    watch(
       todos,
-      remoteTodos,
-      loading,
-      error,
-      lastSyncAt,
-      syncOwnerId,
-      syncConflicts,
-      toSharedTodo,
-      isTrashLoaded,
-      isRemoteSource,
+      () => {
+        // 1. 从持久化记录同步到 todos
+        applyPersistedExpansionState()
+
+        // 2. 从 todos 同步回持久化记录
+        const nextExpansionState = { ...todoExpansionState.value }
+        let expansionChanged = false
+        todos.value.forEach((todo) => {
+          if (todo.expanded !== undefined && nextExpansionState[todo.id] !== todo.expanded) {
+            nextExpansionState[todo.id] = todo.expanded
+            expansionChanged = true
+          }
+        })
+        if (expansionChanged) {
+          todoExpansionState.value = nextExpansionState
+        }
+      },
+      { immediate: true, deep: true },
+    )
+
+    watch(
+      todoExpansionState,
+      () => {
+        applyPersistedExpansionState()
+      },
+      { immediate: true, deep: true },
+    )
+
+    watch(searchQuery, (newQuery) => {
+      if (newQuery.trim()) {
+        const nextExpansionState = { ...todoExpansionState.value }
+        todos.value.forEach((todo) => {
+          todo.expanded = true
+          nextExpansionState[todo.id] = true
+        })
+        todoExpansionState.value = nextExpansionState
+      }
     })
 
+    watch(viewMode, (newMode) => {
+      if (newMode === 'visual' && filter.value === 'trash') {
+        filter.value = 'pending'
+      }
+    })
+
+    // -- 创建 actions --
     const actions = createTodoActions({
       todos,
       filter,
@@ -244,62 +149,13 @@ export const useTodoStore = defineStore(
       error,
       filteredTodos,
       isAllExpanded,
-      debouncedSync,
-      sync,
       isDrawerOpen,
       isMaximized,
       isAppFullscreen,
       isSilencingToast,
-      isTrashLoaded,
-      isRemoteSource,
     })
 
-    async function mergeOnLoginWithRemote(userId: number): Promise<void> {
-      if (todoSource.value !== 'remote') {
-        sourceManager.applyTodoSource('remote')
-      }
-
-      if (syncOwnerId.value !== null && syncOwnerId.value !== userId) {
-        remoteTodos.value = []
-        todos.value = []
-        syncOwnerId.value = null
-        lastSyncAt.value = null
-        syncConflicts.value = []
-        resetSyncStatus()
-      }
-
-      await mergeOnLogin(userId)
-    }
-
-    async function switchTodoSource(source: TodoDataSource): Promise<void> {
-      if (source === todoSource.value) return
-      if (source === 'local') {
-        sourceManager.applyTodoSource('local')
-        return
-      }
-
-      const { useAuthStore } = await import('@/features/auth/stores/auth')
-      const authStore = useAuthStore()
-      authStore.hydrateFromStorage()
-
-      if (!authStore.isAuthenticated || !authStore.user) {
-        return
-      }
-
-      await mergeOnLoginWithRemote(authStore.user.id)
-    }
-
-    function clearRemoteOnLogout(): void {
-      if (todoSource.value === 'remote') {
-        sourceManager.applyTodoSource('local')
-      }
-      remoteTodos.value = []
-      syncOwnerId.value = null
-      lastSyncAt.value = null
-      syncConflicts.value = []
-      resetSyncStatus()
-    }
-
+    // -- 建议变更管理 --
     const proposedChangeStateManager = createProposedChangeStateManager({
       proposedChangeSets,
       proposedChangeSetOrder,
@@ -327,6 +183,7 @@ export const useTodoStore = defineStore(
     }
 
     return {
+      // 状态
       todos,
       filter,
       viewMode,
@@ -340,41 +197,25 @@ export const useTodoStore = defineStore(
       isMaximized,
       isAppFullscreen,
       isSilencingToast,
-      isTrashLoaded,
       isAllExpanded,
       proposedChanges,
       activeProposedChangeSetId,
-      lastSyncAt,
-      syncOwnerId,
-      syncConflicts,
-      todoSource,
-      localTodos,
-      remoteTodos,
-      isRemoteSource,
+      // 计算属性
       filteredTodos,
       pendingCount,
       completedCount,
       hasProposedChanges,
       previewTodos,
       visualTodos,
-      switchTodoSource,
+      // actions
       ...actions,
-      deleteTodoPermanently,
-      clearTrash,
-      sync,
-      mergeOnLogin: mergeOnLoginWithRemote,
-      clearRemoteOnLogout,
-      resetSyncStatus,
-      acceptSyncConflict,
-      retrySyncConflict,
-      clearSyncConflicts,
+      // 建议变更
       addProposedChanges: proposedChangeStateManager.addProposedChanges,
       setProposedChanges: proposedChangeStateManager.setProposedChanges,
       setActiveProposedChangeSet: proposedChangeStateManager.setActiveProposedChangeSet,
       clearProposedChanges: proposedChangeStateManager.clearProposedChanges,
       applyProposedChanges,
       discardProposedChanges: proposedChangeStateManager.discardProposedChanges,
-      initSocketListener,
     }
   },
   {
@@ -382,15 +223,11 @@ export const useTodoStore = defineStore(
       key: 'todos',
       storage: localStorage,
       pick: [
-        'todoSource',
-        'localTodos',
-        'remoteTodos',
+        'todos',
         'filter',
         'viewMode',
         'todoExpansionState',
         'deferredSectionExpandedPreference',
-        'lastSyncAt',
-        'syncOwnerId',
         'isDrawerOpen',
         'isMaximized',
         'isAppFullscreen',

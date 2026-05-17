@@ -8,19 +8,14 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Wrench, X, Terminal, Loader2, Plus, Puzzle } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useAIConfig } from '@/features/ai/composables/useAIConfig'
-import { useAuthStore } from '@/features/auth/stores/auth'
 
 const { t } = useI18n()
 const store = useMcpStore()
-const authStore = useAuthStore()
 const { config, updateConfig } = useAIConfig()
 
-const isAuthenticated = computed(() => authStore.isAuthenticated)
-
 const mcpEnabled = computed({
-  get: () => isAuthenticated.value && config.value.mcpEnabled,
+  get: () => config.value.mcpEnabled,
   set: (val) => {
-    if (!isAuthenticated.value) return
     updateConfig({ mcpEnabled: val })
   },
 })
@@ -34,17 +29,10 @@ const tools = ref<McpToolResponse[]>([])
 const isToolsLoading = ref(false)
 
 onMounted(async () => {
-  // 确保已登录才请求列表
-  if (!isAuthenticated.value) return
-
   try {
     await store.fetchServers({ autoConnect: false })
   } catch (error: unknown) {
-    // 如果是因为 401 导致的，不需要在组件层面记录 console.error
-    const err = error as { response?: { status?: number }; message?: string }
-    if (err?.response?.status !== 401 && err?.message !== 'Refresh token invalid') {
-      console.error('Failed to fetch servers:', error)
-    }
+    console.error('Failed to fetch servers:', error)
   }
 })
 
@@ -107,8 +95,7 @@ async function handleViewTools(server: McpServerResponse) {
               type="button"
               role="switch"
               :aria-checked="mcpEnabled"
-              :disabled="!isAuthenticated"
-              class="relative inline-flex h-5 w-9 items-center rounded-full transition-all duration-300 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="relative inline-flex h-5 w-9 items-center rounded-full transition-all duration-300 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               :class="
                 mcpEnabled
                   ? 'bg-primary shadow-[0_2px_8px_hsl(var(--primary)_/_0.35)]'
@@ -132,8 +119,7 @@ async function handleViewTools(server: McpServerResponse) {
       <div class="relative flex items-center gap-2">
         <button
           v-if="!isEditing && store.servers.length > 0"
-          :disabled="!isAuthenticated"
-          class="group flex h-9 items-center gap-2 rounded-full bg-primary px-4 text-xs font-semibold text-primary-foreground shadow-[0_2px_8px_hsl(var(--primary)_/_0.25)] transition-all duration-200 hover:shadow-[0_4px_12px_hsl(var(--primary)_/_0.35)] hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+          class="group flex h-9 items-center gap-2 rounded-full bg-primary px-4 text-xs font-semibold text-primary-foreground shadow-[0_2px_8px_hsl(var(--primary)_/_0.25)] transition-all duration-200 hover:shadow-[0_4px_12px_hsl(var(--primary)_/_0.35)] hover:-translate-y-0.5 active:translate-y-0"
           @click="handleEdit()"
         >
           <Plus :size="14" stroke-width="2.5" class="transition-transform group-hover:rotate-90" />
@@ -155,26 +141,7 @@ async function handleViewTools(server: McpServerResponse) {
     <ScrollArea class="flex-1">
       <div class="p-5">
         <Transition mode="out-in" name="fade-slide">
-          <!-- 未登录状态 -->
-          <div
-            v-if="!isAuthenticated"
-            class="flex flex-col items-center justify-center py-20 text-center"
-          >
-            <div
-              class="w-16 h-16 rounded-2xl bg-muted/30 flex items-center justify-center mb-5 text-muted-foreground/40"
-            >
-              <Puzzle :size="32" stroke-width="1.5" />
-            </div>
-            <h4 class="text-sm font-bold text-foreground/80 mb-2">
-              {{ t('ai.mcpLoginRequired') }}
-            </h4>
-            <p class="text-xs text-muted-foreground/60 max-w-[240px] leading-relaxed">
-              {{ t('ai.mcpLoginRequiredDesc') }}
-            </p>
-          </div>
-
-          <!-- 已登录状态 -->
-          <div v-else-if="isEditing">
+          <div v-if="isEditing">
             <McpServerForm
               :server="selectedServer"
               :loading="store.isLoading"

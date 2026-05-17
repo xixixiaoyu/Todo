@@ -29,16 +29,6 @@ vi.mock('@/features/ai/composables/useAIConfig', () => ({
   }),
 }))
 
-const isAuthenticated = ref(true)
-
-vi.mock('@/features/auth/stores/auth', () => ({
-  useAuthStore: () => ({
-    get isAuthenticated() {
-      return isAuthenticated.value
-    },
-  }),
-}))
-
 vi.mock('vue-i18n', () => ({
   useI18n: () => ({
     t: (key: string) => key,
@@ -57,7 +47,6 @@ vi.mock('lucide-vue-next', () => ({
 describe('McpSettingsManager', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    isAuthenticated.value = true
     mockConfig.value = { mcpEnabled: true }
   })
 
@@ -80,28 +69,5 @@ describe('McpSettingsManager', () => {
     })
 
     expect(fetchServers).toHaveBeenCalledWith({ autoConnect: false })
-  })
-
-  it('skips fetching when the user is not authenticated', () => {
-    isAuthenticated.value = false
-
-    mount(McpSettingsManager, {
-      global: {
-        stubs: {
-          ScrollArea: {
-            template: '<div><slot /></div>',
-          },
-          McpServerList: {
-            template: '<div />',
-          },
-          McpServerForm: {
-            template: '<div />',
-          },
-          Transition: false,
-        },
-      },
-    })
-
-    expect(fetchServers).not.toHaveBeenCalled()
   })
 })

@@ -14,19 +14,7 @@ export interface Todo extends SharedTodo {
   expanded?: boolean
   isProposed?: boolean
   isProposedDelete?: boolean
-  syncStatus?: 'synced' | 'pending' | 'error'
   pomodoroCount: number
-}
-
-export type SyncConflictReason = 'TOMBSTONED' | 'OWNER_MISMATCH' | 'VERSION_CONFLICT'
-
-export interface TodoSyncConflict {
-  id: string
-  reason: SyncConflictReason
-  serverVersion?: number
-  localDraft?: Todo
-  serverSnapshot?: Todo
-  occurredAt: Date
 }
 
 export interface ProposedTodoChange {
@@ -37,7 +25,6 @@ export interface ProposedTodoChange {
 
 export type FilterType = 'pending' | 'completed' | 'trash'
 export type ViewMode = 'list' | 'visual' | 'stats'
-export type TodoDataSource = 'local' | 'remote'
 
 export interface TreeData {
   name: string

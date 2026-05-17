@@ -15,9 +15,9 @@ function createHttpExecutionContext(method: string, url: string): ExecutionConte
 
 describe('throttling.constants', () => {
   it('skips OPTIONS requests and health endpoints', () => {
-    expect(shouldSkipGlobalThrottle(createHttpExecutionContext('OPTIONS', '/api/auth/login'))).toBe(
-      true,
-    )
+    expect(
+      shouldSkipGlobalThrottle(createHttpExecutionContext('OPTIONS', '/api/health/liveness')),
+    ).toBe(true)
     expect(
       shouldSkipGlobalThrottle(createHttpExecutionContext('GET', '/api/health/liveness')),
     ).toBe(true)

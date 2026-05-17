@@ -177,7 +177,7 @@ function handleDelete() {
 
 async function handlePermanentDelete() {
   void hapticImpact(ImpactStyle.Medium)
-  await store.deleteTodoPermanently(props.todo.id)
+  await store.deleteTodo(props.todo.id)
 }
 
 function handleAddSubtask() {

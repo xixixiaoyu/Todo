@@ -1,15 +1,6 @@
-import {
-  Controller,
-  Post,
-  Delete,
-  Param,
-  BadRequestException,
-  UseGuards,
-  Req,
-} from '@nestjs/common'
+import { Controller, Post, Delete, Param, BadRequestException, Req } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiConsumes, ApiBody, ApiBearerAuth } from '@nestjs/swagger'
 import { Throttle } from '@nestjs/throttler'
-import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { StorageService } from './storage.service'
 import type { UploadResult, UploadedFile } from './storage.service'
 import { FileParsingService } from './file-parsing.service'
@@ -22,7 +13,6 @@ import type { FastifyRequestWithMultipart, MultipartFile } from '../common'
  */
 @ApiTags('上传')
 @Controller('upload')
-@UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class UploadController {
   constructor(

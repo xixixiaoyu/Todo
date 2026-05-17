@@ -6,7 +6,6 @@ import {
   Delete,
   Body,
   Param,
-  UseGuards,
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
@@ -14,9 +13,6 @@ import {
 } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger'
 import { Throttle } from '@nestjs/throttler'
-import { JwtAuthGuard } from '../auth/jwt-auth.guard'
-import { CurrentUser } from '../auth/current-user.decorator'
-import type { User } from '@lumina/shared'
 import { McpServerConfigService } from './mcp-server-config.service'
 import { McpClientService } from './mcp-client.service'
 import { CreateMcpServerDto, UpdateMcpServerDto, CallToolDto } from './mcp.dto'
@@ -29,7 +25,6 @@ import {
 
 @ApiTags('MCP')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller('mcp')
 export class McpController {
   private readonly logger = new Logger(McpController.name)
@@ -44,11 +39,8 @@ export class McpController {
    */
   @Post('servers')
   @ApiOperation({ summary: 'Create MCP server configuration' })
-  async createServer(
-    @CurrentUser() user: User,
-    @Body() dto: CreateMcpServerDto,
-  ): Promise<McpServerResponse> {
-    return this.configService.create(user.id, dto)
+  async createServer(@Body() dto: CreateMcpServerDto): Promise<McpServerResponse> {
+    return this.configService.create(0, dto)
   }
 
   /**
@@ -56,8 +48,8 @@ export class McpController {
    */
   @Get('servers')
   @ApiOperation({ summary: 'Get all MCP server configurations' })
-  async getServers(@CurrentUser() user: User): Promise<McpServerResponse[]> {
-    return this.configService.findAll(user.id)
+  async getServers(): Promise<McpServerResponse[]> {
+    return this.configService.findAll(0)
   }
 
   /**
@@ -65,11 +57,8 @@ export class McpController {
    */
   @Get('servers/:id')
   @ApiOperation({ summary: 'Get MCP server configuration by ID' })
-  async getServer(
-    @CurrentUser() user: User,
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<McpServerResponse> {
-    return this.configService.findOne(user.id, id)
+  async getServer(@Param('id', ParseUUIDPipe) id: string): Promise<McpServerResponse> {
+    return this.configService.findOne(0, id)
   }
 
   /**
@@ -78,11 +67,10 @@ export class McpController {
   @Put('servers/:id')
   @ApiOperation({ summary: 'Update MCP server configuration' })
   async updateServer(
-    @CurrentUser() user: User,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateMcpServerDto,
   ): Promise<McpServerResponse> {
-    return this.configService.update(user.id, id, dto)
+    return this.configService.update(0, id, dto)
   }
 
   /**
@@ -91,13 +79,10 @@ export class McpController {
   @Delete('servers/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete MCP server configuration' })
-  async deleteServer(
-    @CurrentUser() user: User,
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<void> {
-    await this.configService.findOne(user.id, id)
+  async deleteServer(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+    await this.configService.findOne(0, id)
     await this.clientService.disconnect(id)
-    return this.configService.delete(user.id, id)
+    return this.configService.delete(0, id)
   }
 
   /**
@@ -106,8 +91,8 @@ export class McpController {
   @Get('tools')
   @Throttle(MCP_TOOL_DISCOVERY_THROTTLE)
   @ApiOperation({ summary: 'Get all tools from all enabled MCP servers' })
-  async getAllTools(@CurrentUser() user: User): Promise<McpToolResponse[]> {
-    const enabledServers = await this.configService.findEnabled(user.id)
+  async getAllTools(): Promise<McpToolResponse[]> {
+    const enabledServers = await this.configService.findEnabled(0)
     const allTools: McpToolResponse[] = []
 
     for (const server of enabledServers) {
@@ -136,8 +121,8 @@ export class McpController {
   @Throttle(MCP_CONNECTION_THROTTLE)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Connect to MCP server' })
-  async connect(@CurrentUser() user: User, @Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    const config = await this.configService.findOne(user.id, id)
+  async connect(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+    const config = await this.configService.findOne(0, id)
     await this.clientService.connect(id, config.transport, config.config)
   }
 
@@ -148,12 +133,9 @@ export class McpController {
   @Throttle(MCP_CONNECTION_THROTTLE)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Disconnect from MCP server' })
-  async disconnect(
-    @CurrentUser() user: User,
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<void> {
+  async disconnect(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     // 验证所有权
-    await this.configService.findOne(user.id, id)
+    await this.configService.findOne(0, id)
     await this.clientService.disconnect(id)
   }
 
@@ -163,12 +145,9 @@ export class McpController {
   @Get('servers/:id/tools')
   @Throttle(MCP_TOOL_DISCOVERY_THROTTLE)
   @ApiOperation({ summary: 'Get tools from a specific MCP server' })
-  async getTools(
-    @CurrentUser() user: User,
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<McpToolResponse[]> {
+  async getTools(@Param('id', ParseUUIDPipe) id: string): Promise<McpToolResponse[]> {
     // 验证权限
-    const config = await this.configService.findOne(user.id, id)
+    const config = await this.configService.findOne(0, id)
 
     // 如果未连接，尝试连接
     if (!this.clientService.isConnected(id)) {
@@ -185,12 +164,11 @@ export class McpController {
   @Throttle(MCP_TOOL_CALL_THROTTLE)
   @ApiOperation({ summary: 'Call a tool on MCP server' })
   async callTool(
-    @CurrentUser() user: User,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: CallToolDto,
   ): Promise<ToolCallResult> {
     // 验证权限
-    const config = await this.configService.findOne(user.id, id)
+    const config = await this.configService.findOne(0, id)
 
     // 确保已连接
     if (!this.clientService.isConnected(id)) {

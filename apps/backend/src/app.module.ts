@@ -2,7 +2,6 @@ import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common'
 import { APP_GUARD } from '@nestjs/core'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { ThrottlerModule } from '@nestjs/throttler'
-import { EventEmitterModule } from '@nestjs/event-emitter'
 import { BullModule } from '@nestjs/bullmq'
 import { LoggerModule } from 'nestjs-pino'
 import { I18nModule, AcceptLanguageResolver, HeaderResolver } from 'nestjs-i18n'
@@ -10,18 +9,11 @@ import * as path from 'path'
 import { I18nTsLoader } from './i18n/i18n-ts.loader'
 import { PrismaModule } from './prisma/prisma.module'
 import { RedisModule, RedisService } from './redis'
-import { UsersModule } from './users/users.module'
 import { HealthModule } from './health/health.module'
-import { AuthModule } from './auth/auth.module'
-import { MailModule } from './mail'
-import { EventsModule } from './events'
 import { UploadModule } from './upload'
-import { TodosModule } from './todos/todos.module'
-import { ScheduledTasksModule } from './scheduled-tasks'
 import { McpModule } from './mcp/mcp.module'
 import { TeachingModule } from './teaching/teaching.module'
 import { SkillSourcesModule } from './skill-sources/skill-sources.module'
-import { AiSyncModule } from './ai-sync/ai-sync.module'
 import { SessionFileModule } from './agent/session-file'
 import { TaskQueueModule } from './agent/task-queue'
 import { WebSearchModule } from './web-search'
@@ -92,13 +84,6 @@ import { AppThrottlerGuard, RedisThrottlerStorage, createGlobalThrottlerOptions 
         }
       },
     }),
-    // 事件发射器模块（应用内事件驱动）
-    EventEmitterModule.forRoot({
-      wildcard: true, // 支持通配符事件
-      delimiter: '.', // 事件名称分隔符
-      maxListeners: 20, // 最大监听器数量
-      verboseMemoryLeak: true, // 内存泄漏详细提示
-    }),
     // BullMQ 队列模块（后台任务处理）
     BullModule.forRootAsync({
       inject: [ConfigService],
@@ -139,15 +124,8 @@ import { AppThrottlerGuard, RedisThrottlerStorage, createGlobalThrottlerOptions 
     PrismaModule, // 数据库模块
     RedisModule, // Redis 缓存模块
     HealthModule, // 健康检查模块
-    AuthModule, // 认证模块
-    UsersModule, // 用户模块
-    MailModule, // 邮件模块
-    EventsModule, // WebSocket 模块
     UploadModule, // 文件上传模块
     SkillSourcesModule, // 技能外部来源代理模块
-    AiSyncModule, // AI 数据同步模块
-    TodosModule, // 待办事项模块
-    ScheduledTasksModule, // 定时任务模块
     McpModule, // MCP 模块
     TeachingModule, // 教学模式模块
     SessionFileModule, // Agent Session 文件注册模块

@@ -1,4 +1,3 @@
-import { getToken } from '@/api'
 import type { AIConfig } from './useAIConfig'
 import { hasRuntimeAuthToken } from './useChatActions.utils'
 import { buildAiToolsFromMcpTools } from './useChatActions.mcpTools'
@@ -51,7 +50,7 @@ export async function prepareRuntimeCapabilities(params: {
 }> {
   params.hydrateAuth()
 
-  const hasRuntimeAuthAccess = hasRuntimeAuthToken(params.getAuthToken(), getToken())
+  const hasRuntimeAuthAccess = hasRuntimeAuthToken(params.getAuthToken(), null)
   const { mcpApi } = await import('@/features/mcp/api/mcp')
 
   let mcpTools: McpToolResponse[] = []

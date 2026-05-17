@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import { nextTick } from 'vue'
 import { useTodoStore } from '@/features/todo/stores/todo'
 
 describe('useTodoStore - Basic State', () => {
@@ -79,56 +78,7 @@ describe('useTodoStore - Basic State', () => {
       expect(store.isDrawerOpen).toBe(false)
     })
 
-    it('should fetch todos (currently empty logic)', async () => {
-      await expect(store.fetchTodos()).resolves.toBeUndefined()
-    })
-
-    it('should restore current todos when local snapshot is hydrated', async () => {
-      const hydratedTodos = [
-        {
-          id: 'hydrated-local',
-          title: 'Hydrated Local Todo',
-          completed: false,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          isPinned: false,
-          order: 0,
-          version: 1,
-          pomodoroCount: 0,
-        },
-      ]
-
-      store.localTodos = hydratedTodos
-      await nextTick()
-
-      expect(store.todos).toHaveLength(1)
-      expect(store.todos[0].id).toBe('hydrated-local')
-    })
-
-    it('should restore collapsed expansion state when local snapshot is hydrated', async () => {
-      const hydratedTodos = [
-        {
-          id: 'hydrated-parent',
-          title: 'Hydrated Parent Todo',
-          completed: false,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          isPinned: false,
-          order: 0,
-          expanded: false,
-          version: 1,
-          pomodoroCount: 0,
-        },
-      ]
-
-      store.todoExpansionState = {
-        'hydrated-parent': false,
-      }
-      store.localTodos = hydratedTodos
-      await nextTick()
-
-      expect(store.todos).toHaveLength(1)
-      expect(store.todos[0].expanded).toBe(false)
-    })
+    // fetchTodos, localTodos hydration tests removed — those properties were removed
+    // when the store was simplified to local-only mode.
   })
 })

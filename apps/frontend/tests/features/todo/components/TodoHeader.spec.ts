@@ -164,52 +164,7 @@ describe('TodoHeader', () => {
     expect(title).toContain('简思')
   })
 
-  it('点击语言切换应该切换语言并保存到 localStorage', async () => {
-    const wrapper = mount(TodoHeader, {
-      global: {
-        plugins: [i18n],
-        stubs: {
-          TooltipProvider: true,
-          Tooltip: { template: '<div><slot /></div>' },
-          TooltipTrigger: { template: '<div><slot /></div>' },
-          TooltipContent: { template: '<div><slot /></div>' },
-          DropdownMenu: { template: '<div><slot /></div>' },
-          DropdownMenuTrigger: { template: '<div><slot /></div>' },
-          DropdownMenuContent: { template: '<div><slot /></div>' },
-          DropdownMenuItem: DropdownMenuItemStub,
-          DropdownMenuLabel: { template: '<div><slot /></div>' },
-          DropdownMenuSeparator: { template: '<hr />' },
-          ThemeColorPicker: { template: '<div />' },
-          ThemeToggle: { template: '<div />' },
-        },
-      },
-    })
-
-    // 初始是 zh-CN
-    expect(i18n.global.locale.value).toBe('zh-CN')
-
-    // 语言切换在 DropdownMenuItem 内，找到包含 Languages 文案的菜单项并触发点击
-    const menuItems = wrapper.findAllComponents({ name: 'DropdownMenuItem' })
-    const langItem = menuItems.find((c) => c.text().includes('Languages'))
-    expect(langItem).toBeTruthy()
-
-    // 通过 DOM 元素点击，stub 的 onClick 会转发为自定义 click 事件
-    await langItem!.trigger('click')
-    await wrapper.vm.$nextTick()
-
-    // 切换到 en-US
-    expect(i18n.global.locale.value).toBe('en-US')
-    expect(localStorage.getItem('locale')).toBe('en-US')
-
-    await langItem!.trigger('click')
-    await wrapper.vm.$nextTick()
-
-    // 切换回 zh-CN
-    expect(i18n.global.locale.value).toBe('zh-CN')
-    expect(localStorage.getItem('locale')).toBe('zh-CN')
-  })
-
-  it('应该包含语言切换按钮', () => {
+  it('不应包含语言切换按钮（已从 TodoHeader 移除）', () => {
     const wrapper = mount(TodoHeader, {
       global: {
         plugins: [i18n],
@@ -230,9 +185,10 @@ describe('TodoHeader', () => {
       },
     })
 
-    // 语言切换在 DropdownMenuItem（渲染为 div）内
-    const langItem = wrapper.findAll('div').find((el) => el.text().includes('Languages'))
-    expect(langItem?.exists()).toBe(true)
+    // 语言切换按钮不再存在于 TodoHeader 中
+    const items = wrapper.findAll('div, button')
+    const hasLangToggle = items.some((el) => el.text().includes('Languages'))
+    expect(hasLangToggle).toBe(false)
   })
 
   it('点击 AI 助手按钮应立即打开抽屉', async () => {

@@ -1,7 +1,6 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq'
 import { Job } from 'bullmq'
 import { Logger } from '@nestjs/common'
-import { EventsGateway } from '../../events/events.gateway'
 import { DeferredResultStore } from './deferred-result.store'
 
 export interface AgentTaskJobData {
@@ -19,10 +18,7 @@ export interface AgentTaskJobData {
 export class AgentTaskProcessor extends WorkerHost {
   private readonly logger = new Logger(AgentTaskProcessor.name)
 
-  constructor(
-    private readonly eventsGateway: EventsGateway,
-    private readonly resultStore: DeferredResultStore,
-  ) {
+  constructor(private readonly resultStore: DeferredResultStore) {
     super()
   }
 
@@ -32,10 +28,6 @@ export class AgentTaskProcessor extends WorkerHost {
     this.logger.log(`Processing agent task ${taskId} for session ${sessionId}`)
 
     this.resultStore.updateStatus(taskId, 'running')
-    this.eventsGateway.sendToSession(sessionId, 'agent.task.started', {
-      taskId,
-      startedAt: Date.now(),
-    })
 
     try {
       const messages: Array<{ role: 'system' | 'user'; content: string }> = [
@@ -76,12 +68,6 @@ export class AgentTaskProcessor extends WorkerHost {
       this.resultStore.updateContent(taskId, content)
       this.resultStore.updateStatus(taskId, 'done')
 
-      this.eventsGateway.sendToSession(sessionId, 'agent.task.completed', {
-        taskId,
-        content,
-        completedAt: Date.now(),
-      })
-
       this.logger.log(`Agent task ${taskId} completed successfully`)
       return { content }
     } catch (error) {
@@ -89,12 +75,6 @@ export class AgentTaskProcessor extends WorkerHost {
       this.logger.error(`Agent task ${taskId} failed: ${errorMessage}`)
 
       this.resultStore.updateError(taskId, errorMessage)
-
-      this.eventsGateway.sendToSession(sessionId, 'agent.task.failed', {
-        taskId,
-        error: errorMessage,
-        failedAt: Date.now(),
-      })
 
       throw error
     }

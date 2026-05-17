@@ -19,7 +19,6 @@ onMounted(() => {
   }
 
   // 初始化全局 WebSocket 监听
-  void todoStore.initSocketListener()
 })
 
 const handleDblClick = () => {

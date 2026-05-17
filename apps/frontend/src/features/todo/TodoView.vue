@@ -13,7 +13,7 @@ import TodoFilter from './components/TodoFilter.vue'
 import TodoSearch from './components/TodoSearch.vue'
 import TodoList from './components/TodoList.vue'
 import PomodoroTimer from './components/PomodoroTimer.vue'
-import TodoSyncConflictPanel from './components/TodoSyncConflictPanel.vue'
+
 import TodoImageTaskConfirmDialog from './components/TodoImageTaskConfirmDialog.vue'
 import AiAssistantDrawer from '@/features/ai/components/AiAssistantDrawer.vue'
 import Fireworks from '@/components/Fireworks.vue'
@@ -188,8 +188,6 @@ watch(
 )
 
 onMounted(() => {
-  void todoStore.fetchTodos()
-
   ctx.add(() => {
     // 初始化输入框状态，避免首屏闪烁
     if (inputContainerRef.value) {
@@ -284,8 +282,6 @@ const currentViewListeners = computed(() => {
   }
 })
 
-const syncConflicts = computed(() => todoStore.syncConflicts)
-
 function onFireworksComplete() {
   showFireworks.value = false
 }
@@ -349,13 +345,7 @@ function onFireworksComplete() {
           <!-- Header -->
           <TodoHeader />
 
-          <TodoSyncConflictPanel
-            :conflicts="syncConflicts"
-            :todos="todoStore.todos"
-            @clear-all="todoStore.clearSyncConflicts()"
-            @accept="todoStore.acceptSyncConflict($event)"
-            @retry="todoStore.retrySyncConflict($event)"
-          />
+          <!-- sync conflict panel removed (local only) -->
 
           <!-- Input Area - Creation First -->
           <div ref="inputContainerRef" class="relative overflow-hidden">

@@ -108,7 +108,8 @@ describe('TodoView animation timing', () => {
   it('does not run post-paint gsap entrance tweens on initial mount', () => {
     shallowMount(TodoView)
 
-    expect(fetchTodosSpy).toHaveBeenCalledTimes(1)
+    // fetchTodos no longer called on mount (local-only, no remote fetch)
+    expect(fetchTodosSpy).not.toHaveBeenCalled()
     expect(fromSpy).not.toHaveBeenCalled()
   })
 

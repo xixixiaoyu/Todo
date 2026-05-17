@@ -1,7 +1,4 @@
 import { ref } from 'vue'
-import { parseFileApi } from '@/api/upload'
-import { unwrapApiResponse } from '@lumina/shared'
-import { useAuthStore } from '@/features/auth/stores/auth'
 import { useToast } from './useToast'
 import i18n from '@/i18n'
 import { MAX_PARSED_FILE_CHARS, isFrontendParsable } from '@/features/ai/constants/attachments'
@@ -24,7 +21,6 @@ export interface ParsedFile {
 export function useFileParsing() {
   const { t } = i18n.global
   const { error: toastError, warning: toastWarning } = useToast()
-  const authStore = useAuthStore()
   const parsedFiles = ref<ParsedFile[]>([])
   const isParsing = ref(false)
 
@@ -62,15 +58,11 @@ export function useFileParsing() {
       let content = ''
 
       if (isFrontendParsable(file)) {
-        // 方案 A: 前端直接读取
+        // 前端直接读取
         content = await readFileAsText(file)
       } else {
-        // 方案 B: 后端解析 (需验证登录状态)
-        if (!authStore.isAuthenticated) {
-          throw new Error(t('ai.loginRequiredForParsing'))
-        }
-        const response = await parseFileApi(file)
-        content = unwrapApiResponse(response).content
+        // 复杂文件不支持后端解析（无认证），提示用户
+        throw new Error(t('ai.complexFileNotSupported'))
       }
 
       content = clampContent(content, file.name)

@@ -1,4 +1,3 @@
-import type { Todo as SharedTodo } from '@lumina/shared'
 import type { Todo } from './todo.types'
 
 export function generateTodoId(): string {
@@ -22,33 +21,6 @@ export function generateTodoId(): string {
     const v = char === 'x' ? r : (r & 0x3) | 0x8
     return v.toString(16)
   })
-}
-
-export function mapServerTodoToLocalTodo(serverTodo: SharedTodo): Todo {
-  return {
-    id: serverTodo.id,
-    title: serverTodo.title,
-    completed: serverTodo.completed,
-    order: serverTodo.order,
-    isPinned: serverTodo.isPinned,
-    parentId: serverTodo.parentId,
-    version: serverTodo.version,
-    pomodoroCount: serverTodo.pomodoroCount,
-    dueAt: serverTodo.dueAt ? new Date(serverTodo.dueAt) : undefined,
-    remindAt: serverTodo.remindAt ? new Date(serverTodo.remindAt) : undefined,
-    remindedAt: serverTodo.remindedAt ? new Date(serverTodo.remindedAt) : undefined,
-    recurrenceRule: serverTodo.recurrenceRule || null,
-    recurrenceTz: serverTodo.recurrenceTz || null,
-    recurrenceSpawnedAt: serverTodo.recurrenceSpawnedAt
-      ? new Date(serverTodo.recurrenceSpawnedAt)
-      : undefined,
-    createdAt: new Date(serverTodo.createdAt),
-    updatedAt: new Date(serverTodo.updatedAt),
-    completedAt: serverTodo.completedAt ? new Date(serverTodo.completedAt) : undefined,
-    deferredAt: serverTodo.deferredAt ? new Date(serverTodo.deferredAt) : undefined,
-    deletedAt: serverTodo.deletedAt ? new Date(serverTodo.deletedAt) : undefined,
-    syncStatus: 'synced' as const,
-  }
 }
 
 export function isDuplicateTodo(

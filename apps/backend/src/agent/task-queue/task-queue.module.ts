@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common'
 import { BullModule } from '@nestjs/bullmq'
-import { EventsModule } from '../../events/events.module'
 import { AgentTaskProcessor } from './agent-task.processor'
 import { DeferredResultStore } from './deferred-result.store'
 
@@ -15,7 +14,6 @@ import { DeferredResultStore } from './deferred-result.store'
         backoff: { type: 'exponential', delay: 1000 },
       },
     }),
-    EventsModule,
   ],
   providers: [AgentTaskProcessor, DeferredResultStore],
   exports: [DeferredResultStore, BullModule],

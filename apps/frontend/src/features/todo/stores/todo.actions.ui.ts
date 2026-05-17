@@ -16,7 +16,6 @@ type TodoUiDeps = {
   filteredTodos: ComputedRef<Todo[]>
   isAllExpanded: ComputedRef<boolean>
   todos: Ref<Todo[]>
-  fetchTrash: () => Promise<void>
 }
 
 export function createTodoUiActions(deps: TodoUiDeps): {
@@ -52,9 +51,6 @@ export function createTodoUiActions(deps: TodoUiDeps): {
 
   function setFilter(newFilter: FilterType): void {
     deps.filter.value = newFilter
-    if (newFilter === 'trash') {
-      void deps.fetchTrash()
-    }
   }
 
   function setSearchQuery(query: string): void {

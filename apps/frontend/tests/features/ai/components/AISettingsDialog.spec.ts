@@ -31,6 +31,18 @@ vi.mock('lucide-vue-next', () => ({
   ChevronLeft: { template: '<span>ChevronLeft</span>' },
   Settings2: { template: '<span>Settings2</span>' },
   Blocks: { template: '<span>Blocks</span>' },
+  Palette: { template: '<span>Palette</span>' },
+  SlidersHorizontal: { template: '<span>SlidersHorizontal</span>' },
+  Layers: { template: '<span>Layers</span>' },
+  Brain: { template: '<span>Brain</span>' },
+  FileText: { template: '<span>FileText</span>' },
+  Zap: { template: '<span>Zap</span>' },
+  Terminal: { template: '<span>Terminal</span>' },
+  Sun: { template: '<span>Sun</span>' },
+  Moon: { template: '<span>Moon</span>' },
+  Monitor: { template: '<span>Monitor</span>' },
+  Languages: { template: '<span>Languages</span>' },
+  ScanEye: { template: '<span>ScanEye</span>' },
 }))
 
 // Mock composables
@@ -255,6 +267,10 @@ describe('AISettingsDialog', () => {
       },
     })
 
+    // Switch to settings tab first (default is now 'appearance')
+    const settingsTab = wrapper.findAll('button').find((b) => b.text().includes('ai.basicSettings'))
+    await settingsTab?.trigger('click')
+
     const modelInput = wrapper.find('input')
     await modelInput.setValue('new-model')
     await modelInput.trigger('blur')
@@ -329,19 +345,21 @@ describe('AISettingsDialog', () => {
       },
     })
 
-    const expectedTabs = [
+    const expectedTabs: string[] = [
+      'ai.appearance',
       'ai.basicSettings',
       'ai.presetManagement',
       'ai.memory',
       'ai.contextCompression',
       'ai.skills',
+      'ai.webSearch',
       'ai.mcp',
     ]
 
-    const renderedTabs = wrapper
-      .findAll('button')
-      .map((button) => button.text())
-      .filter((text) => expectedTabs.includes(text))
+    // Button text includes icon mock text (e.g. "Paletteai.appearance"), so use includes()
+    const renderedTabs = expectedTabs.filter((tab) =>
+      wrapper.findAll('button').some((button) => button.text().includes(tab)),
+    )
 
     expect(renderedTabs).toEqual(expectedTabs)
   })
@@ -399,6 +417,10 @@ describe('AISettingsDialog', () => {
       },
     })
 
+    // Switch to settings tab (default is now 'appearance')
+    const settingsTab = wrapper.findAll('button').find((b) => b.text().includes('ai.basicSettings'))
+    await settingsTab?.trigger('click')
+
     const syncButton = wrapper
       .findAll('button')
       .find((button) => button.text() === 'ai.syncToActivePreset')
@@ -439,6 +461,10 @@ describe('AISettingsDialog', () => {
         },
       },
     })
+
+    // Switch to settings tab (default is now 'appearance')
+    const settingsTab = wrapper.findAll('button').find((b) => b.text().includes('ai.basicSettings'))
+    await settingsTab?.trigger('click')
 
     const saveButtonBefore = wrapper
       .findAll('button')

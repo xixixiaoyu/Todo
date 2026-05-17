@@ -34,7 +34,7 @@ import {
   fetchPresets as fetchPresetsFromServer,
   pushPresets as pushPresetsToServer,
 } from '@/features/ai/services/aiSyncService'
-import type { AISkillSync, AIPresetSync } from '@lumina/shared'
+import type { AISkillSync, AIPresetSync } from '@/features/ai/services/aiSyncService'
 
 // ─── Thinking Mode ─────────────────────────────────────────────────
 

@@ -9,7 +9,7 @@ import {
   Trash2,
 } from 'lucide-vue-next'
 import { useTodoStore } from '../stores/todo'
-import type { FilterType } from '../stores/todo'
+import type { FilterType, Todo } from '../stores/todo'
 import { useToast } from '@/composables/useToast'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -41,7 +41,8 @@ const emit = defineEmits<{
 }>()
 
 async function handleClearTrash() {
-  await todoStore.clearTrash()
+  // 本地模式下，直接清除所有已删除的 todo
+  todoStore.todos = todoStore.todos.filter((t) => !t.deletedAt)
   toast.success(t('todo.clearTrashSuccess'))
   isClearPopoverOpen.value = false
 }

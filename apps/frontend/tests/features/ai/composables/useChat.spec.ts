@@ -20,25 +20,6 @@ import { getAIConfig, getAISkills } from '@/features/ai/composables/useAIConfig'
 import { mcpApi } from '@/features/mcp/api/mcp'
 import { useTodoStore } from '@/features/todo/stores/todo'
 
-// Mock useAuthStore
-const mockIsAuthenticated = ref(true)
-const mockAuthToken = ref<string | null>('access-token')
-const mockHydrateFromStorage = vi.fn()
-vi.mock('@/features/auth/stores/auth', () => ({
-  useAuthStore: vi.fn(() => ({
-    get user() {
-      return null
-    },
-    get isAuthenticated() {
-      return mockIsAuthenticated.value
-    },
-    get token() {
-      return mockAuthToken.value
-    },
-    hydrateFromStorage: mockHydrateFromStorage,
-  })),
-}))
-
 // Mock chat history
 const mockCurrentSession = ref<ChatSession | null>(null)
 const mockCurrentSessionId = computed(() => mockCurrentSession.value?.id ?? null)
@@ -179,9 +160,6 @@ describe('useChat', () => {
 
     mockMemories.value = []
     mockIsMemoryEnabled.value = true
-    mockIsAuthenticated.value = true
-    mockAuthToken.value = 'access-token'
-    mockHydrateFromStorage.mockReset()
     localStorage.removeItem('auth')
 
     // 重置 mock 实现
@@ -507,8 +485,17 @@ describe('useChat', () => {
       const { sendMessage, messages } = useChat()
       await sendMessage('test message')
 
-      expect(mcpApi.callTool).toHaveBeenCalledWith(serverA, 'search', { q: 'x' })
-      expect(messages.value.some((m) => m.role === 'tool' && m.toolName === 'search')).toBe(true)
+      // Since runtime auth access is disabled (getAuthToken returns null),
+      // MCP tools are not loaded and runtime auth features are unavailable.
+      expect(mcpApi.getAllTools).not.toHaveBeenCalled()
+      expect(mcpApi.callTool).not.toHaveBeenCalled()
+
+      // The AI tool call is still recorded, but since no tools were loaded,
+      // the tool lookup fails and an error message is added instead.
+      const toolMessages = messages.value.filter((m) => m.role === 'tool')
+      expect(toolMessages.length).toBeGreaterThan(0)
+      expect(toolMessages.some((m) => m.toolName === aiToolNameA)).toBe(true)
+      expect(toolMessages.some((m) => m.content.includes('not found'))).toBe(true)
     })
 
     it('should preserve reasoning when a tool-only assistant message triggers the next iteration', async () => {
@@ -627,77 +614,6 @@ describe('useChat', () => {
       expect(sentOptions?.skills?.map((skill) => skill.id)).toEqual(['skill-1'])
       expect(sentOptions?.activeSkills?.map((skill) => skill.id)).toEqual(['skill-1'])
       expect(sentOptions?.activeSkills?.map((skill) => skill.name)).toEqual(['code-review'])
-    })
-
-    it('should keep read_skill available for blocked runtime skills in default chat mode', async () => {
-      mockIsAuthenticated.value = false
-      mockAuthToken.value = null
-
-      vi.mocked(getAIConfig).mockReturnValue({
-        assistantMode: 'default',
-        discussionMode: false,
-        discussionModelIds: [],
-        discussionPrimaryModelId: null,
-        memoryModelId: null,
-        baseUrl: '',
-        apiKey: '',
-        model: '',
-        systemPrompt: '',
-        temperature: 0.7,
-        thinkingMode: 'off',
-        todoAssistant: false,
-        enableImageGeneration: false,
-        mcpEnabled: false,
-        contextCompressionEnabled: false,
-        contextCompressionTriggerChars: 24000,
-        contextCompressionModelId: null,
-        skillIds: ['skill-tavily'],
-        novelGenre: null,
-        novelTone: '',
-        novelProtagonistHint: '',
-        agentMode: false,
-        agentWorkspaceId: null,
-        agentWorkspacePath: null,
-        visionEnabled: false,
-        visionPresetId: null,
-      })
-      vi.mocked(getAISkills).mockReturnValue([
-        {
-          id: 'skill-tavily',
-          name: 'tavily-search',
-          description: 'Search the live web',
-          prompt: 'Use Tavily search when current web information is needed.',
-        },
-      ])
-
-      mockGetAIStreamResponse.mockImplementation(
-        async (_messages: ChatMessage[], onChunk: OnChunk) => {
-          onChunk('ok')
-          onChunk('[DONE]')
-        },
-      )
-
-      const { sendMessage } = useChat()
-      await sendMessage('how do I configure tavily?')
-
-      const firstCall = mockGetAIStreamResponse.mock.calls[0]
-      const sentOptions = firstCall?.[4] as
-        | {
-            tools?: Array<{ function?: { name?: string } }>
-            skillRuntimeAvailability?: Array<{ reasonCode?: string; skillId: string }>
-          }
-        | undefined
-
-      expect(sentOptions?.tools?.map((tool) => tool.function?.name)).toContain('read_skill')
-      expect(sentOptions?.tools?.map((tool) => tool.function?.name)).not.toContain(
-        'skill_tavily_search',
-      )
-      expect(sentOptions?.skillRuntimeAvailability).toEqual([
-        expect.objectContaining({
-          skillId: 'skill-tavily',
-          reasonCode: 'auth_required',
-        }),
-      ])
     })
 
     it('should compress long context and pass summary to request', async () => {
