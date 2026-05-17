@@ -40,7 +40,7 @@ export class McpController {
   @Post('servers')
   @ApiOperation({ summary: 'Create MCP server configuration' })
   async createServer(@Body() dto: CreateMcpServerDto): Promise<McpServerResponse> {
-    return this.configService.create(0, dto)
+    return this.configService.create(dto)
   }
 
   /**
@@ -49,7 +49,7 @@ export class McpController {
   @Get('servers')
   @ApiOperation({ summary: 'Get all MCP server configurations' })
   async getServers(): Promise<McpServerResponse[]> {
-    return this.configService.findAll(0)
+    return this.configService.findAll()
   }
 
   /**
@@ -58,7 +58,7 @@ export class McpController {
   @Get('servers/:id')
   @ApiOperation({ summary: 'Get MCP server configuration by ID' })
   async getServer(@Param('id', ParseUUIDPipe) id: string): Promise<McpServerResponse> {
-    return this.configService.findOne(0, id)
+    return this.configService.findOne(id)
   }
 
   /**
@@ -70,7 +70,7 @@ export class McpController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateMcpServerDto,
   ): Promise<McpServerResponse> {
-    return this.configService.update(0, id, dto)
+    return this.configService.update(id, dto)
   }
 
   /**
@@ -80,9 +80,8 @@ export class McpController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete MCP server configuration' })
   async deleteServer(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    await this.configService.findOne(0, id)
+    await this.configService.delete(id)
     await this.clientService.disconnect(id)
-    return this.configService.delete(0, id)
   }
 
   /**
@@ -92,7 +91,7 @@ export class McpController {
   @Throttle(MCP_TOOL_DISCOVERY_THROTTLE)
   @ApiOperation({ summary: 'Get all tools from all enabled MCP servers' })
   async getAllTools(): Promise<McpToolResponse[]> {
-    const enabledServers = await this.configService.findEnabled(0)
+    const enabledServers = await this.configService.findEnabled()
     const allTools: McpToolResponse[] = []
 
     for (const server of enabledServers) {
@@ -122,7 +121,7 @@ export class McpController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Connect to MCP server' })
   async connect(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    const config = await this.configService.findOne(0, id)
+    const config = await this.configService.findOne(id)
     await this.clientService.connect(id, config.transport, config.config)
   }
 
@@ -134,8 +133,8 @@ export class McpController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Disconnect from MCP server' })
   async disconnect(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    // 验证所有权
-    await this.configService.findOne(0, id)
+    // 验证存在性
+    await this.configService.findOne(id)
     await this.clientService.disconnect(id)
   }
 
@@ -146,8 +145,8 @@ export class McpController {
   @Throttle(MCP_TOOL_DISCOVERY_THROTTLE)
   @ApiOperation({ summary: 'Get tools from a specific MCP server' })
   async getTools(@Param('id', ParseUUIDPipe) id: string): Promise<McpToolResponse[]> {
-    // 验证权限
-    const config = await this.configService.findOne(0, id)
+    // 验证存在性
+    const config = await this.configService.findOne(id)
 
     // 如果未连接，尝试连接
     if (!this.clientService.isConnected(id)) {
@@ -167,8 +166,8 @@ export class McpController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: CallToolDto,
   ): Promise<ToolCallResult> {
-    // 验证权限
-    const config = await this.configService.findOne(0, id)
+    // 验证存在性
+    const config = await this.configService.findOne(id)
 
     // 确保已连接
     if (!this.clientService.isConnected(id)) {

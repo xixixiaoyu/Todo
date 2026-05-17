@@ -78,7 +78,6 @@ describe('McpServerForm.vue', () => {
       transport: McpTransportType.STDIO,
       config: { command: 'node', args: ['-v'] },
       enabled: true,
-      userId: 1,
       createdAt: new Date(),
       updatedAt: new Date(),
     }

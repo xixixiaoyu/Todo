@@ -61,7 +61,6 @@ const baseServer: McpServerResponse = {
     url: 'https://mcp.tavily.com/mcp',
   },
   enabled: true,
-  userId: 1,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 }

@@ -43,7 +43,6 @@ const baseServer: McpServerResponse = {
     args: ['server.js'],
   },
   enabled: true,
-  userId: 1,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 }

@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing'
 import { McpServerConfigService } from '@/mcp/mcp-server-config.service'
 import { PrismaService } from '@/prisma/prisma.service'
 import { McpTransportType } from '@/mcp/mcp.dto'
-import { NotFoundException, ForbiddenException } from '@nestjs/common'
+import { NotFoundException } from '@nestjs/common'
 
 describe('McpServerConfigService', () => {
   let service: McpServerConfigService
@@ -11,7 +11,6 @@ describe('McpServerConfigService', () => {
     mcpServer: {
       create: vi.fn(),
       findMany: vi.fn(),
-      findUnique: vi.fn(),
       findFirst: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
@@ -39,7 +38,6 @@ describe('McpServerConfigService', () => {
 
   describe('create', () => {
     it('should create a new MCP server config', async () => {
-      const userId = 1
       const dto = {
         name: 'Test Server',
         description: 'Test Description',
@@ -50,13 +48,12 @@ describe('McpServerConfigService', () => {
       const mockResult = {
         id: 'uuid',
         ...dto,
-        userId,
         createdAt: new Date(),
         updatedAt: new Date(),
       }
       mockPrisma.mcpServer.create.mockResolvedValue(mockResult)
 
-      const result = await service.create(userId, dto)
+      const result = await service.create(dto)
 
       expect(mockPrisma.mcpServer.create).toHaveBeenCalledWith({
         data: {
@@ -65,7 +62,6 @@ describe('McpServerConfigService', () => {
           transport: dto.transport,
           config: dto.config,
           enabled: dto.enabled,
-          userId,
         },
       })
       expect(result.id).toBe('uuid')
@@ -73,8 +69,7 @@ describe('McpServerConfigService', () => {
   })
 
   describe('findAll', () => {
-    it('should return all servers for a user', async () => {
-      const userId = 1
+    it('should return all servers', async () => {
       const mockServers = [
         {
           id: '1',
@@ -82,7 +77,6 @@ describe('McpServerConfigService', () => {
           transport: 'stdio',
           config: {},
           enabled: true,
-          userId,
           createdAt: new Date(),
           updatedAt: new Date(),
           description: null,
@@ -90,10 +84,9 @@ describe('McpServerConfigService', () => {
       ]
       mockPrisma.mcpServer.findMany.mockResolvedValue(mockServers)
 
-      const result = await service.findAll(userId)
+      const result = await service.findAll()
 
       expect(mockPrisma.mcpServer.findMany).toHaveBeenCalledWith({
-        where: { userId },
         orderBy: { createdAt: 'desc' },
       })
       expect(result).toHaveLength(1)
@@ -101,15 +94,30 @@ describe('McpServerConfigService', () => {
     })
   })
 
-  describe('validateOwnership', () => {
+  describe('delete', () => {
     it('should throw NotFoundException if server not found', async () => {
-      mockPrisma.mcpServer.findUnique.mockResolvedValue(null)
-      await expect(service.delete(1, 'uuid')).rejects.toThrow(NotFoundException)
+      mockPrisma.mcpServer.findFirst.mockResolvedValue(null)
+      await expect(service.delete('uuid')).rejects.toThrow(NotFoundException)
     })
 
-    it('should throw ForbiddenException if user does not own the server', async () => {
-      mockPrisma.mcpServer.findUnique.mockResolvedValue({ userId: 2 })
-      await expect(service.delete(1, 'uuid')).rejects.toThrow(ForbiddenException)
+    it('should delete server if it exists', async () => {
+      mockPrisma.mcpServer.findFirst.mockResolvedValue({
+        id: 'uuid',
+        name: 'Test',
+        description: null,
+        transport: 'stdio',
+        config: {},
+        enabled: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      mockPrisma.mcpServer.delete.mockResolvedValue({ id: 'uuid' })
+
+      await service.delete('uuid')
+
+      expect(mockPrisma.mcpServer.delete).toHaveBeenCalledWith({
+        where: { id: 'uuid' },
+      })
     })
   })
 })

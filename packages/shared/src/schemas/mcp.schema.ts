@@ -273,7 +273,6 @@ export interface McpServerResponse {
   transport: McpTransportType
   config: StdioConfig | HttpConfig
   enabled: boolean
-  userId: number
   createdAt: string | Date
   updatedAt: string | Date
 }

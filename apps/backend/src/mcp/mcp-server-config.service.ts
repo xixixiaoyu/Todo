@@ -1,10 +1,10 @@
-import { Injectable, Logger, NotFoundException, ForbiddenException, Inject } from '@nestjs/common'
+import { Injectable, Logger, NotFoundException, Inject } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import type { CreateMcpServerDto, UpdateMcpServerDto, McpServerResponse } from './mcp.dto'
 
 /**
  * MCP Server 配置管理服务
- * 处理用户的 MCP Server 配置 CRUD 操作
+ * 处理 MCP Server 配置的全局 CRUD 操作
  */
 @Injectable()
 export class McpServerConfigService {
@@ -15,7 +15,7 @@ export class McpServerConfigService {
   /**
    * 创建新的 MCP Server 配置
    */
-  async create(userId: number, dto: CreateMcpServerDto): Promise<McpServerResponse> {
+  async create(dto: CreateMcpServerDto): Promise<McpServerResponse> {
     const server = await this.prisma.mcpServer.create({
       data: {
         name: dto.name,
@@ -23,21 +23,19 @@ export class McpServerConfigService {
         transport: dto.transport,
         config: dto.config as object,
         enabled: dto.enabled ?? true,
-        userId,
       },
     })
 
-    this.logger.log(`Created MCP server config: ${server.id} for user ${userId}`)
+    this.logger.log(`Created MCP server config: ${server.id}`)
 
     return this.toResponse(server)
   }
 
   /**
-   * 获取用户的所有 MCP Server 配置
+   * 获取所有 MCP Server 配置
    */
-  async findAll(userId: number): Promise<McpServerResponse[]> {
+  async findAll(): Promise<McpServerResponse[]> {
     const servers = await this.prisma.mcpServer.findMany({
-      where: { userId },
       orderBy: { createdAt: 'desc' },
     })
 
@@ -47,9 +45,9 @@ export class McpServerConfigService {
   /**
    * 获取单个 MCP Server 配置
    */
-  async findOne(userId: number, id: string): Promise<McpServerResponse> {
+  async findOne(id: string): Promise<McpServerResponse> {
     const server = await this.prisma.mcpServer.findFirst({
-      where: { id, userId },
+      where: { id },
     })
 
     if (!server) {
@@ -62,9 +60,9 @@ export class McpServerConfigService {
   /**
    * 更新 MCP Server 配置
    */
-  async update(userId: number, id: string, dto: UpdateMcpServerDto): Promise<McpServerResponse> {
-    // 先验证所有权
-    await this.validateOwnership(userId, id)
+  async update(id: string, dto: UpdateMcpServerDto): Promise<McpServerResponse> {
+    // 验证存在性
+    await this.findOne(id)
 
     const server = await this.prisma.mcpServer.update({
       where: { id },
@@ -85,8 +83,9 @@ export class McpServerConfigService {
   /**
    * 删除 MCP Server 配置
    */
-  async delete(userId: number, id: string): Promise<void> {
-    await this.validateOwnership(userId, id)
+  async delete(id: string): Promise<void> {
+    // 验证存在性
+    await this.findOne(id)
 
     await this.prisma.mcpServer.delete({
       where: { id },
@@ -96,34 +95,16 @@ export class McpServerConfigService {
   }
 
   /**
-   * 获取用户所有启用的 MCP Server 配置
+   * 获取所有启用的 MCP Server 配置
    * 用于 AI 助手自动发现工具
    */
-  async findEnabled(userId: number): Promise<McpServerResponse[]> {
+  async findEnabled(): Promise<McpServerResponse[]> {
     const servers = await this.prisma.mcpServer.findMany({
-      where: { userId, enabled: true },
+      where: { enabled: true },
       orderBy: { createdAt: 'asc' },
     })
 
     return servers.map((s) => this.toResponse(s))
-  }
-
-  /**
-   * 验证配置所有权
-   */
-  private async validateOwnership(userId: number, id: string): Promise<void> {
-    const server = await this.prisma.mcpServer.findUnique({
-      where: { id },
-      select: { userId: true },
-    })
-
-    if (!server) {
-      throw new NotFoundException(`MCP server config not found: ${id}`)
-    }
-
-    if (server.userId !== userId) {
-      throw new ForbiddenException('You do not have permission to access this config')
-    }
   }
 
   /**
@@ -136,7 +117,6 @@ export class McpServerConfigService {
     transport: string
     config: unknown
     enabled: boolean
-    userId: number
     createdAt: Date
     updatedAt: Date
   }): McpServerResponse {
@@ -147,7 +127,6 @@ export class McpServerConfigService {
       transport: server.transport as McpServerResponse['transport'],
       config: server.config as McpServerResponse['config'],
       enabled: server.enabled,
-      userId: server.userId,
       createdAt: server.createdAt,
       updatedAt: server.updatedAt,
     }
