@@ -6,7 +6,7 @@ export type ThemePresetKey =
   | 'mistBlue'
   | 'lilacGray'
   | 'autumnGold'
-  | 'warmOrange'
+  | 'fragrantOrange'
   | 'random'
 
 export type ThemePresetDefinition = {
@@ -55,7 +55,7 @@ export const THEME_PRESETS: ReadonlyArray<ThemePresetDefinition> = [
   { key: 'mistBlue', value: '#728ba1', recommended: true },
   { key: 'lilacGray', value: '#786ea6', recommended: true },
   { key: 'autumnGold', value: '#b0915e', recommended: true },
-  { key: 'warmOrange', value: '#bb7d5e', recommended: true },
+  { key: 'fragrantOrange', value: '#d4875c', recommended: true },
   { key: 'random', value: RANDOM_THEME_VALUE },
 ] as const
 

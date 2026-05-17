@@ -64,7 +64,7 @@ export const common = {
       mistBlue: 'Mist Blue',
       lilacGray: 'Lilac Gray',
       autumnGold: 'Autumn Gold',
-      warmOrange: 'Warm Orange',
+      fragrantOrange: 'Fragrant Orange',
       random: 'Random',
     },
   },

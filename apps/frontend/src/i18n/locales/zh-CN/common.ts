@@ -64,7 +64,7 @@ export const common = {
       mistBlue: '薄雾',
       lilacGray: '丁香',
       autumnGold: '秋叶',
-      warmOrange: '暖橙',
+      fragrantOrange: '香橙',
       random: '随机',
     },
   },

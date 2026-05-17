@@ -27,7 +27,7 @@ vi.mock('vue-i18n', () => ({
         'common.themeColor.presets.mistBlue': '薄雾',
         'common.themeColor.presets.lilacGray': '丁香',
         'common.themeColor.presets.autumnGold': '秋叶',
-        'common.themeColor.presets.warmOrange': '暖橙',
+        'common.themeColor.presets.fragrantOrange': '香橙',
         'common.themeColor.presets.random': '随机',
       }
 
@@ -107,7 +107,7 @@ describe('ThemeColorPicker', () => {
     expect(wrapper.find('button[title="随机"] [data-recommended="true"]').exists()).toBe(false)
   })
 
-  it('should include autumnGold and warmOrange as recommended warm tones', () => {
+  it('should include autumnGold and fragrantOrange as recommended warm tones', () => {
     const mockedUseTheme = vi.mocked(useTheme)
 
     mockedUseTheme.mockReturnValue(createUseThemeMock())
@@ -130,10 +130,10 @@ describe('ThemeColorPicker', () => {
     expect(autumnButton.find('[data-recommended="true"]').exists()).toBe(true)
     expect(autumnButton.find('span[style]').attributes('style')).toContain('#b0915e')
 
-    const orangeButton = wrapper.find('button[title="暖橙"]')
+    const orangeButton = wrapper.find('button[title="香橙"]')
     expect(orangeButton.exists()).toBe(true)
     expect(orangeButton.find('[data-recommended="true"]').exists()).toBe(true)
-    expect(orangeButton.find('span[style]').attributes('style')).toContain('#bb7d5e')
+    expect(orangeButton.find('span[style]').attributes('style')).toContain('#d4875c')
   })
 
   it('should reflect the effective random theme color in the custom color input', async () => {
