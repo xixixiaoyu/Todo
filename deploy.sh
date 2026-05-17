@@ -455,7 +455,7 @@ fi
 if [ -d apps/backend/prisma/migrations ] && [ "$(ls -A apps/backend/prisma/migrations 2>/dev/null || true)" ]; then
   "${DOCKER[@]}" compose exec -T backend ./node_modules/.bin/prisma migrate deploy
 else
-  "${DOCKER[@]}" compose exec -T backend ./node_modules/.bin/prisma db push
+  "${DOCKER[@]}" compose exec -T backend ./node_modules/.bin/prisma db push --accept-data-loss
 fi
 
 report_disk_health "$DISK_USAGE_AFTER"
