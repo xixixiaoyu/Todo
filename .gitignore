@@ -72,3 +72,4 @@ apps/frontend/dev-dist
 apps/wails/build/bin
 apps/wails/frontend
 wailsjs
+.sisyphus/
