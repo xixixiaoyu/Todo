@@ -39,8 +39,6 @@ export const common = {
   toggleLanguage: 'Switch Language',
   expand: 'Expand',
   collapse: 'Collapse',
-  maximize: 'Fullscreen',
-  minimize: 'Exit Fullscreen',
   error: {
     requestFailed: 'Request failed',
     networkError: 'Network error, please try again later',

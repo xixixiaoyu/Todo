@@ -1,14 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import {
-  Snowflake,
-  Network,
-  List,
-  BarChart3,
-  MoreHorizontal,
-  Maximize2,
-  Minimize2,
-} from 'lucide-vue-next'
+import { Snowflake, Network, List, MoreHorizontal } from 'lucide-vue-next'
 import AiAssistantQuickModesMenu from '@/features/ai/components/AiAssistantQuickModesMenu.vue'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -21,26 +13,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useTodoStore } from '../stores/todo'
-import { nativeService } from '@/services/native'
 
 const { t } = useI18n()
 const todoStore = useTodoStore()
-
-const isWails = () => nativeService.platform === 'wails'
-
-const handleDblClick = () => {
-  if (isWails()) {
-    void nativeService.toggleMaximise()
-  }
-  todoStore.setAppFullscreen(!todoStore.isAppFullscreen)
-}
 </script>
 
 <template>
   <header
     class="mb-2 md:mb-3 flex items-center justify-between transition-all duration-300 select-none"
-    style="--wails-draggable: drag"
-    @dblclick="handleDblClick"
   >
     <div class="flex items-center gap-2 md:gap-3 group">
       <div
@@ -101,25 +81,6 @@ const handleDblClick = () => {
           </TooltipTrigger>
           <TooltipContent>{{ t('todo.visualMode') }}</TooltipContent>
         </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger as-child>
-            <Button
-              variant="ghost"
-              size="icon"
-              class="h-9 w-9 rounded-xl transition-all"
-              :class="
-                todoStore.viewMode === 'stats'
-                  ? 'bg-background text-primary shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-              "
-              @click="todoStore.viewMode = 'stats'"
-            >
-              <BarChart3 :size="18" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>{{ t('todo.statsMode') }}</TooltipContent>
-        </Tooltip>
       </div>
 
       <!-- More Actions Dropdown for Mobile -->
@@ -151,46 +112,8 @@ const handleDblClick = () => {
             <Network class="mr-2 h-4 w-4" />
             <span>{{ t('todo.visualMode') }}</span>
           </DropdownMenuItem>
-          <DropdownMenuItem class="rounded-lg cursor-pointer" @click="todoStore.viewMode = 'stats'">
-            <BarChart3 class="mr-2 h-4 w-4" />
-            <span>{{ t('todo.statsMode') }}</span>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            class="rounded-lg cursor-pointer"
-            @click="todoStore.setAppFullscreen(!todoStore.isAppFullscreen)"
-          >
-            <component
-              :is="todoStore.isAppFullscreen ? Minimize2 : Maximize2"
-              class="mr-2 h-4 w-4"
-            />
-            <span>{{
-              todoStore.isAppFullscreen ? t('common.minimize') : t('common.maximize')
-            }}</span>
-          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-
-      <div class="hidden md:flex items-center gap-2">
-        <!-- Fullscreen Toggle -->
-        <Tooltip>
-          <TooltipTrigger as-child>
-            <Button
-              variant="outline"
-              size="icon"
-              class="h-10 w-10 rounded-xl bg-card border-border hover:bg-accent"
-              :aria-label="todoStore.isAppFullscreen ? t('common.minimize') : t('common.maximize')"
-              @click="todoStore.setAppFullscreen(!todoStore.isAppFullscreen)"
-            >
-              <Minimize2 v-if="todoStore.isAppFullscreen" :size="18" />
-              <Maximize2 v-else :size="18" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            {{ todoStore.isAppFullscreen ? t('common.minimize') : t('common.maximize') }}
-          </TooltipContent>
-        </Tooltip>
-      </div>
     </div>
   </header>
 </template>

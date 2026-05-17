@@ -37,10 +37,7 @@ vi.mock('lucide-vue-next', () => ({
   Sun: { template: '<span>Sun</span>' },
   Moon: { template: '<span>Moon</span>' },
   Fingerprint: { template: '<span>Fingerprint</span>' },
-  BarChart3: { template: '<span>BarChart3</span>' },
   MoreHorizontal: { template: '<span>MoreHorizontal</span>' },
-  Maximize2: { template: '<span>Maximize2</span>' },
-  Minimize2: { template: '<span>Minimize2</span>' },
   HardDrive: { template: '<span>HardDrive</span>' },
   Cloud: { template: '<span>Cloud</span>' },
   ClipboardPaste: { template: '<span>ClipboardPaste</span>' },
@@ -73,7 +70,6 @@ const i18n = createI18n({
       todo: {
         visualMode: '可视化视图',
         listMode: '列表视图',
-        statsMode: '统计视图',
         localSource: '本地',
         remoteSource: '云端',
         localSourceHint: '本地提示',
@@ -105,7 +101,6 @@ const i18n = createI18n({
       todo: {
         visualMode: 'Visual Mode',
         listMode: 'List Mode',
-        statsMode: 'Statistics',
         localSource: 'Local',
         remoteSource: 'Cloud',
         localSourceHint: 'Local hint',

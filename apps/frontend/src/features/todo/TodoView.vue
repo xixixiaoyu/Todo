@@ -27,7 +27,6 @@ const inputContainerRef = ref<HTMLElement | null>(null)
 const { gsap, ctx } = useGsap()
 const { isMobile } = useIsMobile()
 const TodoVisualizer = defineAsyncComponent(() => import('./components/TodoVisualizer.vue'))
-const TodoStatistics = defineAsyncComponent(() => import('./components/TodoStatistics.vue'))
 const PomodoroEarth = defineAsyncComponent(() => import('./components/pomodoro/PomodoroEarth.vue'))
 
 // 预定义动画函数并注册到 GSAP Context，确保自动清理且高性能
@@ -70,12 +69,7 @@ const handleMouseMove = (e: MouseEvent) => {
   }
 
   // 卡片倾斜效果 (Tilt Effect)
-  if (
-    cardRef.value &&
-    !pomodoroStore.isMiniMode &&
-    !todoStore.isDragging &&
-    !todoStore.isAppFullscreen
-  ) {
+  if (cardRef.value && !pomodoroStore.isMiniMode && !todoStore.isDragging) {
     const tiltX = mousePos.value.y * 6 // 增加倾斜幅度，增强 3D 感
     const tiltY = -mousePos.value.x * 6
     animateTilt?.(tiltX, tiltY)
@@ -86,15 +80,6 @@ const resetTilt = () => {
   mousePos.value = { x: 0, y: 0 }
   animateReset?.()
 }
-
-watch(
-  () => todoStore.isAppFullscreen,
-  (isFullscreen) => {
-    if (isFullscreen) {
-      resetTilt()
-    }
-  },
-)
 
 watch(
   () => todoStore.isDragging,
@@ -111,15 +96,12 @@ const shouldMountPomodoroEarth = computed(
 )
 
 const currentViewKey = computed(() => {
-  if (todoStore.viewMode === 'visual') return 'visual'
-  if (todoStore.viewMode === 'stats') return 'stats'
-  return `${todoStore.viewMode}-${todoStore.filter}`
+  return todoStore.viewMode === 'visual' ? 'visual' : `${todoStore.viewMode}-${todoStore.filter}`
 })
 
 const currentViewComponent = computed(() => {
   if (todoStore.viewMode === 'list') return TodoList
-  if (todoStore.viewMode === 'visual') return TodoVisualizer
-  return TodoStatistics
+  return TodoVisualizer
 })
 
 // 追踪上一次的 filter 以决定动画方向
@@ -156,7 +138,6 @@ watch(
     const viewOrder: Record<ViewMode, number> = {
       list: 0,
       visual: 1,
-      stats: 2,
     }
     direction.value = viewOrder[newVal] > viewOrder[oldVal] ? 1 : -1
   },
@@ -237,8 +218,6 @@ watch(
 )
 
 const currentViewProps = computed(() => {
-  if (todoStore.viewMode === 'stats') return {}
-
   const baseProps = {
     filter: todoStore.filter,
   }
@@ -290,10 +269,7 @@ function onFireworksComplete() {
 <template>
   <div
     class="todo-typography h-full bg-background flex items-center md:items-end justify-center overflow-hidden relative transition-all duration-500"
-    :class="[
-      todoStore.isAppFullscreen ? 'p-0' : 'p-0 md:p-8',
-      { 'p-0 items-center': pomodoroStore.isMiniMode },
-    ]"
+    :class="['p-0 md:p-8', { 'p-0 items-center': pomodoroStore.isMiniMode }]"
     @mousemove="handleMouseMove"
     @mouseleave="resetTilt"
   >
@@ -319,7 +295,7 @@ function onFireworksComplete() {
       v-if="!pomodoroStore.isMiniMode"
       ref="cardRef"
       class="w-full flex flex-col z-10 will-change-transform transition-all duration-500 ease-in-out"
-      :class="[todoStore.isAppFullscreen ? 'max-w-none h-screen' : 'max-w-4xl h-full md:h-[94vh]']"
+      :class="['max-w-4xl h-full md:h-[94vh]']"
       :style="{
         perspective: '1200px',
         transformStyle: 'preserve-3d',
@@ -328,14 +304,11 @@ function onFireworksComplete() {
       <Card
         class="flex-1 flex flex-col border border-white/5 dark:border-white/10 shadow-none overflow-hidden bg-card/40 md:bg-card/60 backdrop-blur-[40px] relative group/card transition-all duration-500 ease-in-out"
         :class="[
-          todoStore.isAppFullscreen
-            ? 'rounded-none'
-            : 'md:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] dark:md:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)] rounded-none md:rounded-[32px]',
+          'md:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] dark:md:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)] rounded-none md:rounded-[32px]',
         ]"
       >
         <!-- 玻璃边缘高光 (Glass Edge Highlight) -->
         <div
-          v-if="!todoStore.isAppFullscreen"
           class="absolute inset-0 rounded-[32px] pointer-events-none border border-white/10 dark:border-white/5 mask-edge"
         ></div>
 
@@ -398,7 +371,7 @@ function onFireworksComplete() {
             />
           </Transition>
 
-          <!-- List / Visualizer / Stats with smooth transitions -->
+          <!-- List / Visualizer with smooth transitions -->
           <div
             class="flex-1 relative flex flex-col min-h-0"
             :class="!showSearch && todoStore.viewMode === 'visual' ? 'mt-0' : 'mt-1.5'"
@@ -456,7 +429,7 @@ function onFireworksComplete() {
                 }
               "
             >
-              <KeepAlive :include="['TodoList', 'TodoVisualizer', 'TodoStatistics']">
+              <KeepAlive :include="['TodoList', 'TodoVisualizer']">
                 <component
                   :is="currentViewComponent"
                   :key="currentViewKey"

@@ -29,7 +29,6 @@ export const todo = {
   allTasks: 'All Tasks',
   visualMode: 'Visual View',
   listMode: 'List View',
-  statsMode: 'Statistics',
   expandAll: 'Expand All',
   collapseAll: 'Collapse All',
   pin: 'Pin',

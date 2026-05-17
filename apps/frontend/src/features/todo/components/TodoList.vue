@@ -141,11 +141,7 @@ const isDeferredSectionExpanded = computed(
   () => store.deferredSectionExpandedPreference ?? activeTodos.value.length === 0,
 )
 
-const dragListClass = computed(() => [
-  store.isAppFullscreen
-    ? 'grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4'
-    : 'flex flex-col gap-2 md:gap-2.5',
-])
+const dragListClass = computed(() => ['flex flex-col gap-2 md:gap-2.5'])
 
 function toggleDeferredSection(): void {
   store.setDeferredSectionExpandedPreference(!isDeferredSectionExpanded.value)

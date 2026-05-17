@@ -21,7 +21,6 @@ export const useTodoStore = defineStore(
     const error = ref<string | null>(null)
     const isDrawerOpen = ref(false)
     const isMaximized = ref(false)
-    const isAppFullscreen = ref(false)
     const isSilencingToast = ref(false)
     const proposedChangeSets = ref<Record<string, ProposedTodoChange[]>>({})
     const proposedChangeSetOrder = ref<string[]>([])
@@ -151,7 +150,6 @@ export const useTodoStore = defineStore(
       isAllExpanded,
       isDrawerOpen,
       isMaximized,
-      isAppFullscreen,
       isSilencingToast,
     })
 
@@ -195,7 +193,6 @@ export const useTodoStore = defineStore(
       error,
       isDrawerOpen,
       isMaximized,
-      isAppFullscreen,
       isSilencingToast,
       isAllExpanded,
       proposedChanges,
@@ -230,7 +227,6 @@ export const useTodoStore = defineStore(
         'deferredSectionExpandedPreference',
         'isDrawerOpen',
         'isMaximized',
-        'isAppFullscreen',
       ],
     },
   },
