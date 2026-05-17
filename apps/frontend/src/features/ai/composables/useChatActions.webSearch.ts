@@ -60,7 +60,7 @@ export async function executeWebSearch(args: Record<string, unknown>): Promise<s
   const maxResults = Math.min(Math.max(Number(args.maxResults) || 5, 1), 10)
   const runtimeConfig = getSkillRuntimeConfig()
 
-  // 按优先级依次尝试付费 API；DuckDuckGo 仅在没有配置任何 Key 时兜底
+  // 按优先级依次尝试已配置的付费 API
   const paidProviders: Array<{ name: string; keyName: string }> = [
     { name: 'tavily', keyName: 'tavilyApiKey' },
     { name: 'serper', keyName: 'serperApiKey' },
@@ -104,39 +104,6 @@ export async function executeWebSearch(args: Record<string, unknown>): Promise<s
       console.warn(`Web search provider "${name}" failed:`, message)
       errors.push(`${name}: ${message}`)
       continue
-    }
-  }
-
-  // 仅在没有配置任何付费 Key 时才用 DuckDuckGo 兜底
-  if (triedCount === 0) {
-    try {
-      const { data } = await httpClient.post<ApiResponse<WebSearchResponse>>(
-        '/web-search/search',
-        {
-          query,
-          provider: 'duckduckgo',
-          maxResults,
-          apiKey: '',
-        },
-        { timeout: 30_000 },
-      )
-
-      const response = unwrapApiResponse(data)
-      const results = response.results
-
-      if (!results || results.length === 0) {
-        return 'No search results found via DuckDuckGo.'
-      }
-
-      const formatted = results
-        .map((r, i) => `${i + 1}. **${r.title}**\n   ${r.url}\n   ${r.content}`)
-        .join('\n\n')
-
-      return `Searched via DuckDuckGo:\n\n${formatted}`
-    } catch (err) {
-      const message = extractErrorMessage(err)
-      console.warn('Web search provider "duckduckgo" failed:', message)
-      errors.push(`duckduckgo: ${message}`)
     }
   }
 

@@ -10,9 +10,6 @@ vi.mock('@/features/todo/TodoView.vue', () => ({
 vi.mock('@/views/error/NotFoundView.vue', () => ({
   default: { name: 'NotFoundView', template: '<div></div>' },
 }))
-vi.mock('@/features/mcp/views/McpSettingsView.vue', () => ({
-  default: { name: 'McpSettingsView', template: '<div></div>' },
-}))
 
 describe('Router Title', () => {
   beforeEach(() => {

@@ -4,6 +4,7 @@ import { aiThinkingLevel, saveAIThinkingLevel } from '@/features/ai/composables/
 import type { AIConfig } from '@/features/ai/composables/useAIConfig'
 import type { ThinkingMode } from '@/features/ai/composables/useAIConfig/types'
 import type { NovelGenre } from '@/features/ai/services/types'
+import { useTranslationEditor } from '@/features/ai/composables/useTranslationEditor'
 
 export function useAiAssistantModes(params: {
   config: Ref<AIConfig>
@@ -41,16 +42,26 @@ export function useAiAssistantModes(params: {
     })
   }
 
-  const isTranslationEnabled = computed(() => params.config.value.assistantMode === 'translation')
+  const {
+    isOpen: isTranslationOpen,
+    openEditor: openTranslationEditor,
+    closeEditor: closeTranslationEditor,
+  } = useTranslationEditor()
+
+  const isTranslationEnabled = computed(() => isTranslationOpen.value)
 
   const toggleTranslationMode = () => {
-    const isTranslation = isTranslationEnabled.value
-    params.updateConfig({
-      assistantMode: isTranslation ? 'default' : 'translation',
-      ...(isTranslation
-        ? {}
-        : { todoAssistant: false, discussionMode: false, enableImageGeneration: false }),
-    })
+    if (isTranslationOpen.value) {
+      closeTranslationEditor()
+    } else {
+      // 打开翻译弹窗前关闭互斥模式
+      params.updateConfig({
+        todoAssistant: false,
+        discussionMode: false,
+        enableImageGeneration: false,
+      })
+      openTranslationEditor()
+    }
   }
 
   const updateNovelGenre = (genre: NovelGenre | null) => {
@@ -154,6 +165,7 @@ export function useAiAssistantModes(params: {
     updateNovelProtagonistHint,
     isTranslationEnabled,
     toggleTranslationMode,
+    openTranslationEditor,
     isTodoAssistantEnabled,
     toggleTodoAssistant,
     isDiscussionEnabled,

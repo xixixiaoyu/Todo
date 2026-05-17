@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { FolderTree, Paperclip, X } from 'lucide-vue-next'
+import { FolderTree, Paperclip, PanelRightClose, PanelRightOpen, X } from 'lucide-vue-next'
 import SessionFileList from './SessionFileList.vue'
 import WorkspaceFileTree from './WorkspaceFileTree.vue'
 import axios from 'axios'
@@ -10,6 +10,10 @@ const props = defineProps<{
   sidecarPort: number | null
   sidecarToken: string | null
   collapsed?: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: 'toggleCollapse'): void
 }>()
 
 const activeTab = ref<'session-files' | 'workspace'>('workspace')
@@ -98,7 +102,7 @@ function closePreview() {
   <aside
     class="rwp"
     :class="{ 'rwp--collapsed': collapsed }"
-    :style="{ width: collapsed ? '0px' : panelWidth + 'px' }"
+    :style="{ width: collapsed ? '36px' : panelWidth + 'px' }"
   >
     <!-- 拖拽手柄 -->
     <div
@@ -107,7 +111,14 @@ function closePreview() {
       @pointerdown.prevent="onResizeStart"
     />
 
-    <template v-if="!collapsed">
+    <!-- 折叠态：仅显示展开按钮 -->
+    <template v-if="collapsed">
+      <button class="rwp-collapsed-toggle" title="展开工作区" @click="emit('toggleCollapse')">
+        <PanelRightOpen :size="16" />
+      </button>
+    </template>
+
+    <template v-else>
       <!-- Tab 滑动条 -->
       <div class="rwp-tabs" :style="tabsStyle">
         <div class="rwp-tab-slider" />
@@ -121,6 +132,11 @@ function closePreview() {
           <span>{{ tab.label }}</span>
         </button>
       </div>
+
+      <!-- 折叠按钮 -->
+      <button class="rwp-collapse-btn" title="折叠工作区" @click="emit('toggleCollapse')">
+        <PanelRightClose :size="14" />
+      </button>
 
       <!-- 内容区 -->
       <div class="rwp-body">
@@ -306,5 +322,45 @@ function closePreview() {
   word-break: break-all;
   margin: 0;
   color: hsl(var(--foreground));
+}
+
+/* ── Collapsed Toggle ── */
+.rwp-collapsed-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 40px;
+  border: none;
+  background: none;
+  color: hsl(var(--muted-foreground) / 0.5);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.rwp-collapsed-toggle:hover {
+  color: hsl(var(--foreground) / 0.8);
+  background: hsl(var(--foreground) / 0.06);
+}
+
+/* ── Collapse Button in Header ── */
+.rwp-collapse-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 5px;
+  background: none;
+  color: hsl(var(--muted-foreground) / 0.45);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-left: auto;
+}
+
+.rwp-collapse-btn:hover {
+  color: hsl(var(--foreground) / 0.8);
+  background: hsl(var(--foreground) / 0.06);
 }
 </style>

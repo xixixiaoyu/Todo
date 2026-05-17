@@ -59,7 +59,7 @@ onMounted(() => {
 <template>
   <div
     ref="containerRef"
-    class="relative overflow-hidden rounded-2xl border border-primary/20 bg-ai-message-bg shadow-lg transition-all duration-500 hover:shadow-xl"
+    class="relative overflow-hidden rounded-2xl border border-primary/20 bg-[hsl(var(--ai-message-bg))] shadow-lg transition-all duration-500 hover:shadow-xl"
     style="width: 280px; height: 200px"
   >
     <!-- 背景流光效果 -->

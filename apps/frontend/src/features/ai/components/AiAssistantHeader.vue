@@ -1,22 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useWindowSize } from '@vueuse/core'
-import {
-  Maximize2,
-  Minimize2,
-  X,
-  PanelRightClose,
-  PanelRightOpen,
-  PanelLeftClose,
-  PanelLeftOpen,
-} from 'lucide-vue-next'
+import { Maximize2, Minimize2, X, PanelRightClose, PanelRightOpen } from 'lucide-vue-next'
 import { nativeService } from '@/services/native'
 
 withDefaults(
   defineProps<{
     isMaximized: boolean
     workspaceCollapsed?: boolean
-    sessionSidebarCollapsed?: boolean
     showClose?: boolean
     showMaximize?: boolean
   }>(),
@@ -30,13 +21,11 @@ defineEmits<{
   (e: 'toggleMaximize'): void
   (e: 'close'): void
   (e: 'toggleWorkspace'): void
-  (e: 'toggleSessionSidebar'): void
 }>()
 
 const { width: windowWidth } = useWindowSize()
 const isWails = computed(() => nativeService.platform === 'wails')
 const isDesktop = computed(() => isWails.value)
-const isMac = computed(() => isWails.value && navigator.platform.toLowerCase().includes('mac'))
 const isMobile = computed(() => !isDesktop.value && windowWidth.value < 640)
 </script>
 
@@ -47,18 +36,6 @@ const isMobile = computed(() => !isDesktop.value && windowWidth.value < 640)
     style="--wails-draggable: drag"
     data-wails-drag
   >
-    <!-- 左侧：会话列表开关（macOS 留出红绿灯空间） -->
-    <div class="flex items-center gap-1" :class="[isDesktop && isMac ? 'pl-16' : '']">
-      <button
-        class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-95"
-        :title="sessionSidebarCollapsed ? '展开会话列表' : '折叠会话列表'"
-        @click="$emit('toggleSessionSidebar')"
-      >
-        <PanelLeftOpen v-if="sessionSidebarCollapsed" :size="14" />
-        <PanelLeftClose v-else :size="14" />
-      </button>
-    </div>
-
     <!-- 右侧：工作区 / 最大化 / 关闭 -->
     <div class="flex items-center gap-1">
       <button

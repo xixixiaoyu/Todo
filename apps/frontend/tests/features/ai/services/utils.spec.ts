@@ -80,7 +80,7 @@ describe('AI Utils - injectSystemPrompts', () => {
       toggleMemory: vi.fn(),
       updateAutoCompressThreshold: vi.fn(),
       getMemoryModelOptions: vi.fn(),
-      syncFromServer: vi.fn(),
+
       exportMemories: vi.fn(() => '[]'),
       importMemories: vi.fn(),
     } as ReturnType<typeof useMemory>)
@@ -190,7 +190,7 @@ describe('AI Utils - injectSystemPrompts', () => {
       toggleMemory: vi.fn(),
       updateAutoCompressThreshold: vi.fn(),
       getMemoryModelOptions: vi.fn(),
-      syncFromServer: vi.fn(),
+
       exportMemories: vi.fn(() => '[]'),
       importMemories: vi.fn(),
     } as ReturnType<typeof useMemory>)

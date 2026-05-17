@@ -12,7 +12,6 @@ import { RedisModule, RedisService } from './redis'
 import { HealthModule } from './health/health.module'
 import { UploadModule } from './upload'
 import { McpModule } from './mcp/mcp.module'
-import { TeachingModule } from './teaching/teaching.module'
 import { SkillSourcesModule } from './skill-sources/skill-sources.module'
 import { SessionFileModule } from './agent/session-file'
 import { TaskQueueModule } from './agent/task-queue'
@@ -127,7 +126,6 @@ import { AppThrottlerGuard, RedisThrottlerStorage, createGlobalThrottlerOptions 
     UploadModule, // 文件上传模块
     SkillSourcesModule, // 技能外部来源代理模块
     McpModule, // MCP 模块
-    TeachingModule, // 教学模式模块
     SessionFileModule, // Agent Session 文件注册模块
     TaskQueueModule, // Agent 异步任务队列模块
     WebSearchModule, // 联网搜索模块

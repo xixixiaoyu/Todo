@@ -28,13 +28,6 @@ import {
   loadSkills,
   loadActivePresetId,
 } from './storage'
-import {
-  fetchSkills as fetchSkillsFromServer,
-  pushSkills as pushSkillsToServer,
-  fetchPresets as fetchPresetsFromServer,
-  pushPresets as pushPresetsToServer,
-} from '@/features/ai/services/aiSyncService'
-import type { AISkillSync, AIPresetSync } from '@/features/ai/services/aiSyncService'
 
 // ─── Thinking Mode ─────────────────────────────────────────────────
 
@@ -168,7 +161,6 @@ watch(
   presets,
   (newPresets) => {
     savePresets(newPresets)
-    void pushPresetsToServer(newPresets)
   },
   { deep: true },
 )
@@ -177,7 +169,6 @@ watch(
   (serializedSkills) => {
     const nextSkills = JSON.parse(serializedSkills) as AISkill[]
     saveSkills(nextSkills)
-    void pushSkillsToServer(nextSkills)
 
     const skillIds = nextSkills.map((item) => item.id)
     const validIds = new Set(skillIds)
@@ -806,94 +797,6 @@ export function getAIPresets(): AIPreset[] {
 
 export function getAISkills(): AISkill[] {
   return skills.value
-}
-
-// ─── Server Sync Helpers ───────────────────────────────────────────
-
-/**
- * 合并服务端与本地 Skills：以 id 为键并集合并，同 id 保留 updatedAt 较新者，runtime 始终以本地为准
- */
-function mergeSkills(remote: AISkillSync[], local: AISkill[]): AISkill[] {
-  const mergedMap = new Map<string, AISkill>()
-
-  // 先放入所有本地 skill
-  for (const s of local) {
-    mergedMap.set(s.id, { ...s })
-  }
-
-  // 合并远端 skill
-  for (const r of remote) {
-    const existing = mergedMap.get(r.id)
-    const remoteTime = r.updatedAt ? new Date(r.updatedAt).getTime() : 0
-    const localTime = existing?.updatedAt ? new Date(existing.updatedAt).getTime() : 0
-
-    if (!existing || remoteTime > localTime) {
-      // 远端无此项，或远端版本更新：采用远端数据，但保留本地 runtime
-      mergedMap.set(r.id, {
-        ...r,
-        runtime: existing?.runtime,
-      })
-    }
-    // 否则保留本地版本（含 runtime）
-  }
-
-  return Array.from(mergedMap.values())
-}
-
-/**
- * 合并服务端与本地 Presets：以 id 为键并集合并，同 id 保留 updatedAt 较新者，apiKey 始终以本地为准
- */
-function mergePresets(remote: AIPresetSync[], local: AIPreset[]): AIPreset[] {
-  const mergedMap = new Map<string, AIPreset>()
-
-  // 先放入所有本地 preset
-  for (const p of local) {
-    mergedMap.set(p.id, { ...p })
-  }
-
-  // 合并远端 preset
-  for (const r of remote) {
-    const existing = mergedMap.get(r.id)
-    const remoteTime = r.updatedAt ? new Date(r.updatedAt).getTime() : 0
-    const localTime = existing?.updatedAt ? new Date(existing.updatedAt).getTime() : 0
-
-    if (!existing || remoteTime > localTime) {
-      // 远端无此项，或远端版本更新：采用远端数据，但保留本地 apiKey
-      mergedMap.set(r.id, {
-        ...r,
-        apiKey: existing?.apiKey ?? '',
-      })
-    }
-    // 否则保留本地版本（含 apiKey）
-  }
-
-  return Array.from(mergedMap.values())
-}
-
-/**
- * 从服务端同步 Skills（登录时调用）
- * 合并策略：以 id 为键并集合并，同 id 保留 updatedAt 较新者，runtime 始终以本地为准
- * 合并后写回 localStorage 并推送服务端
- */
-export async function syncSkillsFromServer(): Promise<void> {
-  const remote = await fetchSkillsFromServer()
-  if (!remote) return
-
-  const merged = mergeSkills(remote, skills.value)
-  skills.value = merged // watcher 自动触发 saveSkills + pushSkillsToServer
-}
-
-/**
- * 从服务端同步 Presets（登录时调用）
- * 合并策略：以 id 为键并集合并，同 id 保留 updatedAt 较新者，apiKey 始终以本地为准
- * 合并后写回 localStorage 并推送服务端
- */
-export async function syncPresetsFromServer(): Promise<void> {
-  const remote = await fetchPresetsFromServer()
-  if (!remote) return
-
-  const merged = mergePresets(remote, presets.value)
-  presets.value = merged // watcher 自动触发 savePresets + pushPresetsToServer
 }
 
 // ─── Re-export Types ───────────────────────────────────────────────

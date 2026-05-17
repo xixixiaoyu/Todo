@@ -93,7 +93,6 @@ vi.mock('@/features/ai/composables/useMemory', () => ({
     getMemoryModelOptions: vi.fn(() => ({})),
     compressMemories: vi.fn(),
     updateAutoCompressThreshold: vi.fn(),
-    syncFromServer: vi.fn(),
     exportMemories: vi.fn(() => '[]'),
     importMemories: vi.fn(),
   })),
@@ -798,6 +797,16 @@ describe('useChat', () => {
     it('should create new session and reset state', () => {
       const { clearHistory, currentAIResponse, currentThinkingContent, error } = useChat()
       const todoStore = useTodoStore()
+
+      // 设置当前会话包含消息，确保 clearHistory 守卫逻辑通过
+      mockCurrentSession.value = {
+        id: 'existing-session',
+        title: 'Existing',
+        messages: [{ id: 'msg-1', role: 'user', content: 'hello' }],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+
       todoStore.setProposedChanges('assistant-1', [
         { id: 'temp-1', type: 'add', data: { title: 'A' } },
       ])
@@ -813,6 +822,13 @@ describe('useChat', () => {
       expect(error.value).toBeNull()
       expect(todoStore.activeProposedChangeSetId).toBeNull()
       expect(todoStore.proposedChanges).toEqual([])
+    })
+
+    it('should not create a new session when current session is already empty', () => {
+      const { clearHistory } = useChat()
+      // 当前会话为 null（由 beforeEach 设置），chatHistory 为空
+      clearHistory()
+      expect(mockCreateSession).not.toHaveBeenCalled()
     })
   })
 

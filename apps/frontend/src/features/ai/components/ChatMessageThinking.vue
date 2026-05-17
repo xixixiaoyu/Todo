@@ -228,7 +228,7 @@ watch([() => props.message.thinkingContent, () => props.message.reasoning_detail
 .thinking-text {
   max-height: 260px;
   overflow-y: auto;
-  color: hsl(var(--text-secondary));
+  color: hsl(var(--muted-foreground));
   font-family: var(--font-sans);
   scrollbar-width: none;
   -ms-overflow-style: none;

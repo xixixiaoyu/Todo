@@ -1,6 +1,17 @@
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
-import { Pin, PinOff, Pencil, Trash2, Plus, Settings2, FileDown, Search } from 'lucide-vue-next'
+import {
+  PanelLeftClose,
+  PanelLeftOpen,
+  Pin,
+  PinOff,
+  Pencil,
+  Trash2,
+  Plus,
+  Settings2,
+  FileDown,
+  Search,
+} from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useChatHistory } from '@/features/ai/composables/useChatHistory'
 import { useGenerationState } from '@/features/ai/stores/generationState'
@@ -26,6 +37,7 @@ const emit = defineEmits<{
   (e: 'newChat'): void
   (e: 'switchSession', sessionId: string): void
   (e: 'openSettings'): void
+  (e: 'toggleCollapse'): void
 }>()
 
 const { sessions, currentSessionId, togglePin, renameSession, deleteSession, clearAllSessions } =
@@ -205,15 +217,21 @@ function onResizeStart(e: PointerEvent) {
   <aside
     class="lss"
     :class="{ 'lss--collapsed': collapsed }"
-    :style="{ width: collapsed ? '0px' : panelWidth + 'px' }"
+    :style="{ width: collapsed ? '36px' : panelWidth + 'px' }"
   >
-    <div
-      class="lss-handle"
-      :class="{ 'lss-handle--active': resizing }"
-      @pointerdown.prevent="onResizeStart"
-    />
+    <!-- 折叠态：仅显示展开按钮 -->
+    <template v-if="collapsed">
+      <button class="lss-collapsed-toggle" title="展开会话列表" @click="emit('toggleCollapse')">
+        <PanelLeftOpen :size="16" />
+      </button>
+    </template>
 
-    <template v-if="!collapsed">
+    <template v-else>
+      <div
+        class="lss-handle"
+        :class="{ 'lss-handle--active': resizing }"
+        @pointerdown.prevent="onResizeStart"
+      />
       <div class="lss-header">
         <span class="lss-title">会话</span>
         <div class="lss-header-actions">
@@ -242,6 +260,9 @@ function onResizeStart(e: PointerEvent) {
             @click.stop="emit('openSettings')"
           >
             <Settings2 :size="14" />
+          </button>
+          <button class="lss-action-btn" title="折叠会话列表" @click.stop="emit('toggleCollapse')">
+            <PanelLeftClose :size="14" />
           </button>
         </div>
       </div>
@@ -440,7 +461,7 @@ function onResizeStart(e: PointerEvent) {
   background: none;
   border: none;
   border-radius: 5px;
-  color: hsl(var(--muted-foreground) / 0.45);
+  color: hsl(var(--muted-foreground) / 0.6);
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -467,7 +488,7 @@ function onResizeStart(e: PointerEvent) {
   left: 20px;
   top: 50%;
   transform: translateY(-50%);
-  color: hsl(var(--muted-foreground) / 0.3);
+  color: hsl(var(--muted-foreground) / 0.45);
   pointer-events: none;
 }
 
@@ -632,7 +653,7 @@ function onResizeStart(e: PointerEvent) {
   border: none;
   border-radius: 3px;
   background: none;
-  color: hsl(var(--muted-foreground) / 0.5);
+  color: hsl(var(--muted-foreground) / 0.6);
   cursor: pointer;
   opacity: 0;
   transition:
@@ -676,5 +697,24 @@ function onResizeStart(e: PointerEvent) {
   font-size: 0.7rem;
   color: hsl(var(--muted-foreground) / 0.4);
   text-align: center;
+}
+
+/* ── Collapsed Toggle ── */
+.lss-collapsed-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 40px;
+  border: none;
+  background: none;
+  color: hsl(var(--muted-foreground) / 0.5);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.lss-collapsed-toggle:hover {
+  color: hsl(var(--foreground) / 0.8);
+  background: hsl(var(--foreground) / 0.06);
 }
 </style>

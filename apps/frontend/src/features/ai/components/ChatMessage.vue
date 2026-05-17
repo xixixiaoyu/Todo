@@ -325,7 +325,7 @@ defineExpose({
                   isTeachingQuizPending
                 "
                 data-test="teaching-quiz-loading"
-                class="group relative mt-3 overflow-hidden rounded-2xl border border-ai-message-border/80 bg-gradient-to-br from-background/50 via-ai-message-bg/70 to-ai-message-bg/60 p-3 text-xs text-muted-foreground backdrop-blur-md"
+                class="group relative mt-3 overflow-hidden rounded-2xl border border-[hsl(var(--ai-message-border)/0.8)] bg-gradient-to-br from-background/50 via-[hsl(var(--ai-message-bg)/0.7)] to-[hsl(var(--ai-message-bg)/0.6)] p-3 text-xs text-muted-foreground backdrop-blur-md"
               >
                 <div
                   class="structured-skeleton-sheen pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent [background-size:200%_100%]"
@@ -367,7 +367,7 @@ defineExpose({
               <div
                 v-else-if="isTodoActionsPending"
                 data-test="todo-actions-loading"
-                class="group relative mt-3 overflow-hidden rounded-2xl border border-ai-message-border/80 bg-gradient-to-br from-background/50 via-ai-message-bg/70 to-ai-message-bg/60 p-3 text-xs text-muted-foreground backdrop-blur-md"
+                class="group relative mt-3 overflow-hidden rounded-2xl border border-[hsl(var(--ai-message-border)/0.8)] bg-gradient-to-br from-background/50 via-[hsl(var(--ai-message-bg)/0.7)] to-[hsl(var(--ai-message-bg)/0.6)] p-3 text-xs text-muted-foreground backdrop-blur-md"
               >
                 <div
                   class="structured-skeleton-sheen pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent [background-size:200%_100%]"
@@ -404,7 +404,7 @@ defineExpose({
                   isNovelCharactersPending
                 "
                 data-test="novel-characters-loading"
-                class="group relative mt-3 overflow-hidden rounded-2xl border border-ai-message-border/80 bg-gradient-to-br from-background/50 via-ai-message-bg/70 to-ai-message-bg/60 p-3 text-xs text-muted-foreground backdrop-blur-md"
+                class="group relative mt-3 overflow-hidden rounded-2xl border border-[hsl(var(--ai-message-border)/0.8)] bg-gradient-to-br from-background/50 via-[hsl(var(--ai-message-bg)/0.7)] to-[hsl(var(--ai-message-bg)/0.6)] p-3 text-xs text-muted-foreground backdrop-blur-md"
               >
                 <div
                   class="structured-skeleton-sheen pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent [background-size:200%_100%]"
@@ -460,7 +460,7 @@ defineExpose({
                   isNovelWorldviewPending
                 "
                 data-test="novel-worldview-loading"
-                class="group relative mt-3 overflow-hidden rounded-2xl border border-ai-message-border/80 bg-gradient-to-br from-background/50 via-ai-message-bg/70 to-ai-message-bg/60 p-3 text-xs text-muted-foreground backdrop-blur-md"
+                class="group relative mt-3 overflow-hidden rounded-2xl border border-[hsl(var(--ai-message-border)/0.8)] bg-gradient-to-br from-background/50 via-[hsl(var(--ai-message-bg)/0.7)] to-[hsl(var(--ai-message-bg)/0.6)] p-3 text-xs text-muted-foreground backdrop-blur-md"
               >
                 <div
                   class="structured-skeleton-sheen pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent [background-size:200%_100%]"
@@ -490,7 +490,7 @@ defineExpose({
               <div
                 v-if="isNovelChapterPending"
                 data-test="novel-chapter-loading"
-                class="group relative mt-3 overflow-hidden rounded-2xl border border-ai-message-border/80 bg-gradient-to-br from-background/50 via-ai-message-bg/70 to-ai-message-bg/60 p-3 text-xs text-muted-foreground backdrop-blur-md"
+                class="group relative mt-3 overflow-hidden rounded-2xl border border-[hsl(var(--ai-message-border)/0.8)] bg-gradient-to-br from-background/50 via-[hsl(var(--ai-message-bg)/0.7)] to-[hsl(var(--ai-message-bg)/0.6)] p-3 text-xs text-muted-foreground backdrop-blur-md"
               >
                 <div
                   class="structured-skeleton-sheen pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent [background-size:200%_100%]"

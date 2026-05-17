@@ -48,7 +48,7 @@ function hasExpandable(character: NovelCharacterCard): boolean {
 
 <template>
   <div
-    class="group relative mt-3 overflow-hidden rounded-2xl border border-ai-message-border/80 bg-gradient-to-br from-background/50 via-ai-message-bg/70 to-ai-message-bg/60 p-4 backdrop-blur-md"
+    class="group relative mt-3 overflow-hidden rounded-2xl border border-[hsl(var(--ai-message-border)/0.8)] bg-gradient-to-br from-background/50 via-[hsl(var(--ai-message-bg)/0.7)] to-[hsl(var(--ai-message-bg)/0.6)] p-4 backdrop-blur-md"
   >
     <div class="mb-3 flex items-center gap-2">
       <Users :size="16" class="text-primary/70" />

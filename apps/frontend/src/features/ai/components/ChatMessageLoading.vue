@@ -12,7 +12,7 @@ const { t } = useI18n()
 
 <template>
   <div
-    class="loading-container flex flex-col gap-3 rounded-2xl border border-ai-message-border bg-ai-message-bg p-4 shadow-sm"
+    class="loading-container flex flex-col gap-3 rounded-2xl border border-[hsl(var(--ai-message-border))] bg-[hsl(var(--ai-message-bg))] p-4 shadow-sm"
   >
     <!-- 场景 A: 正在生成图片 -->
     <ImageLoadingState v-if="isImageGenerating" />
@@ -28,9 +28,15 @@ const { t } = useI18n()
         }}</span>
       </div>
       <div class="flex flex-col gap-2">
-        <div class="h-2.5 w-[90%] animate-pulse rounded-full bg-ai-message-border"></div>
-        <div class="h-2.5 w-[75%] animate-pulse rounded-full bg-ai-message-border delay-75"></div>
-        <div class="h-2.5 w-[85%] animate-pulse rounded-full bg-ai-message-border delay-150"></div>
+        <div
+          class="h-2.5 w-[90%] animate-pulse rounded-full bg-[hsl(var(--ai-message-border))]"
+        ></div>
+        <div
+          class="h-2.5 w-[75%] animate-pulse rounded-full bg-[hsl(var(--ai-message-border))] delay-75"
+        ></div>
+        <div
+          class="h-2.5 w-[85%] animate-pulse rounded-full bg-[hsl(var(--ai-message-border))] delay-150"
+        ></div>
       </div>
     </template>
   </div>

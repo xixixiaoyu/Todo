@@ -18,12 +18,9 @@ import { executeToolCalls } from './useChatActions.toolCalls'
 import { useToolPermission } from './useToolPermission'
 import { useGenerationState } from '@/features/ai/stores/generationState'
 import { createStreamChunkHandler } from './useChatActions.stream'
-import type { TeachingPersistPayload } from './useChatActions.stream'
 import { prepareRuntimeCapabilities } from './useChatActions.runtime'
 import { resolveSkillContext } from '@/features/ai/services/aiService'
-import { httpClient } from '@/api'
 import { useSidecar } from '@/composables/useSidecar'
-import { useQueryClient } from '@tanstack/vue-query'
 
 const MAX_RETRIES = 3
 
@@ -67,57 +64,6 @@ export function useChatActions(options: AIRequestOptions = {}) {
   const { isAvailable: sidecarAvailable, sidecarPort, sidecarToken } = useSidecar()
   const { mode: permissionMode } = useToolPermission()
   const { startGenerating: markGenerating, stopGenerating: markDone } = useGenerationState()
-
-  // 惰性获取 queryClient：避免在无 Vue 注入上下文的测试环境中崩溃
-  let queryClient: ReturnType<typeof useQueryClient> | null = null
-  try {
-    queryClient = useQueryClient()
-  } catch {
-    // 非 Vue setup 上下文（如测试），跳过
-  }
-
-  // 教学模式：AI 评估后自动持久化测验记录与学习进度
-  async function onTeachingPersist(payload: TeachingPersistPayload) {
-    const persistTasks: Promise<unknown>[] = []
-
-    for (const a of payload.assessments) {
-      persistTasks.push(
-        httpClient
-          .post('/teaching/quizzes', {
-            quizId: a.quizId,
-            stem: a.stem,
-            kind: a.kind,
-            userAnswer: a.userAnswer,
-            result: a.result,
-            mastery: a.mastery,
-            feedback: a.feedback,
-            nextFocus: a.nextFocus,
-          })
-          .catch((e) => console.warn('[TeachingPersist] quiz record save failed:', e)),
-      )
-
-      // 同时更新学习进度：从 stem 中提取概念名（取前两个词或截断）
-      const concept = a.stem ? a.stem.slice(0, 40) : a.quizId
-      const correctCount = a.result === 'correct' ? 1 : 0
-      persistTasks.push(
-        httpClient
-          .put('/teaching/progress', {
-            concept,
-            masteryLevel: a.mastery,
-            quizCount: 1,
-            correctCount,
-          })
-          .catch((e) => console.warn('[TeachingPersist] progress update failed:', e)),
-      )
-    }
-
-    await Promise.allSettled(persistTasks)
-    if (queryClient) {
-      void queryClient.invalidateQueries({ queryKey: ['teaching', 'quizzes'] })
-      void queryClient.invalidateQueries({ queryKey: ['teaching', 'progress'] })
-      void queryClient.invalidateQueries({ queryKey: ['teaching', 'overview'] })
-    }
-  }
 
   const { buildContextCompression } = createContextCompression({
     currentSession,
@@ -287,7 +233,6 @@ export function useChatActions(options: AIRequestOptions = {}) {
         resetStreamingState,
         todoStore,
         t,
-        onTeachingPersist,
       })
 
       if (aiConfig.discussionMode && aiConfig.discussionModelIds.length > 0) {
@@ -491,7 +436,10 @@ export function useChatActions(options: AIRequestOptions = {}) {
   }
 
   function clearHistory(): void {
-    createSession()
+    // 如果当前会话已经是空白的，不重复创建新会话
+    if (chatHistory.value.length > 0) {
+      createSession()
+    }
     todoStore.clearProposedChanges()
     resetStreamingState()
     clearError()

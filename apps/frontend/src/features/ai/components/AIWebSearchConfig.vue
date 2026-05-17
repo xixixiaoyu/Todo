@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Search, Key, Info, Eye, EyeOff, ExternalLink, Globe, CheckCircle } from 'lucide-vue-next'
+import { Search, Key, Info, Eye, EyeOff, ExternalLink } from 'lucide-vue-next'
 import { useSkillRuntimeConfig } from '@/features/ai/composables/useSkillRuntimeConfig'
 
 const { t } = useI18n()
@@ -108,31 +108,6 @@ const SEARCH_PROVIDERS = [
           {{ provider.url.replace('https://', '') }}
         </a>
       </div>
-    </div>
-  </div>
-
-  <!-- 分隔线 + 免 Key 提供商 -->
-  <div class="border-t border-border/50" />
-
-  <div class="space-y-3 px-6 pb-5">
-    <div class="flex items-center gap-2">
-      <div class="relative flex h-7 w-7 items-center justify-center rounded-xl bg-green-500/10">
-        <Globe :size="15" class="text-green-600 dark:text-green-400" />
-      </div>
-      <h3 class="text-[13px] font-bold tracking-tight text-foreground/90">DuckDuckGo</h3>
-    </div>
-
-    <p class="text-[12px] leading-relaxed text-muted-foreground/80">
-      {{ t('ai.webSearchDuckDuckGoDesc') }}
-    </p>
-
-    <div
-      class="flex items-center gap-2 rounded-2xl border border-green-500/20 bg-green-500/5 px-4 py-3"
-    >
-      <CheckCircle :size="16" class="shrink-0 text-green-600 dark:text-green-400" />
-      <span class="text-[13px] text-green-700 dark:text-green-300">{{
-        t('ai.webSearchDuckDuckGoFree')
-      }}</span>
     </div>
   </div>
 </template>

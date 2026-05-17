@@ -2,12 +2,11 @@
 import { ref, computed, watch, defineAsyncComponent } from 'vue'
 import ChatMessageList from '@/features/ai/components/ChatMessageList.vue'
 import AISettingsDialog from '@/features/ai/components/AISettingsDialog.vue'
-import AiAssistantHeader from '@/features/ai/components/AiAssistantHeader.vue'
 import AiAssistantToolbar from '@/features/ai/components/AiAssistantToolbar.vue'
 import AiAssistantInput from '@/features/ai/components/AiAssistantInput.vue'
 import MermaidEditorDialog from '@/features/ai/components/MermaidEditorDialog.vue'
 import ScratchpadEditorDialog from '@/features/ai/components/ScratchpadEditorDialog.vue'
-import TranslationPanel from '@/features/ai/components/TranslationPanel.vue'
+import TranslationEditorDialog from '@/features/ai/components/TranslationEditorDialog.vue'
 import AgentWorkspaceSelector from '@/features/ai/components/AgentWorkspaceSelector.vue'
 import RightWorkspacePanel from '@/features/ai/components/RightWorkspacePanel.vue'
 import LeftSessionSidebar from '@/features/ai/components/LeftSessionSidebar.vue'
@@ -59,6 +58,7 @@ const {
   toggleImageGeneration,
   isTranslationEnabled,
   toggleTranslationMode,
+  openTranslationEditor,
   isAgentEnabled,
   toggleAgentMode,
   updateAgentWorkspace,
@@ -239,20 +239,6 @@ function onFireworksComplete() {
       ></div>
     </div>
 
-    <!-- Header -->
-    <AiAssistantHeader
-      :is-maximized="isMaximized"
-      :session-sidebar-collapsed="sessionSidebarCollapsed"
-      :workspace-collapsed="
-        isAgentEnabled && selectedWorkspacePath ? workspacePanelCollapsed : undefined
-      "
-      :show-close="false"
-      :show-maximize="false"
-      @toggle-maximize="isMaximized = !isMaximized"
-      @toggle-session-sidebar="sessionSidebarCollapsed = !sessionSidebarCollapsed"
-      @toggle-workspace="workspacePanelCollapsed = !workspacePanelCollapsed"
-    />
-
     <!-- 主内容区域 -->
     <div class="relative flex-1 min-h-0 flex flex-row">
       <!-- 左侧会话列表 -->
@@ -261,53 +247,48 @@ function onFireworksComplete() {
         @new-chat="handleNewChat"
         @switch-session="switchSession"
         @open-settings="openSettings()"
+        @toggle-collapse="sessionSidebarCollapsed = !sessionSidebarCollapsed"
       />
       <!-- 聊天列 -->
       <div class="relative flex-1 min-h-0 flex flex-col min-w-0">
-        <!-- 翻译模式：替换聊天 UI -->
-        <TranslationPanel v-if="isTranslationEnabled" :config="config" />
+        <!-- Agent 工作区（有消息时显示精简条） -->
+        <AgentWorkspaceSelector
+          v-if="isAgentEnabled && messages.length > 0"
+          :visible="true"
+          :sidecar-port="sidecarPort"
+          :sidecar-token="sidecarToken"
+          :selected-id="config.agentWorkspaceId"
+          :permission-mode="permissionMode"
+          @select="(id, path) => handleWorkspaceSelect(id, path)"
+          @cycle-permission-mode="cyclePermissionMode"
+        />
 
-        <!-- 非翻译模式：保持原有内容 -->
-        <template v-else>
-          <!-- Agent 工作区（有消息时显示精简条） -->
-          <AgentWorkspaceSelector
-            v-if="isAgentEnabled && messages.length > 0"
-            :visible="true"
-            :sidecar-port="sidecarPort"
-            :sidecar-token="sidecarToken"
-            :selected-id="config.agentWorkspaceId"
-            :permission-mode="permissionMode"
-            @select="(id, path) => handleWorkspaceSelect(id, path)"
-            @cycle-permission-mode="cyclePermissionMode"
-          />
-
-          <ChatMessageList
-            :messages="messages"
-            :is-maximized="isMaximized"
-            :is-novel-mode="isNovelEnabled"
-            @regenerate="regenerateMessage"
-            @delete="deleteMessage"
-            @edit="editAndResendMessage"
-            @select-suggestion="handleSelectSuggestion"
-            @ask-selection="handleAskSelection"
-            @transfer-selection="() => {}"
-            @teaching-submit="handleTeachingSubmit"
-            @teaching-submit-batch="handleTeachingSubmitBatch"
-            @continue-novel="handleNovelContinue"
-          >
-            <template v-if="isAgentEnabled" #empty-actions>
-              <AgentWorkspaceSelector
-                :visible="true"
-                :sidecar-port="sidecarPort"
-                :sidecar-token="sidecarToken"
-                :selected-id="config.agentWorkspaceId"
-                :permission-mode="permissionMode"
-                @select="(id, path) => handleWorkspaceSelect(id, path)"
-                @cycle-permission-mode="cyclePermissionMode"
-              />
-            </template>
-          </ChatMessageList>
-        </template>
+        <ChatMessageList
+          :messages="messages"
+          :is-maximized="isMaximized"
+          :is-novel-mode="isNovelEnabled"
+          @regenerate="regenerateMessage"
+          @delete="deleteMessage"
+          @edit="editAndResendMessage"
+          @select-suggestion="handleSelectSuggestion"
+          @ask-selection="handleAskSelection"
+          @transfer-selection="() => {}"
+          @teaching-submit="handleTeachingSubmit"
+          @teaching-submit-batch="handleTeachingSubmitBatch"
+          @continue-novel="handleNovelContinue"
+        >
+          <template v-if="isAgentEnabled" #empty-actions>
+            <AgentWorkspaceSelector
+              :visible="true"
+              :sidecar-port="sidecarPort"
+              :sidecar-token="sidecarToken"
+              :selected-id="config.agentWorkspaceId"
+              :permission-mode="permissionMode"
+              @select="(id, path) => handleWorkspaceSelect(id, path)"
+              @cycle-permission-mode="cyclePermissionMode"
+            />
+          </template>
+        </ChatMessageList>
 
         <!-- 错误提示 -->
         <Transition
@@ -381,6 +362,7 @@ function onFireworksComplete() {
           @open-settings="openSettings"
           @open-mermaid-editor="openMermaidEditor()"
           @open-scratchpad="openScratchpad()"
+          @open-translation="openTranslationEditor()"
           @open-todo-panel="openTodoPanel()"
           @trigger-file-upload="triggerUpload"
           @navigate-previous="navigateToPrevious"
@@ -388,7 +370,6 @@ function onFireworksComplete() {
         >
           <template #input>
             <AiAssistantInput
-              v-if="!isTranslationEnabled"
               ref="assistantInputRef"
               v-model="chatInput"
               :is-image-generation-enabled="isImageGenerationEnabled"
@@ -437,6 +418,7 @@ function onFireworksComplete() {
 
     <MermaidEditorDialog />
     <ScratchpadEditorDialog />
+    <TranslationEditorDialog />
     <TodoPanelDialog />
 
     <!-- 浮动元素 -->

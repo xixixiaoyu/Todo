@@ -165,7 +165,7 @@ function switchLanguage(lang: string) {
             v-model="customColor"
             type="color"
             class="h-8 w-10 cursor-pointer rounded-lg border border-border bg-background"
-            @change="applyCustomColor(customColor)"
+            @input="applyCustomColor(($event.target as HTMLInputElement).value)"
           />
         </div>
       </div>

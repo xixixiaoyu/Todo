@@ -41,7 +41,7 @@ async function copyContent() {
 
 <template>
   <div
-    class="mt-2 flex items-center border-t border-ai-message-border pt-2 transition-opacity duration-300"
+    class="mt-2 flex items-center border-t border-[hsl(var(--ai-message-border))] pt-2 transition-opacity duration-300"
     :class="[isMobile ? 'justify-between gap-1' : 'gap-1.5']"
   >
     <button

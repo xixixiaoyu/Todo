@@ -11,7 +11,6 @@
 export { z } from 'zod'
 export * from './schemas/todo.schema'
 export * from './schemas/mcp.schema'
-export * from './schemas/teaching.schema'
 export * from './schemas/i18n-keys'
 
 // Agent 工具类型与 Schema

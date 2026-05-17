@@ -13,6 +13,7 @@ import {
   Bot,
   ClipboardPaste,
   CheckSquare,
+  Languages,
 } from 'lucide-vue-next'
 import AiAssistantToolbarDiscussionMenu from '@/features/ai/components/AiAssistantToolbarDiscussionMenu.vue'
 import AiAssistantToolbarPresetMenu from '@/features/ai/components/AiAssistantToolbarPresetMenu.vue'
@@ -61,6 +62,7 @@ const emit = defineEmits<{
   (e: 'stopGenerating'): void
   (e: 'openMermaidEditor'): void
   (e: 'openScratchpad'): void
+  (e: 'openTranslation'): void
   (e: 'openTodoPanel'): void
 }>()
 
@@ -210,6 +212,17 @@ const newChatTitle = computed(() => `${t('ai.newChat')} (${shortcutHint})`)
             @click="emit('openScratchpad')"
           >
             <ClipboardPaste :size="16" />
+          </button>
+
+          <!-- 翻译 -->
+          <button
+            :class="[
+              'toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-muted-foreground active:scale-95',
+            ]"
+            :title="t('ai.translationOpenEditor')"
+            @click="emit('openTranslation')"
+          >
+            <Languages :size="16" />
           </button>
 
           <!-- 待办事项 -->

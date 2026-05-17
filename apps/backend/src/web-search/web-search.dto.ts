@@ -4,7 +4,7 @@ import { ApiProperty } from '@nestjs/swagger'
 /**
  * 支持的搜索 Provider
  */
-export const SEARCH_PROVIDERS = ['tavily', 'serper', 'brave', 'duckduckgo'] as const
+export const SEARCH_PROVIDERS = ['tavily', 'serper', 'brave'] as const
 export type SearchProvider = (typeof SEARCH_PROVIDERS)[number]
 
 /**
@@ -17,7 +17,6 @@ export const SEARCH_PROVIDER_META: Record<
   tavily: { requiresApiKey: true, label: 'Tavily' },
   serper: { requiresApiKey: true, label: 'Serper (Google)' },
   brave: { requiresApiKey: true, label: 'Brave Search' },
-  duckduckgo: { requiresApiKey: false, label: 'DuckDuckGo' },
 }
 
 /**
@@ -64,7 +63,7 @@ export class SearchWebDto {
   maxResults?: number
 
   @ApiProperty({
-    description: 'Provider API key (required for tavily/serper/brave, not needed for duckduckgo)',
+    description: 'Provider API key (required for tavily/serper/brave)',
   })
   @IsOptional()
   @IsString()
@@ -81,7 +80,7 @@ export class VerifySearchKeyDto {
   provider!: SearchProvider
 
   @ApiProperty({
-    description: 'API key to verify (not required for duckduckgo, which needs no key)',
+    description: 'API key to verify',
   })
   @IsOptional()
   @IsString()

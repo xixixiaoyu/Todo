@@ -61,10 +61,7 @@ export const common = {
     reset: 'Reset to default',
     presets: {
       celadon: 'Celadon',
-      wisteria: 'Wisteria',
       mistBlue: 'Mist Blue',
-      mossGreen: 'Moss Green',
-      sunsetRose: 'Sunset',
       lilacGray: 'Lilac Gray',
       autumnGold: 'Autumn Gold',
       warmOrange: 'Warm Orange',

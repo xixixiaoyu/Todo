@@ -46,7 +46,7 @@ async function copyDiagnostics() {
 
 <template>
   <div
-    class="mb-2 rounded-xl border border-ai-message-border bg-background/40 px-3 py-2 text-foreground/90"
+    class="mb-2 rounded-xl border border-[hsl(var(--ai-message-border))] bg-background/40 px-3 py-2 text-foreground/90"
   >
     <div class="flex items-start gap-2">
       <AlertCircle :size="14" class="mt-0.5 text-amber-600" />

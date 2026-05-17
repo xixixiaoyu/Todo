@@ -74,71 +74,8 @@ export default {
           4: 'hsl(var(--chart-4))',
           5: 'hsl(var(--chart-5))',
         },
-        // UnoCSS 自定义颜色系统 (已迁移至 CSS 变量)
-        bg: {
-          DEFAULT: 'hsl(var(--background))',
-          card: 'hsl(var(--card))',
-        },
-        text: {
-          DEFAULT: 'hsl(var(--text-color))',
-          secondary: 'hsl(var(--text-secondary))',
-          todo: 'hsl(var(--text-color))',
-          completed: 'hsl(var(--todo-completed))',
-        },
-        'input-custom': {
-          bg: 'hsl(var(--card))',
-          border: 'hsl(var(--border))',
-          focus: 'hsl(var(--ring))',
-        },
-        button: {
-          bg: 'hsl(var(--primary))',
-          hover: 'hsl(var(--primary-hover))',
-          text: 'hsl(var(--primary-foreground))',
-        },
-        filter: {
-          bg: 'hsl(var(--secondary))',
-          text: 'hsl(var(--muted-foreground))',
-        },
-        ai: {
-          message: {
-            bg: 'hsl(var(--ai-message-bg))',
-            border: 'hsl(var(--ai-message-border))',
-          },
-          accent: {
-            hover: 'hsl(var(--ai-accent-hover))',
-          },
-        },
-        language: {
-          bg: 'hsl(var(--secondary))',
-          color: 'hsl(var(--foreground))',
-          hover: 'hsl(var(--accent))',
-        },
-        project: {
-          tag: 'hsl(var(--secondary))',
-          'tag-text': 'hsl(var(--secondary-foreground))',
-        },
-        link: {
-          DEFAULT: 'hsl(var(--primary))',
-          hover: 'hsl(var(--primary-hover))',
-        },
-        // 语义状态色
         success: 'hsl(var(--success))',
         warning: 'hsl(var(--chart-3))',
-        info: 'hsl(var(--chart-2))',
-        error: 'hsl(var(--error))',
-        hover: 'hsl(var(--accent))',
-        // warm 色系 (保持兼容性，但映射到变量)
-        warm: {
-          bg: 'hsl(var(--background))',
-          card: 'hsl(var(--card))',
-          primary: 'hsl(var(--primary))',
-          'primary-hover': 'hsl(var(--primary-hover))',
-          text: 'hsl(var(--text-color))',
-          'text-secondary': 'hsl(var(--text-secondary))',
-          border: 'hsl(var(--border))',
-          error: 'hsl(var(--error))',
-          success: 'hsl(var(--success))',
-        },
       },
       // 字体系列
       fontFamily: {

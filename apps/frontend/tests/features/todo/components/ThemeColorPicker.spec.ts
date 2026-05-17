@@ -24,10 +24,7 @@ vi.mock('vue-i18n', () => ({
         'common.themeColor.recommended': '推荐',
         'common.themeColor.recommendedShort': '优选',
         'common.themeColor.presets.celadon': '青瓷',
-        'common.themeColor.presets.wisteria': '紫薇',
         'common.themeColor.presets.mistBlue': '薄雾',
-        'common.themeColor.presets.mossGreen': '苔青',
-        'common.themeColor.presets.sunsetRose': '晚霞',
         'common.themeColor.presets.lilacGray': '丁香',
         'common.themeColor.presets.autumnGold': '秋叶',
         'common.themeColor.presets.warmOrange': '暖橙',
@@ -58,7 +55,7 @@ function createUseThemeMock(overrides: Partial<UseThemeResult> = {}): UseThemeRe
 }
 
 describe('ThemeColorPicker', () => {
-  it('should place lilac in the middle with the updated hex', () => {
+  it('should place lilacGray preset with correct hex', () => {
     const mockedUseTheme = vi.mocked(useTheme)
 
     mockedUseTheme.mockReturnValue(createUseThemeMock())
@@ -77,9 +74,10 @@ describe('ThemeColorPicker', () => {
     })
 
     const presetButtons = wrapper.findAll('button[title]')
-    expect(presetButtons[4]?.attributes('title')).toBe('丁香')
+    const lilacButton = presetButtons.find((btn) => btn.attributes('title') === '丁香')
+    expect(lilacButton?.exists()).toBe(true)
 
-    const lilacDot = presetButtons[4]?.find('span[style]')
+    const lilacDot = lilacButton?.find('span[style]')
     expect(lilacDot?.attributes('style')).toContain('#786ea6')
   })
 

@@ -3,11 +3,8 @@ import { computed, readonly, ref, watch } from 'vue'
 
 export type ThemePresetKey =
   | 'celadon'
-  | 'wisteria'
   | 'mistBlue'
-  | 'mossGreen'
   | 'lilacGray'
-  | 'sunsetRose'
   | 'autumnGold'
   | 'warmOrange'
   | 'random'
@@ -55,11 +52,8 @@ type ThemeForeground = typeof LIGHT_FOREGROUND | typeof DARK_FOREGROUND
 
 export const THEME_PRESETS: ReadonlyArray<ThemePresetDefinition> = [
   { key: 'celadon', value: '#78958e', recommended: true },
-  { key: 'wisteria', value: '#9570a3' },
   { key: 'mistBlue', value: '#728ba1', recommended: true },
-  { key: 'mossGreen', value: '#7c9585' },
   { key: 'lilacGray', value: '#786ea6', recommended: true },
-  { key: 'sunsetRose', value: '#9c6e76' },
   { key: 'autumnGold', value: '#b0915e', recommended: true },
   { key: 'warmOrange', value: '#bb7d5e', recommended: true },
   { key: 'random', value: RANDOM_THEME_VALUE },

@@ -49,19 +49,12 @@
     --chart-5: 32 25% 65%;
 
     /* 语义化变量 */
-    --text-color: 32 10% 23%;
-    --text-secondary: 32 5% 45%;
-    --todo-completed: 32 5% 45%;
     --success: 145 35% 45%;
     --error: 15 65% 55%;
 
     /* AI 助手相关变量 */
-    --primary-color: var(--primary);
-    --text-color-base: var(--text-color);
-    --text-secondary-color: var(--text-secondary);
     --ai-message-bg: var(--card);
     --ai-message-border: var(--border);
-    --ai-accent-hover: var(--accent);
     --ai-glass-bg: var(--background);
     --ai-glass-border: var(--border);
     --ai-header-yellow: 32 55% 82%;
@@ -125,19 +118,12 @@
     --input: 240 4% 18%;
     --ring: var(--primary);
 
-    --text-color: 240 5% 90%;
-    --text-secondary: 240 5% 60%;
-    --todo-completed: 240 5% 45%;
     --success: 145 30% 50%;
     --error: 15 50% 50%;
 
     /* AI 助手相关变量 */
-    --primary-color: var(--primary);
-    --text-color-base: var(--text-color);
-    --text-secondary-color: var(--text-secondary);
     --ai-message-bg: 240 4% 14%;
     --ai-message-border: 240 4% 20%;
-    --ai-accent-hover: var(--accent);
     --ai-glass-bg: 240 4% 10%;
     --ai-glass-border: 240 4% 18%;
     --ai-header-yellow: 32 60% 15%;

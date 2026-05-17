@@ -3,7 +3,7 @@ import type { SearchProvider, SearchResponse, SearchResultItem } from './web-sea
 
 /**
  * Web Search Service
- * 支持多个搜索 Provider：Tavily / Serper(Google) / Brave / DuckDuckGo
+ * 支持多个搜索 Provider：Tavily / Serper(Google) / Brave
  */
 @Injectable()
 export class WebSearchService {
@@ -22,18 +22,17 @@ export class WebSearchService {
       throw new BadGatewayException('Search query is required')
     }
 
-    const isFreeProvider = provider === 'duckduckgo'
-    if (!isFreeProvider && !apiKey) {
+    if (!apiKey) {
       throw new BadGatewayException(`API key is required for provider "${provider}"`)
     }
 
     const searchFn = this.getSearchFn(provider)
-    const results = await searchFn(query, apiKey ?? '', maxResults)
+    const results = await searchFn(query, apiKey, maxResults)
 
     return {
       query,
       provider,
-      source_type: isFreeProvider ? 'scrape' : 'api',
+      source_type: 'api',
       results,
       diagnostics: {},
     }
@@ -43,9 +42,6 @@ export class WebSearchService {
    * 验证 API Key 是否有效
    */
   async verifyKey(provider: SearchProvider, apiKey?: string): Promise<boolean> {
-    const isFreeProvider = provider === 'duckduckgo'
-    if (isFreeProvider) return true
-
     try {
       const searchFn = this.getSearchFn(provider)
       await searchFn('test', apiKey ?? '', 1)
@@ -65,8 +61,6 @@ export class WebSearchService {
         return this.searchSerper.bind(this)
       case 'brave':
         return this.searchBrave.bind(this)
-      case 'duckduckgo':
-        return this.searchDuckDuckGo.bind(this)
       default:
         throw new BadGatewayException(`Unknown search provider: ${provider}`)
     }
@@ -185,75 +179,5 @@ export class WebSearchService {
       score: null,
       metadata: {},
     }))
-  }
-
-  // ── DuckDuckGo (免 API Key) ──
-
-  private async searchDuckDuckGo(
-    query: string,
-    _apiKey: string,
-    maxResults: number,
-  ): Promise<SearchResultItem[]> {
-    const res = await fetch('https://html.duckduckgo.com/html/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-      },
-      body: new URLSearchParams({ q: query }),
-      signal: AbortSignal.timeout(15_000),
-    })
-
-    if (!res.ok) {
-      throw new BadGatewayException(`DuckDuckGo returned HTTP ${res.status}`)
-    }
-
-    const html = await res.text()
-    const results: SearchResultItem[] = []
-
-    // 通过 class 名称提取链接和摘要，按顺序配对，不依赖 DOM 结构
-    const linkMatches = html.matchAll(
-      /<a\s[^>]*class="[^"]*result__a[^"]*"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g,
-    )
-
-    for (const linkMatch of linkMatches) {
-      if (results.length >= maxResults) break
-
-      const title = linkMatch[2].replace(/<[^>]+>/g, '').trim()
-      if (!title) continue
-
-      let url = linkMatch[1]
-      const redirectParam = url.match(/uddg=([^&]+)/)
-      if (redirectParam) {
-        try {
-          url = decodeURIComponent(redirectParam[1])
-        } catch {
-          // 保留原始 URL
-        }
-      }
-
-      results.push({
-        title,
-        url,
-        content: '', // 稍后通过 snippet regex 填充
-        rank: results.length + 1,
-        score: null,
-        metadata: {},
-      })
-    }
-
-    // 提取所有 snippet，按顺序配对
-    const snippetMatches = html.matchAll(
-      /<a\s[^>]*class="[^"]*result__snippet[^"]*"[^>]*>([\s\S]*?)<\/a>/g,
-    )
-    let idx = 0
-    for (const snippetMatch of snippetMatches) {
-      if (idx >= results.length) break
-      results[idx].content = snippetMatch[1].replace(/<[^>]+>/g, '').trim()
-      idx++
-    }
-
-    return results
   }
 }

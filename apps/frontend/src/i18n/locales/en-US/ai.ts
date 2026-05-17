@@ -233,6 +233,7 @@ export const ai = {
   mermaidOpenEditor: 'Open Mermaid Editor',
   mermaidCollapseSource: 'Collapse Source',
   scratchpadOpenEditor: 'Open Scratchpad',
+  translationOpenEditor: 'Open Translation',
   todoPanelOpenEditor: 'Open Todo',
   mermaidExpandSource: 'Expand Source',
   teachingMode: 'Teaching Mode',
@@ -404,9 +405,6 @@ export const ai = {
   webSearchTavilyHint: 'Get API Key from tavily.com',
   webSearchSerperHint: 'Get API Key from serper.dev',
   webSearchBraveHint: 'Get API Key from brave.com/search/api/',
-  webSearchDuckDuckGoDesc:
-    'DuckDuckGo serves as a free fallback search engine with no API key required. Search quality is lower than paid APIs, but it is automatically enabled when no other keys are configured.',
-  webSearchDuckDuckGoFree: 'No API Key · Enabled by default',
   memoryEnabled: 'Memory Enabled',
   memoryDisabled: 'Memory Disabled',
   memoryManagement: 'Memory Management',

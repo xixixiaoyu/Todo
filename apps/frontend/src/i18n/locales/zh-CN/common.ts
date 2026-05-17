@@ -61,10 +61,7 @@ export const common = {
     reset: '恢复默认',
     presets: {
       celadon: '青瓷',
-      wisteria: '紫薇',
       mistBlue: '薄雾',
-      mossGreen: '苔青',
-      sunsetRose: '晚霞',
       lilacGray: '丁香',
       autumnGold: '秋叶',
       warmOrange: '暖橙',

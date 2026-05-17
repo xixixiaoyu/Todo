@@ -220,6 +220,7 @@ export const ai = {
   mermaidOpenEditor: '打开 Mermaid 编辑器',
   mermaidCollapseSource: '折叠源码',
   scratchpadOpenEditor: '打开暂存箱',
+  translationOpenEditor: '打开翻译',
   todoPanelOpenEditor: '打开待办事项',
   mermaidExpandSource: '展开源码',
   teachingMode: '教学模式',
@@ -385,9 +386,6 @@ export const ai = {
   webSearchTavilyHint: '从 tavily.com 获取 API Key',
   webSearchSerperHint: '从 serper.dev 获取 API Key',
   webSearchBraveHint: '从 brave.com/search/api/ 获取 API Key',
-  webSearchDuckDuckGoDesc:
-    'DuckDuckGo 作为免费搜索兜底，无需配置 API Key，默认可用。搜索质量不如付费 API，但在未配置其他 Key 时自动启用。',
-  webSearchDuckDuckGoFree: '无需 API Key · 默认启用',
   memoryEnabled: '记忆功能已开启',
   memoryDisabled: '记忆功能已关闭',
   memoryManagement: '记忆管理',

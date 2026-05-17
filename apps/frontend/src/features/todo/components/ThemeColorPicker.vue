@@ -185,7 +185,7 @@ function reset() {
             v-model="customColor"
             type="color"
             class="h-8 w-10 cursor-pointer rounded-[0.9rem] border border-border bg-background"
-            @change="applyCustomColor(customColor)"
+            @change="applyCustomColor(($event.target as HTMLInputElement).value)"
           />
         </div>
       </div>

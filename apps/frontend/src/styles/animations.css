@@ -91,13 +91,13 @@
 .shimmer-text {
   font-size: 15px;
   font-weight: 500;
-  color: hsl(var(--primary-color));
+  color: hsl(var(--primary));
   opacity: 0.8;
   animation: pulse-subtle 2s ease-in-out infinite;
 }
 
 .dark .shimmer-text {
-  color: hsl(var(--primary-color));
+  color: hsl(var(--primary));
   opacity: 0.9;
   animation: pulse-subtle 2s ease-in-out infinite;
 }
