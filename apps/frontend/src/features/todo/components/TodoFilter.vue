@@ -26,11 +26,12 @@ const isClearPopoverOpen = ref(false)
 withDefaults(
   defineProps<{
     filter: FilterType
-    isDrawerOpen: boolean
+    isDrawerOpen?: boolean
     showSearch: boolean
     showTrash?: boolean
   }>(),
   {
+    isDrawerOpen: false,
     showTrash: true,
   },
 )

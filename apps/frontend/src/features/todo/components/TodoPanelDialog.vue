@@ -1,53 +1,22 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick, defineAsyncComponent } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import { List, Network, X } from 'lucide-vue-next'
 import { useTodoPanel } from '../composables/useTodoPanel'
-import { useTodo } from '../composables/useTodo'
 import { useTodoStore } from '../stores/todo'
 import { useGsap } from '@/composables/useGsap'
 import { useEscClose } from '@/composables/useEscClose'
 import { useI18n } from 'vue-i18n'
 import { Card, CardContent } from '@/components/ui/card'
-import TodoInput from './TodoInput.vue'
-import TodoFilter from './TodoFilter.vue'
-import TodoSearch from './TodoSearch.vue'
-import TodoList from './TodoList.vue'
-
-const TodoVisualizer = defineAsyncComponent(() => import('./TodoVisualizer.vue'))
+import TodoPanelContent from './TodoPanelContent.vue'
 
 const { t } = useI18n()
 const { isOpen, closePanel } = useTodoPanel()
 const todoStore = useTodoStore()
-const {
-  newTodoTitle,
-  showSearch,
-  searchInput,
-  editingId,
-  editingTitle,
-  showTooltip,
-  handleAddTodo,
-  handleKeydown,
-  clearSearch,
-  handleToggleTodo,
-  startEditing,
-  cancelEditing,
-  saveEditing,
-  handleEditKeydown,
-} = useTodo()
 
 useEscClose(isOpen, closePanel)
 
 const dialogRef = ref<HTMLElement | null>(null)
 const { gsap } = useGsap()
-const dummyDrawerOpen = ref(false)
-
-const currentViewComponent = computed(() => {
-  return todoStore.viewMode === 'visual' ? TodoVisualizer : TodoList
-})
-
-const showInputArea = computed(() => {
-  return todoStore.viewMode === 'list' && todoStore.filter !== 'trash'
-})
 
 function toggleViewMode() {
   todoStore.viewMode = todoStore.viewMode === 'list' ? 'visual' : 'list'
@@ -88,7 +57,7 @@ watch(isOpen, (newVal) => {
         @click.self="closePanel"
       >
         <div ref="dialogRef" class="relative flex h-[95vh] w-[98vw] max-w-4xl flex-col">
-          <!-- Dialog Header (panel chrome: title + view toggle + close) -->
+          <!-- Dialog Header -->
           <div class="flex h-12 shrink-0 items-center justify-between px-4 md:px-6">
             <h2 class="text-base font-semibold text-foreground md:text-lg">
               {{ t('todo.title') }}
@@ -121,70 +90,14 @@ watch(isOpen, (newVal) => {
               'md:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] dark:md:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)] rounded-none md:rounded-[32px]',
             ]"
           >
-            <!-- Glass edge highlight -->
             <div
               class="absolute inset-0 rounded-[32px] pointer-events-none border border-white/10 dark:border-white/5 mask-edge"
             ></div>
 
             <CardContent
-              class="todo-typography todo-container p-4 pt-3 md:p-6 md:pt-4 flex flex-col flex-1 min-h-0 relative z-10 pb-[max(1rem,env(safe-area-inset-bottom))]"
+              class="todo-typography p-4 pt-3 md:p-6 md:pt-4 flex flex-col flex-1 min-h-0 relative z-10 pb-[max(1rem,env(safe-area-inset-bottom))]"
             >
-              <!-- Input area -->
-              <div v-if="showInputArea" class="mb-3 shrink-0 md:mb-4">
-                <TodoInput
-                  v-model="newTodoTitle"
-                  :show-tooltip="showTooltip"
-                  :error-message="todoStore.error ?? ''"
-                  @add="handleAddTodo"
-                  @keydown="handleKeydown"
-                />
-              </div>
-
-              <!-- Filter & Search -->
-              <div class="shrink-0">
-                <TodoFilter
-                  v-model:filter="todoStore.filter"
-                  v-model:is-drawer-open="dummyDrawerOpen"
-                  v-model:show-search="showSearch"
-                />
-                <Transition name="fade-slide">
-                  <TodoSearch
-                    v-if="showSearch"
-                    v-model="searchInput"
-                    @clear="clearSearch"
-                    @close="
-                      () => {
-                        showSearch = false
-                        clearSearch()
-                      }
-                    "
-                  />
-                </Transition>
-              </div>
-
-              <!-- List / Visualizer -->
-              <div class="flex-1 min-h-0">
-                <component
-                  :is="currentViewComponent"
-                  :todos="todoStore.filteredTodos"
-                  :filter="todoStore.filter"
-                  :search-query="todoStore.searchQuery"
-                  :editing-id="editingId"
-                  :editing-title="editingTitle"
-                  @toggle="handleToggleTodo"
-                  @start-edit="startEditing"
-                  @save-edit="saveEditing"
-                  @cancel-edit="cancelEditing"
-                  @delete="todoStore.deleteTodo"
-                  @reorder="todoStore.reorderTodos"
-                  @update:editing-title="
-                    (val: string) => {
-                      editingTitle = val
-                    }
-                  "
-                  @edit-keydown="handleEditKeydown"
-                />
-              </div>
+              <TodoPanelContent />
             </CardContent>
           </Card>
         </div>
@@ -235,15 +148,5 @@ watch(isOpen, (newVal) => {
     --todo-item-child-height: 40px;
     --todo-radius-soft: 16px;
   }
-}
-
-.fade-slide-enter-active,
-.fade-slide-leave-active {
-  transition: all 0.2s ease;
-}
-.fade-slide-enter-from,
-.fade-slide-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
 }
 </style>

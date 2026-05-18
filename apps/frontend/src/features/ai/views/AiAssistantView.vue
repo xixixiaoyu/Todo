@@ -27,7 +27,7 @@ import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import { AlertCircle, X, Copy, Check } from 'lucide-vue-next'
 import TodoPanelDialog from '@/features/todo/components/TodoPanelDialog.vue'
-import { useTodoPanel } from '@/features/todo/composables/useTodoPanel'
+import { useTodoSidebarIntegration } from '@/features/ai/composables/useTodoSidebarIntegration'
 import PomodoroTimer from '@/features/todo/components/PomodoroTimer.vue'
 import Fireworks from '@/components/Fireworks.vue'
 import { usePomodoroStore } from '@/features/todo/stores/pomodoro'
@@ -127,7 +127,11 @@ const {
 
 const { openEditor: openMermaidEditor } = useMermaidEditor()
 const { openEditor: openScratchpad } = useScratchpadEditor()
-const { openPanel: openTodoPanel } = useTodoPanel()
+const { rightPanelRef, focusTodoInSidebar } = useTodoSidebarIntegration({
+  isAgentEnabled,
+  selectedWorkspacePath,
+  workspacePanelCollapsed,
+})
 
 const isCopying = ref(false)
 const copyError = async () => {
@@ -363,7 +367,7 @@ function onFireworksComplete() {
           @open-mermaid-editor="openMermaidEditor()"
           @open-scratchpad="openScratchpad()"
           @open-translation="openTranslationEditor()"
-          @open-todo-panel="openTodoPanel()"
+          @open-todo-panel="focusTodoInSidebar()"
           @trigger-file-upload="triggerUpload"
           @navigate-previous="navigateToPrevious"
           @stop-generating="stopGenerating"
@@ -398,9 +402,10 @@ function onFireworksComplete() {
           </template>
         </AiAssistantToolbar>
       </div>
-      <!-- 右侧工作区面板 -->
+      <!-- 右侧面板（Todo + 工作区） -->
       <RightWorkspacePanel
-        v-if="isAgentEnabled && selectedWorkspacePath"
+        ref="rightPanelRef"
+        :show-agent-tabs="isAgentEnabled && !!selectedWorkspacePath"
         :workspace-path="selectedWorkspacePath"
         :sidecar-port="sidecarPort"
         :sidecar-token="sidecarToken"

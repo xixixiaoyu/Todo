@@ -5,6 +5,9 @@ const STORAGE_KEY_OPEN = 'lumina:todo-panel:isOpen'
 /** 模块级单例状态（从 localStorage 恢复） */
 const isOpen = ref(localStorage.getItem(STORAGE_KEY_OPEN) === 'true')
 
+/** 聚焦计数器 — 每次请求聚焦 Todo 面板时递增，用于侧边栏联动 */
+const focusPanel = ref(0)
+
 const persistOpen = (val: boolean) => localStorage.setItem(STORAGE_KEY_OPEN, String(val))
 
 /**
@@ -22,18 +25,22 @@ export function useTodoPanel() {
     persistOpen(false)
   }
 
-  const togglePanel = () => {
-    if (isOpen.value) {
-      closePanel()
+  /** 请求聚焦 Todo 面板 — 侧边栏消费此信号，弹窗忽略 */
+  const requestFocus = () => {
+    if (focusPanel.value > Number.MAX_SAFE_INTEGER - 1) {
+      focusPanel.value = 0
     } else {
-      openPanel()
+      focusPanel.value++
     }
   }
 
   return {
     isOpen,
+    /** 聚焦信号计数器 — 每次请求聚焦 +1 */
+    focusPanel,
     openPanel,
     closePanel,
-    togglePanel,
+    /** 请求聚焦 Todo 面板（侧边栏 + 弹窗通用） */
+    requestFocus,
   }
 }

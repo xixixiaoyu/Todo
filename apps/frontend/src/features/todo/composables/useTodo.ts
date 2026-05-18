@@ -134,7 +134,7 @@ export function useTodo() {
 
   /**
    * 全局快捷键处理
-   * Command+E (Mac) 或 Alt+E (Windows/Mac/Linux) 打开 / 关闭待办事项面板
+   * Command+E (Mac) 或 Alt+E (Windows/Mac/Linux) 聚焦 Todo 面板（侧边栏 / 弹窗）
    */
   function handleGlobalKeydown(e: KeyboardEvent) {
     const activeElement = document.activeElement
@@ -151,8 +151,8 @@ export function useTodo() {
 
     if (isE && isCmdOrAlt) {
       e.preventDefault()
-      const { togglePanel } = useTodoPanel()
-      togglePanel()
+      const { requestFocus } = useTodoPanel()
+      requestFocus()
     }
   }
 

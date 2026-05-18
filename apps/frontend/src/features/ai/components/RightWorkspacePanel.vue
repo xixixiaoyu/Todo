@@ -1,22 +1,34 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { FolderTree, Paperclip, PanelRightClose, PanelRightOpen, X } from 'lucide-vue-next'
+import { ref, computed, watch } from 'vue'
+import {
+  FolderTree,
+  Paperclip,
+  ListTodo,
+  PanelRightClose,
+  PanelRightOpen,
+  X,
+} from 'lucide-vue-next'
 import SessionFileList from './SessionFileList.vue'
 import WorkspaceFileTree from './WorkspaceFileTree.vue'
+import TodoPanelContent from '@/features/todo/components/TodoPanelContent.vue'
+import { useI18n } from 'vue-i18n'
 import axios from 'axios'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   workspacePath: string | null
   sidecarPort: number | null
   sidecarToken: string | null
   collapsed?: boolean
+  showAgentTabs?: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'toggleCollapse'): void
 }>()
 
-const activeTab = ref<'session-files' | 'workspace'>('workspace')
+const activeTab = ref<'todo' | 'workspace' | 'session-files'>('todo')
 const panelWidth = ref(260)
 const resizing = ref(false)
 
@@ -25,18 +37,55 @@ const previewFile = ref<{ path: string; name: string } | null>(null)
 const previewContent = ref<string | null>(null)
 const previewLoading = ref(false)
 
-const tabs = [
+// ── Dynamic tabs ──
+const agentTabs = [
   { id: 'workspace' as const, label: '工作区', icon: FolderTree },
   { id: 'session-files' as const, label: '会话文件', icon: Paperclip },
 ]
 
+const todoTab = computed(() => ({ id: 'todo' as const, label: t('todo.title'), icon: ListTodo }))
+
+// Agent 模式：仅工作区标签；非 Agent 模式：仅 Todo
+const tabs = computed(() => {
+  if (props.showAgentTabs) {
+    return agentTabs
+  }
+  return [todoTab.value]
+})
+
+// Agent 模式切换时重置活动标签
+watch(
+  () => props.showAgentTabs,
+  (val) => {
+    if (val) {
+      activeTab.value = 'workspace'
+    } else {
+      activeTab.value = 'todo'
+    }
+  },
+)
+
+// ── Tab slider style (dynamic columns) ──
 const tabsStyle = computed(() => {
-  const idx = activeTab.value === 'workspace' ? 0 : 1
+  const count = tabs.value.length
+  const idx = tabs.value.findIndex((t) => t.id === activeTab.value)
+  if (count <= 1) return {}
+  const gapTotal = (count - 1) * 2
+  const paddingTotal = 4
   return {
+    '--rwp-tab-count': String(count),
     '--rwp-active-tab-index': String(idx),
-    '--rwp-tab-slider-offset': idx === 0 ? '0px' : 'calc(100% + 2px)',
+    '--rwp-tab-slider-offset': idx === 0 ? '0px' : `calc(${idx} * (100% + 2px) / ${count})`,
+    '--rwp-tab-slider-width': `calc((100% - ${gapTotal + paddingTotal}px) / ${count})`,
   }
 })
+
+// ── Expose for parent ──
+function switchToTodoTab() {
+  activeTab.value = 'todo'
+}
+
+defineExpose({ switchToTodoTab })
 
 // ── Resize ──
 function onResizeStart(e: PointerEvent) {
@@ -113,14 +162,14 @@ function closePreview() {
 
     <!-- 折叠态：仅显示展开按钮 -->
     <template v-if="collapsed">
-      <button class="rwp-collapsed-toggle" title="展开工作区" @click="emit('toggleCollapse')">
+      <button class="rwp-collapsed-toggle" title="展开面板" @click="emit('toggleCollapse')">
         <PanelRightOpen :size="16" />
       </button>
     </template>
 
     <template v-else>
-      <!-- Tab 滑动条 -->
-      <div class="rwp-tabs" :style="tabsStyle">
+      <!-- Tab 滑动条 (multi-tab only) -->
+      <div v-if="tabs.length > 1" class="rwp-tabs" :style="tabsStyle">
         <div class="rwp-tab-slider" />
         <button
           v-for="tab in tabs"
@@ -133,14 +182,21 @@ function closePreview() {
         </button>
       </div>
 
+      <!-- 单 Tab 头部 -->
+      <div v-else class="rwp-single-header">
+        <component :is="todoTab.icon" :size="14" class="rwp-single-header-icon" />
+        <span class="rwp-single-header-label">{{ t('todo.title') }}</span>
+      </div>
+
       <!-- 折叠按钮 -->
-      <button class="rwp-collapse-btn" title="折叠工作区" @click="emit('toggleCollapse')">
+      <button class="rwp-collapse-btn" title="折叠面板" @click="emit('toggleCollapse')">
         <PanelRightClose :size="14" />
       </button>
 
       <!-- 内容区 -->
       <div class="rwp-body">
-        <SessionFileList v-if="activeTab === 'session-files'" />
+        <TodoPanelContent v-if="activeTab === 'todo'" />
+        <SessionFileList v-else-if="activeTab === 'session-files'" />
         <WorkspaceFileTree
           v-else-if="activeTab === 'workspace' && workspacePath"
           :workspace-path="workspacePath"
@@ -204,7 +260,7 @@ function closePreview() {
 /* ── Tab 滑动条 ── */
 .rwp-tabs {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--rwp-tab-count, 2), minmax(0, 1fr));
   gap: 2px;
   margin: 8px 8px 0;
   padding: 2px;
@@ -221,12 +277,31 @@ function closePreview() {
   bottom: 2px;
   left: 2px;
   z-index: 0;
-  width: calc((100% - 6px) / 2);
+  width: var(--rwp-tab-slider-width, calc((100% - 6px) / 2));
   border-radius: 4px;
   background: hsl(var(--background));
   box-shadow: 0 1px 3px hsl(var(--foreground) / 0.04);
-  transform: translateX(var(--rwp-tab-slider-offset));
+  transform: translateX(var(--rwp-tab-slider-offset, 0px));
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── 单 Tab 头部 ── */
+.rwp-single-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 10px 6px;
+  flex-shrink: 0;
+}
+
+.rwp-single-header-icon {
+  color: hsl(var(--muted-foreground) / 0.6);
+}
+
+.rwp-single-header-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: hsl(var(--foreground) / 0.7);
 }
 
 .rwp-tab {
@@ -256,6 +331,18 @@ function closePreview() {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+
+  /* Todo 侧边栏优化字号 token（仅在侧边栏上下文生效，不会覆盖弹窗） */
+  --todo-font-title: 13px;
+  --todo-font-body: 11px;
+  --todo-font-meta: 10px;
+  --todo-font-caption: 9px;
+  --todo-control-primary-height: 36px;
+  --todo-control-secondary-height: 28px;
+  --todo-segment-height: 34px;
+  --todo-item-height: 42px;
+  --todo-item-child-height: 36px;
+  --todo-radius-soft: 10px;
 }
 
 /* ── 文件预览 ── */

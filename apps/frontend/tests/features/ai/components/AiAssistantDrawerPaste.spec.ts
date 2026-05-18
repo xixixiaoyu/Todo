@@ -29,6 +29,8 @@ vi.mock('lucide-vue-next', () => {
     'ArrowLeft',
     'ArrowRight',
     'Paperclip',
+    'FolderTree',
+    'ListTodo',
     'Bot',
     'User',
     'Image',
@@ -69,6 +71,15 @@ vi.mock('@/features/ai/components/AISettingsDialog.vue', () => ({
     template: '<div>AISettingsDialog</div>',
     props: ['modelValue', 'initialTab'],
   },
+}))
+vi.mock('@/features/ai/components/RightWorkspacePanel.vue', () => ({
+  default: {
+    template: '<div>RightWorkspacePanel</div>',
+    props: ['workspacePath', 'sidecarPort', 'sidecarToken', 'collapsed', 'showAgentTabs'],
+  },
+}))
+vi.mock('@/features/todo/components/TodoPanelDialog.vue', () => ({
+  default: { template: '<div>TodoPanelDialog</div>' },
 }))
 
 // Mock composables

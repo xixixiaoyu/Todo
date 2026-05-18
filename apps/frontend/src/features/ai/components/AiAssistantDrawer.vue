@@ -13,6 +13,8 @@ import TranslationEditorDialog from '@/features/ai/components/TranslationEditorD
 import AgentWorkspaceSelector from '@/features/ai/components/AgentWorkspaceSelector.vue'
 import RightWorkspacePanel from '@/features/ai/components/RightWorkspacePanel.vue'
 import LeftSessionSidebar from '@/features/ai/components/LeftSessionSidebar.vue'
+import TodoPanelDialog from '@/features/todo/components/TodoPanelDialog.vue'
+import { useTodoSidebarIntegration } from '@/features/ai/composables/useTodoSidebarIntegration'
 import { useMermaidEditor } from '@/features/ai/composables/useMermaidEditor'
 import { useScratchpadEditor } from '@/features/ai/composables/useScratchpadEditor'
 import { useToolPermission } from '@/features/ai/composables/useToolPermission'
@@ -126,6 +128,12 @@ const {
 
 const { openEditor: openMermaidEditor } = useMermaidEditor()
 const { openEditor: openScratchpad } = useScratchpadEditor()
+
+const { rightPanelRef, focusTodoInSidebar } = useTodoSidebarIntegration({
+  isAgentEnabled,
+  selectedWorkspacePath,
+  workspacePanelCollapsed,
+})
 
 const isCopying = ref(false)
 const copyError = async () => {
@@ -384,6 +392,7 @@ defineOptions({
             @open-mermaid-editor="openMermaidEditor()"
             @open-scratchpad="openScratchpad()"
             @open-translation="openTranslationEditor()"
+            @open-todo-panel="focusTodoInSidebar()"
             @trigger-file-upload="triggerUpload"
             @navigate-previous="navigateToPrevious"
             @stop-generating="stopGenerating"
@@ -418,9 +427,10 @@ defineOptions({
             </template>
           </AiAssistantToolbar>
         </div>
-        <!-- 右侧工作区面板 -->
+        <!-- 右侧面板（Todo + 工作区） -->
         <RightWorkspacePanel
-          v-if="isAgentEnabled && selectedWorkspacePath"
+          ref="rightPanelRef"
+          :show-agent-tabs="isAgentEnabled && !!selectedWorkspacePath"
           :workspace-path="selectedWorkspacePath"
           :sidecar-port="sidecarPort"
           :sidecar-token="sidecarToken"
@@ -439,6 +449,7 @@ defineOptions({
       <MermaidEditorDialog />
       <ScratchpadEditorDialog />
       <TranslationEditorDialog />
+      <TodoPanelDialog />
     </div>
   </ResizableDrawer>
 </template>

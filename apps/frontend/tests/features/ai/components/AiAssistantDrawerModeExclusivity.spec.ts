@@ -12,6 +12,11 @@ vi.mock('lucide-vue-next', () => {
     Maximize2: { template: '<span>Maximize2</span>' },
     Minimize2: { template: '<span>Minimize2</span>' },
     GraduationCap: { template: '<span>GraduationCap</span>' },
+    FolderTree: { template: '<span>FolderTree</span>' },
+    ListTodo: { template: '<span>ListTodo</span>' },
+    PanelRightClose: { template: '<span>PanelRightClose</span>' },
+    PanelRightOpen: { template: '<span>PanelRightOpen</span>' },
+    Paperclip: { template: '<span>Paperclip</span>' },
   }
 })
 
@@ -40,6 +45,15 @@ vi.mock('@/features/ai/components/AiAssistantToolbar.vue', () => ({
 }))
 vi.mock('@/features/ai/components/LeftSessionSidebar.vue', () => ({
   default: { template: '<div>LeftSessionSidebar</div>' },
+}))
+vi.mock('@/features/ai/components/RightWorkspacePanel.vue', () => ({
+  default: {
+    template: '<div>RightWorkspacePanel</div>',
+    props: ['workspacePath', 'sidecarPort', 'sidecarToken', 'collapsed', 'showAgentTabs'],
+  },
+}))
+vi.mock('@/features/todo/components/TodoPanelDialog.vue', () => ({
+  default: { template: '<div>TodoPanelDialog</div>' },
 }))
 vi.mock('@/features/ai/components/AiAssistantInput.vue', () => ({
   default: {

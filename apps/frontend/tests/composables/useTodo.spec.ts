@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import { defineComponent, h } from 'vue'
+import { defineComponent, h, ref } from 'vue'
 import { mount } from '@vue/test-utils'
 import { useTodo } from '@/features/todo/composables/useTodo'
 import { showFireworks } from '@/features/todo/composables/useTodo'
@@ -15,13 +15,14 @@ vi.mock('@/composables/useToast', () => ({
 }))
 
 // Mock useTodoPanel for global shortcut tests
-const mockTogglePanel = vi.fn()
+const mockRequestFocus = vi.fn()
 vi.mock('@/features/todo/composables/useTodoPanel', () => ({
   useTodoPanel: vi.fn(() => ({
     isOpen: { value: false },
     openPanel: vi.fn(),
     closePanel: vi.fn(),
-    togglePanel: mockTogglePanel,
+    focusPanel: ref(0),
+    requestFocus: mockRequestFocus,
   })),
 }))
 
@@ -339,14 +340,14 @@ describe('useTodo', () => {
 
     beforeEach(() => {
       originalUserAgent = navigator.userAgent
-      mockTogglePanel.mockClear()
+      mockRequestFocus.mockClear()
     })
 
     afterEach(() => {
       vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(originalUserAgent)
     })
 
-    it('should toggle todo panel on Command+E (Mac)', () => {
+    it('should focus todo panel on Command+E (Mac)', () => {
       vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Macintosh')
       withSetup(useTodo)
 
@@ -358,10 +359,10 @@ describe('useTodo', () => {
       })
       window.dispatchEvent(event)
 
-      expect(mockTogglePanel).toHaveBeenCalled()
+      expect(mockRequestFocus).toHaveBeenCalled()
     })
 
-    it('should toggle todo panel on Alt+E', () => {
+    it('should focus todo panel on Alt+E', () => {
       withSetup(useTodo)
 
       const event = new KeyboardEvent('keydown', {
@@ -372,10 +373,10 @@ describe('useTodo', () => {
       })
       window.dispatchEvent(event)
 
-      expect(mockTogglePanel).toHaveBeenCalled()
+      expect(mockRequestFocus).toHaveBeenCalled()
     })
 
-    it('should not toggle on other keys', () => {
+    it('should not focus on other keys', () => {
       withSetup(useTodo)
 
       const event = new KeyboardEvent('keydown', {
@@ -385,10 +386,10 @@ describe('useTodo', () => {
       })
       window.dispatchEvent(event)
 
-      expect(mockTogglePanel).not.toHaveBeenCalled()
+      expect(mockRequestFocus).not.toHaveBeenCalled()
     })
 
-    it('should toggle todo panel even when focus is in a normal input', () => {
+    it('should focus todo panel even when focus is in a normal input', () => {
       withSetup(useTodo)
 
       const input = document.createElement('input')
@@ -403,12 +404,12 @@ describe('useTodo', () => {
       })
       window.dispatchEvent(event)
 
-      expect(mockTogglePanel).toHaveBeenCalled()
+      expect(mockRequestFocus).toHaveBeenCalled()
 
       document.body.removeChild(input)
     })
 
-    it('should not toggle when focus is in AI input', () => {
+    it('should not focus when focus is in AI input', () => {
       withSetup(useTodo)
 
       const input = document.createElement('input')
@@ -424,7 +425,7 @@ describe('useTodo', () => {
       })
       window.dispatchEvent(event)
 
-      expect(mockTogglePanel).not.toHaveBeenCalled()
+      expect(mockRequestFocus).not.toHaveBeenCalled()
 
       document.body.removeChild(input)
     })
