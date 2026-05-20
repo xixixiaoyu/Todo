@@ -29,7 +29,24 @@ const emit = defineEmits<{
 }>()
 
 const activeTab = ref<'todo' | 'workspace' | 'session-files'>('todo')
-const panelWidth = ref(260)
+
+function loadPanelWidth(): number {
+  try {
+    const v = localStorage.getItem('lumina-right-workspace-width')
+    return v ? Number(v) : 260
+  } catch {
+    return 260
+  }
+}
+function savePanelWidth(w: number) {
+  try {
+    localStorage.setItem('lumina-right-workspace-width', String(w))
+  } catch {
+    /* ignore */
+  }
+}
+
+const panelWidth = ref(loadPanelWidth())
 const resizing = ref(false)
 
 // File preview state
@@ -101,6 +118,7 @@ function onResizeStart(e: PointerEvent) {
 
   function onUp() {
     resizing.value = false
+    savePanelWidth(panelWidth.value)
     document.removeEventListener('pointermove', onMove)
     document.removeEventListener('pointerup', onUp)
   }
@@ -334,14 +352,14 @@ function closePreview() {
 
   /* Todo 侧边栏优化字号 token（仅在侧边栏上下文生效，不会覆盖弹窗） */
   --todo-font-title: 13px;
-  --todo-font-body: 11px;
-  --todo-font-meta: 10px;
-  --todo-font-caption: 9px;
-  --todo-control-primary-height: 36px;
-  --todo-control-secondary-height: 28px;
-  --todo-segment-height: 34px;
-  --todo-item-height: 42px;
-  --todo-item-child-height: 36px;
+  --todo-font-body: 12px;
+  --todo-font-meta: 11px;
+  --todo-font-caption: 10px;
+  --todo-control-primary-height: 40px;
+  --todo-control-secondary-height: 32px;
+  --todo-segment-height: 38px;
+  --todo-item-height: 48px;
+  --todo-item-child-height: 40px;
   --todo-radius-soft: 10px;
 }
 

@@ -99,17 +99,17 @@ const showInputArea = computed(() => {
   flex-direction: column;
   min-height: 0;
   height: 100%;
-  padding: 4px 8px 8px;
+  padding: 8px 10px 10px;
 }
 
 .tpc-input {
   flex-shrink: 0;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .tpc-toolbar {
   flex-shrink: 0;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .tpc-body {
