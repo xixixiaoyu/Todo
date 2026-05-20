@@ -479,7 +479,8 @@ function onResizeStart(e: PointerEvent) {
 /* ── Search ── */
 .lss-search {
   position: relative;
-  padding: 0 12px 8px;
+  padding: 0 12px;
+  margin-bottom: 8px;
   flex-shrink: 0;
 }
 
