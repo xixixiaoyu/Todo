@@ -204,10 +204,19 @@ function closePreview() {
       <div v-else class="rwp-single-header">
         <component :is="todoTab.icon" :size="14" class="rwp-single-header-icon" />
         <span class="rwp-single-header-label">{{ t('todo.title') }}</span>
+        <button class="rwp-collapse-btn" title="折叠面板" @click="emit('toggleCollapse')">
+          <PanelRightClose :size="14" />
+        </button>
       </div>
 
-      <!-- 折叠按钮 -->
-      <button class="rwp-collapse-btn" title="折叠面板" @click="emit('toggleCollapse')">
+      <!-- 多 Tab 模式下的折叠按钮（单 Tab 已内嵌在 header 中） -->
+      <button
+        v-if="tabs.length > 1"
+        class="rwp-collapse-btn"
+        style="margin: 4px 8px 0 auto"
+        title="折叠面板"
+        @click="emit('toggleCollapse')"
+      >
         <PanelRightClose :size="14" />
       </button>
 

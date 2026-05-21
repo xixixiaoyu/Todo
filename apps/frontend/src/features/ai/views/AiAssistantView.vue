@@ -12,6 +12,8 @@ import RightWorkspacePanel from '@/features/ai/components/RightWorkspacePanel.vu
 import LeftSessionSidebar from '@/features/ai/components/LeftSessionSidebar.vue'
 import { useMermaidEditor } from '@/features/ai/composables/useMermaidEditor'
 import { useScratchpadEditor } from '@/features/ai/composables/useScratchpadEditor'
+import { useKeyboardShortcuts } from '@/features/ai/composables/useKeyboardShortcut'
+import { useRightPanelCollapsed } from '@/features/ai/composables/useRightPanelCollapsed'
 import { useToolPermission } from '@/features/ai/composables/useToolPermission'
 import type { PermissionMode } from '@/features/ai/composables/useToolPermission'
 import { discoverWorkspaceSkills } from '@/features/ai/services/utils/skills.workspace'
@@ -89,7 +91,8 @@ async function handleWorkspaceSelect(id: string | null, path: string | null) {
 }
 
 const selectedWorkspacePath = computed(() => config.value.agentWorkspacePath)
-const workspacePanelCollapsed = ref(false)
+
+const workspacePanelCollapsed = useRightPanelCollapsed()
 const sessionSidebarCollapsed = ref(false)
 
 function cyclePermissionMode() {
@@ -132,6 +135,14 @@ const { rightPanelRef, focusTodoInSidebar } = useTodoSidebarIntegration({
   selectedWorkspacePath,
   workspacePanelCollapsed,
 })
+
+// 全局键盘快捷键
+useKeyboardShortcuts([
+  { key: 's', mod: true, shift: true, handler: () => openScratchpad() },
+  { key: 't', mod: true, shift: true, handler: () => openTranslationEditor() },
+  { key: 'm', mod: true, shift: true, handler: () => openMermaidEditor() },
+  { key: 'd', mod: true, shift: true, handler: () => focusTodoInSidebar() },
+])
 
 const isCopying = ref(false)
 const copyError = async () => {

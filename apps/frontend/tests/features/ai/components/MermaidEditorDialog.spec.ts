@@ -38,7 +38,7 @@ vi.mock('@/composables/useWindowSize', () => ({
 
 vi.mock('@/composables/useGsap', () => ({
   useGsap: () => ({
-    gsap: { fromTo: vi.fn() },
+    gsap: { fromTo: vi.fn(), to: vi.fn(), set: vi.fn() },
   }),
 }))
 

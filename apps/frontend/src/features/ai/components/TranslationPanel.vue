@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
-import { useWindowSize, useDebounceFn } from '@vueuse/core'
+import { ref, computed, onBeforeUnmount } from 'vue'
+import { useWindowSize } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import { Languages, Copy, Check, Loader2, AlertCircle } from 'lucide-vue-next'
 import { useResizable } from '@/composables/useResizable'
@@ -15,32 +15,8 @@ const props = defineProps<{
 const { t } = useI18n()
 const { success: showToast } = useToast()
 
-const STORAGE_KEY = 'ai-translation'
-
-function loadTranslationState(): { input: string; output: string } {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (saved) {
-      const parsed = JSON.parse(saved) as { input?: string; output?: string }
-      return { input: parsed.input ?? '', output: parsed.output ?? '' }
-    }
-  } catch {
-    /* ignore */
-  }
-  return { input: '', output: '' }
-}
-
-const debouncedSave = useDebounceFn((input: string, output: string) => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ input, output }))
-  } catch {
-    console.warn('[translation] Failed to persist translation state to localStorage')
-  }
-}, 500)
-
-const saved = loadTranslationState()
-const inputText = ref(saved.input)
-const translatedText = ref(saved.output)
+const inputText = ref('')
+const translatedText = ref('')
 const isTranslating = ref(false)
 const error = ref<string | null>(null)
 const isCopied = ref(false)
@@ -107,20 +83,6 @@ const handleKeydown = (event: KeyboardEvent) => {
     void handleTranslate()
   }
 }
-
-// 持久化翻译内容 - 500ms 防抖避免高频 localStorage 写入
-watch([inputText, translatedText], ([input, output]) => {
-  void debouncedSave(input, output)
-})
-
-onMounted(() => {
-  const textarea = inputRef.value
-  if (textarea && inputText.value) {
-    // 自动调整 textarea 高度
-    textarea.style.height = 'auto'
-    textarea.style.height = `${textarea.scrollHeight}px`
-  }
-})
 
 onBeforeUnmount(() => {
   if (copyTimer) {
@@ -234,7 +196,7 @@ onBeforeUnmount(() => {
           <!-- 译文 -->
           <div
             v-else
-            class="text-sm text-foreground leading-relaxed whitespace-pre-wrap"
+            class="text-sm text-foreground leading-relaxed whitespace-pre-wrap select-text"
             role="region"
             aria-live="polite"
           >

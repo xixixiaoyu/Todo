@@ -38,6 +38,7 @@ vi.mock('lucide-vue-next', () => {
     'BookOpen',
     'LayoutGrid',
     'Languages',
+    'ClipboardPaste',
     'PanelLeftClose',
     'PanelLeftOpen',
     'PanelRightClose',

@@ -17,6 +17,8 @@ vi.mock('lucide-vue-next', () => {
     PanelRightClose: { template: '<span>PanelRightClose</span>' },
     PanelRightOpen: { template: '<span>PanelRightOpen</span>' },
     Paperclip: { template: '<span>Paperclip</span>' },
+    ClipboardPaste: { template: '<span>ClipboardPaste</span>' },
+    Languages: { template: '<span>Languages</span>' },
   }
 })
 

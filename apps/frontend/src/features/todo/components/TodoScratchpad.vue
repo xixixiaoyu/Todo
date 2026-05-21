@@ -335,15 +335,7 @@ onUnmounted(() => {
 <template>
   <div class="flex flex-col h-full space-y-4">
     <div class="flex items-center justify-between px-1">
-      <div class="flex items-center gap-2">
-        <div class="p-2 rounded-xl bg-primary/10 text-primary">
-          <ClipboardPaste :size="20" />
-        </div>
-        <div>
-          <h2 class="text-lg font-semibold tracking-tight">{{ t('todo.scratchpad.title') }}</h2>
-          <p class="text-xs text-muted-foreground">{{ t('todo.scratchpad.emptyDesc') }}</p>
-        </div>
-      </div>
+      <p class="text-xs text-muted-foreground">{{ t('todo.scratchpad.emptyDesc') }}</p>
       <div class="flex items-center gap-2">
         <Button variant="outline" size="sm" class="gap-2 rounded-xl" @click="startAddNew">
           <Plus :size="16" />

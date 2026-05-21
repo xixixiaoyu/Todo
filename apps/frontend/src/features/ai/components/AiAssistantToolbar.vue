@@ -72,6 +72,10 @@ const isMobile = computed(() => windowWidth.value < 640)
 
 const isMac = typeof window !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform)
 const shortcutHint = isMac ? '⌘J' : 'Ctrl+J'
+const mermaidShortcut = isMac ? '⇧⌘M' : 'Ctrl+Shift+M'
+const scratchpadShortcut = isMac ? '⇧⌘S' : 'Ctrl+Shift+S'
+const translationShortcut = isMac ? '⇧⌘T' : 'Ctrl+Shift+T'
+const todoShortcut = isMac ? '⇧⌘D' : 'Ctrl+Shift+D'
 const newChatTitle = computed(() => `${t('ai.newChat')} (${shortcutHint})`)
 </script>
 
@@ -197,7 +201,7 @@ const newChatTitle = computed(() => `${t('ai.newChat')} (${shortcutHint})`)
             :class="[
               'toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-muted-foreground active:scale-95',
             ]"
-            :title="t('ai.mermaidOpenEditor')"
+            :title="`${t('ai.mermaidOpenEditor')} ${mermaidShortcut}`"
             @click="emit('openMermaidEditor')"
           >
             <Presentation :size="16" />
@@ -208,7 +212,7 @@ const newChatTitle = computed(() => `${t('ai.newChat')} (${shortcutHint})`)
             :class="[
               'toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-muted-foreground active:scale-95',
             ]"
-            :title="t('ai.scratchpadOpenEditor')"
+            :title="`${t('ai.scratchpadOpenEditor')} ${scratchpadShortcut}`"
             @click="emit('openScratchpad')"
           >
             <ClipboardPaste :size="16" />
@@ -219,7 +223,7 @@ const newChatTitle = computed(() => `${t('ai.newChat')} (${shortcutHint})`)
             :class="[
               'toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-muted-foreground active:scale-95',
             ]"
-            :title="t('ai.translationOpenEditor')"
+            :title="`${t('ai.translationOpenEditor')} ${translationShortcut}`"
             @click="emit('openTranslation')"
           >
             <Languages :size="16" />
@@ -230,7 +234,7 @@ const newChatTitle = computed(() => `${t('ai.newChat')} (${shortcutHint})`)
             :class="[
               'toolbar-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-muted-foreground active:scale-95',
             ]"
-            :title="t('ai.todoPanelOpenEditor')"
+            :title="`${t('ai.todoPanelOpenEditor')} ${todoShortcut}`"
             @click="emit('openTodoPanel')"
           >
             <CheckSquare :size="16" />
