@@ -64,6 +64,8 @@ packages/shared/  # 共享契约 — Zod Schema、DTO、工具函数
 | `apps/sidecar`    | `@lumina/shared` + 自身模块 | 前端/后端私有实现                                                          |
 | `apps/wails`      | 原生能力 + 桥接             | 业务规则                                                                   |
 
+- 依赖边界由 `scripts/check-boundaries.js` 自动检查（`pnpm ci:check` 的一部分），违反将导致 CI 失败
+
 ---
 
 ## 3. 强制规则（MUST）
@@ -102,6 +104,7 @@ import { cn } from '@/lib/utils'
 - 变更完成后必须通过 `pnpm ci:check` + `pnpm test`
 - 破坏性清理命令（如 `pnpm docker:prune`）仅在明确要求时执行
 - 脚本中不再使用 `cross-env` 或 `NODE_OPTIONS` — Bun 跨平台原生处理环境变量，Node 工具直接调用即可
+- pre-commit hook 通过 `lint-staged` 自动对暂存文件执行 `oxlint --fix` + `oxfmt`
 
 ### 3.4 建议规则（SHOULD）
 
@@ -201,6 +204,7 @@ type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse
 | Sidecar | Vitest + Node                          | `apps/sidecar/tests/`                             |
 
 - 覆盖率：`@vitest/coverage-v8`，输出 `text/json/html`
+- 后端覆盖率阈值：lines 60%、branches 50%、functions 60%、statements 60%（`apps/backend/vitest.config.mts`）
 - 运行单文件：`pnpm --filter <package> test -- <相对包目录的路径>`
   - 例：`pnpm --filter @lumina/frontend test -- tests/features/ai/services/aiServiceParams.spec.ts`
 
@@ -214,7 +218,9 @@ pnpm dev                      # 本地开发（Bun + Turbo）
 pnpm docker:dev               # Docker 全栈开发
 
 # 质量门禁（提交前必须通过）
-pnpm ci:check                 # oxfmt + oxlint + tsgo/vue-tsc
+pnpm ci:check                 # oxfmt + oxlint + 依赖边界检查 + knip 死代码 + tsgo/vue-tsc
+pnpm ci:test                  # 分组测试（concurrency=50%）
+pnpm ci:all                   # ci:check + ci:test + 安全审计（CI 流水线全量）
 pnpm test                     # 全量 vitest
 
 # Lint / Format
@@ -284,7 +290,7 @@ pnpm docker:prune
 | 修改 Wails 桌面壳    | `apps/wails/`                                               | Go 原生应用                                  |
 | 修改共享契约/Schema  | `packages/shared/src/`                                      | Zod Schema + DTO + 工具类型                  |
 | 修改 i18n 文案       | `apps/frontend/src/i18n/locales/{en-US,zh-CN}/`             | 前后端分离                                   |
-| 修改 Prisma 数据模型 | `apps/backend/prisma/schema/`                               | 6 个模块化 .prisma 文件                      |
+| 修改 Prisma 数据模型 | `apps/backend/prisma/schema/`                               | 2 个模块化 .prisma 文件（base、mcp）         |
 | 修改 Tailwind 主题   | `apps/frontend/tailwind.config.js`                          | CSS 变量设计令牌                             |
 | 修改 Docker 编排     | `docker-compose.yml` / `docker-compose.dev.yml`             | 生产/开发分离                                |
 | 修改 CI 流程         | `.github/workflows/ci.yml`                                  | 质量门禁 + 构建                              |
