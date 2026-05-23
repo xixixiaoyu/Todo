@@ -6,7 +6,6 @@ import { useDark, useResizeObserver } from '@vueuse/core'
 import { useTodoStore } from '../stores/todo'
 import type { FilterType } from '../stores/todo'
 import type { TreeData } from '../stores/todo.types'
-import { applyFilterAndSort } from '../stores/todo.filtering'
 import { useI18n } from 'vue-i18n'
 import { debounce } from 'lodash-es'
 import { useTheme } from '@/composables/useTheme'
@@ -120,12 +119,7 @@ onActivated(async () => {
 })
 
 const displayTodos = computed(() =>
-  applyFilterAndSort(
-    todoStore.hasProposedChanges ? todoStore.previewTodos : todoStore.todos,
-    props.filter,
-    todoStore.searchQuery,
-    false,
-  ),
+  todoStore.hasProposedChanges ? todoStore.previewTodos : todoStore.filteredTodos,
 )
 
 const treeData = computed(() => {
@@ -142,7 +136,7 @@ const treeData = computed(() => {
 
 const chartMinHeight = computed(() => {
   if (treeData.value.length === 0) return CHART_MIN_HEIGHT
-  const maxSiblings = getMaxSiblingsAtAnyDepth(treeData.value)
+  const maxSiblings = getMaxSiblingsAtAnyDepth([...treeData.value])
   // 水平树图：同层级兄弟节点占用纵向空间
   // top: '10%', bottom: '10%' 意味着内容区占容器 80%
   const contentHeight = maxSiblings * NODE_VERTICAL_SPACE

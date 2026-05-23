@@ -70,10 +70,6 @@ const i18n = createI18n({
       todo: {
         visualMode: '可视化视图',
         listMode: '列表视图',
-        localSource: '本地',
-        remoteSource: '云端',
-        localSourceHint: '本地提示',
-        remoteSourceHint: '云端提示',
       },
       common: {
         appName: '简思',
@@ -101,10 +97,6 @@ const i18n = createI18n({
       todo: {
         visualMode: 'Visual Mode',
         listMode: 'List Mode',
-        localSource: 'Local',
-        remoteSource: 'Cloud',
-        localSourceHint: 'Local hint',
-        remoteSourceHint: 'Cloud hint',
       },
       common: {
         appName: 'Lumina',
@@ -150,7 +142,6 @@ describe('TodoHeader', () => {
           DropdownMenuItem: { template: '<div><slot /></div>' },
           DropdownMenuLabel: { template: '<div><slot /></div>' },
           DropdownMenuSeparator: { template: '<div><slot /></div>' },
-          ThemeColorPicker: { template: '<div />' },
         },
       },
     })
@@ -174,8 +165,6 @@ describe('TodoHeader', () => {
           DropdownMenuItem: { template: '<div><slot /></div>' },
           DropdownMenuLabel: { template: '<div><slot /></div>' },
           DropdownMenuSeparator: { template: '<hr />' },
-          ThemeColorPicker: { template: '<div />' },
-          ThemeToggle: { template: '<div />' },
         },
       },
     })
@@ -201,7 +190,6 @@ describe('TodoHeader', () => {
           DropdownMenuItem: true,
           DropdownMenuLabel: true,
           DropdownMenuSeparator: true,
-          ThemeColorPicker: { template: '<div />' },
         },
       },
     })

@@ -8,7 +8,7 @@ import { useTodoStore } from '../stores/todo'
 import type { Todo } from '../stores/todo'
 import { highlightMatch } from '@/lib/utils'
 import dayjs, { formatDate, formatRelativeTime } from '@/lib/dayjs'
-import { toDate } from '../stores/todo.dates'
+import { toDate } from '../stores/todo.schedule'
 import { hasDistinctReminderTime } from '../stores/todo.schedule'
 
 const { t, locale } = useI18n()

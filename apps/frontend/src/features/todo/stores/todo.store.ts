@@ -4,7 +4,6 @@ import type { ProposedTodoChange, FilterType, ViewMode, Todo } from './todo.type
 import { applyFilterAndSort, isEffectivelyCompleted } from './todo.filtering'
 import { createTodoActions } from './todo.actions'
 import { applyProposedTodoChanges, buildBasePreviewTodos } from './todo.proposed'
-import { createProposedChangeStateManager } from './todo.proposed-state'
 
 export const useTodoStore = defineStore(
   'todo',
@@ -154,11 +153,52 @@ export const useTodoStore = defineStore(
     })
 
     // -- 建议变更管理 --
-    const proposedChangeStateManager = createProposedChangeStateManager({
-      proposedChangeSets,
-      proposedChangeSetOrder,
-      activeProposedChangeSetId,
-    })
+    function setActiveProposedChangeSet(setId: string | null): void {
+      activeProposedChangeSetId.value = setId
+    }
+
+    function setProposedChanges(setId: string, changes: ProposedTodoChange[]): void {
+      proposedChangeSets.value = {
+        ...proposedChangeSets.value,
+        [setId]: [...changes],
+      }
+      proposedChangeSetOrder.value = [
+        ...proposedChangeSetOrder.value.filter((id) => id !== setId),
+        setId,
+      ]
+      setActiveProposedChangeSet(setId)
+    }
+
+    function addProposedChanges(setId: string, changes: ProposedTodoChange[]): void {
+      const prev = proposedChangeSets.value[setId] ?? []
+      setProposedChanges(setId, [...prev, ...changes])
+    }
+
+    function clearProposedChanges(setId?: string): void {
+      if (!setId) {
+        proposedChangeSets.value = {}
+        proposedChangeSetOrder.value = []
+        setActiveProposedChangeSet(null)
+        return
+      }
+      const rest = { ...proposedChangeSets.value }
+      delete rest[setId]
+      proposedChangeSets.value = rest
+      proposedChangeSetOrder.value = proposedChangeSetOrder.value.filter((id) => id !== setId)
+      if (activeProposedChangeSetId.value === setId) {
+        const nextActiveId =
+          proposedChangeSetOrder.value.length > 0
+            ? proposedChangeSetOrder.value[proposedChangeSetOrder.value.length - 1]
+            : null
+        setActiveProposedChangeSet(nextActiveId)
+      }
+    }
+
+    function discardProposedChanges(setId?: string): void {
+      const targetId = setId ?? activeProposedChangeSetId.value ?? undefined
+      if (!targetId) return
+      clearProposedChanges(targetId)
+    }
 
     async function applyProposedChanges(
       setId?: string,
@@ -177,7 +217,7 @@ export const useTodoStore = defineStore(
 
       await applyProposedTodoChanges(changes, todos.value, actions)
 
-      proposedChangeStateManager.clearProposedChanges(targetId)
+      clearProposedChanges(targetId)
     }
 
     return {
@@ -207,12 +247,12 @@ export const useTodoStore = defineStore(
       // actions
       ...actions,
       // 建议变更
-      addProposedChanges: proposedChangeStateManager.addProposedChanges,
-      setProposedChanges: proposedChangeStateManager.setProposedChanges,
-      setActiveProposedChangeSet: proposedChangeStateManager.setActiveProposedChangeSet,
-      clearProposedChanges: proposedChangeStateManager.clearProposedChanges,
+      addProposedChanges,
+      setProposedChanges,
+      setActiveProposedChangeSet,
+      clearProposedChanges,
       applyProposedChanges,
-      discardProposedChanges: proposedChangeStateManager.discardProposedChanges,
+      discardProposedChanges,
     }
   },
   {

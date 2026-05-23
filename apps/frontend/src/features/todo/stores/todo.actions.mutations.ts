@@ -1,7 +1,46 @@
 import type { Ref } from 'vue'
-import { toDate } from './todo.dates'
-import { generateTodoId, isDuplicateTodo } from './todo.actions.common'
+import { toDate } from './todo.schedule'
 import type { Todo } from './todo.types'
+
+function generateTodoId(): string {
+  const c =
+    typeof window !== 'undefined' ? window.crypto : typeof crypto !== 'undefined' ? crypto : null
+  if (c?.randomUUID) {
+    return c.randomUUID()
+  }
+  if (c?.getRandomValues) {
+    return Array.from(c.getRandomValues(new Uint8Array(16)))
+      .map((b, i) =>
+        (i === 6 ? (b & 0x0f) | 0x40 : i === 8 ? (b & 0x3f) | 0x80 : b)
+          .toString(16)
+          .padStart(2, '0'),
+      )
+      .join('')
+      .replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5')
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
+    const r = (Math.random() * 16) | 0
+    const v = char === 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
+}
+
+function isDuplicateTodo(
+  todos: Todo[],
+  title: string,
+  parentId: string | null = null,
+  excludeId?: string,
+): boolean {
+  const trimmedTitle = title.trim().toLowerCase()
+  return todos.some(
+    (todo) =>
+      todo.id !== excludeId &&
+      (todo.parentId ?? null) === parentId &&
+      !todo.completed &&
+      !todo.deletedAt &&
+      todo.title.toLowerCase() === trimmedTitle,
+  )
+}
 
 /** 标题最大字符数，与 @lumina/shared TodoSchema.title 保持一致 */
 const MAX_TITLE_LENGTH = 1000

@@ -1,6 +1,20 @@
 import type { ComputedRef, Ref } from 'vue'
-import { getTodoPath } from './todo.actions.common'
 import type { FilterType, Todo, ViewMode } from './todo.types'
+
+function getTodoPath(todos: Todo[], todoId: string): string[] {
+  const path: string[] = []
+  let current = todos.find((todo) => todo.id === todoId)
+  while (current?.parentId) {
+    const parent = todos.find((todo) => todo.id === current!.parentId)
+    if (parent) {
+      path.unshift(parent.title)
+      current = parent
+    } else {
+      break
+    }
+  }
+  return path
+}
 
 type TodoUiDeps = {
   filter: Ref<FilterType>

@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { ChevronLeft, ChevronRight, Clock3 } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { Button } from '@/components/ui/button'
-import { toDate } from '../stores/todo.dates'
+import { toDate } from '../stores/todo.schedule'
 
 const props = withDefaults(
   defineProps<{
