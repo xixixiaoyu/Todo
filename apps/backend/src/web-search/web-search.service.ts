@@ -3,7 +3,7 @@ import type { SearchProvider, SearchResponse, SearchResultItem } from './web-sea
 
 /**
  * Web Search Service
- * 支持多个搜索 Provider：Tavily / Serper(Google) / Brave
+ * 支持搜索 Provider：Tavily / Serper(Google)
  */
 @Injectable()
 export class WebSearchService {
@@ -59,8 +59,6 @@ export class WebSearchService {
         return this.searchTavily.bind(this)
       case 'serper':
         return this.searchSerper.bind(this)
-      case 'brave':
-        return this.searchBrave.bind(this)
       default:
         throw new BadGatewayException(`Unknown search provider: ${provider}`)
     }
@@ -138,43 +136,6 @@ export class WebSearchService {
       title: r.title || '',
       url: r.link || '',
       content: r.snippet || '',
-      rank: i + 1,
-      score: null,
-      metadata: {},
-    }))
-  }
-
-  // ── Brave Search ──
-
-  private async searchBrave(
-    query: string,
-    apiKey: string,
-    maxResults: number,
-  ): Promise<SearchResultItem[]> {
-    const params = new URLSearchParams({ q: query, count: String(maxResults) })
-    const res = await fetch(`https://api.search.brave.com/res/v1/web/search?${params}`, {
-      headers: {
-        Accept: 'application/json',
-        'Accept-Encoding': 'gzip',
-        'X-Subscription-Token': apiKey,
-      },
-      signal: AbortSignal.timeout(30_000),
-    })
-
-    if (!res.ok) {
-      const errorText = await res.text().catch(() => '')
-      throw new BadGatewayException(
-        `Brave API returned HTTP ${res.status}: ${errorText.slice(0, 200)}`,
-      )
-    }
-
-    const data = (await res.json()) as {
-      web?: { results?: Array<{ title?: string; url?: string; description?: string }> }
-    }
-    return (data.web?.results || []).slice(0, maxResults).map((r, i) => ({
-      title: r.title || '',
-      url: r.url || '',
-      content: r.description || '',
       rank: i + 1,
       score: null,
       metadata: {},

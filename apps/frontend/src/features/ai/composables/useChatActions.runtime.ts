@@ -12,7 +12,11 @@ import {
 import type { AISkill, AISkillRuntimeAvailability, Tool } from '@/features/ai/services/aiService'
 import type { McpToolResponse } from '@/features/mcp/api/mcp'
 import { AGENT_TOOL_DEFINITIONS, buildAgentLocalToolHandlers } from './useChatActions.agentTools'
-import { WEB_SEARCH_TOOL_DEFINITION, executeWebSearch } from './useChatActions.webSearch'
+import {
+  WEB_SEARCH_TOOL_DEFINITION,
+  executeWebSearch,
+  hasWebSearchApiKey,
+} from './useChatActions.webSearch'
 
 type SkillContext = {
   catalogSkills: AISkill[]
@@ -97,9 +101,11 @@ export async function prepareRuntimeCapabilities(params: {
     )
   }
 
-  // web_search 作为原生工具始终可用
-  aiTools.push(WEB_SEARCH_TOOL_DEFINITION)
-  localToolHandlers.set('web_search', (args) => executeWebSearch(args))
+  // web_search 仅在已配置 API Key 时注册，避免无 Key 时 AI 仍尝试调用
+  if (hasWebSearchApiKey()) {
+    aiTools.push(WEB_SEARCH_TOOL_DEFINITION)
+    localToolHandlers.set('web_search', (args) => executeWebSearch(args))
+  }
 
   const agentToolsEnabled = params.aiConfig.agentMode && params.sidecarState?.isAvailable === true
 

@@ -406,7 +406,6 @@ export const ai = {
     'Configure API keys for web search providers. The AI assistant will automatically use the configured search service when it needs real-time information.',
   webSearchTavilyHint: 'Get API Key from tavily.com',
   webSearchSerperHint: 'Get API Key from serper.dev',
-  webSearchBraveHint: 'Get API Key from brave.com/search/api/',
   memoryEnabled: 'Memory Enabled',
   memoryDisabled: 'Memory Disabled',
   memoryManagement: 'Memory Management',

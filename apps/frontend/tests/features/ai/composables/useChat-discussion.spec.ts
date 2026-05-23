@@ -321,9 +321,9 @@ describe('useChat - Discussion Mode', () => {
     // Since runtime auth access is disabled (getAuthToken returns null),
     // MCP tools are not loaded and mcpApi.getAllTools is not called.
     expect(mcpApi.getAllTools).not.toHaveBeenCalled()
-    // The web_search native tool is always available regardless of auth state
-    expect(options?.tools?.some((t) => t.function?.name === 'web_search')).toBe(true)
+    // web_search is NOT registered when no API key is configured
+    expect(options?.tools?.some((t) => t.function?.name === 'web_search') ?? false).toBe(false)
     // MCP-provided tools (like 'Search the web') are NOT present
-    expect(options?.tools?.some((t) => t.function?.name?.includes('mcp_'))).toBe(false)
+    expect(options?.tools?.some((t) => t.function?.name?.includes('mcp_')) ?? false).toBe(false)
   })
 })

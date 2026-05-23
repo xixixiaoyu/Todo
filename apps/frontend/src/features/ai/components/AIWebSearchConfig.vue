@@ -32,13 +32,6 @@ const SEARCH_PROVIDERS = [
     i18nHint: 'ai.webSearchSerperHint',
     url: 'https://serper.dev',
   },
-  {
-    key: 'braveApiKey',
-    label: 'Brave Search',
-    placeholder: 'BSA...',
-    i18nHint: 'ai.webSearchBraveHint',
-    url: 'https://brave.com/search/api/',
-  },
 ]
 </script>
 

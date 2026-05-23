@@ -6,7 +6,7 @@ import { getSkillRuntimeConfig } from '@/features/ai/composables/useSkillRuntime
 
 /**
  * web_search 工具定义
- * 始终可用（不依赖 sidecar 或 MCP），由 AI 助手在需要联网信息时自动调用
+ * 仅在已配置 API Key 时向 AI 模型暴露（不依赖 sidecar 或 MCP）
  */
 export const WEB_SEARCH_TOOL_DEFINITION: Tool = {
   type: 'function',
@@ -35,6 +35,9 @@ export const WEB_SEARCH_TOOL_DEFINITION: Tool = {
   },
 }
 
+/** 联网搜索 API Key 名称列表，作为 hasWebSearchApiKey 和 executeWebSearch 的单一数据源 */
+const WEB_SEARCH_API_KEY_NAMES = ['tavilyApiKey', 'serperApiKey'] as const
+
 export type WebSearchResult = {
   title: string
   url: string
@@ -61,11 +64,11 @@ export async function executeWebSearch(args: Record<string, unknown>): Promise<s
   const runtimeConfig = getSkillRuntimeConfig()
 
   // 按优先级依次尝试已配置的付费 API
-  const paidProviders: Array<{ name: string; keyName: string }> = [
-    { name: 'tavily', keyName: 'tavilyApiKey' },
-    { name: 'serper', keyName: 'serperApiKey' },
-    { name: 'brave', keyName: 'braveApiKey' },
-  ]
+  const paidProviders: Array<{ name: string; keyName: (typeof WEB_SEARCH_API_KEY_NAMES)[number] }> =
+    [
+      { name: 'tavily', keyName: 'tavilyApiKey' },
+      { name: 'serper', keyName: 'serperApiKey' },
+    ]
 
   const errors: string[] = []
   let triedCount = 0
@@ -113,8 +116,17 @@ export async function executeWebSearch(args: Record<string, unknown>): Promise<s
 
   return (
     'Web search is not available. Please configure an API key for one of the supported search providers ' +
-    '(Tavily, Serper/Google, Brave) in the AI settings panel.'
+    '(Tavily, Serper/Google) in the AI settings panel.'
   )
+}
+
+/**
+ * 检查是否配置了任意联网搜索 API Key
+ * 用于决定是否向 AI 模型暴露 web_search 工具
+ */
+export function hasWebSearchApiKey(): boolean {
+  const runtimeConfig = getSkillRuntimeConfig()
+  return WEB_SEARCH_API_KEY_NAMES.some((key) => runtimeConfig.secrets[key]?.trim())
 }
 
 /** 从 Axios 错误中提取后端实际返回的错误消息，而非 Axios 的通用 "Request failed with status code 502" */

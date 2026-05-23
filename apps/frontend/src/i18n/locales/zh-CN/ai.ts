@@ -387,7 +387,6 @@ export const ai = {
   webSearchDesc: '配置联网搜索服务的 API Key。AI 助手在需要实时信息时会自动调用已配置的搜索服务。',
   webSearchTavilyHint: '从 tavily.com 获取 API Key',
   webSearchSerperHint: '从 serper.dev 获取 API Key',
-  webSearchBraveHint: '从 brave.com/search/api/ 获取 API Key',
   memoryEnabled: '记忆功能已开启',
   memoryDisabled: '记忆功能已关闭',
   memoryManagement: '记忆管理',
