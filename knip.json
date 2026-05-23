@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/knip/schema.json",
-  "ignore": ["**/dist/**"],
+  "ignore": ["ecosystem.config.js"],
   "ignoreDependencies": [
     "@capacitor/ios",
     "@tailwindcss/postcss",
@@ -15,7 +15,7 @@
     "apps/backend": {
       "entry": ["src/main.ts"],
       "project": ["src/**/*.ts", "tests/**/*.ts"],
-      "ignore": ["src/i18n/**/*.ts", "src/auth/index.ts"],
+      "ignore": ["src/i18n/**/*.ts"],
       "ignoreDependencies": [
         "ts-loader",
         "@types/bcryptjs",
@@ -31,26 +31,13 @@
       ]
     },
     "apps/frontend": {
-      "entry": ["src/main.ts"],
       "project": ["src/**/*.ts", "src/**/*.vue", "tests/**/*.ts"],
-      "ignore": [
-        "src/composables/index.ts",
-        "src/features/ai/components/NovelGenreSelector.vue",
-        "src/features/ai/components/ParallelTaskBlock.vue",
-        "src/features/ai/components/SessionFileCard.vue",
-        "src/features/ai/composables/useChatActions.parallelTasks.ts",
-        "src/features/ai/stores/toolExecutionLog.ts",
-        "src/features/todo/components/pomodoro/PomodoroTaskInfo.vue",
-        "src/features/todo/components/pomodoro/PomodoroTimerControls.vue"
-      ],
       "ignoreDependencies": ["@types/dompurify", "@vitest/coverage-v8"]
     },
     "apps/sidecar": {
-      "entry": ["src/main.ts"],
       "project": ["src/**/*.ts"]
     },
     "packages/shared": {
-      "entry": ["src/index.ts"],
       "project": ["src/**/*.ts"]
     }
   }
