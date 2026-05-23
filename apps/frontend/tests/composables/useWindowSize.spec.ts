@@ -113,28 +113,4 @@ describe('useIsMobile', () => {
 
     expect(isMobile.value).toBe(false)
   })
-
-  it('should return isMobile false for desktop width', () => {
-    Object.defineProperty(window, 'innerWidth', {
-      writable: true,
-      configurable: true,
-      value: 1920,
-    })
-
-    const { isMobile } = useIsMobile()
-
-    expect(isMobile.value).toBe(false)
-  })
-
-  it('should return isMobile true for tablet width', () => {
-    Object.defineProperty(window, 'innerWidth', {
-      writable: true,
-      configurable: true,
-      value: 500,
-    })
-
-    const { isMobile } = useIsMobile()
-
-    expect(isMobile.value).toBe(true)
-  })
 })

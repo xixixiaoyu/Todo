@@ -65,10 +65,6 @@ describe('McpClientService', () => {
     vi.clearAllMocks()
   })
 
-  it('should be defined', () => {
-    expect(service).toBeDefined()
-  })
-
   describe('connect', () => {
     it('should connect to a server', async () => {
       const serverId = 'test-server'

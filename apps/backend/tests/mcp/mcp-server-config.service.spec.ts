@@ -32,10 +32,6 @@ describe('McpServerConfigService', () => {
     service = module.get<McpServerConfigService>(McpServerConfigService)
   })
 
-  it('should be defined', () => {
-    expect(service).toBeDefined()
-  })
-
   describe('create', () => {
     it('should create a new MCP server config', async () => {
       const dto = {

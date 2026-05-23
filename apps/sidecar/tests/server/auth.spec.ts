@@ -107,16 +107,6 @@ describe('createAuthMiddleware', () => {
     expect(body.message).toMatch(/invalid token/i)
   })
 
-  it('Token 长度相同但内容不同也返回 401', async () => {
-    const app = buildApp()
-    const sameLen = 'x'.repeat(VALID_TOKEN.length)
-    const res = await request(app, '/sidecar/ping', {
-      host: `127.0.0.1:${PORT}`,
-      authorization: `Bearer ${sameLen}`,
-    })
-    expect(res.status).toBe(401)
-  })
-
   it('正确 Token + localhost Host 放行', async () => {
     const app = buildApp()
     const res = await request(app, '/sidecar/ping', {

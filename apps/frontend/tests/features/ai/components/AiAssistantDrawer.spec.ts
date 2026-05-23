@@ -1,12 +1,25 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { ref, nextTick } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
 import AiAssistantDrawer from '@/features/ai/components/AiAssistantDrawer.vue'
+import type { ChatMessage } from '@/features/ai/services/aiService'
+import type { ChatSession } from '@/features/ai/composables/useChatHistory'
+import AiAssistantToolbar from '@/features/ai/components/AiAssistantToolbar.vue'
 
-// Mock Lucide icons
+// ============================================================================
+// SHARED MOCK SETUP
+// ============================================================================
+// Notes:
+// - AiAssistantToolbar, AiAssistantInput, AiAssistantHeader, LeftSessionSidebar
+//   are NOT mocked here — their real implementations handle conditional
+//   rendering (previousSession/stop buttons, textarea) that tests depend on.
+// - learn more at AGENTS.md §3.3 and AGENTS.md §10.
+
+// --- Mock Lucide icons ---
 vi.mock('lucide-vue-next', () => {
   const icons = [
+    'AlertCircle',
     'Snowflake',
     'Clover',
     'Plus',
@@ -59,19 +72,23 @@ vi.mock('lucide-vue-next', () => {
   return mockIcons
 })
 
-// Mock components
+// --- Mock child components (non-toolbar/input) ---
 vi.mock('@/components/ResizableDrawer.vue', () => ({
   default: {
     template: '<div><slot /></div>',
     props: ['modelValue'],
   },
 }))
+
+// ChatMessageList: includes teaching-submit emit used by Teaching Answer tests
 vi.mock('@/features/ai/components/ChatMessageList.vue', () => ({
   default: {
-    template: `<div>ChatMessageList<button data-test="teaching-submit" @click="$emit('teaching-submit', { quizId: 'q1', kind: 'single_choice', answer: 'A' })">teach</button></div>`,
+    template:
+      "<div>ChatMessageList<button data-test=\"teaching-submit\" @click=\"$emit('teaching-submit', { quizId: 'q1', kind: 'single_choice', answer: 'A' })\">teach</button></div>",
     emits: ['teaching-submit'],
   },
 }))
+
 vi.mock('@/features/ai/components/AISettingsDialog.vue', () => ({
   default: {
     name: 'AISettingsDialog',
@@ -79,20 +96,19 @@ vi.mock('@/features/ai/components/AISettingsDialog.vue', () => ({
     props: ['modelValue', 'initialTab'],
   },
 }))
+
 vi.mock('@/features/ai/components/RightWorkspacePanel.vue', () => ({
   default: {
     template: '<div>RightWorkspacePanel</div>',
     props: ['workspacePath', 'sidecarPort', 'sidecarToken', 'collapsed', 'showAgentTabs'],
   },
 }))
+
 vi.mock('@/features/todo/components/TodoPanelDialog.vue', () => ({
   default: { template: '<div>TodoPanelDialog</div>' },
 }))
 
-import type { ChatMessage } from '@/features/ai/services/aiService'
-import type { ChatSession } from '@/features/ai/composables/useChatHistory'
-
-// Mock composables
+// --- Shared refs for composable mocks ---
 const mockSessions = ref<ChatSession[]>([])
 const mockCurrentSessionId = ref<string | null>(null)
 const mockLastActiveSession = ref<ChatSession | null>(null)
@@ -166,6 +182,23 @@ vi.mock('@/features/ai/composables/useAIConfig', () => ({
   saveAIThinkingLevel: vi.fn(),
 }))
 
+// --- Other shared mocks ---
+vi.mock('@/composables/useFileParsing', () => ({
+  useFileParsing: () => ({
+    parsedFiles: ref([]),
+    parseFile: vi.fn(),
+    removeFile: vi.fn(),
+    clearFiles: vi.fn(),
+  }),
+}))
+
+vi.mock('@/features/todo/stores/todo', () => ({
+  useTodoStore: () => ({
+    isMaximized: false,
+    setMaximized: vi.fn(),
+  }),
+}))
+
 vi.mock('vue-i18n', () => ({
   useI18n: () => ({
     t: (key: string) => key,
@@ -178,7 +211,28 @@ vi.mock('vue-i18n', () => ({
   }),
 }))
 
-describe('AiAssistantDrawer Navigation and Button States', () => {
+// --- Mock FileReader (needed by Paste tests) ---
+class MockFileReader {
+  onload: ((e: { target: { result: string } }) => void) | null = null
+  readAsDataURL(_file: File) {
+    setTimeout(() => {
+      if (this.onload) {
+        this.onload({
+          target: {
+            result: 'data:image/png;base64,mock-data',
+          },
+        })
+      }
+    }, 0)
+  }
+}
+vi.stubGlobal('FileReader', MockFileReader)
+
+// ============================================================================
+// NAVIGATION AND BUTTON STATES
+// ============================================================================
+
+describe('AiAssistantDrawer - Navigation and Button States', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     mockSessions.value = []
@@ -307,6 +361,19 @@ describe('AiAssistantDrawer Navigation and Button States', () => {
       }),
     )
   })
+})
+
+// ============================================================================
+// TEACHING ANSWER
+// ============================================================================
+
+describe('AiAssistantDrawer - Teaching Answer', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    mockMessages.value = []
+    mockIsGenerating.value = false
+    vi.clearAllMocks()
+  })
 
   it('should include quiz snapshot in teaching answer message', async () => {
     mockMessages.value = [
@@ -354,31 +421,229 @@ describe('AiAssistantDrawer Navigation and Button States', () => {
     const parsed = JSON.parse(jsonStr) as { quiz?: { stem: string } }
     expect(parsed.quiz?.stem).toBe('Q1?')
   })
+})
 
-  describe('Hover Interactions', () => {
-    beforeEach(() => {
-      vi.useFakeTimers()
+// ============================================================================
+// HOVER INTERACTIONS
+// ============================================================================
+
+describe('AiAssistantDrawer - Hover Interactions', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    mockMessages.value = []
+    mockIsGenerating.value = false
+    vi.useFakeTimers()
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('should handle hover events for preset dropdown', async () => {
+    const wrapper = mount(AiAssistantDrawer, {
+      props: { modelValue: true },
     })
 
-    it('should handle hover events for preset dropdown', async () => {
-      const wrapper = mount(AiAssistantDrawer, {
-        props: { modelValue: true },
-      })
-
-      // We test the logic by triggering the events
-      const presetContainer = wrapper.findAll('div.relative').find((div) => {
-        return div.text().includes('ai.custom')
-      })
-
-      expect(presetContainer).toBeDefined()
-
-      // Trigger mouseenter
-      await presetContainer?.trigger('mouseenter')
-      await nextTick()
-
-      // We can't easily check the internal ref without exposing it,
-      // but we can check if the dropdown appears.
-      // If it doesn't appear in tests due to Transition/Stubbing, we at least ensure no errors.
+    const presetContainer = wrapper.findAll('div.relative').find((div) => {
+      return div.text().includes('ai.custom')
     })
+
+    expect(presetContainer).toBeDefined()
+
+    await presetContainer?.trigger('mouseenter')
+    await nextTick()
+  })
+})
+
+// ============================================================================
+// CLIPBOARD PASTE
+// ============================================================================
+
+describe('AiAssistantDrawer - Paste', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it('should add image when pasting from clipboard', async () => {
+    const wrapper = mount(AiAssistantDrawer, {
+      props: { modelValue: true },
+    })
+
+    const textarea = wrapper.find('textarea')
+
+    // Create a mock ClipboardEvent
+    const mockFile = new File([''], 'test.png', { type: 'image/png' })
+    const mockClipboardData = {
+      items: [
+        {
+          kind: 'file',
+          type: 'image/png',
+          getAsFile: () => mockFile,
+        },
+      ],
+    }
+
+    // Trigger paste event
+    await textarea.trigger('paste', {
+      clipboardData: mockClipboardData,
+    })
+
+    // Wait for FileReader and nextTick
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    await nextTick()
+
+    // Check if image preview is rendered
+    const images = wrapper.findAll('img')
+    expect(images.length).toBe(1)
+    expect(images[0].attributes('src')).toBe('data:image/png;base64,mock-data')
+  })
+
+  it('should not add more than 10 images', async () => {
+    const wrapper = mount(AiAssistantDrawer, {
+      props: { modelValue: true },
+    })
+
+    const textarea = wrapper.find('textarea')
+    const mockFile = new File([''], 'test.png', { type: 'image/png' })
+    const mockClipboardData = {
+      items: Array(12).fill({
+        kind: 'file',
+        type: 'image/png',
+        getAsFile: () => mockFile,
+      }),
+    }
+
+    await textarea.trigger('paste', {
+      clipboardData: mockClipboardData,
+    })
+
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    await nextTick()
+
+    const images = wrapper.findAll('img')
+    expect(images.length).toBe(10)
+  })
+})
+
+// ============================================================================
+// MODE EXCLUSIVITY
+// ============================================================================
+
+describe('AiAssistantDrawer - Mode Exclusivity', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    mockMessages.value = []
+    mockIsGenerating.value = false
+    mockConfig.value = {
+      assistantMode: 'default',
+      baseUrl: '',
+      apiKey: '',
+      model: '',
+      temperature: 0.7,
+      systemPrompt: '',
+      thinkingMode: 'off',
+      todoAssistant: false,
+      discussionMode: false,
+      enableImageGeneration: false,
+      discussionModelIds: [],
+      discussionPrimaryModelId: null,
+      memoryModelId: null,
+      mcpEnabled: false,
+      contextCompressionEnabled: false,
+      contextCompressionTriggerChars: 24000,
+      contextCompressionModelId: null,
+      skillIds: [],
+    }
+    vi.clearAllMocks()
+  })
+
+  it('should disable other modes when Teaching Mode is enabled', async () => {
+    const wrapper = mount(AiAssistantDrawer, {
+      props: { modelValue: true },
+    })
+
+    const toolbarComponent = wrapper.findComponent(AiAssistantToolbar)
+    expect(toolbarComponent.exists()).toBe(true)
+
+    // Pre-condition: set other modes to true to verify they get turned off
+    mockConfig.value.assistantMode = 'default'
+    mockConfig.value.todoAssistant = true
+    mockConfig.value.discussionMode = true
+    mockConfig.value.enableImageGeneration = true
+
+    await toolbarComponent.vm.$emit('toggle-teaching')
+
+    expect(mockUpdateConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        assistantMode: 'teaching',
+        todoAssistant: false,
+        discussionMode: false,
+        enableImageGeneration: false,
+      }),
+    )
+  })
+
+  it('should disable Teaching Mode when Todo Assistant is enabled', async () => {
+    const wrapper = mount(AiAssistantDrawer, {
+      props: { modelValue: true },
+    })
+    const toolbarComponent = wrapper.findComponent(AiAssistantToolbar)
+
+    mockConfig.value.assistantMode = 'teaching'
+    mockConfig.value.todoAssistant = false
+
+    await toolbarComponent.vm.$emit('toggle-todo')
+
+    expect(mockUpdateConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        todoAssistant: true,
+        assistantMode: 'default',
+        discussionMode: false,
+        enableImageGeneration: false,
+      }),
+    )
+  })
+
+  it('should disable Teaching Mode when Discussion Mode is enabled', async () => {
+    const wrapper = mount(AiAssistantDrawer, {
+      props: { modelValue: true },
+    })
+    const toolbarComponent = wrapper.findComponent(AiAssistantToolbar)
+
+    mockConfig.value.assistantMode = 'teaching'
+    mockConfig.value.discussionMode = false
+
+    await toolbarComponent.vm.$emit('toggle-discussion')
+
+    expect(mockUpdateConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        discussionMode: true,
+        assistantMode: 'default',
+        todoAssistant: false,
+        enableImageGeneration: false,
+      }),
+    )
+  })
+
+  it('should disable Teaching Mode when Image Generation is enabled', async () => {
+    const wrapper = mount(AiAssistantDrawer, {
+      props: { modelValue: true },
+    })
+    const toolbarComponent = wrapper.findComponent(AiAssistantToolbar)
+
+    mockConfig.value.assistantMode = 'teaching'
+    mockConfig.value.enableImageGeneration = false
+
+    await toolbarComponent.vm.$emit('toggle-image-gen')
+
+    expect(mockUpdateConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enableImageGeneration: true,
+        assistantMode: 'default',
+        todoAssistant: false,
+        discussionMode: false,
+      }),
+    )
   })
 })

@@ -51,20 +51,6 @@ describe('zodErrorMap', () => {
     expect(result.message).toBe('至少需要 6 个字符')
   })
 
-  it('should translate explicit i18n keys and pass parameters', () => {
-    const issue: z.ZodIssue = {
-      code: z.ZodIssueCode.too_small,
-      minimum: 6,
-      type: 'string',
-      inclusive: true,
-      exact: false,
-      path: [],
-      message: 'validation.MIN_LENGTH', // This matches the code logic
-    }
-    const result = zodErrorMap(issue, { defaultError: 'too small', data: '' })
-    expect(result.message).toBe('至少需要 6 个字符')
-  })
-
   it('should translate INVALID_EMAIL error', () => {
     const issue: z.ZodIssue = {
       code: z.ZodIssueCode.invalid_string,

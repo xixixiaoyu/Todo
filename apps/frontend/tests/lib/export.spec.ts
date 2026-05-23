@@ -63,12 +63,3 @@ describe('sessionToMarkdown', () => {
     expect(markdown).toContain('![图片 1](https://example.com/image.png)')
   })
 })
-
-describe('exportAllSessionsToMarkdown', () => {
-  it('should combine multiple sessions with a table of contents', () => {
-    // We can't easily test downloadFile in node environment, but we can verify sessionToMarkdown logic
-    // being called or just focus on the combined markdown generation if we export the logic.
-    // For now, let's just ensure it doesn't crash and we can test the internal logic if needed.
-    // Since exportAllSessionsToMarkdown calls downloadFile, it might fail in Vitest if not mocked.
-  })
-})
