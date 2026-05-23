@@ -7,14 +7,18 @@ import {
   PanelRightClose,
   PanelRightOpen,
   X,
+  List,
+  Network,
 } from 'lucide-vue-next'
 import SessionFileList from './SessionFileList.vue'
 import WorkspaceFileTree from './WorkspaceFileTree.vue'
 import TodoPanelContent from '@/features/todo/components/TodoPanelContent.vue'
+import { useTodoStore } from '@/features/todo/stores/todo'
 import { useI18n } from 'vue-i18n'
 import axios from 'axios'
 
 const { t } = useI18n()
+const todoStore = useTodoStore()
 
 const props = defineProps<{
   workspacePath: string | null
@@ -204,6 +208,14 @@ function closePreview() {
       <div v-else class="rwp-single-header">
         <component :is="todoTab.icon" :size="14" class="rwp-single-header-icon" />
         <span class="rwp-single-header-label">{{ t('todo.title') }}</span>
+        <button
+          class="rwp-view-toggle-btn"
+          :title="todoStore.viewMode === 'list' ? t('todo.visualMode') : t('todo.listMode')"
+          :aria-label="todoStore.viewMode === 'list' ? t('todo.visualMode') : t('todo.listMode')"
+          @click="todoStore.viewMode = todoStore.viewMode === 'list' ? 'visual' : 'list'"
+        >
+          <component :is="todoStore.viewMode === 'list' ? Network : List" :size="14" />
+        </button>
         <button class="rwp-collapse-btn" title="折叠面板" @click="emit('toggleCollapse')">
           <PanelRightClose :size="14" />
         </button>
@@ -329,6 +341,25 @@ function closePreview() {
   font-size: 0.75rem;
   font-weight: 500;
   color: hsl(var(--foreground) / 0.7);
+}
+
+.rwp-view-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  color: hsl(var(--muted-foreground) / 0.5);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.rwp-view-toggle-btn:hover {
+  color: hsl(var(--foreground) / 0.8);
+  background: hsl(var(--foreground) / 0.06);
 }
 
 .rwp-tab {

@@ -116,6 +116,8 @@ const showInputArea = computed(() => {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .fade-slide-enter-active,

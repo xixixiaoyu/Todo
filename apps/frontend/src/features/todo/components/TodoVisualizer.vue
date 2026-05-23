@@ -5,6 +5,7 @@ import VChart from 'vue-echarts'
 import { useDark, useResizeObserver } from '@vueuse/core'
 import { useTodoStore } from '../stores/todo'
 import type { FilterType } from '../stores/todo'
+import type { TreeData } from '../stores/todo.types'
 import { applyFilterAndSort } from '../stores/todo.filtering'
 import { useI18n } from 'vue-i18n'
 import { debounce } from 'lodash-es'
@@ -23,6 +24,25 @@ const todoStore = useTodoStore()
 const isDark = useDark()
 const { t } = useI18n()
 const { themeColor } = useTheme()
+
+// ── 动态图表高度 ──
+const CHART_MIN_HEIGHT = 400
+const NODE_VERTICAL_SPACE = 36
+
+/** 计算树中任何深度层级上的最大兄弟节点数（原地 BFS，O(n)） */
+function getMaxSiblingsAtAnyDepth(nodes: TreeData[]): number {
+  if (nodes.length === 0) return 0
+  let maxCount = nodes.length
+  let head = 0
+  while (head < nodes.length) {
+    const node = nodes[head++]!
+    if (node.children && node.children.length > 0) {
+      maxCount = Math.max(maxCount, node.children.length)
+      nodes.push(...node.children)
+    }
+  }
+  return maxCount
+}
 
 const vChartRef = ref<InstanceType<typeof VChart> | null>(null)
 const containerRef = ref<HTMLElement | null>(null)
@@ -120,6 +140,16 @@ const treeData = computed(() => {
   })
 })
 
+const chartMinHeight = computed(() => {
+  if (treeData.value.length === 0) return CHART_MIN_HEIGHT
+  const maxSiblings = getMaxSiblingsAtAnyDepth(treeData.value)
+  // 水平树图：同层级兄弟节点占用纵向空间
+  // top: '10%', bottom: '10%' 意味着内容区占容器 80%
+  const contentHeight = maxSiblings * NODE_VERTICAL_SPACE
+  const totalHeight = Math.ceil(contentHeight / 0.8)
+  return Math.max(CHART_MIN_HEIGHT, totalHeight)
+})
+
 const chartOptions = computed(() => {
   const _themeColor = themeColor.value
   void _themeColor
@@ -137,7 +167,11 @@ const emptyText = computed(() =>
 </script>
 
 <template>
-  <div ref="containerRef" class="flex-1 flex flex-col min-h-[200px] w-full relative group">
+  <div
+    ref="containerRef"
+    class="flex-1 flex flex-col w-full relative group"
+    :style="{ minHeight: chartMinHeight + 'px' }"
+  >
     <Transition name="fade" mode="out-in">
       <div
         v-if="treeData.length === 0"
