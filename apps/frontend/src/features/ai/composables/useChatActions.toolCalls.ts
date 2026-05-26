@@ -7,7 +7,8 @@ const MAX_TOOL_CONTENT_LENGTH = 15000
 
 function parseToolArgs(input: string): Record<string, unknown> | null {
   try {
-    const parsed = JSON.parse(input || '{}') as unknown
+    const cleaned = (input || '').trim()
+    const parsed = JSON.parse(cleaned || '{}') as unknown
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
       return parsed as Record<string, unknown>
     }

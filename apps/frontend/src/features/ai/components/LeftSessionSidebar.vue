@@ -315,8 +315,7 @@ function onResizeStart(e: PointerEvent) {
             <button
               class="lss-act lss-act--pin"
               :title="s.isPinned ? '取消置顶' : '置顶'"
-              @pointerdown.stop
-              @click="handlePin(s.id)"
+              @click.stop="handlePin(s.id)"
             >
               <PinOff v-if="s.isPinned" :size="10" />
               <Pin v-else :size="10" />
@@ -324,24 +323,21 @@ function onResizeStart(e: PointerEvent) {
             <button
               class="lss-act lss-act--export"
               :title="t('ai.exportMarkdown')"
-              @pointerdown.stop
-              @click="handleExport(s)"
+              @click.stop="handleExport(s)"
             >
               <FileDown :size="10" />
             </button>
             <button
               class="lss-act lss-act--rename"
               title="重命名"
-              @pointerdown.stop
-              @click="startRename(s.id, s.title || '新对话')"
+              @click.stop="startRename(s.id, s.title || '新对话')"
             >
               <Pencil :size="10" />
             </button>
             <button
               class="lss-act lss-act--delete lss-act--danger"
               title="删除"
-              @pointerdown.stop
-              @click="handleDelete(s.id)"
+              @click.stop="handleDelete(s.id)"
             >
               <Trash2 :size="10" />
             </button>

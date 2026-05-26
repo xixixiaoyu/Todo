@@ -418,8 +418,11 @@ export async function getAIStreamResponse(
               const existingCall = toolCallsMap.get(index)!
               if (call.id) existingCall.id = call.id
               if (call.function?.name) existingCall.function.name = call.function.name
-              if (call.function?.arguments)
-                existingCall.function.arguments += call.function.arguments
+              if (call.function?.arguments) {
+                const raw = call.function.arguments
+                const argStr = typeof raw === 'string' ? raw : JSON.stringify(raw)
+                existingCall.function.arguments += argStr
+              }
             }
           }
 
