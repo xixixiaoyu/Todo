@@ -5,7 +5,7 @@ import { classifyPermission } from './useToolPermission'
 
 const MAX_TOOL_CONTENT_LENGTH = 15000
 
-function parseToolArgs(input: string): Record<string, unknown> | null {
+export function parseToolArgs(input: string): Record<string, unknown> | null {
   try {
     const cleaned = (input || '').trim()
     const parsed = JSON.parse(cleaned || '{}') as unknown
