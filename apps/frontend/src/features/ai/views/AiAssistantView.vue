@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, defineAsyncComponent } from 'vue'
+import { onKeyStroke } from '@vueuse/core'
 import ChatMessageList from '@/features/ai/components/ChatMessageList.vue'
 import AISettingsDialog from '@/features/ai/components/AISettingsDialog.vue'
 import AiAssistantToolbar from '@/features/ai/components/AiAssistantToolbar.vue'
@@ -134,6 +135,19 @@ const { rightPanelRef, focusTodoInSidebar } = useTodoSidebarIntegration({
   isAgentEnabled,
   selectedWorkspacePath,
   workspacePanelCollapsed,
+})
+
+const hasHistory = computed(() => messages.value.length > 0)
+
+// 快捷键: Cmd+J / Ctrl+J 创建新对话
+onKeyStroke(['j', 'J'], (e) => {
+  if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey) {
+    if (isGenerating.value) return
+    e.preventDefault()
+    if (hasHistory.value) {
+      handleNewChat()
+    }
+  }
 })
 
 // 全局键盘快捷键
