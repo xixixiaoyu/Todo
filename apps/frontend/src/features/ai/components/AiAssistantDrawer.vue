@@ -103,7 +103,12 @@ function cyclePermissionMode() {
 }
 
 // 会话历史管理
-const { lastActiveSession, switchSession } = useChatHistory()
+const { lastActiveSession, switchSession, currentSessionId } = useChatHistory()
+
+// 切换会话后自动聚焦输入框
+watch(currentSessionId, () => {
+  void nextTick(() => assistantInputRef.value?.focus())
+})
 
 const navigateToPrevious = () => {
   if (!lastActiveSession.value) return

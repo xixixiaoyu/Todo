@@ -7,6 +7,7 @@ import { novelBatchRemaining } from '@/features/ai/composables/useChatState'
 
 type AssistantInputApi = {
   adjustHeight: () => void
+  focus: () => void
 }
 
 type SendDocument = { name: string; content: string }
@@ -58,6 +59,7 @@ export function useAiAssistantComposer(params: {
     if (params.config.value.todoAssistant) {
       params.updateConfig({ todoAssistant: false })
     }
+    void nextTick(() => params.assistantInputRef.value?.focus())
   }
 
   const handleSelectSuggestion = async (text: string, options?: { requireTodo?: boolean }) => {
