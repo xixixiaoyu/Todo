@@ -233,7 +233,10 @@ function onResizeStart(e: PointerEvent) {
         @pointerdown.prevent="onResizeStart"
       />
       <div class="lss-header">
-        <span class="lss-title">会话</span>
+        <div class="lss-brand-group">
+          <span class="lss-brand">{{ t('common.appName') }}</span>
+          <span class="lss-title">会话</span>
+        </div>
         <div class="lss-header-actions">
           <button
             v-if="hasSessions"
@@ -429,10 +432,25 @@ function onResizeStart(e: PointerEvent) {
 /* ── Header ── */
 .lss-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   padding: 10px 12px 8px;
   flex-shrink: 0;
+}
+
+.lss-brand-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.lss-brand {
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: hsl(var(--primary) / 0.82);
+  letter-spacing: 0.02em;
+  line-height: 1.3;
 }
 
 .lss-title {

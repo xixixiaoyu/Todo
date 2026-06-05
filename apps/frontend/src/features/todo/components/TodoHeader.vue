@@ -29,7 +29,7 @@ const todoStore = useTodoStore()
         <Snowflake :size="16" class="md:h-6 md:w-6" />
       </div>
       <h1
-        class="hidden sm:flex items-center gap-2 cursor-default text-[18px] font-semibold tracking-tight text-primary transition-transform hover:scale-105 md:text-[var(--todo-font-title)]"
+        class="flex items-center gap-1 sm:gap-2 cursor-default text-[15px] font-semibold tracking-tight text-primary transition-transform hover:scale-105 sm:text-[18px] md:text-[var(--todo-font-title)]"
       >
         {{ t('common.appName') }}
       </h1>
