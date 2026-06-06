@@ -7,17 +7,11 @@
  * License, or (at your option) any later version.
  */
 
-// Zod Schemas (Single Source of Truth)
-export { z } from 'zod'
-export * from './schemas/todo.schema'
-export * from './schemas/mcp.schema'
-export * from './schemas/i18n-keys'
-
-// Agent 工具类型与 Schema
-export * from './agent'
-
-// 通用响应类型
-export * from './dto/common.dto'
-
-// 工具函数
-export * from './utils/date'
+export function toDate(value: Date | string | number | null | undefined): Date | null {
+  if (!value) return null
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value
+  }
+  const d = new Date(value)
+  return Number.isNaN(d.getTime()) ? null : d
+}

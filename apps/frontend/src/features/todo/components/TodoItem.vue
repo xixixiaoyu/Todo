@@ -7,6 +7,7 @@ import { useHaptics, ImpactStyle } from '@/composables/useHaptics'
 import { useGsap } from '@/composables/useGsap'
 import { useTodoStore } from '../stores/todo'
 import type { Todo } from '../stores/todo'
+import { useAIBreakdown } from '../composables/useAIBreakdown'
 import { useIsMobile } from '@/composables/useWindowSize'
 import { useToast } from '@/composables/useToast'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -19,6 +20,7 @@ import TodoItemEdit from './TodoItemEdit.vue'
 import TodoItemAddSubtask from './TodoItemAddSubtask.vue'
 
 const store = useTodoStore()
+const { breakdownTaskWithAI } = useAIBreakdown()
 const { isMobile } = useIsMobile()
 const { hapticImpact, hapticSelectionStart } = useHaptics()
 const { success: showToastSuccess, error: showToastError } = useToast()
@@ -126,7 +128,7 @@ const parentPath = computed(() => {
 async function handleBreakdown() {
   isBreakingDown.value = true
   try {
-    const addedIds = await store.breakdownTaskWithAI(props.todo.id)
+    const addedIds = await breakdownTaskWithAI(props.todo.id)
     void hapticImpact(ImpactStyle.Medium)
 
     if (addedIds && addedIds.length > 0) {

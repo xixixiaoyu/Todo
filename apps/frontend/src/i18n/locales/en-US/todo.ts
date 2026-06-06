@@ -1,5 +1,6 @@
 export const todo = {
   title: 'To-Do',
+  pageTitle: 'To-Do - Lumina',
   inputPlaceholder: 'Add a new task, or paste an image to analyze...',
   inputPlaceholderNoAI: 'Add a new task, or paste an image to analyze (AI required)...',
   add: 'Add',

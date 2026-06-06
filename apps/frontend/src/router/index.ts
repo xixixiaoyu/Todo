@@ -15,6 +15,12 @@ const router = createRouter({
       component: () => import('@/features/ai/views/AiAssistantView.vue'),
     },
     {
+      path: '/todo',
+      name: 'todo',
+      component: () => import('@/features/todo/TodoView.vue'),
+      meta: { title: 'todo.pageTitle' },
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: () => import('@/views/error/NotFoundView.vue'),

@@ -1,13 +1,6 @@
+import { toDate } from '@lumina/shared'
 import type { RecurrenceRule } from '@lumina/shared'
-
-export function toDate(value: Date | string | number | null | undefined): Date | null {
-  if (!value) return null
-  if (value instanceof Date) {
-    return Number.isNaN(value.getTime()) ? null : value
-  }
-  const d = new Date(value)
-  return Number.isNaN(d.getTime()) ? null : d
-}
+export { toDate }
 
 export type ScheduleEditorKind = 'due' | 'reminder'
 

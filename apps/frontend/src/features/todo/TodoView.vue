@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed, defineAsyncComponent } from 'vue'
+import { useRouter } from 'vue-router'
+import { ArrowLeft } from 'lucide-vue-next'
 import { useTodoStore } from './stores/todo'
 import type { FilterType, ViewMode } from './stores/todo'
 import { usePomodoroStore } from './stores/pomodoro'
@@ -13,12 +15,14 @@ import TodoFilter from './components/TodoFilter.vue'
 import TodoSearch from './components/TodoSearch.vue'
 import TodoList from './components/TodoList.vue'
 import PomodoroTimer from './components/PomodoroTimer.vue'
+import { Button } from '@/components/ui/button'
 
 import TodoImageTaskConfirmDialog from './components/TodoImageTaskConfirmDialog.vue'
 import AiAssistantDrawer from '@/features/ai/components/assistant/AiAssistantDrawer.vue'
 import Fireworks from '@/components/Fireworks.vue'
 import { Card, CardContent } from '@/components/ui/card'
 
+const router = useRouter()
 const todoStore = useTodoStore()
 const pomodoroStore = usePomodoroStore()
 
@@ -316,7 +320,17 @@ function onFireworksComplete() {
           class="todo-container p-4 pt-6 md:p-8 md:pt-6 flex flex-col flex-1 min-h-0 relative z-10 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))]"
         >
           <!-- Header -->
-          <TodoHeader />
+          <div class="flex items-center gap-2 mb-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              class="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+              @click="router.push('/')"
+            >
+              <ArrowLeft :size="18" />
+            </Button>
+            <TodoHeader />
+          </div>
 
           <!-- sync conflict panel removed (local only) -->
 

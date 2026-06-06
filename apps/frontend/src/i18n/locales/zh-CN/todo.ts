@@ -1,5 +1,6 @@
 export const todo = {
   title: '待办事项',
+  pageTitle: '待办事项 - 简思',
   inputPlaceholder: '添加新的待办事项，或粘贴图片进行分析...',
   inputPlaceholderNoAI: '添加新的待办事项，或粘贴图片分析（需配置 AI）...',
   add: '添加',

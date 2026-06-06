@@ -1,13 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useTodoStore } from '@/features/todo/stores/todo'
+import { useAIBreakdown } from '@/features/todo/composables/useAIBreakdown'
 import * as aiService from '@/features/ai/services'
 
 vi.mock('@/features/ai/services', () => ({
   getAIStaticResponse: vi.fn(),
 }))
 
-describe('useTodoStore - AI Actions', () => {
+describe('useAIBreakdown', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
@@ -15,6 +16,7 @@ describe('useTodoStore - AI Actions', () => {
 
   it('should breakdown task with AI using JSON', async () => {
     const store = useTodoStore()
+    const { breakdownTaskWithAI } = useAIBreakdown()
     const todoId = await store.addTodo('Main Task')
 
     vi.mocked(aiService.getAIStaticResponse).mockResolvedValue({
@@ -22,7 +24,7 @@ describe('useTodoStore - AI Actions', () => {
       role: 'assistant',
     } as unknown as { content: string; reasoning_details?: string })
 
-    await store.breakdownTaskWithAI(todoId!)
+    await breakdownTaskWithAI(todoId!)
 
     const subtasks = store.todos.filter((t) => t.parentId === todoId)
     expect(subtasks).toHaveLength(3)
@@ -33,6 +35,7 @@ describe('useTodoStore - AI Actions', () => {
 
   it('should fallback to line splitting if JSON fails', async () => {
     const store = useTodoStore()
+    const { breakdownTaskWithAI } = useAIBreakdown()
     const todoId = await store.addTodo('Main Task')
 
     vi.mocked(aiService.getAIStaticResponse).mockResolvedValue({
@@ -40,7 +43,7 @@ describe('useTodoStore - AI Actions', () => {
       role: 'assistant',
     } as unknown as { content: string; reasoning_details?: string })
 
-    await store.breakdownTaskWithAI(todoId!)
+    await breakdownTaskWithAI(todoId!)
 
     const subtasks = store.todos.filter((t) => t.parentId === todoId)
     expect(subtasks).toHaveLength(3)

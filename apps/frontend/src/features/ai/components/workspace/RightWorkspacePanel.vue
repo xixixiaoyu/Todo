@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   FolderTree,
   Paperclip,
@@ -9,6 +10,7 @@ import {
   X,
   List,
   Network,
+  Expand,
 } from 'lucide-vue-next'
 import SessionFileList from './SessionFileList.vue'
 import WorkspaceFileTree from './WorkspaceFileTree.vue'
@@ -19,6 +21,7 @@ import axios from 'axios'
 
 const { t } = useI18n()
 const todoStore = useTodoStore()
+const router = useRouter()
 
 const props = defineProps<{
   workspacePath: string | null
@@ -37,9 +40,9 @@ const activeTab = ref<'todo' | 'workspace' | 'session-files'>('todo')
 function loadPanelWidth(): number {
   try {
     const v = localStorage.getItem('lumina-right-workspace-width')
-    return v ? Number(v) : 260
+    return v ? Number(v) : 340
   } catch {
-    return 260
+    return 340
   }
 }
 function savePanelWidth(w: number) {
@@ -215,6 +218,14 @@ function closePreview() {
           @click="todoStore.viewMode = todoStore.viewMode === 'list' ? 'visual' : 'list'"
         >
           <component :is="todoStore.viewMode === 'list' ? Network : List" :size="14" />
+        </button>
+        <button
+          class="rwp-view-toggle-btn"
+          title="全屏打开待办"
+          aria-label="全屏打开待办"
+          @click="router.push('/todo')"
+        >
+          <Expand :size="14" />
         </button>
         <button class="rwp-collapse-btn" title="折叠面板" @click="emit('toggleCollapse')">
           <PanelRightClose :size="14" />
