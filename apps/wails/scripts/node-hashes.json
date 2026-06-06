@@ -1,8 +1,9 @@
 {
+  "_comment": "SHA256 hashes from https://nodejs.org/dist/v{VERSION}/SHASUMS256.txt — retrieved 2026-06-06",
   "22.15.0": {
-    "darwin-arm64": "7ed38c2e1c9e8769e9b2667b2eaaeb2eab5c2ce7f4e0f67f4c5e7f6e6d6c6b6a",
-    "darwin-x64": "placeholder_update_with_real_hash",
-    "win-x64": "placeholder_update_with_real_hash",
-    "linux-x64": "placeholder_update_with_real_hash"
+    "darwin-arm64": "92eb58f54d172ed9dee320b8450f1390db629d4262c936d5c074b25a110fed02",
+    "darwin-x64": "f7f42bee60d602783d3a842f0a02a2ecd9cb9d7f6f3088686c79295b0222facf",
+    "win-x64": "06067d4f0d463f90ed803d5eca5b039a05dec5d70fc7b7cc254803a59bd0e27c",
+    "linux-x64": "dafe2e8f82cb97de1bd10db9e2ec4c07bbf53389b0799b1e095a918951e78fd4"
   }
 }

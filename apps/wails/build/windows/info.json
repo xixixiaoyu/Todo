@@ -1,10 +1,10 @@
 {
-  "CompanyName": "Todo Team",
-  "FileDescription": "A modern minimalist Todo application",
-  "FileVersion": "1.0.0.1",
-  "InternalName": "Todo",
-  "LegalCopyright": "Copyright © 2024 Todo Team",
-  "OriginalFilename": "Todo.exe",
-  "ProductName": "Todo",
-  "ProductVersion": "1.0.0-beta.1"
+  "CompanyName": "牧云 (Mu Yun)",
+  "FileDescription": "简思 (Lumina) — A modern minimalist AI Todo application",
+  "FileVersion": "1.0.0.9",
+  "InternalName": "Lumina",
+  "LegalCopyright": "Copyright © 2026 牧云 (Mu Yun)",
+  "OriginalFilename": "Lumina.exe",
+  "ProductName": "简思 (Lumina)",
+  "ProductVersion": "1.0.0-beta.9"
 }

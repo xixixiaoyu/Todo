@@ -30,6 +30,28 @@ try {
   $ArchivePath = Join-Path $TmpDir $Archive
   Invoke-WebRequest -Uri $Url -OutFile $ArchivePath -UseBasicParsing
 
+  # Verify SHA256 checksum
+  $HashesFile = Join-Path $ScriptDir "node-hashes.json"
+  if (Test-Path $HashesFile) {
+    $Hashes = Get-Content $HashesFile -Raw | ConvertFrom-Json
+    $ExpectedHash = $Hashes.$Version."$Platform-$Arch"
+    if ($ExpectedHash -and $ExpectedHash -ne "placeholder_update_with_real_hash") {
+      Write-Host "Verifying SHA256 checksum..."
+      $ActualHash = (Get-FileHash -Path $ArchivePath -Algorithm SHA256).Hash.ToLower()
+      if ($ActualHash -ne $ExpectedHash) {
+        Write-Error "SHA256 mismatch for $Archive"
+        Write-Error "Expected: $ExpectedHash"
+        Write-Error "Got:      $ActualHash"
+        exit 1
+      }
+      Write-Host "SHA256 checksum verified."
+    } else {
+      Write-Host "Warning: No expected hash for $Platform-$Arch in node-hashes.json"
+    }
+  } else {
+    Write-Host "Warning: node-hashes.json not found, skipping hash verification."
+  }
+
   Write-Host "Extracting..."
   $ExtractDir = Join-Path $TmpDir "extracted"
   Expand-Archive -Path $ArchivePath -DestinationPath $ExtractDir -Force

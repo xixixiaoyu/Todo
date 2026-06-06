@@ -49,6 +49,35 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 
 curl -fSL -o "${TMP_DIR}/${ARCHIVE}" "$URL"
 
+# Verify SHA256 checksum
+HASHES_FILE="${SCRIPT_DIR}/node-hashes.json"
+if [ -f "$HASHES_FILE" ]; then
+  EXPECTED_HASH=$(grep "\"${PLATFORM}-${ARCH}\"" "$HASHES_FILE" | head -1 | sed 's/.*: *"\([^"]*\)".*/\1/')
+  if [ -n "$EXPECTED_HASH" ] && [ "$EXPECTED_HASH" != "placeholder_update_with_real_hash" ]; then
+    echo "Verifying SHA256 checksum..."
+    if command -v shasum >/dev/null 2>&1; then
+      ACTUAL_HASH=$(shasum -a 256 "${TMP_DIR}/${ARCHIVE}" | cut -d' ' -f1)
+    elif command -v sha256sum >/dev/null 2>&1; then
+      ACTUAL_HASH=$(sha256sum "${TMP_DIR}/${ARCHIVE}" | cut -d' ' -f1)
+    else
+      echo "Warning: No SHA256 tool found, skipping verification."
+    fi
+    if [ -n "$ACTUAL_HASH" ]; then
+      if [ "$ACTUAL_HASH" != "$EXPECTED_HASH" ]; then
+        echo "Error: SHA256 mismatch for ${ARCHIVE}"
+        echo "Expected: ${EXPECTED_HASH}"
+        echo "Got:      ${ACTUAL_HASH}"
+        exit 1
+      fi
+      echo "SHA256 checksum verified."
+    fi
+  else
+    echo "Warning: No expected hash for ${PLATFORM}-${ARCH} in node-hashes.json"
+  fi
+else
+  echo "Warning: node-hashes.json not found, skipping hash verification."
+fi
+
 # Extract
 echo "Extracting..."
 if [ "$PLATFORM" = "win" ]; then
