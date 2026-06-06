@@ -2,6 +2,7 @@
 import { ref, watch, nextTick, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { initMermaidInteractions } from '@/composables/markdown/mermaid-interactions'
+import { useMermaidEditor } from '../../composables/useMermaidEditor'
 
 const props = defineProps<{
   svgHtml: string
@@ -10,6 +11,7 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n()
+const { openEditor } = useMermaidEditor()
 const containerRef = ref<HTMLElement | null>(null)
 
 const updateInteractions = () => {
@@ -18,7 +20,9 @@ const updateInteractions = () => {
   const mermaidContainer = containerRef.value.querySelector('.mermaid-container') as HTMLElement
   if (mermaidContainer) {
     const isInitial = mermaidContainer.dataset.interacted !== 'true'
-    initMermaidInteractions(mermaidContainer, !isInitial)
+    initMermaidInteractions(mermaidContainer, !isInitial, {
+      onEdit: (code) => openEditor(code),
+    })
   }
 }
 

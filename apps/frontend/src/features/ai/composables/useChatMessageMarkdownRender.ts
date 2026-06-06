@@ -6,6 +6,7 @@ import {
   initCodeInteractions,
   initMermaidInteractions,
 } from '@/composables/markdown/mermaid-interactions'
+import { useMermaidEditor } from '@/features/ai/composables/useMermaidEditor'
 
 export function useChatMessageMarkdownRender(params: {
   content: Ref<string>
@@ -40,9 +41,15 @@ export function useChatMessageMarkdownRender(params: {
     }
   }
 
+  const { openEditor } = useMermaidEditor()
+
   const injectInteractions = () => {
     const container = containerRef.value
     if (!container) return
+
+    const mermaidConfig = {
+      onEdit: (code: string) => openEditor(code),
+    }
 
     const svgMap = getMermaidSvgMap()
     if (svgMap.size > 0) {
@@ -57,12 +64,12 @@ export function useChatMessageMarkdownRender(params: {
           if (containerElement && placeholder.parentNode) {
             containerElement.setAttribute('data-processed', 'true')
             placeholder.parentNode.replaceChild(containerElement, placeholder)
-            initMermaidInteractions(containerElement as HTMLElement)
+            initMermaidInteractions(containerElement as HTMLElement, false, mermaidConfig)
           }
           return
         }
 
-        initMermaidInteractions(placeholder as HTMLElement)
+        initMermaidInteractions(placeholder as HTMLElement, false, mermaidConfig)
       })
     }
 

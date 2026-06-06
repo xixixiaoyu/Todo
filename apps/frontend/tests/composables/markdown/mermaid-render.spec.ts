@@ -1,17 +1,35 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderMermaidSvg } from '@/composables/markdown/mermaid-render'
-import * as mermaidModule from '@/composables/markdown/mermaid'
+import * as initializerModule from '@/composables/markdown/mermaid/initializer'
+import * as loaderModule from '@/composables/markdown/mermaid/loader'
 
-vi.mock('@/composables/markdown/mermaid', () => ({
-  loadMermaid: vi.fn(),
-  initializeMermaid: vi.fn(),
-}))
-
+// Mock dompurify to pass through HTML unchanged
 vi.mock('dompurify', () => ({
   default: {
     sanitize: (html: string) => html,
   },
 }))
+
+// Mock the internal module that renderer.ts actually imports
+vi.mock('@/composables/markdown/mermaid/initializer', async () => {
+  const actual = await vi.importActual<typeof import('@/composables/markdown/mermaid/initializer')>(
+    '@/composables/markdown/mermaid/initializer',
+  )
+  return {
+    ...actual,
+    initializeMermaid: vi.fn(),
+  }
+})
+
+vi.mock('@/composables/markdown/mermaid/loader', async () => {
+  const actual = await vi.importActual<typeof import('@/composables/markdown/mermaid/loader')>(
+    '@/composables/markdown/mermaid/loader',
+  )
+  return {
+    ...actual,
+    loadMermaid: vi.fn(),
+  }
+})
 
 describe('renderMermaidSvg', () => {
   const mockMermaidInstance = {
@@ -20,7 +38,7 @@ describe('renderMermaidSvg', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(mermaidModule.initializeMermaid).mockResolvedValue(
+    vi.mocked(initializerModule.initializeMermaid).mockResolvedValue(
       mockMermaidInstance as unknown as never,
     )
   })
@@ -33,7 +51,7 @@ describe('renderMermaidSvg', () => {
 
     expect(result.error).toBeNull()
     expect(result.svg).toContain('preserveAspectRatio="xMidYMid meet"')
-    expect(mermaidModule.initializeMermaid).toHaveBeenCalledWith('default')
+    expect(initializerModule.initializeMermaid).toHaveBeenCalledWith('default')
   })
 
   it('渲染空代码时应返回空结果', async () => {

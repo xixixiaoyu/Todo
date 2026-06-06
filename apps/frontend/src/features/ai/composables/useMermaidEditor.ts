@@ -1,35 +1,68 @@
-import { ref, watch, onUnmounted } from 'vue'
+import { ref, watch, onUnmounted, getCurrentInstance } from 'vue'
 import { renderMermaidSvg } from '@/composables/markdown/mermaid-render'
 import { getCurrentTheme } from '@/composables/markdown/utils'
 import { useTheme } from '@/composables/useTheme'
+import {
+  STORAGE_KEY_CODE,
+  STORAGE_KEY_OPEN,
+  DEFAULT_DEBOUNCE_MS,
+} from '@/composables/markdown/mermaid'
 
-const STORAGE_KEY_CODE = 'lumina:mermaid-editor:code'
-const STORAGE_KEY_OPEN = 'lumina:mermaid-editor:isOpen'
+// ---- 模块级单例状态（惰性初始化，无模块级副作用） ----
+let instanceState: ReturnType<typeof createEditorState> | null = null
+let instanceRefCount = 0
 
-// 模块级单例状态（从 localStorage 恢复）
-const isOpen = ref(localStorage.getItem(STORAGE_KEY_OPEN) === 'true')
-const code = ref(localStorage.getItem(STORAGE_KEY_CODE) ?? '')
-const svgHtml = ref('')
-const error = ref<string | null>(null)
-const isRendering = ref(false)
+function createEditorState() {
+  const isOpen = ref(false)
+  const code = ref('')
+  const svgHtml = ref('')
+  const error = ref<string | null>(null)
+  const isRendering = ref(false)
 
-let debounceTimer: ReturnType<typeof setTimeout> | null = null
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null
+  let abortController: AbortController | null = null
+  let isInitialized = false
 
-const DEFAULT_MERMAID_TEMPLATE = ''
+  /** 从 localStorage 恢复状态（仅首次调用） */
+  const restoreState = () => {
+    if (isInitialized) return
+    isInitialized = true
+    try {
+      const savedOpen = localStorage.getItem(STORAGE_KEY_OPEN) === 'true'
+      const savedCode = localStorage.getItem(STORAGE_KEY_CODE) ?? ''
+      isOpen.value = savedOpen
+      code.value = savedCode
+    } catch {
+      // localStorage 不可用，保持默认值
+    }
+  }
 
-/** 将 code 持久化到 localStorage */
-const persistCode = (val: string) => localStorage.setItem(STORAGE_KEY_CODE, val)
-/** 将 isOpen 持久化到 localStorage */
-const persistOpen = (val: boolean) => localStorage.setItem(STORAGE_KEY_OPEN, String(val))
+  const persistCode = (val: string) => {
+    try {
+      localStorage.setItem(STORAGE_KEY_CODE, val)
+    } catch {
+      /* noop */
+    }
+  }
 
-/**
- * Mermaid 编辑器核心 Composable
- */
-export function useMermaidEditor(options: { debounceMs?: number } = {}) {
-  const { debounceMs = 300 } = options
-  const { theme: themeState } = useTheme()
+  const persistOpen = (val: boolean) => {
+    try {
+      localStorage.setItem(STORAGE_KEY_OPEN, String(val))
+    } catch {
+      /* noop */
+    }
+  }
+
+  const cancelRender = () => {
+    if (abortController) {
+      abortController.abort()
+      abortController = null
+    }
+  }
 
   const render = async (targetCode: string) => {
+    cancelRender()
+
     if (!targetCode.trim()) {
       svgHtml.value = ''
       error.value = null
@@ -38,11 +71,14 @@ export function useMermaidEditor(options: { debounceMs?: number } = {}) {
     }
 
     isRendering.value = true
-    const currentTheme = getCurrentTheme()
-    const result = await renderMermaidSvg(targetCode, currentTheme)
+    abortController = new AbortController()
+    const currentController = abortController
 
-    // 只有当编辑器仍然打开且代码匹配时才更新（防止竞态）
-    if (isOpen.value && code.value === targetCode) {
+    const currentTheme = getCurrentTheme()
+    const result = await renderMermaidSvg(targetCode, currentTheme, currentController.signal)
+
+    // 防止竞态：仅当编辑器仍打开、代码匹配且未被取消时更新
+    if (currentController === abortController && isOpen.value && code.value === targetCode) {
       svgHtml.value = result.svg
       error.value = result.error
       isRendering.value = false
@@ -51,14 +87,11 @@ export function useMermaidEditor(options: { debounceMs?: number } = {}) {
 
   const openEditor = (initialCode?: string) => {
     const finalCode =
-      initialCode !== undefined && initialCode.trim() !== ''
-        ? initialCode
-        : code.value || DEFAULT_MERMAID_TEMPLATE
+      initialCode !== undefined && initialCode.trim() !== '' ? initialCode : code.value || ''
     code.value = finalCode
     isOpen.value = true
     persistCode(finalCode)
     persistOpen(true)
-    // 立即渲染，无防抖
     void render(finalCode)
   }
 
@@ -66,6 +99,7 @@ export function useMermaidEditor(options: { debounceMs?: number } = {}) {
     isOpen.value = false
     error.value = null
     persistOpen(false)
+    cancelRender()
     if (debounceTimer) {
       clearTimeout(debounceTimer)
       debounceTimer = null
@@ -82,25 +116,7 @@ export function useMermaidEditor(options: { debounceMs?: number } = {}) {
 
     debounceTimer = setTimeout(() => {
       void render(newCode)
-    }, debounceMs)
-  }
-
-  // 监听主题变化，自动重绘
-  watch(themeState, () => {
-    if (isOpen.value) {
-      void render(code.value)
-    }
-  })
-
-  onUnmounted(() => {
-    if (debounceTimer) {
-      clearTimeout(debounceTimer)
-    }
-  })
-
-  // 页面刷新后恢复：如果编辑器曾经打开且有代码，自动重新渲染
-  if (isOpen.value && code.value.trim()) {
-    void render(code.value)
+    }, DEFAULT_DEBOUNCE_MS)
   }
 
   return {
@@ -112,5 +128,83 @@ export function useMermaidEditor(options: { debounceMs?: number } = {}) {
     openEditor,
     closeEditor,
     updateCode,
+    /** 仅供内部测试/清理使用 */
+    _restoreState: restoreState,
+    _cancelRender: cancelRender,
+  }
+}
+
+/**
+ * Mermaid 编辑器核心 Composable（单例模式）
+ *
+ * 多个组件共享同一编辑器状态。使用引用计数管理主题监听器生命周期。
+ */
+export function useMermaidEditor() {
+  // 初始化或获取单例
+  if (!instanceState) {
+    instanceState = createEditorState()
+  }
+
+  const state = instanceState
+  const { theme: themeState } = useTheme()
+  const isInComponent = getCurrentInstance() !== null
+
+  // 引用计数仅在组件上下文中管理；外部调用（如测试）不计入生命周期
+  if (isInComponent) {
+    instanceRefCount++
+  }
+
+  // 惰性恢复状态（仅首次调用执行）
+  state._restoreState()
+
+  // 监听主题变化，自动重绘
+  const stopWatch = watch(
+    () => themeState.value,
+    () => {
+      if (state.isOpen.value) {
+        void (async () => {
+          const currentTheme = getCurrentTheme()
+          const result = await renderMermaidSvg(state.code.value, currentTheme)
+          if (state.isOpen.value) {
+            state.svgHtml.value = result.svg
+            state.error.value = result.error
+          }
+        })()
+      }
+    },
+  )
+
+  // 清理：仅在组件上下文中注册生命周期钩子
+  if (isInComponent) {
+    onUnmounted(() => {
+      instanceRefCount--
+      stopWatch()
+      if (instanceRefCount <= 0) {
+        instanceState = null
+      }
+    })
+  }
+
+  // 页面刷新后恢复：如果编辑器曾经打开且有代码，自动重新渲染
+  if (state.isOpen.value && state.code.value.trim()) {
+    state._cancelRender()
+    const currentTheme = getCurrentTheme()
+    void renderMermaidSvg(state.code.value, currentTheme).then((result) => {
+      if (state.isOpen.value) {
+        state.svgHtml.value = result.svg
+        state.error.value = result.error
+      }
+    })
+  }
+
+  return {
+    isOpen: state.isOpen,
+    code: state.code,
+    svgHtml: state.svgHtml,
+    error: state.error,
+    isRendering: state.isRendering,
+    openEditor: state.openEditor,
+    closeEditor: state.closeEditor,
+    updateCode: state.updateCode,
   }
 }

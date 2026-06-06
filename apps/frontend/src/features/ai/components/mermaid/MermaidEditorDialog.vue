@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import type { CSSProperties } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-vue-next'
+import { PanelLeftClose, PanelLeftOpen, Copy, Download } from 'lucide-vue-next'
 import { useMermaidEditor } from '../../composables/useMermaidEditor'
 import { useResizable } from '@/composables/useResizable'
 import { useWindowSize } from '@/composables/useWindowSize'
@@ -147,38 +147,11 @@ const copySvg = async () => {
     <!-- Footer: 复制操作 -->
     <template #footer>
       <Button variant="outline" size="sm" @click="copySource">
-        <svg
-          class="mr-2"
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-        </svg>
+        <Copy :size="14" class="mr-2" />
         {{ t('ai.mermaidCopySource') }}
       </Button>
       <Button variant="outline" size="sm" :disabled="!svgHtml" @click="copySvg">
-        <svg
-          class="mr-2"
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-          <polyline points="7 10 12 15 17 10"></polyline>
-          <line x1="12" y1="15" x2="12" y2="3"></line>
-        </svg>
+        <Download :size="14" class="mr-2" />
         {{ t('ai.mermaidCopySvg') }}
       </Button>
     </template>

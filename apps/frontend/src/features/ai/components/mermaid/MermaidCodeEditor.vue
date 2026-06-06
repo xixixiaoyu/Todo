@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onUnmounted, watch } from 'vue'
+import { ref, nextTick, onUnmounted, watch } from 'vue'
 import hljs from 'highlight.js'
 import { useI18n } from 'vue-i18n'
+import { MAX_HIGHLIGHT_CHARS } from '@/composables/markdown/mermaid'
 
 const props = defineProps<{
   modelValue: string
@@ -16,13 +17,16 @@ const textareaRef = ref<HTMLTextAreaElement | null>(null)
 const preRef = ref<HTMLPreElement | null>(null)
 const highlightedCode = ref('')
 
-/** 超出此字符数则跳过语法高亮，防止大段粘贴导致主线程冻结 */
-const MAX_HIGHLIGHT_CHARS = 30000
-
 /** HTML 转义，用于无高亮模式的纯文本渲染 */
 const escapeHtml = (str: string): string => {
-  const map: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }
-  return str.replace(/[&<>"]/g, (c) => map[c] || c)
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  }
+  return str.replace(/[&<>"']/g, (c) => map[c] || c)
 }
 
 const highlight = () => {
@@ -36,19 +40,30 @@ const highlight = () => {
     language: 'mermaid',
     ignoreIllegals: true,
   })
-  highlightedCode.value = result.value + '\n' // 增加换行符以防止最后一行抖动
+  highlightedCode.value = result.value + '\n'
 }
 
-let highlightTimer: ReturnType<typeof setTimeout> | null = null
+// 条件性 requestIdleCallback，兼容测试环境（Happy DOM 不支持 rIC）
+const requestIdleCallbackFn =
+  typeof requestIdleCallback !== 'undefined'
+    ? requestIdleCallback
+    : (fn: IdleRequestCallback, opts?: IdleRequestOptions) => setTimeout(fn, opts?.timeout ?? 50)
+const cancelIdleCallbackFn =
+  typeof cancelIdleCallback !== 'undefined' ? cancelIdleCallback : (id: number) => clearTimeout(id)
+
+let highlightHandle: number | null = null
 
 const debouncedHighlight = () => {
-  if (highlightTimer) {
-    clearTimeout(highlightTimer)
+  if (highlightHandle !== null) {
+    cancelIdleCallbackFn(highlightHandle)
   }
-  highlightTimer = setTimeout(() => {
-    highlightTimer = null
-    highlight()
-  }, 100)
+  highlightHandle = requestIdleCallbackFn(
+    () => {
+      highlightHandle = null
+      highlight()
+    },
+    { timeout: 100 },
+  )
 }
 
 const syncScroll = () => {
@@ -72,19 +87,19 @@ const handleKeydown = (e: KeyboardEvent) => {
     const newValue = target.value.substring(0, start) + '  ' + target.value.substring(end)
     emit('update:modelValue', newValue)
 
-    // 在下一次渲染后恢复光标位置
-    setTimeout(() => {
+    // 在下一次 Vue 渲染后恢复光标位置（优先于 setTimeout）
+    nextTick(() => {
       target.selectionStart = target.selectionEnd = start + 2
-    }, 0)
+    })
   }
 }
 
 watch(() => props.modelValue, debouncedHighlight, { immediate: true })
 
 onUnmounted(() => {
-  if (highlightTimer) {
-    clearTimeout(highlightTimer)
-    highlightTimer = null
+  if (highlightHandle !== null) {
+    cancelIdleCallbackFn(highlightHandle)
+    highlightHandle = null
   }
 })
 </script>

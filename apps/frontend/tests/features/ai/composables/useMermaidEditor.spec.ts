@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { ref } from 'vue'
 import { useMermaidEditor } from '@/features/ai/composables/useMermaidEditor'
 import * as mermaidRender from '@/composables/markdown/mermaid-render'
 
@@ -8,7 +9,7 @@ vi.mock('@/composables/markdown/mermaid-render', () => ({
 
 vi.mock('@/composables/useTheme', () => ({
   useTheme: () => ({
-    theme: { value: 'default' },
+    theme: ref('default'),
   }),
 }))
 
