@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import AiAssistantInput from '@/features/ai/components/AiAssistantInput.vue'
+import AiAssistantInput from '@/features/ai/components/assistant/AiAssistantInput.vue'
 
 vi.mock('vue-i18n', () => ({
   useI18n: () => ({

@@ -2,7 +2,7 @@ import axios from 'axios'
 import type { AxiosInstance } from 'axios'
 import type { Tool } from '@/features/ai/services/aiService'
 import { AGENT_TOOL_NAMES } from '@lumina/shared'
-import { useSessionFiles } from '@/features/ai/stores/sessionFiles'
+import { useSessionFiles } from '@/features/ai/composables/useSessionFiles'
 
 /**
  * Agent 工具定义（AI function calling 格式）

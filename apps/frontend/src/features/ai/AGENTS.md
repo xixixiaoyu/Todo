@@ -10,10 +10,9 @@ AI 聊天/助手模块，包含流式对话、技能管理、配置面板、教�
 
 ```
 features/ai/
-├── components/       # 30+ 个组件（AISkillManager, ChatMessage 等）
+├── components/       # 61 个组件，11 子目录（chat/assistant/settings/...）
 ├── composables/      # useAIConfig(901行), useChatActions(608行) 等
-├── services/         # core.ts(604行), systemPrompts(819行) 等
-├── stores/           # Pinia store
+├── services/         # core.ts(604行), systemPrompts(819行) 等（已扁平化 utils/）
 ├── views/            # 页面
 ├── utils/            # 工具函数
 └── constants/        # 常量
@@ -21,14 +20,14 @@ features/ai/
 
 ## 复杂度热点
 
-| 文件                               | 行数 | 建议                              |
-| ---------------------------------- | ---- | --------------------------------- |
-| `composables/useAIConfig/index.ts` | 901  | 拆分为 config/presets/skills/sync |
-| `services/utils/systemPrompts.ts`  | 819  | 按模式拆分 teaching/novel/core    |
-| `components/AISkillManager.vue`    | 798  | 提取 SkillForm/SkillList          |
-| `components/ChatMessage.vue`       | 641  | 提取变体组件减少条件分支          |
-| `composables/useChatActions.ts`    | 608  | 已部分拆分，继续提取 retry/images |
-| `services/core.ts`                 | 604  | 可拆分 stream/static/xml          |
+| 文件                                   | 行数 | 建议                              |
+| -------------------------------------- | ---- | --------------------------------- |
+| `composables/useAIConfig/index.ts`     | 901  | 拆分为 config/presets/skills/sync |
+| `services/systemPrompts.ts`            | 819  | 按模式拆分 teaching/novel/core    |
+| `components/skills/AISkillManager.vue` | 798  | 提取 SkillForm/SkillList          |
+| `components/chat/ChatMessage.vue`      | 641  | 提取变体组件减少条件分支          |
+| `composables/useChatActions.ts`        | 608  | 已部分拆分，继续提取 retry/images |
+| `services/core.ts`                     | 604  | 可拆分 stream/static/xml          |
 
 ## 关键模式
 

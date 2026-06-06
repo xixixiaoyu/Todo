@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { ref, nextTick } from 'vue'
-import ChatMessageList from '@/features/ai/components/ChatMessageList.vue'
+import ChatMessageList from '@/features/ai/components/chat/ChatMessageList.vue'
 
 const scrollToBottomSpy = vi.fn()
 const setStreamingModeSpy = vi.fn()

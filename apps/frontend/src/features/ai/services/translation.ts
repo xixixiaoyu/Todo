@@ -1,4 +1,4 @@
-import { buildApiUrl, getHeaders } from './utils/http'
+import { buildApiUrl, getHeaders } from './http'
 import type { AIConfig } from '../composables/useAIConfig'
 
 export function detectLanguage(text: string): 'zh' | 'non-zh' {

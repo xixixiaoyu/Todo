@@ -277,24 +277,24 @@ pnpm docker:prune
 
 ## 10. WHERE TO LOOK
 
-| 你要做什么           | 去哪里找                                                    | 备注                                         |
-| -------------------- | ----------------------------------------------------------- | -------------------------------------------- |
-| 修改 Todo 业务逻辑   | `apps/backend/src/todos/`                                   | Service + Controller + DTO                   |
-| 修改 Todo 前端交互   | `apps/frontend/src/features/todo/`                          | 含 stores(27 文件)、components、composables  |
-| 修改 AI 聊天/助手    | `apps/frontend/src/features/ai/`                            | 最大 feature，含 composables/services/stores |
-| 修改 AI 后端逻辑     | `apps/backend/src/agent/`                                   | 含会话文件、任务队列                         |
-| 修改 AI 配置面板     | `apps/frontend/src/features/ai/composables/useAIConfig/`    | 901 行，最复杂的 composable                  |
-| 修改鉴权/用户        | `apps/backend/src/auth/` + `apps/backend/src/users/`        | JWT + Bearer                                 |
-| 修改 MCP 集成        | `apps/backend/src/mcp/` + `apps/frontend/src/features/mcp/` | 前后端 MCP                                   |
-| 修改 Sidecar         | `apps/sidecar/`                                             | Hono 旁路服务                                |
-| 修改 Wails 桌面壳    | `apps/wails/`                                               | Go 原生应用                                  |
-| 修改共享契约/Schema  | `packages/shared/src/`                                      | Zod Schema + DTO + 工具类型                  |
-| 修改 i18n 文案       | `apps/frontend/src/i18n/locales/{en-US,zh-CN}/`             | 前后端分离                                   |
-| 修改 Prisma 数据模型 | `apps/backend/prisma/schema/`                               | 2 个模块化 .prisma 文件（base、mcp）         |
-| 修改 Tailwind 主题   | `apps/frontend/tailwind.config.js`                          | CSS 变量设计令牌                             |
-| 修改 Docker 编排     | `docker-compose.yml` / `docker-compose.dev.yml`             | 生产/开发分离                                |
-| 修改 CI 流程         | `.github/workflows/ci.yml`                                  | 质量门禁 + 构建                              |
-| 修改测试配置         | `apps/*/vitest.config.mts`                                  | 按包独立配置                                 |
+| 你要做什么           | 去哪里找                                                    | 备注                                                                 |
+| -------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------- |
+| 修改 Todo 业务逻辑   | `apps/backend/src/todos/`                                   | Service + Controller + DTO                                           |
+| 修改 Todo 前端交互   | `apps/frontend/src/features/todo/`                          | 含 stores(11 文件)、components、composables                          |
+| 修改 AI 聊天/助手    | `apps/frontend/src/features/ai/`                            | 最大 feature，含 composables(37)、services(24)、components(11子目录) |
+| 修改 AI 后端逻辑     | `apps/backend/src/agent/`                                   | 含会话文件、任务队列                                                 |
+| 修改 AI 配置面板     | `apps/frontend/src/features/ai/composables/useAIConfig/`    | 901 行，最复杂的 composable                                          |
+| 修改鉴权/用户        | `apps/backend/src/auth/` + `apps/backend/src/users/`        | JWT + Bearer                                                         |
+| 修改 MCP 集成        | `apps/backend/src/mcp/` + `apps/frontend/src/features/mcp/` | 前后端 MCP                                                           |
+| 修改 Sidecar         | `apps/sidecar/`                                             | Hono 旁路服务                                                        |
+| 修改 Wails 桌面壳    | `apps/wails/`                                               | Go 原生应用                                                          |
+| 修改共享契约/Schema  | `packages/shared/src/`                                      | Zod Schema + DTO + 工具类型                                          |
+| 修改 i18n 文案       | `apps/frontend/src/i18n/locales/{en-US,zh-CN}/`             | 前后端分离                                                           |
+| 修改 Prisma 数据模型 | `apps/backend/prisma/schema/`                               | 2 个模块化 .prisma 文件（base、mcp）                                 |
+| 修改 Tailwind 主题   | `apps/frontend/tailwind.config.js`                          | CSS 变量设计令牌                                                     |
+| 修改 Docker 编排     | `docker-compose.yml` / `docker-compose.dev.yml`             | 生产/开发分离                                                        |
+| 修改 CI 流程         | `.github/workflows/ci.yml`                                  | 质量门禁 + 构建                                                      |
+| 修改测试配置         | `apps/*/vitest.config.mts`                                  | 按包独立配置                                                         |
 
 ## 11. CODE MAP (热点模块)
 
@@ -302,9 +302,9 @@ pnpm docker:prune
 | ------------------- | ------------ | -------------------------------------------------------- | ---- | ------------------- |
 | `useAIConfig/index` | Composable   | `apps/frontend/src/features/ai/composables/useAIConfig/` | 901  | AI 配置面板全栈状态 |
 | `TodoScratchpad`    | Component    | `apps/frontend/src/features/todo/components/`            | 837  | 草稿/快速录入组件   |
-| `systemPrompts`     | Service Util | `apps/frontend/src/features/ai/services/utils/`          | 819  | AI 系统提示词模板   |
-| `AISkillManager`    | Component    | `apps/frontend/src/features/ai/components/`              | 798  | AI 技能管理与配置   |
-| `ChatMessage`       | Component    | `apps/frontend/src/features/ai/components/`              | 641  | 聊天消息渲染        |
+| `systemPrompts`     | Service Util | `apps/frontend/src/features/ai/services/`                | 819  | AI 系统提示词模板   |
+| `AISkillManager`    | Component    | `apps/frontend/src/features/ai/components/skills/`       | 798  | AI 技能管理与配置   |
+| `ChatMessage`       | Component    | `apps/frontend/src/features/ai/components/chat/`         | 641  | 聊天消息渲染        |
 | `useChatActions`    | Composable   | `apps/frontend/src/features/ai/composables/`             | 608  | AI 聊天动作逻辑     |
 | `core`              | Service      | `apps/frontend/src/features/ai/services/`                | 604  | AI 核心服务         |
 | `PomodoroEarth`     | Component    | `apps/frontend/src/features/todo/components/pomodoro/`   | 580  | 3D 番茄钟仪表盘     |
@@ -315,13 +315,13 @@ pnpm docker:prune
 
 ## 12. 结构风险与边界
 
-| 风险等级 | 问题                          | 位置                                            | 建议                                 |
-| :------: | ----------------------------- | ----------------------------------------------- | ------------------------------------ |
-|  🟡 中   | Backend 模块扁平化，类型混杂  | `apps/backend/src/auth/` (11 文件)              | >10 文件时引入技术层子目录           |
-|  🟡 中   | Todo Store 过度拆分 (27 文件) | `apps/frontend/src/features/todo/stores/`       | 考虑合并为单一 store + Pinia modules |
-|  🟡 中   | AI Feature 层级过深           | `apps/frontend/src/features/ai/services/utils/` | 扁平化 utils                         |
-|  🟢 低   | `components/auth/` 边界模糊   | `apps/frontend/src/components/auth/`            | 应移入 `features/auth/components/`   |
-|  🟢 低   | Sidecar `store/` 命名不一致   | `apps/sidecar/src/store/`                       | 统一为 `stores/`                     |
+| 风险等级  | 问题                          | 位置                                                | 建议                                 |
+| :-------: | ----------------------------- | --------------------------------------------------- | ------------------------------------ |
+|   🟡 中   | Backend 模块扁平化，类型混杂  | `apps/backend/src/auth/` (11 文件)                  | >10 文件时引入技术层子目录           |
+|   🟡 中   | Todo Store 过度拆分 (11 文件) | `apps/frontend/src/features/todo/stores/`           | 考虑合并为单一 store + Pinia modules |
+| 🟢 已修复 | AI Feature 层级过深           | ~~`apps/frontend/src/features/ai/services/utils/`~~ | ✅ 已扁平化至 `services/`            |
+|   🟢 低   | `components/auth/` 边界模糊   | `apps/frontend/src/components/auth/`                | 应移入 `features/auth/components/`   |
+|   🟢 低   | Sidecar `store/` 命名不一致   | `apps/sidecar/src/store/`                           | 统一为 `stores/`                     |
 
 ## 13. 测试热点
 

@@ -14,7 +14,7 @@ import {
 } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useChatHistory } from '@/features/ai/composables/useChatHistory'
-import { useGenerationState } from '@/features/ai/stores/generationState'
+import { useGenerationState } from '@/features/ai/composables/useGenerationState'
 import { exportSessionToMarkdown, exportAllSessionsToMarkdown } from '@/lib/export'
 import {
   AlertDialog,

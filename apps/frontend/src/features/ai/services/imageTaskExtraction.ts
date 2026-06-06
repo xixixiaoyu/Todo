@@ -4,7 +4,7 @@
  */
 
 import { getAIConfig } from '@/features/ai/composables/useAIConfig'
-import { buildApiUrl, getHeaders } from './utils/http'
+import { buildApiUrl, getHeaders } from './http'
 import type { MultiModalContent, AIChatCompletionMessage } from './types'
 
 /**

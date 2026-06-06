@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
-import AISettingsDialog from '@/features/ai/components/AISettingsDialog.vue'
+import AISettingsDialog from '@/features/ai/components/settings/AISettingsDialog.vue'
 import type { AIPreset, AIConfig } from '@/features/ai/composables/useAIConfig'
 
 // Mock Lucide icons

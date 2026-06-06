@@ -15,7 +15,7 @@ import TodoList from './components/TodoList.vue'
 import PomodoroTimer from './components/PomodoroTimer.vue'
 
 import TodoImageTaskConfirmDialog from './components/TodoImageTaskConfirmDialog.vue'
-import AiAssistantDrawer from '@/features/ai/components/AiAssistantDrawer.vue'
+import AiAssistantDrawer from '@/features/ai/components/assistant/AiAssistantDrawer.vue'
 import Fireworks from '@/components/Fireworks.vue'
 import { Card, CardContent } from '@/components/ui/card'
 

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import i18n from '@/i18n'
-import ChatMessage from '@/features/ai/components/ChatMessage.vue'
+import ChatMessage from '@/features/ai/components/chat/ChatMessage.vue'
 import type { ChatMessage as ChatMessageType } from '@/features/ai/composables/useChat'
 import * as aiService from '@/features/ai/services/aiService'
 
@@ -10,7 +10,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   setActivePinia(createPinia())
 })
-import ChatMessageMarkdown from '@/features/ai/components/ChatMessageMarkdown.vue'
+import ChatMessageMarkdown from '@/features/ai/components/chat/ChatMessageMarkdown.vue'
 
 // Mock Lucide icons
 vi.mock('lucide-vue-next', () => ({

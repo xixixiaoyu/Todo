@@ -52,8 +52,7 @@ src/
 
 | 问题                    | 位置                              | 建议                             |
 | ----------------------- | --------------------------------- | -------------------------------- |
-| **AI 层级过深**         | `features/ai/services/utils/`     | 扁平化 utils                     |
-| **Todo Store 过度拆分** | `features/todo/stores/` (27 文件) | 合并为单一 store + modules       |
+| **Todo Store 过度拆分** | `features/todo/stores/` (11 文件) | 考虑合并为单一 store + modules   |
 | **auth 组件位置不当**   | `src/components/auth/`            | 移入 `features/auth/components/` |
 
 ## 测试

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { ref, nextTick } from 'vue'
-import ChatMinimap from '@/features/ai/components/ChatMinimap.vue'
+import ChatMinimap from '@/features/ai/components/chat/ChatMinimap.vue'
 
 const gsapToSpy = vi.fn(
   (target: HTMLElement, vars: { scrollTop?: number; onComplete?: () => void }) => {

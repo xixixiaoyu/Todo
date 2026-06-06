@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { Snowflake, Network, List, MoreHorizontal } from 'lucide-vue-next'
-import AiAssistantQuickModesMenu from '@/features/ai/components/AiAssistantQuickModesMenu.vue'
+import AiAssistantQuickModesMenu from '@/features/ai/components/assistant/AiAssistantQuickModesMenu.vue'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {

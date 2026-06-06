@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import TranslationPanel from '@/features/ai/components/TranslationPanel.vue'
+import TranslationPanel from '@/features/ai/components/translation/TranslationPanel.vue'
 
 vi.mock('vue-i18n', () => ({
   useI18n: () => ({

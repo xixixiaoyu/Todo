@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import AIPresetEditorForm from '@/features/ai/components/AIPresetEditorForm.vue'
+import AIPresetEditorForm from '@/features/ai/components/presets/AIPresetEditorForm.vue'
 import type { AIPreset } from '@/features/ai/composables/useAIConfig'
 
 vi.mock('lucide-vue-next', () => ({

@@ -1,7 +1,7 @@
 import { ref, computed, watch } from 'vue'
 import type { Ref } from 'vue'
 import { useChatHistory } from './useChatHistory'
-import { useGenerationState } from '@/features/ai/stores/generationState'
+import { useGenerationState } from '@/features/ai/composables/useGenerationState'
 import type { ChatMessage, DiscussionStep } from '@/features/ai/services/aiService'
 import type { ProposedTodoChange } from '@/features/todo/stores/todo'
 

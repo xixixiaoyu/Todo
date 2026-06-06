@@ -2,8 +2,8 @@
  * AI 服务工具函数
  */
 
-export * from './utils/http'
-export * from './utils/assistantBlocks'
-export * from './utils/systemPrompts'
-export * from './utils/skills'
-export * from './utils/skillRuntime'
+export * from './http'
+export * from './assistantBlocks'
+export * from './systemPrompts'
+export * from './skills'
+export * from './skillRuntime'

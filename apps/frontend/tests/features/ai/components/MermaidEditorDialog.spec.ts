@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import MermaidEditorDialog from '@/features/ai/components/MermaidEditorDialog.vue'
+import MermaidEditorDialog from '@/features/ai/components/mermaid/MermaidEditorDialog.vue'
 import { useMermaidEditor } from '@/features/ai/composables/useMermaidEditor'
 import { ref } from 'vue'
 

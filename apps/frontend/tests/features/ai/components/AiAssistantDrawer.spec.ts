@@ -2,10 +2,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { ref, nextTick } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
-import AiAssistantDrawer from '@/features/ai/components/AiAssistantDrawer.vue'
+import AiAssistantDrawer from '@/features/ai/components/assistant/AiAssistantDrawer.vue'
 import type { ChatMessage } from '@/features/ai/services/aiService'
 import type { ChatSession } from '@/features/ai/composables/useChatHistory'
-import AiAssistantToolbar from '@/features/ai/components/AiAssistantToolbar.vue'
+import AiAssistantToolbar from '@/features/ai/components/assistant/AiAssistantToolbar.vue'
 
 // ============================================================================
 // SHARED MOCK SETUP
@@ -81,7 +81,7 @@ vi.mock('@/components/ResizableDrawer.vue', () => ({
 }))
 
 // ChatMessageList: includes teaching-submit emit used by Teaching Answer tests
-vi.mock('@/features/ai/components/ChatMessageList.vue', () => ({
+vi.mock('@/features/ai/components/chat/ChatMessageList.vue', () => ({
   default: {
     template:
       "<div>ChatMessageList<button data-test=\"teaching-submit\" @click=\"$emit('teaching-submit', { quizId: 'q1', kind: 'single_choice', answer: 'A' })\">teach</button></div>",
@@ -89,7 +89,7 @@ vi.mock('@/features/ai/components/ChatMessageList.vue', () => ({
   },
 }))
 
-vi.mock('@/features/ai/components/AISettingsDialog.vue', () => ({
+vi.mock('@/features/ai/components/settings/AISettingsDialog.vue', () => ({
   default: {
     name: 'AISettingsDialog',
     template: '<div>AISettingsDialog</div>',
