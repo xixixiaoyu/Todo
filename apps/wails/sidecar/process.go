@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
-	"syscall"
 	"time"
 )
 
@@ -26,9 +25,7 @@ func spawnProcess(ctx context.Context, cfg SidecarConfig, port int, authToken st
 	cmd := exec.CommandContext(ctx, cfg.NodePath, args...)
 
 	// Process group isolation — ensures child processes are terminated together
-	if runtime.GOOS != "windows" {
-		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	}
+	setProcessGroupAttr(cmd)
 
 	// Capture stdout to parse the sidecar:ready JSON
 	stdout, err := cmd.StdoutPipe()
@@ -98,53 +95,6 @@ func killProcess(pid int) error {
 		return killProcessWindows(pid)
 	}
 	return killProcessUnix(pid)
-}
-
-func killProcessUnix(pid int) error {
-	// Send SIGTERM to the process group
-	pgid, err := syscall.Getpgid(pid)
-	if err != nil {
-		// Fallback to signaling the process directly
-		if err := syscall.Kill(pid, syscall.SIGTERM); err != nil {
-			return fmt.Errorf("failed to send SIGTERM to sidecar: %w", err)
-		}
-	} else {
-		if err := syscall.Kill(-pgid, syscall.SIGTERM); err != nil {
-			// Process may already be dead
-			if err != syscall.ESRCH {
-				return fmt.Errorf("failed to send SIGTERM to sidecar group: %w", err)
-			}
-		}
-	}
-
-	// Wait up to 5s for graceful shutdown
-	done := make(chan bool)
-	go func() {
-		// Poll for process exit
-		for i := 0; i < 50; i++ {
-			if err := syscall.Kill(pid, 0); err == syscall.ESRCH {
-				done <- true
-				return
-			}
-			time.Sleep(100 * time.Millisecond)
-		}
-		done <- false
-	}()
-
-	graceful := <-done
-	if graceful {
-		return nil
-	}
-
-	// Force kill
-	pgid, err = syscall.Getpgid(pid)
-	if err != nil {
-		syscall.Kill(pid, syscall.SIGKILL)
-	} else {
-		syscall.Kill(-pgid, syscall.SIGKILL)
-	}
-
-	return nil
 }
 
 func killProcessWindows(pid int) error {
