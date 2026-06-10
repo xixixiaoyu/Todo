@@ -286,14 +286,14 @@ defineExpose({
       ref="containerRef"
       :class="[
         'flex-1 h-full overflow-y-auto overscroll-contain scroll-smooth-gpu',
-        isMobile ? 'px-5' : 'px-3',
+        isMobile ? 'px-3' : 'px-4',
       ]"
       @scroll.passive="handleScroll"
     >
       <div
         :class="[
           'ai-chat-thread flex min-h-full w-full flex-col',
-          isMaximized ? 'mx-auto max-w-4xl' : 'mx-auto max-w-5xl',
+          isMaximized ? 'mx-auto max-w-4xl' : '',
         ]"
         style="overflow-anchor: none"
       >
