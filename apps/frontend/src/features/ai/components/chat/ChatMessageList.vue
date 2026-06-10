@@ -286,7 +286,7 @@ defineExpose({
       ref="containerRef"
       :class="[
         'flex-1 h-full overflow-y-auto overscroll-contain scroll-smooth-gpu',
-        isMobile ? 'px-3' : 'px-4',
+        isMobile ? 'px-4' : 'px-5',
       ]"
       @scroll.passive="handleScroll"
     >
