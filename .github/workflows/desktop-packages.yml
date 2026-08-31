@@ -47,12 +47,12 @@ jobs:
 
     steps:
       - name: 检出代码
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
       - name: 安装 pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v5
         with:
           version: ${{ env.PNPM_VERSION }}
 
@@ -305,7 +305,7 @@ jobs:
           xcrun stapler staple "artifacts/$PACKAGE_NAME"
 
       - name: 上传构建产物
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: lumina-${{ matrix.platform }}
           path: artifacts/*
@@ -321,7 +321,7 @@ jobs:
       contents: write
     steps:
       - name: 下载全部构建产物
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           pattern: lumina-*
           path: release-assets
